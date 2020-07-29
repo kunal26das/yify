@@ -7,115 +7,81 @@ import kotlinx.android.parcel.Parcelize
 @Parcelize
 data class Movie(
 
-    @SerializedName("small_cover_image")
-    val smallCoverImage: String? = null,
+    @field:SerializedName("small_cover_image")
+    val smallCoverImage: String,
 
-    @SerializedName("year")
-    val year: Int? = null,
+    @field:SerializedName("year")
+    val year: Int,
 
-    @SerializedName("description_full")
-    val descriptionFull: String? = null,
+    @field:SerializedName("description_full")
+    val descriptionFull: String,
 
-    @SerializedName("rating")
-    val rating: Double? = null,
+    @field:SerializedName("rating")
+    val rating: Double,
 
-    @SerializedName("large_cover_image")
-    val largeCoverImage: String? = null,
+    @field:SerializedName("large_cover_image")
+    val largeCoverImage: String,
 
-    @SerializedName("title_long")
-    val titleLong: String? = null,
+    @field:SerializedName("title_long")
+    val titleLong: String,
 
-    @SerializedName("language")
-    val language: String? = null,
+    @field:SerializedName("language")
+    val language: String,
 
-    @SerializedName("yt_trailer_code")
-    val ytTrailerCode: String? = null,
+    @field:SerializedName("yt_trailer_code")
+    val ytTrailerCode: String,
 
-    @SerializedName("title")
-    val title: String? = null,
+    @field:SerializedName("title")
+    val title: String,
 
-    @SerializedName("mpa_rating")
-    val mpaRating: String? = null,
+    @field:SerializedName("mpa_rating")
+    val mpaRating: String,
 
-    @SerializedName("genres")
-    val genres: List<String>? = null,
+    @field:SerializedName("genres")
+    val genres: List<String>,
 
-    @SerializedName("title_english")
-    val titleEnglish: String? = null,
+    @field:SerializedName("title_english")
+    val titleEnglish: String,
 
-    @SerializedName("id")
-    val id: Int? = null,
+    @field:SerializedName("id")
+    val id: Int,
 
-    @SerializedName("state")
-    val state: String? = null,
+    @field:SerializedName("state")
+    val state: String,
 
-    @SerializedName("slug")
-    val slug: String? = null,
+    @field:SerializedName("slug")
+    val slug: String,
 
-    @SerializedName("summary")
-    val summary: String? = null,
+    @field:SerializedName("summary")
+    val summary: String,
 
-    @SerializedName("date_uploaded")
-    val dateUploaded: String? = null,
+    @field:SerializedName("date_uploaded")
+    val dateUploaded: String,
 
-    @SerializedName("runtime")
-    val runtime: Int? = null,
+    @field:SerializedName("runtime")
+    val runtime: Int,
 
-    @SerializedName("synopsis")
-    val synopsis: String? = null,
+    @field:SerializedName("synopsis")
+    val synopsis: String,
 
-    @SerializedName("url")
-    val url: String? = null,
+    @field:SerializedName("url")
+    val url: String,
 
-    @SerializedName("imdb_code")
-    val imdbCode: String? = null,
+    @field:SerializedName("imdb_code")
+    val imdbCode: String,
 
-    @SerializedName("background_image")
-    val backgroundImage: String? = null,
+    @field:SerializedName("background_image")
+    val backgroundImage: String,
 
-    @SerializedName("torrents")
-    val torrents: List<Torrent>? = emptyList(),
+    @field:SerializedName("torrents")
+    val torrents: List<Torrent>,
 
-    @SerializedName("date_uploaded_unix")
-    val dateUploadedUnix: Int? = null,
+    @field:SerializedName("date_uploaded_unix")
+    val dateUploadedUnix: Int,
 
-    @SerializedName("background_image_original")
-    val backgroundImageOriginal: String? = null,
+    @field:SerializedName("background_image_original")
+    val backgroundImageOriginal: String,
 
-    @SerializedName("medium_cover_image")
-    val mediumCoverImage: String? = null
-) : Parcelable
-
-@Parcelize
-data class Torrent(
-
-    @SerializedName("size_bytes")
-    val sizeBytes: Long? = null,
-
-    @SerializedName("size")
-    val size: String? = null,
-
-    @SerializedName("seeds")
-    val seeds: Int? = null,
-
-    @SerializedName("date_uploaded")
-    val dateUploaded: String? = null,
-
-    @SerializedName("peers")
-    val peers: Int? = null,
-
-    @SerializedName("date_uploaded_unix")
-    val dateUploadedUnix: Int? = null,
-
-    @SerializedName("type")
-    val type: String? = null,
-
-    @SerializedName("url")
-    val url: String? = null,
-
-    @SerializedName("hash")
-    val hash: String? = null,
-
-    @SerializedName("quality")
-    val quality: String? = null
+    @field:SerializedName("medium_cover_image")
+    val mediumCoverImage: String
 ) : Parcelable

@@ -12,12 +12,10 @@ object Constants {
     const val PAGE_SIZE = 10
 
     private val Int.dp: Int
-        get() {
-            return TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                toFloat(), resources.displayMetrics
-            ).roundToInt()
-        }
+        get() = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            toFloat(), resources.displayMetrics
+        ).roundToInt()
 
     var TOOLBAR_MARGIN_VERTICAL = 12.dp
     var TOOLBAR_MARGIN_HORIZONTAL = 24.dp
@@ -25,7 +23,8 @@ object Constants {
     val HEIGHT_STATUS_BAR = resources.getDimensionPixelSize(
         resources.getIdentifier(
             "status_bar_height",
-            "dimen", "android"
+            "dimen",
+            "android"
         )
     )
 }

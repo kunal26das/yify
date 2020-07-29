@@ -11,4 +11,9 @@ class YifyViewModel : ViewModel() {
     private val yify: Yify by inject()
     var movies = LivePagedListBuilder(yify.dataSourceFactory, PAGE_SIZE).build()
 
+    override fun onCleared() {
+        super.onCleared()
+        yify.clear()
+    }
+
 }

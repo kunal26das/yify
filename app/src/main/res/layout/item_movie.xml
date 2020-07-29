@@ -106,7 +106,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:padding="8dp"
-                            android:text="@{movie.rating.toString()}"
+                            android:text="@{String.valueOf(movie.rating)}"
                             android:textSize="12sp"
                             app:chipIconSize="20dp"
                             app:chipStrokeWidth="0dp"

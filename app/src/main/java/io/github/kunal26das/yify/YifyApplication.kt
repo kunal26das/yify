@@ -23,9 +23,6 @@ class YifyApplication : Application() {
         Stetho.initializeWithDefaults(applicationContext)
     }
 
-    private fun initStetho() {
-    }
-
     private fun initNetworking() {
         val gson = GsonBuilder().create()
         val okHttp = OkHttpClient.Builder().apply {

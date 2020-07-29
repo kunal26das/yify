@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.source.services
 
+import io.github.kunal26das.yify.source.models.Response
 import io.reactivex.Single
-import io.github.kunal26das.yify.source.models.MovieDataResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -11,7 +11,7 @@ interface MovieService {
     fun getMovies(
         @Query(QUERY_LIMIT) limit: Int,
         @Query(QUERY_PAGE) page: Int
-    ): Single<MovieDataResponse>
+    ): Single<Response>
 
 //    @GET(API_MOVIE_DETAILS)
 //    fun getMovie(@Query(QUERY_MOVIE_ID) movieId: Int): Single<MovieResponse>
