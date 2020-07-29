@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="isLightTheme">true</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:statusBarColor">@color/colorLightMode</item>
+        <item name="android:navigationBarColor">@color/colorLightMode</item>
+        <item name="android:windowBackground">@color/colorLightMode</item>
+        <item name="colorPrimary">@color/colorLightMode</item>
+        <item name="colorPrimaryDark">@color/colorLightMode</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="android:fontFamily">@font/product_sans_regular</item>
+    </style>
+
+    <style name="ToolbarTheme">
+        <item name="android:textColorPrimary">@color/colorDarkText</item>
+        <item name="android:textColorSecondary">@color/colorDarkText</item>
+        <item name="android:fontFamily">@font/product_sans_medium</item>
+    </style>
+
+</resources>
