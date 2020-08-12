@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <io.github.kunal26das.yify.list.MoviesList xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/movies"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:item_marginHorizontal="24dp"
+    app:item_marginVertical="24dp"
     tools:context=".ui.YifyActivity"
     tools:listitem="@layout/item_movie" />

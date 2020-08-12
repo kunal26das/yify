@@ -14,13 +14,10 @@
         android:id="@+id/movieCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginBottom="12dp"
         android:background="?attr/selectableItemBackground"
         app:cardCornerRadius="8dp"
-        app:cardElevation="24dp">
+        app:cardElevation="24dp"
+        tools:layout_margin="24dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -63,8 +60,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
                     android:gravity="bottom|end"
+                    android:orientation="horizontal"
                     android:padding="8dp">
 
                     <com.google.android.material.chip.Chip

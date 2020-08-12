@@ -58,7 +58,7 @@ dependencies {
 
         // Essentials
         implementation 'androidx.essentials:core:1596900395057'
-        implementation 'androidx.essentials:list:1596945830977'
+        implementation 'androidx.essentials:list:1597250996738'
         implementation 'androidx.essentials:backdrop:1596425185482'
         implementation 'androidx.essentials:kotlin-extensions:1595854347054'
     }
@@ -83,6 +83,9 @@ dependencies {
     dependencies {
         // Leak Canary
 //        debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
+
+        // Picasso
+        implementation 'com.squareup.picasso:picasso:2.71828'
 
         // Retrofit
         implementation 'com.squareup.retrofit2:retrofit:2.9.0'

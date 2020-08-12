@@ -1,7 +1,6 @@
 package io.github.kunal26das.yify.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.view.WindowManager
 import androidx.essentials.core.Activity
 import io.github.kunal26das.yify.R
@@ -23,7 +22,6 @@ class YifyActivity : Activity() {
     override fun initObservers() {
         viewModel.movies.observe {
             movies.submitList(it)
-            Log.d("Size", "${it.size}")
         }
     }
 

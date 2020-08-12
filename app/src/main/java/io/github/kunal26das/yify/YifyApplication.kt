@@ -1,6 +1,8 @@
 package io.github.kunal26das.yify
 
 import androidx.essentials.core.Application
+import coil.ImageLoader
+import coil.util.CoilUtils
 import com.facebook.stetho.Stetho
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.GsonBuilder
@@ -20,6 +22,13 @@ class YifyApplication : Application() {
         single { Yify() }
         single { MovieRepository() }
         viewModel { YifyViewModel() }
+        single {
+            ImageLoader.Builder(this)
+                .okHttpClient(OkHttpClient.Builder().apply {
+                    cache(CoilUtils.createDefaultCache(applicationContext))
+                }.build())
+                .build()
+        }
         Stetho.initializeWithDefaults(applicationContext)
     }
 
