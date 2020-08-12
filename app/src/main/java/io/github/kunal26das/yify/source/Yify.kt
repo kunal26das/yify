@@ -35,8 +35,8 @@ class Yify : PageKeyedDataSource<Int, Movie>() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.d("Page $page", "Success")
-                callback.onResult(it.data.movies as MutableList<Movie>, null, page + 1)
+                Log.d("Page ${it.data.pageNumber}", "${it.data.movies.size} Movies")
+                callback.onResult(it.data.movies, null, page + 1)
             }, {
                 Log.e("Error", it.message!!)
                 loadInitial(params, callback)
@@ -50,8 +50,8 @@ class Yify : PageKeyedDataSource<Int, Movie>() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.d("Page $page", "Success")
-                callback.onResult(it.data.movies as MutableList<Movie>, page)
+                Log.d("Page ${it.data.pageNumber}", "${it.data.movies.size} Movies")
+                callback.onResult(it.data.movies, page)
             }, {
                 Log.e("Error", it.message!!)
                 loadAfter(params, callback)
@@ -65,8 +65,8 @@ class Yify : PageKeyedDataSource<Int, Movie>() {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.d("Page $page", "Success")
-                callback.onResult(it.data.movies as MutableList<Movie>, page)
+                Log.d("Page ${it.data.pageNumber}", "${it.data.movies.size} Movies")
+                callback.onResult(it.data.movies, page)
             }, {
                 Log.e("Error", it.message!!)
                 loadAfter(params, callback)

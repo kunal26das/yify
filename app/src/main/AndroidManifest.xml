@@ -15,7 +15,6 @@
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup">
         <activity android:name="io.github.kunal26das.yify.ui.YifyActivity">
-            <nav-graph android:value="@navigation/yify_navigation" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.DEFAULT" />

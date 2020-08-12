@@ -19,8 +19,6 @@
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="12dp"
         android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
         app:cardCornerRadius="8dp"
         app:cardElevation="24dp">
 
@@ -65,53 +63,23 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:gravity="bottom"
                     android:orientation="horizontal"
+                    android:gravity="bottom|end"
                     android:padding="8dp">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/quality720pButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/movieRatingTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="4dp"
-                        android:text="720p"
-                        android:textAllCaps="false"
-                        android:textSize="12sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/quality1080pButton"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_marginEnd="4dp"
-                        android:text="1080p"
-                        android:textAllCaps="false"
-                        android:textSize="12sp" />
-
-                    <androidx.appcompat.widget.LinearLayoutCompat
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:layout_weight="1"
-                        android:gravity="end"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/movieRatingTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:clickable="false"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:padding="8dp"
-                            android:text="@{String.valueOf(movie.rating)}"
-                            android:textSize="12sp"
-                            app:chipIconSize="20dp"
-                            app:chipStrokeWidth="0dp"
-                            tools:text="Rating" />
-                    </androidx.appcompat.widget.LinearLayoutCompat>
+                        android:clickable="false"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:padding="8dp"
+                        android:text="@{String.valueOf(movie.rating)}"
+                        android:textSize="12sp"
+                        app:chipIconSize="20dp"
+                        app:chipStrokeWidth="0dp"
+                        tools:text="Rating" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </androidx.appcompat.widget.LinearLayoutCompat>
         </RelativeLayout>
