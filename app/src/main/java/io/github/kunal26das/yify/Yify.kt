@@ -6,7 +6,7 @@ import coil.util.CoilUtils
 import com.facebook.stetho.Stetho
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.GsonBuilder
-import io.github.kunal26das.yify.source.Yify
+import io.github.kunal26das.yify.source.YifyDataSource
 import io.github.kunal26das.yify.source.repositories.MovieRepository
 import io.github.kunal26das.yify.ui.YifyViewModel
 import okhttp3.OkHttpClient
@@ -14,12 +14,12 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
-class YifyApplication : Application() {
+class Yify : Application() {
 
     override fun onCreate() {
         super.onCreate()
         initNetworking()
-        single { Yify() }
+        single { YifyDataSource() }
         single { MovieRepository() }
         viewModel { YifyViewModel() }
         single {

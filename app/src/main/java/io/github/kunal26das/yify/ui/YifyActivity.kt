@@ -17,6 +17,9 @@ class YifyActivity : Activity() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
+        fab.setOnClickListener {
+            bottomSheetView.switch()
+        }
     }
 
     override fun initObservers() {

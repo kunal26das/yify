@@ -15,14 +15,14 @@ import io.reactivex.schedulers.Schedulers
  * Created by kunal on 27-12-2019.
  */
 
-class Yify : PageKeyedDataSource<Int, Movie>() {
+class YifyDataSource : PageKeyedDataSource<Int, Movie>() {
 
     private val compositeDisposable = CompositeDisposable()
     private val movieRepository: MovieRepository by inject()
 
-    val dataSourceFactory = object : DataSource.Factory<Int, Movie>() {
+    val factory = object : DataSource.Factory<Int, Movie>() {
         override fun create(): DataSource<Int?, Movie> {
-            return this@Yify
+            return this@YifyDataSource
         }
     }
 

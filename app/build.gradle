@@ -59,7 +59,8 @@ dependencies {
         // Essentials
         implementation 'androidx.essentials:core:1596900395057'
         implementation 'androidx.essentials:list:1597250996738'
-        implementation 'androidx.essentials:backdrop:1596425185482'
+        implementation 'androidx.essentials:backdrop:1597220063305'
+        implementation 'androidx.essentials:resources:1597424018860'
         implementation 'androidx.essentials:kotlin-extensions:1595854347054'
     }
 
