@@ -1,6 +1,8 @@
 package io.github.kunal26das.yify.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.essentials.core.Activity
 import io.github.kunal26das.yify.R
@@ -17,6 +19,13 @@ class YifyActivity : Activity() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
+        movies.setOnMovieClickListener {
+            Intent(this, MovieActivity::class.java).apply {
+                putExtra(getString(R.string.movie), it)
+                startActivity(this)
+                Log.d(getString(R.string.movie), "$it")
+            }
+        }
         fab.setOnClickListener {
             bottomSheetView.switch()
         }

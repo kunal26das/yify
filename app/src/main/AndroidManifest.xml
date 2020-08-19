@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/DayNightStyle"
         tools:ignore="AllowBackup">
-        <activity android:name="io.github.kunal26das.yify.ui.YifyActivity">
+        <activity android:name=".ui.YifyActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.DEFAULT" />
@@ -22,5 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".ui.MovieActivity" />
     </application>
 </manifest>

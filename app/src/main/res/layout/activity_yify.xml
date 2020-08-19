@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:cardCornerRadius="16dp"
-            app:cardElevation="24dp">
+            app:cardElevation="16dp">
 
             <io.github.kunal26das.yify.list.MoviesList
                 android:id="@+id/movies"
@@ -32,7 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:layout_margin="24dp"
-            app:elevation="32dp" />
+            android:layout_margin="16dp"
+            app:elevation="24dp" />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

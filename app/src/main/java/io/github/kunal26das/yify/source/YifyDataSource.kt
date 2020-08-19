@@ -31,16 +31,17 @@ class YifyDataSource : PageKeyedDataSource<Int, Movie>() {
         callback: LoadInitialCallback<Int, Movie>
     ) {
         val page = 1
-        compositeDisposable.add(movieRepository.getMovies(page)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                Log.d("Page ${it.data.pageNumber}", "${it.data.movies.size} Movies")
-                callback.onResult(it.data.movies, null, page + 1)
-            }, {
-                Log.e("Error", it.message!!)
-                loadInitial(params, callback)
-            })
+        compositeDisposable.add(
+            movieRepository.getMovies(page)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    Log.d("Page ${it.data.pageNumber}", "${it.data.movies.size} Movies")
+                    callback.onResult(it.data.movies, null, page)
+                }, {
+                    Log.e("Error", it.message!!)
+                    loadInitial(params, callback)
+                })
         )
     }
 
