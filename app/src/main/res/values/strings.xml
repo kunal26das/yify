@@ -10,6 +10,8 @@
 
     <string name="logout">Logout</string>
 
+    <string name="movie">Movie</string>
+
     <string name="settings">Settings</string>
 
     <string name="status_bar_height">status_bar_height</string>
@@ -17,5 +19,6 @@
     <string name="switch_account">Switch Account</string>
 
     <string name="todo">TODO</string>
-    <string name="movie">Movie</string>
+
+    <string name="torrent">Torrent</string>
 </resources>

@@ -6,6 +6,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.core.graphics.drawable.toBitmap
+import androidx.essentials.list.AbstractList.Companion.DEFAULT_ORIENTATION
 import androidx.essentials.list.view.ListItemView
 import androidx.palette.graphics.Palette
 import com.squareup.picasso.Callback
@@ -18,30 +19,33 @@ class MovieView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = R.attr.materialCardViewStyle,
-    attachToRoot: Boolean = true
-) : ListItemView<Movie, ItemMovieBinding>(context, attrs, defStyleAttr, attachToRoot) {
+    attachToRoot: Boolean = DEFAULT_ATTACH_TO_ROOT,
+    listOrientation: Int = DEFAULT_ORIENTATION
+) : ListItemView<Movie, ItemMovieBinding>(
+    context, attrs, defStyleAttr, attachToRoot, listOrientation
+) {
 
     private val transparentColor = Color.parseColor("#00000000")
-
     override val binding = ItemMovieBinding.inflate(
         LayoutInflater.from(context), this, attachToRoot
     )
 
     init {
-        transitionName = context.getString(R.string.movie)
+        radius = 16f
+        cardElevation = 8f
     }
 
     override fun bind(item: Movie) {
         binding.apply {
+            movie = item
             var genres = ""
-            this.movie = item
+            executePendingBindings()
             item.genres.forEachIndexed { index, genre ->
                 genres += when (index) {
                     0 -> ""
                     else -> "\n"
                 } + genre
             }
-            executePendingBindings()
             movieGenresTextView.text = genres
             Picasso.get().load(item.mediumCoverImage)
                 .into(moviePosterImageView, object : Callback {

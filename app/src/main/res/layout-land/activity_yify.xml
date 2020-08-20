@@ -26,7 +26,7 @@
                 app:item_marginHorizontal="16dp"
                 app:item_marginVertical="16dp"
                 app:marginVertical="8dp"
-                app:spanCount="1"
+                app:spanCount="2"
                 tools:listitem="@layout/item_movie" />
         </androidx.essentials.backdrop.BottomSheetView>
 

@@ -3,7 +3,6 @@ package io.github.kunal26das.yify.list
 import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
-import androidx.essentials.core.Resources.dp
 import androidx.essentials.list.PagedList
 import androidx.essentials.list.view.ListItemView
 import io.github.kunal26das.yify.databinding.ItemMovieBinding
@@ -19,13 +18,12 @@ class MoviesList @JvmOverloads constructor(
     override fun areContentsTheSame(oldItem: Movie, newItem: Movie) = oldItem == newItem
     override fun areItemsTheSame(oldItem: Movie, newItem: Movie) = oldItem.id == newItem.id
 
-    override fun onCreateViewHolder(parent: ViewGroup) = MovieView(
-        context = parent.context,
-        attachToRoot = false
-    ).apply {
-        radius = 8.dp.toFloat()
-        cardElevation = 12.dp.toFloat()
-    }.viewHolder
+    override fun onCreateViewHolder(parent: ViewGroup) =
+        MovieView(
+            attachToRoot = false,
+            context = parent.context,
+            listOrientation = orientation
+        ).viewHolder
 
     override fun onBindViewHolder(holder: ListItemView.ViewHolder<Movie, ItemMovieBinding>) {
         holder.listItemView.binding.root.setOnClickListener {
