@@ -7,6 +7,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
+import retrofit2.Retrofit
 import retrofit2.Retrofit.Builder
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -45,11 +46,11 @@ abstract class Repository : Closeable {
         private val Gson = GsonBuilder().create()
 
         private val OkHttp = OkHttpClient.Builder().apply {
-            networkInterceptors().add(StethoInterceptor())
+            addNetworkInterceptor(StethoInterceptor())
             retryOnConnectionFailure(true)
         }.build()
 
-        protected val Retrofit = Builder().apply {
+        protected val Retrofit: Retrofit = Builder().apply {
             client(OkHttp)
             baseUrl(BASE_URL)
             addConverterFactory(GsonConverterFactory.create(Gson))

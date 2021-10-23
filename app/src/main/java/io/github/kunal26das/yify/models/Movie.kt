@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify.models
 
 import android.os.Parcelable
+import androidx.recyclerview.widget.DiffUtil
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
@@ -84,4 +85,17 @@ data class Movie(
 
     @SerializedName("medium_cover_image")
     val mediumCoverImage: String
-) : Parcelable
+) : Parcelable {
+
+    companion object : DiffUtil.ItemCallback<Movie>() {
+        override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem == newItem
+        }
+
+    }
+
+}

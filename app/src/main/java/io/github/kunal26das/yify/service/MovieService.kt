@@ -7,17 +7,17 @@ import retrofit2.http.Query
 
 interface MovieService {
 
-    @GET(API_LIST_MOVIES)
-    fun getMovies(
-        @Query(QUERY_LIMIT) limit: Int,
-        @Query(QUERY_PAGE) page: Int
-    ): Single<Response>
+    @GET(ROUTE_LIST_MOVIES)
+    suspend fun getMovies(
+        @Query(QUERY_PAGE) page: Int,
+        @Query(QUERY_LIMIT) limit: Int
+    ): Response
 
 //    @GET(API_MOVIE_DETAILS)
 //    fun getMovie(@Query(QUERY_MOVIE_ID) movieId: Int): Single<MovieResponse>
 
     companion object {
-        private const val API_LIST_MOVIES = "list_movies.json"
+        private const val ROUTE_LIST_MOVIES = "list_movies.json"
         private const val API_MOVIE_DETAILS = "movie_details.json"
 
         private const val QUERY_PAGE = "page"

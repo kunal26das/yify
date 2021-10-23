@@ -33,7 +33,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:fontFamily="@font/product_sans_medium"
                 android:maxLines="1"
                 android:padding="8dp"
                 android:text="@{movie.titleLong}"
@@ -47,26 +46,6 @@
                 android:padding="8dp"
                 android:textSize="14sp"
                 tools:text="Genres" />
-
-            <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="bottom|start"
-                android:orientation="horizontal">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/movieRatingTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:clickable="false"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="@{String.valueOf(movie.rating)}"
-                    android:textSize="12sp"
-                    app:chipStrokeWidth="0dp"
-                    tools:text="Rating" />
-            </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.appcompat.widget.LinearLayoutCompat>
     </RelativeLayout>
 </layout>
