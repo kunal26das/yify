@@ -1,6 +1,6 @@
-package io.github.kunal26das.yify.source.services
+package io.github.kunal26das.yify.service
 
-import io.github.kunal26das.yify.source.models.Response
+import io.github.kunal26das.yify.models.Response
 import io.reactivex.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
