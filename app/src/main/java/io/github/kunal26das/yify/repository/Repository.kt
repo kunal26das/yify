@@ -13,9 +13,12 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.Closeable
 
+
 abstract class Repository : Closeable {
 
+    private val ioThread get() = Schedulers.io()
     private val compositeDisposable = CompositeDisposable()
+    private val mainThread get() = AndroidSchedulers.mainThread()
 
     protected inline fun <reified T> Repository.service(): Lazy<T> {
         return lazyOf(Retrofit.create(T::class.java))
@@ -25,8 +28,8 @@ abstract class Repository : Closeable {
         onComplete: ((T?) -> Unit)? = null
     ) {
         compositeDisposable.add(
-            observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.io())
+            observeOn(mainThread)
+                .subscribeOn(ioThread)
                 .subscribe({
                     onComplete?.invoke(it)
                 }, {
