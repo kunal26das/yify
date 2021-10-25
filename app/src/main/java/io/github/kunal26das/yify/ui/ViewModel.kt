@@ -23,10 +23,10 @@ open class ViewModel : ViewModel() {
                 ): LoadResult<Int, T> {
                     loading.postValue(true)
                     val result = onLoadListener.load(params)
+                    loading.postValue(false)
                     if (result is LoadResult.Error) {
                         error.postValue(result.throwable)
                     } else error.postValue(null)
-                    loading.postValue(false)
                     return result
                 }
             }

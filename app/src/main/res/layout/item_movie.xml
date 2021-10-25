@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
@@ -9,14 +10,37 @@
             type="io.github.kunal26das.yify.models.Movie" />
     </data>
 
-    <androidx.appcompat.widget.AppCompatTextView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
         android:background="?selectableItemBackground"
         android:clickable="true"
-        android:lines="1"
-        android:padding="16dp"
-        android:text="@{movie.titleLong}"
-        android:textSize="18sp"
-        tools:text="Title (Year)" />
+        app:cardCornerRadius="8dp"
+        app:cardElevation="8dp">
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:foreground="@drawable/gradient_bottom_black"
+                android:scaleType="centerCrop"
+                tools:layout_height="270dp" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:lines="1"
+                android:padding="16dp"
+                android:text="@{movie.titleLong}"
+                android:textSize="18sp"
+                tools:text="Title (Year)" />
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </com.google.android.material.card.MaterialCardView>
 </layout>

@@ -2,10 +2,10 @@ package io.github.kunal26das.yify.ui
 
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.DividerItemDecoration.VERTICAL
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_INDEFINITE
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -25,8 +25,7 @@ class MovieListActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding.movies.adapter = moviesAdapter
-        binding.movies.layoutManager = LinearLayoutManager(this)
-        binding.movies.addItemDecoration(DividerItemDecoration(this, VERTICAL))
+        binding.movies.layoutManager = StaggeredGridLayoutManager(2, VERTICAL)
         binding.refreshMovies.setOnRefreshListener {
             moviesAdapter.refresh()
         }
@@ -35,6 +34,9 @@ class MovieListActivity : Activity() {
                 moviesAdapter.submitData(it)
                 binding.refreshMovies.isRefreshing = false
             }
+        }
+        viewModel.loading.observe(this) {
+            binding.loading.isVisible = it
         }
         viewModel.error.observe(this) {
             if (it != null) {

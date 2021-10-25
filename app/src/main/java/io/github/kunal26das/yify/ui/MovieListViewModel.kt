@@ -10,10 +10,11 @@ class MovieListViewModel @Inject constructor(
     private val movieRepository: MovieRepository
 ) : ViewModel() {
 
-    val movies by flow(10) {
+    val movies by flow(20) {
         try {
             val page = it.key ?: 1
-            val movies = movieRepository.getMovies(page)
+            val limit = it.loadSize
+            val movies = movieRepository.getMovies(page, limit)
             PagingSource.LoadResult.Page(
                 movies, if (page == 1) null
                 else page - 1, page + 1

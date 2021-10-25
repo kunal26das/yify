@@ -9,7 +9,7 @@ interface MovieService {
     @GET(ROUTE_MOVIE_LIST)
     suspend fun getMovies(
         @Query(KEY_PAGE) page: Int,
-//        @Query(KEY_LIMIT) limit: Int
+        @Query(KEY_LIMIT) limit: Int
     ): Response
 
 //    @GET(ROUTE_MOVIE_DETAILS)
