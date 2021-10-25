@@ -11,17 +11,21 @@ import io.github.kunal26das.yify.source.PagingSource
 open class ViewModel : ViewModel() {
 
     val loading = MutableLiveData<Boolean>()
+    val error = MutableLiveData<Throwable?>()
 
     fun <T : Any> ViewModel.flow(
-        onLoadListener: OnLoadListener<T>
+        pageSize: Int, onLoadListener: OnLoadListener<T>
     ) = lazy {
-        Pager(PagingConfig(10)) {
+        Pager(PagingConfig(pageSize)) {
             object : PagingSource<T>() {
                 override suspend fun load(
                     params: LoadParams<Int>
                 ): LoadResult<Int, T> {
                     loading.postValue(true)
                     val result = onLoadListener.load(params)
+                    if (result is LoadResult.Error) {
+                        error.postValue(result.throwable)
+                    } else error.postValue(null)
                     loading.postValue(false)
                     return result
                 }

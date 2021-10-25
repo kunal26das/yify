@@ -1,6 +1,10 @@
 package io.github.kunal26das.yify.repository
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.facebook.stetho.okhttp3.StethoInterceptor
@@ -24,25 +28,56 @@ import java.io.Closeable
 @Module
 @InstallIn(ViewModelComponent::class)
 abstract class Repository(
-    @ApplicationContext protected val applicationContext: Context
-) : Closeable {
+    @ApplicationContext protected val applicationContext: Context,
+    networkRequestBuilder: NetworkRequest.Builder.() -> Unit = {
+        addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+        addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+    }
+) : ConnectivityManager.NetworkCallback(), Closeable {
 
-    private val ioThread get() = Schedulers.io()
+    private var isNetworkAvailable = false
+        @Synchronized get
+        @Synchronized set
+
+    private val ioThread by lazy { Schedulers.io() }
     private val compositeDisposable = CompositeDisposable()
-    private val mainThread get() = AndroidSchedulers.mainThread()
+    private val mainThread by lazy { AndroidSchedulers.mainThread() }
+
+    private val connectivityManager: ConnectivityManager =
+        applicationContext.getSystemService(ConnectivityManager::class.java).also {
+            it.registerNetworkCallback(NetworkRequest.Builder().apply {
+                networkRequestBuilder.invoke(this)
+            }.build(), this)
+        }
 
     protected inline fun <reified T> Repository.service() = lazy {
         Retrofit.create(T::class.java)
     }
 
-    protected inline fun <reified T : RoomDatabase> Repository.database() = lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            T::class.java,
-            applicationContext.packageName
-        ).apply {
+    protected inline fun <reified T : RoomDatabase> Repository.database(
+        name: String = applicationContext.packageName,
+        crossinline roomDatabaseBuilder: RoomDatabase.Builder<T>.() -> Unit = {
             fallbackToDestructiveMigration()
+        }
+    ) = lazy {
+        Room.databaseBuilder(applicationContext, T::class.java, name).apply {
+            roomDatabaseBuilder.invoke(this)
         }.build()
+    }
+
+    override fun onAvailable(network: Network) {
+        super.onAvailable(network)
+        isNetworkAvailable = true
+    }
+
+    override fun onLost(network: Network) {
+        isNetworkAvailable = false
+        super.onLost(network)
+    }
+
+    override fun onUnavailable() {
+        super.onUnavailable()
+        isNetworkAvailable = false
     }
 
     protected fun Completable.enqueue(
@@ -75,6 +110,7 @@ abstract class Repository(
 
     override fun close() {
         compositeDisposable.clear()
+        connectivityManager.unregisterNetworkCallback(this)
     }
 
     companion object {

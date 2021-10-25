@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 @Entity
@@ -92,6 +93,10 @@ data class Movie(
     @SerializedName("medium_cover_image")
     val mediumCoverImage: String,
 ) : Parcelable {
+
+    @IgnoredOnParcel
+    @SerializedName("page")
+    var page: Int? = null
 
     companion object : DiffUtil.ItemCallback<Movie>() {
         override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {

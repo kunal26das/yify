@@ -6,22 +6,26 @@ import io.github.kunal26das.yify.repository.MovieRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class YifyViewModel @Inject constructor(
-    movieRepository: MovieRepository
+class MovieListViewModel @Inject constructor(
+    private val movieRepository: MovieRepository
 ) : ViewModel() {
 
-    val movies by flow {
+    val movies by flow(10) {
         try {
-            val response = movieRepository.getMovies(it.key ?: 1, it.loadSize)
-            val page = response.data.pageNumber
+            val page = it.key ?: 1
+            val movies = movieRepository.getMovies(page)
             PagingSource.LoadResult.Page(
-                response.data.movies,
-                if (page == 1) null else page - 1,
-                page + 1
+                movies, if (page == 1) null
+                else page - 1, page + 1
             )
         } catch (e: Throwable) {
             PagingSource.LoadResult.Error(e)
         }
+    }
+
+    override fun onCleared() {
+        movieRepository.close()
+        super.onCleared()
     }
 
 }
