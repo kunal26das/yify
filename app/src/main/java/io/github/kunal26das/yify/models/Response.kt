@@ -6,16 +6,6 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Response(
-
-    @SerializedName("status_message")
-    val statusMessage: String,
-
     @SerializedName("data")
-    val data: Data,
-
-    @SerializedName("@meta")
-    val meta: Meta,
-
-    @SerializedName("status")
-    val status: String
+    val data: Data
 ) : Parcelable

@@ -1,20 +1,27 @@
 package io.github.kunal26das.yify.ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
-import io.github.kunal26das.yify.models.Movie
-import io.github.kunal26das.yify.source.MovieDataSource
-import kotlinx.coroutines.flow.Flow
+import androidx.paging.PagingSource
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.kunal26das.yify.repository.MovieRepository
+import javax.inject.Inject
 
-class YifyViewModel : ViewModel() {
+@HiltViewModel
+class YifyViewModel @Inject constructor(
+    movieRepository: MovieRepository
+) : ViewModel() {
 
-    val movies: Flow<PagingData<Movie>>
-        get() = Pager(PagingConfig(10)) {
-            MovieDataSource()
-        }.flow.cachedIn(viewModelScope)
+    val movies by flow {
+        try {
+            val response = movieRepository.getMovies(it.key ?: 1, it.loadSize)
+            val page = response.data.pageNumber
+            PagingSource.LoadResult.Page(
+                response.data.movies,
+                if (page == 1) null else page - 1,
+                page + 1
+            )
+        } catch (e: Throwable) {
+            PagingSource.LoadResult.Error(e)
+        }
+    }
 
 }

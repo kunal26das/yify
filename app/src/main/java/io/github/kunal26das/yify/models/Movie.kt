@@ -1,12 +1,21 @@
 package io.github.kunal26das.yify.models
 
 import android.os.Parcelable
+import androidx.annotation.NonNull
 import androidx.recyclerview.widget.DiffUtil
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
+@Entity
 @Parcelize
 data class Movie(
+
+    @NonNull
+    @PrimaryKey
+    @SerializedName("id")
+    val id: Int,
 
     @SerializedName("small_cover_image")
     val smallCoverImage: String,
@@ -38,14 +47,11 @@ data class Movie(
     @SerializedName("mpa_rating")
     val mpaRating: String,
 
-    @SerializedName("genres")
-    val genres: List<String>,
+//    @SerializedName("genres")
+//    val genres: List<String>,
 
     @SerializedName("title_english")
     val titleEnglish: String,
-
-    @SerializedName("id")
-    val id: Int,
 
     @SerializedName("state")
     val state: String,
@@ -74,8 +80,8 @@ data class Movie(
     @SerializedName("background_image")
     val backgroundImage: String,
 
-    @SerializedName("torrents")
-    val torrents: List<Torrent>,
+//    @SerializedName("torrents")
+//    val torrents: List<Torrent>,
 
     @SerializedName("date_uploaded_unix")
     val dateUploadedUnix: Int,
@@ -84,7 +90,7 @@ data class Movie(
     val backgroundImageOriginal: String,
 
     @SerializedName("medium_cover_image")
-    val mediumCoverImage: String
+    val mediumCoverImage: String,
 ) : Parcelable {
 
     companion object : DiffUtil.ItemCallback<Movie>() {

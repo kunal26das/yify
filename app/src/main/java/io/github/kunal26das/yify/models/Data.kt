@@ -6,7 +6,6 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Data(
-
     @SerializedName("movies")
     val movies: List<Movie>,
 

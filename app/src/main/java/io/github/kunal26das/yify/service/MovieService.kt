@@ -1,28 +1,32 @@
 package io.github.kunal26das.yify.service
 
 import io.github.kunal26das.yify.models.Response
-import io.reactivex.Single
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface MovieService {
 
-    @GET(ROUTE_LIST_MOVIES)
+    @GET(ROUTE_MOVIE_LIST)
     suspend fun getMovies(
-        @Query(QUERY_PAGE) page: Int,
-        @Query(QUERY_LIMIT) limit: Int
+        @Query(KEY_PAGE) page: Int,
+        @Query(KEY_LIMIT) limit: Int
     ): Response
 
-//    @GET(API_MOVIE_DETAILS)
-//    fun getMovie(@Query(QUERY_MOVIE_ID) movieId: Int): Single<MovieResponse>
+//    @GET(ROUTE_MOVIE_DETAILS)
+//    fun getMovie(
+//        @Query(KEY_MOVIE_ID) movieId: Int
+//    ): Single<Movie>
 
     companion object {
-        private const val ROUTE_LIST_MOVIES = "list_movies.json"
-        private const val API_MOVIE_DETAILS = "movie_details.json"
+        private const val ROUTE_MOVIE_LIST = "list_movies.json"
+        private const val ROUTE_UPCOMING_LIST = "list_upcoming.json"
+        private const val ROUTE_MOVIE_DETAILS = "movie_details.json"
+        private const val ROUTE_MOVIE_SUGGESTIONS = "movie_suggestions.json"
+        private const val ROUTE_MOVIE_PARENTAL_GUIDE = "movie_parental_guides.json"
 
-        private const val QUERY_PAGE = "page"
-        private const val QUERY_LIMIT = "limit"
-        private const val QUERY_MOVIE_ID = "movie_id"
+        private const val KEY_PAGE = "page"
+        private const val KEY_LIMIT = "limit"
+        private const val KEY_MOVIE_ID = "movie_id"
     }
 
 }
