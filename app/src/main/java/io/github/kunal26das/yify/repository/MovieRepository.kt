@@ -14,6 +14,12 @@ class MovieRepository @Inject constructor(
     private val movieService by service<MovieService>()
     private val yifyDatabase by database<YifyDatabase>()
 
+    fun getUpcomingMovies(
+        onComplete: ((List<Movie>?) -> Unit)? = null
+    ) {
+        movieService.getUpcomingMovies().enqueue(onComplete)
+    }
+
     suspend fun getMovies(page: Int, limit: Int): List<Movie> {
         return movieService.getMovies(page, limit).data.movies.also {
             it.forEach { it.page = page }

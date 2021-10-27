@@ -21,7 +21,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.Retrofit.Builder
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.Closeable
 
@@ -128,7 +128,7 @@ abstract class Repository(
             client(OkHttp)
             baseUrl(BASE_URL)
             addConverterFactory(GsonConverterFactory.create(Gson))
-            addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            addCallAdapterFactory(RxJava3CallAdapterFactory.create())
         }.build()
 
     }
