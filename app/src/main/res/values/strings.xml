@@ -8,6 +8,8 @@
 
     <string name="dimension">dimen</string>
 
+    <string name="filter">Filter</string>
+
     <string name="logout">Logout</string>
 
     <string name="movie">Movie</string>

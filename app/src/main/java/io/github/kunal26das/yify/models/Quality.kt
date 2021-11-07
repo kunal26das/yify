@@ -15,11 +15,25 @@ import io.github.kunal26das.yify.models.Quality.Companion.QUALITY_ALL
     QUALITY_3D,
 )
 annotation class Quality {
-    companion object {
-        const val QUALITY_3D = "3D"
+
+    fun interface OnChangeListener {
+        fun invoke(@Quality quality: String?)
+    }
+
+    companion object : ArrayList<String>() {
+
         const val QUALITY_ALL = "All"
         const val QUALITY_720p = "720p"
         const val QUALITY_1080p = "1080p"
         const val QUALITY_2160p = "2160p"
+        const val QUALITY_3D = "3D"
+
+        init {
+            add(QUALITY_ALL)
+            add(QUALITY_720p)
+            add(QUALITY_1080p)
+            add(QUALITY_2160p)
+            add(QUALITY_3D)
+        }
     }
 }

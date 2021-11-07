@@ -6,7 +6,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration.VERTICAL
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_INDEFINITE
+import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.yify.R
@@ -29,6 +29,14 @@ class MovieListActivity : Activity() {
         binding.refreshMovies.setOnRefreshListener {
             moviesAdapter.refresh()
         }
+        binding.filter.setOnClickListener {
+            FilterFragment().apply {
+                setOnQualityChangeListener {
+                    viewModel.quality = it
+                    moviesAdapter.refresh()
+                }
+            }.show(supportFragmentManager, null)
+        }
         lifecycleScope.launch {
             viewModel.movies.collect {
                 moviesAdapter.submitData(it)
@@ -40,7 +48,7 @@ class MovieListActivity : Activity() {
         }
         viewModel.error.observe(this) {
             if (it != null) {
-                Snackbar.make(binding.root, "${it.message}", LENGTH_INDEFINITE).show()
+                Snackbar.make(binding.root, "${it.message}", LENGTH_LONG).show()
             }
         }
     }
