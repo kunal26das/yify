@@ -8,11 +8,16 @@ import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import io.github.kunal26das.yify.repository.DataStore
 
 abstract class BottomSheetDialogFragment : BottomSheetDialogFragment() {
 
     abstract val layoutId: Int
     var container: ViewGroup? = null
+
+    protected fun BottomSheetDialogFragment.dataStore() = lazy {
+        DataStore.getInstance(requireContext())
+    }
 
     protected inline fun <reified T : ViewDataBinding> BottomSheetDialogFragment.dataBinding() =
         lazy {

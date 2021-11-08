@@ -54,6 +54,10 @@ abstract class Repository(
         Retrofit.create(T::class.java)
     }
 
+    protected fun Repository.dataStore(name: String = applicationContext.packageName) = lazy {
+        DataStore.getInstance(applicationContext, name)
+    }
+
     protected inline fun <reified T : RoomDatabase> Repository.database(
         name: String = applicationContext.packageName,
         crossinline roomDatabaseBuilder: RoomDatabase.Builder<T>.() -> Unit = {

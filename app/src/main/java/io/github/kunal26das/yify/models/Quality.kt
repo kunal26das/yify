@@ -15,11 +15,6 @@ import io.github.kunal26das.yify.models.Quality.Companion.QUALITY_ALL
     QUALITY_3D,
 )
 annotation class Quality {
-
-    fun interface OnChangeListener {
-        fun invoke(@Quality quality: String?)
-    }
-
     companion object : ArrayList<String>() {
 
         const val QUALITY_ALL = "All"
