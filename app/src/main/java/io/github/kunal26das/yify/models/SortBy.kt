@@ -21,7 +21,8 @@ import io.github.kunal26das.yify.models.SortBy.Companion.SORT_BY_YEAR
     SORT_BY_DATE_ADDED,
 )
 annotation class SortBy {
-    companion object {
+    companion object : ArrayList<String>() {
+
         const val SORT_BY_TITLE = "title"
         const val SORT_BY_YEAR = "year"
         const val SORT_BY_RATING = "rating"
@@ -30,5 +31,16 @@ annotation class SortBy {
         const val SORT_BY_DOWNLOAD_COUNT = "download_count"
         const val SORT_BY_LIKE_COUNT = "like_count"
         const val SORT_BY_DATE_ADDED = "date_added"
+
+        init {
+            add(SORT_BY_TITLE)
+            add(SORT_BY_YEAR)
+            add(SORT_BY_RATING)
+            add(SORT_BY_PEERS)
+            add(SORT_BY_SEEDS)
+            add(SORT_BY_DOWNLOAD_COUNT)
+            add(SORT_BY_LIKE_COUNT)
+            add(SORT_BY_DATE_ADDED)
+        }
     }
 }

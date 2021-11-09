@@ -20,8 +20,15 @@ class MovieRepository @Inject constructor(
         @IntRange(from = 1, to = 50) page: Int,
         limit: Int,
     ): List<Movie> {
-        val quality = dataStore.get<String>(Preference.Quality)
-        return movieService.getMovies(page, limit, quality).data.movies.also {
+        return movieService.getMovies(
+            page, limit,
+            dataStore.get<String>(Preference.Quality),
+            dataStore.get<Int>(Preference.MinimumRating),
+            dataStore.get<String>(Preference.QueryTerm),
+            dataStore.get<String>(Preference.Genre),
+            dataStore.get<String>(Preference.SortBy),
+            dataStore.get<String>(Preference.OrderBy)
+        ).data.movies.also {
             it.forEach { it.page = page }
             yifyDatabase.movieDao.insert(it).enqueue()
         }

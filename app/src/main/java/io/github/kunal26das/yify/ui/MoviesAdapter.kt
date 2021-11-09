@@ -18,16 +18,14 @@ class MoviesAdapter : PagingDataAdapter<Movie, MovieViewHolder>(Movie) {
         val movie = getItem(position)
         val binding = holder.bind(movie)
         if (movie != null && binding != null) {
-            holder.disposable = when (val image = images[movie.id]) {
-                null -> binding.image.load(movie.largeCoverImage) {
+            when (val image = images[movie.id]) {
+                null -> holder.disposable = binding.image.load(movie.largeCoverImage) {
                     target {
                         binding.image.setImageDrawable(it)
                         images[movie.id] = it
                     }
                 }
-                else -> binding.image.load(image) {
-                    target { binding.image.setImageDrawable(it) }
-                }
+                else -> binding.image.setImageDrawable(image)
             }
         }
     }

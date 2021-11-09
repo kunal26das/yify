@@ -12,9 +12,19 @@
 
     <string name="logout">Logout</string>
 
+    <string name="minimum_rating">Minimum Rating</string>
+
     <string name="movie">Movie</string>
 
+    <string name="order_by">Order By</string>
+
+    <string name="quality">Quality</string>
+
+    <string name="search">Search</string>
+
     <string name="settings">Settings</string>
+
+    <string name="sort_by">Sort By</string>
 
     <string name="status_bar_height">status_bar_height</string>
 

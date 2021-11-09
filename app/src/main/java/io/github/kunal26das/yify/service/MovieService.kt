@@ -36,6 +36,10 @@ interface MovieService {
         @Query(KEY_SORT_BY)
         sortBy: String? = null,
 
+        @OrderBy
+        @Query(KEY_ORDER_BY)
+        orderBy: String? = null,
+
         @Query(KEY_WITH_RT_RATINGS)
         withRtRating: Boolean? = null,
     ): Response
@@ -61,6 +65,7 @@ interface MovieService {
         private const val KEY_QUALITY = "quality"
         private const val KEY_SORT_BY = "sort_by"
         private const val KEY_MOVIE_ID = "movie_id"
+        private const val KEY_ORDER_BY = "order_by"
         private const val KEY_QUERY_TERM = "query_term"
         private const val KEY_MINIMUM_RATING = "minimum_rating"
         private const val KEY_WITH_RT_RATINGS = "with_rt_ratings"
