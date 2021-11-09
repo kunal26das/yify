@@ -47,6 +47,11 @@ interface MovieService {
     @GET(ROUTE_UPCOMING_MOVIES)
     fun getUpcomingMovies(): Single<List<Movie>>
 
+    @GET(ROUTE_MOVIE_SUGGESTIONS)
+    fun getMovieSuggestions(
+        @Query(KEY_MOVIE_ID) movieId: Int
+    ): Single<Response>
+
     @GET(ROUTE_MOVIE_DETAILS)
     fun getMovie(
         @Query(KEY_MOVIE_ID) movieId: Int

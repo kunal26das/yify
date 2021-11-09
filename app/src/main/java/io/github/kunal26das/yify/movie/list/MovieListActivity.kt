@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.movie.list
 
 import android.os.Bundle
 import androidx.activity.viewModels
@@ -11,23 +11,31 @@ import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.core.Activity
 import io.github.kunal26das.yify.databinding.ActivityMovieListBinding
+import io.github.kunal26das.yify.movie.MoviesPagingAdapter
+import io.github.kunal26das.yify.movie.filter.FilterFragment
+import io.github.kunal26das.yify.movie.profile.MovieActivity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MovieListActivity : Activity() {
 
-    private val moviesAdapter = MoviesAdapter()
+    private val moviesAdapter = MoviesPagingAdapter()
     override val layoutId = R.layout.activity_movie_list
     private val viewModel by viewModels<MovieListViewModel>()
     private val binding by dataBinding<ActivityMovieListBinding>()
     private val layoutManager by lazy { GridLayoutManager(this, 2) }
+    private val movieActivity = registerForActivityResult(MovieActivity) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding.movies.adapter = moviesAdapter
         binding.movies.layoutManager = layoutManager
+        moviesAdapter.setOnClickListener {
+            movieActivity.launch(it)
+        }
         binding.filter.setOnClickListener {
             FilterFragment().apply {
                 setOnFiltersChangeListener {

@@ -34,4 +34,17 @@ class MovieRepository @Inject constructor(
         }
     }
 
+    fun getMovieSuggestions(
+        movie: Movie, onComplete: ((List<Movie>?) -> Unit)? = null
+    ) {
+        movieService.getMovieSuggestions(movie.id).map {
+            it.data.movies
+        }.enqueue {
+            onComplete?.invoke(it)
+            if (it != null) {
+                yifyDatabase.movieDao.insert(it)
+            }
+        }
+    }
+
 }

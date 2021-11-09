@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.core
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

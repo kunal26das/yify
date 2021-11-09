@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.core
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -6,9 +6,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import io.github.kunal26das.yify.source.OnLoadListener
 import io.github.kunal26das.yify.source.PagingSource
 
-open class ViewModel : ViewModel() {
+abstract class ViewModel : ViewModel() {
 
     val loading = MutableLiveData<Boolean>()
     val error = MutableLiveData<Throwable?>()

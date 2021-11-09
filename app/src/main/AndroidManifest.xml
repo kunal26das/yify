@@ -16,7 +16,7 @@
         android:theme="@style/Theme.Material3.DayNight.NoActionBar"
         tools:ignore="AllowBackup">
         <activity
-            android:name=".ui.MovieListActivity"
+            android:name=".movie.list.MovieListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,6 +26,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.MovieActivity" />
+        <activity android:name=".movie.profile.MovieActivity" />
     </application>
 </manifest>

@@ -22,22 +22,22 @@ data class Movie(
     val smallCoverImage: String,
 
     @SerializedName("year")
-    val year: Int,
+    val year: Int?,
 
     @SerializedName("description_full")
     val descriptionFull: String,
 
     @SerializedName("rating")
-    val rating: Double,
+    val rating: Double?,
 
     @SerializedName("large_cover_image")
-    val largeCoverImage: String,
+    val largeCoverImage: String?,
 
     @SerializedName("title_long")
     val titleLong: String,
 
     @SerializedName("language")
-    val language: String,
+    val language: String?,
 
     @SerializedName("yt_trailer_code")
     val ytTrailerCode: String,
@@ -46,7 +46,7 @@ data class Movie(
     val title: String,
 
     @SerializedName("mpa_rating")
-    val mpaRating: String,
+    val mpaRating: String?,
 
 //    @SerializedName("genres")
 //    val genres: List<String>,
@@ -85,20 +85,26 @@ data class Movie(
 //    val torrents: List<Torrent>,
 
     @SerializedName("date_uploaded_unix")
-    val dateUploadedUnix: Int,
+    val dateUploadedUnix: Int?,
 
     @SerializedName("background_image_original")
     val backgroundImageOriginal: String,
 
     @SerializedName("medium_cover_image")
-    val mediumCoverImage: String,
+    val mediumCoverImage: String?,
 ) : Parcelable {
 
     @IgnoredOnParcel
     @SerializedName("page")
     var page: Int? = null
 
+    val coverImage
+        get() = largeCoverImage ?: mediumCoverImage ?: smallCoverImage
+
     companion object : DiffUtil.ItemCallback<Movie>() {
+
+        const val KEY_MOVIE = "movie"
+
         override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
             return oldItem.id == newItem.id
         }

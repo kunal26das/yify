@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.movie.filter
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,6 +9,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.Chip
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.core.BottomSheetDialogFragment
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 import io.github.kunal26das.yify.models.OnChangeListener
