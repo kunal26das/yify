@@ -67,7 +67,7 @@ data class Movie(
     val dateUploaded: String,
 
     @SerializedName("runtime")
-    val runtime: Int,
+    val runtime: Int?,
 
     @SerializedName("synopsis")
     val synopsis: String,

@@ -20,4 +20,9 @@ class MovieViewModel @Inject constructor(
         }
     }
 
+    override fun onCleared() {
+        movieRepository.close()
+        super.onCleared()
+    }
+
 }

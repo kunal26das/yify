@@ -84,6 +84,20 @@
                         android:clickable="false"
                         android:text="@{movie.mpaRating}"
                         app:visible="@{movie.mpaRating.length() > 0}" />
+
+                    <com.google.android.material.chip.Chip
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="false"
+                        android:text="@{String.valueOf(movie.runtime)}"
+                        app:visible="@{movie.runtime != null}" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/trailer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{movie.ytTrailerCode}"
+                        app:visible="@{movie.ytTrailerCode.length() > 0}" />
                 </com.google.android.material.chip.ChipGroup>
 
                 <com.google.android.material.textview.MaterialTextView
