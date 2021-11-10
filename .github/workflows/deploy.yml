@@ -13,7 +13,7 @@ jobs:
         with:
           serviceAccountJson: service_account.json
           packageName: io.github.kunal26das.yify
-          releaseFile: app/debug/app-debug.aab
+          releaseFiles: app/debug/app-debug.aab
           inAppUpdatePriority: 5
           userFraction: 0.99
           track: internal
