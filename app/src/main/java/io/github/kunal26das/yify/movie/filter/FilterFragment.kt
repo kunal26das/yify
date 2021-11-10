@@ -12,10 +12,7 @@ import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.core.BottomSheetDialogFragment
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
-import io.github.kunal26das.yify.models.OnChangeListener
-import io.github.kunal26das.yify.models.OrderBy
-import io.github.kunal26das.yify.models.Quality
-import io.github.kunal26das.yify.models.SortBy
+import io.github.kunal26das.yify.models.*
 import io.github.kunal26das.yify.repository.Preference
 import kotlinx.coroutines.launch
 
@@ -34,22 +31,28 @@ class FilterFragment : BottomSheetDialogFragment() {
     ): View {
         super.onCreateView(inflater, container, savedInstanceState)
         Quality.forEach { quality ->
-            val radioButton = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
-            radioButton.id = quality.hashCode()
-            radioButton.text = quality
-            binding.quality.addView(radioButton)
+            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            chip.id = quality.hashCode()
+            chip.text = quality
+            binding.quality.addView(chip)
+        }
+        Genre.forEach { sortBy ->
+            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            chip.id = sortBy.hashCode()
+            chip.text = sortBy
+            binding.genre.addView(chip)
         }
         SortBy.forEach { sortBy ->
-            val radioButton = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
-            radioButton.id = sortBy.hashCode()
-            radioButton.text = sortBy
-            binding.sortBy.addView(radioButton)
+            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            chip.id = sortBy.hashCode()
+            chip.text = sortBy
+            binding.sortBy.addView(chip)
         }
         OrderBy.forEach { orderBy ->
-            val radioButton = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
-            radioButton.id = orderBy.hashCode()
-            radioButton.text = orderBy
-            binding.orderBy.addView(radioButton)
+            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            chip.id = orderBy.hashCode()
+            chip.text = orderBy
+            binding.orderBy.addView(chip)
         }
         lifecycleScope.launch {
             dataStore.get<String>(Preference.Quality)?.hashCode()?.let {
@@ -60,6 +63,9 @@ class FilterFragment : BottomSheetDialogFragment() {
             }
             dataStore.get<String>(Preference.QueryTerm)?.let {
                 binding.query.setText(it)
+            }
+            dataStore.get<String>(Preference.Genre)?.hashCode()?.let {
+                binding.genre.check(it)
             }
             dataStore.get<String>(Preference.SortBy)?.hashCode()?.let {
                 binding.sortBy.check(it)
@@ -90,6 +96,15 @@ class FilterFragment : BottomSheetDialogFragment() {
         binding.query.doAfterTextChanged {
             lifecycleScope.launch {
                 dataStore.set(Preference.QueryTerm, it.toString())
+                onChangeListener?.onChange(null)
+            }
+        }
+        binding.genre.setOnCheckedChangeListener { group, _ ->
+            val genre = (group.children.firstOrNull {
+                (it as Chip).isChecked
+            } as? Chip)?.text.toString()
+            lifecycleScope.launch {
+                dataStore.set(Preference.Genre, genre)
                 onChangeListener?.onChange(null)
             }
         }

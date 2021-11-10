@@ -7,8 +7,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
-import com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.core.Activity
@@ -75,8 +73,13 @@ class MovieListActivity : Activity() {
             binding.refreshMovies.isRefreshing = it
         }
         viewModel.error.observe(this) {
-            if (it != null) {
-                Snackbar.make(binding.root, "${it.message}", LENGTH_LONG).show()
+            when (it) {
+                null -> binding.refreshMovies.setOnRefreshListener {
+                    binding.refreshMovies.isRefreshing = false
+                }
+                else -> binding.refreshMovies.setOnRefreshListener {
+                    moviesAdapter.refresh()
+                }
             }
         }
     }

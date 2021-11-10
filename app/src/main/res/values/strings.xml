@@ -10,6 +10,8 @@
 
     <string name="filter">Filter</string>
 
+    <string name="genre">Genre</string>
+
     <string name="logout">Logout</string>
 
     <string name="minimum_rating">Minimum Rating</string>
