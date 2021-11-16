@@ -43,7 +43,7 @@ android {
 dependencies {
     // Defaults
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.5.31'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.0'
 
     // Jetpack
     dependencies {
