@@ -58,7 +58,7 @@ dependencies {
 
         // Paging
         implementation 'androidx.paging:paging-runtime-ktx:3.0.1'
-        implementation 'androidx.paging:paging-rxjava2-ktx:3.0.1'
+        implementation 'androidx.paging:paging-rxjava2-ktx:3.1.0'
 
         // Palette
         implementation 'androidx.palette:palette-ktx:1.0.0'
