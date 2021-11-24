@@ -83,7 +83,7 @@ dependencies {
 
         // Hilt
         kapt 'com.google.dagger:hilt-compiler:2.40.1'
-        implementation 'com.google.dagger:hilt-android:2.40.1'
+        implementation 'com.google.dagger:hilt-android:2.40.2'
 
         // Material Design
         implementation 'com.google.android.material:material:1.5.0-beta01'
