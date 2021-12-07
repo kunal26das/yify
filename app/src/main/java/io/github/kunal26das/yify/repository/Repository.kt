@@ -7,22 +7,17 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.facebook.stetho.okhttp3.StethoInterceptor
-import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.kunal26das.yify.service.Service
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.Retrofit.Builder
-import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.Closeable
 
 @Module
@@ -50,8 +45,8 @@ abstract class Repository(
             }.build(), this)
         }
 
-    protected inline fun <reified T> Repository.service() = lazy {
-        Retrofit.create(T::class.java)
+    protected inline fun <reified T> Repository.service(retrofit: Service<Retrofit>) = lazy {
+        retrofit.get().create(T::class.java)
     }
 
     protected fun Repository.dataStore(name: String = applicationContext.packageName) = lazy {
@@ -60,12 +55,12 @@ abstract class Repository(
 
     protected inline fun <reified T : RoomDatabase> Repository.database(
         name: String = applicationContext.packageName,
-        crossinline roomDatabaseBuilder: RoomDatabase.Builder<T>.() -> Unit = {
+        crossinline builder: RoomDatabase.Builder<T>.() -> Unit = {
             fallbackToDestructiveMigration()
         }
     ) = lazy {
         Room.databaseBuilder(applicationContext, T::class.java, name).apply {
-            roomDatabaseBuilder.invoke(this)
+            builder.invoke(this)
         }.build()
     }
 
@@ -80,8 +75,8 @@ abstract class Repository(
     }
 
     override fun onUnavailable() {
-        super.onUnavailable()
         isNetworkAvailable = false
+        super.onUnavailable()
     }
 
     protected fun Completable.enqueue(
@@ -115,26 +110,6 @@ abstract class Repository(
     override fun close() {
         compositeDisposable.clear()
         connectivityManager.unregisterNetworkCallback(this)
-    }
-
-    companion object {
-
-        private const val BASE_URL = "https://yts.mx/api/v2/"
-
-        private val Gson = GsonBuilder().create()
-
-        private val OkHttp = OkHttpClient.Builder().apply {
-            addNetworkInterceptor(StethoInterceptor())
-            retryOnConnectionFailure(true)
-        }.build()
-
-        protected val Retrofit: Retrofit = Builder().apply {
-            client(OkHttp)
-            baseUrl(BASE_URL)
-            addConverterFactory(GsonConverterFactory.create(Gson))
-            addCallAdapterFactory(RxJava3CallAdapterFactory.create())
-        }.build()
-
     }
 
 }
