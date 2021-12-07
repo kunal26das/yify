@@ -25,9 +25,9 @@ class MovieRepository @Inject constructor(
             dataStore.get<String>(Preference.Quality),
             dataStore.get<Int>(Preference.MinimumRating),
             dataStore.get<String>(Preference.QueryTerm),
-            dataStore.get<String>(Preference.Genre),
             dataStore.get<String>(Preference.SortBy),
-            dataStore.get<String>(Preference.OrderBy)
+            dataStore.get<String>(Preference.OrderBy),
+//            dataStore.get<String>(Preference.Genre),
         ).data.movies.also {
             it.forEach { it.page = page }
             yifyDatabase.movieDao.insert(it).enqueue()
