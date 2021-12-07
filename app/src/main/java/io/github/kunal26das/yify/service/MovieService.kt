@@ -28,10 +28,6 @@ interface MovieService {
         @Query(KEY_QUERY_TERM)
         queryTerm: String? = null,
 
-        @Genre
-        @Query(KEY_GENRE)
-        genre: String? = null,
-
         @SortBy
         @Query(KEY_SORT_BY)
         sortBy: String? = null,
@@ -39,6 +35,10 @@ interface MovieService {
         @OrderBy
         @Query(KEY_ORDER_BY)
         orderBy: String? = null,
+
+        @Genre
+        @Query(KEY_GENRE)
+        genre: String? = null,
 
         @Query(KEY_WITH_RT_RATINGS)
         withRtRating: Boolean? = null,

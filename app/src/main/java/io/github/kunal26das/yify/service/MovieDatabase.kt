@@ -10,6 +10,6 @@ import io.github.kunal26das.yify.models.Movie
     entities = [Movie::class],
     version = BuildConfig.VERSION_CODE,
 )
-abstract class YifyDatabase : RoomDatabase() {
+abstract class MovieDatabase : RoomDatabase() {
     abstract val movieDao: MovieDao
 }

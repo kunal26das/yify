@@ -6,7 +6,6 @@ import android.os.StrictMode.VmPolicy
 import com.facebook.stetho.Stetho
 import dagger.hilt.android.HiltAndroidApp
 
-
 @HiltAndroidApp
 class Yify : Application() {
 

@@ -12,7 +12,7 @@ class MovieViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
 ) : ViewModel() {
 
-    val movieSuggestions = MutableLiveData<List<Movie>?>()
+    val movieSuggestions = MutableLiveData<List<Movie>>()
 
     fun getMovieSuggestions(movie: Movie) {
         movieRepository.getMovieSuggestions(movie) {
