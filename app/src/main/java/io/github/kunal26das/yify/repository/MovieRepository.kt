@@ -5,45 +5,46 @@ import androidx.annotation.IntRange
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.kunal26das.yify.YifyRetrofit
 import io.github.kunal26das.yify.models.Movie
+import io.github.kunal26das.yify.models.Movie.Companion.KEY_MOVIE
+import io.github.kunal26das.yify.service.MovieDatabase
 import io.github.kunal26das.yify.service.MovieService
-import io.github.kunal26das.yify.service.YifyDatabase
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
     @ApplicationContext context: Context
 ) : Repository(context) {
 
-    private val dataStore by dataStore()
-    private val yifyDatabase by database<YifyDatabase>()
-    private val movieService by service<MovieService>(YifyRetrofit)
+    private val movieDataStore by dataStore(KEY_MOVIE)
+    private val movieDatabase by database<MovieDatabase>()
+    private val movieRetrofit by retrofit<MovieService>(YifyRetrofit())
 
     suspend fun getMovies(
         @IntRange(from = 1, to = 50) page: Int,
         limit: Int,
     ): List<Movie> {
-        return movieService.getMovies(
+        return movieRetrofit.getMovies(
             page, limit,
-            dataStore.get<String>(Preference.Quality),
-            dataStore.get<Int>(Preference.MinimumRating),
-            dataStore.get<String>(Preference.QueryTerm),
-            dataStore.get<String>(Preference.SortBy),
-            dataStore.get<String>(Preference.OrderBy),
+            movieDataStore.get<String>(Preference.Quality),
+            movieDataStore.get<Int>(Preference.MinimumRating),
+            movieDataStore.get<String>(Preference.QueryTerm),
+            movieDataStore.get<String>(Preference.SortBy),
+            movieDataStore.get<String>(Preference.OrderBy),
 //            dataStore.get<String>(Preference.Genre),
         ).data.movies.also {
             it.forEach { it.page = page }
-            yifyDatabase.movieDao.insert(it).enqueue()
+            movieDatabase.movieDao.insert(it).enqueue()
         }
     }
 
     fun getMovieSuggestions(
         movie: Movie, onComplete: ((List<Movie>?) -> Unit)? = null
     ) {
-        movieService.getMovieSuggestions(movie.id).map {
+        movieRetrofit.getMovieSuggestions(movie.id).map {
             it.data.movies
         }.enqueue {
             onComplete?.invoke(it)
             if (it != null) {
-                yifyDatabase.movieDao.insert(it)
+                movieDatabase.movieDao.insert(it)
             }
         }
     }

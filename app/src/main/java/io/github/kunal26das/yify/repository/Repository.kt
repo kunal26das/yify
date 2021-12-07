@@ -45,7 +45,7 @@ abstract class Repository(
             }.build(), this)
         }
 
-    protected inline fun <reified T> Repository.service(retrofit: Service<Retrofit>) = lazy {
+    protected inline fun <reified T> Repository.retrofit(retrofit: Service<Retrofit>) = lazy {
         retrofit.get().create(T::class.java)
     }
 
