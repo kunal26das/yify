@@ -82,7 +82,7 @@ dependencies {
         implementation 'com.google.firebase:firebase-analytics-ktx'
 
         // Hilt
-        kapt 'com.google.dagger:hilt-compiler:2.40.4'
+        kapt 'com.google.dagger:hilt-compiler:2.40.5'
         implementation 'com.google.dagger:hilt-android:2.40.4'
 
         // Material Design
