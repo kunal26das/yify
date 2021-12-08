@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import io.github.kunal26das.yify.source.OnLoadListener
-import io.github.kunal26das.yify.source.PagingSource
+import io.github.kunal26das.yify.paging.OnLoadListener
+import io.github.kunal26das.yify.paging.PagingSource
 
 abstract class ViewModel : ViewModel() {
 

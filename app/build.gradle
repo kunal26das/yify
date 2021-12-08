@@ -80,6 +80,7 @@ dependencies {
         implementation platform('com.google.firebase:firebase-bom:29.0.1')
         implementation 'com.google.firebase:firebase-crashlytics-ktx'
         implementation 'com.google.firebase:firebase-analytics-ktx'
+        implementation 'com.google.firebase:firebase-config-ktx'
 
         // Hilt
         kapt 'com.google.dagger:hilt-compiler:2.40.5'

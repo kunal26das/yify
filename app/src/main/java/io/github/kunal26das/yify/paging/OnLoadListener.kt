@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.source
+package io.github.kunal26das.yify.paging
 
 import androidx.paging.PagingSource
 

@@ -11,17 +11,11 @@ class Yify : Application() {
 
     private fun initStrictMode() {
         if (BuildConfig.DEBUG) {
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder().apply {
-                    penaltyLog()
-                    detectAll()
-                }.build()
-            )
             StrictMode.setVmPolicy(
-                VmPolicy.Builder().apply {
-                    penaltyLog()
-                    detectAll()
-                }.build()
+                VmPolicy.Builder().penaltyLog().detectAll().build()
+            )
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder().penaltyLog().detectAll().build()
             )
         }
     }

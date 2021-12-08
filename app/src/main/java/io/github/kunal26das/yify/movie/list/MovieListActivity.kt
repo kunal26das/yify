@@ -1,6 +1,9 @@
 package io.github.kunal26das.yify.movie.list
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -81,6 +84,16 @@ class MovieListActivity : Activity() {
                     moviesAdapter.refresh()
                 }
             }
+        }
+    }
+
+    companion object : ActivityResultContract<Any?, Boolean>() {
+        override fun createIntent(context: Context, input: Any?): Intent {
+            return Intent(context, MovieListActivity::class.java)
+        }
+
+        override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+            return resultCode == RESULT_OK
         }
     }
 
