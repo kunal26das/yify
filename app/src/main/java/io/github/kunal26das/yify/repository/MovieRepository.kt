@@ -14,8 +14,8 @@ class MovieRepository @Inject constructor(
     @ApplicationContext context: Context
 ) : Repository(context) {
 
-    private val movieDataStore by dataStore(KEY_MOVIE)
     private val movieDatabase by database<MovieDatabase>()
+    private val moviePreferences by sharedPreferences(KEY_MOVIE)
     private val movieRetrofit by retrofit<MovieService>(YifyRetrofit())
 
     suspend fun getMovies(
@@ -24,12 +24,12 @@ class MovieRepository @Inject constructor(
     ): List<Movie> {
         return movieRetrofit.getMovies(
             page, limit,
-            movieDataStore.get<String>(Preference.Quality),
-            movieDataStore.get<Int>(Preference.MinimumRating),
-            movieDataStore.get<String>(Preference.QueryTerm),
-            movieDataStore.get<String>(Preference.SortBy),
-            movieDataStore.get<String>(Preference.OrderBy),
-//            dataStore.get<String>(Preference.Genre),
+            moviePreferences.get<String>(Preference.Quality),
+            moviePreferences.get<Int>(Preference.MinimumRating),
+            moviePreferences.get<String>(Preference.QueryTerm),
+            moviePreferences.get<String>(Preference.SortBy),
+            moviePreferences.get<String>(Preference.OrderBy),
+//          moviePreferences.get<String>(Preference.Genre),
         ).data.movies.also {
             it.forEach { it.page = page }
             movieDatabase.movieDao.insert(it).enqueue()

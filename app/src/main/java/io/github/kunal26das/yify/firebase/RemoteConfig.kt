@@ -6,21 +6,26 @@ import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
 import io.github.kunal26das.yify.models.Constants
 
-object RemoteConfig : HashMap<String, FirebaseRemoteConfigValue>() {
+class RemoteConfig private constructor() : HashMap<String, FirebaseRemoteConfigValue>() {
 
-    @Synchronized
-    fun fetchAndActivate(onCompleteListener: () -> Unit) {
-        Firebase.remoteConfig.apply {
-            setConfigSettingsAsync(remoteConfigSettings {
-                minimumFetchIntervalInSeconds = 0
-            })
-            fetchAndActivate().addOnCompleteListener {
-                RemoteConfig.putAll(Firebase.remoteConfig.all)
-                onCompleteListener.invoke()
+    companion object {
+
+        @Synchronized
+        fun fetchAndActivate(onCompleteListener: () -> Unit) {
+            Firebase.remoteConfig.apply {
+                setConfigSettingsAsync(remoteConfigSettings {
+                    minimumFetchIntervalInSeconds = 0
+                })
+                fetchAndActivate().addOnCompleteListener {
+                    val all = Firebase.remoteConfig.all
+                    onCompleteListener.invoke()
+                    RemoteConfig().putAll(all)
+                }
             }
         }
-    }
 
-    override fun get(@Constants key: String) = super.get(key)!!
+        operator fun get(@Constants key: String) = RemoteConfig()[key]!!
+
+    }
 
 }

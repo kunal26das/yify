@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify.repository
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -35,6 +36,7 @@ abstract class Repository(
         @Synchronized set
 
     private val ioThread by lazy { Schedulers.io() }
+    val packageName = applicationContext.packageName
     private val compositeDisposable = CompositeDisposable()
     private val mainThread by lazy { AndroidSchedulers.mainThread() }
 
@@ -49,12 +51,12 @@ abstract class Repository(
         retrofit.get().create(T::class.java)
     }
 
-    protected fun Repository.dataStore(name: String = applicationContext.packageName) = lazy {
-        DataStore.getInstance(applicationContext, name)
+    protected fun Repository.sharedPreferences(name: String = packageName) = lazy {
+        applicationContext.getSharedPreferences(name, MODE_PRIVATE)
     }
 
     protected inline fun <reified T : RoomDatabase> Repository.database(
-        name: String = applicationContext.packageName,
+        name: String = packageName,
         crossinline builder: RoomDatabase.Builder<T>.() -> Unit = {
             fallbackToDestructiveMigration()
         }

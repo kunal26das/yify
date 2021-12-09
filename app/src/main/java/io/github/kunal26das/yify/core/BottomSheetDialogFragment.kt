@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.core
 
+import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,20 +9,21 @@ import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import io.github.kunal26das.yify.repository.DataStore
 
 abstract class BottomSheetDialogFragment : BottomSheetDialogFragment() {
 
     abstract val layoutId: Int
     var container: ViewGroup? = null
 
-    protected fun BottomSheetDialogFragment.dataStore() = lazy {
-        DataStore.getInstance(requireContext())
+    protected fun BottomSheetDialogFragment.sharedPreferences(
+        name: String? = requireContext().packageName
+    ) = lazy {
+        requireContext().getSharedPreferences(name, MODE_PRIVATE)
     }
 
     protected inline fun <reified T : ViewDataBinding> BottomSheetDialogFragment.dataBinding() =
         lazy {
-            DataBindingUtil.inflate<T>(LayoutInflater.from(context), layoutId, container, false)
+            DataBindingUtil.inflate<T>(layoutInflater, layoutId, container, false)
         }
 
     @CallSuper

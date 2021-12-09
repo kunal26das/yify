@@ -15,7 +15,7 @@ import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.core.Activity
 import io.github.kunal26das.yify.databinding.ActivityMovieListBinding
 import io.github.kunal26das.yify.movie.MoviesPagingAdapter
-import io.github.kunal26das.yify.movie.filter.FilterFragment
+import io.github.kunal26das.yify.movie.filter.MovieFilterFragment
 import io.github.kunal26das.yify.movie.profile.MovieActivity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ class MovieListActivity : Activity() {
             movieActivity.launch(it)
         }
         binding.filter.setOnClickListener {
-            FilterFragment().apply {
+            MovieFilterFragment().apply {
                 setOnFiltersChangeListener {
                     moviesAdapter.refresh()
                 }

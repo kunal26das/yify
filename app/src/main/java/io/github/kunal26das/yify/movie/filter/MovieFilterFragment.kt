@@ -13,13 +13,16 @@ import io.github.kunal26das.yify.core.BottomSheetDialogFragment
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 import io.github.kunal26das.yify.models.*
+import io.github.kunal26das.yify.models.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.repository.Preference
+import io.github.kunal26das.yify.repository.get
+import io.github.kunal26das.yify.repository.set
 import kotlinx.coroutines.launch
 
-class FilterFragment : BottomSheetDialogFragment() {
+class MovieFilterFragment : BottomSheetDialogFragment() {
 
-    private val dataStore by dataStore()
     override val layoutId = R.layout.fragment_filters
+    private val moviePreferences by sharedPreferences(KEY_MOVIE)
     private val binding by dataBinding<FragmentFiltersBinding>()
 
     private var onChangeListener: OnChangeListener<*>? = null
@@ -55,22 +58,22 @@ class FilterFragment : BottomSheetDialogFragment() {
             binding.orderBy.addView(chip)
         }
         lifecycleScope.launch {
-            dataStore.get<String>(Preference.Quality)?.hashCode()?.let {
+            moviePreferences.get<String>(Preference.Quality)?.hashCode()?.let {
                 binding.quality.check(it)
             }
-            dataStore.get<Int>(Preference.MinimumRating)?.let {
+            moviePreferences.get<Int>(Preference.MinimumRating)?.let {
                 binding.rating.value = it.toFloat()
             }
-            dataStore.get<String>(Preference.QueryTerm)?.let {
+            moviePreferences.get<String>(Preference.QueryTerm)?.let {
                 binding.query.setText(it)
             }
-            dataStore.get<String>(Preference.Genre)?.hashCode()?.let {
+            moviePreferences.get<String>(Preference.Genre)?.hashCode()?.let {
                 binding.genre.check(it)
             }
-            dataStore.get<String>(Preference.SortBy)?.hashCode()?.let {
+            moviePreferences.get<String>(Preference.SortBy)?.hashCode()?.let {
                 binding.sortBy.check(it)
             }
-            dataStore.get<String>(Preference.OrderBy)?.hashCode()?.let {
+            moviePreferences.get<String>(Preference.OrderBy)?.hashCode()?.let {
                 binding.orderBy.check(it)
             }
         }
@@ -82,49 +85,39 @@ class FilterFragment : BottomSheetDialogFragment() {
             val quality = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            lifecycleScope.launch {
-                dataStore.set(Preference.Quality, quality)
-                onChangeListener?.onChange(null)
-            }
+            moviePreferences[Preference.Quality] = quality
+            onChangeListener?.onChange(null)
         }
         binding.rating.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) lifecycleScope.launch {
-                dataStore.set(Preference.MinimumRating, value.toInt())
+            if (fromUser) {
+                moviePreferences[Preference.MinimumRating] = value.toInt()
                 onChangeListener?.onChange(null)
             }
         }
         binding.query.doAfterTextChanged {
-            lifecycleScope.launch {
-                dataStore.set(Preference.QueryTerm, it.toString())
-                onChangeListener?.onChange(null)
-            }
+            moviePreferences[Preference.QueryTerm] = it.toString()
+            onChangeListener?.onChange(null)
         }
         binding.genre.setOnCheckedChangeListener { group, _ ->
             val genre = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            lifecycleScope.launch {
-                dataStore.set(Preference.Genre, genre)
-                onChangeListener?.onChange(null)
-            }
+            moviePreferences[Preference.Genre] = genre
+            onChangeListener?.onChange(null)
         }
         binding.sortBy.setOnCheckedChangeListener { group, _ ->
             val sortBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            lifecycleScope.launch {
-                dataStore.set(Preference.SortBy, sortBy)
-                onChangeListener?.onChange(null)
-            }
+            moviePreferences[Preference.SortBy] = sortBy
+            onChangeListener?.onChange(null)
         }
         binding.orderBy.setOnCheckedChangeListener { group, _ ->
             val orderBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            lifecycleScope.launch {
-                dataStore.set(Preference.OrderBy, orderBy)
-                onChangeListener?.onChange(null)
-            }
+            moviePreferences[Preference.OrderBy] = orderBy
+            onChangeListener?.onChange(null)
         }
     }
 
