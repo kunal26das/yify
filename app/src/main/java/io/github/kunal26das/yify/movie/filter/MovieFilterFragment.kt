@@ -6,20 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.chip.Chip
+import io.github.kunal26das.core.model.*
+import io.github.kunal26das.core.model.Movie.Companion.KEY_MOVIE
+import io.github.kunal26das.core.network.local.get
+import io.github.kunal26das.core.network.local.set
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.core.BottomSheetDialogFragment
+import io.github.kunal26das.yify.constant.Preference
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
-import io.github.kunal26das.yify.models.*
-import io.github.kunal26das.yify.models.Movie.Companion.KEY_MOVIE
-import io.github.kunal26das.yify.network.repository.Preference
-import io.github.kunal26das.yify.network.repository.get
-import io.github.kunal26das.yify.network.repository.set
-import kotlinx.coroutines.launch
 
-class MovieFilterFragment : BottomSheetDialogFragment() {
+class MovieFilterFragment : io.github.kunal26das.core.BottomSheetDialogFragment() {
 
     override val layoutId = R.layout.fragment_filters
     private val moviePreferences by sharedPreferences(KEY_MOVIE)
@@ -57,25 +54,23 @@ class MovieFilterFragment : BottomSheetDialogFragment() {
             chip.text = orderBy
             binding.orderBy.addView(chip)
         }
-        lifecycleScope.launch {
-            moviePreferences.get<String>(Preference.Quality)?.hashCode()?.let {
-                binding.quality.check(it)
-            }
-            moviePreferences.get<Int>(Preference.MinimumRating)?.let {
-                binding.rating.value = it.toFloat()
-            }
-            moviePreferences.get<String>(Preference.QueryTerm)?.let {
-                binding.query.setText(it)
-            }
-            moviePreferences.get<String>(Preference.Genre)?.hashCode()?.let {
-                binding.genre.check(it)
-            }
-            moviePreferences.get<String>(Preference.SortBy)?.hashCode()?.let {
-                binding.sortBy.check(it)
-            }
-            moviePreferences.get<String>(Preference.OrderBy)?.hashCode()?.let {
-                binding.orderBy.check(it)
-            }
+        moviePreferences.get<String>(Preference.Quality)?.hashCode()?.let {
+            binding.quality.check(it)
+        }
+        moviePreferences.get<Int>(Preference.MinimumRating)?.let {
+            binding.rating.value = it.toFloat()
+        }
+        moviePreferences.get<String>(Preference.QueryTerm)?.let {
+            binding.query.setText(it)
+        }
+        moviePreferences.get<String>(Preference.Genre)?.hashCode()?.let {
+            binding.genre.check(it)
+        }
+        moviePreferences.get<String>(Preference.SortBy)?.hashCode()?.let {
+            binding.sortBy.check(it)
+        }
+        moviePreferences.get<String>(Preference.OrderBy)?.hashCode()?.let {
+            binding.orderBy.check(it)
         }
         return binding.root
     }

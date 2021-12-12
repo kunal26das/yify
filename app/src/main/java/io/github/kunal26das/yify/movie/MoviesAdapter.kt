@@ -2,8 +2,8 @@ package io.github.kunal26das.yify.movie
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
-import io.github.kunal26das.yify.models.Movie
-import io.github.kunal26das.yify.models.OnClickListener
+import io.github.kunal26das.core.model.Movie
+import io.github.kunal26das.core.model.OnClickListener
 
 class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
 

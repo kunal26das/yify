@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'kotlin-parcelize'
@@ -9,20 +9,18 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion '31.0.0'
+    compileSdk 31
 
     defaultConfig {
-        applicationId 'io.github.kunal26das.yify'
-        minSdkVersion 30
-        targetSdkVersion 31
+        minSdk 30
+        targetSdk 31
         versionCode 1
-        versionName '1.0'
+        versionName "1.0"
     }
 
     compileOptions {
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
@@ -33,16 +31,10 @@ android {
         viewBinding true
         dataBinding = true
     }
-
-    dependenciesInfo {
-        includeInApk true
-        includeInBundle true
-    }
 }
 
 dependencies {
     // Defaults
-    implementation project(path: ':core')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.0'
 

@@ -3,14 +3,13 @@ package io.github.kunal26das.yify.movie.list
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.kunal26das.yify.core.ViewModel
-import io.github.kunal26das.yify.network.repository.MovieRepository
+import io.github.kunal26das.yify.repository.MovieRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class MovieListViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
-) : ViewModel() {
+) : io.github.kunal26das.core.ViewModel() {
 
     val page = MutableLiveData<Int>()
 
