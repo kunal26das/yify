@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.repository
+package io.github.kunal26das.yify.network.repository
 
 import android.content.SharedPreferences
 import androidx.lifecycle.LiveData

@@ -1,7 +1,6 @@
-package io.github.kunal26das.yify.service
+package io.github.kunal26das.yify.network.local
 
 import androidx.room.Database
-import androidx.room.RoomDatabase
 import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.models.Movie
 
@@ -10,6 +9,4 @@ import io.github.kunal26das.yify.models.Movie
     entities = [Movie::class],
     version = BuildConfig.VERSION_CODE,
 )
-abstract class MovieDatabase : RoomDatabase() {
-    abstract val movieDao: MovieDao
-}
+abstract class MovieDatabase : RoomDatabaseImpl<MovieDao>()

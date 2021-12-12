@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.paging
+package io.github.kunal26das.yify.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState

@@ -14,9 +14,9 @@ import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 import io.github.kunal26das.yify.models.*
 import io.github.kunal26das.yify.models.Movie.Companion.KEY_MOVIE
-import io.github.kunal26das.yify.repository.Preference
-import io.github.kunal26das.yify.repository.get
-import io.github.kunal26das.yify.repository.set
+import io.github.kunal26das.yify.network.repository.Preference
+import io.github.kunal26das.yify.network.repository.get
+import io.github.kunal26das.yify.network.repository.set
 import kotlinx.coroutines.launch
 
 class MovieFilterFragment : BottomSheetDialogFragment() {

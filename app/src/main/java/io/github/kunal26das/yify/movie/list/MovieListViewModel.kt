@@ -4,7 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.paging.PagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.yify.core.ViewModel
-import io.github.kunal26das.yify.repository.MovieRepository
+import io.github.kunal26das.yify.network.repository.MovieRepository
 import javax.inject.Inject
 
 @HiltViewModel

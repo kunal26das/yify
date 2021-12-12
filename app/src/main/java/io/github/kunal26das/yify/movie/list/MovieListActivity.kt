@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.yify.R
@@ -61,9 +62,11 @@ class MovieListActivity : Activity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 binding.page.isVisible = newState != SCROLL_STATE_IDLE
-                when (newState) {
-                    SCROLL_STATE_IDLE -> binding.filter.extend()
-                    else -> binding.filter.shrink()
+                binding.filter.apply {
+                    when (newState) {
+                        SCROLL_STATE_IDLE -> if (!isExtended) post { extend() }
+                        SCROLL_STATE_DRAGGING -> if (isExtended) post { shrink() }
+                    }
                 }
             }
         })

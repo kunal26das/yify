@@ -1,12 +1,13 @@
-package io.github.kunal26das.yify
+package io.github.kunal26das.yify.network.remote
 
-import io.github.kunal26das.yify.service.RetrofitImpl
+import android.content.Context
+import io.github.kunal26das.yify.network.YifyGson
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
-class YifyRetrofit : RetrofitImpl({
-    client(YifyOkHttpClient().get())
+class YifyRetrofit(context: Context) : RetrofitImpl({
     baseUrl("https://yts.mx/api/v2/")
+    client(YifyOkHttpClient(context).get())
     addCallAdapterFactory(RxJava3CallAdapterFactory.create())
     addConverterFactory(GsonConverterFactory.create(YifyGson().get()))
 })

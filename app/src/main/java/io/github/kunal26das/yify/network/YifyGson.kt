@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify
+package io.github.kunal26das.yify.network
 
 import io.github.kunal26das.yify.service.GsonImpl
 

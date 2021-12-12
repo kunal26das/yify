@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.repository
+package io.github.kunal26das.yify.network.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*

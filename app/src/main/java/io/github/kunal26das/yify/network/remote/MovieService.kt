@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.service
+package io.github.kunal26das.yify.network.remote
 
 import androidx.annotation.IntRange
 import io.github.kunal26das.yify.models.*

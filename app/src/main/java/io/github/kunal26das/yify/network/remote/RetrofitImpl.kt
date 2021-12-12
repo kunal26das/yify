@@ -1,5 +1,6 @@
-package io.github.kunal26das.yify.service
+package io.github.kunal26das.yify.network.remote
 
+import io.github.kunal26das.yify.service.Service
 import retrofit2.Retrofit
 
 abstract class RetrofitImpl(

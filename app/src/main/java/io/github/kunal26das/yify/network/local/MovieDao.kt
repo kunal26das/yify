@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.service
+package io.github.kunal26das.yify.network.local
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -8,7 +8,7 @@ import io.github.kunal26das.yify.models.Movie
 import io.reactivex.rxjava3.core.Completable
 
 @Dao
-interface MovieDao {
+interface MovieDao : DaoService {
 
     @Insert(onConflict = REPLACE)
     fun insert(movie: Movie): Completable
