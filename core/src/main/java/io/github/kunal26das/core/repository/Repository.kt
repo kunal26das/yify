@@ -7,7 +7,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import io.github.kunal26das.core.network.local.RoomDatabaseProvider
-import io.github.kunal26das.core.service.Singleton
+import io.github.kunal26das.core.singleton.Singleton
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single

@@ -1,8 +1,8 @@
-package io.github.kunal26das.core.network.coil
+package io.github.kunal26das.core.coil
 
 import android.content.Context
 import coil.ImageLoader
-import io.github.kunal26das.core.service.Singleton
+import io.github.kunal26das.core.singleton.Singleton
 
 abstract class CoilImpl(
     context: Context, private val builder: (ImageLoader.Builder.() -> Unit)? = null

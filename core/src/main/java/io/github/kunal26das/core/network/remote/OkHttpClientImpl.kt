@@ -1,6 +1,6 @@
 package io.github.kunal26das.core.network.remote
 
-import io.github.kunal26das.core.service.Singleton
+import io.github.kunal26das.core.singleton.Singleton
 import okhttp3.OkHttpClient
 
 abstract class OkHttpClientImpl(
