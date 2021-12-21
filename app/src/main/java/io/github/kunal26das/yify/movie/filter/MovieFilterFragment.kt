@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.chip.Chip
+import io.github.kunal26das.core.BottomSheetDialogFragment
 import io.github.kunal26das.core.model.*
 import io.github.kunal26das.core.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.core.network.local.get
@@ -16,12 +17,11 @@ import io.github.kunal26das.yify.constant.Preference
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 
-class MovieFilterFragment : io.github.kunal26das.core.BottomSheetDialogFragment() {
+class MovieFilterFragment : BottomSheetDialogFragment() {
 
     override val layoutId = R.layout.fragment_filters
-    private val moviePreferences by sharedPreferences(KEY_MOVIE)
     private val binding by dataBinding<FragmentFiltersBinding>()
-
+    private val moviePreferences by sharedPreferences(KEY_MOVIE)
     private var onChangeListener: OnChangeListener<*>? = null
 
     override fun onCreateView(

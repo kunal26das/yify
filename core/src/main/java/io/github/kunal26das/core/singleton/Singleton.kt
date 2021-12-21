@@ -13,6 +13,6 @@ abstract class Singleton<T> {
         }
     }
 
-    abstract fun initialize(): T
+    internal abstract fun initialize(): T
 
 }

@@ -9,6 +9,8 @@ import io.github.kunal26das.core.network.local.database
 import io.github.kunal26das.core.network.local.get
 import io.github.kunal26das.core.repository.Repository
 import io.github.kunal26das.yify.constant.Preference
+import io.github.kunal26das.yify.database.MovieDatabase
+import io.github.kunal26das.yify.network.MovieService
 import io.github.kunal26das.yify.singleton.YifyRetrofit
 import javax.inject.Inject
 
@@ -17,15 +19,8 @@ class MovieRepository @Inject constructor(
 ) : Repository(context) {
 
     private val preferences by sharedPreferences(KEY_MOVIE)
-    private val retrofit by retrofit<io.github.kunal26das.yify.network.MovieService>(
-        YifyRetrofit(
-            context
-        )
-    )
-    private val database by database<io.github.kunal26das.yify.database.MovieDatabase>(
-        applicationContext,
-        KEY_MOVIE
-    )
+    private val retrofit by retrofit<MovieService>(YifyRetrofit(context))
+    private val database by database<MovieDatabase>(applicationContext, KEY_MOVIE)
 
     suspend fun getMovies(
         @IntRange(from = 1, to = 50) page: Int,

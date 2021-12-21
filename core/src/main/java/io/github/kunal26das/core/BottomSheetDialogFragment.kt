@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 abstract class BottomSheetDialogFragment : BottomSheetDialogFragment() {
@@ -16,9 +18,19 @@ abstract class BottomSheetDialogFragment : BottomSheetDialogFragment() {
     var container: ViewGroup? = null
 
     protected fun BottomSheetDialogFragment.sharedPreferences(
-        name: String? = requireContext().packageName
+        name: String, encrypt: Boolean = true
     ) = lazy {
-        requireContext().getSharedPreferences(name, MODE_PRIVATE)
+        val applicationContext = requireContext().applicationContext
+        if (encrypt) try {
+            EncryptedSharedPreferences.create(
+                name, MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+                applicationContext,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Throwable) {
+            applicationContext.getSharedPreferences(name, MODE_PRIVATE)
+        } else applicationContext.getSharedPreferences(name, MODE_PRIVATE)
     }
 
     protected inline fun <reified T : ViewDataBinding> BottomSheetDialogFragment.dataBinding() =

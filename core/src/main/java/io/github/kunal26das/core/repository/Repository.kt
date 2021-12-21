@@ -3,6 +3,8 @@ package io.github.kunal26das.core.repository
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.net.ConnectivityManager
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
@@ -31,8 +33,20 @@ abstract class Repository(context: Context) : ConnectivityManager.NetworkCallbac
         retrofit.get().create(T::class.java)
     }
 
-    protected fun Repository.sharedPreferences(name: String = packageName) = lazy {
-        applicationContext.getSharedPreferences(name, MODE_PRIVATE)
+    protected fun Repository.sharedPreferences(
+        name: String = packageName,
+        encrypt: Boolean = true,
+    ) = lazy {
+        if (encrypt) try {
+            EncryptedSharedPreferences.create(
+                name, MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+                applicationContext,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Throwable) {
+            applicationContext.getSharedPreferences(name, MODE_PRIVATE)
+        } else applicationContext.getSharedPreferences(name, MODE_PRIVATE)
     }
 
     protected inline fun <reified T> Repository.systemService() = lazy {
