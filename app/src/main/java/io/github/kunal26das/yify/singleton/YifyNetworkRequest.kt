@@ -1,5 +1,3 @@
 package io.github.kunal26das.yify.singleton
 
-import io.github.kunal26das.core.network.remote.NetworkRequestImpl
-
-class YifyNetworkRequest : NetworkRequestImpl()
+class YifyNetworkRequest : io.github.kunal26das.network.remote.NetworkRequestImpl()

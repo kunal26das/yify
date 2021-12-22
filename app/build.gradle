@@ -44,6 +44,7 @@ dependencies {
     // Defaults
     implementation project(path: ':core')
     implementation project(path: ':model')
+    implementation project(path: ':network')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.10'
 
@@ -53,10 +54,10 @@ dependencies {
         implementation 'androidx.appcompat:appcompat:1.4.0'
 
         // Activity
-        implementation "androidx.activity:activity-ktx:1.4.0"
+        implementation 'androidx.activity:activity-ktx:1.4.0'
 
         // Datastore
-        implementation "androidx.datastore:datastore-preferences:1.0.0"
+        implementation 'androidx.datastore:datastore-preferences:1.0.0'
 
         // Paging
         implementation 'androidx.paging:paging-runtime-ktx:3.1.0'
@@ -66,14 +67,14 @@ dependencies {
         implementation 'androidx.palette:palette-ktx:1.0.0'
 
         // Recycler View
-        implementation "androidx.recyclerview:recyclerview:1.2.1"
+        implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
         // Room
         kapt 'androidx.room:room-compiler:2.4.0'
         implementation 'androidx.room:room-runtime:2.4.0'
 
         // Security
-        implementation "androidx.security:security-crypto:1.0.0"
+        implementation 'androidx.security:security-crypto:1.0.0'
 
         // Swipe Refresh Layout
         implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'

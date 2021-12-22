@@ -1,12 +1,11 @@
-package io.github.kunal26das.core.gson
+package io.github.kunal26das.network.gson
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import io.github.kunal26das.core.singleton.Singleton
 
 abstract class GsonImpl(
     private val builder: (GsonBuilder.() -> Unit)? = null
-) : Singleton<Gson>() {
+) : io.github.kunal26das.network.Singleton<Gson>() {
     override fun initialize(): Gson {
         return GsonBuilder().apply {
             builder?.invoke(this)

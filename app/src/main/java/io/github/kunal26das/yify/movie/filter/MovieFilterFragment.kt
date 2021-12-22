@@ -8,12 +8,11 @@ import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.chip.Chip
 import io.github.kunal26das.core.BottomSheetDialogFragment
-import io.github.kunal26das.core.network.local.get
-import io.github.kunal26das.core.network.local.set
 import io.github.kunal26das.model.*
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
+import io.github.kunal26das.network.local.get
+import io.github.kunal26das.network.local.set
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.constant.Preference
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 

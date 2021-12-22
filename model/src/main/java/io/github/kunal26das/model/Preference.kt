@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.constant
+package io.github.kunal26das.model
 
 enum class Preference {
     Quality,

@@ -1,6 +1,6 @@
-package io.github.kunal26das.core.network.remote
+package io.github.kunal26das.network.remote
 
-import io.github.kunal26das.core.singleton.Singleton
+import io.github.kunal26das.network.Singleton
 import retrofit2.Retrofit
 
 abstract class RetrofitImpl(

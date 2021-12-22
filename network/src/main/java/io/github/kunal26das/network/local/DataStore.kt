@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.network.local
+package io.github.kunal26das.network.local
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*

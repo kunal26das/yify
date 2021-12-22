@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.singleton
+package io.github.kunal26das.network
 
 abstract class Singleton<T> {
 

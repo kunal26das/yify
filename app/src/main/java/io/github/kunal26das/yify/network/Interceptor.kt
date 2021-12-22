@@ -1,15 +1,15 @@
 package io.github.kunal26das.yify.network
 
 import android.content.Context
-import io.github.kunal26das.core.network.local.RoomDatabaseProvider
-import io.github.kunal26das.core.network.local.database
 import io.github.kunal26das.model.Network
 import io.github.kunal26das.model.Network.Companion.KEY_NETWORK
+import io.github.kunal26das.network.local.database
 import io.github.kunal26das.yify.database.NetworkDatabase
 import okhttp3.Interceptor
 import okhttp3.Response
 
-class Interceptor(context: Context) : Interceptor, RoomDatabaseProvider {
+class Interceptor(context: Context) : Interceptor,
+    io.github.kunal26das.network.local.RoomDatabaseProvider {
 
     private val database by database<NetworkDatabase>(context, KEY_NETWORK)
 

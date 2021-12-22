@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        minSdk 30
+        targetSdk 32
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    // Jetpack
+    dependencies {
+        implementation 'androidx.core:core-ktx:1.7.0'
+        implementation 'androidx.appcompat:appcompat:1.4.0'
+
+        // Datastore
+        implementation 'androidx.datastore:datastore-preferences:1.0.0'
+
+        // Room
+        kapt 'androidx.room:room-compiler:2.4.0'
+        implementation 'androidx.room:room-runtime:2.4.0'
+
+        // Security
+        implementation 'androidx.security:security-crypto:1.0.0'
+    }
+
+    // Google
+    dependencies {
+        // Gson
+        implementation 'com.google.code.gson:gson:2.8.9'
+
+        // Hilt
+        kapt 'com.google.dagger:hilt-compiler:2.40.5'
+        implementation 'com.google.dagger:hilt-android:2.40.5'
+    }
+
+    // Coil
+    implementation 'io.coil-kt:coil:1.4.0'
+
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+
+    // RxJava
+    implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+}

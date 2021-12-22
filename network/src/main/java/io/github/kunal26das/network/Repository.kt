@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.repository
+package io.github.kunal26das.network
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -8,8 +8,8 @@ import androidx.security.crypto.MasterKeys
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
-import io.github.kunal26das.core.network.local.RoomDatabaseProvider
-import io.github.kunal26das.core.singleton.Singleton
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.kunal26das.network.local.RoomDatabaseProvider
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
@@ -20,8 +20,9 @@ import java.io.Closeable
 
 @Module
 @InstallIn(ViewModelComponent::class)
-abstract class Repository(context: Context) : ConnectivityManager.NetworkCallback(),
-    RoomDatabaseProvider, Closeable {
+abstract class Repository(
+    @ApplicationContext context: Context
+) : ConnectivityManager.NetworkCallback(), RoomDatabaseProvider, Closeable {
 
     private val ioThread = Schedulers.io()
     val applicationContext = context.applicationContext!!

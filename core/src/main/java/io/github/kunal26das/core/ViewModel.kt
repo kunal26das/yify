@@ -23,7 +23,7 @@ abstract class ViewModel : ViewModel() {
                     params: LoadParams<Int>
                 ): LoadResult<Int, T> {
                     loading.postValue(true)
-                    val result = onLoadListener.load(params)
+                    val result = onLoadListener.invoke(params)
                     loading.postValue(false)
                     if (result is LoadResult.Error<*, *>) {
                         error.postValue(result.throwable)

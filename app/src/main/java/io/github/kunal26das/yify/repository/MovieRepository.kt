@@ -3,12 +3,11 @@ package io.github.kunal26das.yify.repository
 import android.content.Context
 import androidx.annotation.IntRange
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.kunal26das.core.network.local.database
-import io.github.kunal26das.core.network.local.get
-import io.github.kunal26das.core.repository.Repository
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
-import io.github.kunal26das.yify.constant.Preference
+import io.github.kunal26das.model.Preference
+import io.github.kunal26das.network.local.database
+import io.github.kunal26das.network.local.get
 import io.github.kunal26das.yify.database.MovieDatabase
 import io.github.kunal26das.yify.network.MovieService
 import io.github.kunal26das.yify.singleton.YifyRetrofit
@@ -16,7 +15,7 @@ import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
     @ApplicationContext context: Context
-) : Repository(context) {
+) : io.github.kunal26das.network.Repository(context) {
 
     private val preferences by sharedPreferences(KEY_MOVIE)
     private val retrofit by retrofit<MovieService>(YifyRetrofit(context))
