@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable
 import android.view.ViewGroup
 import coil.load
 import coil.request.Disposable
+import io.github.kunal26das.core.ViewHolder
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.databinding.ItemMovieBinding
@@ -11,7 +12,7 @@ import java.util.*
 
 class MovieViewHolder(
     parent: ViewGroup,
-) : io.github.kunal26das.core.ViewHolder<Movie, ItemMovieBinding>(parent, R.layout.item_movie) {
+) : ViewHolder<Movie, ItemMovieBinding>(parent, R.layout.item_movie) {
 
     private var disposable: Disposable? = null
 

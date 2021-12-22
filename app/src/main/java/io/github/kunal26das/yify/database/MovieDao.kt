@@ -5,10 +5,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
 import io.github.kunal26das.model.Movie
+import io.github.kunal26das.network.local.DaoService
 import io.reactivex.rxjava3.core.Completable
 
 @Dao
-interface MovieDao : io.github.kunal26das.network.local.DaoService {
+interface MovieDao : DaoService {
 
     @Insert(onConflict = REPLACE)
     fun insert(movie: Movie): Completable

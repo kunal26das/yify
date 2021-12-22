@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.kunal26das.core.Activity
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.R
@@ -17,7 +18,7 @@ import io.github.kunal26das.yify.databinding.ActivityMovieBinding
 import io.github.kunal26das.yify.movie.MoviesAdapter
 
 @AndroidEntryPoint
-class MovieActivity : io.github.kunal26das.core.Activity() {
+class MovieActivity : Activity() {
 
     private val moviesAdapter = MoviesAdapter()
     override val layoutId = R.layout.activity_movie
