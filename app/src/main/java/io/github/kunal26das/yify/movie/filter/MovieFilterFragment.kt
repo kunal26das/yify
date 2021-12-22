@@ -8,10 +8,10 @@ import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.chip.Chip
 import io.github.kunal26das.core.BottomSheetDialogFragment
-import io.github.kunal26das.core.model.*
-import io.github.kunal26das.core.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.core.network.local.get
 import io.github.kunal26das.core.network.local.set
+import io.github.kunal26das.model.*
+import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.constant.Preference
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
@@ -81,38 +81,38 @@ class MovieFilterFragment : BottomSheetDialogFragment() {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
             moviePreferences[Preference.Quality] = quality
-            onChangeListener?.onChange(null)
+            onChangeListener?.invoke(null)
         }
         binding.rating.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {
                 moviePreferences[Preference.MinimumRating] = value.toInt()
-                onChangeListener?.onChange(null)
+                onChangeListener?.invoke(null)
             }
         }
         binding.query.doAfterTextChanged {
             moviePreferences[Preference.QueryTerm] = it.toString()
-            onChangeListener?.onChange(null)
+            onChangeListener?.invoke(null)
         }
         binding.genre.setOnCheckedChangeListener { group, _ ->
             val genre = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
             moviePreferences[Preference.Genre] = genre
-            onChangeListener?.onChange(null)
+            onChangeListener?.invoke(null)
         }
         binding.sortBy.setOnCheckedChangeListener { group, _ ->
             val sortBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
             moviePreferences[Preference.SortBy] = sortBy
-            onChangeListener?.onChange(null)
+            onChangeListener?.invoke(null)
         }
         binding.orderBy.setOnCheckedChangeListener { group, _ ->
             val orderBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
             moviePreferences[Preference.OrderBy] = orderBy
-            onChangeListener?.onChange(null)
+            onChangeListener?.invoke(null)
         }
     }
 

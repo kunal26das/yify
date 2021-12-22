@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.network
 
 import androidx.annotation.IntRange
-import io.github.kunal26das.core.model.*
+import io.github.kunal26das.model.*
 import io.reactivex.rxjava3.core.Single
 import retrofit2.http.GET
 import retrofit2.http.Query

@@ -3,11 +3,11 @@ package io.github.kunal26das.yify.repository
 import android.content.Context
 import androidx.annotation.IntRange
 import dagger.hilt.android.qualifiers.ApplicationContext
-import io.github.kunal26das.core.model.Movie
-import io.github.kunal26das.core.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.core.network.local.database
 import io.github.kunal26das.core.network.local.get
 import io.github.kunal26das.core.repository.Repository
+import io.github.kunal26das.model.Movie
+import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.constant.Preference
 import io.github.kunal26das.yify.database.MovieDatabase
 import io.github.kunal26das.yify.network.MovieService

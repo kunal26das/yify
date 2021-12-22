@@ -1,3 +1,4 @@
 rootProject.name = "Yify"
 include ':app'
 include ':core'
+include ':model'

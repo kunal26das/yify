@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.model
+package io.github.kunal26das.model
 
 import android.os.Parcelable
 import androidx.room.Entity
@@ -20,9 +20,9 @@ data class Network(
 ) : Parcelable {
 
     constructor(request: Request, response: Response) : this(
-        request.url().toString(),
-        request.method(),
-        response.message(),
+        request.url.toString(),
+        request.method,
+        response.message,
         response.isSuccessful,
     )
 

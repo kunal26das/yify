@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.model
+package io.github.kunal26das.model
 
 import android.os.Parcelable
 import androidx.annotation.NonNull

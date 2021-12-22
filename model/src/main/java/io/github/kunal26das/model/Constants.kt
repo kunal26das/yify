@@ -1,7 +1,7 @@
-package io.github.kunal26das.core.model
+package io.github.kunal26das.model
 
 import androidx.annotation.StringDef
-import io.github.kunal26das.core.model.Constants.Companion.BASE_URL_YIFY
+import io.github.kunal26das.model.Constants.Companion.BASE_URL_YIFY
 
 @StringDef(
     BASE_URL_YIFY,

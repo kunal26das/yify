@@ -1,14 +1,14 @@
-package io.github.kunal26das.core.model
+package io.github.kunal26das.model
 
 import androidx.annotation.StringDef
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_DATE_ADDED
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_DOWNLOAD_COUNT
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_LIKE_COUNT
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_PEERS
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_RATING
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_SEEDS
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_TITLE
-import io.github.kunal26das.core.model.SortBy.Companion.SORT_BY_YEAR
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_DATE_ADDED
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_DOWNLOAD_COUNT
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_LIKE_COUNT
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_PEERS
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_RATING
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_SEEDS
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_TITLE
+import io.github.kunal26das.model.SortBy.Companion.SORT_BY_YEAR
 
 @StringDef(
     SORT_BY_TITLE,

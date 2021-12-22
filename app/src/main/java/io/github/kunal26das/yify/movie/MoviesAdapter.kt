@@ -2,8 +2,8 @@ package io.github.kunal26das.yify.movie
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
-import io.github.kunal26das.core.model.Movie
-import io.github.kunal26das.core.model.OnClickListener
+import io.github.kunal26das.model.Movie
+import io.github.kunal26das.model.OnClickListener
 
 class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
 
@@ -16,7 +16,7 @@ class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
     override fun onBindViewHolder(holder: MovieViewHolder, position: Int) {
         val movie = getItem(position)
         holder.bind(movie)?.root?.setOnClickListener {
-            onClickListener?.onClick(movie)
+            onClickListener?.invoke(movie)
         }
     }
 

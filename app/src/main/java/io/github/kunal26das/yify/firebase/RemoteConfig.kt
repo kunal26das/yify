@@ -3,7 +3,7 @@ package io.github.kunal26das.yify.firebase
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.ktx.remoteConfig
 import com.google.firebase.remoteconfig.ktx.remoteConfigSettings
-import io.github.kunal26das.core.model.Constants
+import io.github.kunal26das.model.Constants
 
 object RemoteConfig {
 

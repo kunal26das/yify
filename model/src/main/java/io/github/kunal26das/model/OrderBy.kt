@@ -1,8 +1,8 @@
-package io.github.kunal26das.core.model
+package io.github.kunal26das.model
 
 import androidx.annotation.StringDef
-import io.github.kunal26das.core.model.OrderBy.Companion.ORDER_BY_ASC
-import io.github.kunal26das.core.model.OrderBy.Companion.ORDER_BY_DESC
+import io.github.kunal26das.model.OrderBy.Companion.ORDER_BY_ASC
+import io.github.kunal26das.model.OrderBy.Companion.ORDER_BY_DESC
 
 @StringDef(
     ORDER_BY_ASC,
