@@ -1,4 +1,4 @@
-package io.github.kunal26das.core.paging
+package io.github.kunal26das.core
 
 import androidx.paging.PagingSource
 

@@ -49,9 +49,6 @@ dependencies {
         implementation 'androidx.paging:paging-runtime-ktx:3.1.0'
         implementation 'androidx.paging:paging-rxjava2-ktx:3.1.0'
 
-        // Palette
-        implementation 'androidx.palette:palette-ktx:1.0.0'
-
         // Recycler View
         implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
@@ -62,16 +59,7 @@ dependencies {
         implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     }
 
-    // Google
-    dependencies {
-        // Firebase
-        implementation platform('com.google.firebase:firebase-bom:29.0.3')
-        implementation 'com.google.firebase:firebase-crashlytics-ktx'
-        implementation 'com.google.firebase:firebase-analytics-ktx'
-        implementation 'com.google.firebase:firebase-config-ktx'
-
-        // Material Design
-        implementation 'com.google.android.material:material:1.6.0-alpha01'
-    }
+    // Material Design
+    implementation 'com.google.android.material:material:1.6.0-alpha01'
 
 }
