@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.kunal26das.core.Activity
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.databinding.ActivityMovieListBinding
 import io.github.kunal26das.yify.movie.MoviesPagingAdapter
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MovieListActivity : io.github.kunal26das.core.Activity() {
+class MovieListActivity : Activity() {
 
     private val moviesAdapter = MoviesPagingAdapter()
     override val layoutId = R.layout.activity_movie_list

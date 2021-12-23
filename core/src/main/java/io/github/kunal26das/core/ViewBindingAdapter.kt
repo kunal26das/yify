@@ -8,8 +8,8 @@ object ViewBindingAdapter {
 
     @JvmStatic
     @BindingAdapter("visible")
-    fun View.setVisible(isVisible: Boolean) {
-        this.isVisible = isVisible
+    fun View.setVisible(isVisible: Boolean?) {
+        this.isVisible = isVisible ?: false
     }
 
 }
