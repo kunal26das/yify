@@ -6,6 +6,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.model.Preference
+import io.github.kunal26das.network.OnCompleteListener
 import io.github.kunal26das.network.local.database
 import io.github.kunal26das.network.local.get
 import io.github.kunal26das.network.singleton.Repository
@@ -19,8 +20,8 @@ class MovieRepository @Inject constructor(
 ) : Repository(context) {
 
     private val preferences by sharedPreferences(KEY_MOVIE)
-    private val retrofit by retrofit<MovieService>(YifyRetrofit(context))
     private val database by database<MovieDatabase>(applicationContext, KEY_MOVIE)
+    private val retrofit by retrofit<MovieService>(YifyRetrofit(applicationContext))
 
     suspend fun getMovies(
         @IntRange(from = 1, to = 50) page: Int,
@@ -28,12 +29,12 @@ class MovieRepository @Inject constructor(
     ): List<Movie> {
         return retrofit.getMovies(
             page, limit,
-            preferences.get<String>(Preference.Quality),
-            preferences.get<Int>(Preference.MinimumRating),
-            preferences.get<String>(Preference.QueryTerm),
-            preferences.get<String>(Preference.SortBy),
-            preferences.get<String>(Preference.OrderBy),
-//          preferences.get<String>(Preference.Genre),
+            preferences[Preference.Quality],
+            preferences[Preference.MinimumRating],
+            preferences[Preference.QueryTerm],
+            preferences[Preference.SortBy],
+            preferences[Preference.OrderBy],
+//            preferences[Preference.Genre],
         ).data.movies.also {
             it.forEach { it.page = page }
             database.dao.insert(it).enqueue()
@@ -41,15 +42,13 @@ class MovieRepository @Inject constructor(
     }
 
     fun getMovieSuggestions(
-        movie: Movie, onComplete: ((List<Movie>?) -> Unit)? = null
+        movie: Movie, onCompleteListener: OnCompleteListener<List<Movie>>? = null,
     ) {
         retrofit.getMovieSuggestions(movie.id).map {
             it.data.movies
         }.enqueue {
-            onComplete?.invoke(it)
-            if (it != null) {
-                database.dao.insert(it)
-            }
+            onCompleteListener?.invoke(it)
+            if (it != null) database.dao.insert(it)
         }
     }
 

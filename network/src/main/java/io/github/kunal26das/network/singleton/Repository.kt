@@ -9,6 +9,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.kunal26das.network.OnCompleteListener
 import io.github.kunal26das.network.local.RoomDatabaseProvider
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
@@ -55,29 +56,29 @@ abstract class Repository(
     }
 
     protected fun Completable.enqueue(
-        onComplete: ((Throwable?) -> Unit)? = null
+        onCompleteListener: OnCompleteListener<Throwable>? = null
     ) {
         compositeDisposable.add(
             observeOn(mainThread)
                 .subscribeOn(ioThread)
                 .subscribe({
-                    onComplete?.invoke(null)
+                    onCompleteListener?.invoke(null)
                 }, {
-                    onComplete?.invoke(it)
+                    onCompleteListener?.invoke(it)
                 })
         )
     }
 
     protected fun <T : Any> Single<T>.enqueue(
-        onComplete: ((T?) -> Unit)? = null
+        onCompleteListener: OnCompleteListener<T>? = null
     ) {
         compositeDisposable.add(
             observeOn(mainThread)
                 .subscribeOn(ioThread)
                 .subscribe({
-                    onComplete?.invoke(it)
+                    onCompleteListener?.invoke(it)
                 }, {
-                    onComplete?.invoke(null)
+                    onCompleteListener?.invoke(null)
                 })
         )
     }
