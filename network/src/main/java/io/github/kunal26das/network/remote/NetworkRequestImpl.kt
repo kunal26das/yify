@@ -1,7 +1,7 @@
 package io.github.kunal26das.network.remote
 
 import android.net.NetworkRequest
-import io.github.kunal26das.network.Singleton
+import io.github.kunal26das.network.singleton.Singleton
 
 abstract class NetworkRequestImpl(
     private val builder: (NetworkRequest.Builder.() -> Unit)? = null

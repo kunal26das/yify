@@ -1,4 +1,4 @@
-package io.github.kunal26das.network
+package io.github.kunal26das.network.singleton
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE

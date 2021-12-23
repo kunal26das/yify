@@ -6,9 +6,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.model.Preference
-import io.github.kunal26das.network.Repository
 import io.github.kunal26das.network.local.database
 import io.github.kunal26das.network.local.get
+import io.github.kunal26das.network.singleton.Repository
 import io.github.kunal26das.yify.database.MovieDatabase
 import io.github.kunal26das.yify.network.MovieService
 import io.github.kunal26das.yify.singleton.YifyRetrofit
