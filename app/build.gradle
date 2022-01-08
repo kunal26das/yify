@@ -109,7 +109,7 @@ dependencies {
     // Square
     dependencies {
         // Leak Canary
-        debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8'
+        debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
 
         // Retrofit
         implementation 'com.squareup.retrofit2:retrofit:2.9.0'
