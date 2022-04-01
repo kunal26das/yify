@@ -46,7 +46,7 @@ dependencies {
     implementation project(path: ':model')
     implementation project(path: ':network')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.10'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.6.20'
 
     // Jetpack
     dependencies {
