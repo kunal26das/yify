@@ -1,116 +1,107 @@
 package io.github.kunal26das.yify.movie.filter
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.google.android.material.chip.Chip
-import io.github.kunal26das.core.BottomSheetDialogFragment
 import io.github.kunal26das.model.*
-import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
-import io.github.kunal26das.network.local.get
-import io.github.kunal26das.network.local.set
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.core.BottomSheetDialogFragment
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
+import io.github.kunal26das.yify.preference.MoviePreferences
+import javax.inject.Inject
 
 class MovieFilterFragment : BottomSheetDialogFragment() {
 
-    override val layoutId = R.layout.fragment_filters
-    private val binding by dataBinding<FragmentFiltersBinding>()
-    private val moviePreferences by sharedPreferences(KEY_MOVIE)
+    override val layout = R.layout.fragment_filters
+    override val binding by dataBinding<FragmentFiltersBinding>()
+
+    @Inject
+    lateinit var moviePreferences: MoviePreferences
     private var onChangeListener: OnChangeListener<*>? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        super.onCreateView(inflater, container, savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         Quality.forEach { quality ->
-            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            val chip = ChipFilterBinding.inflate(layoutInflater).chip
             chip.id = quality.hashCode()
             chip.text = quality
             binding.quality.addView(chip)
         }
         Genre.forEach { sortBy ->
-            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            val chip = ChipFilterBinding.inflate(layoutInflater).chip
             chip.id = sortBy.hashCode()
             chip.text = sortBy
             binding.genre.addView(chip)
         }
         SortBy.forEach { sortBy ->
-            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            val chip = ChipFilterBinding.inflate(layoutInflater).chip
             chip.id = sortBy.hashCode()
             chip.text = sortBy
             binding.sortBy.addView(chip)
         }
         OrderBy.forEach { orderBy ->
-            val chip = ChipFilterBinding.inflate(LayoutInflater.from(context)).chip
+            val chip = ChipFilterBinding.inflate(layoutInflater).chip
             chip.id = orderBy.hashCode()
             chip.text = orderBy
             binding.orderBy.addView(chip)
         }
-        moviePreferences.get<String>(Preference.Quality)?.hashCode()?.let {
+        moviePreferences.getString(Preference.quality)?.hashCode()?.let {
             binding.quality.check(it)
         }
-        moviePreferences.get<Int>(Preference.MinimumRating)?.let {
+        moviePreferences.getInt(Preference.minimum_rating)?.let {
             binding.rating.value = it.toFloat()
         }
-        moviePreferences.get<String>(Preference.QueryTerm)?.let {
+        moviePreferences.getString(Preference.query_term)?.let {
             binding.query.setText(it)
         }
-        moviePreferences.get<String>(Preference.Genre)?.hashCode()?.let {
+        moviePreferences.getString(Preference.genre)?.hashCode()?.let {
             binding.genre.check(it)
         }
-        moviePreferences.get<String>(Preference.SortBy)?.hashCode()?.let {
+        moviePreferences.getString(Preference.sort_by)?.hashCode()?.let {
             binding.sortBy.check(it)
         }
-        moviePreferences.get<String>(Preference.OrderBy)?.hashCode()?.let {
+        moviePreferences.getString(Preference.order_by)?.hashCode()?.let {
             binding.orderBy.check(it)
         }
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.quality.setOnCheckedChangeListener { group, _ ->
+        binding.quality.setOnCheckedStateChangeListener { group, _ ->
             val quality = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            moviePreferences[Preference.Quality] = quality
+            moviePreferences[Preference.quality] = quality
             onChangeListener?.invoke(null)
         }
         binding.rating.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {
-                moviePreferences[Preference.MinimumRating] = value.toInt()
+                moviePreferences[Preference.minimum_rating] = value.toInt()
                 onChangeListener?.invoke(null)
             }
         }
         binding.query.doAfterTextChanged {
-            moviePreferences[Preference.QueryTerm] = it.toString()
+            moviePreferences[Preference.query_term] = it.toString()
             onChangeListener?.invoke(null)
         }
-        binding.genre.setOnCheckedChangeListener { group, _ ->
+        binding.genre.setOnCheckedStateChangeListener { group, _ ->
             val genre = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            moviePreferences[Preference.Genre] = genre
+            moviePreferences[Preference.genre] = genre
             onChangeListener?.invoke(null)
         }
-        binding.sortBy.setOnCheckedChangeListener { group, _ ->
+        binding.sortBy.setOnCheckedStateChangeListener { group, _ ->
             val sortBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            moviePreferences[Preference.SortBy] = sortBy
+            moviePreferences[Preference.sort_by] = sortBy
             onChangeListener?.invoke(null)
         }
-        binding.orderBy.setOnCheckedChangeListener { group, _ ->
+        binding.orderBy.setOnCheckedStateChangeListener { group, _ ->
             val orderBy = (group.children.firstOrNull {
                 (it as Chip).isChecked
             } as? Chip)?.text.toString()
-            moviePreferences[Preference.OrderBy] = orderBy
+            moviePreferences[Preference.order_by] = orderBy
             onChangeListener?.invoke(null)
         }
     }

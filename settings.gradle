@@ -1,5 +1,3 @@
-rootProject.name = "Yify"
+rootProject.name = "yify"
 include ':app'
-include ':core'
 include ':model'
-include ':network'

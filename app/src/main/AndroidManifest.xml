@@ -17,7 +17,7 @@
         tools:ignore="AllowBackup">
 
         <activity
-            android:name=".launcher.LauncherActivity"
+            android:name=".movie.list.MovieListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,7 +27,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".movie.list.MovieListActivity" />
         <activity android:name=".movie.profile.MovieActivity" />
 
     </application>

@@ -10,7 +10,6 @@ plugins {
 
 android {
     compileSdkVersion 32
-    buildToolsVersion '32.0.0'
 
     defaultConfig {
         applicationId 'io.github.kunal26das.yify'
@@ -32,6 +31,12 @@ android {
     buildFeatures {
         viewBinding true
         dataBinding = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerVersion '1.6.10'
+        kotlinCompilerExtensionVersion '1.1.1'
     }
 
     dependenciesInfo {
@@ -42,11 +47,9 @@ android {
 
 dependencies {
     // Defaults
-    implementation project(path: ':core')
     implementation project(path: ':model')
-    implementation project(path: ':network')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.0'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.0'
 
     // Jetpack
     dependencies {
@@ -55,13 +58,11 @@ dependencies {
 
         // Activity
         implementation 'androidx.activity:activity-ktx:1.4.0'
-
-        // Datastore
-        implementation 'androidx.datastore:datastore-preferences:1.0.0'
-
+        
         // Paging
         implementation 'androidx.paging:paging-runtime-ktx:3.1.1'
         implementation 'androidx.paging:paging-rxjava2-ktx:3.1.1'
+        implementation 'androidx.paging:paging-compose:1.0.0-alpha15'
 
         // Palette
         implementation 'androidx.palette:palette-ktx:1.0.0'
@@ -71,13 +72,33 @@ dependencies {
 
         // Room
         kapt 'androidx.room:room-compiler:2.4.2'
-        implementation 'androidx.room:room-runtime:2.4.2'
+        implementation 'androidx.room:room-ktx:2.4.2'
 
         // Security
         implementation 'androidx.security:security-crypto:1.0.0'
 
         // Swipe Refresh Layout
         implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+        // Compose
+        dependencies {
+            implementation 'androidx.compose.ui:ui:1.1.1'
+            // Tooling support (Previews, etc.)
+            implementation 'androidx.compose.ui:ui-tooling:1.1.1'
+            // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
+            implementation 'androidx.compose.foundation:foundation:1.1.1'
+            // Material Design
+            implementation 'androidx.compose.material3:material3:1.0.0-alpha13'
+            // Material design icons
+            implementation 'androidx.compose.material:material-icons-core:1.1.1'
+            implementation 'androidx.compose.material:material-icons-extended:1.1.1'
+            // Integration with activities
+            implementation 'androidx.activity:activity-compose:1.4.0'
+            // Integration with ViewModels
+            implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1'
+            // Integration with observables
+            implementation 'androidx.compose.runtime:runtime-livedata:1.1.1'
+        }
     }
 
     // Google
@@ -85,22 +106,17 @@ dependencies {
         // Firebase
         implementation platform('com.google.firebase:firebase-bom:30.1.0')
         implementation 'com.google.firebase:firebase-crashlytics-ktx'
-        implementation 'com.google.firebase:firebase-analytics-ktx'
-        implementation 'com.google.firebase:firebase-config-ktx'
 
         // Hilt
         kapt 'com.google.dagger:hilt-compiler:2.42'
         implementation 'com.google.dagger:hilt-android:2.42'
 
         // Material Design
-        implementation 'com.google.android.material:material:1.7.0-alpha02'
+        implementation 'com.google.android.material:material:1.6.1'
     }
 
     // Facebook
     dependencies {
-        // Shimmer
-        implementation 'com.facebook.shimmer:shimmer:0.5.0'
-
         // Stetho
         implementation 'com.facebook.stetho:stetho:1.6.0'
         implementation 'com.facebook.stetho:stetho-okhttp3:1.6.0'
@@ -108,19 +124,20 @@ dependencies {
 
     // Square
     dependencies {
-        // Leak Canary
-        debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+        implementation platform("com.squareup.okhttp3:okhttp-bom:4.10.0")
+        implementation 'com.squareup.okhttp3:okhttp'
+        implementation 'com.squareup.okhttp3:logging-interceptor'
 
-        // Retrofit
         implementation 'com.squareup.retrofit2:retrofit:2.9.0'
         implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-        implementation 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
+
+//        debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
     }
 
     // Coil
     implementation 'io.coil-kt:coil:2.1.0'
+    implementation 'io.coil-kt:coil-compose:2.1.0'
 
-    // RxJava
-    implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
-    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    implementation 'androidx.essentials:view:1.0.0@aar'
+    implementation 'androidx.essentials:network:1.0.0@aar'
 }

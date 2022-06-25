@@ -1,55 +1,51 @@
 package io.github.kunal26das.yify.repository
 
-import android.content.Context
 import androidx.annotation.IntRange
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import io.github.kunal26das.model.Movie
-import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.model.Preference
-import io.github.kunal26das.network.OnCompleteListener
-import io.github.kunal26das.network.local.database
-import io.github.kunal26das.network.local.get
-import io.github.kunal26das.network.singleton.Repository
 import io.github.kunal26das.yify.database.MovieDatabase
-import io.github.kunal26das.yify.network.MovieService
-import io.github.kunal26das.yify.singleton.YifyRetrofit
+import io.github.kunal26das.yify.preference.MoviePreferences
+import io.github.kunal26das.yify.service.MovieService
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
-    @ApplicationContext context: Context
-) : Repository(context) {
-
-    private val preferences by sharedPreferences(KEY_MOVIE)
-    private val database by database<MovieDatabase>(applicationContext, KEY_MOVIE)
-    private val retrofit by retrofit<MovieService>(YifyRetrofit(applicationContext))
+    private val moviePreferences: MoviePreferences,
+    private val movieDatabase: MovieDatabase,
+    private val movieService: MovieService,
+) {
 
     suspend fun getMovies(
-        @IntRange(from = 1, to = 50) page: Int,
-        limit: Int,
-    ): List<Movie> {
-        return retrofit.getMovies(
+        @IntRange(from = 1, to = 50) page: Int, limit: Int,
+    ) = execute {
+        val movies = movieService.getMovies(
             page, limit,
-            preferences[Preference.Quality],
-            preferences[Preference.MinimumRating],
-            preferences[Preference.QueryTerm],
-            preferences[Preference.SortBy],
-            preferences[Preference.OrderBy],
+            moviePreferences[Preference.quality],
+            moviePreferences[Preference.minimum_rating],
+            moviePreferences[Preference.query_term],
+            moviePreferences[Preference.sort_by],
+            moviePreferences[Preference.order_by],
 //            preferences[Preference.Genre],
-        ).data.movies.also {
-            it.forEach { it.page = page }
-            database.dao.insert(it).enqueue()
-        }
+        ).data.movies
+        movieDatabase.dao.insert(movies)
+        movies.forEach { it.page = page }
+        movies
     }
 
-    fun getMovieSuggestions(
-        movie: Movie, onCompleteListener: OnCompleteListener<List<Movie>>? = null,
-    ) {
-        retrofit.getMovieSuggestions(movie.id).map {
-            it.data.movies
-        }.enqueue {
-            onCompleteListener?.invoke(it)
-            if (it != null) database.dao.insert(it)
-        }
+    suspend fun getMovieSuggestions(movie: Movie) = execute {
+        val movies = movieService.getMovieSuggestions(movie.id).data.movies
+        movieDatabase.dao.insert(movies)
+        movies
+    }
+
+    private suspend fun <T> execute(
+        block: suspend () -> T
+    ) = try {
+        block.invoke()
+    } catch (e: Throwable) {
+        Firebase.crashlytics.recordException(e)
+        null
     }
 
 }

@@ -1,10 +1,11 @@
 package io.github.kunal26das.model
 
+@Suppress("EnumEntryName")
 enum class Preference {
-    Quality,
-    MinimumRating,
-    QueryTerm,
-    Genre,
-    SortBy,
-    OrderBy,
+    quality,
+    minimum_rating,
+    query_term,
+    genre,
+    sort_by,
+    order_by,
 }

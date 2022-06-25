@@ -15,7 +15,8 @@ class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
 
     override fun onBindViewHolder(holder: MovieViewHolder, position: Int) {
         val movie = getItem(position)
-        holder.bind(movie)?.root?.setOnClickListener {
+        holder.bind(movie)
+        holder.binding?.root?.setOnClickListener {
             onClickListener?.invoke(movie)
         }
     }

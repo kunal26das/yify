@@ -3,13 +3,14 @@ package io.github.kunal26das.yify.movie.profile
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
+import androidx.essentials.view.Activity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.core.Activity
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.R
@@ -21,16 +22,16 @@ import io.github.kunal26das.yify.movie.MoviesAdapter
 class MovieActivity : Activity() {
 
     private val moviesAdapter = MoviesAdapter()
-    override val layoutId = R.layout.activity_movie
+    override val layout = R.layout.activity_movie
     private val viewModel by viewModels<MovieViewModel>()
-    private val binding by dataBinding<ActivityMovieBinding>()
+    override val binding by dataBinding<ActivityMovieBinding>()
     private val youTube = registerForActivityResult(YouTubeContract()) {}
     private val movieActivity = registerForActivityResult(MovieActivity) {}
     private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
     private val layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         binding.movie = movie
         viewModel.getMovieSuggestions(movie)
         binding.image.load(movie.coverImage)

@@ -1,102 +1,58 @@
 package io.github.kunal26das.yify.movie.list
 
-import android.content.Context
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContract
+import android.view.View
 import androidx.activity.viewModels
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING
-import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.essentials.view.ComposeActivity
+import androidx.paging.compose.collectAsLazyPagingItems
+import coil.compose.AsyncImage
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.core.Activity
-import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.databinding.ActivityMovieListBinding
-import io.github.kunal26das.yify.movie.MoviesPagingAdapter
-import io.github.kunal26das.yify.movie.filter.MovieFilterFragment
+import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.movie.profile.MovieActivity
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MovieListActivity : Activity() {
+class MovieListActivity : ComposeActivity() {
 
-    private val moviesAdapter = MoviesPagingAdapter()
-    override val layoutId = R.layout.activity_movie_list
     private val viewModel by viewModels<MovieListViewModel>()
-    private val binding by dataBinding<ActivityMovieListBinding>()
-    private val layoutManager by lazy { GridLayoutManager(this, 2) }
     private val movieActivity = registerForActivityResult(MovieActivity) {}
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding.movies.adapter = moviesAdapter
-        binding.movies.layoutManager = layoutManager
-        moviesAdapter.setOnClickListener {
-            movieActivity.launch(it)
-        }
-        binding.filter.setOnClickListener {
-            MovieFilterFragment().apply {
-                setOnFiltersChangeListener {
-                    moviesAdapter.refresh()
-                }
-            }.showNow(supportFragmentManager, null)
-        }
-        binding.refreshMovies.setOnRefreshListener {
-            binding.refreshMovies.isRefreshing = false
-        }
-        binding.movies.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                try {
-                    val position = layoutManager.findFirstCompletelyVisibleItemPosition()
-                    val movie = moviesAdapter.snapshot()[position]
-                    binding.page.text = movie?.page.toString()
-                } catch (e: IndexOutOfBoundsException) {
+    @Composable
+    @SuppressLint("ComposableNaming")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val movies = viewModel.movies.collectAsLazyPagingItems()
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            content = {
+                items(movies.itemCount) { index ->
+                    Movie(movie = movies[index])
                 }
             }
-
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                binding.page.isVisible = newState != SCROLL_STATE_IDLE
-                binding.filter.apply {
-                    when (newState) {
-                        SCROLL_STATE_IDLE -> if (!isExtended) post { extend() }
-                        SCROLL_STATE_DRAGGING -> if (isExtended) post { shrink() }
-                    }
-                }
-            }
-        })
-        lifecycleScope.launch {
-            viewModel.movies.collect {
-                moviesAdapter.submitData(it)
-            }
-        }
-        viewModel.loading.observe(this) {
-            binding.refreshMovies.isRefreshing = it
-        }
-        viewModel.error.observe(this) {
-            when (it) {
-                null -> binding.refreshMovies.setOnRefreshListener {
-                    binding.refreshMovies.isRefreshing = false
-                }
-                else -> binding.refreshMovies.setOnRefreshListener {
-                    moviesAdapter.refresh()
-                }
-            }
-        }
+        )
     }
 
-    companion object : ActivityResultContract<Any?, Boolean>() {
-        override fun createIntent(context: Context, input: Any?): Intent {
-            return Intent(context, MovieListActivity::class.java)
-        }
-
-        override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
-            return resultCode == RESULT_OK
+    @Composable
+    @OptIn(ExperimentalMaterial3Api::class)
+    private fun Movie(movie: Movie?) {
+        ElevatedCard(
+            modifier = Modifier.padding(8.dp),
+            onClick = { movieActivity.launch(movie) }
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                contentDescription = null,
+                model = movie?.coverImage,
+            )
         }
     }
 
