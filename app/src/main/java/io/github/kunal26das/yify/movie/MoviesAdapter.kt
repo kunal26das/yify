@@ -1,11 +1,12 @@
 package io.github.kunal26das.yify.movie
 
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.OnClickListener
 
-class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
+class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(MoviesAdapter) {
 
     private var onClickListener: OnClickListener<Movie>? = null
 
@@ -23,6 +24,16 @@ class MoviesAdapter : ListAdapter<Movie, MovieViewHolder>(Movie) {
 
     fun setOnClickListener(onClickListener: OnClickListener<Movie>) {
         this.onClickListener = onClickListener
+    }
+
+    companion object : DiffUtil.ItemCallback<Movie>() {
+        override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem == newItem
+        }
     }
 
 }

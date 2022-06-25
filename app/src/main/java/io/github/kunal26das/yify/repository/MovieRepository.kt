@@ -5,14 +5,14 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Preference
-import io.github.kunal26das.yify.database.MovieDatabase
+import io.github.kunal26das.yify.database.MovieDatabaseBuilder
 import io.github.kunal26das.yify.preference.MoviePreferences
 import io.github.kunal26das.yify.service.MovieService
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
     private val moviePreferences: MoviePreferences,
-    private val movieDatabase: MovieDatabase,
+    private val movieDatabase: MovieDatabaseBuilder,
     private val movieService: MovieService,
 ) {
 
@@ -28,14 +28,14 @@ class MovieRepository @Inject constructor(
             moviePreferences[Preference.order_by],
 //            preferences[Preference.Genre],
         ).data.movies
-        movieDatabase.dao.insert(movies)
+        movieDatabase.getInstance().dao.insert(movies)
         movies.forEach { it.page = page }
         movies
     }
 
     suspend fun getMovieSuggestions(movie: Movie) = execute {
         val movies = movieService.getMovieSuggestions(movie.id).data.movies
-        movieDatabase.dao.insert(movies)
+        movieDatabase.getInstance().dao.insert(movies)
         movies
     }
 

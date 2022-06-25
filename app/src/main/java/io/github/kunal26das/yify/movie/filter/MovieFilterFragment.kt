@@ -4,10 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
+import androidx.essentials.view.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import io.github.kunal26das.model.*
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.core.BottomSheetDialogFragment
 import io.github.kunal26das.yify.databinding.ChipFilterBinding
 import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
 import io.github.kunal26das.yify.preference.MoviePreferences

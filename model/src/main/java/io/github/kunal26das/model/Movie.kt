@@ -2,7 +2,6 @@ package io.github.kunal26das.model
 
 import android.os.Parcelable
 import androidx.annotation.NonNull
-import androidx.recyclerview.widget.DiffUtil
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
@@ -101,18 +100,8 @@ data class Movie(
     val coverImage
         get() = largeCoverImage ?: mediumCoverImage ?: smallCoverImage
 
-    companion object : DiffUtil.ItemCallback<Movie>() {
-
+    companion object {
         const val KEY_MOVIE = "movie"
-
-        override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
-            return oldItem == newItem
-        }
-
     }
 
 }
