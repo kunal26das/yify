@@ -5,17 +5,6 @@
 
     <string name="filter">Filter</string>
 
-    <string name="genre">Genre</string>
-
-    <string name="minimum_rating">Minimum Rating</string>
-
-    <string name="order_by">Order By</string>
-
-    <string name="quality">Quality</string>
-
-    <string name="search">Search</string>
-
-    <string name="sort_by">Sort By</string>
     <string name="query_term">Query Term</string>
 
 </resources>
