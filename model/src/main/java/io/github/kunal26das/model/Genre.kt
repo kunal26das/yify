@@ -39,7 +39,7 @@ import io.github.kunal26das.model.Genre.Companion.GENRE_THRILLER
 annotation class Genre {
     companion object : ArrayList<String>() {
 
-        const val GENRE_ALL = "All"
+        const val GENRE_ALL = "all"
         const val GENRE_COMEDY = "Comedy"
         const val GENRE_SCI_FI = "Sci-Fi"
         const val GENRE_HORROR = "Horror"
@@ -70,9 +70,9 @@ annotation class Genre {
             add(GENRE_ANIMATION)
             add(GENRE_ADVENTURE)
             add(GENRE_FANTASY)
-            add(GENRE_COMEDY_ROMANCE)
-            add(GENRE_ACTION_COMEDY)
-            add(GENRE_SUPERHERO)
+//            add(GENRE_COMEDY_ROMANCE)
+//            add(GENRE_ACTION_COMEDY)
+//            add(GENRE_SUPERHERO)
         }
     }
 }

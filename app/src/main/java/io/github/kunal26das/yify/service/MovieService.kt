@@ -9,12 +9,12 @@ interface MovieService {
 
     @GET(ROUTE_MOVIES)
     suspend fun getMovies(
+        @Query(KEY_LIMIT)
+        limit: Int,
+
         @IntRange(from = 1, to = 50)
         @Query(KEY_PAGE)
         page: Int,
-
-        @Query(KEY_LIMIT)
-        limit: Int,
 
         @Quality
         @Query(KEY_QUALITY)
@@ -27,6 +27,10 @@ interface MovieService {
         @Query(KEY_QUERY_TERM)
         queryTerm: String? = null,
 
+        @Genre
+        @Query(KEY_GENRE)
+        genre: String? = null,
+
         @SortBy
         @Query(KEY_SORT_BY)
         sortBy: String? = null,
@@ -34,10 +38,6 @@ interface MovieService {
         @OrderBy
         @Query(KEY_ORDER_BY)
         orderBy: String? = null,
-
-        @Genre
-        @Query(KEY_GENRE)
-        genre: String? = null,
 
         @Query(KEY_WITH_RT_RATINGS)
         withRtRating: Boolean? = null,
@@ -53,7 +53,9 @@ interface MovieService {
 
     @GET(ROUTE_MOVIE_DETAILS)
     fun getMovie(
-        @Query(KEY_MOVIE_ID) movieId: Int
+        @Query(KEY_MOVIE_ID) movieId: Int,
+        @Query(KEY_WITH_IMAGES) withImages: Boolean?,
+        @Query(KEY_WITH_CAST) withCast: Boolean?,
     ): Movie
 
     companion object {
@@ -70,7 +72,9 @@ interface MovieService {
         private const val KEY_SORT_BY = "sort_by"
         private const val KEY_MOVIE_ID = "movie_id"
         private const val KEY_ORDER_BY = "order_by"
+        private const val KEY_WITH_CAST = "with_cast"
         private const val KEY_QUERY_TERM = "query_term"
+        private const val KEY_WITH_IMAGES = "with_images"
         private const val KEY_MINIMUM_RATING = "minimum_rating"
         private const val KEY_WITH_RT_RATINGS = "with_rt_ratings"
     }

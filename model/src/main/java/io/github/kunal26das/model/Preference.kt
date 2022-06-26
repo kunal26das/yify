@@ -8,4 +8,7 @@ enum class Preference {
     genre,
     sort_by,
     order_by,
+    columns,
+    movie_count,
+    loading,
 }

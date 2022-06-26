@@ -22,7 +22,7 @@ allprojects {
             url = "https://maven.pkg.github.com/kunal26das/androidx-essentials"
             credentials {
                 username = "kunal26das"
-                password = "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"
+                password = "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"
             }
         }
     }

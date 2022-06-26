@@ -1,115 +1,178 @@
 package io.github.kunal26das.yify.movie.filter
 
-import android.os.Bundle
-import android.view.View
-import androidx.core.view.children
-import androidx.core.widget.doAfterTextChanged
-import androidx.essentials.view.BottomSheetDialogFragment
-import com.google.android.material.chip.Chip
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.essentials.view.ComposeBottomSheetDialogFragment
+import androidx.fragment.app.viewModels
+import com.google.accompanist.flowlayout.FlowRow
+import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.*
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.databinding.ChipFilterBinding
-import io.github.kunal26das.yify.databinding.FragmentFiltersBinding
-import io.github.kunal26das.yify.preference.MoviePreferences
-import javax.inject.Inject
 
-class MovieFilterFragment : BottomSheetDialogFragment() {
+@AndroidEntryPoint
+@OptIn(ExperimentalMaterial3Api::class)
+class MovieFilterFragment : ComposeBottomSheetDialogFragment() {
 
-    override val layout = R.layout.fragment_filters
-    override val binding by dataBinding<FragmentFiltersBinding>()
-
-    @Inject
-    lateinit var moviePreferences: MoviePreferences
     private var onChangeListener: OnChangeListener<*>? = null
+    private val viewModel by viewModels<MovieFilterViewModel>()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Quality.forEach { quality ->
-            val chip = ChipFilterBinding.inflate(layoutInflater).chip
-            chip.id = quality.hashCode()
-            chip.text = quality
-            binding.quality.addView(chip)
+    @Preview
+    @Composable
+    override fun setContent() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+                .verticalScroll(ScrollState(0))
+        ) {
+            MovieQueryTerm()
+            MovieQuality()
+            MovieMinimumRating()
+            MovieGenre()
+            MovieSortBy()
+            MovieOrderBy()
         }
-        Genre.forEach { sortBy ->
-            val chip = ChipFilterBinding.inflate(layoutInflater).chip
-            chip.id = sortBy.hashCode()
-            chip.text = sortBy
-            binding.genre.addView(chip)
-        }
-        SortBy.forEach { sortBy ->
-            val chip = ChipFilterBinding.inflate(layoutInflater).chip
-            chip.id = sortBy.hashCode()
-            chip.text = sortBy
-            binding.sortBy.addView(chip)
-        }
-        OrderBy.forEach { orderBy ->
-            val chip = ChipFilterBinding.inflate(layoutInflater).chip
-            chip.id = orderBy.hashCode()
-            chip.text = orderBy
-            binding.orderBy.addView(chip)
-        }
-        moviePreferences.getString(Preference.quality)?.hashCode()?.let {
-            binding.quality.check(it)
-        }
-        moviePreferences.getInt(Preference.minimum_rating)?.let {
-            binding.rating.value = it.toFloat()
-        }
-        moviePreferences.getString(Preference.query_term)?.let {
-            binding.query.setText(it)
-        }
-        moviePreferences.getString(Preference.genre)?.hashCode()?.let {
-            binding.genre.check(it)
-        }
-        moviePreferences.getString(Preference.sort_by)?.hashCode()?.let {
-            binding.sortBy.check(it)
-        }
-        moviePreferences.getString(Preference.order_by)?.hashCode()?.let {
-            binding.orderBy.check(it)
-        }
-        binding.quality.setOnCheckedStateChangeListener { group, _ ->
-            val quality = (group.children.firstOrNull {
-                (it as Chip).isChecked
-            } as? Chip)?.text.toString()
-            moviePreferences[Preference.quality] = quality
-            onChangeListener?.invoke(null)
-        }
-        binding.rating.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                moviePreferences[Preference.minimum_rating] = value.toInt()
+    }
+
+    @Composable
+    private fun MovieQueryTerm() {
+        val queryTerm by viewModel.queryTerm.observeAsState()
+        TextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            value = queryTerm ?: "",
+            placeholder = { Text(text = getString(R.string.query_term)) },
+            onValueChange = {
+                viewModel.queryTerm.value = it
                 onChangeListener?.invoke(null)
             }
+        )
+    }
+
+    @Composable
+    private fun MovieQuality() {
+        val quality by viewModel.quality.observeAsState()
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Quality.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == quality,
+                    onClick = {
+                        viewModel.quality.value = it
+                        onChangeListener?.invoke(null)
+                    }
+                )
+            }
         }
-        binding.query.doAfterTextChanged {
-            moviePreferences[Preference.query_term] = it.toString()
-            onChangeListener?.invoke(null)
+    }
+
+    @Composable
+    private fun MovieMinimumRating() {
+        val minimumRating by viewModel.minimumRating.observeAsState()
+        Slider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            value = minimumRating?.toFloat() ?: 0f,
+            valueRange = 0f..9f,
+            steps = 8,
+            onValueChangeFinished = {
+                onChangeListener?.invoke(null)
+            },
+            onValueChange = {
+                viewModel.minimumRating.value = it.toInt()
+            },
+        )
+    }
+
+    @Composable
+    private fun MovieGenre() {
+        val genre by viewModel.genre.observeAsState()
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Genre.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == genre,
+                    onClick = {
+                        viewModel.genre.value = it
+                        onChangeListener?.invoke(null)
+                    }
+                )
+            }
         }
-        binding.genre.setOnCheckedStateChangeListener { group, _ ->
-            val genre = (group.children.firstOrNull {
-                (it as Chip).isChecked
-            } as? Chip)?.text.toString()
-            moviePreferences[Preference.genre] = genre
-            onChangeListener?.invoke(null)
+    }
+
+    @Composable
+    private fun MovieSortBy() {
+        val sortBy by viewModel.sortBy.observeAsState()
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            SortBy.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == sortBy,
+                    onClick = {
+                        viewModel.sortBy.value = it
+                        onChangeListener?.invoke(null)
+                    }
+                )
+            }
         }
-        binding.sortBy.setOnCheckedStateChangeListener { group, _ ->
-            val sortBy = (group.children.firstOrNull {
-                (it as Chip).isChecked
-            } as? Chip)?.text.toString()
-            moviePreferences[Preference.sort_by] = sortBy
-            onChangeListener?.invoke(null)
-        }
-        binding.orderBy.setOnCheckedStateChangeListener { group, _ ->
-            val orderBy = (group.children.firstOrNull {
-                (it as Chip).isChecked
-            } as? Chip)?.text.toString()
-            moviePreferences[Preference.order_by] = orderBy
-            onChangeListener?.invoke(null)
+    }
+
+    @Composable
+    private fun MovieOrderBy() {
+        val orderBy by viewModel.orderBy.observeAsState()
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            OrderBy.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == orderBy,
+                    onClick = {
+                        viewModel.orderBy.value = it
+                        onChangeListener?.invoke(null)
+                    }
+                )
+            }
         }
     }
 
     fun setOnFiltersChangeListener(
         onChangeListener: OnChangeListener<*>
-    ) {
+    ): MovieFilterFragment {
         this.onChangeListener = onChangeListener
+        return this
     }
 
 }

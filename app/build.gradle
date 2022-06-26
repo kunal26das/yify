@@ -58,6 +58,9 @@ dependencies {
 
         // Activity
         implementation 'androidx.activity:activity-ktx:1.4.0'
+
+        // Fragment
+        implementation "androidx.fragment:fragment-ktx:1.4.1"
         
         // Paging
         implementation 'androidx.paging:paging-runtime-ktx:3.1.1'
@@ -73,12 +76,6 @@ dependencies {
         // Room
         kapt 'androidx.room:room-compiler:2.4.2'
         implementation 'androidx.room:room-ktx:2.4.2'
-
-        // Security
-        implementation 'androidx.security:security-crypto:1.0.0'
-
-        // Swipe Refresh Layout
-        implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
         // Compose
         dependencies {
@@ -98,6 +95,8 @@ dependencies {
             implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1'
             // Integration with observables
             implementation 'androidx.compose.runtime:runtime-livedata:1.1.1'
+            // Accompanist
+            implementation "com.google.accompanist:accompanist-flowlayout:0.23.1"
         }
     }
 

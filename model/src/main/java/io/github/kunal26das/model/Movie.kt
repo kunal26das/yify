@@ -18,13 +18,13 @@ data class Movie(
     val id: Int,
 
     @SerializedName("small_cover_image")
-    val smallCoverImage: String,
+    val smallCoverImage: String?,
 
     @SerializedName("year")
     val year: Int?,
 
     @SerializedName("description_full")
-    val descriptionFull: String,
+    val descriptionFull: String?,
 
     @SerializedName("rating")
     val rating: Double?,
@@ -33,16 +33,16 @@ data class Movie(
     val largeCoverImage: String?,
 
     @SerializedName("title_long")
-    val titleLong: String,
+    val titleLong: String?,
 
     @SerializedName("language")
     val language: String?,
 
     @SerializedName("yt_trailer_code")
-    val ytTrailerCode: String,
+    val ytTrailerCode: String?,
 
     @SerializedName("title")
-    val title: String,
+    val title: String?,
 
     @SerializedName("mpa_rating")
     val mpaRating: String?,
@@ -51,31 +51,31 @@ data class Movie(
 //    val genres: List<String>,
 
     @SerializedName("title_english")
-    val titleEnglish: String,
+    val titleEnglish: String?,
 
     @SerializedName("state")
-    val state: String,
+    val state: String?,
 
     @SerializedName("slug")
-    val slug: String,
+    val slug: String?,
 
     @SerializedName("summary")
-    val summary: String,
+    val summary: String?,
 
     @SerializedName("date_uploaded")
-    val dateUploaded: String,
+    val dateUploaded: String?,
 
     @SerializedName("runtime")
     val runtime: Int?,
 
     @SerializedName("synopsis")
-    val synopsis: String,
+    val synopsis: String?,
 
     @SerializedName("url")
-    val url: String,
+    val url: String?,
 
     @SerializedName("imdb_code")
-    val imdbCode: String,
+    val imdbCode: String?,
 
     @SerializedName("background_image")
     val backgroundImage: String,
@@ -87,7 +87,7 @@ data class Movie(
     val dateUploadedUnix: Int?,
 
     @SerializedName("background_image_original")
-    val backgroundImageOriginal: String,
+    val backgroundImageOriginal: String?,
 
     @SerializedName("medium_cover_image")
     val mediumCoverImage: String?,

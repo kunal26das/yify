@@ -1,30 +1,48 @@
 package io.github.kunal26das.yify.movie.list
 
+import androidx.essentials.network.local.Preferences
 import androidx.lifecycle.MutableLiveData
-import androidx.paging.PagingSource
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.kunal26das.yify.core.ViewModel
+import io.github.kunal26das.model.Movie
+import io.github.kunal26das.model.Preference
 import io.github.kunal26das.yify.repository.MovieRepository
+import io.github.kunal26das.yify.source.MoviePagingSource
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MovieListViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
+    preferences: Preferences,
 ) : ViewModel() {
 
-    val page = MutableLiveData<Int>()
+    private var filter: Job? = null
+    val movies = MutableLiveData<Flow<PagingData<Movie>>>()
+    val columns by preferences.mutableLiveDataOf<Int>(Preference.columns)
+    val loading by preferences.mutableLiveDataOf<Int>(Preference.loading)
+    val movieCount by preferences.mutableLiveDataOf<Int>(Preference.movie_count)
 
-    val movies by flow(20) {
-        val page = it.key ?: 1
-        val limit = it.loadSize
-        this.page.postValue(page)
-        val movies = movieRepository.getMovies(page, limit)
-        PagingSource.LoadResult.Page(
-            movies ?: emptyList(),
-            if (page == 1) null
-            else page - 1,
-            page + 1
-        )
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        filter?.cancel()
+        filter = viewModelScope.launch {
+            delay(1000L)
+            movies.postValue(Pager(PagingConfig(10)) {
+                MoviePagingSource(movieRepository)
+            }.flow.cachedIn(viewModelScope))
+        }
     }
 
 }
