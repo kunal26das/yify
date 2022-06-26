@@ -132,13 +132,13 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment() {
                 .fillMaxWidth()
                 .padding(4.dp)
         ) {
-            SortBy.forEach {
+            SortBy.values().forEach {
                 FilterChip(
                     modifier = Modifier.padding(4.dp),
-                    label = { Text(text = it) },
-                    selected = it == sortBy,
+                    label = { Text(text = it.name) },
+                    selected = it.name == sortBy,
                     onClick = {
-                        viewModel.sortBy.value = it
+                        viewModel.sortBy.value = it.name
                         onChangeListener?.invoke(null)
                     }
                 )
@@ -154,13 +154,13 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment() {
                 .fillMaxWidth()
                 .padding(4.dp)
         ) {
-            OrderBy.forEach {
+            OrderBy.values().forEach {
                 FilterChip(
                     modifier = Modifier.padding(4.dp),
-                    label = { Text(text = it) },
-                    selected = it == orderBy,
+                    label = { Text(text = it.name) },
+                    selected = it.name == orderBy,
                     onClick = {
-                        viewModel.orderBy.value = it
+                        viewModel.orderBy.value = it.name
                         onChangeListener?.invoke(null)
                     }
                 )

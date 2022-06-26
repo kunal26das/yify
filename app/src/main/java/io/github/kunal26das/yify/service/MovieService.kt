@@ -1,7 +1,10 @@
 package io.github.kunal26das.yify.service
 
 import androidx.annotation.IntRange
-import io.github.kunal26das.model.*
+import io.github.kunal26das.model.Genre
+import io.github.kunal26das.model.Movie
+import io.github.kunal26das.model.Quality
+import io.github.kunal26das.model.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -9,38 +12,23 @@ interface MovieService {
 
     @GET(ROUTE_MOVIES)
     suspend fun getMovies(
-        @Query(KEY_LIMIT)
-        limit: Int,
+        @Query(KEY_LIMIT) limit: Int,
 
         @IntRange(from = 1, to = 50)
-        @Query(KEY_PAGE)
-        page: Int,
+        @Query(KEY_PAGE) page: Int,
 
         @Quality
-        @Query(KEY_QUALITY)
-        quality: String? = null,
+        @Query(KEY_QUALITY) quality: String? = null,
 
         @IntRange(from = 0, to = 9)
-        @Query(KEY_MINIMUM_RATING)
-        minimumRating: Int? = null,
-
-        @Query(KEY_QUERY_TERM)
-        queryTerm: String? = null,
+        @Query(KEY_MINIMUM_RATING) minimumRating: Int? = null,
+        @Query(KEY_QUERY_TERM) queryTerm: String? = null,
 
         @Genre
-        @Query(KEY_GENRE)
-        genre: String? = null,
-
-        @SortBy
-        @Query(KEY_SORT_BY)
-        sortBy: String? = null,
-
-        @OrderBy
-        @Query(KEY_ORDER_BY)
-        orderBy: String? = null,
-
-        @Query(KEY_WITH_RT_RATINGS)
-        withRtRating: Boolean? = null,
+        @Query(KEY_GENRE) genre: String? = null,
+        @Query(KEY_SORT_BY) sortBy: String? = null,
+        @Query(KEY_ORDER_BY) orderBy: String? = null,
+        @Query(KEY_WITH_RT_RATINGS) withRtRating: Boolean? = null,
     ): Response
 
     @GET(ROUTE_UPCOMING_MOVIES)
