@@ -80,6 +80,7 @@ class MovieListActivity : ComposeActivity() {
             modifier = modifier.padding(16.dp),
             text = { Text(text = getString(R.string.filter)) },
             onClick = {
+                viewModel.page.value = null
                 MovieFilterFragment().setOnFiltersChangeListener {
                     viewModel.refresh()
                 }.showNow(supportFragmentManager, null)

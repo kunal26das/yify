@@ -27,8 +27,9 @@ class MovieListViewModel @Inject constructor(
 
     private var filter: Job? = null
     val movies = MutableLiveData<Flow<PagingData<Movie>>>()
+    val page by preferences.mutableLiveDataOf<Int>(Preference.page)
     val columns by preferences.mutableLiveDataOf<Int>(Preference.columns)
-    val loading by preferences.mutableLiveDataOf<Int>(Preference.loading)
+    val loading by preferences.mutableLiveDataOf<Boolean>(Preference.loading)
     val movieCount by preferences.mutableLiveDataOf<Int>(Preference.movie_count)
 
     init {
@@ -37,10 +38,11 @@ class MovieListViewModel @Inject constructor(
 
     fun refresh() {
         filter?.cancel()
+        loading.value = true
         filter = viewModelScope.launch {
             delay(1000L)
             movies.postValue(Pager(PagingConfig(10)) {
-                MoviePagingSource(movieRepository)
+                MoviePagingSource(movieRepository, page.value)
             }.flow.cachedIn(viewModelScope))
         }
     }

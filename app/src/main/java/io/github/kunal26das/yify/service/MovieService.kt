@@ -31,20 +31,20 @@ interface MovieService {
         @Query(KEY_WITH_RT_RATINGS) withRtRating: Boolean? = null,
     ): Response
 
-    @GET(ROUTE_UPCOMING_MOVIES)
-    fun getUpcomingMovies(): List<Movie>
-
     @GET(ROUTE_MOVIE_SUGGESTIONS)
-    fun getMovieSuggestions(
+    suspend fun getMovieSuggestions(
         @Query(KEY_MOVIE_ID) movieId: Int
     ): Response
 
     @GET(ROUTE_MOVIE_DETAILS)
-    fun getMovie(
+    suspend fun getMovie(
         @Query(KEY_MOVIE_ID) movieId: Int,
-        @Query(KEY_WITH_IMAGES) withImages: Boolean?,
-        @Query(KEY_WITH_CAST) withCast: Boolean?,
-    ): Movie
+        @Query(KEY_WITH_IMAGES) withImages: Boolean? = true,
+        @Query(KEY_WITH_CAST) withCast: Boolean? = true,
+    ): Response
+
+    @GET(ROUTE_UPCOMING_MOVIES)
+    suspend fun getUpcomingMovies(): List<Movie>
 
     companion object {
         private const val ROUTE_MOVIES = "list_movies.json"

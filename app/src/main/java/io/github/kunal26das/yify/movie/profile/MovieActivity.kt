@@ -2,50 +2,65 @@ package io.github.kunal26das.yify.movie.profile
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import android.view.View
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
-import androidx.essentials.view.Activity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import coil.load
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.essentials.view.ComposeActivity
+import coil.compose.AsyncImage
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
-import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.contract.YouTubeContract
-import io.github.kunal26das.yify.databinding.ActivityMovieBinding
-import io.github.kunal26das.yify.movie.MoviesAdapter
 
 @AndroidEntryPoint
-class MovieActivity : Activity() {
+class MovieActivity : ComposeActivity() {
 
-    private val moviesAdapter = MoviesAdapter()
-    override val layout = R.layout.activity_movie
     private val viewModel by viewModels<MovieViewModel>()
-    override val binding by dataBinding<ActivityMovieBinding>()
+
     private val youTube = registerForActivityResult(YouTubeContract()) {}
     private val movieActivity = registerForActivityResult(MovieActivity) {}
-    private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
-    private val layoutManager = LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.movie = movie
+    private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
+
+    @Preview
+    @Composable
+    override fun setContent() {
+        super.setContent()
+        val movie by viewModel.movie.observeAsState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(ScrollState(0))
+        ) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                contentDescription = null,
+                model = movie?.coverImage,
+            )
+            Surface(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(text = movie?.descriptionFull ?: "")
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.getMovie(movie)
         viewModel.getMovieSuggestions(movie)
-        binding.image.load(movie.coverImage)
-        binding.suggestions.adapter = moviesAdapter
-        binding.suggestions.layoutManager = layoutManager
-        binding.trailer.setOnClickListener {
-            youTube.launch(movie.ytTrailerCode)
-        }
-        moviesAdapter.setOnClickListener {
-            movieActivity.launch(it)
-        }
-        viewModel.movieSuggestions.observe(this) {
-            moviesAdapter.submitList(it)
-        }
     }
 
     companion object : ActivityResultContract<Movie, Boolean>() {

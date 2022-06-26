@@ -11,4 +11,5 @@ enum class Preference {
     columns,
     movie_count,
     loading,
+    page,
 }

@@ -6,15 +6,18 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Data(
+    @SerializedName("movie")
+    val movie: Movie?,
+
     @SerializedName("movies")
-    val movies: List<Movie>,
+    val movies: List<Movie>?,
 
     @SerializedName("page_number")
     val pageNumber: Int,
 
     @SerializedName("movie_count")
-    val movieCount: Int,
+    val movieCount: Int?,
 
     @SerializedName("limit")
-    val limit: Int
+    val limit: Int?
 ) : Parcelable

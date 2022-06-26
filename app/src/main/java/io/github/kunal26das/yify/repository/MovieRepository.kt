@@ -29,22 +29,31 @@ class MovieRepository @Inject constructor(
             preferences[Preference.order_by],
         )
         val movies = response.data.movies
+        preferences[Preference.page] = page
         preferences[Preference.movie_count] = response.data.movieCount
-        movieDatabase.getInstance().dao.insert(movies)
-        movies.forEach { it.page = page }
+        if (movies != null) movieDatabase.getInstance().dao.insert(movies)
+        movies?.forEach { it.page = page }
         movies
+    }
+
+    suspend fun getMovie(movieId: Int) = execute {
+        val movie = movieService.getMovie(movieId).data.movie
+        if (movie != null) movieDatabase.getInstance().dao.insert(movie)
+        movie
     }
 
     suspend fun getMovieSuggestions(movie: Movie) = execute {
         val movies = movieService.getMovieSuggestions(movie.id).data.movies
-        movieDatabase.getInstance().dao.insert(movies)
+        if (movies != null) movieDatabase.getInstance().dao.insert(movies)
         movies
     }
 
     private suspend fun <T> execute(
         block: suspend () -> T
     ) = try {
-        block.invoke()
+        val response = block.invoke()
+        preferences[Preference.loading] = false
+        response
     } catch (e: Throwable) {
         Firebase.crashlytics.recordException(e)
         null
