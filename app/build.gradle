@@ -9,12 +9,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion rootProject.ext.sdkVersion
 
     defaultConfig {
         applicationId 'io.github.kunal26das.yify'
-        minSdkVersion 23
-        targetSdkVersion 33
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.sdkVersion
         versionCode 1
         versionName '1.0'
     }

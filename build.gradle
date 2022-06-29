@@ -1,3 +1,10 @@
+ext {
+    sdkVersion = 33
+    minSdkVersion = 23
+    githubProperties = 'github.properties'
+    mavenUrl = 'https://maven.pkg.github.com/kunal26das/androidx-essentials'
+}
+
 buildscript {
 
     repositories {
@@ -19,10 +26,13 @@ allprojects {
         jcenter()
         google()
         maven {
-            url = "https://maven.pkg.github.com/kunal26das/androidx-essentials"
+            url = uri(rootProject.ext.mavenUrl)
             credentials {
-                username = "kunal26das"
-                password = "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"
+                def github = rootProject.file(rootProject.ext.githubProperties)
+                def properties = new Properties()
+                properties.load(new FileInputStream(github))
+                username = properties['github.user']
+                password = properties['github.token']
             }
         }
     }
