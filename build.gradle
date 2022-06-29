@@ -7,7 +7,7 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:7.2.1'
-        classpath 'com.google.gms:google-services:4.3.12'
+        classpath 'com.google.gms:google-services:4.3.13'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10'
         classpath 'com.google.dagger:hilt-android-gradle-plugin:2.42'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.1'
@@ -22,7 +22,7 @@ allprojects {
             url = "https://maven.pkg.github.com/kunal26das/androidx-essentials"
             credentials {
                 username = "kunal26das"
-                password = "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"
+                password = "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"
             }
         }
     }

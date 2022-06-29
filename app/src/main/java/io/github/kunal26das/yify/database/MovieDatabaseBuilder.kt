@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.database
 
 import android.content.Context
-import androidx.essentials.network.local.RoomDatabaseBuilder
+import androidx.essentials.network.RoomDatabaseBuilder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import javax.inject.Inject

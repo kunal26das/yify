@@ -31,7 +31,7 @@ import io.github.kunal26das.yify.movie.profile.MovieActivity
 class MovieListActivity : ComposeActivity() {
 
     private val viewModel by viewModels<MovieListViewModel>()
-    private val movieActivity = registerForActivityResult(MovieActivity) {}
+    private val movieActivity = registerForActivityResult(MovieActivity)
 
     @Preview
     @Composable
@@ -64,7 +64,7 @@ class MovieListActivity : ComposeActivity() {
     private fun Movie(movie: Movie?) {
         ElevatedCard(
             modifier = Modifier.padding(8.dp),
-            onClick = { movieActivity.launch(movie) }
+            onClick = { /*movieActivity.launch(movie)*/ }
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),

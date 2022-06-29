@@ -1,6 +1,6 @@
 package io.github.kunal26das.yify.network
 
-import androidx.essentials.network.remote.OkHttpClientBuilder
+import androidx.essentials.network.OkHttpClientBuilder
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import okhttp3.logging.HttpLoggingInterceptor
 

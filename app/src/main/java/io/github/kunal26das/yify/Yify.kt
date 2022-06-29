@@ -14,7 +14,7 @@ class Yify : Application() {
         super.onCreate()
         Stetho.initializeWithDefaults(this)
         DynamicColors.applyToActivitiesIfAvailable(this)
-        Coil.setImageLoader(YifyImageLoader(this).getInstance())
+        Coil.setImageLoader(YifyImageLoader(this).INSTANCE)
     }
 
 }

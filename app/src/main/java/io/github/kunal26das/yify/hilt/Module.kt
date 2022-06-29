@@ -1,7 +1,6 @@
-package io.github.kunal26das.yify
+package io.github.kunal26das.yify.hilt
 
 import android.content.Context
-import androidx.essentials.network.local.Preferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,11 +16,11 @@ object Module {
     @Provides
     fun getPreferences(
         @ApplicationContext context: Context
-    ) = Preferences(context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE))
+    ) = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)!!
 
     @Provides
     fun getMovieService(): MovieService {
-        return YifyRetrofit.getInstance().create(MovieService::class.java)
+        return YifyRetrofit.INSTANCE.create(MovieService::class.java)
     }
 
 }

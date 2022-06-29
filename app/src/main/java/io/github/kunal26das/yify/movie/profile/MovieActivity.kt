@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
@@ -29,8 +30,8 @@ class MovieActivity : ComposeActivity() {
 
     private val viewModel by viewModels<MovieViewModel>()
 
-    private val youTube = registerForActivityResult(YouTubeContract()) {}
-    private val movieActivity = registerForActivityResult(MovieActivity) {}
+    private val youTube = registerForActivityResult(YouTubeContract())
+    private val movieActivity = registerForActivityResult(MovieActivity)
 
     private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
 
@@ -45,7 +46,7 @@ class MovieActivity : ComposeActivity() {
                 .verticalScroll(ScrollState(0))
         ) {
             AsyncImage(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth(),
                 contentDescription = null,
                 model = movie?.coverImage,
             )

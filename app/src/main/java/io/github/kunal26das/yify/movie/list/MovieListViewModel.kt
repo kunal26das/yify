@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify.movie.list
 
-import androidx.essentials.network.local.Preferences
+import android.content.SharedPreferences
+import androidx.essentials.network.mutableLiveDataOf
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,15 +23,15 @@ import javax.inject.Inject
 @HiltViewModel
 class MovieListViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
-    preferences: Preferences,
+    sharedPreferences: SharedPreferences,
 ) : ViewModel() {
 
     private var filter: Job? = null
     val movies = MutableLiveData<Flow<PagingData<Movie>>>()
-    val page by preferences.mutableLiveDataOf<Int>(Preference.page)
-    val columns by preferences.mutableLiveDataOf<Int>(Preference.columns)
-    val loading by preferences.mutableLiveDataOf<Boolean>(Preference.loading)
-    val movieCount by preferences.mutableLiveDataOf<Int>(Preference.movie_count)
+    val page by sharedPreferences.mutableLiveDataOf<Int>(Preference.page)
+    val columns by sharedPreferences.mutableLiveDataOf<Int>(Preference.columns)
+    val loading by sharedPreferences.mutableLiveDataOf<Boolean>(Preference.loading)
+    val movieCount by sharedPreferences.mutableLiveDataOf<Int>(Preference.movie_count)
 
     init {
         refresh()
