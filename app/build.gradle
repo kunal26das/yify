@@ -9,12 +9,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId 'io.github.kunal26das.yify'
-        minSdkVersion 30
-        targetSdkVersion 32
+        minSdkVersion 23
+        targetSdkVersion 33
         versionCode 1
         versionName '1.0'
     }
