@@ -49,7 +49,7 @@ dependencies {
     // Defaults
     implementation project(path: ':model')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.0'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.10'
 
     // Jetpack
     dependencies {
