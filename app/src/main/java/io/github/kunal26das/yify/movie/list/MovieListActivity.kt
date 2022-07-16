@@ -6,13 +6,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.R
@@ -31,18 +32,13 @@ import io.github.kunal26das.yify.movie.profile.MovieActivity
 class MovieListActivity : ComposeActivity() {
 
     private val viewModel by viewModels<MovieListViewModel>()
-    private val movieActivity = registerForActivityResult(MovieActivity)
+    private val movieActivity = registerForActivityResult(MovieActivity.Contract())
 
     @Preview
     @Composable
     override fun setContent() {
         super.setContent()
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Movies()
-            FilterButton(modifier = Modifier.align(Alignment.BottomEnd))
-        }
+        Movies()
     }
 
     @Composable
@@ -50,21 +46,41 @@ class MovieListActivity : ComposeActivity() {
         val source by viewModel.movies.observeAsState()
         val movies = source?.collectAsLazyPagingItems()
         val columns by viewModel.columns.observeAsState()
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(columns ?: 2),
-            content = {
-                items(movies?.itemCount ?: 0) { index ->
-                    Movie(movie = movies?.get(index))
+        val isRefreshing by remember { mutableStateOf(false) }
+        SwipeRefresh(
+            modifier = Modifier.fillMaxSize(),
+            state = rememberSwipeRefreshState(isRefreshing),
+            onRefresh = { viewModel.refresh() },
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                when (movies?.itemCount) {
+                    null, 0 -> CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                    else -> LazyVerticalGrid(
+                        modifier = Modifier.fillMaxSize(),
+                        columns = GridCells.Fixed(columns ?: 2),
+                        content = {
+                            items(movies.itemCount) { index ->
+                                Movie(movie = movies[index])
+                            }
+                        }
+                    )
                 }
+                FilterButton(
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                )
             }
-        )
+        }
     }
 
     @Composable
     private fun Movie(movie: Movie?) {
         ElevatedCard(
             modifier = Modifier.padding(8.dp),
-            onClick = { /*movieActivity.launch(movie)*/ }
+            onClick = { movieActivity.launch(movie) }
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
@@ -82,7 +98,7 @@ class MovieListActivity : ComposeActivity() {
             onClick = {
                 viewModel.page.value = null
                 MovieFilterFragment().setOnFiltersChangeListener {
-                    viewModel.refresh()
+                    viewModel.refresh(1000L)
                 }.showNow(supportFragmentManager, null)
             },
             icon = {},

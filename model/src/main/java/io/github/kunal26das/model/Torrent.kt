@@ -1,7 +1,9 @@
 package io.github.kunal26das.model
 
 import android.os.Parcelable
+import androidx.annotation.NonNull
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
@@ -9,33 +11,35 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Torrent(
 
-    @SerializedName("size_bytes")
-    val sizeBytes: Long,
-
-    @SerializedName("size")
-    val size: String,
-
-    @SerializedName("seeds")
-    val seeds: Int,
+    @NonNull
+    @PrimaryKey
+    @SerializedName("hash")
+    var hash: String = "",
 
     @SerializedName("date_uploaded")
-    val dateUploaded: String,
-
-    @SerializedName("peers")
-    val peers: Int,
+    var dateUploaded: String? = null,
 
     @SerializedName("date_uploaded_unix")
-    val dateUploadedUnix: Int,
+    var dateUploadedUnix: Int? = null,
 
-    @SerializedName("type")
-    val type: String,
-
-    @SerializedName("url")
-    val url: String,
-
-    @SerializedName("hash")
-    val hash: String,
+    @SerializedName("peers")
+    var peers: Int? = null,
 
     @SerializedName("quality")
-    val quality: String
+    var quality: String? = null,
+
+    @SerializedName("seeds")
+    var seeds: Int? = null,
+
+    @SerializedName("size")
+    var size: String? = null,
+
+    @SerializedName("size_bytes")
+    var sizeBytes: Long? = null,
+
+    @SerializedName("type")
+    var type: String? = null,
+
+    @SerializedName("url")
+    var url: String? = null,
 ) : Parcelable

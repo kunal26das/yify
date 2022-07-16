@@ -4,18 +4,18 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
-import io.github.kunal26das.model.Movie
+import io.github.kunal26das.model.Cast
 
 @Dao
-interface MovieDao {
+interface CastDao {
 
     @Insert(onConflict = REPLACE)
-    suspend fun insert(movie: Movie)
+    suspend fun insert(cast: Cast)
 
     @Insert(onConflict = REPLACE)
-    suspend fun insert(movies: List<Movie>)
+    suspend fun insert(cast: List<Cast>)
 
-    @Query("SELECT * from Movie")
-    suspend fun getMovies(): List<Movie>
+    @Query("SELECT * from `Cast` WHERE imdbCode IN (:ids)")
+    fun getCast(ids: List<String>): List<Cast>
 
 }

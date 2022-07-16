@@ -5,7 +5,6 @@ import androidx.annotation.NonNull
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
-import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 @Entity
@@ -15,90 +14,132 @@ data class Movie(
     @NonNull
     @PrimaryKey
     @SerializedName("id")
-    val id: Int,
-
-    @SerializedName("small_cover_image")
-    val smallCoverImage: String?,
-
-    @SerializedName("year")
-    val year: Int?,
-
-    @SerializedName("description_full")
-    val descriptionFull: String?,
-
-    @SerializedName("rating")
-    val rating: Double?,
-
-    @SerializedName("large_cover_image")
-    val largeCoverImage: String?,
-
-    @SerializedName("title_long")
-    val titleLong: String?,
-
-    @SerializedName("language")
-    val language: String?,
-
-    @SerializedName("yt_trailer_code")
-    val ytTrailerCode: String?,
-
-    @SerializedName("title")
-    val title: String?,
-
-    @SerializedName("mpa_rating")
-    val mpaRating: String?,
-
-//    @SerializedName("genres")
-//    val genres: List<String>,
-
-    @SerializedName("title_english")
-    val titleEnglish: String?,
-
-    @SerializedName("state")
-    val state: String?,
-
-    @SerializedName("slug")
-    val slug: String?,
-
-    @SerializedName("summary")
-    val summary: String?,
-
-    @SerializedName("date_uploaded")
-    val dateUploaded: String?,
-
-    @SerializedName("runtime")
-    val runtime: Int?,
-
-    @SerializedName("synopsis")
-    val synopsis: String?,
-
-    @SerializedName("url")
-    val url: String?,
-
-    @SerializedName("imdb_code")
-    val imdbCode: String?,
+    var id: Int = 0,
 
     @SerializedName("background_image")
-    val backgroundImage: String,
-
-//    @SerializedName("torrents")
-//    val torrents: List<Torrent>,
-
-    @SerializedName("date_uploaded_unix")
-    val dateUploadedUnix: Int?,
+    var backgroundImage: String? = null,
 
     @SerializedName("background_image_original")
-    val backgroundImageOriginal: String?,
+    var backgroundImageOriginal: String? = null,
+
+    @SerializedName("cast")
+    var cast: List<Cast>? = null,
+
+    @SerializedName("date_uploaded")
+    var dateUploaded: String? = null,
+
+    @SerializedName("date_uploaded_unix")
+    var dateUploadedUnix: Long? = null,
+
+    @SerializedName("description_full")
+    var descriptionFull: String? = null,
+
+    @SerializedName("description_intro")
+    var descriptionIntro: String? = null,
+
+    @SerializedName("download_count")
+    var downloadCount: Int? = null,
+
+    @SerializedName("genres")
+    var genres: List<String>? = null,
+
+    @SerializedName("imdb_code")
+    var imdbCode: String? = null,
+
+    @SerializedName("language")
+    var language: String? = null,
+
+    @SerializedName("large_cover_image")
+    var largeCoverImage: String? = null,
+
+    @SerializedName("large_screenshot_image1")
+    var largeScreenshotImage1: String? = null,
+
+    @SerializedName("large_screenshot_image2")
+    var largeScreenshotImage2: String? = null,
+
+    @SerializedName("large_screenshot_image3")
+    var largeScreenshotImage3: String? = null,
+
+    @SerializedName("like_count")
+    var likeCount: Int? = null,
 
     @SerializedName("medium_cover_image")
-    val mediumCoverImage: String?,
-) : Parcelable {
+    var mediumCoverImage: String? = null,
 
-    @IgnoredOnParcel
-    @SerializedName("page")
-    var page: Int? = null
+    @SerializedName("medium_screenshot_image1")
+    var mediumScreenshotImage1: String? = null,
+
+    @SerializedName("medium_screenshot_image2")
+    var mediumScreenshotImage2: String? = null,
+
+    @SerializedName("medium_screenshot_image3")
+    var mediumScreenshotImage3: String? = null,
+
+    @SerializedName("mpa_rating")
+    var mpaRating: String? = null,
+
+    @SerializedName("rating")
+    var rating: Double? = null,
+
+    @SerializedName("runtime")
+    var runtime: Int? = null,
+
+    @SerializedName("slug")
+    var slug: String? = null,
+
+    @SerializedName("small_cover_image")
+    var smallCoverImage: String? = null,
+
+    @SerializedName("state")
+    var state: String? = null,
+
+    @SerializedName("summary")
+    var summary: String? = null,
+
+    @SerializedName("synopsis")
+    var synopsis: String? = null,
+
+    @SerializedName("title")
+    var title: String? = null,
+
+    @SerializedName("title_english")
+    var titleEnglish: String? = null,
+
+    @SerializedName("title_long")
+    var titleLong: String? = null,
+
+    @SerializedName("torrents")
+    var torrents: List<Torrent>? = null,
+
+    @SerializedName("url")
+    var url: String? = null,
+
+    @SerializedName("year")
+    var year: Int? = null,
+
+    @SerializedName("yt_trailer_code")
+    var ytTrailerCode: String? = null,
+) : Parcelable {
 
     val coverImage
         get() = largeCoverImage ?: mediumCoverImage ?: smallCoverImage
+
+    val screenshotImage1
+        get() = largeScreenshotImage1 ?: mediumScreenshotImage1
+
+    val screenshotImage2
+        get() = largeScreenshotImage2 ?: mediumScreenshotImage2
+
+    val screenshotImage3
+        get() = largeScreenshotImage3 ?: mediumScreenshotImage3
+
+    val screenshotImages
+        get() = mutableListOf<String>().apply {
+            screenshotImage1?.let { add(it) }
+            screenshotImage2?.let { add(it) }
+            screenshotImage3?.let { add(it) }
+        }
 
     companion object {
         const val KEY_MOVIE = "movie"

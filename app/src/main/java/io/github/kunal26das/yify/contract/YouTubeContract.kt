@@ -5,6 +5,6 @@ import android.content.Intent
 
 class YouTubeContract : UrlContract() {
     override fun createIntent(context: Context, input: String): Intent {
-        return super.createIntent(context, "https://www.youtube.com/watch?v=${input}")
+        return super.createIntent(context, "https://www.youtube.com/watch?v=$input")
     }
 }

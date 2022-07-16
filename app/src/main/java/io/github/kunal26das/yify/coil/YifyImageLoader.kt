@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.coil
 
-import android.content.Context
+import io.github.kunal26das.yify.Yify
 
-class YifyImageLoader(context: Context) : ImageLoaderBuilder(context, {
+object YifyImageLoader : ImageLoaderBuilder(Yify.INSTANCE, {
     allowHardware(false)
 })

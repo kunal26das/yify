@@ -5,17 +5,18 @@ import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
@@ -26,12 +27,13 @@ import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.contract.YouTubeContract
 
 @AndroidEntryPoint
+@OptIn(ExperimentalMaterial3Api::class)
 class MovieActivity : ComposeActivity() {
 
     private val viewModel by viewModels<MovieViewModel>()
 
+    private val movieActivity = registerForActivityResult(Contract())
     private val youTube = registerForActivityResult(YouTubeContract())
-    private val movieActivity = registerForActivityResult(MovieActivity)
 
     private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
 
@@ -45,26 +47,63 @@ class MovieActivity : ComposeActivity() {
                 .fillMaxSize()
                 .verticalScroll(ScrollState(0))
         ) {
-            AsyncImage(
-                modifier = Modifier.fillMaxWidth(),
-                contentDescription = null,
-                model = movie?.coverImage,
-            )
-            Surface(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(text = movie?.descriptionFull ?: "")
+            Poster(movie?.coverImage)
+            Description(movie?.descriptionFull)
+            Screenshots(movie?.screenshotImages)
+        }
+    }
+
+    @Composable
+    private fun Poster(url: String?) {
+        AsyncImage(
+            modifier = Modifier.fillMaxWidth(),
+            contentDescription = null,
+            model = url,
+            contentScale = ContentScale.FillWidth,
+            onSuccess = {
+                viewModel.generatePalette(it.result.drawable)
+            }
+        )
+    }
+
+    @Composable
+    private fun Description(description: String?) {
+        Surface(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = description ?: "")
+        }
+    }
+
+    @Composable
+    private fun Screenshots(screenshots: List<String>?) {
+        if (!screenshots.isNullOrEmpty()) Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(ScrollState(0))
+                .padding(8.dp)
+        ) {
+            screenshots.forEach {
+                ElevatedCard(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    AsyncImage(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentDescription = null,
+                        model = it,
+                    )
+                }
             }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        viewModel.getMovie(movie)
-        viewModel.getMovieSuggestions(movie)
+        viewModel.getMovie(movie.id)
+        viewModel.getMovieSuggestions(movie.id)
     }
 
-    companion object : ActivityResultContract<Movie, Boolean>() {
+    class Contract : ActivityResultContract<Movie, Boolean>() {
         override fun createIntent(context: Context, input: Movie): Intent {
             return Intent(context, MovieActivity::class.java).also {
                 it.putExtra(KEY_MOVIE, input)

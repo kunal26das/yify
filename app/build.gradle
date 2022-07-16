@@ -29,14 +29,12 @@ android {
     }
 
     buildFeatures {
-        viewBinding true
-        dataBinding = true
         compose = true
     }
 
     composeOptions {
-        kotlinCompilerVersion '1.6.10'
-        kotlinCompilerExtensionVersion '1.1.1'
+        kotlinCompilerVersion = '1.7.0'
+        kotlinCompilerExtensionVersion = '1.2.0'
     }
 
     dependenciesInfo {
@@ -49,7 +47,6 @@ dependencies {
     // Defaults
     implementation project(path: ':model')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.0'
 
     // Jetpack
     dependencies {
@@ -96,7 +93,8 @@ dependencies {
             // Integration with observables
             implementation 'androidx.compose.runtime:runtime-livedata:1.1.1'
             // Accompanist
-            implementation "com.google.accompanist:accompanist-flowlayout:0.23.1"
+            implementation 'com.google.accompanist:accompanist-flowlayout:0.23.1'
+            implementation 'com.google.accompanist:accompanist-swiperefresh:0.23.1'
         }
     }
 
@@ -137,6 +135,10 @@ dependencies {
     implementation 'io.coil-kt:coil:2.1.0'
     implementation 'io.coil-kt:coil-compose:2.1.0'
 
+    // Koin
+    implementation 'io.insert-koin:koin-android:3.2.0'
+
+    // Essentials
     implementation 'androidx.essentials:view:1.0.0@aar'
     implementation 'androidx.essentials:network:1.0.0@aar'
 }

@@ -39,8 +39,8 @@ interface MovieService {
     @GET(ROUTE_MOVIE_DETAILS)
     suspend fun getMovie(
         @Query(KEY_MOVIE_ID) movieId: Int,
-        @Query(KEY_WITH_IMAGES) withImages: Boolean? = true,
-        @Query(KEY_WITH_CAST) withCast: Boolean? = true,
+        @Query(KEY_WITH_IMAGES) withImages: Boolean = true,
+        @Query(KEY_WITH_CAST) withCast: Boolean = true,
     ): Response
 
     @GET(ROUTE_UPCOMING_MOVIES)

@@ -1,8 +1,10 @@
 package io.github.kunal26das.yify.movie.profile
 
+import android.graphics.drawable.Drawable
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.palette.graphics.Palette
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.repository.MovieRepository
@@ -17,20 +19,24 @@ class MovieViewModel @Inject constructor(
 
     private var job: Job? = null
     val movie = MutableLiveData<Movie>()
-    val movieSuggestions = MutableLiveData<List<Movie>>()
+    val palette = MutableLiveData<Palette>()
+    val suggestions = MutableLiveData<List<Movie>>()
 
-    fun getMovie(movie: Movie) {
-        this.movie.value = movie
+    fun getMovie(movieId: Int) {
         job = viewModelScope.launch {
-            val movie = movieRepository.getMovie(movie.id)
-            this@MovieViewModel.movie.postValue(movie)
+            movie.postValue(movieRepository.getMovie(movieId))
         }
     }
 
-    fun getMovieSuggestions(movie: Movie) {
+    fun getMovieSuggestions(movieId: Int) {
         job = viewModelScope.launch {
-            val movies = movieRepository.getMovieSuggestions(movie)
-            movieSuggestions.postValue(movies)
+            suggestions.postValue(movieRepository.getMovieSuggestions(movieId))
+        }
+    }
+
+    fun generatePalette(drawable: Drawable) {
+        job = viewModelScope.launch {
+            palette.postValue(movieRepository.generatePalette(drawable))
         }
     }
 
