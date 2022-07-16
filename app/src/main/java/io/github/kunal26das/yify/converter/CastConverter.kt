@@ -1,14 +1,18 @@
-package io.github.kunal26das.yify.database
+package io.github.kunal26das.yify.converter
 
 import androidx.room.TypeConverter
 import io.github.kunal26das.model.Cast
+import io.github.kunal26das.yify.database.YifyDatabase
 
 class CastConverter {
+
+    private val yifyDatabase
+        get() = YifyDatabase.INSTANCE
 
     @TypeConverter
     fun stringToCast(value: String?): List<Cast>? {
         return value?.split(",")?.let {
-            YifyDatabase.INSTANCE.castDao.getCast(it)
+            yifyDatabase.castDao.getCast(it)
         }
     }
 

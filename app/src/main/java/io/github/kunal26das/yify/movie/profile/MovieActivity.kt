@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,12 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
 import coil.compose.AsyncImage
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.kunal26das.model.Cast
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.contract.YouTubeContract
@@ -47,18 +50,18 @@ class MovieActivity : ComposeActivity() {
                 .fillMaxSize()
                 .verticalScroll(ScrollState(0))
         ) {
-            Poster(movie?.coverImage)
+            Poster(movie)
             Description(movie?.descriptionFull)
             Screenshots(movie?.screenshotImages)
         }
     }
 
     @Composable
-    private fun Poster(url: String?) {
+    private fun Poster(movie: Movie?) {
         AsyncImage(
             modifier = Modifier.fillMaxWidth(),
-            contentDescription = null,
-            model = url,
+            contentDescription = movie?.title,
+            model = movie?.coverImage,
             contentScale = ContentScale.FillWidth,
             onSuccess = {
                 viewModel.generatePalette(it.result.drawable)
@@ -76,6 +79,27 @@ class MovieActivity : ComposeActivity() {
     }
 
     @Composable
+    private fun Cast(cast: List<Cast>?) {
+        if (!cast.isNullOrEmpty()) Row(
+            modifier = Modifier
+                .horizontalScroll(ScrollState(0))
+                .padding(8.dp)
+        ) {
+            cast.forEach {
+                AsyncImage(
+                    modifier = Modifier
+                        .height(100.dp)
+                        .width(100.dp)
+                        .padding(8.dp)
+                        .clip(CircleShape),
+                    model = it.urlSmallImage,
+                    contentDescription = it.name,
+                )
+            }
+        }
+    }
+
+    @Composable
     private fun Screenshots(screenshots: List<String>?) {
         if (!screenshots.isNullOrEmpty()) Row(
             modifier = Modifier
@@ -89,7 +113,7 @@ class MovieActivity : ComposeActivity() {
                 ) {
                     AsyncImage(
                         modifier = Modifier.fillMaxWidth(),
-                        contentDescription = null,
+                        contentDescription = it,
                         model = it,
                     )
                 }

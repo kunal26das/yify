@@ -1,3 +1,4 @@
+
 package io.github.kunal26das.yify.di
 
 import android.content.Context
@@ -11,26 +12,31 @@ import io.github.kunal26das.yify.network.YifyRetrofit
 import io.github.kunal26das.yify.service.MovieService
 
 @Module
+@Suppress("HasPlatformType")
 @InstallIn(SingletonComponent::class)
 object Module {
 
-    @Provides
-    fun getCastDao() = YifyDatabase.INSTANCE.castDao
+    private val yifyDatabase
+        get() = YifyDatabase.INSTANCE
+
+    private val yifyRetrofit
+        get() = YifyRetrofit.INSTANCE
 
     @Provides
-    fun getMovieDao() = YifyDatabase.INSTANCE.movieDao
+    fun getCastDao() = yifyDatabase.castDao
 
     @Provides
-    fun getTorrentDao() = YifyDatabase.INSTANCE.torrentDao
+    fun getMovieDao() = yifyDatabase.movieDao
 
     @Provides
-    fun getMovieService(): MovieService {
-        return YifyRetrofit.INSTANCE.create(MovieService::class.java)
-    }
+    fun getTorrentDao() = yifyDatabase.torrentDao
+
+    @Provides
+    fun getMovieService() = yifyRetrofit.create(MovieService::class.java)
 
     @Provides
     fun getPreferences(
         @ApplicationContext context: Context
-    ) = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)!!
+    ) = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
 
 }

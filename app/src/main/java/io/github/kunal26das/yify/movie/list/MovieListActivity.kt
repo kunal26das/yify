@@ -6,12 +6,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.*
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,29 +47,25 @@ class MovieListActivity : ComposeActivity() {
         val source by viewModel.movies.observeAsState()
         val movies = source?.collectAsLazyPagingItems()
         val columns by viewModel.columns.observeAsState()
-        val isRefreshing by remember { mutableStateOf(false) }
         SwipeRefresh(
             modifier = Modifier.fillMaxSize(),
-            state = rememberSwipeRefreshState(isRefreshing),
+            state = rememberSwipeRefreshState(
+                isRefreshing = movies != null && movies.itemCount == 0
+            ),
             onRefresh = { viewModel.refresh() },
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                when (movies?.itemCount) {
-                    null, 0 -> CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                    else -> LazyVerticalGrid(
-                        modifier = Modifier.fillMaxSize(),
-                        columns = GridCells.Fixed(columns ?: 2),
-                        content = {
-                            items(movies.itemCount) { index ->
-                                Movie(movie = movies[index])
-                            }
+                LazyVerticalGrid(
+                    modifier = Modifier.fillMaxSize(),
+                    columns = GridCells.Fixed(columns ?: 2),
+                    content = {
+                        items(movies?.itemCount ?: 0) { index ->
+                            Movie(movie = movies?.get(index))
                         }
-                    )
-                }
+                    }
+                )
                 FilterButton(
                     modifier = Modifier.align(Alignment.BottomEnd)
                 )
@@ -84,7 +81,7 @@ class MovieListActivity : ComposeActivity() {
         ) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
-                contentDescription = null,
+                contentDescription = movie?.title,
                 model = movie?.coverImage,
             )
         }

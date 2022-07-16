@@ -9,6 +9,9 @@ import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Torrent
 import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.Yify
+import io.github.kunal26das.yify.converter.CastConverter
+import io.github.kunal26das.yify.converter.GenreConverter
+import io.github.kunal26das.yify.converter.TorrentConverter
 
 @Database(
     entities = [
@@ -21,14 +24,14 @@ import io.github.kunal26das.yify.Yify
 )
 @TypeConverters(
     CastConverter::class,
+    GenreConverter::class,
     TorrentConverter::class,
-    StringListConverter::class,
 )
 abstract class YifyDatabase : RoomDatabase() {
 
-    abstract val torrentDao: TorrentDao
-    abstract val movieDao: MovieDao
     abstract val castDao: CastDao
+    abstract val movieDao: MovieDao
+    abstract val torrentDao: TorrentDao
 
     companion object : RoomDatabaseBuilder<YifyDatabase>(
         Yify.INSTANCE, YifyDatabase::class,

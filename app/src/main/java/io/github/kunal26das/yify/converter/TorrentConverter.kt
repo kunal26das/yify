@@ -1,14 +1,18 @@
-package io.github.kunal26das.yify.database
+package io.github.kunal26das.yify.converter
 
 import androidx.room.TypeConverter
 import io.github.kunal26das.model.Torrent
+import io.github.kunal26das.yify.database.YifyDatabase
 
 class TorrentConverter {
+
+    private val yifyDatabase
+        get() = YifyDatabase.INSTANCE
 
     @TypeConverter
     fun stringToTorrents(value: String?): List<Torrent>? {
         return value?.split(",")?.let {
-            YifyDatabase.INSTANCE.torrentDao.getTorrents(it)
+            yifyDatabase.torrentDao.getTorrents(it)
         }
     }
 

@@ -1,8 +1,8 @@
-package io.github.kunal26das.yify.database
+package io.github.kunal26das.yify.converter
 
 import androidx.room.TypeConverter
 
-class StringListConverter {
+class GenreConverter {
 
     @TypeConverter
     fun stringToList(value: String?): List<String>? {
