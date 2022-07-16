@@ -22,6 +22,13 @@ class MovieViewModel @Inject constructor(
     val palette = MutableLiveData<Palette>()
     val suggestions = MutableLiveData<List<Movie>>()
 
+    fun refresh(movieId: Int?) {
+        if (movieId != null) {
+            getMovie(movieId)
+            getMovieSuggestions(movieId)
+        }
+    }
+
     fun getMovie(movieId: Int) {
         job = viewModelScope.launch {
             movie.postValue(movieRepository.getMovie(movieId))

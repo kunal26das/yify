@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Text
@@ -19,18 +18,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.movie.MovieComposable
 import io.github.kunal26das.yify.movie.filter.MovieFilterFragment
 import io.github.kunal26das.yify.movie.profile.MovieActivity
 
 @AndroidEntryPoint
 @OptIn(ExperimentalMaterial3Api::class)
-class MovieListActivity : ComposeActivity() {
+class MovieListActivity : ComposeActivity(), MovieComposable {
 
     private val viewModel by viewModels<MovieListViewModel>()
     private val movieActivity = registerForActivityResult(MovieActivity.Contract())
@@ -62,7 +60,13 @@ class MovieListActivity : ComposeActivity() {
                     columns = GridCells.Fixed(columns ?: 2),
                     content = {
                         items(movies?.itemCount ?: 0) { index ->
-                            Movie(movie = movies?.get(index))
+                            val movie = movies?.get(index)
+                            MovieCard(
+                                modifier = Modifier.padding(8.dp),
+                                movie = movie,
+                            ) {
+                                movieActivity.launch(movie)
+                            }
                         }
                     }
                 )
@@ -70,20 +74,6 @@ class MovieListActivity : ComposeActivity() {
                     modifier = Modifier.align(Alignment.BottomEnd)
                 )
             }
-        }
-    }
-
-    @Composable
-    private fun Movie(movie: Movie?) {
-        ElevatedCard(
-            modifier = Modifier.padding(8.dp),
-            onClick = { movieActivity.launch(movie) }
-        ) {
-            AsyncImage(
-                modifier = Modifier.fillMaxSize(),
-                contentDescription = movie?.title,
-                model = movie?.coverImage,
-            )
         }
     }
 

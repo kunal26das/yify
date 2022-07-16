@@ -27,7 +27,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".movie.profile.MovieActivity" />
+        <activity
+            android:name=".movie.profile.MovieActivity"
+            android:launchMode="singleTop" />
 
     </application>
 </manifest>

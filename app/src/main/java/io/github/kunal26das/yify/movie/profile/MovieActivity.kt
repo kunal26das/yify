@@ -23,36 +23,48 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
 import coil.compose.AsyncImage
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.Cast
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.contract.YouTubeContract
+import io.github.kunal26das.yify.movie.MovieComposable
 
 @AndroidEntryPoint
 @OptIn(ExperimentalMaterial3Api::class)
-class MovieActivity : ComposeActivity() {
+class MovieActivity : ComposeActivity(), MovieComposable {
 
     private val viewModel by viewModels<MovieViewModel>()
 
     private val movieActivity = registerForActivityResult(Contract())
     private val youTube = registerForActivityResult(YouTubeContract())
 
-    private val movie by lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE)!! }
+    private val movie get() = intent.getParcelableExtra<Movie>(KEY_MOVIE)
 
     @Preview
     @Composable
     override fun setContent() {
         super.setContent()
         val movie by viewModel.movie.observeAsState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(ScrollState(0))
+        SwipeRefresh(
+            modifier = Modifier.fillMaxSize(),
+            state = rememberSwipeRefreshState(
+                isRefreshing = movie == null
+            ),
+            onRefresh = { viewModel.refresh(movie?.id) },
         ) {
-            Poster(movie)
-            Description(movie?.descriptionFull)
-            Screenshots(movie?.screenshotImages)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(ScrollState(0))
+            ) {
+                Poster(movie)
+                Description(movie?.descriptionFull)
+                Screenshots(movie?.screenshotImages)
+                Suggestions()
+            }
         }
     }
 
@@ -121,10 +133,35 @@ class MovieActivity : ComposeActivity() {
         }
     }
 
+    @Composable
+    private fun Suggestions() {
+        val suggestions by viewModel.suggestions.observeAsState()
+        if (!suggestions.isNullOrEmpty()) Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(ScrollState(0))
+                .padding(8.dp)
+        ) {
+            suggestions?.forEach {
+                MovieCard(
+                    modifier = Modifier.padding(8.dp),
+                    movie = it,
+                ) {
+                    movieActivity.launch(it)
+                }
+            }
+        }
+    }
+
     override fun onStart() {
         super.onStart()
-        viewModel.getMovie(movie.id)
-        viewModel.getMovieSuggestions(movie.id)
+        viewModel.refresh(movie?.id)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        viewModel.refresh(movie?.id)
     }
 
     class Contract : ActivityResultContract<Movie, Boolean>() {
