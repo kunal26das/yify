@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.essentials.view.ComposeActivity
+import androidx.lifecycle.Lifecycle
 import coil.compose.AsyncImage
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -30,18 +31,19 @@ import io.github.kunal26das.model.Cast
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.contract.YouTubeContract
-import io.github.kunal26das.yify.movie.MovieComposable
+import io.github.kunal26das.yify.movie.Composables
 
 @AndroidEntryPoint
 @OptIn(ExperimentalMaterial3Api::class)
-class MovieActivity : ComposeActivity(), MovieComposable {
+class MovieActivity : ComposeActivity(), Composables {
 
     private val viewModel by viewModels<MovieViewModel>()
 
     private val movieActivity = registerForActivityResult(Contract())
     private val youTube = registerForActivityResult(YouTubeContract())
 
-    private val movie get() = intent.getParcelableExtra<Movie>(KEY_MOVIE)
+    private val movieDelegate = lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE) }
+    private val movie by movieDelegate
 
     @Preview
     @Composable
@@ -161,6 +163,7 @@ class MovieActivity : ComposeActivity(), MovieComposable {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
+        movieDelegate.onStateChanged(this, Lifecycle.Event.ON_DESTROY)
         viewModel.refresh(movie?.id)
     }
 
