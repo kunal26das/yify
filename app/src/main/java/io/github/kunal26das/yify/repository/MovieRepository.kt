@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
 import androidx.annotation.IntRange
 import androidx.core.graphics.drawable.toBitmap
-import androidx.essentials.network.get
 import androidx.essentials.network.set
 import androidx.palette.graphics.Palette
 import io.github.kunal26das.model.Cast
@@ -14,6 +13,7 @@ import io.github.kunal26das.model.Torrent
 import io.github.kunal26das.yify.database.CastDao
 import io.github.kunal26das.yify.database.MovieDao
 import io.github.kunal26das.yify.database.TorrentDao
+import io.github.kunal26das.yify.movie.filter.Filters
 import io.github.kunal26das.yify.service.MovieService
 import javax.inject.Inject
 
@@ -26,17 +26,17 @@ class MovieRepository @Inject constructor(
 ) : Repository {
 
     suspend fun getMovies(
-        @IntRange(from = 1, to = 50) page: Int, limit: Int,
+        @IntRange(from = 1, to = 50) page: Int,
+        limit: Int, filters: Filters,
     ) = execute {
-        sharedPreferences[Preference.page] = page
         val response = movieService.getMovies(
             limit, page,
-            sharedPreferences[Preference.quality],
-            sharedPreferences[Preference.minimum_rating],
-            sharedPreferences[Preference.query_term],
-            sharedPreferences[Preference.genre],
-            sharedPreferences[Preference.sort_by],
-            sharedPreferences[Preference.order_by],
+            filters.quality,
+            filters.minimumRating,
+            filters.queryTerm,
+            filters.genre,
+            filters.sortBy,
+            filters.orderBy,
         )
         sharedPreferences[Preference.movie_count] = response.data.movieCount
         val movies = response.data.movies

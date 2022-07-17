@@ -2,9 +2,9 @@
 <resources>
 
     <string name="app_name">Yify</string>
-
     <string name="filter">Filter</string>
-
     <string name="query_term">Query Term</string>
+    <string name="recently_added">Recently Added</string>
+    <string name="all">All</string>
 
 </resources>
