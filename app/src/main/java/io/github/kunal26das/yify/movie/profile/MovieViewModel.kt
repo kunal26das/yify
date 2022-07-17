@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.repository.MovieRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,22 +23,19 @@ class MovieViewModel @Inject constructor(
     val palette = MutableLiveData<Palette>()
     val suggestions = MutableLiveData<List<Movie>>()
 
-    fun refresh(movieId: Int?) {
-        if (movieId != null) {
-            getMovie(movieId)
-            getMovieSuggestions(movieId)
-        }
-    }
-
-    fun getMovie(movieId: Int) {
-        job = viewModelScope.launch {
-            movie.postValue(movieRepository.getMovie(movieId))
-        }
-    }
-
-    fun getMovieSuggestions(movieId: Int) {
-        job = viewModelScope.launch {
-            suggestions.postValue(movieRepository.getMovieSuggestions(movieId))
+    fun refresh(
+        movieId: Int?,
+        delayTimeMillis: Long = 0L
+    ) {
+        job = when (movieId) {
+            null -> null
+            else -> viewModelScope.launch {
+                delay(delayTimeMillis)
+                movie.postValue(null)
+                suggestions.postValue(null)
+                movie.postValue(movieRepository.getMovie(movieId))
+                suggestions.postValue(movieRepository.getMovieSuggestions(movieId))
+            }
         }
     }
 
