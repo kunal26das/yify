@@ -27,16 +27,16 @@ class MovieRepository @Inject constructor(
 
     suspend fun getMovies(
         @IntRange(from = 1, to = 50) page: Int,
-        limit: Int, filters: Filters,
+        limit: Int, filters: Filters? = null,
     ) = execute {
         val response = movieService.getMovies(
             limit, page,
-            filters.quality,
-            filters.minimumRating,
-            filters.queryTerm,
-            filters.genre,
-            filters.sortBy,
-            filters.orderBy,
+            filters?.quality,
+            filters?.minimumRating,
+            filters?.queryTerm,
+            filters?.genre,
+            filters?.sortBy,
+            filters?.orderBy,
         )
         sharedPreferences[Preference.movie_count] = response.data.movieCount
         val movies = response.data.movies

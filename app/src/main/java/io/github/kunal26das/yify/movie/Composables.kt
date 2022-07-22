@@ -1,27 +1,21 @@
 package io.github.kunal26das.yify.movie
 
-import android.view.View
-import android.view.ViewGroup
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.commit
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import com.google.accompanist.flowlayout.FlowRow
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import io.github.kunal26das.model.Movie
@@ -29,27 +23,6 @@ import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 interface Composables {
-
-    @Composable
-    fun FragmentContainer(
-        modifier: Modifier = Modifier,
-        fragmentManager: FragmentManager,
-        commit: FragmentTransaction.(containerId: Int) -> Unit
-    ) {
-        val containerId by remember { mutableStateOf(View.generateViewId()) }
-        AndroidView(
-            modifier = modifier,
-            factory = { context ->
-                fragmentManager.findFragmentById(containerId)?.view
-                    ?.also { (it.parent as? ViewGroup)?.removeView(it) }
-                    ?: FragmentContainerView(context)
-                        .apply { id = containerId }
-                        .also {
-                            fragmentManager.commit { commit(it.id) }
-                        }
-            }
-        )
-    }
 
     @Composable
     fun Movies(
@@ -60,7 +33,7 @@ interface Composables {
     ) {
         val movies = source?.collectAsLazyPagingItems()
         SwipeRefresh(
-            modifier = Modifier,
+            modifier = modifier,
             state = rememberSwipeRefreshState(
                 isRefreshing = movies != null && movies.itemCount == 0
             ),
@@ -98,6 +71,48 @@ interface Composables {
                 contentDescription = movie?.title,
                 model = movie?.coverImage,
             )
+        }
+    }
+
+    @Composable
+    fun FlowChips(
+        modifier: Modifier = Modifier,
+        chips: List<String>,
+        selected: String? = null,
+        onClick: ((String) -> Unit)? = null
+    ) {
+        FlowRow(
+            modifier = modifier
+        ) {
+            chips.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == selected,
+                    onClick = { onClick?.invoke(it) }
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun Chips(
+        modifier: Modifier = Modifier,
+        chips: List<String>,
+        selected: String? = null,
+        onClick: ((String) -> Unit)? = null
+    ) {
+        Row(
+            modifier = modifier
+        ) {
+            chips.forEach {
+                FilterChip(
+                    modifier = Modifier.padding(4.dp),
+                    label = { Text(text = it) },
+                    selected = it == selected,
+                    onClick = { onClick?.invoke(it) }
+                )
+            }
         }
     }
 

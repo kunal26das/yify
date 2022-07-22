@@ -3,7 +3,10 @@ package io.github.kunal26das.yify.movie.list
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,12 +55,12 @@ class AllMoviesFragment : MovieListFragment(), Composables {
         ExtendedFloatingActionButton(
             modifier = modifier,
             text = { Text(text = getString(R.string.filter)) },
+            icon = { Icon(Icons.Default.FilterAlt, null) },
             onClick = {
                 MovieFilterFragment().setOnFiltersChangeListener {
                     viewModel.refresh(1000L)
                 }.showNow(childFragmentManager, null)
             },
-            icon = {},
         )
     }
 

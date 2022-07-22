@@ -50,6 +50,7 @@ class MovieActivity : ComposeActivity(), Composables {
     override fun setContent() {
         super.setContent()
         val movie by viewModel.movie.observeAsState()
+        val palette by viewModel.palette.observeAsState()
         SwipeRefresh(
             modifier = Modifier.fillMaxSize(),
             state = rememberSwipeRefreshState(
@@ -63,9 +64,19 @@ class MovieActivity : ComposeActivity(), Composables {
                     .verticalScroll(ScrollState(0))
             ) {
                 Poster(movie)
-                Description(movie?.descriptionFull)
-                Screenshots(movie?.screenshotImages)
-                Suggestions()
+                if (palette != null) Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            vertical = 4.dp,
+                            horizontal = 8.dp,
+                        )
+                ) {
+                    Description(movie?.descriptionFull)
+                    Genres(movie?.genres)
+                    Screenshots(movie)
+                    Suggestions()
+                }
             }
         }
     }
@@ -79,16 +90,30 @@ class MovieActivity : ComposeActivity(), Composables {
             contentScale = ContentScale.FillWidth,
             onSuccess = {
                 viewModel.generatePalette(it.result.drawable)
-            }
+            },
+        )
+    }
+
+    @Composable
+    private fun Genres(genres: List<String>?) {
+        if (!genres.isNullOrEmpty()) Chips(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(ScrollState(0))
+                .padding(
+                    vertical = 4.dp,
+                    horizontal = 8.dp,
+                ),
+            chips = genres,
         )
     }
 
     @Composable
     private fun Description(description: String?) {
-        Surface(
-            modifier = Modifier.padding(16.dp)
+        if (!description.isNullOrEmpty()) Surface(
+            modifier = Modifier.padding(8.dp)
         ) {
-            Text(text = description ?: "")
+            Text(text = description)
         }
     }
 
@@ -97,7 +122,7 @@ class MovieActivity : ComposeActivity(), Composables {
         if (!cast.isNullOrEmpty()) Row(
             modifier = Modifier
                 .horizontalScroll(ScrollState(0))
-                .padding(8.dp)
+                .padding(4.dp)
         ) {
             cast.forEach {
                 AsyncImage(
@@ -114,16 +139,20 @@ class MovieActivity : ComposeActivity(), Composables {
     }
 
     @Composable
-    private fun Screenshots(screenshots: List<String>?) {
+    private fun Screenshots(movie: Movie?) {
+        val screenshots = movie?.screenshotImages
         if (!screenshots.isNullOrEmpty()) Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(ScrollState(0))
-                .padding(8.dp)
+                .padding(4.dp)
         ) {
-            screenshots.forEach {
-                ElevatedCard(
-                    modifier = Modifier.padding(8.dp)
+            screenshots.forEachIndexed { i, it ->
+                if (it != null) ElevatedCard(
+                    modifier = Modifier.padding(8.dp),
+                    onClick = {
+                        if (i == 0) youTube.launch(movie.ytTrailerCode)
+                    }
                 ) {
                     AsyncImage(
                         modifier = Modifier.fillMaxWidth(),
@@ -142,7 +171,7 @@ class MovieActivity : ComposeActivity(), Composables {
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(ScrollState(0))
-                .padding(8.dp)
+                .padding(4.dp)
         ) {
             suggestions?.forEach {
                 MovieCard(

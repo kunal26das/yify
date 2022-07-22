@@ -134,11 +134,15 @@ data class Movie(
     val screenshotImage3
         get() = largeScreenshotImage3 ?: mediumScreenshotImage3
 
+    val trailerCoverImage
+        get() = "https://img.youtube.com/vi/$ytTrailerCode/maxresdefault.jpg"
+
     val screenshotImages
-        get() = mutableListOf<String>().apply {
-            screenshotImage1?.let { add(it) }
-            screenshotImage2?.let { add(it) }
-            screenshotImage3?.let { add(it) }
+        get() = mutableListOf<String?>().apply {
+            add(trailerCoverImage)
+            add(screenshotImage1)
+            add(screenshotImage2)
+            add(screenshotImage3)
         }
 
     companion object {

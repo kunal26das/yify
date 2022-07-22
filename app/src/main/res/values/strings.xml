@@ -6,5 +6,6 @@
     <string name="query_term">Query Term</string>
     <string name="recently_added">Recently Added</string>
     <string name="all">All</string>
+    <string name="settings">Settings</string>
 
 </resources>

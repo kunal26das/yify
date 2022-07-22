@@ -12,7 +12,7 @@ class NewMoviesViewModel @Inject constructor(
     private val movieRepository: MovieRepository,
 ) : MovieListViewModel() {
 
-    private val Calendar.withoutTime: Calendar
+    private val Calendar.date: Calendar
         get() {
             this[Calendar.MILLISECOND] = 0
             this[Calendar.SECOND] = 0
@@ -23,7 +23,7 @@ class NewMoviesViewModel @Inject constructor(
 
     private val yesterday
         get() = unixTime {
-            it.withoutTime.add(Calendar.DATE, -1)
+            date.add(Calendar.DATE, -1)
         }
 
     init {
@@ -37,7 +37,7 @@ class NewMoviesViewModel @Inject constructor(
     }
 
     private fun unixTime(
-        operation: (Calendar) -> Unit
+        operation: Calendar.() -> Unit
     ): Long {
         val calendar = Calendar.getInstance()
         operation.invoke(calendar)

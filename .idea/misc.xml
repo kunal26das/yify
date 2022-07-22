@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/kunal/.github/yify/app/src/main/res/layout/fragment_all_movies.xml" value="0.18541666666666667" />
+        <entry key="..\:/Users/kunal/.github/yify/app/src/main/res/layout/fragment_new_movies.xml" value="0.1" />
+        <entry key="..\:/Users/kunal/.github/yify/app/src/main/res/layout/fragment_settings.xml" value="0.3625" />
         <entry key="..\:/Users/kunal/.github/yify/app/src/main/res/layout/item_movie.xml" value="0.1859375" />
       </map>
     </option>
