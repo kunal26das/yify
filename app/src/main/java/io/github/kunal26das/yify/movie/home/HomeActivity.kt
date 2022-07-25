@@ -40,8 +40,9 @@ class HomeActivity : ComposeActivity(), Composables {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                count = Destination.size,
                 state = pagerState,
+                count = Destination.size,
+                userScrollEnabled = false,
             ) {
                 when (Destination[currentPage]) {
                     Destination.RecentlyAdded -> AndroidViewBinding(FragmentNewMoviesBinding::inflate)
@@ -59,7 +60,7 @@ class HomeActivity : ComposeActivity(), Composables {
                         selected = pagerState.currentPage == index,
                         onClick = {
                             coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
+                                pagerState.scrollToPage(index)
                             }
                         },
                     )
