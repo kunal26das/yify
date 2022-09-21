@@ -1,17 +1,15 @@
 package io.github.kunal26das.yify.coil
 
-import android.content.Context
 import androidx.essentials.network.Builder
 import coil.ImageLoader
+import io.github.kunal26das.yify.initializer.KoinInitializer.Companion.ApplicationContext
 
 abstract class ImageLoaderBuilder(
-    context: Context, private val builder: (ImageLoader.Builder.() -> Unit)? = null
+    private val builder: (ImageLoader.Builder.() -> Unit)? = null
 ) : Builder<ImageLoader>() {
 
-    private val applicationContext = context.applicationContext
-
     override fun initialize(): ImageLoader {
-        return ImageLoader.Builder(applicationContext).apply {
+        return ImageLoader.Builder(ApplicationContext).apply {
             builder?.invoke(this)
         }.build()
     }

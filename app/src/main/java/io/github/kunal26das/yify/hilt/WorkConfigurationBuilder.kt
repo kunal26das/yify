@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.di
+package io.github.kunal26das.yify.hilt
 
 import androidx.essentials.network.Builder
 import androidx.work.Configuration

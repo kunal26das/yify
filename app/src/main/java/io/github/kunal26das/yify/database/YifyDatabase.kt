@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.database
 
+import android.annotation.SuppressLint
 import androidx.essentials.network.RoomDatabaseBuilder
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -12,6 +13,7 @@ import io.github.kunal26das.yify.Yify
 import io.github.kunal26das.yify.converter.CastConverter
 import io.github.kunal26das.yify.converter.GenreConverter
 import io.github.kunal26das.yify.converter.TorrentConverter
+import io.github.kunal26das.yify.initializer.KoinInitializer.Companion.ApplicationContext
 
 @Database(
     entities = [
@@ -33,8 +35,9 @@ abstract class YifyDatabase : RoomDatabase() {
     abstract val movieDao: MovieDao
     abstract val torrentDao: TorrentDao
 
+    @SuppressLint("StaticFieldLeak")
     companion object : RoomDatabaseBuilder<YifyDatabase>(
-        Yify.INSTANCE, YifyDatabase::class,
+        ApplicationContext, YifyDatabase::class,
         Yify::class.java.simpleName, {
             fallbackToDestructiveMigration()
         }

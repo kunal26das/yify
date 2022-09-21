@@ -7,8 +7,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidViewBinding
@@ -20,12 +19,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.yify.databinding.FragmentAllMoviesBinding
 import io.github.kunal26das.yify.databinding.FragmentNewMoviesBinding
 import io.github.kunal26das.yify.databinding.FragmentSettingsBinding
-import io.github.kunal26das.yify.movie.Composables
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 @OptIn(ExperimentalPagerApi::class)
-class HomeActivity : ComposeActivity(), Composables {
+class HomeActivity : ComposeActivity() {
 
     @Preview
     @Composable
@@ -33,6 +32,7 @@ class HomeActivity : ComposeActivity(), Composables {
         super.setContent()
         val pagerState = rememberPagerState()
         val coroutineScope = rememberCoroutineScope()
+        var job by remember { mutableStateOf<Job?>(null) }
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -59,7 +59,8 @@ class HomeActivity : ComposeActivity(), Composables {
                         icon = { Icon(destination.icon, null) },
                         selected = pagerState.currentPage == index,
                         onClick = {
-                            coroutineScope.launch {
+                            job?.cancel()
+                            job = coroutineScope.launch {
                                 pagerState.scrollToPage(index)
                             }
                         },

@@ -1,5 +1,5 @@
 
-package io.github.kunal26das.yify.di
+package io.github.kunal26das.yify.hilt
 
 import android.content.Context
 import dagger.Module
@@ -35,7 +35,7 @@ object Module {
     fun getMovieService() = yifyRetrofit.create(MovieService::class.java)
 
     @Provides
-    fun getPreferences(
+    fun getSharedPreferences(
         @ApplicationContext context: Context
     ) = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
 

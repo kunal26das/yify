@@ -55,10 +55,10 @@ dependencies {
         implementation 'androidx.appcompat:appcompat:1.5.1'
 
         // Activity
-        implementation 'androidx.activity:activity-ktx:1.5.1'
+        implementation 'androidx.activity:activity-ktx:1.6.0'
 
         // Fragment
-        implementation 'androidx.fragment:fragment-ktx:1.5.2'
+        implementation 'androidx.fragment:fragment-ktx:1.5.3'
 
         // Hilt
         implementation 'androidx.hilt:hilt-work:1.0.0'
@@ -78,6 +78,9 @@ dependencies {
         kapt 'androidx.room:room-compiler:2.4.3'
         implementation 'androidx.room:room-ktx:2.4.3'
 
+        // Startup
+        implementation 'androidx.startup:startup-runtime:1.1.1'
+
         // Work
         implementation 'androidx.work:work-runtime-ktx:2.7.1'
 
@@ -89,12 +92,12 @@ dependencies {
             // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
             implementation 'androidx.compose.foundation:foundation:1.2.1'
             // Material Design
-            implementation 'androidx.compose.material3:material3:1.0.0-beta02'
+            implementation 'androidx.compose.material3:material3:1.0.0-beta03'
             // Material design icons
             implementation 'androidx.compose.material:material-icons-core:1.2.1'
             implementation 'androidx.compose.material:material-icons-extended:1.2.1'
             // Integration with activities
-            implementation 'androidx.activity:activity-compose:1.5.1'
+            implementation 'androidx.activity:activity-compose:1.6.0'
             // Integration with ViewModels
             implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1'
             // Integration with observables
