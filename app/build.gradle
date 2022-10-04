@@ -153,7 +153,7 @@ dependencies {
 
     // Coil
     implementation 'io.coil-kt:coil:2.2.1'
-    implementation 'io.coil-kt:coil-compose:2.2.1'
+    implementation 'io.coil-kt:coil-compose:2.2.2'
 
     // Koin
     implementation 'io.insert-koin:koin-android:3.2.2'
