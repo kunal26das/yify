@@ -55,7 +55,7 @@ dependencies {
         implementation 'androidx.appcompat:appcompat:1.5.1'
 
         // Activity
-        implementation 'androidx.activity:activity-ktx:1.6.0'
+        implementation 'androidx.activity:activity-ktx:1.6.1'
 
         // Fragment
         implementation 'androidx.fragment:fragment-ktx:1.5.4'
