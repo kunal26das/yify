@@ -58,7 +58,7 @@ dependencies {
         implementation 'androidx.activity:activity-ktx:1.6.1'
 
         // Fragment
-        implementation 'androidx.fragment:fragment-ktx:1.5.4'
+        implementation 'androidx.fragment:fragment-ktx:1.5.5'
 
         // Hilt
         implementation 'androidx.hilt:hilt-work:1.0.0'
