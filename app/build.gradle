@@ -76,7 +76,7 @@ dependencies {
 
         // Room
         kapt 'androidx.room:room-compiler:2.5.0'
-        implementation 'androidx.room:room-ktx:2.4.3'
+        implementation 'androidx.room:room-ktx:2.5.0'
 
         // Startup
         implementation 'androidx.startup:startup-runtime:1.1.1'
