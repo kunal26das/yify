@@ -156,7 +156,7 @@ dependencies {
     implementation 'io.coil-kt:coil-compose:2.2.2'
 
     // Koin
-    implementation 'io.insert-koin:koin-android:3.3.2'
+    implementation 'io.insert-koin:koin-android:3.3.3'
 
     // Essentials
     implementation 'androidx.essentials:view:1.0.0@aar'
