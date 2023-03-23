@@ -112,7 +112,7 @@ dependencies {
         dependencies {
             // Accompanist
             implementation 'com.google.accompanist:accompanist-flowlayout:0.28.0'
-            implementation 'com.google.accompanist:accompanist-pager:0.28.0'
+            implementation 'com.google.accompanist:accompanist-pager:0.30.0'
             implementation 'com.google.accompanist:accompanist-placeholder-material:0.28.0'
             implementation 'com.google.accompanist:accompanist-swiperefresh:0.28.0'
         }
