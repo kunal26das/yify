@@ -4,10 +4,9 @@ import androidx.room.TypeConverter
 import io.github.kunal26das.model.Torrent
 import io.github.kunal26das.yify.database.YifyDatabase
 
-class TorrentConverter {
-
-    private val yifyDatabase
-        get() = YifyDatabase.INSTANCE
+class TorrentConverter constructor(
+    private val yifyDatabase: YifyDatabase
+) {
 
     @TypeConverter
     fun stringToTorrents(value: String?): List<Torrent>? {
@@ -18,13 +17,7 @@ class TorrentConverter {
 
     @TypeConverter
     fun torrentsToString(value: List<Torrent>?): String? {
-        return value?.map {
-            it.hash
-        }?.reduce { acc, hash ->
-            var result = acc
-            result += "$hash,"
-            result
-        }
+        return value?.joinToString { "${it.hash}," }
     }
 
 }

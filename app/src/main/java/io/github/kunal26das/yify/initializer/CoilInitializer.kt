@@ -2,11 +2,12 @@ package io.github.kunal26das.yify.initializer
 
 import android.content.Context
 import coil.Coil
-import io.github.kunal26das.yify.coil.YifyImageLoader
+import coil.ImageLoader
 
 class CoilInitializer : IndependentInitializer<Coil> {
     override fun create(context: Context): Coil {
-        Coil.setImageLoader(YifyImageLoader.INSTANCE)
+        val builder = ImageLoader.Builder(context)
+        Coil.setImageLoader(builder.build())
         return Coil
     }
 }

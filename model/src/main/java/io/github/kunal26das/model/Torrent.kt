@@ -1,7 +1,6 @@
 package io.github.kunal26das.model
 
 import android.os.Parcelable
-import androidx.annotation.NonNull
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
@@ -11,7 +10,6 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Torrent(
 
-    @NonNull
     @PrimaryKey
     @SerializedName("hash")
     var hash: String = "",

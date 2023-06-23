@@ -2,7 +2,7 @@ package io.github.kunal26das.yify.database
 
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
 import io.github.kunal26das.model.Torrent
 

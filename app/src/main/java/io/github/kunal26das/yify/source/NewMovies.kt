@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.source
 
 import io.github.kunal26das.model.Movie
-import io.github.kunal26das.yify.movie.filter.Filters
+import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.yify.repository.MovieRepository
 
 class NewMovies(

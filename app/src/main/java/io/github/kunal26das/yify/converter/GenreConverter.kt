@@ -11,10 +11,6 @@ class GenreConverter {
 
     @TypeConverter
     fun listToString(value: List<String>?): String? {
-        return value?.reduce { acc, s ->
-            var result = acc
-            result += "$s,"
-            acc
-        }
+        return value?.joinToString(",")
     }
 }

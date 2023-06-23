@@ -1,11 +1,13 @@
-package io.github.kunal26das.yify.movie.filter
+package io.github.kunal26das.yify.preference
 
-import android.content.SharedPreferences
 import androidx.annotation.IntRange
-import androidx.essentials.network.get
-import io.github.kunal26das.model.*
+import io.github.kunal26das.model.Genre
+import io.github.kunal26das.model.OrderBy
+import io.github.kunal26das.model.Preference
+import io.github.kunal26das.model.Quality
+import io.github.kunal26das.model.SortBy
 
-data class Filters(
+data class Filters constructor(
 
     @Quality
     val quality: String? = null,
@@ -27,14 +29,15 @@ data class Filters(
     val addedBefore: Long? = null,
 ) {
 
-    constructor(sharedPreferences: SharedPreferences) : this(
-        sharedPreferences[Preference.quality],
-        sharedPreferences[Preference.minimum_rating],
-        sharedPreferences[Preference.query_term],
-        sharedPreferences[Preference.genre],
-        sharedPreferences[Preference.sort_by],
-        sharedPreferences[Preference.order_by],
+    constructor(it: MoviePreferences): this(
+        quality = it.getQuality(),
+        minimumRating = it.getMinimumRating(),
+        queryTerm = it.getQueryTerm(),
+        genre = it.getGenre(),
+        sortBy = it.getSortBy(),
+        orderBy = it.getOrderBy(),
     )
+
 
     constructor(addedBefore: Long) : this(
         sortBy = SortBy.date_added.name,

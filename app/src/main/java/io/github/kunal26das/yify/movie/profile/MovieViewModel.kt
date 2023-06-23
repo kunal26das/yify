@@ -19,9 +19,9 @@ class MovieViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var job: Job? = null
-    val movie = MutableLiveData<Movie>()
+    val movie = MutableLiveData<Movie?>()
     val palette = MutableLiveData<Palette>()
-    val suggestions = MutableLiveData<List<Movie>>()
+    val suggestions = MutableLiveData<List<Movie>?>()
 
     fun refresh(
         movieId: Int?,

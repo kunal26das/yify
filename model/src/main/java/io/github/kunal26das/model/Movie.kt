@@ -1,8 +1,8 @@
 package io.github.kunal26das.model
 
 import android.os.Parcelable
-import androidx.annotation.NonNull
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
@@ -11,7 +11,6 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Movie(
 
-    @NonNull
     @PrimaryKey
     @SerializedName("id")
     var id: Int = 0,
@@ -22,6 +21,7 @@ data class Movie(
     @SerializedName("background_image_original")
     var backgroundImageOriginal: String? = null,
 
+    @Ignore
     @SerializedName("cast")
     var cast: List<Cast>? = null,
 
@@ -109,6 +109,7 @@ data class Movie(
     @SerializedName("title_long")
     var titleLong: String? = null,
 
+    @Ignore
     @SerializedName("torrents")
     var torrents: List<Torrent>? = null,
 

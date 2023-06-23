@@ -9,6 +9,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
@@ -21,16 +24,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.essentials.view.ComposeActivity
 import androidx.lifecycle.Lifecycle
 import coil.compose.AsyncImage
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.Cast
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
 import io.github.kunal26das.yify.contract.YouTubeContract
+import io.github.kunal26das.yify.core.ComposeActivity
 import io.github.kunal26das.yify.movie.Composables
 
 @AndroidEntryPoint
@@ -45,38 +46,39 @@ class MovieActivity : ComposeActivity(), Composables {
     private val movieDelegate = lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE) }
     private val movie by movieDelegate
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Preview
     @Composable
     override fun setContent() {
-        super.setContent()
+        val pullRefreshState = rememberPullRefreshState(
+            onRefresh = { viewModel.refresh(movie?.id) },
+            refreshing = movie == null,
+        )
         val movie by viewModel.movie.observeAsState()
         val palette by viewModel.palette.observeAsState()
-        SwipeRefresh(
-            modifier = Modifier.fillMaxSize(),
-            state = rememberSwipeRefreshState(
-                isRefreshing = movie == null
-            ),
-            onRefresh = { viewModel.refresh(movie?.id) },
+//        PullRefreshIndicator(
+//            modifier = Modifier.fillMaxSize(),
+//            refreshing = movie == null,
+//            state = pullRefreshState,
+//        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(ScrollState(0))
         ) {
-            Column(
+            Poster(movie)
+            if (palette != null) Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(ScrollState(0))
+                    .padding(
+                        vertical = 4.dp,
+                        horizontal = 8.dp,
+                    )
             ) {
-                Poster(movie)
-                if (palette != null) Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            vertical = 4.dp,
-                            horizontal = 8.dp,
-                        )
-                ) {
-                    Description(movie?.descriptionFull)
-                    Genres(movie?.genres)
-                    Screenshots(movie)
-                    Suggestions()
-                }
+                Description(movie?.descriptionFull)
+                Genres(movie?.genres)
+                Screenshots(movie)
+                Suggestions()
             }
         }
     }
@@ -192,7 +194,7 @@ class MovieActivity : ComposeActivity(), Composables {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        movieDelegate.onStateChanged(this, Lifecycle.Event.ON_DESTROY)
+//        movieDelegate.onStateChanged(this, Lifecycle.Event.ON_DESTROY)
         viewModel.refresh(movie?.id)
     }
 

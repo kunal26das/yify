@@ -4,10 +4,9 @@ import androidx.room.TypeConverter
 import io.github.kunal26das.model.Cast
 import io.github.kunal26das.yify.database.YifyDatabase
 
-class CastConverter {
-
-    private val yifyDatabase
-        get() = YifyDatabase.INSTANCE
+class CastConverter constructor(
+    private val yifyDatabase: YifyDatabase
+) {
 
     @TypeConverter
     fun stringToCast(value: String?): List<Cast>? {
@@ -18,13 +17,7 @@ class CastConverter {
 
     @TypeConverter
     fun torrentsToCast(value: List<Cast>?): String? {
-        return value?.map {
-            it.imdbCode
-        }?.reduce { acc, hash ->
-            var result = acc
-            result += "$hash,"
-            result
-        }
+        return value?.joinToString { "${it.imdbCode}," }
     }
 
 }

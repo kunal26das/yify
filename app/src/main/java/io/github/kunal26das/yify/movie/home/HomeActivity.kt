@@ -1,8 +1,11 @@
 package io.github.kunal26das.yify.movie.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -11,11 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidViewBinding
-import androidx.essentials.view.ComposeActivity
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.kunal26das.yify.core.ComposeActivity
 import io.github.kunal26das.yify.databinding.FragmentAllMoviesBinding
 import io.github.kunal26das.yify.databinding.FragmentNewMoviesBinding
 import io.github.kunal26das.yify.databinding.FragmentSettingsBinding
@@ -23,13 +23,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 class HomeActivity : ComposeActivity() {
 
     @Preview
     @Composable
     override fun setContent() {
-        super.setContent()
         val pagerState = rememberPagerState()
         val coroutineScope = rememberCoroutineScope()
         var job by remember { mutableStateOf<Job?>(null) }
@@ -41,9 +40,9 @@ class HomeActivity : ComposeActivity() {
                     .fillMaxWidth()
                     .weight(1f),
                 state = pagerState,
-                count = Destination.size,
+                pageCount = Destination.size,
                 userScrollEnabled = false,
-            ) {
+            ) { currentPage ->
                 when (Destination[currentPage]) {
                     Destination.RecentlyAdded -> AndroidViewBinding(FragmentNewMoviesBinding::inflate)
                     Destination.AllMovies -> AndroidViewBinding(FragmentAllMoviesBinding::inflate)

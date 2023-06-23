@@ -1,11 +1,16 @@
 package io.github.kunal26das.yify.movie
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -16,15 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import io.github.kunal26das.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterial3Api::class)
 interface Composables {
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun Movies(
         modifier: Modifier = Modifier,
@@ -33,28 +36,30 @@ interface Composables {
         onClick: (Movie?) -> Unit = {},
     ) {
         val movies = source?.collectAsLazyPagingItems()
-        SwipeRefresh(
-            modifier = modifier,
-            state = rememberSwipeRefreshState(
-                isRefreshing = movies != null && movies.itemCount == 0
-            ),
+        val refreshing: () -> Boolean = { movies != null && movies.itemCount == 0 }
+        val pullRefreshState = rememberPullRefreshState(
+            refreshing = refreshing.invoke(),
             onRefresh = onRefresh,
-        ) {
-            LazyVerticalGrid(
-                modifier = Modifier.fillMaxSize(),
-                columns = GridCells.Fixed(2),
-                content = {
-                    items(movies?.itemCount ?: 0) { index ->
-                        val movie = movies?.get(index)
-                        MovieCard(
-                            modifier = Modifier.padding(8.dp),
-                            movie = movie,
-                            onClick = onClick,
-                        )
-                    }
+        )
+//        PullRefreshIndicator(
+//            modifier = modifier,
+//            state = pullRefreshState,
+//            refreshing = refreshing.invoke()
+//        )
+        LazyVerticalGrid(
+            modifier = Modifier.fillMaxSize(),
+            columns = GridCells.Fixed(2),
+            content = {
+                items(movies?.itemCount ?: 0) { index ->
+                    val movie = movies?.get(index)
+                    MovieCard(
+                        modifier = Modifier.padding(8.dp),
+                        movie = movie,
+                        onClick = onClick,
+                    )
                 }
-            )
-        }
+            }
+        )
     }
 
     @Composable
@@ -77,6 +82,7 @@ interface Composables {
         }
     }
 
+    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun FlowChips(
         modifier: Modifier = Modifier,

@@ -3,7 +3,7 @@ package io.github.kunal26das.yify.source
 import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
 import io.github.kunal26das.model.Movie
-import io.github.kunal26das.yify.movie.filter.Filters
+import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.yify.repository.MovieRepository
 
 open class AllMovies(

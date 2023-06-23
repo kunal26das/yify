@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.movie.list
 
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.kunal26das.yify.movie.filter.Filters
+import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.yify.repository.MovieRepository
 import io.github.kunal26das.yify.source.NewMovies
 import java.util.*
@@ -30,7 +30,7 @@ class NewMoviesViewModel @Inject constructor(
         refresh()
     }
 
-    override fun refresh(delayTimeMillis: Long) {
+    override suspend fun refreshInternal(delayTimeMillis: Long) {
         super.refresh(delayTimeMillis) {
             NewMovies(movieRepository, Filters(yesterday))
         }

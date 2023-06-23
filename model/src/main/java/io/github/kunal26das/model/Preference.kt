@@ -1,5 +1,9 @@
 package io.github.kunal26das.model
 
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+
 @Suppress("EnumEntryName")
 enum class Preference {
     quality,
@@ -12,4 +16,8 @@ enum class Preference {
     movie_count,
     loading,
     page,
+    ;
+    val intPreferencesKey get() = intPreferencesKey(name)
+    val stringPreferencesKey get() = stringPreferencesKey(name)
+    val booleanPreferencesKey get() = booleanPreferencesKey(name)
 }

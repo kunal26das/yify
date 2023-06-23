@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.movie.list
 
-import androidx.essentials.view.ComposeFragment
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.kunal26das.yify.core.ComposeFragment
 import io.github.kunal26das.yify.movie.Composables
 import io.github.kunal26das.yify.movie.profile.MovieActivity
 

@@ -6,29 +6,42 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.essentials.view.ComposeBottomSheetDialogFragment
-import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.model.*
+import io.github.kunal26das.model.Genre
+import io.github.kunal26das.model.OnChangeListener
+import io.github.kunal26das.model.OrderBy
+import io.github.kunal26das.model.Quality
+import io.github.kunal26das.model.SortBy
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.core.ComposeBottomSheetDialogFragment
 import io.github.kunal26das.yify.movie.Composables
+import io.github.kunal26das.yify.preference.MoviePreferences
+import io.github.kunal26das.yify.preference.MutableMoviePreferences
+import io.github.kunal26das.yify.preference.ObservableMoviePreferences
+import javax.inject.Inject
 
 @AndroidEntryPoint
-@OptIn(ExperimentalMaterial3Api::class)
 class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
 
+//    @Inject
+//    lateinit var observableMoviePreferences: ObservableMoviePreferences
+
+    @Inject
+    lateinit var mutableMoviePreferences: MutableMoviePreferences
+
+    @Inject
+    lateinit var moviePreferences: MoviePreferences
+
     private var onChangeListener: OnChangeListener<*>? = null
-    private val viewModel by viewModels<MovieFilterViewModel>()
 
     @Preview
     @Composable
@@ -50,7 +63,7 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
 
     @Composable
     private fun QueryTerm() {
-        val queryTerm by viewModel.queryTerm.observeAsState()
+        val queryTerm = moviePreferences.getQueryTerm()
         TextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -58,7 +71,7 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
             value = queryTerm ?: "",
             placeholder = { Text(text = getString(R.string.query_term)) },
             onValueChange = {
-                viewModel.queryTerm.value = it
+                mutableMoviePreferences.setQueryTerm(it)
                 onChangeListener?.invoke(null)
             }
         )
@@ -66,7 +79,7 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
 
     @Composable
     private fun Quality() {
-        val quality by viewModel.quality.observeAsState()
+        val quality = moviePreferences.getQuality()
         FlowChips(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,14 +87,14 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
             chips = Quality,
             selected = quality,
         ) {
-            viewModel.quality.value = it
+            mutableMoviePreferences.setQuality(it)
             onChangeListener?.invoke(null)
         }
     }
 
     @Composable
     private fun MinimumRating() {
-        val minimumRating by viewModel.minimumRating.observeAsState()
+        val minimumRating = moviePreferences.getMinimumRating()
         Slider(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,14 +106,14 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
                 onChangeListener?.invoke(null)
             },
             onValueChange = {
-                viewModel.minimumRating.value = it.toInt()
+                mutableMoviePreferences.setMinimumRating(it.toInt())
             },
         )
     }
 
     @Composable
     private fun Genre() {
-        val genre by viewModel.genre.observeAsState()
+        val genre = moviePreferences.getGenre()
         FlowChips(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,14 +121,14 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
             chips = Genre,
             selected = genre,
         ) {
-            viewModel.genre.value = it
+            mutableMoviePreferences.setGenre(it)
             onChangeListener?.invoke(null)
         }
     }
 
     @Composable
     private fun SortBy() {
-        val sortBy by viewModel.sortBy.observeAsState()
+        val sortBy = moviePreferences.getSortBy()
         FlowChips(
             modifier = Modifier
                 .fillMaxWidth()
@@ -123,14 +136,14 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
             chips = SortBy.values().map { it.name },
             selected = sortBy,
         ) {
-            viewModel.sortBy.value = it
+            mutableMoviePreferences.setSortBy(it)
             onChangeListener?.invoke(null)
         }
     }
 
     @Composable
     private fun OrderBy() {
-        val orderBy by viewModel.orderBy.observeAsState()
+        val orderBy = moviePreferences.getOrderBy()
         FlowChips(
             modifier = Modifier
                 .fillMaxWidth()
@@ -138,7 +151,7 @@ class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
             chips = OrderBy.values().map { it.name },
             selected = orderBy,
         ) {
-            viewModel.orderBy.value = it
+            mutableMoviePreferences.setOrderBy(it)
             onChangeListener?.invoke(null)
         }
     }

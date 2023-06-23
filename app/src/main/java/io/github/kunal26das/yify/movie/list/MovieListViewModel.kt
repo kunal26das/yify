@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import io.github.kunal26das.model.Movie
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -15,27 +16,31 @@ abstract class MovieListViewModel : ViewModel() {
     private var job: Job? = null
     val movies = MutableLiveData<Flow<PagingData<Movie>>>()
 
-    abstract fun refresh(
-        delayTimeMillis: Long = 0L,
+    fun refresh(delayTimeMillis: Long = 0L) {
+        viewModelScope.launch(Dispatchers.IO) {
+            refreshInternal(delayTimeMillis)
+        }
+    }
+
+    abstract suspend fun refreshInternal(
+        delayTimeMillis: Long,
     )
 
-    protected fun refresh(
+    protected suspend fun refresh(
         delayTimeMillis: Long,
         pagingSourceFactory: () -> PagingSource<Int, Movie>,
     ) {
         job?.cancel()
-        job = viewModelScope.launch {
-            delay(delayTimeMillis)
-            movies.postValue(
-                Pager(
-                    config = PagingConfig(
-                        initialLoadSize = LOAD_SIZE,
-                        pageSize = LOAD_SIZE,
-                    ),
-                    pagingSourceFactory = pagingSourceFactory,
-                ).flow.cachedIn(viewModelScope)
-            )
-        }
+        delay(delayTimeMillis)
+        movies.postValue(
+            Pager(
+                config = PagingConfig(
+                    initialLoadSize = LOAD_SIZE,
+                    pageSize = LOAD_SIZE,
+                ),
+                pagingSourceFactory = pagingSourceFactory,
+            ).flow.cachedIn(viewModelScope)
+        )
     }
 
     override fun onCleared() {

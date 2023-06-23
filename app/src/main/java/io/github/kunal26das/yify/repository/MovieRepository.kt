@@ -1,24 +1,24 @@
 package io.github.kunal26das.yify.repository
 
-import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
 import androidx.annotation.IntRange
 import androidx.core.graphics.drawable.toBitmap
-import androidx.essentials.network.set
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.palette.graphics.Palette
 import io.github.kunal26das.model.Cast
+import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Preference
 import io.github.kunal26das.model.Torrent
 import io.github.kunal26das.yify.database.CastDao
 import io.github.kunal26das.yify.database.MovieDao
 import io.github.kunal26das.yify.database.TorrentDao
-import io.github.kunal26das.yify.movie.filter.Filters
+import io.github.kunal26das.yify.preference.MutableMoviePreferences
 import io.github.kunal26das.yify.service.MovieService
 import javax.inject.Inject
 
 class MovieRepository @Inject constructor(
-    private val sharedPreferences: SharedPreferences,
+    private val mutableMoviePreferences: MutableMoviePreferences?,
     private val movieService: MovieService,
     private val torrentDao: TorrentDao,
     private val movieDao: MovieDao,
@@ -38,7 +38,7 @@ class MovieRepository @Inject constructor(
             filters?.sortBy,
             filters?.orderBy,
         )
-        sharedPreferences[Preference.movie_count] = response.data.movieCount
+        mutableMoviePreferences?.setMovieCount(response.data.movieCount)
         val movies = response.data.movies
         insertMovies(movies)
         movies
