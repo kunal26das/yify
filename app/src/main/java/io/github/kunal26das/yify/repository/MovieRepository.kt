@@ -3,16 +3,14 @@ package io.github.kunal26das.yify.repository
 import android.graphics.drawable.Drawable
 import androidx.annotation.IntRange
 import androidx.core.graphics.drawable.toBitmap
-import androidx.datastore.preferences.core.MutablePreferences
 import androidx.palette.graphics.Palette
 import io.github.kunal26das.model.Cast
-import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.model.Movie
-import io.github.kunal26das.model.Preference
 import io.github.kunal26das.model.Torrent
 import io.github.kunal26das.yify.database.CastDao
 import io.github.kunal26das.yify.database.MovieDao
 import io.github.kunal26das.yify.database.TorrentDao
+import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.yify.preference.MutableMoviePreferences
 import io.github.kunal26das.yify.service.MovieService
 import javax.inject.Inject

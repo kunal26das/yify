@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
 import coil.compose.AsyncImage
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.model.Cast
@@ -49,7 +47,7 @@ class MovieActivity : ComposeActivity(), Composables {
     @OptIn(ExperimentalMaterialApi::class)
     @Preview
     @Composable
-    override fun setContent() {
+    override fun Content() {
         val pullRefreshState = rememberPullRefreshState(
             onRefresh = { viewModel.refresh(movie?.id) },
             refreshing = movie == null,

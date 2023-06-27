@@ -6,7 +6,7 @@ import io.github.kunal26das.model.Movie
 import io.github.kunal26das.yify.preference.Filters
 import io.github.kunal26das.yify.repository.MovieRepository
 
-open class AllMovies(
+open class AllMovies constructor(
     private val movieRepository: MovieRepository,
     private val filters: Filters,
 ) : PagingSource<Movie>() {

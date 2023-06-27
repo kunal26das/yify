@@ -4,7 +4,6 @@ import com.google.firebase.crashlytics.ktx.crashlytics
 import com.google.firebase.ktx.Firebase
 
 sealed interface Repository {
-
     suspend fun <T> execute(
         block: suspend () -> T
     ) = try {
@@ -13,5 +12,4 @@ sealed interface Repository {
         Firebase.crashlytics.recordException(e)
         null
     }
-
 }

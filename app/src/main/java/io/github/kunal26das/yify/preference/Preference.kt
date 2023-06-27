@@ -1,4 +1,4 @@
-package io.github.kunal26das.model
+package io.github.kunal26das.yify.preference
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey

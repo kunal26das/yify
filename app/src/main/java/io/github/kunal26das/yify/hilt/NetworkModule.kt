@@ -1,11 +1,13 @@
 package io.github.kunal26das.yify.hilt
 
+import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.service.MovieService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -23,6 +25,9 @@ object NetworkModule {
     fun providesOkHttp(): OkHttpClient {
         return OkHttpClient.Builder().apply {
             retryOnConnectionFailure(true)
+            if (BuildConfig.DEBUG) {
+                addNetworkInterceptor(StethoInterceptor())
+            }
         }.build()
     }
 
@@ -37,7 +42,7 @@ object NetworkModule {
         gson: Gson,
     ): Retrofit {
         return Retrofit.Builder().apply {
-            baseUrl("https://yts.mx/api/v2/")
+            baseUrl(BuildConfig.BASE_URL)
             client(okHttpClient)
             addConverterFactory(GsonConverterFactory.create(gson))
         }.build()

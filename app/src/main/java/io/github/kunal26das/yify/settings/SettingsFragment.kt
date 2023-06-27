@@ -7,7 +7,7 @@ import io.github.kunal26das.yify.core.ComposeFragment
 @AndroidEntryPoint
 class SettingsFragment : ComposeFragment() {
     @Composable
-    override fun setContent() {
+    override fun Content() {
         TODO("Not yet implemented")
     }
 }

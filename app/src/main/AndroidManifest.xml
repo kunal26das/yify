@@ -21,8 +21,6 @@
             tools:node="merge">
             <meta-data android:name="io.github.kunal26das.yify.initializer.CoilInitializer"
                 android:value="androidx.startup" />
-            <meta-data android:name="io.github.kunal26das.yify.initializer.StethoInitializer"
-                android:value="androidx.startup" />
         </provider>
 
         <activity android:name=".movie.home.HomeActivity"

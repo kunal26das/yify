@@ -1,7 +1,6 @@
 package io.github.kunal26das.yify.preference
 
 import androidx.datastore.preferences.core.MutablePreferences
-import io.github.kunal26das.model.Preference
 import javax.inject.Inject
 
 class MutableMoviePreferencesImpl @Inject constructor(

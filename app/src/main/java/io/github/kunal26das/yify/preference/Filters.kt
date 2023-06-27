@@ -3,7 +3,6 @@ package io.github.kunal26das.yify.preference
 import androidx.annotation.IntRange
 import io.github.kunal26das.model.Genre
 import io.github.kunal26das.model.OrderBy
-import io.github.kunal26das.model.Preference
 import io.github.kunal26das.model.Quality
 import io.github.kunal26das.model.SortBy
 

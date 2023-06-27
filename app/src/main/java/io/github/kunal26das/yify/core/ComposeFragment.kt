@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import io.github.kunal26das.yify.theme.YifyTheme
 
 abstract class ComposeFragment : Fragment() {
     fun <I, O> registerForActivityResult(
@@ -19,10 +20,12 @@ abstract class ComposeFragment : Fragment() {
         savedInstanceState: Bundle?
     ) = ComposeView(requireContext()).also {
         it.setContent {
-            setContent()
+            YifyTheme {
+                Content()
+            }
         }
     }
 
     @Composable
-    abstract fun setContent()
+    abstract fun Content()
 }

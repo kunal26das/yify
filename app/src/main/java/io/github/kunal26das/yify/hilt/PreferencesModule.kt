@@ -11,21 +11,14 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.preference.MoviePreferences
 import io.github.kunal26das.yify.preference.MoviePreferencesImpl
 import io.github.kunal26das.yify.preference.MutableMoviePreferences
 import io.github.kunal26das.yify.preference.MutableMoviePreferencesImpl
 import io.github.kunal26das.yify.preference.ObservableMoviePreferences
 import io.github.kunal26das.yify.preference.ObservableMoviePreferencesImpl
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 @Module
@@ -50,11 +43,11 @@ abstract class PreferencesModule {
     companion object {
 
         private val Context.dataStore by preferencesDataStore(
-            name = "temp" // replace with package name
+            name = BuildConfig.APPLICATION_ID
         )
 
         @Provides
-        fun providesPreferencesFlow(
+        fun providesDataStore(
             @ApplicationContext context: Context
         ): DataStore<Preferences> {
             return context.dataStore

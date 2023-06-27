@@ -1,12 +1,12 @@
 package io.github.kunal26das.yify.preference
 
-import kotlinx.coroutines.flow.Flow
+import androidx.lifecycle.LiveData
 
 interface ObservableMoviePreferences {
-    fun getQualityFlow(): Flow<String?>
-    fun getMinimumRatingFlow(): Flow<Int?>
-    fun getQueryTermFlow(): Flow<String?>
-    fun getGenreFlow(): Flow<String?>
-    fun getSortByFlow(): Flow<String?>
-    fun getOrderByFlow(): Flow<String?>
+    fun getQualityLiveData(): LiveData<String?>
+    fun getMinimumRatingLiveData(): LiveData<Int?>
+    fun getQueryTermLiveData(): LiveData<String?>
+    fun getGenreLiveData(): LiveData<String?>
+    fun getSortByLiveData(): LiveData<String?>
+    fun getOrderByLiveData(): LiveData<String?>
 }

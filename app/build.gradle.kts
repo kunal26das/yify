@@ -23,9 +23,18 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile ("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+        }
+
+        release {
+            isMinifyEnabled = true
+            buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -37,6 +46,7 @@ android {
     buildFeatures {
         compose = true
         dataBinding = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -49,7 +59,7 @@ android {
 }
 
 dependencies {
-    implementation(project (":model"))
+    implementation(project(":model"))
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
@@ -81,7 +91,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.1.1"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.facebook.stetho:stetho:1.6.0")
+    debugImplementation("com.facebook.stetho:stetho:1.6.0")
+    debugImplementation("com.facebook.stetho:stetho-okhttp3:1.6.0")
     implementation("androidx.compose.foundation:foundation:1.4.3")
     val paging_version = "3.2.0-beta01"
     implementation("androidx.paging:paging-runtime:$paging_version")

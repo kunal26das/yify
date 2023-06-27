@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import io.github.kunal26das.yify.theme.YifyTheme
 
 abstract class ComposeBottomSheetDialogFragment : BottomSheetDialogFragment() {
     override fun onCreateView(
@@ -14,10 +15,12 @@ abstract class ComposeBottomSheetDialogFragment : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ) = ComposeView(requireContext()).also {
         it.setContent {
-            setContent()
+            YifyTheme {
+                Content()
+            }
         }
     }
 
     @Composable
-    abstract fun setContent()
+    abstract fun Content()
 }

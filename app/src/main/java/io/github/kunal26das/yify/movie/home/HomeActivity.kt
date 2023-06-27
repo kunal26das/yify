@@ -28,7 +28,7 @@ class HomeActivity : ComposeActivity() {
 
     @Preview
     @Composable
-    override fun setContent() {
+    override fun Content() {
         val pagerState = rememberPagerState()
         val coroutineScope = rememberCoroutineScope()
         var job by remember { mutableStateOf<Job?>(null) }

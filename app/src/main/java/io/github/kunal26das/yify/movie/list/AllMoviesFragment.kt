@@ -28,7 +28,7 @@ class AllMoviesFragment : MovieListFragment(), Composables {
 
     @Preview
     @Composable
-    override fun setContent() {
+    override fun Content() {
         val source by viewModel.movies.observeAsState()
         Box(
             modifier = Modifier.fillMaxSize()

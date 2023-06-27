@@ -6,9 +6,8 @@ import androidx.room.TypeConverters
 import io.github.kunal26das.model.Cast
 import io.github.kunal26das.model.Movie
 import io.github.kunal26das.model.Torrent
-import io.github.kunal26das.yify.converter.CastConverter
+import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.converter.GenreConverter
-import io.github.kunal26das.yify.converter.TorrentConverter
 
 @Database(
     entities = [
@@ -17,7 +16,7 @@ import io.github.kunal26das.yify.converter.TorrentConverter
         Torrent::class,
     ],
     exportSchema = true,
-    version = 1,
+    version = BuildConfig.VERSION_CODE,
 )
 @TypeConverters(
 //    CastConverter::class,
