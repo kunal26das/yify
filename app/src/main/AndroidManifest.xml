@@ -3,28 +3,31 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:allowBackup="true"
         android:name=".Yify"
+        android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/YifyStyle"
-        tools:targetApi="31">
+        android:theme="@style/YifyStyle">
 
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             android:exported="false"
             tools:node="merge">
-            <meta-data android:name="io.github.kunal26das.yify.initializer.CoilInitializer"
+            <meta-data
+                android:name="io.github.kunal26das.yify.initializer.CoilInitializer"
                 android:value="androidx.startup" />
         </provider>
 
-        <activity android:name=".movie.home.HomeActivity"
-            android:exported="true">
+        <activity
+            android:name=".home.HomeActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

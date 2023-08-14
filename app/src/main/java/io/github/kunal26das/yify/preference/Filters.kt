@@ -1,10 +1,10 @@
 package io.github.kunal26das.yify.preference
 
 import androidx.annotation.IntRange
-import io.github.kunal26das.model.Genre
-import io.github.kunal26das.model.OrderBy
-import io.github.kunal26das.model.Quality
-import io.github.kunal26das.model.SortBy
+import io.github.kunal26das.yify.model.Genre
+import io.github.kunal26das.yify.model.OrderBy
+import io.github.kunal26das.yify.model.Quality
+import io.github.kunal26das.yify.model.SortBy
 
 data class Filters constructor(
 

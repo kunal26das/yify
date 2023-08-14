@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.palette.graphics.Palette
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.kunal26das.model.Movie
+import io.github.kunal26das.yify.model.Movie
 import io.github.kunal26das.yify.repository.MovieRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

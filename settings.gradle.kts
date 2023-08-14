@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "yify"
 include(":app")
-include(":model")

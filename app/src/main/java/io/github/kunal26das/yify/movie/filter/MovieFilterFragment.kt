@@ -16,20 +16,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.model.Genre
-import io.github.kunal26das.model.OnChangeListener
-import io.github.kunal26das.model.OrderBy
-import io.github.kunal26das.model.Quality
-import io.github.kunal26das.model.SortBy
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.core.ComposeBottomSheetDialogFragment
-import io.github.kunal26das.yify.movie.Composables
+import io.github.kunal26das.yify.common.ComposeBottomSheetDialogFragment
+import io.github.kunal26das.yify.compose.FlowChips
+import io.github.kunal26das.yify.model.Genre
+import io.github.kunal26das.yify.model.OnChangeListener
+import io.github.kunal26das.yify.model.OrderBy
+import io.github.kunal26das.yify.model.Quality
+import io.github.kunal26das.yify.model.SortBy
 import io.github.kunal26das.yify.preference.MutableMoviePreferences
 import io.github.kunal26das.yify.preference.ObservableMoviePreferences
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MovieFilterFragment : ComposeBottomSheetDialogFragment(), Composables {
+class MovieFilterFragment : ComposeBottomSheetDialogFragment() {
 
     @Inject
     lateinit var observableMoviePreferences: ObservableMoviePreferences

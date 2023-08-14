@@ -25,23 +25,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.model.Cast
-import io.github.kunal26das.model.Movie
-import io.github.kunal26das.model.Movie.Companion.KEY_MOVIE
+import io.github.kunal26das.yify.common.ComposeActivity
+import io.github.kunal26das.yify.compose.Chips
+import io.github.kunal26das.yify.compose.MovieCard
 import io.github.kunal26das.yify.contract.YouTubeContract
-import io.github.kunal26das.yify.core.ComposeActivity
-import io.github.kunal26das.yify.movie.Composables
+import io.github.kunal26das.yify.model.Cast
+import io.github.kunal26das.yify.model.Movie
+import io.github.kunal26das.yify.model.Movie.Companion.KEY_MOVIE
 
 @AndroidEntryPoint
 @OptIn(ExperimentalMaterial3Api::class)
-class MovieActivity : ComposeActivity(), Composables {
+class MovieActivity : ComposeActivity() {
 
     private val viewModel by viewModels<MovieViewModel>()
 
     private val movieActivity = registerForActivityResult(Contract())
     private val youTube = registerForActivityResult(YouTubeContract())
 
-    private val movieDelegate = lazy { intent.getParcelableExtra<Movie>(KEY_MOVIE) }
+    private val movieDelegate = lazy { intent.getParcelableExtra(KEY_MOVIE, Movie::class.java) }
     private val movie by movieDelegate
 
     @OptIn(ExperimentalMaterialApi::class)

@@ -1,10 +1,10 @@
 package io.github.kunal26das.yify.service
 
 import androidx.annotation.IntRange
-import io.github.kunal26das.model.Genre
-import io.github.kunal26das.model.Movie
-import io.github.kunal26das.model.Quality
-import io.github.kunal26das.model.Response
+import io.github.kunal26das.yify.model.Genre
+import io.github.kunal26das.yify.model.Movie
+import io.github.kunal26das.yify.model.Quality
+import io.github.kunal26das.yify.model.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
