@@ -9,7 +9,7 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="io.github.kunal26das.yify.initializer.StethoInitializer"
+                android:name="io.github.kunal26das.yify.init.StethoInitializer"
                 android:value="androidx.startup" />
         </provider>
     </application>

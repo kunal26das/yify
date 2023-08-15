@@ -19,12 +19,12 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="io.github.kunal26das.yify.initializer.CoilInitializer"
+                android:name="io.github.kunal26das.yify.init.CoilInitializer"
                 android:value="androidx.startup" />
         </provider>
 
         <activity
-            android:name=".home.HomeActivity"
+            android:name=".HomeActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity">

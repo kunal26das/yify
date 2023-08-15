@@ -8,7 +8,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.kunal26das.yify.BuildConfig
-import io.github.kunal26das.yify.service.MovieService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -43,9 +42,4 @@ object NetworkModule {
             addConverterFactory(GsonConverterFactory.create(gson))
         }.build()
     }
-
-    @Provides
-    fun getMovieService(
-        retrofit: Retrofit
-    ): MovieService = retrofit.create(MovieService::class.java)
 }

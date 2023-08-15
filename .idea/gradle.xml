@@ -12,6 +12,11 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/common" />
+            <option value="$PROJECT_DIR$/dependency" />
+            <option value="$PROJECT_DIR$/yify" />
+            <option value="$PROJECT_DIR$/yify/data" />
+            <option value="$PROJECT_DIR$/yify/domain" />
           </set>
         </option>
       </GradleProjectSettings>
