@@ -1,22 +1,22 @@
-package io.github.kunal26das.yify.domain.model
+package io.github.kunal26das.yify
 
 import androidx.annotation.StringDef
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ACTION
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ACTION_COMEDY
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ADVENTURE
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ALL
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ANIMATION
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_COMEDY
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_COMEDY_ROMANCE
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_CRIME
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_DRAMA
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_FANTASY
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_HORROR
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_MYSTERY
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_ROMANCE
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_SCI_FI
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_SUPERHERO
-import io.github.kunal26das.yify.domain.model.Genre.Companion.GENRE_THRILLER
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ACTION
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ACTION_COMEDY
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ADVENTURE
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ALL
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ANIMATION
+import io.github.kunal26das.yify.Genre.Companion.GENRE_COMEDY
+import io.github.kunal26das.yify.Genre.Companion.GENRE_COMEDY_ROMANCE
+import io.github.kunal26das.yify.Genre.Companion.GENRE_CRIME
+import io.github.kunal26das.yify.Genre.Companion.GENRE_DRAMA
+import io.github.kunal26das.yify.Genre.Companion.GENRE_FANTASY
+import io.github.kunal26das.yify.Genre.Companion.GENRE_HORROR
+import io.github.kunal26das.yify.Genre.Companion.GENRE_MYSTERY
+import io.github.kunal26das.yify.Genre.Companion.GENRE_ROMANCE
+import io.github.kunal26das.yify.Genre.Companion.GENRE_SCI_FI
+import io.github.kunal26das.yify.Genre.Companion.GENRE_SUPERHERO
+import io.github.kunal26das.yify.Genre.Companion.GENRE_THRILLER
 
 @StringDef(
     GENRE_ALL,

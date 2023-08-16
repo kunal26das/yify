@@ -15,8 +15,8 @@ import io.github.kunal26das.yify.domain.model.Movie
 @Composable
 fun MovieCard(
     modifier: Modifier = Modifier,
-    movie: Movie,
-    onClick: (Movie) -> Unit = {},
+    movie: Movie?,
+    onClick: (Movie?) -> Unit = {},
 ) {
     ElevatedCard(
         modifier = modifier,
@@ -25,8 +25,8 @@ fun MovieCard(
     ) {
         AsyncImage(
             modifier = Modifier.fillMaxSize(),
-            contentDescription = movie.title,
-            model = movie.coverImage,
+            contentDescription = movie?.title,
+            model = movie?.coverImage,
             contentScale = ContentScale.Crop,
         )
     }

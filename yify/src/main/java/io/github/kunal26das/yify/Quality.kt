@@ -1,11 +1,11 @@
-package io.github.kunal26das.yify.domain.model
+package io.github.kunal26das.yify
 
 import androidx.annotation.StringDef
-import io.github.kunal26das.yify.domain.model.Quality.Companion.QUALITY_1080p
-import io.github.kunal26das.yify.domain.model.Quality.Companion.QUALITY_2160p
-import io.github.kunal26das.yify.domain.model.Quality.Companion.QUALITY_3D
-import io.github.kunal26das.yify.domain.model.Quality.Companion.QUALITY_720p
-import io.github.kunal26das.yify.domain.model.Quality.Companion.QUALITY_ALL
+import io.github.kunal26das.yify.Quality.Companion.QUALITY_1080p
+import io.github.kunal26das.yify.Quality.Companion.QUALITY_2160p
+import io.github.kunal26das.yify.Quality.Companion.QUALITY_3D
+import io.github.kunal26das.yify.Quality.Companion.QUALITY_720p
+import io.github.kunal26das.yify.Quality.Companion.QUALITY_ALL
 
 @StringDef(
     QUALITY_ALL,
