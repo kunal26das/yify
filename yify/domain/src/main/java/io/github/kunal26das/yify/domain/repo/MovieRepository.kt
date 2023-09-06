@@ -12,6 +12,7 @@ interface MovieRepository {
         genre: String? = null,
         sortBy: String? = null,
         orderBy: String? = null,
+        withRtRating: Boolean? = null,
     ): List<Movie>
 
     suspend fun getMovie(movieId: Int): Movie?

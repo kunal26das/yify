@@ -1,14 +1,14 @@
 package io.github.kunal26das.yify.domain.model
 
-data class Movie(
+data class Movie constructor(
     val backgroundImageUrl: String?,
     val cast: List<Cast>,
-    val coverImage: String?,
+    val coverImageUrl: String?,
     val dateUploaded: Long,
     val descriptionFull: String,
     val descriptionIntro: String,
     val downloadCount: Int,
-    val genres: List<String>,
+    val genres: List<Genre>,
     val imdbCode: String,
     val language: String,
     val likeCount: Int,
@@ -27,8 +27,4 @@ data class Movie(
     val torrents: List<Torrent>,
     val url: String?,
     val year: Int?,
-) {
-    companion object {
-        const val KEY_MOVIE = "movie"
-    }
-}
+)

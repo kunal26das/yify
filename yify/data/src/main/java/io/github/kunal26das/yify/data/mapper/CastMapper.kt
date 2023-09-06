@@ -1,9 +1,9 @@
 package io.github.kunal26das.yify.data.mapper
 
-import io.github.kunal26das.yify.data.model.CastModel
+import io.github.kunal26das.yify.data.dto.CastDto
 import io.github.kunal26das.yify.domain.model.Cast
 
-val CastModel.toCast: Cast
+val CastDto.toCast: Cast
     get() = Cast(
         imdbCode = imdbCode,
         characterName = characterName.orEmpty(),
@@ -11,5 +11,5 @@ val CastModel.toCast: Cast
         imageUrl = urlSmallImage,
     )
 
-val List<CastModel>?.toCast: List<Cast>
+val List<CastDto>?.toCast: List<Cast>
     get() = this?.map { it.toCast } ?: emptyList()

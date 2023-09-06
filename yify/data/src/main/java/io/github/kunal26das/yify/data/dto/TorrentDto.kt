@@ -1,8 +1,8 @@
-package io.github.kunal26das.yify.data.model
+package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class TorrentModel(
+data class TorrentDto(
     @SerializedName("hash")
     val hash: String,
     @SerializedName("date_uploaded")

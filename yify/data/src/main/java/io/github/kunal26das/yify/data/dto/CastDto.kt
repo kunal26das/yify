@@ -1,8 +1,8 @@
-package io.github.kunal26das.yify.data.model
+package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class CastModel(
+data class CastDto(
     @SerializedName("imdb_code")
     val imdbCode: String,
 

@@ -1,8 +1,8 @@
-package io.github.kunal26das.yify.data.model
+package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class MovieModel(
+data class MovieDto(
     @SerializedName("id")
     var id: Int = 0,
     @SerializedName("background_image")
@@ -10,7 +10,7 @@ data class MovieModel(
     @SerializedName("background_image_original")
     var backgroundImageOriginal: String? = null,
     @SerializedName("cast")
-    var cast: List<CastModel>? = null,
+    var cast: List<CastDto>? = null,
     @SerializedName("date_uploaded")
     var dateUploaded: String? = null,
     @SerializedName("date_uploaded_unix")
@@ -68,7 +68,7 @@ data class MovieModel(
     @SerializedName("title_long")
     var titleLong: String? = null,
     @SerializedName("torrents")
-    var torrentModels: List<TorrentModel>? = null,
+    var torrentDtos: List<TorrentDto>? = null,
     @SerializedName("url")
     var url: String? = null,
     @SerializedName("year")

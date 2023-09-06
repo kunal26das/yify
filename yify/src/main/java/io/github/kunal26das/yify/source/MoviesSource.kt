@@ -3,9 +3,11 @@ package io.github.kunal26das.yify.source
 import io.github.kunal26das.common.PagingSource
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.repo.MovieRepository
+import io.github.kunal26das.yify.model.MoviePreference
 
 class MoviesSource(
     private val movieRepository: MovieRepository,
+    private val moviePreference: MoviePreference,
 ) : PagingSource<Movie>() {
     override suspend fun load(
         params: LoadParams<Int>
@@ -13,10 +15,19 @@ class MoviesSource(
         val page = params.key ?: 1
         val limit = params.loadSize
         val movies = try {
-            movieRepository.getMovies(
-                limit = limit,
-                page = page,
-            )
+            moviePreference.run {
+                movieRepository.getMovies(
+                    limit = limit,
+                    page = page,
+                    quality = quality?.name,
+                    minimumRating = minimumRating,
+                    queryTerm = queryTerm,
+                    genre = genre?.name,
+                    sortBy = sortBy?.name,
+                    orderBy = orderBy?.name,
+                    withRtRating = withRtRating,
+                )
+            }
         } catch (e: Throwable) {
             emptyList()
         }

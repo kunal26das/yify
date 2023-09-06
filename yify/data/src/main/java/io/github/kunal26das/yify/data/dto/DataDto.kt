@@ -1,12 +1,12 @@
-package io.github.kunal26das.yify.data.model
+package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class Data(
+data class DataDto(
     @SerializedName("movie")
-    val movieModel: MovieModel?,
+    val movieDto: MovieDto?,
     @SerializedName("movies")
-    val movieModels: List<MovieModel>?,
+    val movieDtos: List<MovieDto>?,
     @SerializedName("page_number")
     val pageNumber: Int,
     @SerializedName("movie_count")

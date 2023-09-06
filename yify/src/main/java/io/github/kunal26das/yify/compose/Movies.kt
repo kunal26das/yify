@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.yify.domain.model.Movie
+import io.github.kunal26das.yify.model.MoviePreference
 import io.github.kunal26das.yify.ui.MoviesViewModel
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -27,9 +28,10 @@ import io.github.kunal26das.yify.ui.MoviesViewModel
 fun Movies(
     modifier: Modifier = Modifier,
     moviesViewModel: MoviesViewModel = hiltViewModel(),
+    moviePreference: MoviePreference = MoviePreference.None,
     onClick: (Movie?) -> Unit = {},
 ) {
-    val movies = moviesViewModel.movies.collectAsLazyPagingItems()
+    val movies = moviesViewModel.getMovies(moviePreference).collectAsLazyPagingItems()
     var refreshing by remember { mutableStateOf(false) }
     val pullRefreshState = rememberPullRefreshState(
         onRefresh = {
