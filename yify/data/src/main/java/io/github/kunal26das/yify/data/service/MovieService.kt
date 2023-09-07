@@ -18,22 +18,22 @@ interface MovieService {
         @Query(KEY_SORT_BY) sortBy: String? = null,
         @Query(KEY_ORDER_BY) orderBy: String? = null,
         @Query(KEY_WITH_RT_RATINGS) withRtRating: Boolean? = null,
-    ): ResponseDto
+    ): Result<ResponseDto>
 
     @GET(ROUTE_MOVIE_SUGGESTIONS)
     suspend fun getMovieSuggestions(
         @Query(KEY_MOVIE_ID) movieId: Int
-    ): ResponseDto
+    ): Result<ResponseDto>
 
     @GET(ROUTE_MOVIE_DETAILS)
     suspend fun getMovie(
         @Query(KEY_MOVIE_ID) movieId: Int,
         @Query(KEY_WITH_IMAGES) withImages: Boolean = true,
         @Query(KEY_WITH_CAST) withCast: Boolean = true,
-    ): ResponseDto
+    ): Result<ResponseDto>
 
     @GET(ROUTE_UPCOMING_MOVIES)
-    suspend fun getUpcomingMovies(): List<MovieDto>
+    suspend fun getUpcomingMovies(): Result<List<MovieDto>>
 
     companion object {
         private const val KEY_PAGE = "page"

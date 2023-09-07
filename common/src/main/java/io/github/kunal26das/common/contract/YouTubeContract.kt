@@ -1,4 +1,4 @@
-package io.github.kunal26das.common
+package io.github.kunal26das.common.contract
 
 import android.content.Context
 import android.content.Intent

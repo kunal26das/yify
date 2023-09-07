@@ -3,6 +3,7 @@ package io.github.kunal26das.yify.di
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.skydoves.retrofit.adapters.result.ResultCallAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,6 +41,7 @@ object NetworkModule {
             baseUrl(BuildConfig.BASE_URL)
             client(okHttpClient)
             addConverterFactory(GsonConverterFactory.create(gson))
+            addCallAdapterFactory(ResultCallAdapterFactory.create())
         }.build()
     }
 }

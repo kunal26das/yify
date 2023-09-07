@@ -1,4 +1,4 @@
-package io.github.kunal26das.common
+package io.github.kunal26das.common.contract
 
 import android.app.Activity.RESULT_OK
 import android.content.Context

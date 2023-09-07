@@ -1,4 +1,4 @@
-package io.github.kunal26das.common
+package io.github.kunal26das.common.download
 
 import android.app.DownloadManager
 import android.content.BroadcastReceiver

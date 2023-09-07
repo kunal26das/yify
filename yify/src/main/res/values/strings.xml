@@ -4,4 +4,10 @@
     <string name="recently_added">Recently Added</string>
     <string name="all">All</string>
     <string name="settings">Settings</string>
+    <string name="search">Search</string>
+    <string name="genre">Genre</string>
+    <string name="quality">Quality</string>
+    <string name="sort_by">Sort By</string>
+    <string name="order_by">Order By</string>
+    <string name="minimum_rating">Minimum Rating</string>
 </resources>

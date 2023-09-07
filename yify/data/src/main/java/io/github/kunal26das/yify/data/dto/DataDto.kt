@@ -4,9 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 data class DataDto(
     @SerializedName("movie")
-    val movieDto: MovieDto?,
+    val movie: MovieDto?,
     @SerializedName("movies")
-    val movieDtos: List<MovieDto>?,
+    val movies: List<MovieDto>?,
     @SerializedName("page_number")
     val pageNumber: Int,
     @SerializedName("movie_count")

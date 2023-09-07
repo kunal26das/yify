@@ -3,7 +3,7 @@
 
     <application>
         <receiver
-            android:name=".DownloadCompleteBroadcastReceiver"
+            android:name=".download.DownloadCompleteBroadcastReceiver"
             android:exported="true" />
     </application>
 </manifest>

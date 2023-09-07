@@ -24,9 +24,16 @@ sealed class Genre(val name: String) {
     data object Thriller : Genre(GENRE_THRILLER)
     data object War : Genre(GENRE_WAR)
     data object Western : Genre(GENRE_WESTERN)
-    internal data object Unknown : Genre("")
 
-    companion object {
+    companion object : HashMap<String, Genre>(
+        Genre::class.sealedSubclasses
+            .mapNotNull {
+                it.objectInstance
+            }.associateBy {
+                it.name
+            }
+    ) {
+
         private const val GENRE_ACTION = "Action"
         private const val GENRE_ADVENTURE = "Adventure"
         private const val GENRE_ANIMATION = "Animation"
@@ -51,31 +58,6 @@ sealed class Genre(val name: String) {
         private const val GENRE_WAR = "War"
         private const val GENRE_WESTERN = "Western"
 
-        operator fun get(genre: String?): Genre = when (genre) {
-            GENRE_ACTION -> Action
-            GENRE_ADVENTURE -> Adventure
-            GENRE_ANIMATION -> Animation
-            GENRE_BIOGRAPHY -> Biography
-            GENRE_COMEDY -> Comedy
-            GENRE_CRIME -> Crime
-            GENRE_DOCUMENTARY -> Documentary
-            GENRE_DRAMA -> Drama
-            GENRE_FAMILY -> Family
-            GENRE_FANTASY -> Fantasy
-            GENRE_FILM_NOIR -> FilmNoir
-            GENRE_HISTORY -> History
-            GENRE_HORROR -> Horror
-            GENRE_MUSIC -> Music
-            GENRE_MUSICAL -> Musical
-            GENRE_MYSTERY -> Mystery
-            GENRE_ROMANCE -> Romance
-            GENRE_SCI_FI -> SciFi
-            GENRE_SHORT -> Short
-            GENRE_SPORT -> Sport
-            GENRE_THRILLER -> Thriller
-            GENRE_WAR -> War
-            GENRE_WESTERN -> Western
-            else -> Unknown
-        }
+        val ALL get() = values
     }
 }

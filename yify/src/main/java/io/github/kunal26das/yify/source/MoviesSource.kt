@@ -1,11 +1,11 @@
 package io.github.kunal26das.yify.source
 
-import io.github.kunal26das.common.PagingSource
+import io.github.kunal26das.common.paging.PagingSource
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import io.github.kunal26das.yify.model.MoviePreference
 
-class MoviesSource(
+class MoviesSource constructor(
     private val movieRepository: MovieRepository,
     private val moviePreference: MoviePreference,
 ) : PagingSource<Movie>() {
@@ -14,22 +14,18 @@ class MoviesSource(
     ): LoadResult<Int, Movie> {
         val page = params.key ?: 1
         val limit = params.loadSize
-        val movies = try {
-            moviePreference.run {
-                movieRepository.getMovies(
-                    limit = limit,
-                    page = page,
-                    quality = quality?.name,
-                    minimumRating = minimumRating,
-                    queryTerm = queryTerm,
-                    genre = genre?.name,
-                    sortBy = sortBy?.name,
-                    orderBy = orderBy?.name,
-                    withRtRating = withRtRating,
-                )
-            }
-        } catch (e: Throwable) {
-            emptyList()
+        val movies = moviePreference.run {
+            movieRepository.getMovies(
+                limit = limit,
+                page = page,
+                quality = quality,
+                minimumRating = minimumRating,
+                queryTerm = queryTerm,
+                genre = genre,
+                sortBy = sortBy,
+                orderBy = orderBy,
+                withRtRating = withRtRating,
+            )
         }
         return LoadResult.Page(
             movies,

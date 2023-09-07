@@ -3,7 +3,7 @@ package io.github.kunal26das.yify.init
 import android.content.Context
 import coil.Coil
 import coil.ImageLoader
-import io.github.kunal26das.common.IndependentInitializer
+import io.github.kunal26das.common.init.IndependentInitializer
 
 class CoilInitializer : IndependentInitializer<Coil> {
     override fun create(context: Context): Coil {

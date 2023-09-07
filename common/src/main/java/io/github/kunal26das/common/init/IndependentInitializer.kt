@@ -1,4 +1,4 @@
-package io.github.kunal26das.common
+package io.github.kunal26das.common.init
 
 import androidx.startup.Initializer
 

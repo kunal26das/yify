@@ -6,7 +6,6 @@ plugins {
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     kotlin("android")
-    kotlin("kapt")
 }
 
 android {
@@ -77,7 +76,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    ksp("com.google.dagger:hilt-android-compiler:2.48")
     implementation(platform("com.google.firebase:firebase-bom:32.2.3"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     debugImplementation("com.facebook.stetho:stetho:1.6.0")
@@ -89,4 +88,5 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation("com.github.skydoves:retrofit-adapters-result:1.0.8")
 }

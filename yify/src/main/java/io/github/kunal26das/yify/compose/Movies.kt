@@ -17,29 +17,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.yify.domain.model.Movie
-import io.github.kunal26das.yify.model.MoviePreference
-import io.github.kunal26das.yify.ui.MoviesViewModel
+import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Movies(
     modifier: Modifier = Modifier,
-    moviesViewModel: MoviesViewModel = hiltViewModel(),
-    moviePreference: MoviePreference = MoviePreference.None,
+    moviesFlow: Flow<PagingData<Movie>>,
     onClick: (Movie?) -> Unit = {},
 ) {
-    val movies = moviesViewModel.getMovies(moviePreference).collectAsLazyPagingItems()
     var refreshing by remember { mutableStateOf(false) }
+    val movies = moviesFlow.collectAsLazyPagingItems()
     val pullRefreshState = rememberPullRefreshState(
+        refreshing = refreshing,
         onRefresh = {
             refreshing = true
             movies.refresh()
             refreshing = false
         },
-        refreshing = refreshing,
     )
     Box(
         modifier = modifier

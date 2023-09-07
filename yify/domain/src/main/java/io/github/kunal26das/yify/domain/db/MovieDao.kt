@@ -7,5 +7,8 @@ import io.github.kunal26das.yify.domain.entity.MovieEntity
 @Dao
 interface MovieDao {
     @Upsert
+    suspend fun upsert(movies: MovieEntity)
+
+    @Upsert
     suspend fun upsert(movies: List<MovieEntity>)
 }

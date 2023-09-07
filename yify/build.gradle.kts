@@ -2,7 +2,6 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     id("com.android.library")
-    id("kotlin-kapt")
     kotlin("android")
 }
 
@@ -37,7 +36,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 }
 
@@ -64,7 +63,7 @@ dependencies {
     implementation("androidx.paging:paging-compose:3.2.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    ksp("com.google.dagger:hilt-android-compiler:2.48")
     implementation("androidx.palette:palette-ktx:1.0.0")
     implementation("androidx.room:room-runtime:2.5.2")
     implementation("androidx.room:room-ktx:2.5.2")
