@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.data.repo
 
+import io.github.kunal26das.yify.data.mapper.key
 import io.github.kunal26das.yify.data.mapper.toEntities
 import io.github.kunal26das.yify.data.mapper.toEntity
 import io.github.kunal26das.yify.data.mapper.toMovie
@@ -10,7 +11,6 @@ import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
-import io.github.kunal26das.yify.domain.model.Rating
 import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import javax.inject.Inject
@@ -24,7 +24,7 @@ class MovieRepositoryImpl @Inject constructor(
         limit: Int,
         page: Int,
         quality: Quality?,
-        minimumRating: Rating?,
+        minimumRating: Int?,
         queryTerm: String?,
         genre: Genre?,
         sortBy: SortBy?,
@@ -34,12 +34,12 @@ class MovieRepositoryImpl @Inject constructor(
         val result = movieService.getMovies(
             limit = limit,
             page = page,
-            quality = quality?.value,
-            minimumRating = minimumRating?.rating,
+            quality = quality?.key,
+            minimumRating = minimumRating,
             queryTerm = queryTerm,
-            genre = genre?.name,
-            sortBy = sortBy?.value,
-            orderBy = orderBy?.value,
+            genre = genre?.key,
+            sortBy = sortBy?.key,
+            orderBy = orderBy?.key,
             withRtRating = withRtRating,
         )
         if (result.isSuccess) {

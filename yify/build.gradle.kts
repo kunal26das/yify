@@ -3,6 +3,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.android.library")
     kotlin("android")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -68,4 +69,7 @@ dependencies {
     implementation("androidx.room:room-runtime:2.5.2")
     implementation("androidx.room:room-ktx:2.5.2")
     ksp("androidx.room:room-compiler:2.5.2")
+    implementation("androidx.datastore:datastore:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }

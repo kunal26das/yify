@@ -1,6 +1,7 @@
 plugins {
     id("java-library")
     kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 java {
@@ -12,4 +13,5 @@ dependencies {
     implementation("androidx.annotation:annotation-jvm:1.6.0")
     implementation("androidx.room:room-common:2.5.2")
     implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }

@@ -36,8 +36,8 @@ import io.github.kunal26das.yify.compose.Movies
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
-import io.github.kunal26das.yify.domain.model.Rating
 import io.github.kunal26das.yify.domain.model.SortBy
+import io.github.kunal26das.yify.model.MoviePreference
 
 @AndroidEntryPoint
 class HomeActivity : Activity() {
@@ -60,9 +60,7 @@ class HomeActivity : Activity() {
             Movies(
                 modifier = Modifier.fillMaxSize(),
                 moviesFlow = viewModel.movies,
-            ) {
-
-            }
+            )
         }
     }
 
@@ -83,101 +81,191 @@ class HomeActivity : Activity() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             item {
-                val focusManager = LocalFocusManager.current
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.search)) },
-                    trailingIcon = {
-                        Icon(
-                            modifier = Modifier.clickable {
-                                viewModel.search(null)
-                                focusManager.clearFocus()
-                            },
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = null,
-                        )
-                    },
-                    value = moviePreference.queryTerm.orEmpty(),
-                    onValueChange = {
-                        viewModel.search(it)
-                    },
+                SearchTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    moviePreference = moviePreference,
                 )
             }
             item {
-                Dropdown(
-                    modifier2 = Modifier.fillMaxWidth(),
-                    label = stringResource(R.string.genre),
-                    items = Genre.ALL.sortedBy { it.name },
-                    name = { it.name },
-                    selection = moviePreference.genre
-                ) {
-                    viewModel.setGenre(it)
-                }
+                GenreDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                    moviePreference = moviePreference,
+                )
             }
             item {
-                Dropdown(
-                    modifier2 = Modifier.fillMaxWidth(),
-                    label = stringResource(R.string.quality),
-                    items = Quality.ALL,
-                    name = { it.name },
-                    selection = moviePreference.quality
-                ) {
-                    viewModel.setQuality(it)
-                }
+                QualityDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                    moviePreference = moviePreference,
+                )
             }
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Dropdown(
-                        modifier = Modifier.weight(1f),
-                        modifier2 = Modifier.fillMaxWidth(),
-                        label = stringResource(R.string.sort_by),
-                        items = SortBy.ALL,
-                        name = { it.name },
-                        selection = moviePreference.sortBy
-                    ) {
-                        viewModel.setSortBy(it)
-                    }
-                    AnimatedVisibility(
-                        modifier = Modifier.weight(1f),
-                        visible = moviePreference.sortBy != null
-                    ) {
-                        Dropdown(
-                            label = stringResource(R.string.order_by),
-                            items = OrderBy.ALL,
-                            name = { it.name },
-                            selection = moviePreference.orderBy
-                        ) {
-                            viewModel.setOrderBy(it)
-                        }
-                    }
-                }
+                SortOrderDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                    moviePreference = moviePreference,
+                )
             }
             item {
-                Dropdown(
-                    modifier2 = Modifier.fillMaxWidth(),
-                    label = stringResource(R.string.minimum_rating),
-                    items = Rating.ALL.sortedBy { it.rating },
-                    name = { it.rating.toString() },
-                    selection = moviePreference.minimumRating
-                ) {
-                    viewModel.setMinimumRating(it)
-                }
+                MinimumRatingDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                    moviePreference = moviePreference,
+                )
             }
             item {
-                ElevatedButton(
+                ClearButton(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    onClick = { viewModel.clear() },
-                    content = { Text(text = "Clear") }
+                        .padding(top = 8.dp)
                 )
             }
         }
+    }
+
+    @Composable
+    private fun SearchTextField(
+        modifier: Modifier = Modifier,
+        moviePreference: MoviePreference,
+    ) {
+        val focusManager = LocalFocusManager.current
+        val searchQuery by viewModel.searchQuery.collectAsState()
+        OutlinedTextField(
+            modifier = modifier,
+            readOnly = true,
+            label = { Text(stringResource(R.string.search)) },
+            trailingIcon = {
+                Icon(
+                    modifier = Modifier.clickable {
+                        viewModel.search(null)
+                        focusManager.clearFocus()
+                    },
+                    imageVector = Icons.Filled.Clear,
+                    contentDescription = null,
+                )
+            },
+            value = searchQuery,
+            onValueChange = {
+                viewModel.search(it)
+            },
+        )
+    }
+
+    @Composable
+    private fun GenreDropdown(
+        modifier: Modifier = Modifier,
+        moviePreference: MoviePreference,
+    ) {
+        Dropdown(
+            modifier2 = modifier,
+            label = stringResource(R.string.genre),
+            items = Genre.values().filter {
+                it != Genre.Unknown
+            },
+            name = { it.name },
+            selection = moviePreference.genre
+        ) {
+            viewModel.setGenre(it)
+        }
+    }
+
+    @Composable
+    private fun QualityDropdown(
+        modifier: Modifier = Modifier,
+        moviePreference: MoviePreference,
+    ) {
+        Dropdown(
+            modifier2 = modifier,
+            label = stringResource(R.string.quality),
+            items = Quality.values().filter {
+                it != Quality.Unknown
+            },
+            name = {
+                when (it) {
+                    Quality.Low -> getString(R.string.low)
+                    Quality.Medium -> getString(R.string.medium)
+                    Quality.High -> getString(R.string.high)
+                    else -> ""
+                }
+            },
+            selection = moviePreference.quality
+        ) {
+            viewModel.setQuality(it)
+        }
+    }
+
+    @Composable
+    private fun SortOrderDropdown(
+        modifier: Modifier = Modifier,
+        moviePreference: MoviePreference,
+    ) {
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Dropdown(
+                modifier = Modifier.weight(1f),
+                modifier2 = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.sort_by),
+                items = SortBy.values().toList(),
+                name = {
+                    when (it) {
+                        SortBy.DateAdded -> getString(R.string.date_added)
+                        SortBy.DownloadCount -> getString(R.string.downloads)
+                        SortBy.LikeCount -> getString(R.string.likes)
+                        SortBy.Peers -> getString(R.string.peers)
+                        SortBy.Rating -> getString(R.string.rating)
+                        SortBy.Seeds -> getString(R.string.seeds)
+                        SortBy.Title -> getString(R.string.title)
+                        SortBy.Year -> getString(R.string.year)
+                    }
+                },
+                selection = moviePreference.sortBy
+            ) {
+                viewModel.setSortBy(it)
+            }
+            AnimatedVisibility(
+                modifier = Modifier.weight(1f),
+                visible = true // moviePreference.sortBy != null
+            ) {
+                Dropdown(
+                    label = stringResource(R.string.order_by),
+                    items = OrderBy.values().toList(),
+                    name = {
+                        when (it) {
+                            OrderBy.Ascending -> getString(R.string.ascending)
+                            OrderBy.Descending -> getString(R.string.descending)
+                        }
+                    },
+                    selection = moviePreference.orderBy
+                ) {
+                    viewModel.setOrderBy(it)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun MinimumRatingDropdown(
+        modifier: Modifier = Modifier,
+        moviePreference: MoviePreference,
+    ) {
+        Dropdown(
+            modifier2 = modifier,
+            label = stringResource(R.string.minimum_rating),
+            items = 0..9,
+            name = { it.toString() },
+            selection = moviePreference.minimumRating
+        ) {
+            viewModel.setMinimumRating(it)
+        }
+    }
+
+    @Composable
+    private fun ClearButton(
+        modifier: Modifier = Modifier,
+    ) {
+        ElevatedButton(
+            modifier = modifier,
+            onClick = { viewModel.clear() },
+            content = { Text(text = "Clear") }
+        )
     }
 }

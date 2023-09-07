@@ -9,7 +9,7 @@ val TorrentDto.toTorrent: Torrent
         hash = hash,
         dateUploaded = dateUploadedUnix?.toLong() ?: 0,
         peers = peers ?: 0,
-        quality = Quality[quality] ?: Quality.Unknown,
+        quality = quality?.toQuality ?: Quality.Unknown,
         seeds = seeds ?: 0,
         size = size.orEmpty(),
         sizeBytes = sizeBytes ?: 0,

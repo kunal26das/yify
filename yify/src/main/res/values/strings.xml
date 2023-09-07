@@ -10,4 +10,17 @@
     <string name="sort_by">Sort By</string>
     <string name="order_by">Order By</string>
     <string name="minimum_rating">Minimum Rating</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="date_added">Date Added</string>
+    <string name="downloads">Downloads</string>
+    <string name="likes">Likes</string>
+    <string name="peers">Peers</string>
+    <string name="rating">Rating</string>
+    <string name="seeds">Seeds</string>
+    <string name="title">Title</string>
+    <string name="year">Year</string>
+    <string name="low">Low</string>
+    <string name="medium">Medium</string>
+    <string name="high">High</string>
 </resources>

@@ -4,7 +4,6 @@ import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
-import io.github.kunal26das.yify.domain.model.Rating
 import io.github.kunal26das.yify.domain.model.SortBy
 
 interface MovieRepository {
@@ -12,7 +11,7 @@ interface MovieRepository {
         limit: Int,
         page: Int,
         quality: Quality? = null,
-        minimumRating: Rating? = null,
+        minimumRating: Int? = null,
         queryTerm: String? = null,
         genre: Genre? = null,
         sortBy: SortBy? = null,
