@@ -1,6 +1,7 @@
-package io.github.kunal26das.yify.model
+package io.github.kunal26das.yify.db.serializer
 
 import androidx.datastore.core.Serializer
+import io.github.kunal26das.yify.model.MoviePreference
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.InputStream
@@ -16,18 +17,23 @@ object MoviePreferencesSerializer : Serializer<MoviePreference> {
                 deserializer = MoviePreference.serializer(),
                 string = input.readBytes().decodeToString(),
             )
-        } catch (e: SerializationException) {
+        } catch (e: Exception) {
+            // Log error
             defaultValue
         }
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
     override suspend fun writeTo(t: MoviePreference, output: OutputStream) {
-        output.write(
-            Json.encodeToString(
-                serializer = MoviePreference.serializer(),
-                value = t
-            ).encodeToByteArray()
-        )
+        try {
+            output.write(
+                Json.encodeToString(
+                    serializer = MoviePreference.serializer(),
+                    value = t
+                ).encodeToByteArray()
+            )
+        } catch (e: SerializationException) {
+            // Log error
+        }
     }
 }

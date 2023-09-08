@@ -58,7 +58,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("androidx.paging:paging-runtime-ktx:3.2.0")
     implementation("androidx.paging:paging-compose:3.2.0")

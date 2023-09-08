@@ -10,69 +10,98 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.kunal26das.yify.db.FlowPreferenceImpl
+import io.github.kunal26das.yify.db.ImmutablePreferenceImpl
+import io.github.kunal26das.yify.db.MutablePreferencesImpl
 import io.github.kunal26das.yify.db.YifyDatabase
+import io.github.kunal26das.yify.db.serializer.MoviePreferencesSerializer
+import io.github.kunal26das.yify.domain.db.FlowPreference
+import io.github.kunal26das.yify.domain.db.ImmutablePreference
 import io.github.kunal26das.yify.domain.db.MovieDao
+import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.model.MoviePreference
-import io.github.kunal26das.yify.model.MoviePreferencesSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Singleton
 
 
 @Module
 @InstallIn(SingletonComponent::class)
-object YifyModule {
+abstract class YifyModule {
 
-    private const val YIFY_DATABASE = "yify.db"
-    private const val MOVIE_PREFERENCE_JSON = "movie_preference.json"
+    @Binds
+    abstract fun bindImmutablePreference(
+        immutablePreferenceImpl: ImmutablePreferenceImpl
+    ): ImmutablePreference
 
-    @Provides
-    fun providesDataStore(
-        @ApplicationContext context: Context
-    ): DataStore<Preferences> {
-        return PreferenceDataStoreFactory.create(
-            produceFile = { context.preferencesDataStoreFile(context.packageName) },
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-            corruptionHandler = ReplaceFileCorruptionHandler(
-                produceNewData = { emptyPreferences() }
-            ),
-        )
-    }
+    @Binds
+    abstract fun bindMutablePreference(
+        mutablePreferencesImpl: MutablePreferencesImpl
+    ): MutablePreference
 
-    @Provides
-    fun providesMoviePreferenceDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<MoviePreference> {
-        return DataStoreFactory.create(
-            serializer = MoviePreferencesSerializer,
-            produceFile = { context.dataStoreFile(MOVIE_PREFERENCE_JSON) },
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-            corruptionHandler = ReplaceFileCorruptionHandler(
-                produceNewData = { MoviePreference() }
-            ),
-        )
-    }
+    @Binds
+    abstract fun bindFlowPreference(
+        flowPreferenceImpl: FlowPreferenceImpl
+    ): FlowPreference
 
-    @Provides
-    fun providesYifyDatabase(
-        @ApplicationContext context: Context
-    ): YifyDatabase {
-        return Room.databaseBuilder(
-            context = context,
-            klass = YifyDatabase::class.java,
-            name = YIFY_DATABASE,
-        ).build()
-    }
+    companion object {
 
-    @Provides
-    fun providesMovieDao(
-        yifyDatabase: YifyDatabase
-    ): MovieDao {
-        return yifyDatabase.movieDao
+        private const val YIFY_DATABASE = "yify.db"
+        private const val MOVIE_PREFERENCE_JSON = "movie_preference.json"
+
+        @Provides
+        @Singleton
+        fun providesPreferenceDataStore(
+            @ApplicationContext context: Context
+        ): DataStore<Preferences> {
+            return PreferenceDataStoreFactory.create(
+                produceFile = { context.preferencesDataStoreFile(context.packageName) },
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                corruptionHandler = ReplaceFileCorruptionHandler(
+                    produceNewData = { emptyPreferences() }
+                ),
+            )
+        }
+
+        @Provides
+        @Singleton
+        fun providesMoviePreferenceDataStore(
+            @ApplicationContext context: Context,
+        ): DataStore<MoviePreference> {
+            return DataStoreFactory.create(
+                serializer = MoviePreferencesSerializer,
+                produceFile = { context.dataStoreFile(MOVIE_PREFERENCE_JSON) },
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                corruptionHandler = ReplaceFileCorruptionHandler(
+                    produceNewData = { MoviePreference() }
+                ),
+            )
+        }
+
+        @Provides
+        @Singleton
+        fun providesYifyDatabase(
+            @ApplicationContext context: Context
+        ): YifyDatabase {
+            return Room.databaseBuilder(
+                context = context,
+                klass = YifyDatabase::class.java,
+                name = YIFY_DATABASE,
+            ).build()
+        }
+
+        @Provides
+        fun providesMovieDao(
+            yifyDatabase: YifyDatabase
+        ): MovieDao {
+            return yifyDatabase.movieDao
+        }
     }
 }

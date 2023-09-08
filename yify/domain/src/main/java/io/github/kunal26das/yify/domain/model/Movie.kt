@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify.domain.model
 
 data class Movie constructor(
+    val id: Int,
     val backgroundImageUrl: String?,
     val cast: List<Cast>,
     val coverImageUrl: String?,

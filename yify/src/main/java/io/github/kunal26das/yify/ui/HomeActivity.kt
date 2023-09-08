@@ -18,6 +18,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -111,6 +112,12 @@ class HomeActivity : Activity() {
                 )
             }
             item {
+                MovieCountText(
+                    modifier = Modifier
+                        .padding(top = 12.dp),
+                )
+            }
+            item {
                 ClearButton(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -123,7 +130,7 @@ class HomeActivity : Activity() {
     @Composable
     private fun SearchTextField(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference,
+        moviePreference: MoviePreference?,
     ) {
         val focusManager = LocalFocusManager.current
         val searchQuery by viewModel.searchQuery.collectAsState()
@@ -151,7 +158,7 @@ class HomeActivity : Activity() {
     @Composable
     private fun GenreDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference,
+        moviePreference: MoviePreference?,
     ) {
         Dropdown(
             modifier2 = modifier,
@@ -160,7 +167,7 @@ class HomeActivity : Activity() {
                 it != Genre.Unknown
             },
             name = { it.name },
-            selection = moviePreference.genre
+            selection = moviePreference?.genre
         ) {
             viewModel.setGenre(it)
         }
@@ -169,7 +176,7 @@ class HomeActivity : Activity() {
     @Composable
     private fun QualityDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference,
+        moviePreference: MoviePreference?,
     ) {
         Dropdown(
             modifier2 = modifier,
@@ -185,7 +192,7 @@ class HomeActivity : Activity() {
                     else -> ""
                 }
             },
-            selection = moviePreference.quality
+            selection = moviePreference?.quality
         ) {
             viewModel.setQuality(it)
         }
@@ -194,7 +201,7 @@ class HomeActivity : Activity() {
     @Composable
     private fun SortOrderDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference,
+        moviePreference: MoviePreference?,
     ) {
         Row(
             modifier = modifier,
@@ -217,7 +224,7 @@ class HomeActivity : Activity() {
                         SortBy.Year -> getString(R.string.year)
                     }
                 },
-                selection = moviePreference.sortBy
+                selection = moviePreference?.sortBy
             ) {
                 viewModel.setSortBy(it)
             }
@@ -234,7 +241,7 @@ class HomeActivity : Activity() {
                             OrderBy.Descending -> getString(R.string.descending)
                         }
                     },
-                    selection = moviePreference.orderBy
+                    selection = moviePreference?.orderBy
                 ) {
                     viewModel.setOrderBy(it)
                 }
@@ -245,16 +252,27 @@ class HomeActivity : Activity() {
     @Composable
     private fun MinimumRatingDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference,
+        moviePreference: MoviePreference?,
     ) {
         Dropdown(
             modifier2 = modifier,
             label = stringResource(R.string.minimum_rating),
             items = 0..9,
             name = { it.toString() },
-            selection = moviePreference.minimumRating
+            selection = moviePreference?.minimumRating
         ) {
             viewModel.setMinimumRating(it)
+        }
+    }
+
+    @Composable
+    private fun MovieCountText(
+        modifier: Modifier = Modifier,
+    ) {
+        val maxMovieCount by viewModel.maxMovieCount.collectAsState()
+        val currentMovieCount by viewModel.currentMovieCount.collectAsState()
+        Surface(modifier = modifier) {
+            Text(text = "Showing $currentMovieCount out of $maxMovieCount movies.")
         }
     }
 
@@ -265,7 +283,7 @@ class HomeActivity : Activity() {
         ElevatedButton(
             modifier = modifier,
             onClick = { viewModel.clear() },
-            content = { Text(text = "Clear") }
+            content = { Text(text = stringResource(R.string.clear)) }
         )
     }
 }

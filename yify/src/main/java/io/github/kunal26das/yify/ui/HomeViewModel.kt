@@ -7,6 +7,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
@@ -16,6 +17,7 @@ import io.github.kunal26das.yify.source.factory.MoviesSourceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,13 +33,16 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val moviesSourceFactory: MoviesSourceFactory,
     private val moviePreferenceDataStore: DataStore<MoviePreference>,
+    immutablePreference: FlowPreference,
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    val moviePreference = moviePreferenceDataStore.data
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), MoviePreference())
+    val moviePreference = moviePreferenceDataStore.data.stateIn()
+
+    val maxMovieCount = immutablePreference.getMaxMovieCount().stateIn()
+    val currentMovieCount = immutablePreference.getCurrentMovieCount().stateIn()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val movies = searchQuery
@@ -107,6 +112,11 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    private fun <T> Flow<T>.stateIn(
+        initialValue: T? = null,
+        started: SharingStarted = SharingStarted.WhileSubscribed(),
+    ) = stateIn(viewModelScope, started, initialValue)
 
     companion object {
         private const val LOAD_SIZE = 10
