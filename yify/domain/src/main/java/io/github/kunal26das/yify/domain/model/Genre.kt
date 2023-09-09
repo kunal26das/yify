@@ -28,4 +28,13 @@ enum class Genre {
     War,
     Western,
     Unknown,
+    ;
+
+    companion object {
+        val ALL by lazy {
+            values().toMutableList().apply {
+                removeAt(indexOf(Unknown))
+            }
+        }
+    }
 }

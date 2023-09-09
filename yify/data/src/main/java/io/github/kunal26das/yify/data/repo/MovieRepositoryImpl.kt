@@ -28,6 +28,23 @@ class MovieRepositoryImpl @Inject constructor(
     private val movieDao: MovieDao,
 ) : MovieRepository {
 
+    override suspend fun getMoviesCount(genre: Genre?): Int {
+        val result = movieService.getMovies(
+            genre = genre?.key,
+            limit = 1,
+            page = 1,
+        )
+        val count = result.getOrNull()?.dataDto?.movieCount ?: 0
+        if (result.isSuccess) {
+            if (genre != null) {
+                mutablePreference.setGenreMovieCount(genre, count)
+            } else {
+                mutablePreference.setMaxMovieCount(count)
+            }
+        }
+        return count
+    }
+
     override suspend fun getMovies(
         limit: Int,
         page: Int,

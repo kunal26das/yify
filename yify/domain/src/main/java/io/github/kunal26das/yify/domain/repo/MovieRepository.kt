@@ -7,6 +7,9 @@ import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
 
 interface MovieRepository {
+
+    suspend fun getMoviesCount(genre: Genre?): Int
+
     suspend fun getMovies(
         limit: Int,
         page: Int,

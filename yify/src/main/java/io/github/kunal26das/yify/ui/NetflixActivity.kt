@@ -2,6 +2,7 @@ package io.github.kunal26das.yify.ui
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,22 +29,36 @@ class NetflixActivity : Activity() {
 
     private val viewModel by viewModels<NetflixViewModel>()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel.getMovieGenreCounts(Genre.ALL)
+    }
+
     @Composable
     override fun Content() {
-        val genres = Genre.values().toList()
+        val movieGenreCounts by viewModel.movieGenreCount.collectAsState()
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 4.dp, bottom = 8.dp),
             content = {
-                itemsIndexed(viewModel.getMovieGenreFlows(genres)) { index, flow ->
+                itemsIndexed(viewModel.getMovieGenreFlows(Genre.ALL)) { index, flow ->
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Surface(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
+                        Surface {
                             Text(
-                                text = "${genres[index]}",
-                                fontSize = 16.sp,
+                                modifier = Modifier.padding(
+                                    start = 26.dp,
+                                    top = 12.dp,
+                                    end = 26.dp,
+                                    bottom = 12.dp,
+                                ),
+                                text = when (movieGenreCounts.getOrNull(index)) {
+                                    null -> Genre.ALL[index].name
+                                    else -> "${Genre.ALL[index]} (${movieGenreCounts[index]})"
+                                },
+                                fontSize = 20.sp,
                             )
                         }
                         HorizontalMovies(

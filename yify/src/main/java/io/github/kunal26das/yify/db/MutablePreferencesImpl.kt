@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import io.github.kunal26das.yify.domain.db.MutablePreference
+import io.github.kunal26das.yify.domain.model.Genre
 import javax.inject.Inject
 
 class MutablePreferencesImpl @Inject constructor(
@@ -23,5 +24,9 @@ class MutablePreferencesImpl @Inject constructor(
 
     override suspend fun setCurrentMovieCount(value: Int) {
         setIntPreference(PreferencesKey.CURRENT_MOVIE_COUNT, value)
+    }
+
+    override suspend fun setGenreMovieCount(genre: Genre, value: Int) {
+        setIntPreference(genre.name, value)
     }
 }

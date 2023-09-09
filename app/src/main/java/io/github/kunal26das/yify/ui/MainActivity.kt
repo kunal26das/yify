@@ -12,6 +12,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        homeActivity.launch(null)
+        netflixActivity.launch(null)
     }
 }
