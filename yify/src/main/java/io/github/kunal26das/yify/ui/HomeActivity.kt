@@ -1,5 +1,8 @@
 package io.github.kunal26das.yify.ui
 
+import android.content.Context
+import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -33,7 +36,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
 import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
-import io.github.kunal26das.yify.compose.Movies
+import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
@@ -58,7 +61,7 @@ class HomeActivity : Activity() {
                 )
             },
         ) {
-            Movies(
+            VerticalGridMovies(
                 modifier = Modifier.fillMaxSize(),
                 moviesFlow = viewModel.movies,
             )
@@ -285,5 +288,15 @@ class HomeActivity : Activity() {
             onClick = { viewModel.clear() },
             content = { Text(text = stringResource(R.string.clear)) }
         )
+    }
+
+    class Contract : ActivityResultContract<Any?, Boolean>() {
+        override fun createIntent(context: Context, input: Any?): Intent {
+            return Intent(context, HomeActivity::class.java)
+        }
+
+        override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+            return resultCode == RESULT_OK
+        }
     }
 }

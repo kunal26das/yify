@@ -2,6 +2,7 @@ package io.github.kunal26das.yify.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,12 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.model.Movie
 import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun Movies(
+fun VerticalGridMovies(
     modifier: Modifier = Modifier,
     moviesFlow: Flow<PagingData<Movie>>,
     onClick: (Movie?) -> Unit = {},
@@ -44,15 +46,24 @@ fun Movies(
             .pullRefresh(pullRefreshState),
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(300.dp),
+            columns = GridCells.Adaptive(Constants.MOVIE_WIDTH.dp),
             contentPadding = PaddingValues(8.dp),
             content = {
                 items(movies.itemCount) { index ->
                     val movie = movies[index]
                     MovieCard(
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier
+                            .height(Constants.MOVIE_HEIGHT.dp)
+                            .padding(8.dp),
                         movie = movie,
                         onClick = onClick,
+                    )
+                }
+                items(Constants.LOAD_SIZE) {
+                    MovieCard(
+                        modifier = Modifier
+                            .height(Constants.MOVIE_HEIGHT.dp)
+                            .padding(8.dp),
                     )
                 }
             }

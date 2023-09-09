@@ -1,12 +1,13 @@
 package io.github.kunal26das.yify.ui
 
 import androidx.datastore.core.DataStore
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.kunal26das.common.core.ViewModel
+import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.OrderBy
@@ -17,14 +18,11 @@ import io.github.kunal26das.yify.source.factory.MoviesSourceFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,8 +48,8 @@ class HomeViewModel @Inject constructor(
         .combine(moviePreferenceDataStore.data) { searchQuery, moviePreference ->
             Pager(
                 config = PagingConfig(
-                    pageSize = LOAD_SIZE,
-                    initialLoadSize = LOAD_SIZE,
+                    pageSize = Constants.LOAD_SIZE,
+                    initialLoadSize = Constants.LOAD_SIZE,
                 ),
                 pagingSourceFactory = {
                     moviesSourceFactory.get(moviePreference.copy(queryTerm = searchQuery))
@@ -111,14 +109,5 @@ class HomeViewModel @Inject constructor(
                 MoviePreference()
             }
         }
-    }
-
-    private fun <T> Flow<T>.stateIn(
-        initialValue: T? = null,
-        started: SharingStarted = SharingStarted.WhileSubscribed(),
-    ) = stateIn(viewModelScope, started, initialValue)
-
-    companion object {
-        private const val LOAD_SIZE = 10
     }
 }
