@@ -94,7 +94,7 @@ class MoviesViewModel @Inject constructor(
     fun clear() {
         viewModelScope.launch(Dispatchers.IO) {
             moviePreferenceDataStore.updateData {
-                MoviePreference()
+                MoviePreference.Default
             }
         }
     }

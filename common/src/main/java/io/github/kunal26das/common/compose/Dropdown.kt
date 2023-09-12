@@ -31,6 +31,7 @@ fun <T> Dropdown(
     items: Iterable<T>,
     name: (T) -> String? = { null },
     onSelect: (T?) -> Unit = {},
+    onClear: () -> Unit = { onSelect.invoke(null) },
 ) {
     val focusManager = LocalFocusManager.current
     var expanded by remember { mutableStateOf(false) }
@@ -58,7 +59,7 @@ fun <T> Dropdown(
             trailingIcon = {
                 Icon(
                     modifier = Modifier.clickable {
-                        onSelect.invoke(null)
+                        onClear.invoke()
                     },
                     imageVector = Icons.Filled.Clear,
                     contentDescription = null,

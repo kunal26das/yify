@@ -8,18 +8,20 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,7 +40,6 @@ import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
-import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
@@ -54,9 +55,17 @@ class MoviesActivity : Activity() {
         DismissibleNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
-                DrawerContent(
-                    modifier = Modifier.width(360.dp),
-                )
+                ElevatedCard(
+                    modifier = Modifier
+                        .width(360.dp)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(
+                        bottomEnd = 16.dp,
+                        topEnd = 16.dp,
+                    )
+                ) {
+                    DrawerContent()
+                }
             },
         ) {
             VerticalGridMovies(
@@ -70,14 +79,11 @@ class MoviesActivity : Activity() {
     private fun DrawerContent(
         modifier: Modifier = Modifier,
     ) {
-        val moviePreference by viewModel.moviePreference.collectAsState()
         LazyColumn(
             modifier = modifier,
             contentPadding = PaddingValues(
-                start = 16.dp,
-                top = 10.dp,
-                end = 0.dp,
-                bottom = 10.dp,
+                horizontal = 16.dp,
+                vertical = 10.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -90,31 +96,31 @@ class MoviesActivity : Activity() {
             item {
                 GenreDropdown(
                     modifier = Modifier.fillMaxWidth(),
-                    moviePreference = moviePreference,
                 )
             }
             item {
                 QualityDropdown(
                     modifier = Modifier.fillMaxWidth(),
-                    moviePreference = moviePreference,
-                )
-            }
-            item {
-                SortOrderDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                    moviePreference = moviePreference,
                 )
             }
             item {
                 MinimumRatingDropdown(
                     modifier = Modifier.fillMaxWidth(),
-                    moviePreference = moviePreference,
+                )
+            }
+            item {
+                SortByDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                OrderByDropdown(
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
             item {
                 MovieCountText(
-                    modifier = Modifier
-                        .padding(top = 12.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
             item {
@@ -157,29 +163,31 @@ class MoviesActivity : Activity() {
     @Composable
     private fun GenreDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference?,
     ) {
+        val moviePreference by viewModel.moviePreference.collectAsState()
         Dropdown(
             modifier2 = modifier,
             label = stringResource(R.string.genre),
+            selection = moviePreference?.genre,
             items = Genre.values().filter {
                 it != Genre.Unknown
             },
             name = { it.name },
-            selection = moviePreference?.genre
-        ) {
-            viewModel.setGenre(it)
-        }
+            onSelect = {
+                viewModel.setGenre(it)
+            }
+        )
     }
 
     @Composable
     private fun QualityDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference?,
     ) {
+        val moviePreference by viewModel.moviePreference.collectAsState()
         Dropdown(
             modifier2 = modifier,
             label = stringResource(R.string.quality),
+            selection = moviePreference?.quality,
             items = Quality.values().filter {
                 it != Quality.Unknown
             },
@@ -191,76 +199,86 @@ class MoviesActivity : Activity() {
                     else -> ""
                 }
             },
-            selection = moviePreference?.quality
-        ) {
-            viewModel.setQuality(it)
-        }
-    }
-
-    @Composable
-    private fun SortOrderDropdown(
-        modifier: Modifier = Modifier,
-        moviePreference: MoviePreference?,
-    ) {
-        Row(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Dropdown(
-                modifier = Modifier.weight(1f),
-                modifier2 = Modifier.fillMaxWidth(),
-                label = stringResource(R.string.sort_by),
-                items = SortBy.values().toList(),
-                name = {
-                    when (it) {
-                        SortBy.DateAdded -> getString(R.string.date_added)
-                        SortBy.DownloadCount -> getString(R.string.downloads)
-                        SortBy.LikeCount -> getString(R.string.likes)
-                        SortBy.Peers -> getString(R.string.peers)
-                        SortBy.Rating -> getString(R.string.rating)
-                        SortBy.Seeds -> getString(R.string.seeds)
-                        SortBy.Title -> getString(R.string.title)
-                        SortBy.Year -> getString(R.string.year)
-                    }
-                },
-                selection = moviePreference?.sortBy
-            ) {
-                viewModel.setSortBy(it)
+            onSelect = {
+                viewModel.setQuality(it)
             }
-            AnimatedVisibility(
-                modifier = Modifier.weight(1f),
-                visible = true // moviePreference.sortBy != null
-            ) {
-                Dropdown(
-                    label = stringResource(R.string.order_by),
-                    items = OrderBy.values().toList(),
-                    name = {
-                        when (it) {
-                            OrderBy.Ascending -> getString(R.string.ascending)
-                            OrderBy.Descending -> getString(R.string.descending)
-                        }
-                    },
-                    selection = moviePreference?.orderBy
-                ) {
-                    viewModel.setOrderBy(it)
-                }
-            }
-        }
+        )
     }
 
     @Composable
     private fun MinimumRatingDropdown(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference?,
     ) {
+        val moviePreference by viewModel.moviePreference.collectAsState()
         Dropdown(
             modifier2 = modifier,
             label = stringResource(R.string.minimum_rating),
+            selection = moviePreference?.minimumRating,
             items = 0..9,
             name = { it.toString() },
-            selection = moviePreference?.minimumRating
+            onSelect = {
+                viewModel.setMinimumRating(it)
+            }
+        )
+    }
+
+    @Composable
+    private fun SortByDropdown(
+        modifier: Modifier = Modifier,
+    ) {
+        val moviePreference by viewModel.moviePreference.collectAsState()
+        Dropdown(
+            modifier = modifier,
+            modifier2 = Modifier.fillMaxWidth(),
+            label = stringResource(R.string.sort_by),
+            selection = moviePreference?.sortBy,
+            items = SortBy.values().toList(),
+            name = {
+                when (it) {
+                    SortBy.DateAdded -> getString(R.string.date_added)
+                    SortBy.DownloadCount -> getString(R.string.downloads)
+                    SortBy.LikeCount -> getString(R.string.likes)
+                    SortBy.Peers -> getString(R.string.peers)
+                    SortBy.Rating -> getString(R.string.rating)
+                    SortBy.Seeds -> getString(R.string.seeds)
+                    SortBy.Title -> getString(R.string.title)
+                    SortBy.Year -> getString(R.string.year)
+                }
+            },
+            onClear = {
+                viewModel.setSortBy(SortBy.DateAdded)
+                viewModel.setOrderBy(OrderBy.Descending)
+            },
+            onSelect = {
+                viewModel.setSortBy(it)
+            },
+        )
+    }
+
+    @Composable
+    private fun OrderByDropdown(
+        modifier: Modifier = Modifier,
+    ) {
+        val moviePreference by viewModel.moviePreference.collectAsState()
+        AnimatedVisibility(
+            modifier = modifier,
+            visible = moviePreference?.sortBy != null
         ) {
-            viewModel.setMinimumRating(it)
+            Dropdown(
+                modifier2 = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.order_by),
+                selection = moviePreference?.orderBy,
+                items = OrderBy.values().toList(),
+                name = {
+                    when (it) {
+                        OrderBy.Ascending -> getString(R.string.ascending)
+                        OrderBy.Descending -> getString(R.string.descending)
+                    }
+                },
+                onSelect = {
+                    viewModel.setOrderBy(it)
+                },
+            )
         }
     }
 
@@ -279,7 +297,7 @@ class MoviesActivity : Activity() {
     private fun ClearButton(
         modifier: Modifier = Modifier,
     ) {
-        ElevatedButton(
+        OutlinedButton(
             modifier = modifier,
             onClick = { viewModel.clear() },
             content = { Text(text = stringResource(R.string.clear)) }
