@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import io.github.kunal26das.common.model.File
 
 class DownloadCompleteBroadcastReceiver(
     private val onReceive: (BroadcastReceiver.(File?) -> Unit)? = null,

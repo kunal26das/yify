@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.yify.Constants
@@ -46,25 +47,27 @@ fun VerticalGridMovies(
             .pullRefresh(pullRefreshState),
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(Constants.MOVIE_WIDTH.dp),
+            columns = GridCells.Adaptive(Constants.movieWidth),
             contentPadding = PaddingValues(8.dp),
             content = {
                 items(movies.itemCount) { index ->
                     val movie = movies[index]
                     MovieCard(
                         modifier = Modifier
-                            .height(Constants.MOVIE_HEIGHT.dp)
+                            .height(Constants.movieHeight)
                             .padding(8.dp),
                         movie = movie,
                         onClick = onClick,
                     )
                 }
-                items(Constants.LOAD_SIZE) {
-                    MovieCard(
-                        modifier = Modifier
-                            .height(Constants.MOVIE_HEIGHT.dp)
-                            .padding(8.dp),
-                    )
+                if (movies.loadState.append is LoadState.Loading) {
+                    items(Constants.LOAD_SIZE) {
+                        MovieCard(
+                            modifier = Modifier
+                                .height(Constants.movieHeight)
+                                .padding(8.dp),
+                        )
+                    }
                 }
             }
         )

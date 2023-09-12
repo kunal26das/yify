@@ -2,7 +2,7 @@ package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class CastDto(
+data class CastDto constructor(
     @SerializedName("imdb_code")
     val imdbCode: String,
 

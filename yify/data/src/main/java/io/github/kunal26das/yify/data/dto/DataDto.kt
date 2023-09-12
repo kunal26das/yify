@@ -2,7 +2,7 @@ package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class DataDto(
+data class DataDto constructor(
     @SerializedName("movie")
     val movie: MovieDto?,
     @SerializedName("movies")

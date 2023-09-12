@@ -29,8 +29,8 @@ fun HorizontalMovies(
                 val movie = movies[index]
                 MovieCard(
                     modifier = Modifier
-                        .width(Constants.MOVIE_WIDTH.dp)
-                        .height(Constants.MOVIE_HEIGHT.dp)
+                        .width(Constants.movieWidth)
+                        .height(Constants.movieHeight)
                         .padding(8.dp),
                     movie = movie,
                     onClick = onClick,
@@ -39,8 +39,8 @@ fun HorizontalMovies(
             items(Constants.LOAD_SIZE) {
                 MovieCard(
                     modifier = Modifier
-                        .width(Constants.MOVIE_WIDTH.dp)
-                        .height(Constants.MOVIE_HEIGHT.dp)
+                        .width(Constants.movieWidth)
+                        .height(Constants.movieHeight)
                         .padding(8.dp),
                 )
             }

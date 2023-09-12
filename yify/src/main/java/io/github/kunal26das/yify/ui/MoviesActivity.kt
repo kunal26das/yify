@@ -38,26 +38,24 @@ import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
+import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
-import io.github.kunal26das.yify.model.MoviePreference
 
 @AndroidEntryPoint
-class HomeActivity : Activity() {
+class MoviesActivity : Activity() {
 
-    private val viewModel by viewModels<HomeViewModel>()
+    private val viewModel by viewModels<MoviesViewModel>()
 
     @Composable
     override fun Content() {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         DismissibleNavigationDrawer(
-            modifier = Modifier,
             drawerState = drawerState,
             drawerContent = {
                 DrawerContent(
-                    modifier = Modifier
-                        .width(360.dp),
+                    modifier = Modifier.width(360.dp),
                 )
             },
         ) {
@@ -87,7 +85,6 @@ class HomeActivity : Activity() {
             item {
                 SearchTextField(
                     modifier = Modifier.fillMaxWidth(),
-                    moviePreference = moviePreference,
                 )
             }
             item {
@@ -133,7 +130,6 @@ class HomeActivity : Activity() {
     @Composable
     private fun SearchTextField(
         modifier: Modifier = Modifier,
-        moviePreference: MoviePreference?,
     ) {
         val focusManager = LocalFocusManager.current
         val searchQuery by viewModel.searchQuery.collectAsState()
@@ -292,7 +288,7 @@ class HomeActivity : Activity() {
 
     class Contract : ActivityResultContract<Any?, Boolean>() {
         override fun createIntent(context: Context, input: Any?): Intent {
-            return Intent(context, HomeActivity::class.java)
+            return Intent(context, MoviesActivity::class.java)
         }
 
         override fun parseResult(resultCode: Int, intent: Intent?): Boolean {

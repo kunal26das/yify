@@ -14,6 +14,7 @@ data class Movie constructor(
     val language: String,
     val likeCount: Int,
     val mpaRating: String,
+    val quality: Quality,
     val rating: Float,
     val runtime: Int,
     val slug: String,

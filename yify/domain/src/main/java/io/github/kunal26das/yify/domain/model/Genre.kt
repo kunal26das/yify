@@ -31,9 +31,11 @@ enum class Genre {
     ;
 
     companion object {
-        val ALL by lazy {
-            values().toMutableList().apply {
-                removeAt(indexOf(Unknown))
+        operator fun get(genre: String?): Genre? {
+            return try {
+                Genre.valueOf(genre!!)
+            } catch (e: Exception) {
+                null
             }
         }
     }

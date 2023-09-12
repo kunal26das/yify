@@ -31,7 +31,7 @@ class NetflixActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.getMovieGenreCounts(Genre.ALL)
+        viewModel.getMovieGenreCounts(Genre.values())
     }
 
     @Composable
@@ -42,7 +42,7 @@ class NetflixActivity : Activity() {
                 .fillMaxSize()
                 .padding(top = 4.dp, bottom = 8.dp),
             content = {
-                itemsIndexed(viewModel.getMovieGenreFlows(Genre.ALL)) { index, flow ->
+                itemsIndexed(viewModel.getMovieGenreFlows(Genre.values())) { index, flow ->
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -55,8 +55,8 @@ class NetflixActivity : Activity() {
                                     bottom = 12.dp,
                                 ),
                                 text = when (movieGenreCounts.getOrNull(index)) {
-                                    null -> Genre.ALL[index].name
-                                    else -> "${Genre.ALL[index]} (${movieGenreCounts[index]})"
+                                    null -> Genre.values()[index].name
+                                    else -> "${Genre.values()[index]} (${movieGenreCounts[index]})"
                                 },
                                 fontSize = 20.sp,
                             )

@@ -11,4 +11,4 @@ import io.github.kunal26das.yify.data.di.YifyDataModule
     ]
 )
 @InstallIn(SingletonComponent::class)
-object SingletonDependencies
+internal object SingletonDependencies

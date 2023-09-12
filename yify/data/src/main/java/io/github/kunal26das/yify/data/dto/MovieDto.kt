@@ -2,7 +2,7 @@ package io.github.kunal26das.yify.data.dto
 
 import com.google.gson.annotations.SerializedName
 
-data class MovieDto(
+data class MovieDto constructor(
     @SerializedName("id")
     var id: Int = 0,
     @SerializedName("background_image")

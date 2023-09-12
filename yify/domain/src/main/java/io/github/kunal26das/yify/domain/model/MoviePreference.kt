@@ -1,9 +1,5 @@
-package io.github.kunal26das.yify.model
+package io.github.kunal26das.yify.domain.model
 
-import io.github.kunal26das.yify.domain.model.Genre
-import io.github.kunal26das.yify.domain.model.OrderBy
-import io.github.kunal26das.yify.domain.model.Quality
-import io.github.kunal26das.yify.domain.model.SortBy
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,5 +10,11 @@ data class MoviePreference constructor(
     val genre: Genre? = null,
     val sortBy: SortBy? = null,
     val orderBy: OrderBy? = null,
-    val withRtRating: Boolean? = null,
-)
+) {
+    companion object {
+        val Default = MoviePreference(
+            sortBy = SortBy.DateAdded,
+            orderBy = OrderBy.Descending,
+        )
+    }
+}

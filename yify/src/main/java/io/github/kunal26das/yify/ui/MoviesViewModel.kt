@@ -2,19 +2,16 @@ package io.github.kunal26das.yify.ui
 
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.common.core.ViewModel
-import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.model.Genre
+import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
-import io.github.kunal26das.yify.model.MoviePreference
-import io.github.kunal26das.yify.source.factory.MoviesSourceFactory
+import io.github.kunal26das.yify.usecase.MoviesPagerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -28,35 +25,26 @@ import javax.inject.Inject
 
 @HiltViewModel
 @OptIn(FlowPreview::class)
-class HomeViewModel @Inject constructor(
-    private val moviesSourceFactory: MoviesSourceFactory,
-    private val moviePreferenceDataStore: DataStore<MoviePreference>,
+class MoviesViewModel @Inject constructor(
     immutablePreference: FlowPreference,
+    private val moviesPagerUseCase: MoviesPagerUseCase,
+    private val moviePreferenceDataStore: DataStore<MoviePreference>,
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
-    val moviePreference = moviePreferenceDataStore.data.stateIn()
-
     val maxMovieCount = immutablePreference.getMaxMovieCount().stateIn()
     val currentMovieCount = immutablePreference.getCurrentMovieCount().stateIn()
+    val moviePreference = moviePreferenceDataStore.data.stateIn(MoviePreference.Default)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val movies = searchQuery
         .debounce(1000L)
         .combine(moviePreferenceDataStore.data) { searchQuery, moviePreference ->
-            Pager(
-                config = PagingConfig(
-                    pageSize = Constants.LOAD_SIZE,
-                    initialLoadSize = Constants.LOAD_SIZE,
-                ),
-                pagingSourceFactory = {
-                    moviesSourceFactory.get(moviePreference.copy(queryTerm = searchQuery))
-                },
-            )
+            moviesPagerUseCase.getMoviesPagingData(moviePreference, searchQuery)
         }.flatMapLatest {
-            it.flow
+            it
         }.cachedIn(viewModelScope)
 
     fun search(searchQuery: String?) {

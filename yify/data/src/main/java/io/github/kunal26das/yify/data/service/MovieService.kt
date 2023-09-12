@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.data.service
 
-import io.github.kunal26das.yify.data.dto.MovieDto
 import io.github.kunal26das.yify.data.dto.ResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -10,14 +9,13 @@ interface MovieService {
     @GET(ROUTE_MOVIES)
     suspend fun getMovies(
         @Query(KEY_LIMIT) limit: Int,
-        @Query(KEY_PAGE) page: Int,
+        @Query(KEY_PAGE) page: Int = FIRST_PAGE,
         @Query(KEY_QUALITY) quality: String? = null,
         @Query(KEY_MINIMUM_RATING) minimumRating: Int? = null,
         @Query(KEY_QUERY_TERM) queryTerm: String? = null,
         @Query(KEY_GENRE) genre: String? = null,
         @Query(KEY_SORT_BY) sortBy: String? = null,
         @Query(KEY_ORDER_BY) orderBy: String? = null,
-        @Query(KEY_WITH_RT_RATINGS) withRtRating: Boolean? = null,
     ): Result<ResponseDto>
 
     @GET(ROUTE_MOVIE_SUGGESTIONS)
@@ -32,10 +30,9 @@ interface MovieService {
         @Query(KEY_WITH_CAST) withCast: Boolean = true,
     ): Result<ResponseDto>
 
-    @GET(ROUTE_UPCOMING_MOVIES)
-    suspend fun getUpcomingMovies(): Result<List<MovieDto>>
-
     companion object {
+        private const val FIRST_PAGE = 1
+
         private const val KEY_PAGE = "page"
         private const val KEY_GENRE = "genre"
         private const val KEY_LIMIT = "limit"
@@ -47,12 +44,9 @@ interface MovieService {
         private const val KEY_QUERY_TERM = "query_term"
         private const val KEY_WITH_IMAGES = "with_images"
         private const val KEY_MINIMUM_RATING = "minimum_rating"
-        private const val KEY_WITH_RT_RATINGS = "with_rt_ratings"
 
         private const val ROUTE_MOVIES = "list_movies.json"
         private const val ROUTE_MOVIE_DETAILS = "movie_details.json"
-        private const val ROUTE_UPCOMING_MOVIES = "list_upcoming.json"
         private const val ROUTE_MOVIE_SUGGESTIONS = "movie_suggestions.json"
-        private const val ROUTE_MOVIE_PARENTAL_GUIDE = "movie_parental_guides.json"
     }
 }

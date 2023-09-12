@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.db.serializer
 
 import androidx.datastore.core.Serializer
-import io.github.kunal26das.yify.model.MoviePreference
+import io.github.kunal26das.yify.domain.model.MoviePreference
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.InputStream

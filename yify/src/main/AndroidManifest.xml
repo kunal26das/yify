@@ -4,7 +4,7 @@
 
     <application>
         <activity
-            android:name=".ui.HomeActivity"
+            android:name=".ui.MoviesActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity">

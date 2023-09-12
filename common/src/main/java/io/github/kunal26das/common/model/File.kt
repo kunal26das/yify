@@ -1,4 +1,4 @@
-package io.github.kunal26das.common.download
+package io.github.kunal26das.common.model
 
 import android.net.Uri
 
