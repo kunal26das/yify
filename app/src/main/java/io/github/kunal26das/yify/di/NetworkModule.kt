@@ -8,9 +8,13 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.kunal26das.yify.BuildConfig
+import okhttp3.Cache
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.dnsoverhttps.DnsOverHttps
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -20,9 +24,13 @@ internal object NetworkModule {
     @Provides
     @Singleton
     fun providesOkHttp(): OkHttpClient {
-        return OkHttpClient.Builder().apply {
-            retryOnConnectionFailure(true)
+        val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
+        val bootstrapClient = OkHttpClient.Builder().cache(appCache).build()
+        val dns = DnsOverHttps.Builder().client(bootstrapClient).apply {
+            url("https://1.1.1.1/dns-query".toHttpUrl())
+            includeIPv6(false)
         }.build()
+        return bootstrapClient.newBuilder().dns(dns).build()
     }
 
     @Provides
