@@ -81,7 +81,7 @@ internal abstract class YifyModule {
                 produceFile = { context.dataStoreFile(MOVIE_PREFERENCE_JSON) },
                 scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
                 corruptionHandler = ReplaceFileCorruptionHandler(
-                    produceNewData = { MoviePreference() }
+                    produceNewData = { MoviePreference.Default }
                 ),
             )
         }

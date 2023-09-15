@@ -5,13 +5,18 @@ import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +26,8 @@ import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -31,6 +38,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -68,22 +77,61 @@ class MoviesActivity : Activity() {
                 }
             },
         ) {
-            VerticalGridMovies(
-                modifier = Modifier.fillMaxSize(),
-                moviesFlow = viewModel.movies,
-            )
+            Box {
+                VerticalGridMovies(
+                    modifier = Modifier.fillMaxSize(),
+                    moviesFlow = viewModel.movies,
+                )
+                VerticalGradient(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                    reverse = false,
+                )
+                VerticalGradient(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                    reverse = true,
+                )
+            }
         }
+    }
+
+    @Composable
+    private fun VerticalGradient(
+        modifier: Modifier = Modifier,
+        reverse: Boolean = false
+    ) {
+        val systemBarsPaddingValues = WindowInsets.systemBars.asPaddingValues()
+        Box(
+            modifier = modifier
+                .height(systemBarsPaddingValues.calculateTopPadding())
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to MaterialTheme.colorScheme.background,
+                            1f to Color.Transparent
+                        ),
+                        startY = if (reverse) Float.POSITIVE_INFINITY else 0f,
+                        endY = if (reverse) 0f else Float.POSITIVE_INFINITY,
+                    )
+                )
+        )
     }
 
     @Composable
     private fun DrawerContent(
         modifier: Modifier = Modifier,
     ) {
+        val systemBarsPaddingValues = WindowInsets.systemBars.asPaddingValues()
         LazyColumn(
             modifier = modifier,
             contentPadding = PaddingValues(
-                horizontal = 16.dp,
-                vertical = 10.dp,
+                start = 16.dp,
+                top = systemBarsPaddingValues.calculateTopPadding(),
+                end = 16.dp,
+                bottom = systemBarsPaddingValues.calculateBottomPadding(),
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,11 +167,6 @@ class MoviesActivity : Activity() {
                 )
             }
             item {
-                MovieCountText(
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-            item {
                 ClearButton(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -141,17 +184,20 @@ class MoviesActivity : Activity() {
         val searchQuery by viewModel.searchQuery.collectAsState()
         OutlinedTextField(
             modifier = modifier,
-            readOnly = true,
+            readOnly = false,
             label = { Text(stringResource(R.string.search)) },
             trailingIcon = {
-                Icon(
-                    modifier = Modifier.clickable {
+                IconButton(
+                    onClick = {
                         viewModel.search(null)
                         focusManager.clearFocus()
-                    },
-                    imageVector = Icons.Filled.Clear,
-                    contentDescription = null,
-                )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = null,
+                    )
+                }
             },
             value = searchQuery,
             onValueChange = {
@@ -244,10 +290,6 @@ class MoviesActivity : Activity() {
                     SortBy.Title -> getString(R.string.title)
                     SortBy.Year -> getString(R.string.year)
                 }
-            },
-            onClear = {
-                viewModel.setSortBy(SortBy.DateAdded)
-                viewModel.setOrderBy(OrderBy.Descending)
             },
             onSelect = {
                 viewModel.setSortBy(it)

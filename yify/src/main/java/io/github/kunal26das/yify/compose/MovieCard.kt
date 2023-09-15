@@ -3,6 +3,7 @@ package io.github.kunal26das.yify.compose
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -19,6 +20,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import androidx.palette.graphics.Palette
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
@@ -32,6 +35,7 @@ fun MovieCard(
     onClick: (Movie?) -> Unit = {},
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    var palette by remember { mutableStateOf<Palette?>(null) }
     var state by remember { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
     ElevatedCard(
         modifier = modifier,
@@ -46,7 +50,9 @@ fun MovieCard(
             when (state) {
                 is AsyncImagePainter.State.Error -> {
                     Text(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(8.dp),
                         text = movie?.title.orEmpty(),
                         textAlign = TextAlign.Center,
                     )
@@ -56,6 +62,11 @@ fun MovieCard(
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                     )
+                }
+
+                is AsyncImagePainter.State.Success -> {
+                    val result = (state as AsyncImagePainter.State.Success).result
+                    palette = Palette.from(result.drawable.toBitmap()).generate()
                 }
 
                 else -> Unit

@@ -10,7 +10,7 @@ object Constants {
 
     const val LOAD_SIZE = 10
     const val FIRST_PAGE = 1
-    private const val RATIO = 1.65f
+    private const val RATIO = 2f
     private const val MOVIE_WIDTH = 320
 
     val movieWidth: Dp

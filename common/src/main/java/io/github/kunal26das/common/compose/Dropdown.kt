@@ -1,12 +1,12 @@
 package io.github.kunal26das.common.compose
 
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +18,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -35,8 +35,7 @@ fun <T> Dropdown(
 ) {
     val focusManager = LocalFocusManager.current
     var expanded by remember { mutableStateOf(false) }
-    val keyboardController: SoftwareKeyboardController? =
-        null // = LocalSoftwareKeyboardController.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     ExposedDropdownMenuBox(
         modifier = modifier,
         expanded = expanded,
@@ -57,13 +56,17 @@ fun <T> Dropdown(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = {
-                Icon(
-                    modifier = Modifier.clickable {
+                IconButton(
+                    onClick = {
                         onClear.invoke()
-                    },
-                    imageVector = Icons.Filled.Clear,
-                    contentDescription = null,
-                )
+                        expanded = false
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = null,
+                    )
+                }
             },
         )
         ExposedDropdownMenu(

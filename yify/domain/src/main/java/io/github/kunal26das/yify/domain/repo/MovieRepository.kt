@@ -8,8 +8,6 @@ import io.github.kunal26das.yify.domain.model.MoviePreference
 
 interface MovieRepository {
 
-    suspend fun ping(): Boolean
-
     suspend fun getMoviesCount(genre: Genre?): Int
 
     suspend fun getMovies(

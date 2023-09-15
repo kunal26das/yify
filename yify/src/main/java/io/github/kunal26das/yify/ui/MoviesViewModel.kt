@@ -62,7 +62,7 @@ class MoviesViewModel @Inject constructor(
     fun setQuality(quality: Quality?) {
         viewModelScope.launch(Dispatchers.IO) {
             moviePreferenceDataStore.updateData {
-                it.copy(quality = quality)
+                it.copy(quality = quality ?: MoviePreference.Default.quality)
             }
         }
     }
@@ -70,7 +70,7 @@ class MoviesViewModel @Inject constructor(
     fun setSortBy(sortBy: SortBy?) {
         viewModelScope.launch(Dispatchers.IO) {
             moviePreferenceDataStore.updateData {
-                it.copy(sortBy = sortBy)
+                it.copy(sortBy = sortBy ?: MoviePreference.Default.sortBy)
             }
         }
     }
@@ -78,7 +78,7 @@ class MoviesViewModel @Inject constructor(
     fun setOrderBy(orderBy: OrderBy?) {
         viewModelScope.launch(Dispatchers.IO) {
             moviePreferenceDataStore.updateData {
-                it.copy(orderBy = orderBy)
+                it.copy(orderBy = orderBy ?: MoviePreference.Default.orderBy)
             }
         }
     }
@@ -86,7 +86,7 @@ class MoviesViewModel @Inject constructor(
     fun setMinimumRating(rating: Int?) {
         viewModelScope.launch(Dispatchers.IO) {
             moviePreferenceDataStore.updateData {
-                it.copy(minimumRating = rating)
+                it.copy(minimumRating = rating ?: MoviePreference.Default.minimumRating)
             }
         }
     }
@@ -96,6 +96,7 @@ class MoviesViewModel @Inject constructor(
             moviePreferenceDataStore.updateData {
                 MoviePreference.Default
             }
+            _searchQuery.value = ""
         }
     }
 }

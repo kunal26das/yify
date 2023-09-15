@@ -13,6 +13,7 @@ data class MoviePreference constructor(
 ) {
     companion object {
         val Default = MoviePreference(
+            minimumRating = 0,
             sortBy = SortBy.DateAdded,
             orderBy = OrderBy.Descending,
         )

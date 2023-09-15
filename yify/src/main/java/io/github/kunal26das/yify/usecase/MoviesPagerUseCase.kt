@@ -32,11 +32,7 @@ class MoviesPagerUseCase @Inject constructor(
         return connectivityObserver.observe().flatMapLatest {
             when (it) {
                 ConnectionStatus.Available -> {
-                    if (movieRepository.ping()) {
-                        remoteMoviesSourcePager(preference)
-                    } else {
-                        localMoviesSourcePager(preference)
-                    }
+                    remoteMoviesSourcePager(preference)
                 }
 
                 else -> localMoviesSourcePager(preference)

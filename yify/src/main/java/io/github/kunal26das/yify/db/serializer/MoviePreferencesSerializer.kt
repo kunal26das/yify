@@ -9,7 +9,7 @@ import java.io.OutputStream
 
 object MoviePreferencesSerializer : Serializer<MoviePreference> {
     override val defaultValue: MoviePreference
-        get() = MoviePreference()
+        get() = MoviePreference.Default
 
     override suspend fun readFrom(input: InputStream): MoviePreference {
         return try {

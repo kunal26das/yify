@@ -25,11 +25,6 @@ class MovieRepositoryImpl @Inject constructor(
     private val yifyDatabase: YifyDatabase,
 ) : MovieRepository {
 
-    override suspend fun ping(): Boolean {
-        val result = movieService.getMovies(limit = 1)
-        return result.isSuccess
-    }
-
     override suspend fun getMoviesCount(genre: Genre?): Int {
         val result = movieService.getMovies(limit = 1, genre = genre?.key)
         val count = result.getOrNull()?.dataDto?.movieCount ?: 0

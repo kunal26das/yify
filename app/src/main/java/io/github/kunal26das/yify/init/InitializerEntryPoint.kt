@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface InitializerEntryPoint {
+
     fun inject(initializer: CoilInitializer)
 
     companion object {

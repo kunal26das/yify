@@ -2,8 +2,11 @@ package io.github.kunal26das.yify.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.ExperimentalMaterialApi
@@ -32,6 +35,7 @@ fun VerticalGridMovies(
     moviesFlow: Flow<PagingData<Movie>>,
     onClick: (Movie?) -> Unit = {},
 ) {
+    val systemBarsPaddingValues = WindowInsets.systemBars.asPaddingValues()
     var refreshing by remember { mutableStateOf(false) }
     val movies = moviesFlow.collectAsLazyPagingItems()
     val pullRefreshState = rememberPullRefreshState(
@@ -48,7 +52,12 @@ fun VerticalGridMovies(
     ) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(Constants.movieWidth),
-            contentPadding = PaddingValues(8.dp),
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                top = systemBarsPaddingValues.calculateTopPadding(),
+                end = 8.dp,
+                bottom = systemBarsPaddingValues.calculateBottomPadding(),
+            ),
             content = {
                 items(movies.itemCount) { index ->
                     val movie = movies[index]

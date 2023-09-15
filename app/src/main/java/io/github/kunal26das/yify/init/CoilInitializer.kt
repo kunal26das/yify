@@ -21,6 +21,7 @@ class CoilInitializer : IndependentInitializer<ImageLoader>() {
             diskCachePolicy(CachePolicy.ENABLED)
             respectCacheHeaders(false)
             okHttpClient(okHttpClient)
+            allowHardware(false)
         }.build().also {
             Coil.setImageLoader(it)
         }
