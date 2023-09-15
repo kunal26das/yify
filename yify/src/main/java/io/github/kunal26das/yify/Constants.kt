@@ -21,4 +21,7 @@ object Constants {
 
     val movieHeight: Dp
         @Composable get() = movieWidth * RATIO
+
+    val trailerHeight: Dp
+        @Composable get() = 256.dp
 }

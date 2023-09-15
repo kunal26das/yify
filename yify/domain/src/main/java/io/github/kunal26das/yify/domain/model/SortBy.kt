@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class SortBy {
-    Title, Year, Rating, Peers, Seeds, DownloadCount, LikeCount, DateAdded;
+    Title, Year, Rating, Peers, Seeds, DateAdded;
 }

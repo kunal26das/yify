@@ -18,7 +18,9 @@ interface MovieRepository {
         moviePreference: MoviePreference? = null
     ): Result<List<Movie>>
 
-    fun getMoviesSource(moviePreference: MoviePreference?): PagingSource<Int, MovieEntity>
+    suspend fun getLocalMovie(movieId: Int): Movie?
 
-    suspend fun getMovie(movieId: Int): Result<Movie?>
+    suspend fun getRemoteMovie(movieId: Int): Result<Movie?>
+
+    fun getMoviesSource(moviePreference: MoviePreference?): PagingSource<Int, MovieEntity>
 }

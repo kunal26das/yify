@@ -11,6 +11,8 @@ import io.github.kunal26das.yify.domain.db.ImmutablePreference
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.entity.MovieEntity
+import io.github.kunal26das.yify.domain.mapper.toMovie
+import io.github.kunal26das.yify.domain.mapper.toTorrents
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.MoviePreference
@@ -65,6 +67,23 @@ class MovieRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getLocalMovie(movieId: Int): Movie? {
+        return yifyDatabase.transaction {
+            val torrents = torrentDao.getTorrents(movieId).toTorrents
+            yifyDatabase.movieDao.getMovie(movieId)?.toMovie(torrents = torrents)
+        }
+    }
+
+    override suspend fun getRemoteMovie(movieId: Int): Result<Movie?> {
+        return movieService.getMovie(movieId).map {
+            it.dataDto.movie
+        }.onSuccess {
+            it?.let { updateDatabase(listOf(it)) }
+        }.map {
+            it?.toMovie
+        }
+    }
+
     override fun getMoviesSource(
         moviePreference: MoviePreference?
     ): PagingSource<Int, MovieEntity> {
@@ -76,16 +95,6 @@ class MovieRepositoryImpl @Inject constructor(
             sortBy = moviePreference?.sortBy?.name,
 //            orderBy = moviePreference?.orderBy?.name,
         )
-    }
-
-    override suspend fun getMovie(movieId: Int): Result<Movie?> {
-        return movieService.getMovie(movieId).map {
-            it.dataDto.movie
-        }.onSuccess {
-            it?.let { updateDatabase(listOf(it)) }
-        }.map {
-            it?.toMovie
-        }
     }
 
     private suspend fun updateDatabase(movies: List<MovieDto>?) {

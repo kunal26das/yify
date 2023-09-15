@@ -2,10 +2,11 @@ package io.github.kunal26das.yify.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -27,7 +27,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -36,17 +35,18 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
+import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.compose.SystemBarGradient
 import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.OrderBy
@@ -57,10 +57,21 @@ import io.github.kunal26das.yify.domain.model.SortBy
 class MoviesActivity : Activity() {
 
     private val viewModel by viewModels<MoviesViewModel>()
+    private val movieActivity = registerForActivityResult(MovieActivity.Contract())
+
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
 
     @Composable
     override fun Content() {
         val drawerState = rememberDrawerState(DrawerValue.Closed)
+        onBackPressedCallback = addOnBackPressedDispatcherCallback(rememberCoroutineScope()) {
+            if (drawerState.isOpen) {
+                drawerState.close()
+            } else finish()
+        }
+        BackHandler(true) {
+            onBackPressedCallback.handleOnBackPressed()
+        }
         DismissibleNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -81,14 +92,16 @@ class MoviesActivity : Activity() {
                 VerticalGridMovies(
                     modifier = Modifier.fillMaxSize(),
                     moviesFlow = viewModel.movies,
-                )
-                VerticalGradient(
+                ) {
+                    movieActivity.launch(it?.id)
+                }
+                SystemBarGradient(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
                     reverse = false,
                 )
-                VerticalGradient(
+                SystemBarGradient(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter),
@@ -98,27 +111,7 @@ class MoviesActivity : Activity() {
         }
     }
 
-    @Composable
-    private fun VerticalGradient(
-        modifier: Modifier = Modifier,
-        reverse: Boolean = false
-    ) {
-        val systemBarsPaddingValues = WindowInsets.systemBars.asPaddingValues()
-        Box(
-            modifier = modifier
-                .height(systemBarsPaddingValues.calculateTopPadding())
-                .background(
-                    Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            0f to MaterialTheme.colorScheme.background,
-                            1f to Color.Transparent
-                        ),
-                        startY = if (reverse) Float.POSITIVE_INFINITY else 0f,
-                        endY = if (reverse) 0f else Float.POSITIVE_INFINITY,
-                    )
-                )
-        )
-    }
+
 
     @Composable
     private fun DrawerContent(
@@ -129,9 +122,9 @@ class MoviesActivity : Activity() {
             modifier = modifier,
             contentPadding = PaddingValues(
                 start = 16.dp,
-                top = systemBarsPaddingValues.calculateTopPadding(),
+                top = statusBarHeight,
                 end = 16.dp,
-                bottom = systemBarsPaddingValues.calculateBottomPadding(),
+                bottom = statusBarHeight,
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -282,8 +275,6 @@ class MoviesActivity : Activity() {
             name = {
                 when (it) {
                     SortBy.DateAdded -> getString(R.string.date_added)
-                    SortBy.DownloadCount -> getString(R.string.downloads)
-                    SortBy.LikeCount -> getString(R.string.likes)
                     SortBy.Peers -> getString(R.string.peers)
                     SortBy.Rating -> getString(R.string.rating)
                     SortBy.Seeds -> getString(R.string.seeds)

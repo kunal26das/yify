@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import io.github.kunal26das.common.Theme
+import io.github.kunal26das.common.compose.Theme
 
 abstract class BottomSheetDialogFragment : BottomSheetDialogFragment() {
     override fun onCreateView(

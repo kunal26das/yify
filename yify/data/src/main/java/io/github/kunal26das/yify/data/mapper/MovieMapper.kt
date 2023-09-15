@@ -2,6 +2,8 @@ package io.github.kunal26das.yify.data.mapper
 
 import io.github.kunal26das.yify.data.dto.MovieDto
 import io.github.kunal26das.yify.domain.entity.MovieEntity
+import io.github.kunal26das.yify.domain.mapper.getYouTubeVideoCoverImageUrl
+import io.github.kunal26das.yify.domain.mapper.getYouTubeVideoUrl
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.Quality
 
@@ -9,36 +11,28 @@ val MovieDto.toMovie: Movie
     get() = Movie(
         id = id,
         backgroundImageUrl = backgroundImageOriginal ?: backgroundImage,
-        cast = cast.toCast,
         coverImageUrl = largeCoverImage ?: mediumCoverImage ?: smallCoverImage,
         dateUploaded = dateUploadedUnix ?: 0,
-        descriptionFull = descriptionFull.orEmpty(),
-        descriptionIntro = descriptionIntro.orEmpty(),
-        downloadCount = downloadCount ?: 0,
+        description = descriptionFull.orEmpty(),
         genres = genres.toGenres,
         imdbCode = imdbCode.orEmpty(),
         language = language.orEmpty(),
-        likeCount = likeCount ?: 0,
         mpaRating = mpaRating.orEmpty(),
         quality = torrentDtos.bestQuality ?: Quality.Unknown,
         rating = rating?.toFloat() ?: 0f,
         runtime = runtime ?: 0,
         slug = slug.orEmpty(),
         state = state.orEmpty(),
-        screenshotUrls = listOfNotNull(
-            largeScreenshotImage1 ?: mediumScreenshotImage1,
-            largeScreenshotImage2 ?: mediumScreenshotImage2,
-            largeScreenshotImage3 ?: mediumScreenshotImage3,
-        ),
         summary = summary.orEmpty(),
         synopsis = synopsis.orEmpty(),
         title = title.orEmpty(),
         titleEnglish = titleEnglish.orEmpty(),
         titleLong = titleLong.orEmpty(),
-        trailerImageUrl = getYouTubeVideoCoverImageUrl(ytTrailerCode),
+        trailerImageUrl = getYouTubeVideoCoverImageUrl(youtubeTrailerCode),
         torrents = torrentDtos.toTorrents,
         url = url,
         year = year,
+        youtubeTrailerUrl = getYouTubeVideoUrl(youtubeTrailerCode),
     )
 
 val MovieDto.toEntity: MovieEntity
@@ -48,12 +42,9 @@ val MovieDto.toEntity: MovieEntity
         coverImageUrl = largeCoverImage ?: mediumCoverImage ?: smallCoverImage,
         dateUploaded = dateUploadedUnix,
         descriptionFull = descriptionFull,
-        descriptionIntro = descriptionIntro,
-        downloadCount = downloadCount,
         genres = genres.toGenres,
         imdbCode = imdbCode,
         language = language,
-        likeCount = likeCount,
         mpaRating = mpaRating,
         peers = torrentDtos?.maxPeers,
         quality = torrentDtos.bestQuality,
@@ -67,9 +58,9 @@ val MovieDto.toEntity: MovieEntity
         title = title,
         titleEnglish = titleEnglish,
         titleLong = titleLong,
-        trailerImageUrl = getYouTubeVideoCoverImageUrl(ytTrailerCode),
         url = url,
         year = year,
+        youtubeTrailerCode = youtubeTrailerCode,
     )
 
 val List<MovieDto>?.toMovies: List<Movie>
@@ -77,8 +68,3 @@ val List<MovieDto>?.toMovies: List<Movie>
 
 val List<MovieDto>?.toEntities: List<MovieEntity>
     get() = this?.map { it.toEntity } ?: emptyList()
-
-private fun getYouTubeVideoCoverImageUrl(trailerCode: String?): String? {
-    return if (trailerCode.isNullOrEmpty()) null
-    else "https://img.youtube.com/vi/$trailerCode/maxresdefault.jpg"
-}

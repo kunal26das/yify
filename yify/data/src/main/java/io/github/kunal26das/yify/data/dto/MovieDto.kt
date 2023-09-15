@@ -9,18 +9,12 @@ data class MovieDto constructor(
     var backgroundImage: String? = null,
     @SerializedName("background_image_original")
     var backgroundImageOriginal: String? = null,
-    @SerializedName("cast")
-    var cast: List<CastDto>? = null,
     @SerializedName("date_uploaded")
     var dateUploaded: String? = null,
     @SerializedName("date_uploaded_unix")
     var dateUploadedUnix: Long? = null,
     @SerializedName("description_full")
     var descriptionFull: String? = null,
-    @SerializedName("description_intro")
-    var descriptionIntro: String? = null,
-    @SerializedName("download_count")
-    var downloadCount: Int? = null,
     @SerializedName("genres")
     var genres: List<String>? = null,
     @SerializedName("imdb_code")
@@ -29,22 +23,8 @@ data class MovieDto constructor(
     var language: String? = null,
     @SerializedName("large_cover_image")
     var largeCoverImage: String? = null,
-    @SerializedName("large_screenshot_image1")
-    var largeScreenshotImage1: String? = null,
-    @SerializedName("large_screenshot_image2")
-    var largeScreenshotImage2: String? = null,
-    @SerializedName("large_screenshot_image3")
-    var largeScreenshotImage3: String? = null,
-    @SerializedName("like_count")
-    var likeCount: Int? = null,
     @SerializedName("medium_cover_image")
     var mediumCoverImage: String? = null,
-    @SerializedName("medium_screenshot_image1")
-    var mediumScreenshotImage1: String? = null,
-    @SerializedName("medium_screenshot_image2")
-    var mediumScreenshotImage2: String? = null,
-    @SerializedName("medium_screenshot_image3")
-    var mediumScreenshotImage3: String? = null,
     @SerializedName("mpa_rating")
     var mpaRating: String? = null,
     @SerializedName("rating")
@@ -74,5 +54,5 @@ data class MovieDto constructor(
     @SerializedName("year")
     var year: Int? = null,
     @SerializedName("yt_trailer_code")
-    var ytTrailerCode: String? = null,
+    var youtubeTrailerCode: String? = null,
 )

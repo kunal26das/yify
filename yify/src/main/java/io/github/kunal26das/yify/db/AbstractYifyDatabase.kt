@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.withTransaction
 import io.github.kunal26das.yify.db.converter.QualityConverter
+import io.github.kunal26das.yify.db.converter.UrlConverter
 import io.github.kunal26das.yify.domain.db.MovieDao
 import io.github.kunal26das.yify.domain.db.TorrentDao
 import io.github.kunal26das.yify.domain.db.YifyDatabase
@@ -20,6 +21,7 @@ import io.github.kunal26das.yify.domain.entity.TorrentEntity
     version = 1,
 )
 @TypeConverters(
+    UrlConverter::class,
     GenreConverter::class,
     QualityConverter::class,
 )

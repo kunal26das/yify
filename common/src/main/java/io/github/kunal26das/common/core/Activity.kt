@@ -1,13 +1,16 @@
 package io.github.kunal26das.common.core
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
-import io.github.kunal26das.common.Theme
+import io.github.kunal26das.common.compose.Theme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 abstract class Activity : AppCompatActivity() {
 
@@ -18,6 +21,25 @@ abstract class Activity : AppCompatActivity() {
     protected fun <I> ActivityResultLauncher<I>.launch(input: I? = null): Activity {
         launch(input)
         return this@Activity
+    }
+
+    protected fun onBackPressedCallback(
+        coroutineScope: CoroutineScope, onBackPressed: suspend () -> Unit = {}
+    ): OnBackPressedCallback {
+        return object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                coroutineScope.launch {
+                    onBackPressed.invoke()
+                }
+            }
+        }
+    }
+
+    protected fun addOnBackPressedDispatcherCallback(
+        coroutineScope: CoroutineScope,
+        callback: suspend () -> Unit = {},
+    ) = onBackPressedCallback(coroutineScope, callback).also {
+        onBackPressedDispatcher.addCallback(it)
     }
 
     @Composable

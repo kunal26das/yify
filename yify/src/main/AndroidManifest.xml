@@ -10,7 +10,13 @@
             tools:ignore="LockedOrientationActivity" />
 
         <activity
-            android:name=".ui.NetflixActivity"
+            android:name=".ui.netflix.NetflixActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity" />
+
+        <activity
+            android:name=".ui.MovieActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity" />

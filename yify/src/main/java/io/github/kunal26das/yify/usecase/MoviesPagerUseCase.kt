@@ -66,7 +66,7 @@ class MoviesPagerUseCase @Inject constructor(
         },
     ).flow.map {
         it.map {
-            it.toMovie
+            it.toMovie()
         }
     }
 }

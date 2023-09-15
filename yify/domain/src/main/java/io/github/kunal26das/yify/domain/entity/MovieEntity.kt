@@ -19,18 +19,12 @@ data class MovieEntity constructor(
     val dateUploaded: Long?,
     @ColumnInfo("description_full")
     val descriptionFull: String?,
-    @ColumnInfo("description_intro")
-    val descriptionIntro: String?,
-    @ColumnInfo("download_count")
-    val downloadCount: Int?,
     @ColumnInfo("genres")
     val genres: List<Genre>?,
     @ColumnInfo("imdb_code")
     val imdbCode: String?,
     @ColumnInfo("language")
     val language: String?,
-    @ColumnInfo("like_count")
-    val likeCount: Int?,
     @ColumnInfo("mpa_rating")
     val mpaRating: String?,
     @ColumnInfo("peers")
@@ -57,10 +51,10 @@ data class MovieEntity constructor(
     val titleEnglish: String?,
     @ColumnInfo("title_long")
     val titleLong: String?,
-    @ColumnInfo("trailer_image_url")
-    val trailerImageUrl: String?,
     @ColumnInfo("url")
     val url: String?,
     @ColumnInfo("year")
     val year: Int?,
+    @ColumnInfo("youtube_trailer_code")
+    val youtubeTrailerCode: String?,
 )

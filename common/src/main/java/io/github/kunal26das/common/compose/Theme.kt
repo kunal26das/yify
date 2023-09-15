@@ -1,4 +1,4 @@
-package io.github.kunal26das.common
+package io.github.kunal26das.common.compose
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,16 +9,14 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun Theme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    val colors = when {
-        useDarkTheme -> dynamicDarkColorScheme(context)
-        else -> dynamicLightColorScheme(context)
-    }
     MaterialTheme(
-        colorScheme = colors,
+        colorScheme = when {
+            isSystemInDarkTheme() -> dynamicDarkColorScheme(context)
+            else -> dynamicLightColorScheme(context)
+        },
         content = content,
     )
 }

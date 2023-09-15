@@ -14,5 +14,5 @@ interface TorrentDao {
     suspend fun upsert(torrents: List<TorrentEntity>)
 
     @Query("SELECT * FROM TORRENT WHERE :id == MOVIE_ID")
-    suspend fun get(id: Int): List<TorrentEntity>
+    suspend fun getTorrents(id: Int): List<TorrentEntity>
 }

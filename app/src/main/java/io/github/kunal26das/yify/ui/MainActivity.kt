@@ -5,6 +5,7 @@ import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.core.Activity
+import io.github.kunal26das.yify.ui.netflix.NetflixActivity
 
 @AndroidEntryPoint
 class MainActivity : Activity() {

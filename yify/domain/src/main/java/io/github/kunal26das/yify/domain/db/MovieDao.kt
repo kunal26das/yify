@@ -15,11 +15,11 @@ interface MovieDao {
     @Upsert
     suspend fun upsert(movies: List<MovieEntity>)
 
-    @Query("SELECT * FROM MOVIE WHERE :id == ID")
-    suspend fun get(id: Int): MovieEntity?
-
     @Query("SELECT COUNT(*) FROM MOVIE")
     suspend fun getMoviesCount(): Int
+
+    @Query("SELECT * FROM MOVIE WHERE :id == ID")
+    suspend fun getMovie(id: Int): MovieEntity?
 
     @Query(
         "SELECT * FROM MOVIE " +
@@ -33,8 +33,6 @@ interface MovieDao {
                 "WHEN :sortBy == 'Rating' THEN RATING " +
                 "WHEN :sortBy == 'Peers' THEN PEERS " +
                 "WHEN :sortBy == 'Seeds' THEN SEEDS " +
-                "WHEN :sortBy == 'DownloadCount' THEN DOWNLOAD_COUNT " +
-                "WHEN :sortBy == 'LikeCount' THEN LIKE_COUNT " +
                 "ELSE DATE_UPLOADED END) "
     )
     fun getMovies(
