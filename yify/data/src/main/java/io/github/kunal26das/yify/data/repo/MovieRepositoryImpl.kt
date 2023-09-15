@@ -25,7 +25,11 @@ class MovieRepositoryImpl @Inject constructor(
     private val yifyDatabase: YifyDatabase,
 ) : MovieRepository {
 
-    override suspend fun getMoviesCount(genre: Genre?): Int {
+    override suspend fun getLocalMoviesCount(): Int {
+        return yifyDatabase.movieDao.getMoviesCount()
+    }
+
+    override suspend fun getRemoteMoviesCount(genre: Genre?): Int {
         val result = movieService.getMovies(limit = 1, genre = genre?.key)
         val count = result.getOrNull()?.dataDto?.movieCount ?: 0
         if (result.isSuccess) {

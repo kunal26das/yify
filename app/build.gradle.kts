@@ -87,4 +87,6 @@ dependencies {
     implementation("com.github.skydoves:retrofit-adapters-result:1.0.8")
     implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.11.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.activity:activity-ktx:1.7.2")
+    implementation("androidx.hilt:hilt-work:1.0.0")
 }

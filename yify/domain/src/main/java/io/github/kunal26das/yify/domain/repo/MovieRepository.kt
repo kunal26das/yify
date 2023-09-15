@@ -8,12 +8,14 @@ import io.github.kunal26das.yify.domain.model.MoviePreference
 
 interface MovieRepository {
 
-    suspend fun getMoviesCount(genre: Genre?): Int
+    suspend fun getLocalMoviesCount(): Int
+
+    suspend fun getRemoteMoviesCount(genre: Genre? = null): Int
 
     suspend fun getMovies(
         limit: Int,
         page: Int,
-        moviePreference: MoviePreference?
+        moviePreference: MoviePreference? = null
     ): Result<List<Movie>>
 
     fun getMoviesSource(moviePreference: MoviePreference?): PagingSource<Int, MovieEntity>

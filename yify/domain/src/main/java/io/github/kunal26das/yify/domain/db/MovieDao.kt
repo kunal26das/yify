@@ -18,6 +18,9 @@ interface MovieDao {
     @Query("SELECT * FROM MOVIE WHERE :id == ID")
     suspend fun get(id: Int): MovieEntity?
 
+    @Query("SELECT COUNT(*) FROM MOVIE")
+    suspend fun getMoviesCount(): Int
+
     @Query(
         "SELECT * FROM MOVIE " +
                 "WHERE :quality == QUALITY " +

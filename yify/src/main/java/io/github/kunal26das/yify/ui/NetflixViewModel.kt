@@ -11,6 +11,7 @@ import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import io.github.kunal26das.yify.usecase.MoviesPagerUseCase
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,10 +30,8 @@ class NetflixViewModel @Inject constructor(
     fun getMovieGenreCounts(genres: Array<Genre>) {
         viewModelScope.launch {
             _genreCount.value = genres.map {
-                async { movieRepository.getMoviesCount(it) }
-            }.map {
-                it.await()
-            }
+                async { movieRepository.getRemoteMoviesCount(it) }
+            }.awaitAll()
         }
     }
 

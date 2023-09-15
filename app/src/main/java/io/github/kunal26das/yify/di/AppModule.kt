@@ -1,11 +1,14 @@
 package io.github.kunal26das.yify.di
 
+import android.content.Context
+import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.skydoves.retrofit.adapters.result.ResultCallAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.kunal26das.yify.BuildConfig
 import okhttp3.Cache
@@ -19,7 +22,14 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal object NetworkModule {
+internal object AppModule {
+
+    @Provides
+    fun providesWorkManager(
+        @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
+    }
 
     @Provides
     @Singleton
