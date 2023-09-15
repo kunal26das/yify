@@ -16,7 +16,7 @@ val MovieDto.toMovie: Movie
         description = descriptionFull.orEmpty(),
         genres = genres.toGenres,
         imdbCode = imdbCode.orEmpty(),
-        language = language.orEmpty(),
+        languageCode = language.orEmpty(),
         mpaRating = mpaRating.orEmpty(),
         quality = torrentDtos.bestQuality ?: Quality.Unknown,
         rating = rating?.toFloat() ?: 0f,

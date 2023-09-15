@@ -4,6 +4,7 @@ import io.github.kunal26das.yify.data.dto.TorrentDto
 import io.github.kunal26das.yify.domain.entity.TorrentEntity
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.Torrent
+import java.util.Locale
 
 val TorrentDto.toTorrent: Torrent
     get() = Torrent(
@@ -14,7 +15,7 @@ val TorrentDto.toTorrent: Torrent
         seeds = seeds ?: 0,
         size = size.orEmpty(),
         sizeBytes = sizeBytes ?: 0,
-        type = type.orEmpty(),
+        type = type?.capitalize().orEmpty(),
         url = url,
     )
 
@@ -28,7 +29,7 @@ fun TorrentDto.toEntity(movieId: Int): TorrentEntity {
         seeds = seeds,
         size = size,
         sizeBytes = sizeBytes,
-        type = type,
+        type = type?.capitalize(),
         url = url,
     )
 }
@@ -48,3 +49,12 @@ val List<TorrentDto>?.maxPeers: Int?
 
 val List<TorrentDto>?.maxSeeds: Int?
     get() = this?.maxOf { it.seeds ?: 0 }
+
+fun String.capitalize(
+    locale: Locale = Locale.getDefault()
+) = replaceFirstChar {
+    when {
+        it.isLowerCase() -> it.titlecase(locale)
+        else -> it.toString()
+    }
+}

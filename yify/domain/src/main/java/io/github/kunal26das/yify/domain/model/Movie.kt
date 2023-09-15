@@ -1,5 +1,7 @@
 package io.github.kunal26das.yify.domain.model
 
+import java.util.Locale
+
 data class Movie constructor(
     val id: Int,
     val backgroundImageUrl: String?,
@@ -8,7 +10,7 @@ data class Movie constructor(
     val description: String,
     val genres: List<Genre>,
     val imdbCode: String,
-    val language: String,
+    val languageCode: String,
     val mpaRating: String,
     val quality: Quality,
     val rating: Float,
@@ -26,6 +28,11 @@ data class Movie constructor(
     val year: Int?,
     val youtubeTrailerUrl: String?,
 ) {
+
+    val displayLanguage by lazy {
+        Locale(languageCode).displayLanguage
+    }
+
     companion object {
         const val KEY_MOVIE_ID = "movie_id"
     }

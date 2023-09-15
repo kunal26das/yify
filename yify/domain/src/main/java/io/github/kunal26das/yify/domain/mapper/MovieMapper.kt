@@ -15,7 +15,7 @@ fun MovieEntity.toMovie(
     description = descriptionFull.orEmpty(),
     genres = genres.orEmpty(),
     imdbCode = imdbCode.orEmpty(),
-    language = language.orEmpty(),
+    languageCode = language.orEmpty(),
     mpaRating = mpaRating.orEmpty(),
     quality = quality ?: Quality.Unknown,
     rating = rating ?: 0f,

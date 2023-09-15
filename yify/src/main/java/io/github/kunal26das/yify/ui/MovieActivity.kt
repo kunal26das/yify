@@ -9,12 +9,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,6 +46,7 @@ import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.compose.TrailerCard
 import io.github.kunal26das.yify.compose.imageRequest
 import io.github.kunal26das.yify.domain.model.Movie
+import io.github.kunal26das.yify.domain.model.Torrent
 
 @AndroidEntryPoint
 class MovieActivity : Activity() {
@@ -57,7 +63,6 @@ class MovieActivity : Activity() {
     @Composable
     override fun Content() {
         val movie by viewModel.movie.collectAsState()
-        var maxLines by remember { mutableIntStateOf(MAX_LINES) }
         var palette by remember { mutableStateOf<Palette?>(null) }
         val painter = rememberAsyncImagePainter(
             model = movie?.coverImageUrl?.imageRequest,
@@ -78,71 +83,162 @@ class MovieActivity : Activity() {
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.925f)),
         ) {
             if (movie != null) {
-                LazyColumn(
+                LazyVerticalGrid(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         vertical = statusBarHeight,
+                        horizontal = 8.dp
                     ),
+                    columns = GridCells.Fixed(2),
                     content = {
-                        item {
-                            Text(
-                                modifier = Modifier.padding(
-                                    horizontal = 16.dp,
-                                    vertical = 8.dp,
-                                ),
-                                text = movie?.title.orEmpty(),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                overflow = TextOverflow.Ellipsis,
-                                fontSize = 28.sp,
-                                maxLines = 1,
+                        item(span = { GridItemSpan(2) }) {
+                            Title(
+                                modifier = Modifier.padding(8.dp),
                             )
                         }
-                        item {
-                            TrailerCard(
+                        item(span = { GridItemSpan(2) }) {
+                            Trailer(
+                                modifier = Modifier.padding(8.dp),
+                            )
+                        }
+                        item(span = { GridItemSpan(2) }) {
+                            Props(
+                                modifier = Modifier.padding(8.dp),
+                            )
+                        }
+                        item(span = { GridItemSpan(2) }) {
+                            Genre(
+                                modifier = Modifier.padding(8.dp),
+                            )
+                        }
+                        if (!movie?.description.isNullOrEmpty()) {
+                            item(span = { GridItemSpan(2) }) {
+                                Description(
+                                    modifier = Modifier.padding(8.dp),
+                                )
+                            }
+                        }
+                        items(
+                            count = movie?.torrents?.size ?: 0,
+                            span = { GridItemSpan(1) }
+                        ) {
+                            Torrent(
                                 modifier = Modifier
-                                    .height(Constants.trailerHeight)
-                                    .padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp,
-                                    ),
-                                url = movie?.trailerImageUrl,
-                            )
-                        }
-                        item {
-                            Text(
-                                modifier = Modifier.padding(
-                                    horizontal = 16.dp,
-                                    vertical = 8.dp,
-                                ),
-                                text = movie?.year.toString(),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 18.sp,
-                            )
-                        }
-                        item {
-                            Text(
-                                modifier = Modifier
-                                    .padding(
-                                        horizontal = 16.dp,
-                                        vertical = 8.dp,
-                                    )
-                                    .clickable(
-                                        interactionSource = MutableInteractionSource(),
-                                        indication = null,
-                                    ) {
-                                        maxLines = when (maxLines) {
-                                            Int.MAX_VALUE -> MAX_LINES
-                                            else -> Int.MAX_VALUE
-                                        }
-                                    },
-                                text = movie?.description.toString(),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = maxLines,
-                                fontSize = 14.sp,
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                torrent = movie?.torrents?.get(it)
                             )
                         }
                     },
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun Title(
+        modifier: Modifier = Modifier,
+    ) {
+        val movie by viewModel.movie.collectAsState()
+        Text(
+            modifier = modifier,
+            text = movie?.title.orEmpty(),
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 28.sp,
+            maxLines = 1,
+        )
+    }
+
+    @Composable
+    private fun Trailer(
+        modifier: Modifier = Modifier,
+    ) {
+        val movie by viewModel.movie.collectAsState()
+        TrailerCard(
+            modifier = modifier.height(Constants.trailerHeight),
+            url = movie?.trailerImageUrl,
+        )
+    }
+
+    @Composable
+    private fun Props(
+        modifier: Modifier = Modifier,
+    ) {
+        val movie by viewModel.movie.collectAsState()
+        val props = movie?.run { listOf(year, displayLanguage) }.orEmpty()
+        Text(
+            modifier = modifier,
+            text = props.joinToString(" • ") { "$it" },
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 18.sp,
+            maxLines = 1,
+        )
+    }
+
+    @Composable
+    private fun Genre(
+        modifier: Modifier = Modifier,
+    ) {
+        val movie by viewModel.movie.collectAsState()
+        Text(
+            modifier = modifier,
+            text = movie?.genres?.joinToString(", ") { it.name }.orEmpty(),
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            fontSize = 16.sp,
+            maxLines = 1,
+        )
+    }
+
+    @Composable
+    private fun Description(
+        modifier: Modifier = Modifier,
+    ) {
+        val movie by viewModel.movie.collectAsState()
+        var maxLines by remember { mutableIntStateOf(MAX_LINES) }
+        Text(
+            modifier = modifier
+                .clickable(
+                    interactionSource = MutableInteractionSource(),
+                    indication = null,
+                ) {
+                    maxLines = when (maxLines) {
+                        Int.MAX_VALUE -> MAX_LINES
+                        else -> Int.MAX_VALUE
+                    }
+                },
+            text = movie?.description.toString(),
+            color = MaterialTheme.colorScheme.onSurface,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = maxLines,
+            fontSize = 14.sp,
+        )
+    }
+
+    @Composable
+    private fun Torrent(
+        modifier: Modifier = Modifier,
+        torrent: Torrent?
+    ) {
+        OutlinedCard(
+            modifier = modifier,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+            ) {
+                Text(
+                    text = "${torrent?.quality?.name.orEmpty()} Quality (${torrent?.type.orEmpty()})",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    overflow = TextOverflow.Clip,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                )
+                Text(
+                    text = torrent?.size.orEmpty(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 12.sp,
                 )
             }
         }
