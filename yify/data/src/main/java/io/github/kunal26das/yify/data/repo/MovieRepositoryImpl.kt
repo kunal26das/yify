@@ -1,6 +1,8 @@
 package io.github.kunal26das.yify.data.repo
 
 import androidx.paging.PagingSource
+import io.github.kunal26das.common.domain.logger.CrashLogger
+import io.github.kunal26das.yify.data.UnknownGenreException
 import io.github.kunal26das.yify.data.dto.MovieDto
 import io.github.kunal26das.yify.data.mapper.key
 import io.github.kunal26das.yify.data.mapper.toEntities
@@ -25,6 +27,7 @@ class MovieRepositoryImpl @Inject constructor(
     private val mutablePreference: MutablePreference,
     private val movieService: MovieService,
     private val yifyDatabase: YifyDatabase,
+    private val crashLogger: CrashLogger,
 ) : MovieRepository {
 
     override suspend fun getLocalMoviesCount(): Int {
@@ -63,7 +66,11 @@ class MovieRepositoryImpl @Inject constructor(
             updateDatabase(it.movies)
             updateMovieCount(it.movieCount ?: 0)
         }.map {
-            it.movies.toMovies
+            it.movies.toMovies(
+                genreFallback = { genre ->
+                    crashLogger.log(UnknownGenreException(genre))
+                }
+            )
         }
     }
 
@@ -80,7 +87,7 @@ class MovieRepositoryImpl @Inject constructor(
         }.onSuccess {
             it?.let { updateDatabase(listOf(it)) }
         }.map {
-            it?.toMovie
+            it?.toMovie()
         }
     }
 

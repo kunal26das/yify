@@ -4,8 +4,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
-import io.github.kunal26das.common.connectivity.ConnectivityObserver
-import io.github.kunal26das.common.model.ConnectionStatus
+import io.github.kunal26das.common.domain.connectivity.ConnectionStatus
+import io.github.kunal26das.common.domain.connectivity.ConnectivityObserver
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.mapper.toMovie
 import io.github.kunal26das.yify.domain.model.Movie

@@ -1,18 +1,18 @@
 package io.github.kunal26das.yify.compose
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -24,20 +24,18 @@ import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.model.Movie
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun TrailerPlayer(
+fun TrailerCard(
     modifier: Modifier = Modifier,
     movie: Movie?,
     player: Player,
 ) {
     var visible by remember { mutableStateOf(true) }
     var clicked by remember { mutableStateOf(false) }
-    AnimatedVisibility(
-        modifier = modifier.aspectRatio(Constants.TRAILER_ASPECT_RATIO),
-        visible = visible,
-    ) {
+    if (visible) {
         ElevatedCard(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier
+                .aspectRatio(Constants.TRAILER_ASPECT_RATIO)
+                .fillMaxSize(),
             shape = RoundedCornerShape(8.dp),
         ) {
             Box {
@@ -76,13 +74,32 @@ fun Trailer(
     onStateChange: (AsyncImagePainter.State) -> Unit = {},
     onClick: () -> Unit = {},
 ) {
-    AsyncImage(
-        modifier = modifier.clickable {
-            onClick.invoke()
-        },
-        model = url?.imageRequest,
-        contentDescription = url,
-        contentScale = ContentScale.Crop,
-        onState = onStateChange,
-    )
+    var state by remember { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
+    Box(
+        modifier = modifier,
+    ) {
+        AsyncImage(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    onClick.invoke()
+                },
+            model = url?.imageRequest,
+            contentDescription = url,
+            contentScale = ContentScale.Crop,
+            onState = {
+                onStateChange.invoke(it)
+                state = it
+            },
+        )
+        when (state) {
+            is AsyncImagePainter.State.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+
+            else -> Unit
+        }
+    }
 }

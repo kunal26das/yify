@@ -29,6 +29,7 @@ fun <T> Dropdown(
     enabled: Boolean = true,
     selection: T? = null,
     items: Iterable<T>,
+    showTrailingIcon: Boolean = true,
     name: (T) -> String? = { null },
     onSelect: (T?) -> Unit = {},
     onClear: () -> Unit = { onSelect.invoke(null) },
@@ -56,16 +57,18 @@ fun <T> Dropdown(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = {
-                IconButton(
-                    onClick = {
-                        onClear.invoke()
-                        expanded = false
+                if (showTrailingIcon) {
+                    IconButton(
+                        onClick = {
+                            onClear.invoke()
+                            expanded = false
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = null,
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Clear,
-                        contentDescription = null,
-                    )
                 }
             },
         )

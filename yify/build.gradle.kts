@@ -45,6 +45,7 @@ android {
 dependencies {
     implementation(project(":common"))
     implementation(project(":yify:domain"))
+    implementation(project(mapOf("path" to ":common:domain")))
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")

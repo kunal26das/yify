@@ -41,7 +41,7 @@ import coil.compose.rememberAsyncImagePainter
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.Activity
-import io.github.kunal26das.yify.compose.TrailerPlayer
+import io.github.kunal26das.yify.compose.TrailerCard
 import io.github.kunal26das.yify.compose.imageRequest
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.Torrent
@@ -95,7 +95,7 @@ class MovieActivity : Activity() {
                             )
                         }
                         item(span = { GridItemSpan(GRID_CELLS) }) {
-                            TrailerPlayer(
+                            TrailerCard(
                                 modifier = Modifier.padding(8.dp),
                                 player = viewModel.player,
                                 movie = movie,
@@ -113,13 +113,6 @@ class MovieActivity : Activity() {
                                 )
                             }
                         }
-                        if (movie?.description.isNullOrEmpty().not()) {
-                            item(span = { GridItemSpan(GRID_CELLS) }) {
-                                Description(
-                                    modifier = Modifier.padding(8.dp),
-                                )
-                            }
-                        }
                         items(
                             count = movie?.torrents?.size ?: 0,
                             span = { GridItemSpan(GRID_CELLS / 2) }
@@ -128,8 +121,15 @@ class MovieActivity : Activity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(8.dp),
-                                torrent = movie?.torrents?.get(it)
+                                torrent = movie?.torrents?.get(it),
                             )
+                        }
+                        if (movie?.description.isNullOrEmpty().not()) {
+                            item(span = { GridItemSpan(GRID_CELLS) }) {
+                                Description(
+                                    modifier = Modifier.padding(8.dp),
+                                )
+                            }
                         }
                     },
                 )
@@ -253,7 +253,7 @@ class MovieActivity : Activity() {
     }
 
     companion object {
-        private const val MAX_LINES = 5
         private const val GRID_CELLS = 2
+        private const val MAX_LINES = Int.MAX_VALUE
     }
 }

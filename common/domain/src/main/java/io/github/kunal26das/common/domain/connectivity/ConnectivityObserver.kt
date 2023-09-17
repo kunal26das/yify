@@ -1,6 +1,5 @@
-package io.github.kunal26das.common.connectivity
+package io.github.kunal26das.common.domain.connectivity
 
-import io.github.kunal26das.common.model.ConnectionStatus
 import kotlinx.coroutines.flow.Flow
 
 interface ConnectivityObserver {

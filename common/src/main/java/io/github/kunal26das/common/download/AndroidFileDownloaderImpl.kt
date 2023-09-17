@@ -4,7 +4,8 @@ import android.app.DownloadManager
 import android.content.Context
 import android.content.IntentFilter
 import android.net.Uri
-import io.github.kunal26das.common.model.File
+import io.github.kunal26das.common.domain.download.File
+import io.github.kunal26das.common.domain.download.FileDownloader
 
 internal class AndroidFileDownloaderImpl(
     private val context: Context

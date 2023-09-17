@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class Quality(val value: Int) {
-    Low(0), Medium(1), High(2), Unknown(-1),
+    Unknown(-1), Low(0), Medium(1), High(2),
     ;
 
     companion object {

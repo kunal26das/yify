@@ -9,6 +9,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -38,11 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.compose.HorizontalMovies
 import io.github.kunal26das.yify.compose.SystemBarGradient
 import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
@@ -55,6 +59,7 @@ class MoviesActivity : Activity() {
 
     private val viewModel by viewModels<MoviesViewModel>()
     private val movieActivity = registerForActivityResult(MovieActivity.Contract())
+    private val genres = Genre.values().filter { it != Genre.Unknown }
 
     private lateinit var onBackPressedCallback: OnBackPressedCallback
 
@@ -85,12 +90,18 @@ class MoviesActivity : Activity() {
                 }
             },
         ) {
-            Box {
-                VerticalGridMovies(
-                    modifier = Modifier.fillMaxSize(),
-                    moviesFlow = viewModel.movies,
-                ) {
-                    movieActivity.launch(it?.id)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                val uiPreference by viewModel.uiPreference.collectAsState()
+                when (uiPreference?.ui) {
+                    UserInterface.Categorised -> {
+                        Categorised(modifier = Modifier.fillMaxSize())
+                    }
+
+                    else -> {
+                        Uncategorised(modifier = Modifier.fillMaxSize())
+                    }
                 }
                 SystemBarGradient(
                     modifier = Modifier
@@ -106,6 +117,59 @@ class MoviesActivity : Activity() {
                 )
             }
         }
+    }
+
+    @Composable
+    private fun Uncategorised(
+        modifier: Modifier = Modifier,
+    ) {
+        VerticalGridMovies(
+            modifier = modifier,
+            moviesFlow = viewModel.movies,
+        ) {
+            movieActivity.launch(it?.id)
+        }
+    }
+
+    @Composable
+    private fun Categorised(
+        modifier: Modifier = Modifier,
+    ) {
+        LazyColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(
+                bottom = statusBarHeight,
+                top = statusBarHeight,
+            ),
+            content = {
+                itemsIndexed(viewModel.getMovieGenreFlows(genres)) { index, flow ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Surface {
+                            Text(
+                                modifier = Modifier.padding(
+                                    start = 14.dp,
+                                    top = 13.dp,
+                                    end = 16.dp,
+                                    bottom = 3.dp,
+                                ),
+                                text = genres[index].name,
+                                fontSize = 16.sp,
+                            )
+                        }
+                        HorizontalMovies(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            moviePadding = PaddingValues(4.dp),
+                            moviesFlow = flow,
+                        ) {
+                            movieActivity.launch(it?.id)
+                        }
+                    }
+                }
+            }
+        )
     }
 
     @Composable
@@ -150,6 +214,11 @@ class MoviesActivity : Activity() {
             }
             item {
                 OrderByDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                UiDropdown(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -221,7 +290,7 @@ class MoviesActivity : Activity() {
             modifier2 = modifier,
             label = stringResource(R.string.quality),
             selection = moviePreference?.quality,
-            items = Quality.values().filter {
+            items = Quality.values().reversed().filter {
                 it != Quality.Unknown
             },
             name = {
@@ -307,6 +376,29 @@ class MoviesActivity : Activity() {
                 },
             )
         }
+    }
+
+    @Composable
+    private fun UiDropdown(
+        modifier: Modifier = Modifier,
+    ) {
+        val uiPreference by viewModel.uiPreference.collectAsState()
+        Dropdown(
+            modifier2 = modifier,
+            label = stringResource(R.string.preview),
+            selection = uiPreference?.ui,
+            items = UserInterface.values().toList(),
+            showTrailingIcon = false,
+            name = {
+                when (it) {
+                    UserInterface.Uncategorised -> getString(R.string.uncategorised)
+                    UserInterface.Categorised -> getString(R.string.categorised)
+                }
+            },
+            onSelect = {
+                viewModel.setUserInterface(it)
+            },
+        )
     }
 
     @Composable

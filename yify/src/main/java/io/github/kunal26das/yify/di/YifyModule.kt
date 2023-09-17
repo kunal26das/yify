@@ -18,17 +18,20 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.kunal26das.common.domain.logger.CrashLogger
 import io.github.kunal26das.yify.db.AbstractYifyDatabase
 import io.github.kunal26das.yify.db.FlowPreferenceImpl
 import io.github.kunal26das.yify.db.ImmutablePreferenceImpl
 import io.github.kunal26das.yify.db.MutablePreferencesImpl
 import io.github.kunal26das.yify.db.serializer.MoviePreferencesSerializer
+import io.github.kunal26das.yify.db.serializer.UiPreferencesSerializer
 import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.db.ImmutablePreference
 import io.github.kunal26das.yify.domain.db.MovieDao
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.model.MoviePreference
+import io.github.kunal26das.yify.ui.UiPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,6 +60,7 @@ internal abstract class YifyModule {
     companion object {
 
         private const val YIFY_DATABASE = "yify.db"
+        private const val UI_PREFERENCE_JSON = "ui_preference.json"
         private const val MOVIE_PREFERENCE_JSON = "movie_preference.json"
 
         @Provides
@@ -77,13 +81,30 @@ internal abstract class YifyModule {
         @Singleton
         fun providesMoviePreferenceDataStore(
             @ApplicationContext context: Context,
+            crashLogger: CrashLogger
         ): DataStore<MoviePreference> {
             return DataStoreFactory.create(
-                serializer = MoviePreferencesSerializer,
+                serializer = MoviePreferencesSerializer(crashLogger),
                 produceFile = { context.dataStoreFile(MOVIE_PREFERENCE_JSON) },
                 scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
                 corruptionHandler = ReplaceFileCorruptionHandler(
                     produceNewData = { MoviePreference.Default }
+                ),
+            )
+        }
+
+        @Provides
+        @Singleton
+        fun providesUiPreferenceDataStore(
+            @ApplicationContext context: Context,
+            crashLogger: CrashLogger
+        ): DataStore<UiPreference> {
+            return DataStoreFactory.create(
+                serializer = UiPreferencesSerializer(crashLogger),
+                produceFile = { context.dataStoreFile(UI_PREFERENCE_JSON) },
+                scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                corruptionHandler = ReplaceFileCorruptionHandler(
+                    produceNewData = { UiPreference.Uncategorised }
                 ),
             )
         }

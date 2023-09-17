@@ -2,23 +2,23 @@ package io.github.kunal26das.yify.db.serializer
 
 import androidx.datastore.core.Serializer
 import io.github.kunal26das.common.domain.logger.CrashLogger
-import io.github.kunal26das.yify.domain.model.MoviePreference
+import io.github.kunal26das.yify.ui.UiPreference
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 
-class MoviePreferencesSerializer @Inject constructor(
+class UiPreferencesSerializer @Inject constructor(
     private val crashLogger: CrashLogger,
-) : Serializer<MoviePreference> {
-    override val defaultValue: MoviePreference
-        get() = MoviePreference.Default
+) : Serializer<UiPreference> {
+    override val defaultValue: UiPreference
+        get() = UiPreference.Uncategorised
 
-    override suspend fun readFrom(input: InputStream): MoviePreference {
+    override suspend fun readFrom(input: InputStream): UiPreference {
         return try {
             Json.decodeFromString(
-                deserializer = MoviePreference.serializer(),
+                deserializer = UiPreference.serializer(),
                 string = input.readBytes().decodeToString(),
             )
         } catch (e: Exception) {
@@ -28,11 +28,11 @@ class MoviePreferencesSerializer @Inject constructor(
     }
 
     @Suppress("BlockingMethodInNonBlockingContext")
-    override suspend fun writeTo(t: MoviePreference, output: OutputStream) {
+    override suspend fun writeTo(t: UiPreference, output: OutputStream) {
         try {
             output.write(
                 Json.encodeToString(
-                    serializer = MoviePreference.serializer(),
+                    serializer = UiPreference.serializer(),
                     value = t
                 ).encodeToByteArray()
             )

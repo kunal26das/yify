@@ -11,6 +11,7 @@ java {
 
 dependencies {
     implementation(project(":yify:domain"))
+    implementation(project(mapOf("path" to ":common:domain")))
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("androidx.annotation:annotation-jvm:1.7.0")

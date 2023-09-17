@@ -13,15 +13,18 @@ private const val GENRE_DRAMA = "Drama"
 private const val GENRE_FAMILY = "Family"
 private const val GENRE_FANTASY = "Fantasy"
 private const val GENRE_FILM_NOIR = "Film-Noir"
+private const val GENRE_GAME_SHOW = "Game-Show"
 private const val GENRE_HISTORY = "History"
 private const val GENRE_HORROR = "Horror"
 private const val GENRE_MUSIC = "Music"
 private const val GENRE_MUSICAL = "Musical"
 private const val GENRE_MYSTERY = "Mystery"
+private const val GENRE_NEWS = "News"
+private const val GENRE_REALITY_TV = "Reality-TV"
 private const val GENRE_ROMANCE = "Romance"
 private const val GENRE_SCI_FI = "Sci-Fi"
-private const val GENRE_SHORT = "Short"
 private const val GENRE_SPORT = "Sport"
+private const val GENRE_TALK_SHOW = "Talk-Show"
 private const val GENRE_THRILLER = "Thriller"
 private const val GENRE_WAR = "War"
 private const val GENRE_WESTERN = "Western"
@@ -39,48 +42,63 @@ val Genre.key: String?
         Genre.Family -> GENRE_FAMILY
         Genre.Fantasy -> GENRE_FANTASY
         Genre.FilmNoir -> GENRE_FILM_NOIR
+        Genre.GameShow -> GENRE_GAME_SHOW
         Genre.History -> GENRE_HISTORY
         Genre.Horror -> GENRE_HORROR
         Genre.Music -> GENRE_MUSIC
         Genre.Musical -> GENRE_MUSICAL
         Genre.Mystery -> GENRE_MYSTERY
+        Genre.News -> GENRE_NEWS
+        Genre.RealityTV -> GENRE_REALITY_TV
         Genre.Romance -> GENRE_ROMANCE
         Genre.SciFi -> GENRE_SCI_FI
-        Genre.Short -> GENRE_SHORT
         Genre.Sport -> GENRE_SPORT
+        Genre.TalkShow -> GENRE_TALK_SHOW
         Genre.Thriller -> GENRE_THRILLER
         Genre.War -> GENRE_WAR
         Genre.Western -> GENRE_WESTERN
         else -> null
     }
 
-val String.toGenre: Genre
-    get() = when (this) {
-        GENRE_ACTION -> Genre.Action
-        GENRE_ADVENTURE -> Genre.Adventure
-        GENRE_ANIMATION -> Genre.Animation
-        GENRE_BIOGRAPHY -> Genre.Biography
-        GENRE_COMEDY -> Genre.Comedy
-        GENRE_CRIME -> Genre.Crime
-        GENRE_DOCUMENTARY -> Genre.Documentary
-        GENRE_DRAMA -> Genre.Drama
-        GENRE_FAMILY -> Genre.Family
-        GENRE_FANTASY -> Genre.Fantasy
-        GENRE_FILM_NOIR -> Genre.FilmNoir
-        GENRE_HISTORY -> Genre.History
-        GENRE_HORROR -> Genre.Horror
-        GENRE_MUSIC -> Genre.Music
-        GENRE_MUSICAL -> Genre.Musical
-        GENRE_MYSTERY -> Genre.Mystery
-        GENRE_ROMANCE -> Genre.Romance
-        GENRE_SCI_FI -> Genre.SciFi
-        GENRE_SHORT -> Genre.Short
-        GENRE_SPORT -> Genre.Sport
-        GENRE_THRILLER -> Genre.Thriller
-        GENRE_WAR -> Genre.War
-        GENRE_WESTERN -> Genre.Western
-        else -> Genre.Unknown
+fun String.toGenre(
+    fallback: (String) -> Unit = {}
+): Genre = when (this) {
+    GENRE_ACTION -> Genre.Action
+    GENRE_ADVENTURE -> Genre.Adventure
+    GENRE_ANIMATION -> Genre.Animation
+    GENRE_BIOGRAPHY -> Genre.Biography
+    GENRE_COMEDY -> Genre.Comedy
+    GENRE_CRIME -> Genre.Crime
+    GENRE_DOCUMENTARY -> Genre.Documentary
+    GENRE_DRAMA -> Genre.Drama
+    GENRE_FAMILY -> Genre.Family
+    GENRE_FANTASY -> Genre.Fantasy
+    GENRE_FILM_NOIR -> Genre.FilmNoir
+    GENRE_GAME_SHOW -> Genre.GameShow
+    GENRE_HISTORY -> Genre.History
+    GENRE_HORROR -> Genre.Horror
+    GENRE_MUSIC -> Genre.Music
+    GENRE_MUSICAL -> Genre.Musical
+    GENRE_MYSTERY -> Genre.Mystery
+    GENRE_NEWS -> Genre.News
+    GENRE_REALITY_TV -> Genre.RealityTV
+    GENRE_ROMANCE -> Genre.Romance
+    GENRE_SCI_FI -> Genre.SciFi
+    GENRE_SPORT -> Genre.Sport
+    GENRE_TALK_SHOW -> Genre.TalkShow
+    GENRE_THRILLER -> Genre.Thriller
+    GENRE_WAR -> Genre.War
+    GENRE_WESTERN -> Genre.Western
+    else -> {
+        fallback.invoke(this)
+        Genre.Unknown
     }
+}
 
-val List<String>?.toGenres: List<Genre>
-    get() = this?.map { it.toGenre } ?: emptyList()
+fun List<String>?.toGenres(
+    fallback: (String) -> Unit = {}
+): List<Genre> {
+    return this?.map {
+        it.toGenre(fallback)
+    } ?: emptyList()
+}

@@ -2,7 +2,8 @@ package io.github.kunal26das.common.connectivity
 
 import android.net.ConnectivityManager
 import android.net.Network
-import io.github.kunal26das.common.model.ConnectionStatus
+import io.github.kunal26das.common.domain.connectivity.ConnectionStatus
+import io.github.kunal26das.common.domain.connectivity.ConnectivityObserver
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
