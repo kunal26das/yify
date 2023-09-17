@@ -45,7 +45,7 @@ class MoviesPagerUseCase @Inject constructor(
     ) = Pager(
         config = PagingConfig(
             pageSize = Constants.LOAD_SIZE,
-            initialLoadSize = Constants.LOAD_SIZE,
+            initialLoadSize = Constants.MAX_LOAD_SIZE,
         ),
         initialKey = Constants.FIRST_PAGE,
         pagingSourceFactory = {
@@ -60,7 +60,7 @@ class MoviesPagerUseCase @Inject constructor(
             pageSize = Constants.LOAD_SIZE,
             initialLoadSize = Constants.LOAD_SIZE,
         ),
-        initialKey = Constants.FIRST_PAGE,
+        initialKey = Constants.MAX_LOAD_SIZE,
         pagingSourceFactory = {
             movieRepository.getMoviesSource(moviePreference)
         },

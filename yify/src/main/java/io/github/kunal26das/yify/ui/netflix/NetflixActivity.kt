@@ -40,7 +40,7 @@ class NetflixActivity : Activity() {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 4.dp, bottom = 8.dp),
+                .padding(top = 8.dp, bottom = 8.dp),
             content = {
                 itemsIndexed(viewModel.getMovieGenreFlows(Genre.values())) { index, flow ->
                     Column(
@@ -49,9 +49,9 @@ class NetflixActivity : Activity() {
                         Surface {
                             Text(
                                 modifier = Modifier.padding(
-                                    start = 26.dp,
+                                    start = 20.dp,
                                     top = 12.dp,
-                                    end = 26.dp,
+                                    end = 20.dp,
                                     bottom = 12.dp,
                                 ),
                                 text = when (movieGenreCounts.getOrNull(index)) {

@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.compose
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,7 +30,7 @@ fun HorizontalMovies(
                 MovieCard(
                     modifier = Modifier
                         .width(Constants.movieWidth)
-                        .height(Constants.movieHeight)
+                        .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
                         .padding(8.dp),
                     movie = movie,
                     onClick = onClick,
@@ -40,7 +40,7 @@ fun HorizontalMovies(
                 MovieCard(
                     modifier = Modifier
                         .width(Constants.movieWidth)
-                        .height(Constants.movieHeight)
+                        .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
                         .padding(8.dp),
                 )
             }

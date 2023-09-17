@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,27 +21,21 @@ class MoviesWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val movieRepository: MovieRepository,
 ) : CoroutineWorker(context, params) {
-
     override suspend fun doWork(): Result {
         val remoteCount = movieRepository.getRemoteMoviesCount()
         val localCount = movieRepository.getLocalMoviesCount()
         val diff = remoteCount - localCount
-        val pages = ceil(diff / MAX_LOAD_SIZE.toFloat()).toInt()
+        val pages = ceil(diff / Constants.MAX_LOAD_SIZE.toFloat()).toInt()
         val job = CoroutineScope(Dispatchers.Default).launch {
             /*if (remoteCount > localCount)*/
-            (FIRST_PAGE..pages).map { page ->
+            (Constants.FIRST_PAGE..pages).map { page ->
                 async {
-                    movieRepository.getMovies(MAX_LOAD_SIZE, page)
+                    movieRepository.getMovies(Constants.MAX_LOAD_SIZE, page)
                     println("Loading page $page / $pages")
                 }
             }.awaitAll()
         }
         job.join()
         return Result.success()
-    }
-
-    companion object {
-        private const val FIRST_PAGE = 1
-        private const val MAX_LOAD_SIZE = 50
     }
 }

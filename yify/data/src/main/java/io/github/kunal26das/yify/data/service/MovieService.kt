@@ -31,7 +31,7 @@ interface MovieService {
     ): Result<ResponseDto>
 
     companion object {
-        private const val FIRST_PAGE = 1
+        const val FIRST_PAGE = 1
 
         private const val KEY_PAGE = "page"
         private const val KEY_GENRE = "genre"

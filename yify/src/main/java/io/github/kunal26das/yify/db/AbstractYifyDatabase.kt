@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.withTransaction
+import io.github.kunal26das.yify.db.converter.GenreConverter
 import io.github.kunal26das.yify.db.converter.QualityConverter
 import io.github.kunal26das.yify.db.converter.UrlConverter
 import io.github.kunal26das.yify.domain.db.MovieDao

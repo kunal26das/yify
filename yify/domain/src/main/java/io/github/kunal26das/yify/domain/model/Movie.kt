@@ -29,7 +29,7 @@ data class Movie constructor(
     val youtubeTrailerUrl: String?,
 ) {
 
-    val displayLanguage by lazy {
+    val displayLanguage: String by lazy {
         Locale(languageCode).displayLanguage
     }
 

@@ -10,18 +10,15 @@ object Constants {
 
     const val LOAD_SIZE = 10
     const val FIRST_PAGE = 1
-    private const val RATIO = 2f
+    const val MAX_LOAD_SIZE = 50
+
     private const val MOVIE_WIDTH = 320
+    const val MOVIE_ASPECT_RATIO = 2 / 3f
+    const val TRAILER_ASPECT_RATIO = 16 / 9f
 
     val movieWidth: Dp
         @Composable get() {
             val config = LocalConfiguration.current
             return min(config.screenWidthDp / 3, MOVIE_WIDTH).dp
         }
-
-    val movieHeight: Dp
-        @Composable get() = movieWidth * RATIO
-
-    val trailerHeight: Dp
-        @Composable get() = 256.dp
 }

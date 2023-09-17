@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -42,8 +41,7 @@ import coil.compose.rememberAsyncImagePainter
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.Activity
-import io.github.kunal26das.yify.Constants
-import io.github.kunal26das.yify.compose.TrailerCard
+import io.github.kunal26das.yify.compose.TrailerPlayer
 import io.github.kunal26das.yify.compose.imageRequest
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.Torrent
@@ -89,30 +87,34 @@ class MovieActivity : Activity() {
                         vertical = statusBarHeight,
                         horizontal = 8.dp
                     ),
-                    columns = GridCells.Fixed(2),
+                    columns = GridCells.Fixed(GRID_CELLS),
                     content = {
-                        item(span = { GridItemSpan(2) }) {
+                        item(span = { GridItemSpan(GRID_CELLS) }) {
                             Title(
                                 modifier = Modifier.padding(8.dp),
                             )
                         }
-                        item(span = { GridItemSpan(2) }) {
-                            Trailer(
+                        item(span = { GridItemSpan(GRID_CELLS) }) {
+                            TrailerPlayer(
                                 modifier = Modifier.padding(8.dp),
+                                player = viewModel.player,
+                                movie = movie,
                             )
                         }
-                        item(span = { GridItemSpan(2) }) {
+                        item(span = { GridItemSpan(GRID_CELLS) }) {
                             Props(
                                 modifier = Modifier.padding(8.dp),
                             )
                         }
-                        item(span = { GridItemSpan(2) }) {
-                            Genre(
-                                modifier = Modifier.padding(8.dp),
-                            )
+                        if (movie?.genres.isNullOrEmpty().not()) {
+                            item(span = { GridItemSpan(GRID_CELLS) }) {
+                                Genre(
+                                    modifier = Modifier.padding(8.dp),
+                                )
+                            }
                         }
-                        if (!movie?.description.isNullOrEmpty()) {
-                            item(span = { GridItemSpan(2) }) {
+                        if (movie?.description.isNullOrEmpty().not()) {
+                            item(span = { GridItemSpan(GRID_CELLS) }) {
                                 Description(
                                     modifier = Modifier.padding(8.dp),
                                 )
@@ -120,7 +122,7 @@ class MovieActivity : Activity() {
                         }
                         items(
                             count = movie?.torrents?.size ?: 0,
-                            span = { GridItemSpan(1) }
+                            span = { GridItemSpan(GRID_CELLS / 2) }
                         ) {
                             Torrent(
                                 modifier = Modifier
@@ -147,17 +149,6 @@ class MovieActivity : Activity() {
             overflow = TextOverflow.Ellipsis,
             fontSize = 28.sp,
             maxLines = 1,
-        )
-    }
-
-    @Composable
-    private fun Trailer(
-        modifier: Modifier = Modifier,
-    ) {
-        val movie by viewModel.movie.collectAsState()
-        TrailerCard(
-            modifier = modifier.height(Constants.trailerHeight),
-            url = movie?.trailerImageUrl,
         )
     }
 
@@ -263,5 +254,6 @@ class MovieActivity : Activity() {
 
     companion object {
         private const val MAX_LINES = 5
+        private const val GRID_CELLS = 2
     }
 }

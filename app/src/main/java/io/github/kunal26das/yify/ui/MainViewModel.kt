@@ -27,7 +27,7 @@ class MainViewModel @Inject constructor(
             setConstraints(constraints)
         }.build()
         workManager.getWorkInfoByIdLiveData(workRequest.id).observeForever {
-            _loading.value = !it.state.isFinished
+            _loading.value = it.state.isFinished.not()
         }
         workManager.enqueue(workRequest)
     }
