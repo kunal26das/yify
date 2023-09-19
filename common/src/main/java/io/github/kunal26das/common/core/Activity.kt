@@ -18,8 +18,8 @@ abstract class Activity : AppCompatActivity() {
         contract: ActivityResultContract<I, O>
     ) = registerForActivityResult(contract) {}
 
-    protected fun <I> ActivityResultLauncher<I>.launch(input: I? = null): Activity {
-        launch(input)
+    protected fun ActivityResultLauncher<*>.launch(): Activity {
+        launch(null)
         return this@Activity
     }
 

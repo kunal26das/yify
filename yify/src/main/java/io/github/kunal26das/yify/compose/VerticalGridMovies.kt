@@ -24,23 +24,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.domain.model.Movie
-import kotlinx.coroutines.flow.Flow
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 fun VerticalGridMovies(
     modifier: Modifier = Modifier,
-    moviesFlow: Flow<PagingData<Movie>>,
+    contentPadding: PaddingValues,
+    moviePadding: PaddingValues,
+    movies: LazyPagingItems<Movie>,
     onClick: (Movie?) -> Unit = {},
 ) {
-    val movies = moviesFlow.collectAsLazyPagingItems()
     val pullRefreshState = rememberPullRefreshState(
         refreshing = movies.loadState.refresh is LoadState.Loading,
         onRefresh = { movies.refresh() },
@@ -63,7 +61,12 @@ fun VerticalGridMovies(
                 else -> Unit
             }
 
-            else -> NonEmptyState(movies, onClick)
+            else -> NonEmptyState(
+                contentPadding = contentPadding,
+                moviePadding = moviePadding,
+                movies = movies,
+                onClick = onClick,
+            )
         }
         PullRefreshIndicator(
             modifier = Modifier.align(Alignment.TopCenter),
@@ -76,24 +79,23 @@ fun VerticalGridMovies(
 
 @Composable
 private fun NonEmptyState(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
+    moviePadding: PaddingValues,
     movies: LazyPagingItems<Movie>,
     onClick: (Movie?) -> Unit
 ) {
     LazyVerticalGrid(
+        modifier = modifier,
         columns = GridCells.Adaptive(Constants.movieWidth),
-        contentPadding = PaddingValues(
-            start = 8.dp,
-            top = statusBarHeight,
-            end = 8.dp,
-            bottom = statusBarHeight,
-        ),
+        contentPadding = contentPadding,
         content = {
             items(movies.itemCount) { index ->
                 val movie = movies[index]
                 MovieCard(
                     modifier = Modifier
                         .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
-                        .padding(8.dp),
+                        .padding(moviePadding),
                     movie = movie,
                     onClick = onClick,
                 )
@@ -103,7 +105,7 @@ private fun NonEmptyState(
                     MovieCard(
                         modifier = Modifier
                             .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
-                            .padding(8.dp),
+                            .padding(moviePadding),
                     )
                 }
             }

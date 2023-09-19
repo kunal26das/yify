@@ -15,9 +15,10 @@ import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.entity.MovieEntity
 import io.github.kunal26das.yify.domain.mapper.toMovie
 import io.github.kunal26das.yify.domain.mapper.toTorrents
-import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.MoviePreference
+import io.github.kunal26das.yify.domain.model.OrderBy
+import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import javax.inject.Inject
 import kotlin.math.max
@@ -34,15 +35,16 @@ class MovieRepositoryImpl @Inject constructor(
         return yifyDatabase.movieDao.getMoviesCount()
     }
 
-    override suspend fun getRemoteMoviesCount(genre: Genre?): Int {
-        val result = movieService.getMovies(limit = 1, genre = genre?.key)
+    override suspend fun getRemoteMoviesCount(): Int {
+        val result = movieService.getMovies(
+            limit = 1,
+            page = MovieService.FIRST_PAGE,
+            sortBy = SortBy.DateAdded.key,
+            orderBy = OrderBy.Descending.key,
+        )
         val count = result.getOrNull()?.dataDto?.movieCount ?: 0
         if (result.isSuccess) {
-            if (genre != null) {
-                mutablePreference.setGenreMovieCount(genre, count)
-            } else {
-                mutablePreference.setMaxMovieCount(count)
-            }
+            mutablePreference.setMaxMovieCount(count)
         }
         return count
     }
@@ -68,7 +70,7 @@ class MovieRepositoryImpl @Inject constructor(
         }.map {
             it.movies.toMovies(
                 genreFallback = { genre ->
-                    crashLogger.log(UnknownGenreException(genre))
+                    logUnknownGenre(genre)
                 }
             )
         }
@@ -88,6 +90,21 @@ class MovieRepositoryImpl @Inject constructor(
             it?.let { updateDatabase(listOf(it)) }
         }.map {
             it?.toMovie()
+        }
+    }
+
+    override suspend fun getMovieSuggestions(movieId: Int): Result<List<Movie>> {
+        return movieService.getMovieSuggestions(movieId).map {
+            it.dataDto
+        }.onSuccess {
+            updateDatabase(it.movies)
+            // update suggestion mapping in db
+        }.map {
+            it.movies.toMovies(
+                genreFallback = { genre ->
+                    logUnknownGenre(genre)
+                }
+            )
         }
     }
 
@@ -119,5 +136,9 @@ class MovieRepositoryImpl @Inject constructor(
         val max = max(movieCount, immutablePreference.getMaxMovieCount() ?: 0)
         mutablePreference.setCurrentMovieCount(movieCount)
         mutablePreference.setMaxMovieCount(max)
+    }
+
+    private fun logUnknownGenre(genre: String) {
+        crashLogger.log(UnknownGenreException(genre))
     }
 }

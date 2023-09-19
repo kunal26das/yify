@@ -6,7 +6,6 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.common.core.ViewModel
-import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.MoviePreference
@@ -29,7 +28,6 @@ import javax.inject.Inject
 @HiltViewModel
 @OptIn(FlowPreview::class)
 class MoviesViewModel @Inject constructor(
-    immutablePreference: FlowPreference,
     private val moviesPagerUseCase: MoviesPagerUseCase,
     private val uiPreferenceDataStore: DataStore<UiPreference>,
     private val moviePreferenceDataStore: DataStore<MoviePreference>,
@@ -37,9 +35,6 @@ class MoviesViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
-
-    val maxMovieCount = immutablePreference.getMaxMovieCount().stateIn()
-    val currentMovieCount = immutablePreference.getCurrentMovieCount().stateIn()
 
     val uiPreference = uiPreferenceDataStore.data.stateIn(UiPreference.Uncategorised)
     val moviePreference = moviePreferenceDataStore.data.stateIn(MoviePreference.Default)

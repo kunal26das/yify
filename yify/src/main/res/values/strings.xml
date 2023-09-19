@@ -22,4 +22,5 @@
     <string name="uncategorised">Uncategorised</string>
     <string name="categorised">Categorised</string>
     <string name="preview">Preview</string>
+    <string name="synchronising">Synchronising</string>
 </resources>

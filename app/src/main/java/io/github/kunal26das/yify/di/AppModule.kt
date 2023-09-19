@@ -1,6 +1,8 @@
 package io.github.kunal26das.yify.di
 
+import android.app.NotificationManager
 import android.content.Context
+import androidx.work.Configuration
 import androidx.work.WorkManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -11,6 +13,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.kunal26das.yify.BuildConfig
+import io.github.kunal26das.yify.work.YifyWorkerFactory
 import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -25,9 +28,22 @@ import javax.inject.Singleton
 internal object AppModule {
 
     @Provides
+    fun providesNotificationManager(
+        @ApplicationContext context: Context,
+    ): NotificationManager {
+        return context.getSystemService(NotificationManager::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun providesWorkManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        yifyWorkerFactory: YifyWorkerFactory,
     ): WorkManager {
+        val configuration = Configuration.Builder().apply {
+            setWorkerFactory(yifyWorkerFactory)
+        }.build()
+        WorkManager.initialize(context, configuration)
         return WorkManager.getInstance(context)
     }
 
@@ -37,7 +53,7 @@ internal object AppModule {
         val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
         val bootstrapClient = OkHttpClient.Builder().cache(appCache).build()
         val dns = DnsOverHttps.Builder().client(bootstrapClient).apply {
-            url("https://1.1.1.1/dns-query".toHttpUrl())
+            url(BuildConfig.DNS_URL.toHttpUrl())
             includeIPv6(false)
         }.build()
         return bootstrapClient.newBuilder().dns(dns).build()

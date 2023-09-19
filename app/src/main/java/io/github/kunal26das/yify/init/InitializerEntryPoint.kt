@@ -11,6 +11,7 @@ import dagger.hilt.components.SingletonComponent
 interface InitializerEntryPoint {
 
     fun inject(initializer: CoilInitializer)
+    fun inject(initializer: StrictModeInitializer)
 
     companion object {
         fun resolve(context: Context): InitializerEntryPoint {

@@ -39,11 +39,13 @@ android {
         debug {
             isMinifyEnabled = false
             buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+            buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
         }
 
         release {
             isMinifyEnabled = true
             buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+            buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -67,6 +69,7 @@ android {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(mapOf("path" to ":common:domain")))
     implementation(project(":dependency"))
     implementation(project(":yify"))
     implementation("androidx.core:core-ktx:1.12.0")
@@ -87,4 +90,5 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation("androidx.hilt:hilt-work:1.0.0")
+    ksp("androidx.hilt:hilt-compiler:1.0.0")
 }

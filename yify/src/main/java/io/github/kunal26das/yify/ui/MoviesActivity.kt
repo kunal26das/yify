@@ -26,9 +26,9 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.compose.collectAsLazyPagingItems
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
 import io.github.kunal26das.common.compose.statusBarHeight
@@ -123,9 +124,15 @@ class MoviesActivity : Activity() {
     private fun Uncategorised(
         modifier: Modifier = Modifier,
     ) {
+        val movies = viewModel.movies.collectAsLazyPagingItems()
         VerticalGridMovies(
             modifier = modifier,
-            moviesFlow = viewModel.movies,
+            contentPadding = PaddingValues(
+                vertical = statusBarHeight,
+                horizontal = 5.dp,
+            ),
+            moviePadding = PaddingValues(5.dp),
+            movies = movies,
         ) {
             movieActivity.launch(it?.id)
         }
@@ -143,10 +150,9 @@ class MoviesActivity : Activity() {
             ),
             content = {
                 itemsIndexed(viewModel.getMovieGenreFlows(genres)) { index, flow ->
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Surface {
+                    val movies = flow.collectAsLazyPagingItems()
+                    AnimatedVisibility(movies.itemCount != 0) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 modifier = Modifier.padding(
                                     start = 14.dp,
@@ -155,16 +161,17 @@ class MoviesActivity : Activity() {
                                     bottom = 3.dp,
                                 ),
                                 text = genres[index].name,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp,
                             )
-                        }
-                        HorizontalMovies(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 8.dp),
-                            moviePadding = PaddingValues(4.dp),
-                            moviesFlow = flow,
-                        ) {
-                            movieActivity.launch(it?.id)
+                            HorizontalMovies(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 8.dp),
+                                moviePadding = PaddingValues(4.dp),
+                                movies = movies,
+                            ) {
+                                movieActivity.launch(it?.id)
+                            }
                         }
                     }
                 }
@@ -187,6 +194,11 @@ class MoviesActivity : Activity() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            item {
+                UiDropdown(
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             item {
                 SearchTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -214,11 +226,6 @@ class MoviesActivity : Activity() {
             }
             item {
                 OrderByDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                UiDropdown(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -399,17 +406,6 @@ class MoviesActivity : Activity() {
                 viewModel.setUserInterface(it)
             },
         )
-    }
-
-    @Composable
-    private fun MovieCountText(
-        modifier: Modifier = Modifier,
-    ) {
-        val maxMovieCount by viewModel.maxMovieCount.collectAsState()
-        val currentMovieCount by viewModel.currentMovieCount.collectAsState()
-        Surface(modifier = modifier) {
-            Text(text = "Showing $currentMovieCount out of $maxMovieCount movies.")
-        }
     }
 
     @Composable

@@ -11,11 +11,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.paging.LoadState
-import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.LazyPagingItems
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.model.Movie
-import kotlinx.coroutines.flow.Flow
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -23,11 +21,10 @@ fun HorizontalMovies(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
     moviePadding: PaddingValues,
-    moviesFlow: Flow<PagingData<Movie>>,
+    movies: LazyPagingItems<Movie>,
     onClick: (Movie?) -> Unit = {},
 ) {
     val state = rememberLazyListState()
-    val movies = moviesFlow.collectAsLazyPagingItems()
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = state)
     LazyRow(
         modifier = modifier,
@@ -46,9 +43,7 @@ fun HorizontalMovies(
                     onClick = onClick,
                 )
             }
-            if (movies.itemCount == 0
-                || movies.loadState.append is LoadState.Loading
-            ) {
+            if (movies.loadState.append is LoadState.Loading) {
                 items(Constants.LOAD_SIZE) {
                     MovieCard(
                         modifier = Modifier

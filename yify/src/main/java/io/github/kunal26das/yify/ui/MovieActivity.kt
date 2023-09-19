@@ -51,11 +51,9 @@ class MovieActivity : Activity() {
 
     private val viewModel by viewModels<MovieViewModel>()
 
-    private val movieId get() = intent.getIntExtra(Movie.KEY_MOVIE_ID, 0)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.getMovie(movieId)
+        refresh(intent)
     }
 
     @Composable
@@ -131,6 +129,7 @@ class MovieActivity : Activity() {
                                 )
                             }
                         }
+
                     },
                 )
             }
@@ -238,6 +237,16 @@ class MovieActivity : Activity() {
     @Composable
     private fun Palette?.getDominantColor(color: Color): Color {
         return this?.getDominantColor(color.value.toInt())?.let { Color(it) } ?: color
+    }
+
+    private fun refresh(intent: Intent) {
+        val movieId = intent.getIntExtra(Movie.KEY_MOVIE_ID, 0)
+        viewModel.getMovie(movieId)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        refresh(intent)
     }
 
     class Contract : ActivityResultContract<Int, Boolean>() {
