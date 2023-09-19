@@ -15,7 +15,7 @@ import retrofit2.Retrofit
 abstract class YifyDataModule {
 
     @Binds
-    abstract fun bindMovieRepository(
+    internal abstract fun bindMovieRepository(
         movieRepository: MovieRepositoryImpl
     ): MovieRepository
 

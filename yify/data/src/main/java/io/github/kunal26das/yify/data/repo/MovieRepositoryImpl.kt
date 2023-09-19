@@ -1,13 +1,11 @@
 package io.github.kunal26das.yify.data.repo
 
 import androidx.paging.PagingSource
-import io.github.kunal26das.common.domain.logger.CrashLogger
-import io.github.kunal26das.yify.data.UnknownGenreException
 import io.github.kunal26das.yify.data.dto.MovieDto
+import io.github.kunal26das.yify.data.mapper.GenreMapper
+import io.github.kunal26das.yify.data.mapper.MovieMapper
 import io.github.kunal26das.yify.data.mapper.key
 import io.github.kunal26das.yify.data.mapper.toEntities
-import io.github.kunal26das.yify.data.mapper.toMovie
-import io.github.kunal26das.yify.data.mapper.toMovies
 import io.github.kunal26das.yify.data.service.MovieService
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
@@ -21,11 +19,12 @@ import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import javax.inject.Inject
 
-class MovieRepositoryImpl @Inject constructor(
+internal class MovieRepositoryImpl @Inject constructor(
     private val mutablePreference: MutablePreference,
     private val movieService: MovieService,
     private val yifyDatabase: YifyDatabase,
-    private val crashLogger: CrashLogger,
+    private val movieMapper: MovieMapper,
+    private val genreMapper: GenreMapper,
 ) : MovieRepository {
 
     override suspend fun ping(): Boolean {
@@ -65,7 +64,9 @@ class MovieRepositoryImpl @Inject constructor(
             quality = moviePreference?.quality?.key,
             minimumRating = moviePreference?.minimumRating,
             queryTerm = moviePreference?.queryTerm,
-            genre = moviePreference?.genre?.key,
+            genre = moviePreference?.genre?.let {
+                genreMapper.getKey(it)
+            },
             sortBy = moviePreference?.sortBy?.key,
             orderBy = moviePreference?.orderBy?.key,
         )
@@ -74,11 +75,7 @@ class MovieRepositoryImpl @Inject constructor(
                 updateDatabase(it.movies)
             }
         }.map {
-            it.movies.toMovies(
-                genreFallback = { genre ->
-                    logUnknownGenre(genre)
-                }
-            )
+            movieMapper.toMovies(it.movies)
         }
     }
 
@@ -91,17 +88,15 @@ class MovieRepositoryImpl @Inject constructor(
 
     override suspend fun getRemoteMovie(movieId: Int): Result<Movie?> {
         return movieService.getMovie(movieId).map {
-            it.dataDto.movie?.toMovie()
+            it.dataDto.movie?.let {
+                movieMapper.toMovie(it)
+            }
         }
     }
 
     override suspend fun getMovieSuggestions(movieId: Int): Result<List<Movie>> {
         return movieService.getMovieSuggestions(movieId).map {
-            it.dataDto.movies.toMovies(
-                genreFallback = { genre ->
-                    logUnknownGenre(genre)
-                }
-            )
+            movieMapper.toMovies(it.dataDto.movies)
         }
     }
 
@@ -120,16 +115,12 @@ class MovieRepositoryImpl @Inject constructor(
 
     private suspend fun updateDatabase(movies: List<MovieDto>?) {
         yifyDatabase.transaction {
-            movieDao.upsert(movies.toEntities)
+            movieDao.upsert(movieMapper.toEntities(movies))
             movies?.flatMap {
                 it.torrentDtos.toEntities(it.id)
             }?.let {
                 torrentDao.upsert(it)
             }
         }
-    }
-
-    private fun logUnknownGenre(genre: String) {
-        crashLogger.log(UnknownGenreException(genre))
     }
 }

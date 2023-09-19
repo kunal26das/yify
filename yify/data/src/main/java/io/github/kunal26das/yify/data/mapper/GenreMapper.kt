@@ -1,6 +1,9 @@
 package io.github.kunal26das.yify.data.mapper
 
+import io.github.kunal26das.common.domain.logger.CrashLogger
+import io.github.kunal26das.yify.data.UnknownGenreException
 import io.github.kunal26das.yify.domain.model.Genre
+import javax.inject.Inject
 
 private const val GENRE_ACTION = "Action"
 private const val GENRE_ADVENTURE = "Adventure"
@@ -29,8 +32,10 @@ private const val GENRE_THRILLER = "Thriller"
 private const val GENRE_WAR = "War"
 private const val GENRE_WESTERN = "Western"
 
-val Genre.key: String?
-    get() = when (this) {
+internal class GenreMapper @Inject constructor(
+    private val crashLogger: CrashLogger,
+) {
+    fun getKey(genre: Genre) = when (genre) {
         Genre.Action -> GENRE_ACTION
         Genre.Adventure -> GENRE_ADVENTURE
         Genre.Animation -> GENRE_ANIMATION
@@ -60,45 +65,44 @@ val Genre.key: String?
         else -> null
     }
 
-fun String.toGenre(
-    fallback: (String) -> Unit = {}
-): Genre = when (this) {
-    GENRE_ACTION -> Genre.Action
-    GENRE_ADVENTURE -> Genre.Adventure
-    GENRE_ANIMATION -> Genre.Animation
-    GENRE_BIOGRAPHY -> Genre.Biography
-    GENRE_COMEDY -> Genre.Comedy
-    GENRE_CRIME -> Genre.Crime
-    GENRE_DOCUMENTARY -> Genre.Documentary
-    GENRE_DRAMA -> Genre.Drama
-    GENRE_FAMILY -> Genre.Family
-    GENRE_FANTASY -> Genre.Fantasy
-    GENRE_FILM_NOIR -> Genre.FilmNoir
-    GENRE_GAME_SHOW -> Genre.GameShow
-    GENRE_HISTORY -> Genre.History
-    GENRE_HORROR -> Genre.Horror
-    GENRE_MUSIC -> Genre.Music
-    GENRE_MUSICAL -> Genre.Musical
-    GENRE_MYSTERY -> Genre.Mystery
-    GENRE_NEWS -> Genre.News
-    GENRE_REALITY_TV -> Genre.RealityTV
-    GENRE_ROMANCE -> Genre.Romance
-    GENRE_SCI_FI -> Genre.SciFi
-    GENRE_SPORT -> Genre.Sport
-    GENRE_TALK_SHOW -> Genre.TalkShow
-    GENRE_THRILLER -> Genre.Thriller
-    GENRE_WAR -> Genre.War
-    GENRE_WESTERN -> Genre.Western
-    else -> {
-        fallback.invoke(this)
-        Genre.Unknown
+    fun toGenre(genre: String) = when (genre) {
+        GENRE_ACTION -> Genre.Action
+        GENRE_ADVENTURE -> Genre.Adventure
+        GENRE_ANIMATION -> Genre.Animation
+        GENRE_BIOGRAPHY -> Genre.Biography
+        GENRE_COMEDY -> Genre.Comedy
+        GENRE_CRIME -> Genre.Crime
+        GENRE_DOCUMENTARY -> Genre.Documentary
+        GENRE_DRAMA -> Genre.Drama
+        GENRE_FAMILY -> Genre.Family
+        GENRE_FANTASY -> Genre.Fantasy
+        GENRE_FILM_NOIR -> Genre.FilmNoir
+        GENRE_GAME_SHOW -> Genre.GameShow
+        GENRE_HISTORY -> Genre.History
+        GENRE_HORROR -> Genre.Horror
+        GENRE_MUSIC -> Genre.Music
+        GENRE_MUSICAL -> Genre.Musical
+        GENRE_MYSTERY -> Genre.Mystery
+        GENRE_NEWS -> Genre.News
+        GENRE_REALITY_TV -> Genre.RealityTV
+        GENRE_ROMANCE -> Genre.Romance
+        GENRE_SCI_FI -> Genre.SciFi
+        GENRE_SPORT -> Genre.Sport
+        GENRE_TALK_SHOW -> Genre.TalkShow
+        GENRE_THRILLER -> Genre.Thriller
+        GENRE_WAR -> Genre.War
+        GENRE_WESTERN -> Genre.Western
+        else -> {
+            crashLogger.log(UnknownGenreException(genre))
+            Genre.Unknown
+        }
     }
-}
 
-fun List<String>?.toGenres(
-    fallback: (String) -> Unit = {}
-): List<Genre> {
-    return this?.map {
-        it.toGenre(fallback)
-    } ?: emptyList()
+    fun toGenres(
+        genres: List<String>?
+    ): List<Genre> {
+        return genres?.map {
+            toGenre(it)
+        } ?: emptyList()
+    }
 }
