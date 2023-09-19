@@ -4,10 +4,6 @@
     <string name="genre">Genre</string>
     <string name="quality">Quality</string>
     <string name="sort_by">Sort By</string>
-    <string name="order_by">Order By</string>
-    <string name="minimum_rating">Minimum Rating</string>
-    <string name="ascending">Ascending</string>
-    <string name="descending">Descending</string>
     <string name="date_added">Date Added</string>
     <string name="peers">Peers</string>
     <string name="rating">Rating</string>
@@ -19,10 +15,8 @@
     <string name="high">High</string>
     <string name="clear">Clear</string>
     <string name="no_movies_found">No Movies Found!</string>
-    <string name="uncategorised">Uncategorised</string>
-    <string name="categorised">Categorised</string>
-    <string name="preview">Preview</string>
     <string name="synchronising">Synchronising</string>
-    <string name="no_internet">No Internet</string>
     <string name="refresh">Refresh</string>
+    <string name="decreasing_order">Decreasing order</string>
+    <string name="categorize">Categorize</string>
 </resources>

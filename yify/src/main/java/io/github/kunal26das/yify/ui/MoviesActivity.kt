@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -48,6 +49,7 @@ import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.compose.CategorisedMovies
 import io.github.kunal26das.yify.compose.SystemBarGradient
+import io.github.kunal26das.yify.compose.TextSwitch
 import io.github.kunal26das.yify.compose.VerticalGridMovies
 import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
@@ -154,59 +156,28 @@ class MoviesActivity : Activity() {
     private fun DrawerContent(
         modifier: Modifier = Modifier,
     ) {
-        LazyColumn(
-            modifier = modifier,
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                top = statusBarHeight,
-                end = 16.dp,
-                bottom = statusBarHeight,
+        val uiPreference by viewModel.uiPreference.collectAsState()
+        val contentModifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = modifier.padding(
+                vertical = statusBarHeight,
+                horizontal = 16.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item {
-                UiDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            SearchTextField(modifier = contentModifier)
+            AnimatedVisibility(
+                modifier = contentModifier,
+                visible = uiPreference.preview == Preview.Uncategorised,
+            ) {
+                GenreDropdown(modifier = contentModifier)
             }
-            item {
-                SearchTextField(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                GenreDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                QualityDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                MinimumRatingDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                SortByDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                OrderByDropdown(
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                ClearButton(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                )
-            }
+            QualityDropdown(modifier = contentModifier)
+            SortByDropdown(modifier = contentModifier)
+            OrderBy(modifier = contentModifier)
+            Preview(modifier = contentModifier)
+            MinimumRating(modifier = contentModifier)
+            ClearButton(modifier = contentModifier)
         }
     }
 
@@ -286,20 +257,29 @@ class MoviesActivity : Activity() {
     }
 
     @Composable
-    private fun MinimumRatingDropdown(
+    private fun MinimumRating(
         modifier: Modifier = Modifier,
     ) {
         val moviePreference by viewModel.moviePreference.collectAsState()
-        Dropdown(
-            modifier2 = modifier,
-            label = stringResource(R.string.minimum_rating),
-            selection = moviePreference.minimumRating,
-            items = 0..9,
-            name = { it.toString() },
-            onSelect = {
-                viewModel.setMinimumRating(it)
-            }
-        )
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(id = R.string.rating),
+            )
+            Slider(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp),
+                steps = 10,
+                valueRange = 0f..9f,
+                value = moviePreference.minimumRating?.toFloat() ?: 0f,
+                onValueChange = {
+                    viewModel.setMinimumRating(it.toInt())
+                }
+            )
+        }
     }
 
     @Composable
@@ -312,7 +292,8 @@ class MoviesActivity : Activity() {
             modifier2 = Modifier.fillMaxWidth(),
             label = stringResource(R.string.sort_by),
             selection = moviePreference.sortBy,
-            items = SortBy.values().toList(),
+            items = listOf(SortBy.DateAdded, SortBy.Title, SortBy.Year, SortBy.Rating),
+            showTrailingIcon = false,
             name = {
                 when (it) {
                     SortBy.DateAdded -> getString(R.string.date_added)
@@ -330,53 +311,31 @@ class MoviesActivity : Activity() {
     }
 
     @Composable
-    private fun OrderByDropdown(
+    private fun OrderBy(
         modifier: Modifier = Modifier,
     ) {
         val moviePreference by viewModel.moviePreference.collectAsState()
-        AnimatedVisibility(
+        TextSwitch(
             modifier = modifier,
-            visible = moviePreference.sortBy != null
+            checked = moviePreference.orderBy == OrderBy.Descending,
+            text = stringResource(R.string.decreasing_order),
         ) {
-            Dropdown(
-                modifier2 = Modifier.fillMaxWidth(),
-                label = stringResource(R.string.order_by),
-                selection = moviePreference.orderBy,
-                items = OrderBy.values().toList(),
-                name = {
-                    when (it) {
-                        OrderBy.Ascending -> getString(R.string.ascending)
-                        OrderBy.Descending -> getString(R.string.descending)
-                    }
-                },
-                onSelect = {
-                    viewModel.setOrderBy(it)
-                },
-            )
+            viewModel.setOrderBy(if (it) OrderBy.Descending else OrderBy.Ascending)
         }
     }
 
     @Composable
-    private fun UiDropdown(
+    private fun Preview(
         modifier: Modifier = Modifier,
     ) {
         val uiPreference by viewModel.uiPreference.collectAsState()
-        Dropdown(
-            modifier2 = modifier,
-            label = stringResource(R.string.preview),
-            selection = uiPreference.preview,
-            items = Preview.values().toList(),
-            showTrailingIcon = false,
-            name = {
-                when (it) {
-                    Preview.Uncategorised -> getString(R.string.uncategorised)
-                    Preview.Categorised -> getString(R.string.categorised)
-                }
-            },
-            onSelect = {
-                viewModel.setUserInterface(it)
-            },
-        )
+        TextSwitch(
+            modifier = modifier,
+            checked = uiPreference.preview == Preview.Categorised,
+            text = stringResource(R.string.categorize),
+        ) {
+            viewModel.setUserInterface(if (it) Preview.Categorised else Preview.Uncategorised)
+        }
     }
 
     @Composable

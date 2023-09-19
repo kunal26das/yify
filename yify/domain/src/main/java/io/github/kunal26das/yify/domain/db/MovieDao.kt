@@ -15,33 +15,38 @@ interface MovieDao {
     @Upsert
     suspend fun upsert(movies: List<MovieEntity>)
 
-    @Query("SELECT COUNT(*) FROM MOVIE")
+    @Query("SELECT COUNT(*) FROM movie")
     suspend fun getMoviesCount(): Int
 
-    @Query("SELECT * FROM MOVIE WHERE :id == ID")
+    @Query("SELECT * FROM movie WHERE :id == id")
     suspend fun getMovie(id: Int): MovieEntity?
 
     @Query(
-        "SELECT * FROM MOVIE " +
-                "WHERE :quality == QUALITY " +
-                "AND :minimumRating <= RATING " +
-                "AND TITLE LIKE '%' + :queryTerm% + '%' " +
-                "AND :genre IN(GENRES) " +
-                "ORDER BY (CASE " +
-                "WHEN :sortBy == 'Title' THEN TITLE " +
-                "WHEN :sortBy == 'Year' THEN YEAR " +
-                "WHEN :sortBy == 'Rating' THEN RATING " +
-                "WHEN :sortBy == 'Peers' THEN PEERS " +
-                "WHEN :sortBy == 'Seeds' THEN SEEDS " +
-                "ELSE DATE_UPLOADED END) "
+        "SELECT * FROM movie "
+                + "WHERE (:quality IS NULL OR :quality <= quality)"
+                + "AND (:minimumRating IS NULL OR :minimumRating <= rating)"
+//                + "AND (:queryTerm IS NULL OR title LIKE '%' + :queryTerm + '%')"
+                + "AND (:genre IS NULL OR :genre IN (genres))"
+                + "ORDER BY "
+                + "CASE WHEN :orderBy == 'Ascending' AND :sortBy == 'Title' THEN title END ASC, "
+                + "CASE WHEN :orderBy == 'Ascending' AND :sortBy == 'Year' THEN year END ASC, "
+                + "CASE WHEN :orderBy == 'Ascending' AND :sortBy == 'Rating' THEN rating END ASC, "
+                + "CASE WHEN :orderBy == 'Ascending' AND :sortBy == 'Peers' THEN peers END ASC, "
+                + "CASE WHEN :orderBy == 'Ascending' AND :sortBy == 'Seeds' THEN seeds END ASC, "
+                + "CASE WHEN :orderBy == 'Ascending' THEN date_uploaded END ASC, "
+                + "CASE WHEN :orderBy == 'Descending' AND :sortBy == 'Title' THEN title END DESC, "
+                + "CASE WHEN :orderBy == 'Descending' AND :sortBy == 'Year' THEN year END DESC, "
+                + "CASE WHEN :orderBy == 'Descending' AND :sortBy == 'Rating' THEN rating END DESC, "
+                + "CASE WHEN :orderBy == 'Descending' AND :sortBy == 'Peers' THEN peers END DESC, "
+                + "CASE WHEN :orderBy == 'Descending' AND :sortBy == 'Seeds' THEN seeds END DESC, "
+                + "CASE WHEN :orderBy == 'Descending' THEN date_uploaded END DESC"
     )
     fun getMovies(
-        quality: String?,
+        quality: Int?,
         minimumRating: Int?,
-        queryTerm: String? = null,
+//        queryTerm: String? = null,
         genre: Genre? = null,
         sortBy: String? = null,
-//        orderBy: String? = null,
+        orderBy: String? = null,
     ): PagingSource<Int, MovieEntity>
 }
-

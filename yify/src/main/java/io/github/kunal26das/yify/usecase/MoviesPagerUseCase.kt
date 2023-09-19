@@ -4,7 +4,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
-import io.github.kunal26das.common.domain.connectivity.ConnectivityObserver
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.mapper.toMovie
 import io.github.kunal26das.yify.domain.model.Movie
@@ -13,22 +12,16 @@ import io.github.kunal26das.yify.domain.repo.MovieRepository
 import io.github.kunal26das.yify.source.MoviesSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class MoviesPagerUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
-    private val connectivityObserver: ConnectivityObserver,
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getMoviesPagingData(moviePreference: MoviePreference): Flow<PagingData<Movie>> {
-        return connectivityObserver.observe().flatMapLatest {
-            if (it.isAvailable and movieRepository.ping()) {
-                remoteMoviesSourcePager(moviePreference)
-            } else localMoviesSourcePager(moviePreference)
-        }
+        return localMoviesSourcePager(moviePreference)
     }
 
     private fun remoteMoviesSourcePager(

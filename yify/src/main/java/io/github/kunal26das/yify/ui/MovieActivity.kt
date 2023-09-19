@@ -155,7 +155,7 @@ class MovieActivity : Activity() {
         modifier: Modifier = Modifier,
     ) {
         val movie by viewModel.movie.collectAsState()
-        val props = movie?.run { listOf(year, displayLanguage) }.orEmpty()
+        val props = movie?.run { listOf(year, displayLanguage, rating) }.orEmpty()
         Text(
             modifier = modifier,
             text = props.joinToString(" • ") { "$it" },

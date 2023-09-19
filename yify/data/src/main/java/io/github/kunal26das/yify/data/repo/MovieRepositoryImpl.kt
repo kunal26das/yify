@@ -109,12 +109,12 @@ class MovieRepositoryImpl @Inject constructor(
         moviePreference: MoviePreference?
     ): PagingSource<Int, MovieEntity> {
         return yifyDatabase.movieDao.getMovies(
-            quality = moviePreference?.quality?.name,
+            quality = moviePreference?.quality?.value,
             minimumRating = moviePreference?.minimumRating,
-            queryTerm = moviePreference?.queryTerm,
+//            queryTerm = moviePreference?.queryTerm,
             genre = moviePreference?.genre,
             sortBy = moviePreference?.sortBy?.name,
-//            orderBy = moviePreference?.orderBy?.name,
+            orderBy = moviePreference?.orderBy?.name,
         )
     }
 

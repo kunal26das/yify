@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UiPreference constructor(
-    val preview: Preview,
+    val preview: Preview? = null,
 ) {
     companion object {
         val Uncategorised = UiPreference(
