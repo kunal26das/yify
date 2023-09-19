@@ -4,7 +4,5 @@ import io.github.kunal26das.yify.domain.model.Genre
 import kotlinx.coroutines.flow.Flow
 
 interface FlowPreference {
-    fun getMaxMovieCount(): Flow<Int?>
-    fun getCurrentMovieCount(): Flow<Int?>
-    fun getGenreMovieCount(genre: Genre): Flow<Int?>
+    fun getMovieCount(genre: Genre?): Flow<Int?>
 }

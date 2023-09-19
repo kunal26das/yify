@@ -1,5 +1,5 @@
 package io.github.kunal26das.yify.ui
 
-enum class UserInterface {
+enum class Preview {
     Categorised, Uncategorised,
 }

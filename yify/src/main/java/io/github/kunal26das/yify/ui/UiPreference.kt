@@ -4,11 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UiPreference constructor(
-    val ui: UserInterface,
+    val preview: Preview,
 ) {
     companion object {
         val Uncategorised = UiPreference(
-            ui = UserInterface.Uncategorised
+            preview = Preview.Uncategorised,
         )
     }
 }

@@ -7,14 +7,17 @@ import io.github.kunal26das.yify.domain.model.MoviePreference
 
 interface MovieRepository {
 
+    suspend fun ping(): Boolean
+
     suspend fun getLocalMoviesCount(): Int
 
-    suspend fun getRemoteMoviesCount(): Int
+    suspend fun getRemoteMoviesCount(): Result<Int?>
 
     suspend fun getMovies(
         limit: Int,
         page: Int,
-        moviePreference: MoviePreference? = null
+        moviePreference: MoviePreference? = null,
+        updateDatabase: Boolean = false,
     ): Result<List<Movie>>
 
     suspend fun getLocalMovie(movieId: Int): Movie?

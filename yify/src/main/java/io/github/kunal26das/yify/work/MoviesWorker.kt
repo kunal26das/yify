@@ -1,7 +1,6 @@
 package io.github.kunal26das.yify.work
 
 import android.Manifest
-import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
@@ -26,7 +25,6 @@ class MoviesWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val movieRepository: MovieRepository,
-    private val notificationManager: NotificationManager,
 ) : CoroutineWorker(context, params) {
 
     private val notificationId = Int.MAX_VALUE
@@ -35,12 +33,16 @@ class MoviesWorker @AssistedInject constructor(
     override suspend fun doWork() = withContext(Dispatchers.IO) {
         val remoteCount = movieRepository.getRemoteMoviesCount()
         val localCount = movieRepository.getLocalMoviesCount()
-        val diff = remoteCount - localCount
+        val diff = remoteCount.getOrNull()?.minus(localCount) ?: 0
         if (diff > 0) {
-            notificationManager.cancel(notificationId)
             val pages = ceil(diff / Constants.MAX_LOAD_SIZE.toFloat()).toInt()
             (pages downTo Constants.FIRST_PAGE).forEach { page ->
-                movieRepository.getMovies(Constants.MAX_LOAD_SIZE, page, MoviePreference.Default)
+                movieRepository.getMovies(
+                    limit = Constants.MAX_LOAD_SIZE,
+                    page = page,
+                    moviePreference = MoviePreference.Default,
+                    updateDatabase = true,
+                )
                 if (applicationContext.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
                     setForeground(setProgress(pages - page, pages))
                 }
@@ -68,10 +70,6 @@ class MoviesWorker @AssistedInject constructor(
 
         fun getInputData(channelId: String): Data {
             return workDataOf(CHANNEL_ID to channelId)
-        }
-
-        fun getInputData(channelId: Enum<*>): Data {
-            return getInputData(channelId.name)
         }
     }
 }

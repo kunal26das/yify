@@ -9,7 +9,6 @@ import io.github.kunal26das.yify.data.mapper.toEntities
 import io.github.kunal26das.yify.data.mapper.toMovie
 import io.github.kunal26das.yify.data.mapper.toMovies
 import io.github.kunal26das.yify.data.service.MovieService
-import io.github.kunal26das.yify.domain.db.ImmutablePreference
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.entity.MovieEntity
@@ -21,38 +20,44 @@ import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import javax.inject.Inject
-import kotlin.math.max
 
 class MovieRepositoryImpl @Inject constructor(
-    private val immutablePreference: ImmutablePreference,
     private val mutablePreference: MutablePreference,
     private val movieService: MovieService,
     private val yifyDatabase: YifyDatabase,
     private val crashLogger: CrashLogger,
 ) : MovieRepository {
 
+    override suspend fun ping(): Boolean {
+        return movieService.getMovies(
+            limit = 1,
+            page = MovieService.FIRST_PAGE,
+        ).onSuccess {
+            mutablePreference.setMovieCount(it.dataDto.movieCount ?: 0)
+        }.isSuccess
+    }
+
     override suspend fun getLocalMoviesCount(): Int {
         return yifyDatabase.movieDao.getMoviesCount()
     }
 
-    override suspend fun getRemoteMoviesCount(): Int {
+    override suspend fun getRemoteMoviesCount(): Result<Int?> {
         val result = movieService.getMovies(
             limit = 1,
             page = MovieService.FIRST_PAGE,
             sortBy = SortBy.DateAdded.key,
             orderBy = OrderBy.Descending.key,
         )
-        val count = result.getOrNull()?.dataDto?.movieCount ?: 0
-        if (result.isSuccess) {
-            mutablePreference.setMaxMovieCount(count)
+        return result.map {
+            it.dataDto.movieCount
         }
-        return count
     }
 
     override suspend fun getMovies(
         limit: Int,
         page: Int,
-        moviePreference: MoviePreference?
+        moviePreference: MoviePreference?,
+        updateDatabase: Boolean,
     ): Result<List<Movie>> {
         val result = movieService.getMovies(
             limit = limit,
@@ -65,8 +70,9 @@ class MovieRepositoryImpl @Inject constructor(
             orderBy = moviePreference?.orderBy?.key,
         )
         return result.map { it.dataDto }.onSuccess {
-            updateDatabase(it.movies)
-            updateMovieCount(it.movieCount ?: 0)
+            if (updateDatabase) {
+                updateDatabase(it.movies)
+            }
         }.map {
             it.movies.toMovies(
                 genreFallback = { genre ->
@@ -85,22 +91,13 @@ class MovieRepositoryImpl @Inject constructor(
 
     override suspend fun getRemoteMovie(movieId: Int): Result<Movie?> {
         return movieService.getMovie(movieId).map {
-            it.dataDto.movie
-        }.onSuccess {
-            it?.let { updateDatabase(listOf(it)) }
-        }.map {
-            it?.toMovie()
+            it.dataDto.movie?.toMovie()
         }
     }
 
     override suspend fun getMovieSuggestions(movieId: Int): Result<List<Movie>> {
         return movieService.getMovieSuggestions(movieId).map {
-            it.dataDto
-        }.onSuccess {
-            updateDatabase(it.movies)
-            // update suggestion mapping in db
-        }.map {
-            it.movies.toMovies(
+            it.dataDto.movies.toMovies(
                 genreFallback = { genre ->
                     logUnknownGenre(genre)
                 }
@@ -130,12 +127,6 @@ class MovieRepositoryImpl @Inject constructor(
                 torrentDao.upsert(it)
             }
         }
-    }
-
-    private suspend fun updateMovieCount(movieCount: Int) {
-        val max = max(movieCount, immutablePreference.getMaxMovieCount() ?: 0)
-        mutablePreference.setCurrentMovieCount(movieCount)
-        mutablePreference.setMaxMovieCount(max)
     }
 
     private fun logUnknownGenre(genre: String) {

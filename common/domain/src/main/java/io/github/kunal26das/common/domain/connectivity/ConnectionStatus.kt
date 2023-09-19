@@ -1,5 +1,9 @@
 package io.github.kunal26das.common.domain.connectivity
 
 enum class ConnectionStatus {
-    Available, Unavailable, Losing, Lost
+    Available, Unavailable, Losing, Lost,
+    ;
+
+    val isAvailable
+        get() = this == Available
 }

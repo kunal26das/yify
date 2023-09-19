@@ -4,7 +4,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.map
-import io.github.kunal26das.common.domain.connectivity.ConnectionStatus
 import io.github.kunal26das.common.domain.connectivity.ConnectivityObserver
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.mapper.toMovie
@@ -24,19 +23,11 @@ class MoviesPagerUseCase @Inject constructor(
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getMoviesPagingData(
-        moviePreference: MoviePreference,
-        searchQuery: String? = null,
-    ): Flow<PagingData<Movie>> {
-        val preference = moviePreference.copy(queryTerm = searchQuery)
+    fun getMoviesPagingData(moviePreference: MoviePreference): Flow<PagingData<Movie>> {
         return connectivityObserver.observe().flatMapLatest {
-            when (it) {
-                ConnectionStatus.Available -> {
-                    remoteMoviesSourcePager(preference)
-                }
-
-                else -> localMoviesSourcePager(preference)
-            }
+            if (it.isAvailable and movieRepository.ping()) {
+                remoteMoviesSourcePager(moviePreference)
+            } else localMoviesSourcePager(moviePreference)
         }
     }
 

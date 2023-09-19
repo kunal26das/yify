@@ -18,15 +18,7 @@ class MutablePreferencesImpl @Inject constructor(
         }
     }
 
-    override suspend fun setMaxMovieCount(value: Int) {
-        setIntPreference(PreferencesKey.MAX_MOVIE_COUNT, value)
-    }
-
-    override suspend fun setCurrentMovieCount(value: Int) {
-        setIntPreference(PreferencesKey.CURRENT_MOVIE_COUNT, value)
-    }
-
-    override suspend fun setGenreMovieCount(genre: Genre, value: Int) {
-        setIntPreference(genre.name, value)
+    override suspend fun setMovieCount(value: Int, genre: Genre?) {
+        setIntPreference(genre?.name ?: PreferencesKey.ALL_GENRES, value)
     }
 }

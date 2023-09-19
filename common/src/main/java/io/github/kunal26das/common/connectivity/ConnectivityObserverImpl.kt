@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 internal class ConnectivityObserverImpl @Inject constructor(
-    private val connectivityManager: ConnectivityManager
+    private val connectivityManager: ConnectivityManager,
 ) : ConnectivityObserver {
     override fun observe(): Flow<ConnectionStatus> {
         return callbackFlow {

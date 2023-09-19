@@ -22,6 +22,7 @@ class MoviesSource constructor(
             limit = params.loadSize,
             page = page,
             moviePreference = moviePreference,
+            updateDatabase = false,
         ).getOrNull().orEmpty()
         return LoadResult.Page(
             movies,

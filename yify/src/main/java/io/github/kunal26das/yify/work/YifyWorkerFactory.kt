@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.work
 
-import android.app.NotificationManager
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.ListenableWorker
@@ -12,7 +11,6 @@ import javax.inject.Inject
 class YifyWorkerFactory @Inject constructor(
     private val hiltWorkerFactory: HiltWorkerFactory,
     private val movieRepository: MovieRepository,
-    private val notificationManager: NotificationManager,
 ) : WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -24,7 +22,7 @@ class YifyWorkerFactory @Inject constructor(
             return worker
         }
         if (workerClassName == MoviesWorker::class.qualifiedName) {
-            return MoviesWorker(appContext, workerParameters, movieRepository, notificationManager)
+            return MoviesWorker(appContext, workerParameters, movieRepository)
         }
         return null
     }

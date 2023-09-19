@@ -2,12 +2,10 @@ package io.github.kunal26das.yify.ui
 
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.common.core.ViewModel
 import io.github.kunal26das.yify.domain.model.Genre
-import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
@@ -16,7 +14,6 @@ import io.github.kunal26das.yify.usecase.MoviesPagerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,17 +33,30 @@ class MoviesViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
+    private val genres = MutableStateFlow(emptyList<Genre>())
+
     val uiPreference = uiPreferenceDataStore.data.stateIn(UiPreference.Uncategorised)
     val moviePreference = moviePreferenceDataStore.data.stateIn(MoviePreference.Default)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val movies = searchQuery
-        .debounce(1000L)
-        .combine(moviePreferenceDataStore.data) { searchQuery, moviePreference ->
-            moviesPagerUseCase.getMoviesPagingData(moviePreference, searchQuery)
-        }.flatMapLatest {
-            it
-        }.cachedIn(viewModelScope)
+    val uncategorizedMovies = combine(
+        searchQuery,
+        moviePreferenceDataStore.data,
+    ) { searchQuery, moviePreference ->
+        moviesPagerUseCase.getMoviesPagingData(moviePreference.copy(queryTerm = searchQuery))
+    }.debounce(DEBOUNCE_TIMEOUT).flatMapLatest { it }.cachedIn(viewModelScope)
+
+    val categorizedMovies = combine(
+        searchQuery,
+        genres,
+        moviePreferenceDataStore.data,
+    ) { searchQuery, genres, moviePreference ->
+        genres.map {
+            moviesPagerUseCase.getMoviesPagingData(
+                moviePreference.copy(genre = it, queryTerm = searchQuery)
+            ).cachedIn(viewModelScope)
+        }
+    }.debounce(DEBOUNCE_TIMEOUT).stateIn(emptyList())
 
     fun search(searchQuery: String?) {
         _searchQuery.value = searchQuery.orEmpty()
@@ -92,12 +102,16 @@ class MoviesViewModel @Inject constructor(
         }
     }
 
-    fun setUserInterface(ui: UserInterface?) {
+    fun setUserInterface(ui: Preview?) {
         viewModelScope.launch(Dispatchers.IO) {
             uiPreferenceDataStore.updateData {
-                it.copy(ui = ui ?: UiPreference.Uncategorised.ui)
+                it.copy(preview = ui ?: UiPreference.Uncategorised.preview)
             }
         }
+    }
+
+    fun setGenres(genres: List<Genre>) {
+        this.genres.value = genres
     }
 
     fun clear() {
@@ -109,13 +123,7 @@ class MoviesViewModel @Inject constructor(
         }
     }
 
-    fun getMovieGenreFlows(
-        genres: List<Genre>,
-    ): List<Flow<PagingData<Movie>>> {
-        return genres.map {
-            moviesPagerUseCase
-                .getMoviesPagingData(MoviePreference.Default.copy(genre = it))
-                .cachedIn(viewModelScope)
-        }
+    companion object {
+        private const val DEBOUNCE_TIMEOUT = 1000L
     }
 }

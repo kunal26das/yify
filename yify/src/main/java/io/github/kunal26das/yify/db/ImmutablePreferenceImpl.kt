@@ -9,15 +9,7 @@ import javax.inject.Inject
 class ImmutablePreferenceImpl @Inject constructor(
     private val flowPreference: FlowPreference
 ) : ImmutablePreference {
-    override suspend fun getMaxMovieCount(): Int? {
-        return flowPreference.getMaxMovieCount().first()
-    }
-
-    override suspend fun getCurrentMovieCount(): Int? {
-        return flowPreference.getCurrentMovieCount().first()
-    }
-
-    override suspend fun getGenreMovieCount(genre: Genre, value: Int): Int? {
-        return flowPreference.getGenreMovieCount(genre).first()
+    override suspend fun getMovieCount(genre: Genre?): Int? {
+        return flowPreference.getMovieCount(genre).first()
     }
 }

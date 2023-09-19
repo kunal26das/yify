@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.compose
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,40 +41,45 @@ fun VerticalGridMovies(
     onClick: (Movie?) -> Unit = {},
 ) {
     val pullRefreshState = rememberPullRefreshState(
+        refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
         refreshing = movies.loadState.refresh is LoadState.Loading,
         onRefresh = { movies.refresh() },
-        refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
     )
-    Box(
-        modifier = modifier.pullRefresh(pullRefreshState),
-    ) {
-        when (movies.itemCount) {
-            0 -> when (movies.loadState.refresh) {
-                !is LoadState.Loading -> {
-                    EmptyState(
-                        modifier = Modifier.Companion.align(Alignment.Center),
+    AnimatedContent(
+        modifier = modifier,
+        targetState = movies,
+        label = "movies",
+    ) { movies ->
+        Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
+            when (movies.itemCount) {
+                0 -> when (movies.loadState.refresh) {
+                    is LoadState.Loading -> LoadingState(
+                        contentPadding = contentPadding,
+                        moviePadding = moviePadding
+                    )
+
+                    else -> EmptyState(
+                        modifier = Modifier.align(Alignment.Center),
                         movies = movies,
                     ) {
                         movies.refresh()
                     }
                 }
 
-                else -> Unit
+                else -> NonEmptyState(
+                    contentPadding = contentPadding,
+                    moviePadding = moviePadding,
+                    movies = movies,
+                    onClick = onClick,
+                )
             }
-
-            else -> NonEmptyState(
-                contentPadding = contentPadding,
-                moviePadding = moviePadding,
-                movies = movies,
-                onClick = onClick,
+            PullRefreshIndicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                refreshing = movies.loadState.refresh is LoadState.Loading,
+                state = pullRefreshState,
+                scale = true,
             )
         }
-        PullRefreshIndicator(
-            modifier = Modifier.align(Alignment.TopCenter),
-            refreshing = movies.loadState.refresh is LoadState.Loading,
-            state = pullRefreshState,
-            scale = true,
-        )
     }
 }
 
@@ -87,8 +93,8 @@ private fun NonEmptyState(
 ) {
     LazyVerticalGrid(
         modifier = modifier,
-        columns = GridCells.Adaptive(Constants.movieWidth),
         contentPadding = contentPadding,
+        columns = GridCells.Adaptive(Constants.movieWidth),
         content = {
             items(movies.itemCount) { index ->
                 val movie = movies[index]
@@ -139,9 +145,37 @@ private fun EmptyState(
         )
 
         OutlinedButton(
-            modifier = Modifier.padding(top = 8.dp),
+            modifier = Modifier.padding(top = 12.dp),
             onClick = onRefresh,
-            content = { Text(text = stringResource(R.string.clear)) }
+            content = {
+                Text(
+                    text = stringResource(R.string.refresh),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
         )
     }
+}
+
+@Composable
+private fun LoadingState(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
+    moviePadding: PaddingValues,
+) {
+    LazyVerticalGrid(
+        modifier = modifier,
+        userScrollEnabled = false,
+        contentPadding = contentPadding,
+        columns = GridCells.Adaptive(Constants.movieWidth),
+        content = {
+            items(Constants.LOAD_SIZE) {
+                MovieCard(
+                    modifier = Modifier
+                        .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
+                        .padding(moviePadding),
+                )
+            }
+        }
+    )
 }

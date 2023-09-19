@@ -17,15 +17,7 @@ class FlowPreferenceImpl @Inject constructor(
         return dataStore.data.map { it[intPreferencesKey(key)] }
     }
 
-    override fun getMaxMovieCount(): Flow<Int?> {
-        return getIntPreferenceFlow(PreferencesKey.MAX_MOVIE_COUNT)
-    }
-
-    override fun getCurrentMovieCount(): Flow<Int?> {
-        return getIntPreferenceFlow(PreferencesKey.CURRENT_MOVIE_COUNT)
-    }
-
-    override fun getGenreMovieCount(genre: Genre): Flow<Int?> {
-        return getIntPreferenceFlow(genre.name)
+    override fun getMovieCount(genre: Genre?): Flow<Int?> {
+        return getIntPreferenceFlow(genre?.name ?: PreferencesKey.ALL_GENRES)
     }
 }

@@ -23,4 +23,6 @@
     <string name="categorised">Categorised</string>
     <string name="preview">Preview</string>
     <string name="synchronising">Synchronising</string>
+    <string name="no_internet">No Internet</string>
+    <string name="refresh">Refresh</string>
 </resources>
