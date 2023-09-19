@@ -1,7 +1,6 @@
 package io.github.kunal26das.yify.ui
 
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.Player
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.common.core.ViewModel
 import io.github.kunal26das.yify.domain.model.Movie
@@ -18,7 +17,6 @@ import javax.inject.Inject
 class MovieViewModel @Inject constructor(
     private val movieUseCase: MovieUseCase,
     private val movieRepository: MovieRepository,
-    val player: Player,
 ) : ViewModel() {
 
     private val _movie = MutableStateFlow<Movie?>(null)
@@ -27,10 +25,6 @@ class MovieViewModel @Inject constructor(
     private val _movieSuggestions = MutableStateFlow<List<Movie>?>(null)
     val movieSuggestions = _movieSuggestions.asStateFlow()
 
-    init {
-        player.prepare()
-    }
-
     fun getMovie(movieId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val movie = async { movieUseCase.getMovie(movieId) }
@@ -38,10 +32,5 @@ class MovieViewModel @Inject constructor(
             _movie.value = movie.await().getOrNull()
             _movieSuggestions.value = suggestions.await().getOrNull()
         }
-    }
-
-    override fun onCleared() {
-        player.release()
-        super.onCleared()
     }
 }

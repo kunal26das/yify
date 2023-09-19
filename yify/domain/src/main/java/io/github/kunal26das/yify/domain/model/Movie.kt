@@ -26,6 +26,7 @@ data class Movie constructor(
     val torrents: List<Torrent>,
     val url: String?,
     val year: Int?,
+    val youtubeTrailerCode: String?,
     val youtubeTrailerUrl: String?,
 ) {
 

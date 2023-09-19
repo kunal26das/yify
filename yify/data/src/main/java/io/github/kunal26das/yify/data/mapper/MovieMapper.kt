@@ -33,6 +33,7 @@ fun MovieDto.toMovie(
     torrents = torrentDtos.toTorrents,
     url = url,
     year = year,
+    youtubeTrailerCode = youtubeTrailerCode,
     youtubeTrailerUrl = getYouTubeVideoUrl(youtubeTrailerCode),
 )
 

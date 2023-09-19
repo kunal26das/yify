@@ -95,7 +95,6 @@ class MovieActivity : Activity() {
                         item(span = { GridItemSpan(GRID_CELLS) }) {
                             TrailerCard(
                                 modifier = Modifier.padding(8.dp),
-                                player = viewModel.player,
                                 movie = movie,
                             )
                         }

@@ -9,8 +9,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.room.Room
 import dagger.Binds
 import dagger.Module
@@ -36,7 +34,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
-
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -128,13 +125,6 @@ internal abstract class YifyModule {
             abstractYifyDatabase: YifyDatabase
         ): MovieDao {
             return abstractYifyDatabase.movieDao
-        }
-
-        @Provides
-        fun provideVideoPlayer(
-            @ApplicationContext context: Context
-        ): Player {
-            return ExoPlayer.Builder(context).build()
         }
     }
 }

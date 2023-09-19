@@ -31,6 +31,7 @@ fun MovieEntity.toMovie(
     trailerImageUrl = getYouTubeVideoCoverImageUrl(youtubeTrailerCode),
     url = url,
     year = year,
+    youtubeTrailerCode = youtubeTrailerCode,
     youtubeTrailerUrl = getYouTubeVideoUrl(youtubeTrailerCode),
 )
 
