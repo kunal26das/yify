@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -19,11 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
-import androidx.palette.graphics.Palette
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
+import io.github.kunal26das.common.compose.shimmer
 import io.github.kunal26das.yify.domain.model.Movie
+
+val AsyncImagePainter.State.isLoading
+    get() = this is AsyncImagePainter.State.Loading
+            || this is AsyncImagePainter.State.Empty
+
+val AsyncImagePainter.State.isError
+    get() = this is AsyncImagePainter.State.Error
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +44,10 @@ fun MovieCard(
         onClick = { onClick.invoke(movie) },
         interactionSource = interactionSource,
     ) {
-        Movie(movie = movie)
+        Movie(
+            modifier = Modifier.fillMaxSize(),
+            movie = movie,
+        )
     }
 }
 
@@ -47,48 +55,31 @@ fun MovieCard(
 fun Movie(
     modifier: Modifier = Modifier,
     movie: Movie?,
-    onPalette: (Palette?) -> Unit = {},
 ) {
-    var palette by remember { mutableStateOf<Palette?>(null) }
     var state by remember { mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty) }
     Box(
-        modifier = modifier,
-    ) {
-        AsyncImage(
-            modifier = Modifier.fillMaxSize(),
-            model = movie?.coverImageUrl?.imageRequest,
-            contentDescription = movie?.slug,
-            contentScale = ContentScale.Crop,
-            onState = {
-                state = it
-            },
+        modifier = modifier.shimmer(
+            label = movie?.slug ?: "shimmer",
+            enabled = state.isLoading,
         )
-        when (state) {
-            is AsyncImagePainter.State.Error -> {
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(8.dp),
-                    text = movie?.title.orEmpty(),
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            is AsyncImagePainter.State.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                )
-            }
-
-            is AsyncImagePainter.State.Success -> {
-                val result = (state as AsyncImagePainter.State.Success).result
-                Palette.from(result.drawable.toBitmap()).generate().let {
-                    onPalette.invoke(it)
-                    palette = it
-                }
-            }
-
-            else -> Unit
+    ) {
+        if (movie == null || state.isError) {
+            Text(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(8.dp),
+                text = movie?.title.orEmpty(),
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (movie != null) {
+            AsyncImage(
+                modifier = Modifier.fillMaxSize(),
+                model = movie.coverImageUrl?.imageRequest,
+                contentDescription = movie.slug,
+                contentScale = ContentScale.Crop,
+                onState = { state = it },
+            )
         }
     }
 }

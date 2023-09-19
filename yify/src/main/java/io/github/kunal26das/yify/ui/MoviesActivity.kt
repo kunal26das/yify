@@ -265,13 +265,11 @@ class MoviesActivity : Activity() {
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(id = R.string.rating),
-            )
+            Text(text = stringResource(R.string.min_rating))
             Slider(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 12.dp),
+                    .padding(horizontal = 12.dp),
                 steps = 10,
                 valueRange = 0f..9f,
                 value = moviePreference.minimumRating?.toFloat() ?: 0f,
@@ -279,6 +277,7 @@ class MoviesActivity : Activity() {
                     viewModel.setMinimumRating(it.toInt())
                 }
             )
+            Text(text = moviePreference.minimumRating.toString())
         }
     }
 

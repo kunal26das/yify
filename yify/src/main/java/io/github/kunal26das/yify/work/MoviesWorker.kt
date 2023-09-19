@@ -44,14 +44,14 @@ class MoviesWorker @AssistedInject constructor(
                     updateDatabase = true,
                 )
                 if (applicationContext.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
-                    setForeground(setProgress(pages - page, pages))
+                    setForeground(getForegroundInfo(pages - page, pages))
                 }
             }
         }
         Result.success()
     }
 
-    private fun setProgress(page: Int, pages: Int): ForegroundInfo {
+    private fun getForegroundInfo(page: Int, pages: Int): ForegroundInfo {
         val notification = NotificationCompat.Builder(
             applicationContext,
             channelId.orEmpty(),

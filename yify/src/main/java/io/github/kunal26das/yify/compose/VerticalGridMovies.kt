@@ -31,6 +31,8 @@ import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.R
 import io.github.kunal26das.yify.domain.model.Movie
 
+private const val LABEL = "vertical_grid_movies"
+
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 fun VerticalGridMovies(
@@ -48,7 +50,7 @@ fun VerticalGridMovies(
     AnimatedContent(
         modifier = modifier,
         targetState = movies,
-        label = "movies",
+        label = LABEL,
     ) { movies ->
         Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
             when (movies.itemCount) {

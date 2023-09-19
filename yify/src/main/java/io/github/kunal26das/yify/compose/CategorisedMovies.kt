@@ -1,10 +1,12 @@
 package io.github.kunal26das.yify.compose
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +29,8 @@ import io.github.kunal26das.yify.domain.model.Genre
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.ui.MovieActivity
 
+private const val LABEL = "categorized_movies"
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun CategorisedMovies(
@@ -40,29 +44,35 @@ fun CategorisedMovies(
         refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
         onRefresh = onRefresh,
     )
-    Box(modifier = modifier) {
-        LazyColumn(
-            contentPadding = PaddingValues(
-                bottom = statusBarHeight,
-                top = statusBarHeight,
-            ),
-            content = {
-                itemsIndexed(categorisedMovies) { index, movies ->
-                    AnimatedVisibility(movies.itemCount != 0) {
-                        MovieCategory(
-                            genre = genres[index],
-                            movies = movies,
-                        )
+    AnimatedContent(
+        modifier = modifier,
+        targetState = categorisedMovies,
+        label = LABEL,
+    ) { categorisedMovies ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                contentPadding = PaddingValues(
+                    bottom = statusBarHeight,
+                    top = statusBarHeight,
+                ),
+                content = {
+                    itemsIndexed(categorisedMovies) { index, movies ->
+                        AnimatedVisibility(movies.itemCount != 0) {
+                            MovieCategory(
+                                genre = genres[index],
+                                movies = movies,
+                            )
+                        }
                     }
                 }
-            }
-        )
-        PullRefreshIndicator(
-            modifier = Modifier.align(Alignment.TopCenter),
-            refreshing = categorisedMovies.any { it.loadState.refresh == LoadState.Loading },
-            state = pullRefreshState,
-            scale = true,
-        )
+            )
+            PullRefreshIndicator(
+                modifier = Modifier.align(Alignment.TopCenter),
+                refreshing = categorisedMovies.any { it.loadState.refresh == LoadState.Loading },
+                state = pullRefreshState,
+                scale = true,
+            )
+        }
     }
 }
 
