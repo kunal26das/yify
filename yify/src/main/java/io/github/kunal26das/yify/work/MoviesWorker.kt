@@ -14,6 +14,7 @@ import dagger.assisted.AssistedInject
 import io.github.kunal26das.common.util.hasPermission
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.R
+import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.model.MoviePreference
 import io.github.kunal26das.yify.domain.repo.MovieRepository
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ import kotlin.math.ceil
 class MoviesWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
+    private val yifyDatabase: YifyDatabase,
     private val movieRepository: MovieRepository,
 ) : CoroutineWorker(context, params) {
 
@@ -37,12 +39,12 @@ class MoviesWorker @AssistedInject constructor(
         if (diff > 0) {
             val pages = ceil(diff / Constants.MAX_LOAD_SIZE.toFloat()).toInt()
             (pages downTo Constants.FIRST_PAGE).forEach { page ->
-                movieRepository.getMovies(
+                val result = movieRepository.getMovies(
+                    moviePreference = MoviePreference.Default,
                     limit = Constants.MAX_LOAD_SIZE,
                     page = page,
-                    moviePreference = MoviePreference.Default,
-                    updateDatabase = true,
                 )
+                yifyDatabase.insertMovies(result.getOrNull().orEmpty())
                 if (applicationContext.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
                     setForeground(getForegroundInfo(pages - page, pages))
                 }

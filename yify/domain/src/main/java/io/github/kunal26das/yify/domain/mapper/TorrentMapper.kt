@@ -8,6 +8,7 @@ val TorrentEntity.toTorrent
     get() = Torrent(
         hash = hash,
         dateUploaded = dateUploaded ?: 0,
+        movieId = movieId,
         peers = peers ?: 0,
         quality = quality ?: Quality.Unknown,
         seeds = seeds ?: 0,
@@ -17,5 +18,22 @@ val TorrentEntity.toTorrent
         url = url,
     )
 
+val Torrent.toEntity
+    get() = TorrentEntity(
+        hash = hash,
+        dateUploaded = dateUploaded,
+        movieId = movieId,
+        peers = peers,
+        quality = quality,
+        seeds = seeds,
+        size = size,
+        sizeBytes = sizeBytes,
+        type = type,
+        url = url,
+    )
+
 val List<TorrentEntity>?.toTorrents: List<Torrent>
     get() = this?.map { it.toTorrent }.orEmpty()
+
+val List<Torrent>?.toEntities: List<TorrentEntity>
+    get() = this?.map { it.toEntity }.orEmpty()

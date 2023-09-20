@@ -3,9 +3,9 @@ package io.github.kunal26das.yify.ui
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.kunal26das.common.core.ViewModel
+import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.repo.MovieRepository
-import io.github.kunal26das.yify.usecase.MovieUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MovieViewModel @Inject constructor(
-    private val movieUseCase: MovieUseCase,
+    private val yifyDatabase: YifyDatabase,
     private val movieRepository: MovieRepository,
 ) : ViewModel() {
 
@@ -27,9 +27,9 @@ class MovieViewModel @Inject constructor(
 
     fun getMovie(movieId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val movie = async { movieUseCase.getMovie(movieId) }
+            val movie = async { yifyDatabase.getMovie(movieId) }
             val suggestions = async { movieRepository.getMovieSuggestions(movieId) }
-            _movie.value = movie.await().getOrNull()
+            _movie.value = movie.await()
             _movieSuggestions.value = suggestions.await().getOrNull()
         }
     }

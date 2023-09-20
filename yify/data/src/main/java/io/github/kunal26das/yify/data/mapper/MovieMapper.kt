@@ -2,13 +2,12 @@ package io.github.kunal26das.yify.data.mapper
 
 import io.github.kunal26das.yify.data.dto.MovieDto
 import io.github.kunal26das.yify.domain.entity.MovieEntity
-import io.github.kunal26das.yify.domain.mapper.getYouTubeVideoCoverImageUrl
-import io.github.kunal26das.yify.domain.mapper.getYouTubeVideoUrl
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.Quality
 import javax.inject.Inject
 
 internal class MovieMapper @Inject constructor(
+    private val languageMapper: LanguageMapper,
     private val genreMapper: GenreMapper,
 ) {
     fun toMovie(movieDto: MovieDto) = Movie(
@@ -20,11 +19,13 @@ internal class MovieMapper @Inject constructor(
         description = movieDto.descriptionFull.orEmpty(),
         genres = genreMapper.toGenres(movieDto.genres),
         imdbCode = movieDto.imdbCode.orEmpty(),
-        languageCode = movieDto.language.orEmpty(),
+        language = languageMapper.toLanguage(movieDto.language),
         mpaRating = movieDto.mpaRating.orEmpty(),
+        peers = movieDto.torrentDtos.maxPeers,
         quality = movieDto.torrentDtos.bestQuality ?: Quality.Unknown,
         rating = movieDto.rating?.toFloat() ?: 0f,
         runtime = movieDto.runtime ?: 0,
+        seeds = movieDto.torrentDtos.maxSeeds,
         slug = movieDto.slug.orEmpty(),
         state = movieDto.state.orEmpty(),
         summary = movieDto.summary.orEmpty(),
@@ -32,30 +33,28 @@ internal class MovieMapper @Inject constructor(
         title = movieDto.title.orEmpty(),
         titleEnglish = movieDto.titleEnglish.orEmpty(),
         titleLong = movieDto.titleLong.orEmpty(),
-        trailerImageUrl = getYouTubeVideoCoverImageUrl(movieDto.youtubeTrailerCode),
-        torrents = movieDto.torrentDtos.toTorrents,
+        torrents = movieDto.torrentDtos.toTorrents(movieDto.id),
         url = movieDto.url,
         year = movieDto.year,
         youtubeTrailerCode = movieDto.youtubeTrailerCode,
-        youtubeTrailerUrl = getYouTubeVideoUrl(movieDto.youtubeTrailerCode),
     )
 
-    fun toEntity(movieDto: MovieDto): MovieEntity = MovieEntity(
+    fun toEntity(movieDto: MovieDto) = MovieEntity(
         id = movieDto.id,
         backgroundImageUrl = movieDto.backgroundImageOriginal ?: movieDto.backgroundImage,
         coverImageUrl = movieDto.largeCoverImage ?: movieDto.mediumCoverImage
         ?: movieDto.smallCoverImage,
         dateUploaded = movieDto.dateUploadedUnix,
-        descriptionFull = movieDto.descriptionFull,
+        description = movieDto.descriptionFull,
         genres = genreMapper.toGenres(movieDto.genres),
         imdbCode = movieDto.imdbCode,
-        language = movieDto.language,
+        language = languageMapper.toLanguage(movieDto.language),
         mpaRating = movieDto.mpaRating,
-        peers = movieDto.torrentDtos?.maxPeers,
+        peers = movieDto.torrentDtos.maxPeers,
         quality = movieDto.torrentDtos.bestQuality,
         rating = movieDto.rating?.toFloat(),
         runtime = movieDto.runtime,
-        seeds = movieDto.torrentDtos?.maxSeeds,
+        seeds = movieDto.torrentDtos.maxSeeds,
         slug = movieDto.slug,
         state = movieDto.state,
         summary = movieDto.summary,

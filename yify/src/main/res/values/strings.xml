@@ -20,4 +20,5 @@
     <string name="decreasing_order">Decreasing order</string>
     <string name="categorize">Categorize</string>
     <string name="min_rating">Min Rating</string>
+    <string name="reset">Reset\n</string>
 </resources>

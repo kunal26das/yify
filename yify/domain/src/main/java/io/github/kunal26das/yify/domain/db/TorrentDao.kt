@@ -8,9 +8,6 @@ import io.github.kunal26das.yify.domain.entity.TorrentEntity
 @Dao
 interface TorrentDao {
     @Upsert
-    suspend fun upsert(vararg torrent: TorrentEntity)
-
-    @Upsert
     suspend fun upsert(torrents: List<TorrentEntity>)
 
     @Query("SELECT * FROM TORRENT WHERE :id == MOVIE_ID")

@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify.domain.model
 
 data class Torrent constructor(
+    val movieId: Int,
     val hash: String,
     val dateUploaded: Long,
     val peers: Int,

@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import io.github.kunal26das.yify.domain.model.Genre
+import io.github.kunal26das.yify.domain.model.Language
 import io.github.kunal26das.yify.domain.model.Quality
 
 @Entity(tableName = "movie")
@@ -17,14 +18,14 @@ data class MovieEntity constructor(
     val coverImageUrl: String?,
     @ColumnInfo("date_uploaded")
     val dateUploaded: Long?,
-    @ColumnInfo("description_full")
-    val descriptionFull: String?,
+    @ColumnInfo("description")
+    val description: String?,
     @ColumnInfo("genres")
     val genres: List<Genre>?,
     @ColumnInfo("imdb_code")
     val imdbCode: String?,
     @ColumnInfo("language")
-    val language: String?,
+    val language: Language?,
     @ColumnInfo("mpa_rating")
     val mpaRating: String?,
     @ColumnInfo("peers")

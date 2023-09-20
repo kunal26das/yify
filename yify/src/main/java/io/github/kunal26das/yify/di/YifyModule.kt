@@ -25,7 +25,6 @@ import io.github.kunal26das.yify.db.serializer.MoviePreferencesSerializer
 import io.github.kunal26das.yify.db.serializer.UiPreferencesSerializer
 import io.github.kunal26das.yify.domain.db.FlowPreference
 import io.github.kunal26das.yify.domain.db.ImmutablePreference
-import io.github.kunal26das.yify.domain.db.MovieDao
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.model.MoviePreference
@@ -118,13 +117,6 @@ internal abstract class YifyModule {
             ).apply {
                 fallbackToDestructiveMigration()
             }.build()
-        }
-
-        @Provides
-        fun providesMovieDao(
-            abstractYifyDatabase: YifyDatabase
-        ): MovieDao {
-            return abstractYifyDatabase.movieDao
         }
     }
 }

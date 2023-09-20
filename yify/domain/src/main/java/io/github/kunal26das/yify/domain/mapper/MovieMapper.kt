@@ -1,25 +1,28 @@
 package io.github.kunal26das.yify.domain.mapper
 
 import io.github.kunal26das.yify.domain.entity.MovieEntity
+import io.github.kunal26das.yify.domain.model.Language
 import io.github.kunal26das.yify.domain.model.Movie
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.Torrent
 
 fun MovieEntity.toMovie(
     torrents: List<Torrent> = emptyList(),
-): Movie = Movie(
+) = Movie(
     id = id,
     backgroundImageUrl = backgroundImageUrl,
     coverImageUrl = coverImageUrl,
     dateUploaded = dateUploaded ?: 0,
-    description = descriptionFull.orEmpty(),
+    description = description.orEmpty(),
     genres = genres.orEmpty(),
     imdbCode = imdbCode.orEmpty(),
-    languageCode = language.orEmpty(),
+    language = language ?: Language.Unknown,
     mpaRating = mpaRating.orEmpty(),
+    peers = peers ?: 0,
     quality = quality ?: Quality.Unknown,
     rating = rating ?: 0f,
     runtime = runtime ?: 0,
+    seeds = seeds ?: 0,
     slug = slug.orEmpty(),
     state = state.orEmpty(),
     summary = summary.orEmpty(),
@@ -28,22 +31,41 @@ fun MovieEntity.toMovie(
     titleEnglish = titleEnglish.orEmpty(),
     titleLong = titleLong.orEmpty(),
     torrents = torrents,
-    trailerImageUrl = getYouTubeVideoCoverImageUrl(youtubeTrailerCode),
     url = url,
     year = year,
     youtubeTrailerCode = youtubeTrailerCode,
-    youtubeTrailerUrl = getYouTubeVideoUrl(youtubeTrailerCode),
 )
+
+val Movie.toEntity
+    get() = MovieEntity(
+        id = id,
+        backgroundImageUrl = backgroundImageUrl,
+        coverImageUrl = coverImageUrl,
+        dateUploaded = dateUploaded,
+        description = description,
+        genres = genres,
+        imdbCode = imdbCode,
+        language = language,
+        mpaRating = mpaRating,
+        peers = peers,
+        quality = quality,
+        rating = rating,
+        runtime = runtime,
+        seeds = seeds,
+        slug = slug,
+        state = state,
+        summary = summary,
+        synopsis = synopsis,
+        title = title,
+        titleEnglish = titleEnglish,
+        titleLong = titleLong,
+        url = url,
+        year = year,
+        youtubeTrailerCode = youtubeTrailerCode,
+    )
 
 val List<MovieEntity>?.toMovies
     get() = this?.map { it.toMovie() }.orEmpty()
 
-fun getYouTubeVideoCoverImageUrl(trailerCode: String?): String? {
-    return if (trailerCode.isNullOrEmpty()) null
-    else "https://img.youtube.com/vi/$trailerCode/maxresdefault.jpg"
-}
-
-fun getYouTubeVideoUrl(trailerCode: String?): String? {
-    return if (trailerCode.isNullOrEmpty()) null
-    else "https://www.youtube.com/watch?v=$trailerCode"
-}
+val List<Movie>?.toEntities
+    get() = this?.map { it.toEntity }.orEmpty()

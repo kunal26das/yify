@@ -344,7 +344,7 @@ class MoviesActivity : Activity() {
         OutlinedButton(
             modifier = modifier,
             onClick = { viewModel.clear() },
-            content = { Text(text = stringResource(R.string.clear)) }
+            content = { Text(text = stringResource(R.string.reset)) }
         )
     }
 

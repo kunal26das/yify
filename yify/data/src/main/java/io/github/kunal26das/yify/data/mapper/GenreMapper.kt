@@ -1,6 +1,8 @@
 package io.github.kunal26das.yify.data.mapper
 
 import io.github.kunal26das.common.domain.logger.CrashLogger
+import io.github.kunal26das.common.domain.logger.Logger
+import io.github.kunal26das.common.domain.logger.Priority
 import io.github.kunal26das.yify.data.UnknownGenreException
 import io.github.kunal26das.yify.domain.model.Genre
 import javax.inject.Inject
@@ -34,6 +36,7 @@ private const val GENRE_WESTERN = "Western"
 
 internal class GenreMapper @Inject constructor(
     private val crashLogger: CrashLogger,
+    private val logger: Logger,
 ) {
     fun getKey(genre: Genre) = when (genre) {
         Genre.Action -> GENRE_ACTION
@@ -93,6 +96,7 @@ internal class GenreMapper @Inject constructor(
         GENRE_WAR -> Genre.War
         GENRE_WESTERN -> Genre.Western
         else -> {
+            logger.log(Priority.Debug, "Unknown Genre", genre)
             crashLogger.log(UnknownGenreException(genre))
             Genre.Unknown
         }
