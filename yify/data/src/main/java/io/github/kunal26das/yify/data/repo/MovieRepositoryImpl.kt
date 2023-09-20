@@ -35,9 +35,7 @@ internal class MovieRepositoryImpl @Inject constructor(
             orderBy = OrderBy.Descending.key,
         )
         return result.map {
-            it.dataDto.movieCount?.also {
-                mutablePreference.setMovieCount(it)
-            }
+            it.dataDto.movieCount
         }
     }
 

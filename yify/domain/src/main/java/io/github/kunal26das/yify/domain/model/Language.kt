@@ -25,6 +25,7 @@ enum class Language {
     Danish,
     Dutch,
     Dzongkha,
+    English,
     Estonian,
     Finnish,
     French,

@@ -266,7 +266,7 @@ class MoviesActivity : Activity() {
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = stringResource(R.string.min_rating))
+            Text(text = stringResource(R.string.rating))
             Slider(
                 modifier = Modifier
                     .weight(1f)

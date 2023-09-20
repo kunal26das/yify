@@ -127,6 +127,6 @@ class MoviesViewModel @Inject constructor(
     }
 
     companion object {
-        private const val DEBOUNCE_TIMEOUT = 2000L
+        private const val DEBOUNCE_TIMEOUT = 1750L
     }
 }
