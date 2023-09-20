@@ -5,6 +5,7 @@ import io.github.kunal26das.yify.data.mapper.GenreMapper
 import io.github.kunal26das.yify.data.mapper.MovieMapper
 import io.github.kunal26das.yify.data.mapper.key
 import io.github.kunal26das.yify.data.service.MovieService
+import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.entity.MovieEntity
 import io.github.kunal26das.yify.domain.model.Movie
@@ -15,6 +16,7 @@ import io.github.kunal26das.yify.domain.repo.MovieRepository
 import javax.inject.Inject
 
 internal class MovieRepositoryImpl @Inject constructor(
+    private val mutablePreference: MutablePreference,
     private val movieService: MovieService,
     private val yifyDatabase: YifyDatabase,
     private val movieMapper: MovieMapper,
@@ -33,7 +35,9 @@ internal class MovieRepositoryImpl @Inject constructor(
             orderBy = OrderBy.Descending.key,
         )
         return result.map {
-            it.dataDto.movieCount
+            it.dataDto.movieCount?.also {
+                mutablePreference.setMovieCount(it)
+            }
         }
     }
 

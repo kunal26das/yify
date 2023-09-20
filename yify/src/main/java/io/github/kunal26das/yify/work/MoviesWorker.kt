@@ -11,6 +11,8 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import io.github.kunal26das.common.domain.logger.Logger
+import io.github.kunal26das.common.domain.logger.Priority
 import io.github.kunal26das.common.util.hasPermission
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.R
@@ -27,6 +29,7 @@ class MoviesWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val yifyDatabase: YifyDatabase,
     private val movieRepository: MovieRepository,
+    private val logger: Logger,
 ) : CoroutineWorker(context, params) {
 
     private val notificationId = Int.MAX_VALUE
@@ -36,6 +39,7 @@ class MoviesWorker @AssistedInject constructor(
         val remoteCount = movieRepository.getRemoteMoviesCount()
         val localCount = movieRepository.getLocalMoviesCount()
         val diff = remoteCount.getOrNull()?.minus(localCount) ?: 0
+        logger.log(Priority.Debug, "diff", diff.toString())
         if (diff > 0) {
             val pages = ceil(diff / Constants.MAX_LOAD_SIZE.toFloat()).toInt()
             (pages downTo Constants.FIRST_PAGE).forEach { page ->
@@ -46,7 +50,7 @@ class MoviesWorker @AssistedInject constructor(
                 )
                 yifyDatabase.insertMovies(result.getOrNull().orEmpty())
                 if (applicationContext.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
-                    setForeground(getForegroundInfo(pages - page, pages))
+                    setForeground(getForegroundInfo(pages - page + Constants.FIRST_PAGE, pages))
                 }
             }
         }

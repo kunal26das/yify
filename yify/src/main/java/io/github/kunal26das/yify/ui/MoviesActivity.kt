@@ -98,6 +98,7 @@ class MoviesActivity : Activity() {
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 val uiPreference by viewModel.uiPreference.collectAsState()
+                val isWorkInProgress by viewModel.isWorkInProgress.collectAsState()
                 val categorizedMovies by viewModel.categorizedMovies.collectAsState()
                 val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
                 val categorizedMoviePagingItems =

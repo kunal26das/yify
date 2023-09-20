@@ -42,9 +42,10 @@ fun VerticalGridMovies(
     movies: LazyPagingItems<Movie>,
     onClick: (Movie?) -> Unit = {},
 ) {
+    val refreshing = { movies.loadState.refresh is LoadState.Loading }
     val pullRefreshState = rememberPullRefreshState(
         refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
-        refreshing = movies.loadState.refresh is LoadState.Loading,
+        refreshing = refreshing.invoke(),
         onRefresh = { movies.refresh() },
     )
     AnimatedContent(
@@ -77,7 +78,7 @@ fun VerticalGridMovies(
             }
             PullRefreshIndicator(
                 modifier = Modifier.align(Alignment.TopCenter),
-                refreshing = movies.loadState.refresh is LoadState.Loading,
+                refreshing = refreshing.invoke(),
                 state = pullRefreshState,
                 scale = true,
             )

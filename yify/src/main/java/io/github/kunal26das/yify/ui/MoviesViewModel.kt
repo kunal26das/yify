@@ -11,6 +11,7 @@ import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.usecase.MoviesPagerUseCase
+import io.github.kunal26das.yify.usecase.MoviesWorkerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -26,6 +27,7 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 class MoviesViewModel @Inject constructor(
     private val moviesPagerUseCase: MoviesPagerUseCase,
+    private val moviesWorkerUseCase: MoviesWorkerUseCase,
     private val uiPreferenceDataStore: DataStore<UiPreference>,
     private val moviePreferenceDataStore: DataStore<MoviePreference>,
 ) : ViewModel() {
@@ -37,6 +39,7 @@ class MoviesViewModel @Inject constructor(
 
     val uiPreference = uiPreferenceDataStore.data.stateIn(UiPreference.Uncategorised)
     val moviePreference = moviePreferenceDataStore.data.stateIn(MoviePreference.Default)
+    val isWorkInProgress = moviesWorkerUseCase.isWorkInProgress().stateIn(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uncategorizedMovies = combine(

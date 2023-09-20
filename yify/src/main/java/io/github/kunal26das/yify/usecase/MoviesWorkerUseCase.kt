@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.work.MoviesWorker
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class MoviesWorkerUseCase @Inject constructor(
@@ -29,6 +30,12 @@ class MoviesWorkerUseCase @Inject constructor(
         }.build()
         workManager.enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, workRequest)
         return workManager.getWorkInfoByIdLiveData(workRequest.id).asFlow()
+    }
+
+    fun isWorkInProgress(): Flow<Boolean> {
+        return workManager.getWorkInfosForUniqueWorkLiveData(WORK_NAME).asFlow().map {
+            it.any { it.state.isFinished.not() }
+        }
     }
 
     companion object {
