@@ -86,7 +86,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.github.skydoves:retrofit-adapters-result:1.0.9")
-    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.0")
     implementation("androidx.hilt:hilt-work:1.0.0")
