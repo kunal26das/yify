@@ -64,7 +64,7 @@ dependencies {
     implementation("androidx.paging:paging-runtime-ktx:3.2.1")
     implementation("androidx.paging:paging-compose:3.2.1")
     implementation("androidx.room:room-paging:2.5.2")
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("com.google.dagger:hilt-android:2.48.1")
     ksp("com.google.dagger:hilt-android-compiler:2.48.1")
     implementation("androidx.palette:palette-ktx:1.0.0")
