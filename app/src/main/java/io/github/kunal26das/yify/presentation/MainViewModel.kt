@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.presentation
 
 import androidx.work.WorkInfo
 import dagger.hilt.android.lifecycle.HiltViewModel

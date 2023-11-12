@@ -1,5 +1,8 @@
 package io.github.kunal26das.yify.domain.model
 
+import androidx.annotation.Keep
+
+@Keep
 enum class Genre {
     Action,
     Adventure,

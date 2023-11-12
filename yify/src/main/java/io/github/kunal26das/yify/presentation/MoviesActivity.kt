@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.presentation
 
 import android.content.Context
 import android.content.Intent
@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DismissibleNavigationDrawer
@@ -36,9 +38,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -98,7 +103,6 @@ class MoviesActivity : Activity() {
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 val uiPreference by viewModel.uiPreference.collectAsState()
-                val isWorkInProgress by viewModel.isWorkInProgress.collectAsState()
                 val categorizedMovies by viewModel.categorizedMovies.collectAsState()
                 val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
                 val categorizedMoviePagingItems =
@@ -149,7 +153,7 @@ class MoviesActivity : Activity() {
             moviePadding = PaddingValues(5.dp),
             movies = movies,
         ) {
-            movieActivity.launch(it?.id)
+            movieActivity.launch(it)
         }
     }
 
@@ -182,12 +186,14 @@ class MoviesActivity : Activity() {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     private fun SearchTextField(
         modifier: Modifier = Modifier,
     ) {
         val focusManager = LocalFocusManager.current
         val searchQuery by viewModel.searchQuery.collectAsState()
+        val keyboardController = LocalSoftwareKeyboardController.current
         OutlinedTextField(
             modifier = modifier,
             readOnly = false,
@@ -209,6 +215,16 @@ class MoviesActivity : Activity() {
             onValueChange = {
                 viewModel.search(it)
             },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search,
+                autoCorrect = false,
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onBackPressedCallback.handleOnBackPressed()
+                    keyboardController?.hide()
+                }
+            )
         )
     }
 

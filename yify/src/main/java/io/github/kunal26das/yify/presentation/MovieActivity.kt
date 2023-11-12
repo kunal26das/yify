@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.presentation
 
 import android.content.Context
 import android.content.Intent
@@ -8,17 +8,17 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,8 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,63 +72,57 @@ class MovieActivity : Activity() {
                 }
             }
         )
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .paint(painter, contentScale = ContentScale.Crop)
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.925f)),
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.925f))
+                .padding(top = statusBarHeight),
         ) {
             if (movie != null) {
-                LazyVerticalGrid(
+                TrailerCard(
+                    modifier = Modifier.padding(0.dp),
+                    movie = movie,
+                )
+                LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        vertical = statusBarHeight,
-                        horizontal = 8.dp
-                    ),
-                    columns = GridCells.Fixed(GRID_CELLS),
+                    contentPadding = PaddingValues(vertical = 4.dp),
                     content = {
-                        item(span = { GridItemSpan(GRID_CELLS) }) {
+                        item {
                             Title(
-                                modifier = Modifier.padding(8.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 4.dp,
+                                ),
                             )
                         }
-                        item(span = { GridItemSpan(GRID_CELLS) }) {
-                            TrailerCard(
-                                modifier = Modifier.padding(8.dp),
-                                movie = movie,
-                            )
-                        }
-                        item(span = { GridItemSpan(GRID_CELLS) }) {
+                        item {
                             Props(
-                                modifier = Modifier.padding(8.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 4.dp,
+                                ),
                             )
                         }
                         if (movie?.genres.isNullOrEmpty().not()) {
-                            item(span = { GridItemSpan(GRID_CELLS) }) {
+                            item {
                                 Genre(
-                                    modifier = Modifier.padding(8.dp),
+                                    modifier = Modifier.padding(
+                                        vertical = 4.dp,
+                                    ),
                                 )
                             }
-                        }
-                        items(
-                            count = movie?.torrents?.size ?: 0,
-                            span = { GridItemSpan(GRID_CELLS / 2) }
-                        ) {
-                            Torrent(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                torrent = movie?.torrents?.get(it),
-                            )
                         }
                         if (movie?.description.isNullOrEmpty().not()) {
-                            item(span = { GridItemSpan(GRID_CELLS) }) {
+                            item {
                                 Description(
-                                    modifier = Modifier.padding(8.dp),
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 4.dp,
+                                    ),
                                 )
                             }
                         }
-
                     },
                 )
             }
@@ -145,8 +139,9 @@ class MovieActivity : Activity() {
             text = movie?.title.orEmpty(),
             color = MaterialTheme.colorScheme.onSurface,
             overflow = TextOverflow.Ellipsis,
-            fontSize = 28.sp,
-            maxLines = 1,
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            maxLines = 2,
         )
     }
 
@@ -155,13 +150,13 @@ class MovieActivity : Activity() {
         modifier: Modifier = Modifier,
     ) {
         val movie by viewModel.movie.collectAsState()
-        val props = movie?.run { listOf(year, language, rating) }.orEmpty()
+        val props = movie?.run { listOf(rating, year, language) }.orEmpty()
         Text(
             modifier = modifier,
             text = props.joinToString(" • ") { "$it" },
             color = MaterialTheme.colorScheme.onSurface,
             overflow = TextOverflow.Ellipsis,
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             maxLines = 1,
         )
     }
@@ -171,13 +166,26 @@ class MovieActivity : Activity() {
         modifier: Modifier = Modifier,
     ) {
         val movie by viewModel.movie.collectAsState()
-        Text(
+        LazyRow(
             modifier = modifier,
-            text = movie?.genres?.joinToString(", ") { it.name }.orEmpty(),
-            color = MaterialTheme.colorScheme.onSurface,
-            overflow = TextOverflow.Ellipsis,
-            fontSize = 16.sp,
-            maxLines = 1,
+            contentPadding = PaddingValues(horizontal = 12.dp),
+            content = {
+                items(movie?.genres.orEmpty()) { genre ->
+                    SuggestionChip(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = genre.name,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                            )
+                        },
+                    )
+                }
+            }
         )
     }
 
@@ -188,16 +196,15 @@ class MovieActivity : Activity() {
         val movie by viewModel.movie.collectAsState()
         var maxLines by remember { mutableIntStateOf(MAX_LINES) }
         Text(
-            modifier = modifier
-                .clickable(
-                    interactionSource = MutableInteractionSource(),
-                    indication = null,
-                ) {
-                    maxLines = when (maxLines) {
-                        Int.MAX_VALUE -> MAX_LINES
-                        else -> Int.MAX_VALUE
-                    }
-                },
+            modifier = modifier.clickable(
+                interactionSource = MutableInteractionSource(),
+                indication = null,
+            ) {
+                maxLines = when (maxLines) {
+                    Int.MAX_VALUE -> MAX_LINES
+                    else -> Int.MAX_VALUE
+                }
+            },
             text = movie?.description.toString(),
             color = MaterialTheme.colorScheme.onSurface,
             overflow = TextOverflow.Ellipsis,
@@ -208,8 +215,7 @@ class MovieActivity : Activity() {
 
     @Composable
     private fun Torrent(
-        modifier: Modifier = Modifier,
-        torrent: Torrent?
+        modifier: Modifier = Modifier, torrent: Torrent?
     ) {
         OutlinedCard(
             modifier = modifier,
@@ -233,14 +239,9 @@ class MovieActivity : Activity() {
         }
     }
 
-    @Composable
-    private fun Palette?.getDominantColor(color: Color): Color {
-        return this?.getDominantColor(color.value.toInt())?.let { Color(it) } ?: color
-    }
-
     private fun refresh(intent: Intent) {
-        val movieId = intent.getIntExtra(Movie.KEY_MOVIE_ID, 0)
-        viewModel.getMovie(movieId)
+        val movie = intent.getSerializableExtra(Movie.KEY_MOVIE, Movie::class.java)
+        viewModel.setMovie(movie)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -248,10 +249,10 @@ class MovieActivity : Activity() {
         refresh(intent)
     }
 
-    class Contract : ActivityResultContract<Int, Boolean>() {
-        override fun createIntent(context: Context, input: Int): Intent {
+    class Contract : ActivityResultContract<Movie, Boolean>() {
+        override fun createIntent(context: Context, input: Movie): Intent {
             return Intent(context, MovieActivity::class.java).apply {
-                putExtra(Movie.KEY_MOVIE_ID, input)
+                putExtra(Movie.KEY_MOVIE, input)
             }
         }
 
@@ -261,7 +262,6 @@ class MovieActivity : Activity() {
     }
 
     companion object {
-        private const val GRID_CELLS = 2
         private const val MAX_LINES = Int.MAX_VALUE
     }
 }

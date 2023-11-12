@@ -4,13 +4,13 @@
 
     <application>
         <activity
-            android:name=".ui.MoviesActivity"
+            android:name=".presentation.MoviesActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity" />
 
         <activity
-            android:name=".ui.MovieActivity"
+            android:name=".presentation.MovieActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"

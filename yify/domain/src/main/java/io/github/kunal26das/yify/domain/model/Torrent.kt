@@ -1,5 +1,8 @@
 package io.github.kunal26das.yify.domain.model
 
+import java.io.Serializable
+
+@kotlinx.serialization.Serializable
 data class Torrent constructor(
     val movieId: Int,
     val hash: String,
@@ -11,4 +14,4 @@ data class Torrent constructor(
     val sizeBytes: Long,
     val type: String,
     val url: String?,
-)
+): Serializable

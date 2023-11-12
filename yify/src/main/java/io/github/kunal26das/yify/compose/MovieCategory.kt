@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.LazyPagingItems
 import io.github.kunal26das.yify.domain.model.Movie
-import io.github.kunal26das.yify.ui.MovieActivity
+import io.github.kunal26das.yify.presentation.MovieActivity
 
 @Composable
 fun MovieCategory(
@@ -42,7 +42,7 @@ fun MovieCategory(
             moviePadding = PaddingValues(4.dp),
             movies = movies,
         ) {
-            movieActivity.launch(it?.id)
+            movieActivity.launch(it)
         }
     }
 }

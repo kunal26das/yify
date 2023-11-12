@@ -4,7 +4,9 @@ import android.content.Context
 import coil.Coil
 import coil.ImageLoader
 import coil.request.CachePolicy
+import coil.util.DebugLogger
 import io.github.kunal26das.common.init.IndependentInitializer
+import io.github.kunal26das.yify.BuildConfig
 import okhttp3.OkHttpClient
 import javax.inject.Inject
 
@@ -22,6 +24,9 @@ class CoilInitializer : IndependentInitializer<ImageLoader>() {
             respectCacheHeaders(false)
             okHttpClient(okHttpClient)
             allowHardware(false)
+            if (BuildConfig.DEBUG) {
+                logger(DebugLogger())
+            }
         }.build().also {
             Coil.setImageLoader(it)
         }

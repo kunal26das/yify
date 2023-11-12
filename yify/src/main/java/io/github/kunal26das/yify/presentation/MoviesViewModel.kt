@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.ui
+package io.github.kunal26das.yify.presentation
 
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,6 @@ import io.github.kunal26das.yify.domain.model.OrderBy
 import io.github.kunal26das.yify.domain.model.Quality
 import io.github.kunal26das.yify.domain.model.SortBy
 import io.github.kunal26das.yify.usecase.MoviesPagerUseCase
-import io.github.kunal26das.yify.usecase.MoviesWorkerUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -27,7 +26,6 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 class MoviesViewModel @Inject constructor(
     private val moviesPagerUseCase: MoviesPagerUseCase,
-    private val moviesWorkerUseCase: MoviesWorkerUseCase,
     private val uiPreferenceDataStore: DataStore<UiPreference>,
     private val moviePreferenceDataStore: DataStore<MoviePreference>,
 ) : ViewModel() {
@@ -39,7 +37,6 @@ class MoviesViewModel @Inject constructor(
 
     val uiPreference = uiPreferenceDataStore.data.stateIn(UiPreference.Uncategorised)
     val moviePreference = moviePreferenceDataStore.data.stateIn(MoviePreference.Default)
-    val isWorkInProgress = moviesWorkerUseCase.isWorkInProgress().stateIn(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uncategorizedMovies = combine(
@@ -105,10 +102,10 @@ class MoviesViewModel @Inject constructor(
         }
     }
 
-    fun setUserInterface(ui: Preview?) {
+    fun setUserInterface(preview: Preview?) {
         viewModelScope.launch(Dispatchers.IO) {
             uiPreferenceDataStore.updateData {
-                it.copy(preview = ui ?: UiPreference.Uncategorised.preview)
+                it.copy(preview = preview ?: UiPreference.Uncategorised.preview)
             }
         }
     }

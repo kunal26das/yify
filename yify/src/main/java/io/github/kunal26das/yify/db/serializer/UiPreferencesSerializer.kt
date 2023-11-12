@@ -2,7 +2,7 @@ package io.github.kunal26das.yify.db.serializer
 
 import androidx.datastore.core.Serializer
 import io.github.kunal26das.common.domain.logger.CrashLogger
-import io.github.kunal26das.yify.ui.UiPreference
+import io.github.kunal26das.yify.presentation.UiPreference
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.InputStream

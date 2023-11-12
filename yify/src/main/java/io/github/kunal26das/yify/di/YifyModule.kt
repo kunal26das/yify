@@ -28,7 +28,7 @@ import io.github.kunal26das.yify.domain.db.ImmutablePreference
 import io.github.kunal26das.yify.domain.db.MutablePreference
 import io.github.kunal26das.yify.domain.db.YifyDatabase
 import io.github.kunal26das.yify.domain.model.MoviePreference
-import io.github.kunal26das.yify.ui.UiPreference
+import io.github.kunal26das.yify.presentation.UiPreference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

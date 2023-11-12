@@ -35,10 +35,13 @@
             <meta-data
                 android:name="io.github.kunal26das.yify.init.NotificationChannelsInitializer"
                 android:value="androidx.startup" />
+            <meta-data
+                android:name="io.github.kunal26das.yify.init.AppCheckInitializer"
+                android:value="androidx.startup" />
         </provider>
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".presentation.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

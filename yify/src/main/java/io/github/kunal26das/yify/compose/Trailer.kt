@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import io.github.kunal26das.yify.Constants
 import io.github.kunal26das.yify.domain.model.Movie
@@ -14,13 +15,14 @@ import io.github.kunal26das.yify.domain.model.Movie
 fun TrailerCard(
     modifier: Modifier = Modifier,
     movie: Movie?,
+    shape: Shape = RoundedCornerShape(0.dp),
 ) {
     if (movie?.youtubeTrailerCode.isNullOrEmpty().not()) {
         ElevatedCard(
             modifier = modifier
                 .aspectRatio(Constants.TRAILER_ASPECT_RATIO)
                 .fillMaxSize(),
-            shape = RoundedCornerShape(8.dp),
+            shape = shape,
         ) {
             YoutubePlayer(
                 modifier = Modifier.fillMaxSize(),
