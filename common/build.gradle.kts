@@ -58,7 +58,7 @@ dependencies {
     implementation("androidx.startup:startup-runtime:1.1.1")
     implementation("androidx.paging:paging-common-ktx:3.2.1")
     implementation("com.google.dagger:hilt-android:2.48.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.48.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.49")
     implementation("androidx.activity:activity-ktx:1.8.0")
     implementation(platform("com.google.firebase:firebase-bom:32.5.0"))
     implementation("com.google.firebase:firebase-crashlytics-ktx")
