@@ -7,7 +7,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import io.github.kunal26das.yify.BuildConfig
 import io.github.kunal26das.yify.work.MoviesWorker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,7 +17,6 @@ class MoviesWorkerUseCase @Inject constructor(
 ) {
     fun enqueue(notificationChannel: String): Flow<WorkInfo> {
         val constraints = Constraints.Builder().apply {
-            setRequiresDeviceIdle(BuildConfig.DEBUG.not())
             setRequiredNetworkType(NetworkType.CONNECTED)
             setRequiresBatteryNotLow(true)
             setRequiresStorageNotLow(true)
