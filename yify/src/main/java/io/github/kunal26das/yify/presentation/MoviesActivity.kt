@@ -67,7 +67,7 @@ class MoviesActivity : Activity() {
 
     private val viewModel by viewModels<MoviesViewModel>()
     private val movieActivity = registerForActivityResult(MovieActivity.Contract())
-    private val genres = Genre.values().filter { it != Genre.Unknown }
+    private val genres = Genre.entries.filter { it != Genre.Unknown }
 
     private lateinit var onBackPressedCallback: OnBackPressedCallback
 
