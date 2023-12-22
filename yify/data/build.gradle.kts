@@ -15,8 +15,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("androidx.annotation:annotation-jvm:1.7.0")
-    implementation("com.google.dagger:hilt-core:2.49")
+    implementation("com.google.dagger:hilt-core:2.50")
     implementation("androidx.paging:paging-common-ktx:3.2.1")
-    ksp("com.google.dagger:hilt-compiler:2.49")
+    ksp("com.google.dagger:hilt-compiler:2.50")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 }
