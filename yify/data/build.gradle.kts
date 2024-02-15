@@ -18,5 +18,5 @@ dependencies {
     implementation("com.google.dagger:hilt-core:2.50")
     implementation("androidx.paging:paging-common-ktx:3.2.1")
     ksp("com.google.dagger:hilt-compiler:2.50")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 }
