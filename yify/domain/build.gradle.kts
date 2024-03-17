@@ -13,7 +13,7 @@ dependencies {
     implementation("androidx.annotation:annotation-jvm:1.7.1")
     implementation("androidx.room:room-common:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("androidx.paging:paging-common-ktx:3.2.1")
     implementation(kotlin("reflect"))
 }

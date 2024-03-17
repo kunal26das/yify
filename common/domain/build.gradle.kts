@@ -10,5 +10,5 @@ java {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("androidx.annotation:annotation-jvm:1.7.0")
+    implementation("androidx.annotation:annotation-jvm:1.7.1")
 }
