@@ -1,7 +1,7 @@
 plugins {
+    kotlin("jvm")
     id("java-library")
     id("com.google.devtools.ksp")
-    kotlin("jvm")
 }
 
 java {
@@ -11,12 +11,12 @@ java {
 
 dependencies {
     implementation(project(":yify:domain"))
-    implementation(project(mapOf("path" to ":common:domain")))
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("androidx.annotation:annotation-jvm:1.7.1")
-    implementation("com.google.dagger:hilt-core:2.51")
-    implementation("androidx.paging:paging-common-ktx:3.2.1")
-    ksp("com.google.dagger:hilt-compiler:2.51")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation(project(":common:domain"))
+
+    implementation(libs.gson)
+    implementation(libs.retrofit)
+    implementation(libs.hilt.core)
+    implementation(libs.androidx.paging.common.ktx)
+    ksp(libs.hilt.compiler)
+    implementation(libs.kotlinx.coroutines.core)
 }

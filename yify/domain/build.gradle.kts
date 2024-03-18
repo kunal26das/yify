@@ -1,6 +1,6 @@
 plugins {
-    id("java-library")
     kotlin("jvm")
+    id("java-library")
     kotlin("plugin.serialization")
 }
 
@@ -10,10 +10,9 @@ java {
 }
 
 dependencies {
-    implementation("androidx.annotation:annotation-jvm:1.7.1")
-    implementation("androidx.room:room-common:2.6.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("androidx.paging:paging-common-ktx:3.2.1")
+    implementation(libs.androidx.room.common)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.paging.common.ktx)
     implementation(kotlin("reflect"))
 }

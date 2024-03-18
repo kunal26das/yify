@@ -1,8 +1,5 @@
 package io.github.kunal26das.common.domain.logger
 
-import androidx.annotation.Keep
-
-@Keep
 enum class Priority(
     val value: Int,
 ) {

@@ -1,7 +1,7 @@
 plugins {
+    kotlin("android")
     id("com.android.library")
     id("com.google.devtools.ksp")
-    kotlin("android")
 }
 
 android {
@@ -34,7 +34,8 @@ android {
 }
 
 dependencies {
-    implementation("com.google.dagger:hilt-android:2.51")
-    ksp("com.google.dagger:hilt-android-compiler:2.51")
     implementation(project(":yify:data"))
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
 }
