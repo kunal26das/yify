@@ -4,13 +4,11 @@ annotationJvm = "1.7.1"
 appcompat = "1.6.1"
 coilCompose = "2.6.0"
 composeBom = "2024.02.02"
-converterGson = "2.9.0"
 coreKtx = "1.12.0"
 coreSplashscreen = "1.0.1"
 datastore = "1.0.0"
 espressoCore = "3.5.1"
 firebaseBom = "32.7.4"
-gson = "2.10.1"
 hilt = "2.51"
 hiltCompiler = "1.2.0"
 hiltCore = "2.51"
@@ -20,12 +18,11 @@ junit = "4.13.2"
 junitVersion = "1.1.5"
 kotlinxCoroutinesCore = "1.8.0"
 kotlinxSerializationJson = "1.6.3"
+ktor = "2.3.8"
 material = "1.11.0"
 okhttpDnsoverhttps = "4.12.0"
 pagingCommonKtx = "3.2.1"
 paletteKtx = "1.0.0"
-retrofit = "2.9.0"
-retrofitAdaptersResult = "1.0.9"
 room = "2.6.1"
 startupRuntime = "1.1.1"
 youtubePlayer = "12.1.0"
@@ -47,6 +44,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltCompiler" }
@@ -65,11 +63,10 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+firebase-performance = { group = "com.google.firebase", name = "firebase-perf" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
@@ -78,8 +75,12 @@ integrity = { group = "com.google.android.play", name = "integrity", version.ref
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-serialization = { group = "io.ktor", name = "ktor-client-serialization", version.ref = "ktor" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 okhttp-dnsoverhttps = { group = "com.squareup.okhttp3", name = "okhttp-dnsoverhttps", version.ref = "okhttpDnsoverhttps" }
-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-retrofit-adapters-result = { group = "com.github.skydoves", name = "retrofit-adapters-result", version.ref = "retrofitAdaptersResult" }
 youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtubePlayer" }
