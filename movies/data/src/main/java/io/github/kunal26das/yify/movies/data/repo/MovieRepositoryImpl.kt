@@ -1,9 +1,12 @@
 package io.github.kunal26das.yify.movies.data.repo
 
+import androidx.paging.PagingSource
+import io.github.kunal26das.common.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.data.mapper.GenreMapper
 import io.github.kunal26das.yify.movies.data.mapper.MovieMapper
 import io.github.kunal26das.yify.movies.data.mapper.key
 import io.github.kunal26das.yify.movies.data.service.MovieService
+import io.github.kunal26das.yify.movies.data.source.MoviesPagingSource
 import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.SortBy
@@ -15,6 +18,7 @@ internal class MovieRepositoryImpl @Inject constructor(
     private val movieService: MovieService,
     private val movieMapper: MovieMapper,
     private val genreMapper: GenreMapper,
+    private val exceptionLogger: ExceptionLogger,
 ) : MovieRepository {
 
     override suspend fun getMoviesCount(): Result<Long?> {
@@ -55,5 +59,17 @@ internal class MovieRepositoryImpl @Inject constructor(
         return movieService.getMovieSuggestions(movieId).map {
             movieMapper.toMovies(it.dataDto?.movies)
         }
+    }
+
+    override fun getPagedMovies(
+        moviePreference: MoviePreference?
+    ): PagingSource<Int, Movie> {
+        return MoviesPagingSource(
+            movieService = movieService,
+            movieMapper = movieMapper,
+            genreMapper = genreMapper,
+            exceptionLogger = exceptionLogger,
+            moviePreference = moviePreference,
+        )
     }
 }

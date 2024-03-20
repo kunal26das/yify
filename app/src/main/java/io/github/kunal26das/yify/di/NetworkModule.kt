@@ -6,7 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.github.kunal26das.yify.BuildConfig
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -20,6 +20,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.Cache
+import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
@@ -30,16 +31,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 internal object NetworkModule {
 
-    @Provides
-    @Singleton
-    fun providesOkHttp(): OkHttpClient {
-        val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
-        val bootstrapClient = OkHttpClient.Builder().cache(appCache).build()
-        val dns = DnsOverHttps.Builder().client(bootstrapClient).apply {
+    fun getDns(builder: OkHttpClient.Builder): Dns {
+        val file = File("cacheDir", "okhttpcache")
+        val appCache = Cache(file, 10 * 1024 * 1024)
+        return DnsOverHttps.Builder().client(builder.cache(appCache).build()).apply {
             url(BuildConfig.DNS_URL.toHttpUrl())
             includeIPv6(false)
         }.build()
-        return bootstrapClient.newBuilder().dns(dns).build()
     }
 
     @Provides
@@ -57,7 +55,7 @@ internal object NetworkModule {
     fun providesHttpClient(
         json: Json
     ): HttpClient {
-        return HttpClient(Android) {
+        return HttpClient(OkHttp) {
             expectSuccess = true
             install(ContentNegotiation) {
                 json(json)
@@ -73,8 +71,18 @@ internal object NetworkModule {
                 url(BuildConfig.BASE_URL)
             }
             install(HttpRequestRetry) {
-                retryOnServerErrors(maxRetries = 5)
-                exponentialDelay()
+                retryOnServerErrors(Int.MAX_VALUE)
+                delayMillis { retry ->
+                    retry * 1000L
+                }
+                modifyRequest { request ->
+                    request.headers.append("x-retry-count", retryCount.toString())
+                }
+            }
+            engine {
+                config {
+                    dns(getDns(this))
+                }
             }
         }
     }

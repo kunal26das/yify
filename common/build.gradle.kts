@@ -35,7 +35,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.activity.compose)
 
-    implementation(libs.androidx.paging.common.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.activity.ktx)

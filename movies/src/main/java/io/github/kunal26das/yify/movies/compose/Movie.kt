@@ -15,10 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
+import coil.request.ImageRequest
 import io.github.kunal26das.common.compose.shimmer
 import io.github.kunal26das.yify.movies.domain.model.Movie
 
@@ -73,7 +75,11 @@ fun Movie(
         if (movie != null) {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
-                model = movie.coverImageUrl?.imageRequest,
+                model = ImageRequest.Builder(LocalContext.current).apply {
+                    data(movie.coverImageUrl)
+                    memoryCacheKey(movie.slug)
+                    diskCacheKey(movie.slug)
+                }.build(),
                 contentDescription = movie.slug,
                 contentScale = ContentScale.Crop,
                 onState = { state = it },

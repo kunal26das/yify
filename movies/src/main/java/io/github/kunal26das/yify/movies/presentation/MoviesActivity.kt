@@ -51,7 +51,6 @@ import io.github.kunal26das.common.compose.Dropdown
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.Activity
 import io.github.kunal26das.yify.movies.R
-import io.github.kunal26das.yify.movies.compose.CategorisedMovies
 import io.github.kunal26das.yify.movies.compose.SystemBarGradient
 import io.github.kunal26das.yify.movies.compose.TextSwitch
 import io.github.kunal26das.yify.movies.compose.VerticalGridMovies
@@ -101,27 +100,11 @@ class MoviesActivity : Activity() {
             },
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                val uiPreference by viewModel.uiPreference.collectAsState()
-                val categorizedMovies by viewModel.categorizedMovies.collectAsState()
                 val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
-                val categorizedMoviePagingItems =
-                    categorizedMovies.map { it.collectAsLazyPagingItems() }
-                Column(modifier = Modifier.fillMaxSize()) {
-                    when (uiPreference?.preview) {
-                        Preview.Categorised -> CategorisedMovies(
-                            modifier = Modifier.fillMaxSize(),
-                            genres = genres,
-                            categorisedMovies = categorizedMoviePagingItems,
-                        ) {
-                            viewModel.setGenres(genres)
-                        }
-
-                        else -> UncategorisedMovies(
-                            modifier = Modifier.fillMaxSize(),
-                            movies = uncategorizedMovies,
-                        )
-                    }
-                }
+                UncategorisedMovies(
+                    modifier = Modifier.fillMaxSize(),
+                    movies = uncategorizedMovies,
+                )
                 SystemBarGradient(
                     modifier = Modifier
                         .fillMaxWidth()

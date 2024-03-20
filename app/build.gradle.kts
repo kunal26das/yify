@@ -53,7 +53,6 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.startup.runtime)
     implementation(libs.coil.compose)
-    implementation(libs.okhttp.dnsoverhttps)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.ktx)
     ksp(libs.androidx.hilt.compiler)
@@ -69,4 +68,6 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.okhttp.dnsoverhttps)
 }
