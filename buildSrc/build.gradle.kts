@@ -14,7 +14,7 @@ dependencies {
     val kspVersion = "1.0.16"
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinGradleVersion")
     implementation("com.android.tools.build:gradle:8.3.1")
-    implementation("com.google.dagger:hilt-android-gradle-plugin:2.50")
+    implementation("com.google.dagger:hilt-android-gradle-plugin:2.51")
     implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$kotlinGradleVersion-$kspVersion")
     implementation("org.jetbrains.kotlin:kotlin-serialization:$kotlinGradleVersion")
     implementation("com.google.gms:google-services:4.4.1")
