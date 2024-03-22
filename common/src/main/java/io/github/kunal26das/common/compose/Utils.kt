@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImagePainter
 
 val statusBarHeight: Dp
     @Composable get() {
@@ -13,3 +14,6 @@ val statusBarHeight: Dp
         val height = systemBarsPaddingValues.calculateTopPadding()
         return if (height > 8.dp) systemBarsPaddingValues.calculateTopPadding() else 8.dp
     }
+
+val AsyncImagePainter.State.isLoading
+    get() = this is AsyncImagePainter.State.Loading

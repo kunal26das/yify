@@ -11,9 +11,11 @@ internal class MovieMapper @Inject constructor(
 ) {
     fun toMovie(movieDto: MovieDto) = Movie(
         id = movieDto.id,
-        backgroundImageUrl = movieDto.backgroundImageOriginal ?: movieDto.backgroundImage,
-        coverImageUrl = movieDto.largeCoverImage ?: movieDto.mediumCoverImage
-        ?: movieDto.smallCoverImage,
+        backgroundImageOriginalUrl = movieDto.backgroundImageOriginal.orEmpty(),
+        backgroundImageUrl = movieDto.backgroundImage.orEmpty(),
+        largeCoverImageUrl = movieDto.largeCoverImage.orEmpty(),
+        mediumCoverImageUrl = movieDto.mediumCoverImage.orEmpty(),
+        smallCoverImageUrl = movieDto.smallCoverImage.orEmpty(),
         dateUploaded = movieDto.dateUploadedUnix ?: 0,
         description = movieDto.descriptionFull.orEmpty(),
         genres = genreMapper.toGenres(movieDto.genres),
@@ -33,9 +35,9 @@ internal class MovieMapper @Inject constructor(
         titleEnglish = movieDto.titleEnglish.orEmpty(),
         titleLong = movieDto.titleLong.orEmpty(),
         torrents = movieDto.torrentDtos.toTorrents(movieDto.id),
-        url = movieDto.url,
+        url = movieDto.url.orEmpty(),
         year = movieDto.year,
-        youtubeTrailerCode = movieDto.youtubeTrailerCode,
+        youtubeTrailerCode = movieDto.youtubeTrailerCode.orEmpty(),
     )
 
     fun toMovies(

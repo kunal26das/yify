@@ -134,9 +134,7 @@ class MoviesActivity : Activity() {
             ),
             moviePadding = PaddingValues(5.dp),
             movies = movies,
-        ) {
-            movieActivity.launch(it)
-        }
+        )
     }
 
     @Composable
@@ -162,7 +160,7 @@ class MoviesActivity : Activity() {
             QualityDropdown(modifier = contentModifier)
             SortByDropdown(modifier = contentModifier)
             OrderBy(modifier = contentModifier)
-            Preview(modifier = contentModifier)
+//            Preview(modifier = contentModifier)
             MinimumRating(modifier = contentModifier)
             ClearButton(modifier = contentModifier)
         }

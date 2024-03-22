@@ -17,6 +17,9 @@ internal class MoviesPagingSource(
     private val exceptionLogger: ExceptionLogger,
     private val moviePreference: MoviePreference?,
 ) : PagingSource<Int, Movie>() {
+
+    private val uniqueMovieIds = mutableSetOf<Long>()
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Movie> {
         val page = params.key ?: return LoadResult.Page(emptyList(), null, null)
         val limit = params.loadSize
@@ -40,7 +43,7 @@ internal class MoviesPagingSource(
                 movieMapper.toMovies(it.dataDto?.movies)
             }.getOrNull().orEmpty()
             LoadResult.Page(
-                data = movies,
+                data = movies.newMovies,
                 prevKey = when (page) {
                     1 -> null
                     else -> page.minus(1)
@@ -55,6 +58,20 @@ internal class MoviesPagingSource(
             LoadResult.Error(e)
         }
     }
+
+    private val List<Movie>.newMovies: List<Movie>
+        get() {
+            val newMovies = mutableListOf<Movie>()
+            forEach {
+                if (it.id != null) {
+                    if (it.id !in uniqueMovieIds) {
+                        uniqueMovieIds.add(it.id!!)
+                        newMovies.add(it)
+                    }
+                }
+            }
+            return newMovies
+        }
 
     override fun getRefreshKey(state: PagingState<Int, Movie>): Int? {
         return state.anchorPosition?.let { anchorPosition ->

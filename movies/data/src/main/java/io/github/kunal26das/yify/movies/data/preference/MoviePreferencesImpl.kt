@@ -23,15 +23,17 @@ class MoviePreferencesImpl @Inject constructor(
         return getMoviePreferenceFlow().firstOrNull()
     }
 
-    override suspend fun setMoviePreference(moviePreference: MoviePreference?) {
+    override suspend fun setMoviePreference(moviePreference: MoviePreference) {
         updateMoviePreference { moviePreference }
     }
 
     override suspend fun updateMoviePreference(
-        transform: (MoviePreference?) -> MoviePreference?,
+        transform: (MoviePreference) -> MoviePreference,
     ) {
         moviePreferenceDataStore.updateData {
-            transform.invoke(it?.toMoviePreference())?.toMoviePreferenceDto()
+            transform.invoke(
+                (it?.toMoviePreference() ?: MoviePreference.Default)
+            ).toMoviePreferenceDto()
         }
     }
 }

@@ -14,7 +14,7 @@ application {
 //            applicationIdSuffix = ".debug"
 //            versionNameSuffix = "-debug"
 
-            isDebuggable = true
+            isDebuggable = false
             isMinifyEnabled = false
 
             stringField("BASE_URL", "\"https://yts.mx/api/v2/\"")
@@ -33,6 +33,9 @@ application {
                 "proguard-rules.pro"
             )
         }
+    }
+    lint {
+        baseline = file("lint-baseline.xml")
     }
 }
 

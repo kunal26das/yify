@@ -61,7 +61,7 @@ class MovieActivity : Activity() {
         val movie by viewModel.movie.collectAsState()
         var palette by remember { mutableStateOf<Palette?>(null) }
         val painter = rememberAsyncImagePainter(
-            model = movie?.coverImageUrl?.imageRequest,
+            model = movie?.largeCoverImageUrl?.imageRequest,
             onState = {
                 if (it is AsyncImagePainter.State.Success) {
                     palette = try {

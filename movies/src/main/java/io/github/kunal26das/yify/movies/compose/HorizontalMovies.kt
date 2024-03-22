@@ -40,7 +40,6 @@ fun HorizontalMovies(
                         .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
                         .padding(moviePadding),
                     movie = movie,
-                    onClick = onClick,
                 )
             }
             if (movies.loadState.append is LoadState.Loading) {

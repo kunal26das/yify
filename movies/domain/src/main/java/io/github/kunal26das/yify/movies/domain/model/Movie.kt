@@ -4,8 +4,11 @@ import java.io.Serializable
 
 data class Movie(
     val id: Long?,
-    val backgroundImageUrl: String?,
-    val coverImageUrl: String?,
+    val backgroundImageOriginalUrl: String,
+    val backgroundImageUrl: String,
+    val largeCoverImageUrl: String,
+    val mediumCoverImageUrl: String,
+    val smallCoverImageUrl: String,
     val dateUploaded: Long,
     val description: String,
     val genres: List<Genre>,
@@ -25,9 +28,9 @@ data class Movie(
     val titleEnglish: String,
     val titleLong: String,
     val torrents: List<Torrent>,
-    val url: String?,
+    val url: String,
     val year: Int?,
-    val youtubeTrailerCode: String?,
+    val youtubeTrailerCode: String,
 ) : Serializable {
     companion object {
         const val KEY_MOVIE = "movie"

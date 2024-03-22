@@ -19,7 +19,7 @@ import io.github.kunal26das.yify.movies.R
 import io.github.kunal26das.yify.movies.domain.model.Movie
 
 @Composable
-fun EmptyState(
+fun ErrorState(
     modifier: Modifier = Modifier,
     movies: LazyPagingItems<Movie>,
     onRefresh: () -> Unit = {},
