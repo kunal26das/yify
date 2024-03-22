@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".Yify"
@@ -15,7 +14,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
-        android:theme="@style/YifyStyle">
+        android:theme="@style/Theme.App">
 
         <provider
             android:name="androidx.startup.InitializationProvider"
@@ -27,13 +26,7 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
             <meta-data
-                android:name="io.github.kunal26das.yify.init.StrictModeInitializer"
-                android:value="androidx.startup" />
-            <meta-data
                 android:name="io.github.kunal26das.yify.init.CoilInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="io.github.kunal26das.yify.init.NotificationChannelsInitializer"
                 android:value="androidx.startup" />
             <meta-data
                 android:name="io.github.kunal26das.yify.init.AppCheckInitializer"
@@ -42,7 +35,8 @@
 
         <activity
             android:name=".presentation.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -1,0 +1,30 @@
+package io.github.kunal26das.yify.movies.data.mapper
+
+import io.github.kunal26das.yify.movies.data.preference.MoviePreferenceDto
+import io.github.kunal26das.yify.movies.domain.model.Genre
+import io.github.kunal26das.yify.movies.domain.model.OrderBy
+import io.github.kunal26das.yify.movies.domain.model.Quality
+import io.github.kunal26das.yify.movies.domain.model.SortBy
+import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
+
+fun MoviePreferenceDto.toMoviePreference(): MoviePreference {
+    return MoviePreference(
+        quality = Quality[quality],
+        minimumRating = minimumRating,
+        queryTerm = queryTerm,
+        genre = Genre[genre],
+        sortBy = SortBy[sortBy],
+        orderBy = OrderBy[orderBy],
+    )
+}
+
+fun MoviePreference.toMoviePreferenceDto(): MoviePreferenceDto {
+    return MoviePreferenceDto(
+        quality = quality?.value,
+        minimumRating = minimumRating,
+        queryTerm = queryTerm,
+        genre = genre?.name,
+        sortBy = sortBy?.name,
+        orderBy = orderBy?.name,
+    )
+}

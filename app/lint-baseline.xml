@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues name="AGP (8.3.1)" by="lint 8.3.1" client="gradle" dependencies="false" format="6"
+    type="baseline" variant="fatal" version="8.3.1">
+
+    <issue id="EnsureInitializerMetadata"
+        message="Every Initializer needs to be accompanied by a corresponding &lt;meta-data> entry in the AndroidManifest.xml file.">
+        <location file="src/main/java/io/github/kunal26das/yify/init/IndependentInitializer.kt" />
+    </issue>
+
+</issues>

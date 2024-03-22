@@ -1,12 +1,11 @@
 package io.github.kunal26das.yify.init
 
 import android.content.Context
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.Firebase
+import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.initialize
-import io.github.kunal26das.common.init.IndependentInitializer
 
 class AppCheckInitializer : IndependentInitializer<FirebaseAppCheck>() {
     override fun create(context: Context): FirebaseAppCheck {
