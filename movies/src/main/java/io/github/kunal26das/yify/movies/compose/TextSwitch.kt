@@ -29,7 +29,9 @@ fun TextSwitch(
             modifier = Modifier
                 .weight(1f)
                 .clickable(
-                    interactionSource = MutableInteractionSource(),
+                    interactionSource = remember {
+                        MutableInteractionSource()
+                    },
                     indication = null,
                 ) {
                     isChecked = isChecked.not()

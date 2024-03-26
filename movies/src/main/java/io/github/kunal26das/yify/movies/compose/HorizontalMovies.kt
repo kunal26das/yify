@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import io.github.kunal26das.yify.movies.Constants
 import io.github.kunal26das.yify.movies.domain.model.Movie
@@ -41,16 +40,6 @@ fun HorizontalMovies(
                         .padding(moviePadding),
                     movie = movie,
                 )
-            }
-            if (movies.loadState.append is LoadState.Loading) {
-                items(Constants.LOAD_SIZE) {
-                    MovieCard(
-                        modifier = Modifier
-                            .width(Constants.movieWidth)
-                            .aspectRatio(Constants.MOVIE_ASPECT_RATIO)
-                            .padding(moviePadding),
-                    )
-                }
             }
         }
     )

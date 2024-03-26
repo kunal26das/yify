@@ -20,7 +20,7 @@ class MoviesPagerUseCase @Inject constructor(
             config = PagingConfig(
                 enablePlaceholders = false,
                 pageSize = Constants.LOAD_SIZE,
-                initialLoadSize = Constants.MAX_LOAD_SIZE,
+                initialLoadSize = Constants.LOAD_SIZE,
             ),
             initialKey = Constants.FIRST_PAGE,
             pagingSourceFactory = {

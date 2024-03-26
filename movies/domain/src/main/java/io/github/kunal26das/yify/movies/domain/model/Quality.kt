@@ -4,7 +4,6 @@ import androidx.annotation.Keep
 
 @Keep
 enum class Quality(val value: Int) {
-    Unknown(-1),
     Low(0),
     Medium(1),
     High(2),

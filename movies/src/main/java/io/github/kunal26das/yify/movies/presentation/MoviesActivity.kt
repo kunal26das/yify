@@ -2,12 +2,10 @@ package io.github.kunal26das.yify.movies.presentation
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +16,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
@@ -34,6 +35,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,45 +46,48 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
 import io.github.kunal26das.common.compose.statusBarHeight
-import io.github.kunal26das.common.core.Activity
+import io.github.kunal26das.common.core.YifyActivity
 import io.github.kunal26das.yify.movies.R
 import io.github.kunal26das.yify.movies.compose.SystemBarGradient
-import io.github.kunal26das.yify.movies.compose.TextSwitch
 import io.github.kunal26das.yify.movies.compose.VerticalGridMovies
 import io.github.kunal26das.yify.movies.domain.model.Genre
-import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.Quality
 import io.github.kunal26das.yify.movies.domain.model.SortBy
 
 @AndroidEntryPoint
-class MoviesActivity : Activity() {
+class MoviesActivity : YifyActivity() {
 
-    private val viewModel by viewModels<MoviesViewModel>()
-    private val movieActivity = registerForActivityResult(MovieActivity.Contract())
-    private val genres = Genre.entries.filter { it != Genre.Unknown }
+    private val viewModel by viewModels<MoviesYifyViewModel>()
 
     private lateinit var onBackPressedCallback: OnBackPressedCallback
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        viewModel.setGenres(genres)
-    }
-
     @Composable
     override fun Content() {
+        val state = rememberLazyGridState()
         val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val moviePreference by viewModel.moviePreference.collectAsState()
+        val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
+
+        LaunchedEffect(moviePreference) {
+            try {
+                state.scrollToItem(0)
+            } catch (_: IndexOutOfBoundsException) {
+            }
+        }
+
         onBackPressedCallback = addOnBackPressedDispatcherCallback(rememberCoroutineScope()) {
             if (drawerState.isOpen) drawerState.close() else finish()
         }
+
         BackHandler(true) {
             onBackPressedCallback.handleOnBackPressed()
         }
+
         DismissibleNavigationDrawer(
             drawerState = drawerState,
             drawerContent = {
@@ -100,10 +105,15 @@ class MoviesActivity : Activity() {
             },
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
-                UncategorisedMovies(
+                VerticalGridMovies(
                     modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        vertical = statusBarHeight,
+                        horizontal = 5.dp,
+                    ),
+                    moviePadding = PaddingValues(5.dp),
                     movies = uncategorizedMovies,
+                    state = state,
                 )
                 SystemBarGradient(
                     modifier = Modifier
@@ -122,26 +132,9 @@ class MoviesActivity : Activity() {
     }
 
     @Composable
-    private fun UncategorisedMovies(
-        modifier: Modifier = Modifier,
-        movies: LazyPagingItems<Movie>,
-    ) {
-        VerticalGridMovies(
-            modifier = modifier,
-            contentPadding = PaddingValues(
-                vertical = statusBarHeight,
-                horizontal = 5.dp,
-            ),
-            moviePadding = PaddingValues(5.dp),
-            movies = movies,
-        )
-    }
-
-    @Composable
     private fun DrawerContent(
         modifier: Modifier = Modifier,
     ) {
-        val uiPreference by viewModel.uiPreference.collectAsState()
         val contentModifier = Modifier.fillMaxWidth()
         Column(
             modifier = modifier.padding(
@@ -151,15 +144,9 @@ class MoviesActivity : Activity() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             SearchTextField(modifier = contentModifier)
-            AnimatedVisibility(
-                modifier = contentModifier,
-                visible = uiPreference?.preview == Preview.Uncategorised,
-            ) {
-                GenreDropdown(modifier = contentModifier)
-            }
+            GenreDropdown(modifier = contentModifier)
             QualityDropdown(modifier = contentModifier)
             SortByDropdown(modifier = contentModifier)
-            OrderBy(modifier = contentModifier)
 //            Preview(modifier = contentModifier)
             MinimumRating(modifier = contentModifier)
             ClearButton(modifier = contentModifier)
@@ -216,9 +203,7 @@ class MoviesActivity : Activity() {
             modifier2 = modifier,
             label = stringResource(R.string.genre),
             selection = moviePreference.genre,
-            items = Genre.entries.filter {
-                it != Genre.Unknown
-            },
+            items = Genre.entries,
             name = { it.name },
             onSelect = {
                 viewModel.setGenre(it)
@@ -235,9 +220,7 @@ class MoviesActivity : Activity() {
             modifier2 = modifier,
             label = stringResource(R.string.quality),
             selection = moviePreference.quality,
-            items = Quality.entries.reversed().filter {
-                it != Quality.Unknown
-            },
+            items = Quality.entries.reversed(),
             name = {
                 when (it) {
                     Quality.Low -> getString(R.string.low)
@@ -288,7 +271,6 @@ class MoviesActivity : Activity() {
             label = stringResource(R.string.sort_by),
             selection = moviePreference.sortBy,
             items = listOf(SortBy.DateAdded, SortBy.Title, SortBy.Year, SortBy.Rating),
-            showTrailingIcon = false,
             name = {
                 when (it) {
                     SortBy.DateAdded -> getString(R.string.date_added)
@@ -302,35 +284,27 @@ class MoviesActivity : Activity() {
             onSelect = {
                 viewModel.setSortBy(it)
             },
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        viewModel.setOrderBy(
+                            when (moviePreference.orderBy) {
+                                OrderBy.Ascending -> OrderBy.Descending
+                                OrderBy.Descending -> OrderBy.Ascending
+                            }
+                        )
+                    }
+                ) {
+                    Icon(
+                        imageVector = when (moviePreference.orderBy) {
+                            OrderBy.Descending -> Icons.Filled.ArrowDownward
+                            OrderBy.Ascending -> Icons.Filled.ArrowUpward
+                        },
+                        contentDescription = null,
+                    )
+                }
+            }
         )
-    }
-
-    @Composable
-    private fun OrderBy(
-        modifier: Modifier = Modifier,
-    ) {
-        val moviePreference by viewModel.moviePreference.collectAsState()
-        TextSwitch(
-            modifier = modifier,
-            checked = moviePreference.orderBy == OrderBy.Descending,
-            text = stringResource(R.string.decreasing_order),
-        ) {
-            viewModel.setOrderBy(if (it) OrderBy.Descending else OrderBy.Ascending)
-        }
-    }
-
-    @Composable
-    private fun Preview(
-        modifier: Modifier = Modifier,
-    ) {
-        val uiPreference by viewModel.uiPreference.collectAsState()
-        TextSwitch(
-            modifier = modifier,
-            checked = uiPreference?.preview == Preview.Categorised,
-            text = stringResource(R.string.categorize),
-        ) {
-            viewModel.setUserInterface(if (it) Preview.Categorised else Preview.Uncategorised)
-        }
     }
 
     @Composable
@@ -340,6 +314,7 @@ class MoviesActivity : Activity() {
         OutlinedButton(
             modifier = modifier,
             onClick = { viewModel.clear() },
+            contentPadding = PaddingValues(12.dp),
             content = { Text(text = stringResource(R.string.reset)) }
         )
     }

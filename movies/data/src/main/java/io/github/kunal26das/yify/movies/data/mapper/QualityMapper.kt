@@ -15,7 +15,7 @@ val String.toQuality
         QUALITY_720p -> Quality.Low
         QUALITY_1080p -> Quality.Medium
         QUALITY_2160p -> Quality.High
-        else -> Quality.Unknown
+        else -> null
     }
 
 val Quality.key

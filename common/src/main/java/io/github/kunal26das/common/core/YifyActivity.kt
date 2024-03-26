@@ -12,15 +12,15 @@ import io.github.kunal26das.common.compose.Theme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-abstract class Activity : AppCompatActivity() {
+abstract class YifyActivity : AppCompatActivity() {
 
     protected fun <I, O> registerForActivityResult(
         contract: ActivityResultContract<I, O>
     ) = registerForActivityResult(contract) {}
 
-    protected fun ActivityResultLauncher<*>.launch(): Activity {
+    protected fun ActivityResultLauncher<*>.launch(): YifyActivity {
         launch(null)
-        return this@Activity
+        return this@YifyActivity
     }
 
     protected fun onBackPressedCallback(

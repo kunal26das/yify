@@ -81,6 +81,7 @@ internal object NetworkModule {
             }
             engine {
                 config {
+                    retryOnConnectionFailure(true)
                     dns(getDns(this))
                 }
             }

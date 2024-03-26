@@ -29,9 +29,24 @@ fun <T> Dropdown(
     selection: T? = null,
     items: Iterable<T>,
     showTrailingIcon: Boolean = true,
-    name: (T) -> String? = { null },
     onSelect: (T?) -> Unit = {},
     onClear: () -> Unit = { onSelect.invoke(null) },
+    trailingIcon: @Composable () -> Unit = {
+        if (showTrailingIcon) {
+            IconButton(
+                onClick = {
+                    onClear.invoke()
+//                    expanded = false
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Clear,
+                    contentDescription = null,
+                )
+            }
+        }
+    },
+    name: (T) -> String? = { null },
 ) {
     val focusManager = LocalFocusManager.current
     var expanded by remember { mutableStateOf(false) }
@@ -57,17 +72,7 @@ fun <T> Dropdown(
             label = { Text(label) },
             trailingIcon = {
                 if (showTrailingIcon) {
-                    IconButton(
-                        onClick = {
-                            onClear.invoke()
-                            expanded = false
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = null,
-                        )
-                    }
+                    trailingIcon.invoke()
                 }
             },
         )

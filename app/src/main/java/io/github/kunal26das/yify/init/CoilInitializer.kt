@@ -36,6 +36,7 @@ class CoilInitializer : IndependentInitializer<ImageLoader>() {
             }
             okHttpClient {
                 val builder = OkHttpClient.Builder()
+                builder.retryOnConnectionFailure(true)
                 val dns = NetworkModule.getDns(builder)
                 builder.dns(dns).build()
             }

@@ -30,7 +30,6 @@ enum class Genre {
     Thriller,
     War,
     Western,
-    Unknown,
     ;
 
     companion object {

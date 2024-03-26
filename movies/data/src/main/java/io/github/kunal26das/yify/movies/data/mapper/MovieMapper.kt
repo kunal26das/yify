@@ -2,7 +2,6 @@ package io.github.kunal26das.yify.movies.data.mapper
 
 import io.github.kunal26das.yify.movies.data.dto.MovieDto
 import io.github.kunal26das.yify.movies.domain.model.Movie
-import io.github.kunal26das.yify.movies.domain.model.Quality
 import javax.inject.Inject
 
 internal class MovieMapper @Inject constructor(
@@ -23,7 +22,7 @@ internal class MovieMapper @Inject constructor(
         language = languageMapper.toLanguage(movieDto.language),
         mpaRating = movieDto.mpaRating.orEmpty(),
         peers = movieDto.torrentDtos.maxPeers,
-        quality = movieDto.torrentDtos.bestQuality ?: Quality.Unknown,
+        quality = movieDto.torrentDtos.bestQuality,
         rating = movieDto.rating?.toFloat() ?: 0f,
         runtime = movieDto.runtime ?: 0,
         seeds = movieDto.torrentDtos.maxSeeds,

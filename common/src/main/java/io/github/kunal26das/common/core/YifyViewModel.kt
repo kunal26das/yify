@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 
-open class ViewModel : ViewModel() {
+open class YifyViewModel : ViewModel() {
     protected fun <T> Flow<T>.stateIn(
         initialValue: T,
         started: SharingStarted = SharingStarted.WhileSubscribed(),

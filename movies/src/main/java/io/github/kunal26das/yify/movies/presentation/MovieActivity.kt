@@ -40,16 +40,16 @@ import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.statusBarHeight
-import io.github.kunal26das.common.core.Activity
+import io.github.kunal26das.common.core.YifyActivity
 import io.github.kunal26das.yify.movies.compose.TrailerCard
 import io.github.kunal26das.yify.movies.compose.imageRequest
 import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.domain.model.Torrent
 
 @AndroidEntryPoint
-class MovieActivity : Activity() {
+class MovieActivity : YifyActivity() {
 
-    private val viewModel by viewModels<MovieViewModel>()
+    private val viewModel by viewModels<MovieYifyViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +86,7 @@ class MovieActivity : Activity() {
                 )
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 4.dp),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = statusBarHeight),
                     content = {
                         item {
                             Title(

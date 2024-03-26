@@ -16,7 +16,7 @@ data class Movie(
     val language: Language,
     val mpaRating: String,
     val peers: Int,
-    val quality: Quality,
+    val quality: Quality?,
     val rating: Float,
     val runtime: Int,
     val seeds: Int,

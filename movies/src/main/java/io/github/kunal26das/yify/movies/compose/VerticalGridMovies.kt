@@ -3,6 +3,8 @@ package io.github.kunal26das.yify.movies.compose
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshDefaults
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -22,11 +24,16 @@ private const val LABEL = "vertical_grid_movies"
 @OptIn(ExperimentalMaterialApi::class)
 fun VerticalGridMovies(
     modifier: Modifier = Modifier,
+    state: LazyGridState = rememberLazyGridState(),
     contentPadding: PaddingValues,
     moviePadding: PaddingValues,
     movies: LazyPagingItems<Movie>,
 ) {
-    val refreshing = { movies.loadState.refresh is LoadState.Loading }
+    val refreshing = {
+        movies.loadState.refresh is LoadState.Loading
+                || movies.loadState.append is LoadState.Loading
+                || movies.loadState.prepend is LoadState.Loading
+    }
     val pullRefreshState = rememberPullRefreshState(
         refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
         refreshing = refreshing.invoke(),
@@ -38,22 +45,18 @@ fun VerticalGridMovies(
             targetState = movies,
             label = LABEL,
         ) { movies ->
-            when (movies.itemCount) {
-                0 -> when (movies.loadState.refresh) {
-                    is LoadState.Error -> {
-                        ErrorState(
-                            modifier = Modifier.align(Alignment.Center),
-                            movies = movies,
-                        ) {
-                            movies.refresh()
-                        }
-                    }
-
-                    is LoadState.Loading -> Unit
-                    is LoadState.NotLoading -> Unit
+            if (movies.itemCount == 0
+                && movies.loadState.refresh is LoadState.Error
+            ) {
+                ErrorState(
+                    modifier = Modifier.align(Alignment.Center),
+                    movies = movies,
+                ) {
+                    movies.refresh()
                 }
-
-                else -> NonEmptyState(
+            } else {
+                NonEmptyState(
+                    state = state,
                     contentPadding = contentPadding,
                     moviePadding = moviePadding,
                     movies = movies,

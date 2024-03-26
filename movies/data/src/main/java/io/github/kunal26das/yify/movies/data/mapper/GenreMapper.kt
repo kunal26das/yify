@@ -98,14 +98,14 @@ internal class GenreMapper @Inject constructor(
         else -> {
             logger.log(Priority.Debug, "Unknown Genre", genre)
             exceptionLogger.log(UnknownGenreException(genre))
-            Genre.Unknown
+            null
         }
     }
 
     fun toGenres(
         genres: List<String>?
     ): List<Genre> {
-        return genres?.map {
+        return genres?.mapNotNull {
             toGenre(it)
         } ?: emptyList()
     }

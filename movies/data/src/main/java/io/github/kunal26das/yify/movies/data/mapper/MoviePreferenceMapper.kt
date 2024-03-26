@@ -9,12 +9,12 @@ import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
 
 fun MoviePreferenceDto.toMoviePreference(): MoviePreference {
     return MoviePreference(
-        quality = Quality[quality],
-        minimumRating = minimumRating,
-        queryTerm = queryTerm,
+        quality = Quality[quality] ?: Quality.High,
+        minimumRating = minimumRating ?: 0,
+        queryTerm = queryTerm.orEmpty(),
         genre = Genre[genre],
-        sortBy = SortBy[sortBy],
-        orderBy = OrderBy[orderBy],
+        sortBy = SortBy[sortBy] ?: SortBy.DateAdded,
+        orderBy = OrderBy[orderBy] ?: OrderBy.Descending,
     )
 }
 

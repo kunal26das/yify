@@ -5,15 +5,13 @@
     <application>
         <activity
             android:name=".presentation.MoviesActivity"
-            android:exported="true"
-            android:screenOrientation="portrait"
-            tools:ignore="LockedOrientationActivity" />
+            android:exported="false" />
 
         <activity
             android:name=".presentation.MovieActivity"
-            android:exported="true"
+            android:exported="false"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            tools:ignore="LockedOrientationActivity" />
+            tools:ignore="DiscouragedApi" />
     </application>
 </manifest>
