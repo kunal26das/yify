@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    val kotlinGradleVersion = "1.9.22" // check kotlinCompilerExtensionVersion before changing
+    val kotlinGradleVersion = "1.9.23" // check kotlinCompilerExtensionVersion before changing
     val kspVersion = "1.0.16"
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinGradleVersion")
     implementation("com.android.tools.build:gradle:8.3.1")
