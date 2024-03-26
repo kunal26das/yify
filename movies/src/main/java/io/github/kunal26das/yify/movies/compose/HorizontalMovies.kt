@@ -21,7 +21,6 @@ fun HorizontalMovies(
     contentPadding: PaddingValues,
     moviePadding: PaddingValues,
     movies: LazyPagingItems<Movie>,
-    onClick: (Movie?) -> Unit = {},
 ) {
     val state = rememberLazyListState()
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = state)

@@ -41,8 +41,6 @@ fun MovieCategory(
             contentPadding = PaddingValues(horizontal = 8.dp),
             moviePadding = PaddingValues(4.dp),
             movies = movies,
-        ) {
-            movieActivity.launch(it)
-        }
+        )
     }
 }

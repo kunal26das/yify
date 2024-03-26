@@ -221,6 +221,7 @@ class MoviesActivity : YifyActivity() {
             label = stringResource(R.string.quality),
             selection = moviePreference.quality,
             items = Quality.entries.reversed(),
+            showTrailingIcon = false,
             name = {
                 when (it) {
                     Quality.Low -> getString(R.string.low)
