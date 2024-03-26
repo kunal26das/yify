@@ -11,8 +11,8 @@ plugins {
 application {
     buildTypes {
         debug {
-//            applicationIdSuffix = ".debug"
-//            versionNameSuffix = "-debug"
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
 
             isDebuggable = false
             isMinifyEnabled = false
@@ -23,7 +23,7 @@ application {
 
         release {
             isDebuggable = false
-            isMinifyEnabled = true
+            isMinifyEnabled = false
 
             stringField("BASE_URL", "\"https://yts.mx/api/v2/\"")
             stringField("DNS_URL", "\"https://1.1.1.1/dns-query\"")
@@ -32,6 +32,8 @@ application {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     lint {

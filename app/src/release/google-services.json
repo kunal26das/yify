@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "325235052319",
+    "project_id": "yify-2da67",
+    "storage_bucket": "yify-2da67.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:325235052319:android:d0952f8b37e046062d2a2a",
+        "android_client_info": {
+          "package_name": "io.github.kunal26das.yify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "325235052319-jevfbpr9ru5jno3c71tlsums7lsle105.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCainD4vwEL_NeRzLZ_0MnQraUXh9hL3Mk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "325235052319-jevfbpr9ru5jno3c71tlsums7lsle105.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
