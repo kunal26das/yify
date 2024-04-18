@@ -21,7 +21,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-gradle:2.9.9")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7")
     implementation("com.google.firebase:perf-plugin:1.4.2")
-    implementation("io.realm.kotlin:gradle-plugin:1.14.1")
+    implementation("io.realm.kotlin:gradle-plugin:1.15.0")
 }
 
 
