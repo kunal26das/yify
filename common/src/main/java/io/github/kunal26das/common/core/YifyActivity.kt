@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
@@ -17,11 +16,6 @@ abstract class YifyActivity : AppCompatActivity() {
     protected fun <I, O> registerForActivityResult(
         contract: ActivityResultContract<I, O>
     ) = registerForActivityResult(contract) {}
-
-    protected fun ActivityResultLauncher<*>.launch(): YifyActivity {
-        launch(null)
-        return this@YifyActivity
-    }
 
     protected fun onBackPressedCallback(
         coroutineScope: CoroutineScope, onBackPressed: suspend () -> Unit = {}

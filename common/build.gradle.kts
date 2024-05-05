@@ -41,4 +41,7 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics.ktx)
+
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.preferences)
 }

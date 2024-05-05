@@ -15,6 +15,7 @@ class MainActivity : YifyActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition { true }
-        moviesActivity.launch().finish()
+        moviesActivity.launch(null)
+        finish()
     }
 }

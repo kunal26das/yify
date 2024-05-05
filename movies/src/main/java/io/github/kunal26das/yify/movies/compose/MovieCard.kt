@@ -22,7 +22,9 @@ fun MovieCard(
     val modifier2 = modifier
         .clip(RoundedCornerShape(8.dp))
         .clickable {
-            movieActivity.launch(movie)
+            if (movie != null) {
+                movieActivity.launch(movie)
+            }
         }
     YifySubcomposeAsyncImage(
         modifier = modifier2,
