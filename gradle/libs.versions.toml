@@ -1,6 +1,6 @@
 [versions]
 activityKtx = "1.9.0"
-annotationJvm = "1.7.1"
+annotationJvm = "1.8.0"
 appcompat = "1.6.1"
 coilCompose = "2.6.0"
 composeBom = "2024.05.00"
