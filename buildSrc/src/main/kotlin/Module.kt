@@ -45,7 +45,7 @@ private fun TestedExtension.commonConfig(name: String = "") {
         targetCompatibility = ProjectConfig.javaVersion
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.13"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 
