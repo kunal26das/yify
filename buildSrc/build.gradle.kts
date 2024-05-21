@@ -14,7 +14,7 @@ dependencies {
     val kotlinGradleVersion = "1.9.24" // check kotlinCompilerExtensionVersion before changing
     val kspVersion = "1.0.20"
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinGradleVersion")
-    implementation("com.android.tools.build:gradle:8.4.0")
+    implementation("com.android.tools.build:gradle:8.4.1")
     implementation("com.google.dagger:hilt-android-gradle-plugin:2.51.1")
     implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$kotlinGradleVersion-$kspVersion")
     implementation("org.jetbrains.kotlin:kotlin-serialization:$kotlinGradleVersion")
