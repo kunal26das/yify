@@ -12,7 +12,7 @@ repositories {
 //noinspection UseTomlInstead
 dependencies {
     val kotlinGradleVersion = "2.0.0" // check kotlinCompilerExtensionVersion before changing
-    val kspVersion = "1.0.20"
+    val kspVersion = "1.0.21"
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinGradleVersion")
     implementation("com.android.tools.build:gradle:8.4.1")
     implementation("com.google.dagger:hilt-android-gradle-plugin:2.51.1")
