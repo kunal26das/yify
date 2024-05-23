@@ -4,7 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-androidModule("di", false) {
+androidModule("di") {
     buildTypes {
         release {
             isMinifyEnabled = false

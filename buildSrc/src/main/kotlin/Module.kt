@@ -22,7 +22,6 @@ fun Project.application(configure: Action<BaseAppModuleExtension>) {
             setProperty("archivesBaseName", "v${versionName}-${versionCode}")
         }
         buildFeatures {
-            compose = true
             buildConfig = true
         }
         commonConfig()
@@ -44,20 +43,15 @@ private fun TestedExtension.commonConfig(name: String = "") {
         sourceCompatibility = ProjectConfig.javaVersion
         targetCompatibility = ProjectConfig.javaVersion
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
 }
 
 fun Project.androidModule(
     name: String,
-    enableCompose: Boolean = true,
     configure: Action<LibraryExtension>,
 ) {
     extensions.getByType(LibraryExtension::class.java).apply {
         compileSdk = ProjectConfig.compileSdk
         buildFeatures {
-            compose = enableCompose
             buildConfig = true
         }
         commonConfig(name)
