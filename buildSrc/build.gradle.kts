@@ -21,7 +21,7 @@ dependencies {
 
     implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$kotlinVersion-$kspVersion")
     implementation("com.google.dagger:hilt-android-gradle-plugin:2.51.1")
-    implementation("com.google.gms:google-services:4.4.1")
+    implementation("com.google.gms:google-services:4.4.2")
 
     implementation("com.google.firebase:firebase-crashlytics-gradle:3.0.1")
     implementation("com.google.firebase:perf-plugin:1.4.2")
