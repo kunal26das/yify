@@ -10,7 +10,7 @@ repositories {
     maven { setUrl("https://plugins.gradle.org/m2/") }
 }
 
-//noinspection UseTomlInstead
+// noinspection UseTomlInstead
 dependencies {
     val kotlinVersion = "2.0.0"
     val kspVersion = "1.0.21"
