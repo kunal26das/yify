@@ -21,15 +21,23 @@ internal class MovieRepositoryImpl @Inject constructor(
     private val exceptionLogger: ExceptionLogger,
 ) : MovieRepository {
 
-    override suspend fun getMoviesCount(): Result<Long?> {
+    override suspend fun getMoviesCount(
+        moviePreference: MoviePreference?
+    ): Result<Long> {
         val result = movieService.getMovies(
             limit = 1,
             page = MovieService.FIRST_PAGE,
             sortBy = SortBy.DateAdded.key,
             orderBy = OrderBy.Descending.key,
+            quality = moviePreference?.quality?.key,
+            minimumRating = moviePreference?.minimumRating,
+            queryTerm = moviePreference?.queryTerm,
+            genre = moviePreference?.genre?.let {
+                genreMapper.getKey(it)
+            }
         )
         return result.map {
-            it.dataDto?.movieCount
+            it.dataDto?.movieCount ?: 0
         }
     }
 
@@ -62,7 +70,8 @@ internal class MovieRepositoryImpl @Inject constructor(
     }
 
     override fun getPagedMovies(
-        moviePreference: MoviePreference?
+        moviePreference: MoviePreference?,
+        onFirstLoad: ((Long) -> Unit)?,
     ): PagingSource<Int, Movie> {
         return MoviesPagingSource(
             movieService = movieService,
@@ -70,6 +79,7 @@ internal class MovieRepositoryImpl @Inject constructor(
             genreMapper = genreMapper,
             exceptionLogger = exceptionLogger,
             moviePreference = moviePreference,
+            onFirstLoad = onFirstLoad,
         )
     }
 }

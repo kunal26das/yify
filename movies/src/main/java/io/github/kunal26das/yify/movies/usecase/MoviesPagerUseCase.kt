@@ -14,7 +14,8 @@ class MoviesPagerUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
 ) {
     fun getMoviesPagingData(
-        moviePreference: MoviePreference?
+        moviePreference: MoviePreference?,
+        onFirstLoad: ((Long) -> Unit)? = null,
     ): Flow<PagingData<Movie>> {
         return Pager(
             config = PagingConfig(
@@ -24,7 +25,7 @@ class MoviesPagerUseCase @Inject constructor(
             ),
             initialKey = Constants.FIRST_PAGE,
             pagingSourceFactory = {
-                movieRepository.getPagedMovies(moviePreference)
+                movieRepository.getPagedMovies(moviePreference, onFirstLoad)
             },
         ).flow
     }

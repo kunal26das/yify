@@ -6,7 +6,9 @@ import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
 
 interface MovieRepository {
 
-    suspend fun getMoviesCount(): Result<Long?>
+    suspend fun getMoviesCount(
+        moviePreference: MoviePreference?
+    ): Result<Long>
 
     suspend fun getMovies(
         limit: Int,
@@ -16,5 +18,8 @@ interface MovieRepository {
 
     suspend fun getMovieSuggestions(movieId: Int): Result<List<Movie>>
 
-    fun getPagedMovies(moviePreference: MoviePreference?): PagingSource<Int, Movie>
+    fun getPagedMovies(
+        moviePreference: MoviePreference?,
+        onFirstLoad: ((Long) -> Unit)? = null,
+    ): PagingSource<Int, Movie>
 }

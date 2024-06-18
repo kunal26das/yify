@@ -16,6 +16,7 @@ internal class MoviesPagingSource(
     private val genreMapper: GenreMapper,
     private val exceptionLogger: ExceptionLogger,
     private val moviePreference: MoviePreference?,
+    private val onFirstLoad: ((Long) -> Unit)? = null,
 ) : PagingSource<Int, Movie>() {
 
     private val uniqueMovieIds = mutableSetOf<Long>()
@@ -38,6 +39,10 @@ internal class MoviesPagingSource(
             )
             if (result.isFailure) {
                 throw result.exceptionOrNull()!!
+            }
+            if (uniqueMovieIds.isEmpty()) {
+                val moviesCount = result.getOrNull()?.dataDto?.movieCount ?: 0L
+                onFirstLoad?.invoke(moviesCount)
             }
             val movies = result.map {
                 movieMapper.toMovies(it.dataDto?.movies)

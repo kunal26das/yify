@@ -31,12 +31,16 @@ class MoviesYifyViewModel @Inject constructor(
 
     val moviePreference = MutableStateFlow(MoviePreference.Default)
 
+    private val _moviesCount = MutableStateFlow<Long>(0)
+    val moviesCount = _moviesCount.asStateFlow()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val uncategorizedMovies = searchQuery
         .debounce(DEBOUNCE_TIMEOUT)
         .combine(moviePreference) { searchQuery, moviePreference ->
             moviesPagerUseCase.getMoviesPagingData(
-                moviePreference.copy(queryTerm = searchQuery)
+                moviePreference = moviePreference.copy(queryTerm = searchQuery),
+                onFirstLoad = { _moviesCount.value = it }
             ).cachedIn(viewModelScope)
         }.flatMapLatest { it }
 
