@@ -28,7 +28,7 @@ dependencies {
 
     implementation("com.android.tools.build:gradle:8.5.0")
 
-    implementation("io.realm.kotlin:gradle-plugin:2.0.0")
+    implementation("io.realm.kotlin:gradle-plugin:2.1.0")
 }
 
 val compileKotlin: KotlinCompile by tasks
