@@ -1,5 +1,5 @@
 [versions]
-activityKtx = "1.9.0"
+activityKtx = "1.9.1"
 appcompat = "1.7.0"
 coilCompose = "2.7.0"
 composeBom = "2024.06.00"
