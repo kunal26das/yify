@@ -12,7 +12,7 @@ repositories {
 
 // noinspection UseTomlInstead
 dependencies {
-    val kotlinVersion = "2.0.0"
+    val kotlinVersion = "2.0.10"
     val kspVersion = "1.0.21"
 
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
