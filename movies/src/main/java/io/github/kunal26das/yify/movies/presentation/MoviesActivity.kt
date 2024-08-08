@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.kunal26das.common.compose.Dropdown
+import io.github.kunal26das.common.compose.navigationBarHeight
 import io.github.kunal26das.common.compose.statusBarHeight
 import io.github.kunal26das.common.core.YifyActivity
 import io.github.kunal26das.yify.movies.R
@@ -71,7 +72,7 @@ import io.github.kunal26das.yify.movies.domain.model.SortBy
 @AndroidEntryPoint
 class MoviesActivity : YifyActivity() {
 
-    private val viewModel by viewModels<MoviesYifyViewModel>()
+    private val viewModel by viewModels<MoviesViewModel>()
 
     private lateinit var onBackPressedCallback: OnBackPressedCallback
 
@@ -151,8 +152,8 @@ class MoviesActivity : YifyActivity() {
                 )
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = statusBarHeight + 8.dp)
-                        .align(Alignment.TopCenter),
+                        .padding(top = navigationBarHeight + 24.dp)
+                        .align(Alignment.BottomCenter),
                     visible = moviesCount > 0 && firstVisibleItemIndex > 0,
                     enter = fadeIn(),
                     exit = fadeOut(),
@@ -162,7 +163,8 @@ class MoviesActivity : YifyActivity() {
                             .background(
                                 shape = RoundedCornerShape(32.dp),
                                 color = MaterialTheme.colorScheme.background,
-                            ).padding(
+                            )
+                            .padding(
                                 horizontal = 10.dp,
                                 vertical = 2.dp,
                             ),

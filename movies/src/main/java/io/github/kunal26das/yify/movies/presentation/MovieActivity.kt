@@ -49,7 +49,7 @@ import io.github.kunal26das.yify.movies.domain.model.Torrent
 @AndroidEntryPoint
 class MovieActivity : YifyActivity() {
 
-    private val viewModel by viewModels<MovieYifyViewModel>()
+    private val viewModel by viewModels<MovieViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
