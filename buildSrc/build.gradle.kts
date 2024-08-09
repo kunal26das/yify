@@ -26,7 +26,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-gradle:3.0.2")
     implementation("com.google.firebase:perf-plugin:1.4.2")
 
-    implementation("com.android.tools.build:gradle:8.5.1")
+    implementation("com.android.tools.build:gradle:8.5.2")
 
     implementation("io.realm.kotlin:gradle-plugin:2.1.0")
 }
