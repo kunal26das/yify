@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify
 
 import org.junit.Assert.assertEquals
-import org.junit.jupiter.api.Test
+import org.junit.Test
 
 /**
  * Example local unit test, which will execute on the development machine (host).

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class MovieYifyViewModel @Inject constructor(
+class MovieViewModel @Inject constructor(
 ) : YifyViewModel() {
 
     private val _movie = MutableStateFlow<Movie?>(null)

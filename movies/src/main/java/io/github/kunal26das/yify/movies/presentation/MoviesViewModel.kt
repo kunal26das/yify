@@ -22,7 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 @OptIn(FlowPreview::class)
-class MoviesYifyViewModel @Inject constructor(
+class MoviesViewModel @Inject constructor(
     private val moviesPagerUseCase: MoviesPagerUseCase,
 ) : YifyViewModel() {
 
