@@ -194,7 +194,6 @@ class MoviesActivity : YifyActivity() {
             GenreDropdown(modifier = contentModifier)
             QualityDropdown(modifier = contentModifier)
             SortByDropdown(modifier = contentModifier)
-//            Preview(modifier = contentModifier)
             MinimumRating(modifier = contentModifier)
             ClearButton(modifier = contentModifier)
         }
@@ -230,7 +229,7 @@ class MoviesActivity : YifyActivity() {
             },
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Search,
-                autoCorrect = false,
+                autoCorrectEnabled = false,
             ),
             keyboardActions = KeyboardActions(
                 onSearch = {
