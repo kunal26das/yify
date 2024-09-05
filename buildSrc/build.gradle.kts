@@ -17,7 +17,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.8")
 
     implementation("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$kotlinVersion-$kspVersion")
     implementation("com.google.dagger:hilt-android-gradle-plugin:2.52")
