@@ -1,5 +1,3 @@
-@file:Suppress("ConstPropertyName")
-
 package io.github.kunal26das.yify.movies.data.mapper
 
 import io.github.kunal26das.yify.movies.domain.model.Quality

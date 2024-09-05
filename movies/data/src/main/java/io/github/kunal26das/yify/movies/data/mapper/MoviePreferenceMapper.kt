@@ -20,11 +20,11 @@ fun MoviePreferenceDto.toMoviePreference(): MoviePreference {
 
 fun MoviePreference.toMoviePreferenceDto(): MoviePreferenceDto {
     return MoviePreferenceDto(
-        quality = quality?.value,
+        quality = quality.value,
         minimumRating = minimumRating,
         queryTerm = queryTerm,
         genre = genre?.name,
-        sortBy = sortBy?.name,
-        orderBy = orderBy?.name,
+        sortBy = sortBy.name,
+        orderBy = orderBy.name,
     )
 }

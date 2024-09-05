@@ -17,16 +17,16 @@ application {
             isDebuggable = false
             isMinifyEnabled = false
 
-            stringField("BASE_URL", "\"https://yts.mx/api/v2/\"")
-            stringField("DNS_URL", "\"https://1.1.1.1/dns-query\"")
+            stringField("BASE_URL", "https://yts.mx/api/v2/")
+            stringField("DNS_URL", "https://1.1.1.1/dns-query")
         }
 
         release {
             isDebuggable = false
             isMinifyEnabled = false
 
-            stringField("BASE_URL", "\"https://yts.mx/api/v2/\"")
-            stringField("DNS_URL", "\"https://1.1.1.1/dns-query\"")
+            stringField("BASE_URL", "https://yts.mx/api/v2/")
+            stringField("DNS_URL", "https://1.1.1.1/dns-query")
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

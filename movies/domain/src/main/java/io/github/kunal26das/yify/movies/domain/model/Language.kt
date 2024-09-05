@@ -105,7 +105,7 @@ enum class Language {
 
     companion object {
         operator fun get(language: String?): Language? {
-            return values().find { it.name == language }
+            return entries.find { it.name == language }
         }
     }
 }

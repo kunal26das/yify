@@ -17,7 +17,6 @@ import io.ktor.client.plugins.logging.SIMPLE
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.Cache
 import okhttp3.Dns
@@ -42,7 +41,6 @@ internal object NetworkModule {
 
     @Provides
     @Singleton
-    @OptIn(ExperimentalSerializationApi::class)
     fun providesJson(): Json {
         return Json {
             explicitNulls = false

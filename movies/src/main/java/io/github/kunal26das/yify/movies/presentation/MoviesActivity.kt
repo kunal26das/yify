@@ -152,7 +152,7 @@ class MoviesActivity : YifyActivity() {
                 )
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = navigationBarHeight + 24.dp)
+                        .padding(bottom = navigationBarHeight + 24.dp)
                         .align(Alignment.BottomCenter),
                     visible = moviesCount > 0 && firstVisibleItemIndex > 0,
                     enter = fadeIn(),
@@ -169,6 +169,7 @@ class MoviesActivity : YifyActivity() {
                                 vertical = 2.dp,
                             ),
                         text = "${firstVisibleItemIndex + visibleItemsCount}/${moviesCount}",
+                        color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp,
                     )

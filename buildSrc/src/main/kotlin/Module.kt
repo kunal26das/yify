@@ -8,7 +8,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.kotlin.dsl.project
-import java.io.FileInputStream
 import java.util.Properties
 
 fun Project.application(configure: Action<BaseAppModuleExtension>) {
@@ -29,7 +28,6 @@ fun Project.application(configure: Action<BaseAppModuleExtension>) {
     }
 }
 
-@Suppress("UnstableApiUsage")
 private fun TestedExtension.commonConfig(name: String = "") {
     namespace = ProjectConfig.applicationId + when {
         name.isEmpty().not() -> ".$name"
@@ -69,23 +67,12 @@ fun Project.kotlinModule(
     }
 }
 
-fun Project.properties(file: String, callback: (Properties) -> Unit = {}) {
-    val propertiesFile = rootProject.file(file)
-    val properties = Properties()
-    properties.load(FileInputStream(propertiesFile))
-    callback.invoke(properties)
-}
-
 fun VariantDimension.stringField(key: String, value: String) {
-    buildConfigField("String", key, value)
+    buildConfigField("String", key, "\"$value\"")
 }
 
 fun VariantDimension.stringField(properties: Properties, key: String) {
     stringField(key, (properties[key] as? String).orEmpty())
-}
-
-fun Properties.string(key: String): String {
-    return (get(key) as? String).orEmpty()
 }
 
 fun DependencyHandler.common() {
