@@ -14,7 +14,7 @@ application {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
 
-            isDebuggable = false
+            isDebuggable = true
             isMinifyEnabled = false
 
             stringField("BASE_URL", "https://yts.mx/api/v2/")

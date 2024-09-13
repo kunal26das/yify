@@ -69,10 +69,8 @@ internal object NetworkModule {
                 url(BuildConfig.BASE_URL)
             }
             install(HttpRequestRetry) {
-                retryOnServerErrors(Int.MAX_VALUE)
-                delayMillis { retry ->
-                    retry * 1000L
-                }
+                retryOnServerErrors(maxRetries = 5)
+                exponentialDelay()
                 modifyRequest { request ->
                     request.headers.append("x-retry-count", retryCount.toString())
                 }
