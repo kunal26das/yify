@@ -15,10 +15,11 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "yify"
-include(":app")
+include(":androidApp")
 include(":di")
 include(":common")
 include(":common:domain")
 include(":movies")
 include(":movies:data")
 include(":movies:domain")
+//include(":shared")
