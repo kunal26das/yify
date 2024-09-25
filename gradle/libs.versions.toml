@@ -22,7 +22,7 @@ okhttpDnsoverhttps = "4.12.0"
 pagingCommonKtx = "3.3.2"
 paletteKtx = "1.0.0"
 startupRuntime = "1.2.0"
-youtubePlayer = "12.1.0"
+youtubePlayer = "12.1.1"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityKtx" }
