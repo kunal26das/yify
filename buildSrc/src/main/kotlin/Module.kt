@@ -3,7 +3,6 @@ import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
 import org.gradle.api.Action
-import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.plugins.JavaPluginExtension
@@ -61,8 +60,8 @@ fun Project.kotlinModule(
     configure: Action<JavaPluginExtension> = Action<JavaPluginExtension> { },
 ) {
     extensions.getByType(JavaPluginExtension::class.java).apply {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = ProjectConfig.javaVersion
+        targetCompatibility = ProjectConfig.javaVersion
         configure.execute(this)
     }
 }
