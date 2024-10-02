@@ -29,6 +29,7 @@
             <option value="$PROJECT_DIR$/movies" />
             <option value="$PROJECT_DIR$/movies/data" />
             <option value="$PROJECT_DIR$/movies/domain" />
+            <option value="$PROJECT_DIR$/shared" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />
