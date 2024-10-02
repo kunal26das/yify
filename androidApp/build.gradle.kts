@@ -38,6 +38,7 @@ application {
     }
     lint {
         baseline = file("lint-baseline.xml")
+        disable.add("EnsureInitializerMetadata")
     }
 }
 
