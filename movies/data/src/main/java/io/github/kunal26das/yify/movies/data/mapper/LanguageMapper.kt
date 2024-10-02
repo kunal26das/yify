@@ -18,7 +18,7 @@ internal class LanguageMapper @Inject constructor(
         if (languageCode == null) {
             return Language.Unknown
         }
-        val locale = Locale.of(languageCode)
+        val locale = Locale(languageCode)
         val language = locale.displayLanguage
         val enum = Language[language]
         if (enum == null) {
