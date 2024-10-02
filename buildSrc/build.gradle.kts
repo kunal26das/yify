@@ -25,6 +25,7 @@ dependencies {
 //    implementation("com.google.firebase:perf-plugin:1.4.2")
 
     implementation("com.android.tools.build:gradle:8.7.0")
+    implementation("com.squareup:javapoet:1.13.0")
 
 //    implementation("io.realm.kotlin:gradle-plugin:2.3.0")
 }
