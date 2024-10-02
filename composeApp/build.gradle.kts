@@ -1,4 +1,3 @@
-//import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 //import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 //import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -13,7 +12,7 @@ kotlin {
 //    androidTarget {
 //        @OptIn(ExperimentalKotlinGradlePluginApi::class)
 //        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_11)
+//            jvmTarget.set(JvmTarget.JVM_21)
 //        }
 //    }
 
@@ -47,40 +46,39 @@ kotlin {
     }
 }
 
-android {
-    namespace = ProjectConfig.applicationId
-    compileSdk = ProjectConfig.compileSdk
-
+application {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
-    defaultConfig {
-        applicationId = ProjectConfig.applicationId
-        minSdk = ProjectConfig.minSdk
-        targetSdk = ProjectConfig.targetSdk
-        versionCode = 1
-        versionName = "1.0"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
     buildTypes {
-        getByName("release") {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+
+            isDebuggable = true
             isMinifyEnabled = false
+
+            stringField("BASE_URL", "https://yts.mx/api/v2/")
+            stringField("DNS_URL", "https://1.1.1.1/dns-query")
+        }
+
+        release {
+            isDebuggable = false
+            isMinifyEnabled = false
+
+            stringField("BASE_URL", "https://yts.mx/api/v2/")
+            stringField("DNS_URL", "https://1.1.1.1/dns-query")
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
-    compileOptions {
-        sourceCompatibility = ProjectConfig.javaVersion
-        targetCompatibility = ProjectConfig.javaVersion
-    }
-    buildFeatures {
-        compose = true
-    }
-    dependencies {
-        debugImplementation(compose.uiTooling)
+    lint {
+        baseline = file("lint-baseline.xml")
     }
 }
 
