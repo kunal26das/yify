@@ -4,13 +4,6 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    }
 
     listOf(
         iosX64(),
@@ -25,7 +18,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            //put your multiplatform dependencies here
+            // put your multiplatform dependencies here
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -34,9 +27,9 @@ kotlin {
 }
 
 android {
-    namespace = "com.github.kunal26das.yify.shared"
-    compileSdk = 34
+    namespace = "${ProjectConfig.applicationId}.shared"
+    compileSdk = ProjectConfig.compileSdk
     defaultConfig {
-        minSdk = 24
+        minSdk = ProjectConfig.minSdk
     }
 }
