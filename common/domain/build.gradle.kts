@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm")
     id("java-library")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlinModule()

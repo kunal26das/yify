@@ -1,13 +1,18 @@
 [versions]
 activityKtx = "1.9.2"
+agp = "8.6.1"
 appcompat = "1.7.0"
 coilCompose = "2.7.0"
+compose = "1.6.11"
 composeBom = "2024.09.02"
 coreKtx = "1.13.1"
 coreSplashscreen = "1.0.1"
+crashlytics = "3.0.2"
 datastore = "1.1.1"
 espressoCore = "3.6.1"
 firebaseBom = "33.4.0"
+firebasePerf = "1.4.2"
+googleServices = "4.4.2"
 hilt = "2.52"
 hiltCompiler = "1.2.0"
 integrity = "1.4.0"
@@ -17,6 +22,7 @@ kotlin = "2.0.20"
 kotlinxCoroutinesCore = "1.9.0"
 kotlinxSerializationJson = "1.7.3"
 ktor = "2.3.12"
+ksp = "2.0.20-1.0.24"
 material = "1.12.0"
 okhttpDnsoverhttps = "4.12.0"
 pagingCommonKtx = "3.3.2"
@@ -63,6 +69,7 @@ integrity = { group = "com.google.android.play", name = "integrity", version.ref
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
@@ -75,4 +82,14 @@ okhttp-dnsoverhttps = { group = "com.squareup.okhttp3", name = "okhttp-dnsoverht
 youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtubePlayer" }
 
 [plugins]
-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+firebasePerf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerf" }

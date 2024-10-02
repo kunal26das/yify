@@ -1,8 +1,8 @@
 plugins {
     kotlin("jvm")
     id("java-library")
-    id("com.google.devtools.ksp")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlinModule()
