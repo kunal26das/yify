@@ -29,10 +29,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "yify"
 include(":androidApp")
-include(":composeApp")
-include(":composeApp:di")
-include(":composeApp:common")
-include(":composeApp:common:domain")
-include(":composeApp:movies")
-include(":composeApp:movies:data")
-include(":composeApp:movies:domain")
+include(":app")
+include(":app:di")
+include(":app:common")
+include(":app:common:domain")
+include(":app:movies")
+include(":app:movies:data")
+include(":app:movies:domain")

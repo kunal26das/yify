@@ -22,14 +22,14 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/androidApp" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/app/common" />
+            <option value="$PROJECT_DIR$/app/common/domain" />
+            <option value="$PROJECT_DIR$/app/di" />
+            <option value="$PROJECT_DIR$/app/movies" />
+            <option value="$PROJECT_DIR$/app/movies/data" />
+            <option value="$PROJECT_DIR$/app/movies/domain" />
             <option value="$PROJECT_DIR$/buildSrc" />
-            <option value="$PROJECT_DIR$/common" />
-            <option value="$PROJECT_DIR$/common/domain" />
-            <option value="$PROJECT_DIR$/composeApp" />
-            <option value="$PROJECT_DIR$/di" />
-            <option value="$PROJECT_DIR$/movies" />
-            <option value="$PROJECT_DIR$/movies/data" />
-            <option value="$PROJECT_DIR$/movies/domain" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />
