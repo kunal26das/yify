@@ -4,15 +4,18 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-androidModule("di") {
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+android {
+    namespace = "${ProjectConfig.applicationId}.di"
+    compileSdk = ProjectConfig.compileSdk
+    defaultConfig {
+        minSdk = ProjectConfig.minSdk
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+    compileOptions {
+        sourceCompatibility = ProjectConfig.javaVersion
+        targetCompatibility = ProjectConfig.javaVersion
     }
 }
 

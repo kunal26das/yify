@@ -4,7 +4,10 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
-kotlinModule()
+java {
+    sourceCompatibility = ProjectConfig.javaVersion
+    targetCompatibility = ProjectConfig.javaVersion
+}
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)

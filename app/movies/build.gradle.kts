@@ -7,20 +7,24 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-androidModule("movies") {
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+android {
+    namespace = "${ProjectConfig.applicationId}.movies"
+    compileSdk = ProjectConfig.compileSdk
+    defaultConfig {
+        minSdk = ProjectConfig.minSdk
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+    compileOptions {
+        sourceCompatibility = ProjectConfig.javaVersion
+        targetCompatibility = ProjectConfig.javaVersion
     }
 }
 
 dependencies {
-    common()
+    implementation(project(":app:common"))
+    implementation(project(":app:common:domain"))
     implementation(project(":app:movies:domain"))
 
     implementation(libs.androidx.core.ktx)

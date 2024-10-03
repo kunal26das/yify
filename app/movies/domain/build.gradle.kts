@@ -3,7 +3,10 @@ plugins {
     id("java-library")
 }
 
-kotlinModule()
+java {
+    sourceCompatibility = ProjectConfig.javaVersion
+    targetCompatibility = ProjectConfig.javaVersion
+}
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)

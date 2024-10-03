@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "yify"
-include(":androidApp")
+
 include(":app")
 include(":app:di")
 include(":app:common")

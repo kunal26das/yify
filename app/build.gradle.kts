@@ -1,17 +1,27 @@
+import org.gradle.kotlin.dsl.compose
+import org.gradle.kotlin.dsl.implementation
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeCompiler)
-    id("com.android.application")
     alias(libs.plugins.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.crashlytics)
+    alias(libs.plugins.firebasePerf)
 }
 
 kotlin {
-//    androidTarget {
-//        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_21)
-//        }
-//    }
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+        }
+    }
 
     listOf(
         iosX64(),
@@ -25,11 +35,41 @@ kotlin {
     }
 
     sourceSets {
-
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+
+            implementation(project(":app:common"))
+            implementation(project(":app:common:domain"))
+
+            implementation(project(":app:movies"))
+            implementation(project(":app:movies:domain"))
+
+            implementation(project(":app:di"))
+
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
+
+            implementation(libs.hilt.android)
+            implementation(libs.androidx.startup.runtime)
+            implementation(libs.coil.compose)
+            implementation(libs.androidx.core.splashscreen)
+            implementation(libs.androidx.activity.ktx)
+
+            implementation(libs.firebase.appcheck.playintegrity)
+            implementation(libs.integrity)
+            implementation(libs.firebase.performance)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.android)
+            implementation(libs.ktor.client.serialization)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp.dnsoverhttps)
         }
+
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -41,12 +81,46 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
         }
     }
+    sourceSets {
+        val commonMain by getting
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.symbol.processing.api)
+            }
+        }
+    }
 }
 
-application {
+dependencies {
+    add("kspAndroid", libs.hilt.android.compiler)
+    add("kspAndroid", libs.androidx.hilt.compiler)
+
+    implementation(platform(libs.firebase.bom))
+}
+
+android {
+    namespace = ProjectConfig.applicationId
+    compileSdk = ProjectConfig.compileSdk
+
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+
+    defaultConfig {
+        applicationId = ProjectConfig.applicationId
+        minSdk = ProjectConfig.minSdk
+        targetSdk = ProjectConfig.targetSdk
+        versionCode = ProjectConfig.versionCode
+        versionName = ProjectConfig.versionName
+        setProperty("archivesBaseName", "v${versionName}-${versionCode}")
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+    compileOptions {
+        sourceCompatibility = ProjectConfig.javaVersion
+        targetCompatibility = ProjectConfig.javaVersion
+    }
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -55,16 +129,16 @@ application {
             isDebuggable = true
             isMinifyEnabled = false
 
-            stringField("BASE_URL", "https://yts.mx/api/v2/")
-            stringField("DNS_URL", "https://1.1.1.1/dns-query")
+            buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+            buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
         }
 
         release {
             isDebuggable = false
             isMinifyEnabled = false
 
-            stringField("BASE_URL", "https://yts.mx/api/v2/")
-            stringField("DNS_URL", "https://1.1.1.1/dns-query")
+            buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
+            buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -76,6 +150,7 @@ application {
     }
     lint {
         baseline = file("lint-baseline.xml")
+        disable.add("EnsureInitializerMetadata")
     }
 }
 
