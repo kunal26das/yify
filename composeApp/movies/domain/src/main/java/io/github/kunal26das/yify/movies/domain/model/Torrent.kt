@@ -13,4 +13,4 @@ data class Torrent(
     val sizeBytes: Long,
     val type: String,
     val url: String?,
-): Serializable
+) : Serializable

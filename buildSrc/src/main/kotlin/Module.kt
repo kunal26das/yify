@@ -75,11 +75,11 @@ fun VariantDimension.stringField(properties: Properties, key: String) {
 }
 
 fun DependencyHandler.common() {
-    implementation(project(":common"))
-    implementation(project(":common:domain"))
+    implementation(project(":composeApp:common"))
+    implementation(project(":composeApp:common:domain"))
 }
 
 fun DependencyHandler.movies() {
-    implementation(project(":movies"))
-    implementation(project(":movies:domain"))
+    implementation(project(":composeApp:movies"))
+    implementation(project(":composeApp:movies:domain"))
 }

@@ -1,25 +1,38 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
-        google()
+        google {
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
+        google {
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
+            }
+        }
         mavenCentral()
     }
 }
 
 rootProject.name = "yify"
 include(":androidApp")
-include(":di")
-include(":common")
-include(":common:domain")
-include(":movies")
-include(":movies:data")
-include(":movies:domain")
 include(":composeApp")
+include(":composeApp:di")
+include(":composeApp:common")
+include(":composeApp:common:domain")
+include(":composeApp:movies")
+include(":composeApp:movies:data")
+include(":composeApp:movies:domain")

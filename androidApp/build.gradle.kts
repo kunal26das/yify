@@ -46,7 +46,7 @@ dependencies {
     common()
     movies()
 
-    implementation(project(":di"))
+    implementation(project(":composeApp:di"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)

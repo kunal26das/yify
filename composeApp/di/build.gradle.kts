@@ -17,7 +17,7 @@ androidModule("di") {
 }
 
 dependencies {
-    implementation(project(":movies:data"))
+    implementation(project(":composeApp:movies:data"))
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)

@@ -8,8 +8,8 @@ plugins {
 kotlinModule()
 
 dependencies {
-    implementation(project(":common:domain"))
-    implementation(project(":movies:domain"))
+    implementation(project(":composeApp:common:domain"))
+    implementation(project(":composeApp:movies:domain"))
 
     implementation(libs.ktor.client.core)
 
