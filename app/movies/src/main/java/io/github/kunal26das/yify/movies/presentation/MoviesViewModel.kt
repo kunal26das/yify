@@ -1,9 +1,9 @@
 package io.github.kunal26das.yify.movies.presentation
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.kunal26das.common.core.YifyViewModel
 import io.github.kunal26das.yify.movies.domain.model.Genre
 import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.Quality
@@ -24,7 +24,7 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 class MoviesViewModel @Inject constructor(
     private val moviesPagerUseCase: MoviesPagerUseCase,
-) : YifyViewModel() {
+) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()

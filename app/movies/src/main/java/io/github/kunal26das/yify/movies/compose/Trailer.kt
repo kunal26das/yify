@@ -14,10 +14,10 @@ import io.github.kunal26das.yify.movies.domain.model.Movie
 @Composable
 fun TrailerCard(
     modifier: Modifier = Modifier,
-    movie: Movie?,
+    movie: Movie,
     shape: Shape = RoundedCornerShape(0.dp),
 ) {
-    if (movie?.youtubeTrailerCode.isNullOrEmpty().not()) {
+    if (movie.youtubeTrailerCode.isNotEmpty()) {
         ElevatedCard(
             modifier = modifier
                 .aspectRatio(Constants.TRAILER_ASPECT_RATIO)
@@ -26,7 +26,7 @@ fun TrailerCard(
         ) {
             YoutubePlayer(
                 modifier = Modifier.fillMaxSize(),
-                videoId = movie?.youtubeTrailerCode.orEmpty(),
+                videoId = movie.youtubeTrailerCode,
             )
         }
     }

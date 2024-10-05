@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import io.github.kunal26das.common.compose.statusBarHeight
+import io.github.kunal26das.common.compose.LocalStatusBarHeight
 import io.github.kunal26das.yify.movies.domain.model.Movie
 
 private const val LABEL = "vertical_grid_movies"
@@ -35,7 +35,7 @@ fun VerticalGridMovies(
                 || movies.loadState.prepend is LoadState.Loading
     }
     val pullRefreshState = rememberPullRefreshState(
-        refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
+        refreshingOffset = PullRefreshDefaults.RefreshingOffset + LocalStatusBarHeight.current,
         refreshing = refreshing.invoke(),
         onRefresh = { movies.refresh() },
     )

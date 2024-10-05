@@ -18,6 +18,9 @@ fun Theme(
     CompositionLocalProvider(
         LocalShimmer provides shimmer,
         LocalShimmerAnimation provides animation,
+        LocalStatusBarHeight provides statusBarHeight,
+        LocalNavigationBarHeight provides navigationBarHeight,
+        LocalCornerRadius provides cornerRadius,
     ) {
         MaterialTheme(
             colorScheme = when {

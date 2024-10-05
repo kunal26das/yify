@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import io.github.kunal26das.common.compose.statusBarHeight
+import io.github.kunal26das.common.compose.LocalStatusBarHeight
 import io.github.kunal26das.yify.movies.domain.model.Genre
 import io.github.kunal26das.yify.movies.domain.model.Movie
 
@@ -32,7 +32,7 @@ fun CategorisedMovies(
 ) {
     val pullRefreshState = rememberPullRefreshState(
         refreshing = categorisedMovies.any { it.loadState.refresh == LoadState.Loading },
-        refreshingOffset = PullRefreshDefaults.RefreshingOffset + statusBarHeight,
+        refreshingOffset = PullRefreshDefaults.RefreshingOffset + LocalStatusBarHeight.current,
         onRefresh = onRefresh,
     )
     AnimatedContent(
@@ -43,8 +43,8 @@ fun CategorisedMovies(
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 contentPadding = PaddingValues(
-                    bottom = statusBarHeight,
-                    top = statusBarHeight,
+                    bottom = LocalStatusBarHeight.current,
+                    top = LocalStatusBarHeight.current,
                 ),
                 content = {
                     itemsIndexed(it) { index, movies ->
