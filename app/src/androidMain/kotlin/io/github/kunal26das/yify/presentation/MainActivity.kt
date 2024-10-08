@@ -8,8 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.kunal26das.common.compose.Theme
-import io.github.kunal26das.yify.movies.compose.Movies
+import io.github.kunal26das.yify.movies.compose.App
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -20,11 +19,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         splashScreen.setKeepOnScreenCondition { false }
         setContent {
-            Theme {
-                Movies(
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            App(
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }

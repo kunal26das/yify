@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.common.compose.Dropdown
+import io.github.kunal26das.common.compose.LocalCornerRadius
 import io.github.kunal26das.common.compose.LocalNavigationBarHeight
 import io.github.kunal26das.common.compose.LocalStatusBarHeight
 import io.github.kunal26das.yify.movies.R
@@ -100,8 +101,8 @@ fun Movies(
                     .width(360.dp)
                     .fillMaxHeight(),
                 shape = RoundedCornerShape(
-                    bottomEnd = 16.dp,
-                    topEnd = 16.dp,
+                    bottomEnd = LocalCornerRadius.current,
+                    topEnd = LocalCornerRadius.current,
                 )
             ) {
                 DrawerContent()

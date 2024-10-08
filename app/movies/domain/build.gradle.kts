@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     id("java-library")
+    alias(libs.plugins.kotlinSerialization)
 }
 
 java {
@@ -11,4 +12,5 @@ java {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.paging.common.ktx)
+    implementation(libs.kotlinx.serialization.json)
 }

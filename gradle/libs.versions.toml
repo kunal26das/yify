@@ -9,15 +9,12 @@ coreKtx = "1.13.1"
 coreSplashscreen = "1.0.1"
 crashlytics = "3.0.2"
 datastore = "1.1.1"
-espressoCore = "3.6.1"
 firebaseBom = "33.4.0"
 firebasePerf = "1.4.2"
 googleServices = "4.4.2"
 hilt = "2.52"
 hiltCompiler = "1.2.0"
 integrity = "1.4.0"
-junit = "4.13.2"
-junitVersion = "1.2.1"
 kotlin = "2.0.20"
 kotlinxCoroutinesCore = "1.9.0"
 kotlinxSerializationJson = "1.7.3"
@@ -25,6 +22,7 @@ ktor = "2.3.12"
 ksp = "2.0.20-1.0.25"
 lifecycle = "2.8.6"
 material = "1.12.0"
+navigation = "2.8.2"
 okhttpDnsoverhttps = "4.12.0"
 pagingCommonKtx = "3.3.2"
 paletteKtx = "1.0.0"
@@ -48,12 +46,11 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hiltCompiler" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltCompiler" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 androidx-paging-common-ktx = { group = "androidx.paging", name = "paging-common-ktx", version.ref = "pagingCommonKtx" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCommonKtx" }
 androidx-paging-runtime-ktx = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "pagingCommonKtx" }
@@ -69,10 +66,8 @@ hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-comp
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 hilt-core = { group = "com.google.dagger", name = "hilt-core", version.ref = "hilt" }
 integrity = { group = "com.google.android.play", name = "integrity", version.ref = "integrity" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
-kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }

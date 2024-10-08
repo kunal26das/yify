@@ -1,7 +1,8 @@
 package io.github.kunal26das.yify.movies.domain.model
 
-import java.io.Serializable
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Movie(
     val id: Long?,
     val backgroundImageOriginalUrl: String,
@@ -31,9 +32,4 @@ data class Movie(
     val url: String,
     val year: Int?,
     val youtubeTrailerCode: String,
-) : Serializable {
-    companion object {
-        const val KEY_MOVIE = "movie"
-        const val KEY_MOVIE_ID = "${KEY_MOVIE}_id"
-    }
-}
+)
