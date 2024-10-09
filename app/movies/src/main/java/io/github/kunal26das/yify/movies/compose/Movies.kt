@@ -251,25 +251,29 @@ private fun SearchTextField(
         label = {
             if (isFocused.not() && searchQuery.isEmpty()) {
                 Text(
-                    modifier = Modifier.padding(start = 8.dp),
-                    text = stringResource(R.string.search)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp),
+                    text = stringResource(R.string.search),
                 )
             }
         },
         trailingIcon = {
-            IconButton(
-                modifier = Modifier.padding(end = 8.dp),
-                onClick = {
-                    viewModel.search(null)
-                    focusManager.clearFocus()
-                },
-                content = {
-                    Icon(
-                        imageVector = Icons.Filled.Clear,
-                        contentDescription = null,
-                    )
-                }
-            )
+            if (searchQuery.isNotEmpty()) {
+                IconButton(
+                    modifier = Modifier.padding(end = 8.dp),
+                    onClick = {
+                        viewModel.search(null)
+                        focusManager.clearFocus()
+                    },
+                    content = {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = null,
+                        )
+                    }
+                )
+            }
         },
         value = searchQuery,
         onValueChange = {
