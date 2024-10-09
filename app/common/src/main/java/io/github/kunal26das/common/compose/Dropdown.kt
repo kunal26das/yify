@@ -9,6 +9,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
@@ -32,6 +34,7 @@ fun <T> Dropdown(
     showTrailingIcon: Boolean = true,
     onSelect: (T?) -> Unit = {},
     onClear: () -> Unit = { onSelect.invoke(null) },
+    shape: Shape = OutlinedTextFieldDefaults.shape,
     trailingIcon: @Composable () -> Unit = {
         if (showTrailingIcon) {
             IconButton(
@@ -68,6 +71,7 @@ fun <T> Dropdown(
                     keyboardController?.hide()
                     expanded = it.hasFocus and enabled
                 },
+            shape = shape,
             readOnly = true,
             enabled = enabled,
             value = selection?.let { name.invoke(it) }.orEmpty(),
