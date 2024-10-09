@@ -19,4 +19,5 @@
     <string name="decreasing_order">Decreasing Order</string>
     <string name="categorize">Categorize</string>
     <string name="reset">Reset</string>
+    <string name="something_went_wrong">Something went wrong!</string>
 </resources>

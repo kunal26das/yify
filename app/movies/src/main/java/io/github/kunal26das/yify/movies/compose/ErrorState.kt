@@ -13,15 +13,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
 import io.github.kunal26das.yify.movies.R
-import io.github.kunal26das.yify.movies.domain.model.Movie
 
 @Composable
 fun ErrorState(
     modifier: Modifier = Modifier,
-    movies: LazyPagingItems<Movie>,
     onRefresh: () -> Unit = {},
 ) {
     Column(
@@ -30,21 +26,14 @@ fun ErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = when (movies.loadState.refresh) {
-                is LoadState.Error -> {
-                    val error = (movies.loadState.refresh as LoadState.Error)
-                    error.error.message.toString()
-                }
-
-                else -> stringResource(R.string.no_movies_found)
-            },
-            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(16.dp),
+            text = stringResource(R.string.something_went_wrong),
             color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
             fontSize = 20.sp,
         )
-
         OutlinedButton(
-            modifier = Modifier.padding(top = 12.dp),
+            modifier = Modifier,
             onClick = onRefresh,
             content = {
                 Text(

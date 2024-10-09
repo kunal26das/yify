@@ -40,7 +40,7 @@ class MoviesViewModel @Inject constructor(
         .combine(moviePreference) { searchQuery, moviePreference ->
             moviesPagerUseCase.getMoviesPagingData(
                 moviePreference = moviePreference.copy(queryTerm = searchQuery),
-                onFirstLoad = { _moviesCount.value = it }
+                onFirstLoad = { _moviesCount.value = it },
             ).cachedIn(viewModelScope)
         }.flatMapLatest { it }
 

@@ -216,7 +216,6 @@ private fun SearchTextField(
         ),
         keyboardActions = KeyboardActions(
             onSearch = {
-//                onBackPressedCallback.handleOnBackPressed()
                 keyboardController?.hide()
             }
         )

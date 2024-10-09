@@ -11,6 +11,9 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.paging.LoadState
@@ -29,15 +32,17 @@ fun VerticalGridMovies(
     moviePadding: PaddingValues,
     movies: LazyPagingItems<Movie>,
 ) {
-    val refreshing = {
-        movies.loadState.refresh is LoadState.Loading
-                || movies.loadState.append is LoadState.Loading
-                || movies.loadState.prepend is LoadState.Loading
+    val isRefreshing by remember {
+        derivedStateOf {
+            movies.loadState.refresh is LoadState.Loading
+                    || movies.loadState.append is LoadState.Loading
+                    || movies.loadState.prepend is LoadState.Loading
+        }
     }
     val pullRefreshState = rememberPullRefreshState(
         refreshingOffset = PullRefreshDefaults.RefreshingOffset + LocalStatusBarHeight.current,
-        refreshing = refreshing.invoke(),
-        onRefresh = { movies.refresh() },
+        onRefresh = movies::refresh,
+        refreshing = isRefreshing,
     )
     Box(modifier = Modifier.pullRefresh(pullRefreshState)) {
         AnimatedContent(
@@ -46,14 +51,12 @@ fun VerticalGridMovies(
             label = LABEL,
         ) { movies ->
             if (movies.itemCount == 0
-                && movies.loadState.refresh is LoadState.Error
+                && movies.loadState.hasError
             ) {
                 ErrorState(
                     modifier = Modifier.align(Alignment.Center),
-                    movies = movies,
-                ) {
-                    movies.refresh()
-                }
+                    onRefresh = movies::refresh
+                )
             } else {
                 NonEmptyState(
                     state = state,
@@ -65,7 +68,7 @@ fun VerticalGridMovies(
         }
         PullRefreshIndicator(
             modifier = Modifier.align(Alignment.TopCenter),
-            refreshing = refreshing.invoke(),
+            refreshing = isRefreshing,
             state = pullRefreshState,
             scale = true,
         )
