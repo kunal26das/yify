@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.movies.compose
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -39,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,6 +63,7 @@ import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.Quality
 import io.github.kunal26das.yify.movies.domain.model.SortBy
 import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun Movies(
@@ -68,6 +71,7 @@ fun Movies(
     viewModel: MoviesViewModel = hiltViewModel(),
 ) {
     val state = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val moviesCount by viewModel.moviesCount.collectAsState()
     val moviePreference by viewModel.moviePreference.collectAsState()
@@ -82,6 +86,14 @@ fun Movies(
     val visibleItemsCount by remember {
         derivedStateOf {
             state.layoutInfo.visibleItemsInfo.size
+        }
+    }
+
+    BackHandler(drawerState.isOpen) {
+        if (drawerState.isOpen) {
+            coroutineScope.launch {
+                drawerState.close()
+            }
         }
     }
 
