@@ -190,7 +190,7 @@ fun Movies(
                                 topEnd = cornerRadius / 1.5f,
                             )
                         )
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.9f))
                         .padding(
                             horizontal = 10.dp,
                             vertical = 8.dp,

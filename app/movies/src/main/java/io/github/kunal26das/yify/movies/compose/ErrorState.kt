@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.movies.compose
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -13,13 +14,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.kunal26das.common.compose.LocalActivity
+import io.github.kunal26das.common.contract.LauncherContract
 import io.github.kunal26das.yify.movies.R
 
 @Composable
 fun ErrorState(
     modifier: Modifier = Modifier,
-    onRefresh: () -> Unit = {},
 ) {
+    val activity = LocalActivity.current
+    val launcherActivity = rememberLauncherForActivityResult(LauncherContract()) { }
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
@@ -34,7 +38,10 @@ fun ErrorState(
         )
         OutlinedButton(
             modifier = Modifier,
-            onClick = onRefresh,
+            onClick = {
+                activity.finishAffinity()
+                launcherActivity.launch(null)
+            },
             content = {
                 Text(
                     text = stringResource(R.string.refresh),

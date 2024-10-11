@@ -1,5 +1,6 @@
 package io.github.kunal26das.yify.movies.compose
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -15,9 +16,11 @@ import kotlin.reflect.typeOf
 @Composable
 fun App(
     modifier: Modifier = Modifier,
+    activity: Activity,
 ) {
     val navHostController = rememberNavController()
     Theme(
+        activity = activity,
         navHostController = navHostController
     ) {
         NavHost(

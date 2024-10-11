@@ -20,7 +20,8 @@ class MainActivity : AppCompatActivity() {
         splashScreen.setKeepOnScreenCondition { false }
         setContent {
             App(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                activity = this,
             )
         }
     }

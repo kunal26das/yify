@@ -1,5 +1,6 @@
 package io.github.kunal26das.common.compose
 
+import android.app.Activity
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -21,4 +22,8 @@ val LocalCornerRadius = compositionLocalOf<Dp> { 8.dp }
 
 val LocalNavHostController = compositionLocalOf<NavHostController?> {
     error("No active nav host controller found!")
+}
+
+val LocalActivity = compositionLocalOf<Activity> {
+    error("No active activity found!")
 }

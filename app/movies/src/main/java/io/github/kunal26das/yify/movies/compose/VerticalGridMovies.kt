@@ -54,8 +54,7 @@ fun VerticalGridMovies(
                 && movies.loadState.hasError
             ) {
                 ErrorState(
-                    modifier = Modifier.align(Alignment.Center),
-                    onRefresh = movies::refresh
+                    modifier = Modifier.align(Alignment.Center)
                 )
             } else {
                 NonEmptyState(
