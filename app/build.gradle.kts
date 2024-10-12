@@ -40,9 +40,8 @@ kotlin {
             implementation(libs.androidx.activity.compose)
 
             implementation(project(":app:movies"))
+            implementation(project(":app:movies:data"))
             implementation(project(":app:movies:domain"))
-
-            implementation(project(":app:di"))
 
             implementation(libs.androidx.core.ktx)
             implementation(libs.material)
