@@ -37,9 +37,8 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
 
-            implementation(project(":app:movies"))
-            implementation(project(":app:movies:data"))
-            implementation(project(":app:movies:domain"))
+            implementation(project(":app:domain"))
+            implementation(project(":app:data"))
 
             implementation(libs.androidx.core.ktx)
             implementation(libs.material)
@@ -48,7 +47,6 @@ kotlin {
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.datastore)
-            implementation("androidx.navigation:navigation-compose:2.8.2")
 
             implementation(libs.coil.compose)
 
@@ -64,18 +62,47 @@ kotlin {
         }
 
         commonMain.dependencies {
+            implementation(project(":app:domain"))
+
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.material)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-//            implementation(libs.androidx.lifecycle.viewmodel.ktx)
-//            implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation(libs.androidx.compose.material.icons.extended)
+
+            implementation(libs.navigation.compose)
+
+            implementation(libs.coil.compose)
+
+            implementation(libs.paging.common)
+            implementation(libs.paging.compose.common)
+
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
+            implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose.viewmodel)
+
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.serialization)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp.dnsoverhttps)
         }
     }
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":app:domain"))
+            }
+        }
         val androidMain by getting {
             dependencies {
                 implementation(libs.symbol.processing.api)
@@ -85,6 +112,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":app:domain"))
     implementation(platform(libs.firebase.bom))
     implementation(platform(libs.koin.bom))
 }
@@ -93,9 +121,9 @@ android {
     namespace = ProjectConfig.applicationId
     compileSdk = ProjectConfig.compileSdk
 
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 
     defaultConfig {
         applicationId = ProjectConfig.applicationId
