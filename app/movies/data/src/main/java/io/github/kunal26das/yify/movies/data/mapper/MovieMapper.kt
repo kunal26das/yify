@@ -2,9 +2,8 @@ package io.github.kunal26das.yify.movies.data.mapper
 
 import io.github.kunal26das.yify.movies.data.dto.MovieDto
 import io.github.kunal26das.yify.movies.domain.model.Movie
-import javax.inject.Inject
 
-internal class MovieMapper @Inject constructor(
+internal class MovieMapper(
     private val languageMapper: LanguageMapper,
     private val genreMapper: GenreMapper,
 ) {

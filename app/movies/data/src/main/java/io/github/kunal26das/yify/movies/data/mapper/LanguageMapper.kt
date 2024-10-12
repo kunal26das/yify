@@ -6,9 +6,8 @@ import io.github.kunal26das.yify.movies.domain.logger.Logger
 import io.github.kunal26das.yify.movies.domain.logger.Priority
 import io.github.kunal26das.yify.movies.domain.model.Language
 import java.util.Locale
-import javax.inject.Inject
 
-internal class LanguageMapper @Inject constructor(
+internal class LanguageMapper(
     private val exceptionLogger: ExceptionLogger,
     private val logger: Logger,
 ) {

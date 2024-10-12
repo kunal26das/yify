@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinSerialization)
-    alias(libs.plugins.hilt)
 }
 
 android {
@@ -38,7 +37,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.paging.compose)
     implementation(libs.coil.compose)
 
@@ -46,12 +44,13 @@ dependencies {
     implementation(libs.firebase.crashlytics.ktx)
 
     implementation(libs.androidx.paging.runtime.ktx)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.palette.ktx)
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
-    ksp(libs.androidx.hilt.compiler)
     implementation(libs.youtube.player)
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose.viewmodel)
 }

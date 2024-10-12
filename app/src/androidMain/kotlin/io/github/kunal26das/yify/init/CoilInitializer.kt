@@ -8,7 +8,7 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.util.DebugLogger
 import io.github.kunal26das.yify.BuildConfig
-import io.github.kunal26das.yify.di.NetworkModule
+import io.github.kunal26das.yify.di.getDns
 import okhttp3.OkHttpClient
 
 class CoilInitializer : IndependentInitializer<ImageLoader>() {
@@ -37,7 +37,7 @@ class CoilInitializer : IndependentInitializer<ImageLoader>() {
             okHttpClient {
                 val builder = OkHttpClient.Builder()
                 builder.retryOnConnectionFailure(true)
-                val dns = NetworkModule.getDns(builder)
+                val dns = getDns(builder)
                 builder.dns(dns).build()
             }
         }.build().also {

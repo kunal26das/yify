@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
     alias(libs.plugins.googleServices)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.firebasePerf)
@@ -46,7 +45,6 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             implementation(libs.material)
 
-            implementation(libs.hilt.android)
             implementation(libs.androidx.startup.runtime)
             implementation(libs.coil.compose)
             implementation(libs.androidx.core.splashscreen)
@@ -64,6 +62,9 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.okhttp.dnsoverhttps)
+
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.startup)
         }
 
         commonMain.dependencies {
@@ -88,10 +89,8 @@ kotlin {
 }
 
 dependencies {
-    add("kspAndroid", libs.hilt.android.compiler)
-    add("kspAndroid", libs.androidx.hilt.compiler)
-
     implementation(platform(libs.firebase.bom))
+    implementation(platform(libs.koin.bom))
 }
 
 android {

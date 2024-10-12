@@ -5,7 +5,6 @@ import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.domain.logger.Logger
 import io.github.kunal26das.yify.movies.domain.logger.Priority
 import io.github.kunal26das.yify.movies.domain.model.Genre
-import javax.inject.Inject
 
 private const val GENRE_ACTION = "Action"
 private const val GENRE_ADVENTURE = "Adventure"
@@ -34,7 +33,7 @@ private const val GENRE_THRILLER = "Thriller"
 private const val GENRE_WAR = "War"
 private const val GENRE_WESTERN = "Western"
 
-internal class GenreMapper @Inject constructor(
+internal class GenreMapper(
     private val exceptionLogger: ExceptionLogger,
     private val logger: Logger,
 ) {

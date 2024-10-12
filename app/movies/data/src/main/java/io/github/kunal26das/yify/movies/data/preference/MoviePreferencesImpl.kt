@@ -8,9 +8,8 @@ import io.github.kunal26das.yify.movies.domain.preference.MoviePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
 
-class MoviePreferencesImpl @Inject constructor(
+class MoviePreferencesImpl(
     private val moviePreferenceDataStore: DataStore<MoviePreferenceDto?>
 ) : MoviePreferences {
     override fun getMoviePreferenceFlow(): Flow<MoviePreference?> {

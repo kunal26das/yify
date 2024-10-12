@@ -7,9 +7,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.http.path
-import javax.inject.Inject
 
-class MovieServiceImpl @Inject constructor(
+class MovieServiceImpl(
     private val httpClient: HttpClient,
     private val exceptionLogger: ExceptionLogger,
 ) : MovieService {
