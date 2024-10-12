@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.movies.contract
+package io.github.kunal26das.yify.contract
 
 import android.app.Activity.RESULT_OK
 import android.content.Context

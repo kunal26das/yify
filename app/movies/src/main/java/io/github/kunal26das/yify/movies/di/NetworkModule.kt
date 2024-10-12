@@ -1,6 +1,5 @@
-package io.github.kunal26das.yify.di
+package io.github.kunal26das.yify.movies.di
 
-import io.github.kunal26das.yify.BuildConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.DefaultRequest
@@ -22,16 +21,23 @@ import okhttp3.dnsoverhttps.DnsOverHttps
 import org.koin.dsl.module
 import java.io.File
 
-fun getDns(builder: OkHttpClient.Builder): Dns {
+fun getDns(
+    dnsUrl: String,
+    builder: OkHttpClient.Builder
+): Dns {
     val file = File("cacheDir", "okhttpcache")
     val appCache = Cache(file, 10 * 1024 * 1024)
     return DnsOverHttps.Builder().client(builder.cache(appCache).build()).apply {
-        url(BuildConfig.DNS_URL.toHttpUrl())
+        url(dnsUrl.toHttpUrl())
         includeIPv6(false)
     }.build()
 }
 
-val networkModule = module {
+fun networkModule(
+    debug: Boolean,
+    baseUrl: String,
+    dnsUrl: String
+) = module {
     single<Json> {
         Json {
             explicitNulls = false
@@ -44,7 +50,7 @@ val networkModule = module {
             install(ContentNegotiation) {
                 json(get())
             }
-            if (BuildConfig.DEBUG) {
+            if (debug) {
                 install(Logging) {
                     level = LogLevel.ALL
                     logger = Logger.SIMPLE
@@ -52,7 +58,7 @@ val networkModule = module {
             }
             install(DefaultRequest) {
                 contentType(ContentType.Application.Json)
-                url(BuildConfig.BASE_URL)
+                url(baseUrl)
             }
             install(HttpRequestRetry) {
                 retryOnServerErrors(maxRetries = 5)
@@ -64,7 +70,7 @@ val networkModule = module {
             engine {
                 config {
                     retryOnConnectionFailure(true)
-                    dns(getDns(this))
+                    dns(getDns(dnsUrl, this))
                 }
             }
         }

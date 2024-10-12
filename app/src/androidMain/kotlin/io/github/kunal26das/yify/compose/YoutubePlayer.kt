@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.movies.compose
+package io.github.kunal26das.yify.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

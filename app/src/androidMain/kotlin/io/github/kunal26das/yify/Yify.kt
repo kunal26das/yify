@@ -2,9 +2,10 @@ package io.github.kunal26das.yify
 
 import android.app.Application
 import com.google.android.material.color.DynamicColors
-import io.github.kunal26das.yify.di.networkModule
+import io.github.kunal26das.yify.di.androidModule
 import io.github.kunal26das.yify.movies.data.di.moviesDataModule
-import io.github.kunal26das.yify.movies.di.commonModule
+import io.github.kunal26das.yify.movies.di.moviesModule
+import io.github.kunal26das.yify.movies.di.networkModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.androix.startup.KoinStartup.onKoinStartup
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -16,9 +17,14 @@ class Yify : Application() {
         onKoinStartup {
             androidContext(this@Yify)
             modules(
-                commonModule,
-                networkModule,
+                moviesModule,
+                androidModule,
                 moviesDataModule,
+                networkModule(
+                    debug = BuildConfig.DEBUG,
+                    dnsUrl = BuildConfig.DNS_URL,
+                    baseUrl = BuildConfig.BASE_URL,
+                ),
             )
         }
     }

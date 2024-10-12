@@ -1,47 +1,44 @@
 package io.github.kunal26das.yify.init
 
 import android.content.Context
-import coil.Coil
-import coil.ImageLoader
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
-import coil.request.CachePolicy
-import coil.util.DebugLogger
+import coil3.ImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.request.CachePolicy
+import coil3.util.DebugLogger
 import io.github.kunal26das.yify.BuildConfig
-import io.github.kunal26das.yify.di.getDns
-import okhttp3.OkHttpClient
+import okio.Path.Companion.toOkioPath
 
 class CoilInitializer : IndependentInitializer<ImageLoader>() {
 
     override fun create(context: Context): ImageLoader {
-        return ImageLoader.Builder(context).apply {
+        val imageLoader = ImageLoader.Builder(context).apply {
             networkCachePolicy(CachePolicy.ENABLED)
             memoryCachePolicy(CachePolicy.ENABLED)
             memoryCache {
-                MemoryCache.Builder(context).apply {
+                MemoryCache.Builder().apply {
                     strongReferencesEnabled(true)
-                    maxSizePercent(0.2) // 20%
+                    maxSizePercent(context, 0.2) // 20%
                 }.build()
             }
             diskCachePolicy(CachePolicy.ENABLED)
             diskCache {
                 DiskCache.Builder().apply {
-                    directory(context.cacheDir)
+                    directory(context.cacheDir.toOkioPath())
                     maxSizePercent(0.02) // 2%
                 }.build()
             }
-            respectCacheHeaders(false)
             if (BuildConfig.DEBUG) {
                 logger(DebugLogger())
             }
-            okHttpClient {
-                val builder = OkHttpClient.Builder()
-                builder.retryOnConnectionFailure(true)
-                val dns = getDns(builder)
-                builder.dns(dns).build()
-            }
-        }.build().also {
-            Coil.setImageLoader(it)
-        }
+//            respectCacheHeaders(false)
+//            okHttpClient {
+//                val builder = OkHttpClient.Builder()
+//                builder.retryOnConnectionFailure(true)
+//                val dns = getDns(builder)
+//                builder.dns(dns).build()
+//            }
+        }.build()
+        return imageLoader
     }
 }

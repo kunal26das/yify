@@ -2,12 +2,9 @@ package io.github.kunal26das.yify.movies.compose
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -54,19 +51,19 @@ fun <T> Dropdown(
     val focusManager = LocalFocusManager.current
     var expanded by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
-    ExposedDropdownMenuBox(
-        modifier = modifier,
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = it and enabled
-        }
-    ) {
+//    ExposedDropdownMenuBox(
+//        modifier = modifier,
+//        expanded = expanded,
+//        onExpandedChange = {
+//            expanded = it and enabled
+//        }
+//    ) {
         OutlinedTextField(
             modifier = modifier2
-                .menuAnchor(
-                    type = MenuAnchorType.PrimaryNotEditable,
-                    enabled = true
-                )
+//                .menuAnchor(
+//                    type = MenuAnchorType.PrimaryNotEditable,
+//                    enabled = true
+//                )
                 .onFocusChanged {
                     keyboardController?.hide()
                     expanded = it.hasFocus and enabled
@@ -83,23 +80,23 @@ fun <T> Dropdown(
                 }
             },
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-                focusManager.clearFocus()
-            }
-        ) {
-            items.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(text = name.invoke(option).orEmpty()) },
-                    onClick = {
-                        expanded = false
-                        onSelect.invoke(option)
-                        focusManager.clearFocus()
-                    }
-                )
-            }
-        }
-    }
+//        ExposedDropdownMenu(
+//            expanded = expanded,
+//            onDismissRequest = {
+//                expanded = false
+//                focusManager.clearFocus()
+//            }
+//        ) {
+//            items.forEach { option ->
+//                DropdownMenuItem(
+//                    text = { Text(text = name.invoke(option).orEmpty()) },
+//                    onClick = {
+//                        expanded = false
+//                        onSelect.invoke(option)
+//                        focusManager.clearFocus()
+//                    }
+//                )
+//            }
+//        }
+//    }
 }

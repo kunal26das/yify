@@ -26,7 +26,7 @@ fun NonEmptyState(
         modifier = modifier,
         state = state,
         contentPadding = contentPadding,
-        columns = GridCells.Adaptive(Constants.movieWidth),
+        columns = GridCells.Fixed(2),
         content = {
             items(movies.itemCount) { index ->
                 val movie = movies[index]

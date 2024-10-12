@@ -12,11 +12,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImagePainter
-import coil.compose.SubcomposeAsyncImage
-import coil.request.ImageRequest
-import kotlinx.coroutines.Dispatchers
+import coil3.compose.AsyncImagePainter
+import coil3.compose.LocalPlatformContext
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 
 @Composable
 fun YifySubcomposeAsyncImage(
@@ -37,10 +37,10 @@ fun YifySubcomposeAsyncImage(
     }
     SubcomposeAsyncImage(
         modifier = modifier.yifyShimmer(enableShimmer and state.isLoading),
-        model = ImageRequest.Builder(LocalContext.current).apply {
-            dispatcher(Dispatchers.IO)
-            crossfade(true)
+        model = ImageRequest.Builder(LocalPlatformContext.current).apply {
+//            dispatcher(Dispatchers.IO)
             builder.invoke(this)
+            crossfade(true)
         }.build(),
         contentDescription = contentDescription,
         contentScale = contentScale,

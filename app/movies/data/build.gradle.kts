@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm")
     id("java-library")
-    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinSerialization)
 }
 
@@ -19,7 +18,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.datastore.core)
-    implementation(libs.androidx.paging.common.ktx)
+    implementation(libs.paging.common)
 
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)

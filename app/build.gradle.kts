@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.compose)
-    alias(libs.plugins.ksp)
     alias(libs.plugins.googleServices)
     alias(libs.plugins.crashlytics)
     alias(libs.plugins.firebasePerf)
@@ -46,31 +45,28 @@ kotlin {
             implementation(libs.material)
 
             implementation(libs.androidx.startup.runtime)
-            implementation(libs.coil.compose)
             implementation(libs.androidx.core.splashscreen)
             implementation(libs.androidx.activity.ktx)
+            implementation(libs.androidx.datastore)
+            implementation("androidx.navigation:navigation-compose:2.8.2")
+
+            implementation(libs.coil.compose)
 
             implementation(libs.firebase.appcheck.playintegrity)
-            implementation(libs.integrity)
+            implementation(libs.firebase.crashlytics.ktx)
             implementation(libs.firebase.performance)
-
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.android)
-            implementation(libs.ktor.client.serialization)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.okhttp.dnsoverhttps)
+            implementation(libs.integrity)
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.startup)
+
+            implementation(libs.youtube.player)
         }
 
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
+            implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)

@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.movies.compose
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -45,9 +44,8 @@ class Shimmer private constructor(
         private const val SHIMMER_DURATION = 1000
         private const val SHIMMER_OFFSET = 4
 
-        @SuppressLint("ComposableNaming")
         @Composable
-        internal fun shimmer(
+        fun shimmer(
             duration: Int = SHIMMER_DURATION,
             label: String = SHIMMER_LABEL,
             offset: Int = SHIMMER_OFFSET,

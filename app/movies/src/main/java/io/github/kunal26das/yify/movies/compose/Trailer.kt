@@ -24,10 +24,10 @@ fun TrailerCard(
                 .fillMaxSize(),
             shape = shape,
         ) {
-            YoutubePlayer(
-                modifier = Modifier.fillMaxSize(),
-                videoId = movie.youtubeTrailerCode,
-            )
+//            YoutubePlayer(
+//                modifier = Modifier.fillMaxSize(),
+//                videoId = movie.youtubeTrailerCode,
+//            )
         }
     }
 }

@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.movies.compose
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,11 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -48,29 +45,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
-import io.github.kunal26das.yify.movies.R
+import coil3.compose.LocalPlatformContext
 import io.github.kunal26das.yify.movies.domain.model.Genre
 import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.Quality
 import io.github.kunal26das.yify.movies.domain.model.SortBy
 import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -98,13 +91,13 @@ fun Movies(
         }
     }
 
-    BackHandler(drawerState.isOpen) {
-        if (drawerState.isOpen) {
-            coroutineScope.launch {
-                drawerState.close()
-            }
-        }
-    }
+//    BackHandler(drawerState.isOpen) {
+//        if (drawerState.isOpen) {
+//            coroutineScope.launch {
+//                drawerState.close()
+//            }
+//        }
+//    }
 
     LaunchedEffect(moviePreference) {
         try {
@@ -230,13 +223,13 @@ private fun SearchTextField(
     var isFocused by remember { mutableStateOf(false) }
     val searchQuery by viewModel.searchQuery.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
-    val isImeVisible by rememberUpdatedState(WindowInsets.isImeVisible)
+//    val isImeVisible by rememberUpdatedState(WindowInsets.isImeVisible)
 
-    LaunchedEffect(isImeVisible) {
-        if (isImeVisible.not()) {
-            focusManager.clearFocus(true)
-        }
-    }
+//    LaunchedEffect(isImeVisible) {
+//        if (isImeVisible.not()) {
+//            focusManager.clearFocus(true)
+//        }
+//    }
 
     OutlinedTextField(
         modifier = modifier.onFocusChanged {
@@ -250,7 +243,7 @@ private fun SearchTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 8.dp),
-                    text = stringResource(R.string.search),
+                    text = "Search",
                 )
             }
         },
@@ -296,7 +289,7 @@ private fun GenreDropdown(
     val moviePreference by viewModel.moviePreference.collectAsState()
     Dropdown(
         modifier2 = modifier,
-        label = stringResource(R.string.genre),
+        label = "Genre",
         shape = RoundedCornerShape(cornerRadius / 1.5f),
         selection = moviePreference.genre,
         items = Genre.entries,
@@ -312,21 +305,20 @@ private fun QualityDropdown(
     modifier: Modifier = Modifier,
     viewModel: MoviesViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
     val cornerRadius = LocalCornerRadius.current
     val moviePreference by viewModel.moviePreference.collectAsState()
     Dropdown(
         modifier2 = modifier,
-        label = stringResource(R.string.quality),
+        label = "Quality",
         shape = RoundedCornerShape(cornerRadius / 1.5f),
         selection = moviePreference.quality,
         items = Quality.entries.reversed(),
         showTrailingIcon = false,
         name = {
             when (it) {
-                Quality.Low -> context.getString(R.string.low)
-                Quality.Medium -> context.getString(R.string.medium)
-                Quality.High -> context.getString(R.string.high)
+                Quality.Low -> "Low"
+                Quality.Medium -> "Medium"
+                Quality.High -> "High"
                 else -> ""
             }
         },
@@ -341,24 +333,24 @@ private fun SortByDropdown(
     modifier: Modifier = Modifier,
     viewModel: MoviesViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
     val cornerRadius = LocalCornerRadius.current
     val moviePreference by viewModel.moviePreference.collectAsState()
     Dropdown(
         modifier = modifier,
         modifier2 = Modifier.fillMaxWidth(),
-        label = stringResource(R.string.sort_by),
+        label = "Sort By",
         selection = moviePreference.sortBy,
         shape = RoundedCornerShape(cornerRadius / 1.5f),
         items = listOf(SortBy.DateAdded, SortBy.Title, SortBy.Year, SortBy.Rating),
         name = {
             when (it) {
-                SortBy.DateAdded -> context.getString(R.string.date_added)
-                SortBy.Peers -> context.getString(R.string.peers)
-                SortBy.Rating -> context.getString(R.string.rating)
-                SortBy.Seeds -> context.getString(R.string.seeds)
-                SortBy.Title -> context.getString(R.string.title)
-                SortBy.Year -> context.getString(R.string.year)
+                SortBy.DateAdded -> "Date Added"
+                SortBy.Peers -> "Peers"
+                SortBy.Rating -> "Rating"
+                SortBy.Seeds -> "Seeds"
+                SortBy.Title -> "Title"
+                SortBy.Year -> "Year"
             }
         },
         onSelect = {
@@ -397,7 +389,7 @@ private fun MinimumRating(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = stringResource(R.string.rating))
+        Text(text = "Rating")
         Slider(
             modifier = Modifier
                 .weight(1f)
@@ -422,6 +414,6 @@ private fun ClearButton(
         modifier = modifier,
         onClick = { viewModel.clear() },
         contentPadding = PaddingValues(12.dp),
-        content = { Text(text = stringResource(R.string.reset)) }
+        content = { Text(text = "Reset") }
     )
 }

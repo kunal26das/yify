@@ -1,4 +1,4 @@
-package io.github.kunal26das.yify.movies.logger
+package io.github.kunal26das.yify.logger
 
 import android.util.Log
 import io.github.kunal26das.yify.movies.domain.logger.Logger

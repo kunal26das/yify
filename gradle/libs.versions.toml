@@ -2,7 +2,7 @@
 activityKtx = "1.9.2"
 agp = "8.5.0"
 appcompat = "1.7.0"
-coilCompose = "2.7.0"
+coil = "3.0.0-rc01"
 compose = "1.6.11"
 composeBom = "2024.09.03"
 coreKtx = "1.13.1"
@@ -21,9 +21,10 @@ ktor = "3.0.0"
 ksp = "2.0.21-1.0.25"
 lifecycle = "2.8.6"
 material = "1.12.0"
-navigation = "2.8.2"
+navigation = "2.8.0-alpha10"
 okhttpDnsoverhttps = "4.12.0"
-pagingCommonKtx = "3.3.2"
+paging = "3.3.0-alpha02-0.5.1"
+pagingAndroid = "3.3.2"
 paletteKtx = "1.0.0"
 startupRuntime = "1.2.0"
 youtubePlayer = "12.1.1"
@@ -36,6 +37,7 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material = { group = "androidx.compose.material", name = "material" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
@@ -47,13 +49,16 @@ androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
-androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
-androidx-paging-common-ktx = { group = "androidx.paging", name = "paging-common-ktx", version.ref = "pagingCommonKtx" }
-androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCommonKtx" }
-androidx-paging-runtime-ktx = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "pagingCommonKtx" }
-androidx-palette-ktx = { group = "androidx.palette", name = "palette-ktx", version.ref = "paletteKtx" }
+androidx-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
+paging-common = { group = "app.cash.paging", name = "paging-common", version.ref = "paging" }
+paging-compose-common = { group = "app.cash.paging", name = "paging-compose-common", version.ref = "paging" }
+paging-android = { group = "androidx.paging", name = "paging-runtime-ktx", version.ref = "pagingAndroid" }
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "startupRuntime" }
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilCompose" }
+coil = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil" }
+coil-core = { group = "io.coil-kt.coil3", name = "coil-core", version.ref = "coil" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-compose-core = { group = "io.coil-kt.coil3", name = "coil-compose-core", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }

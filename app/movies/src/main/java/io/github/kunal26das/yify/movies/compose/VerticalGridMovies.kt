@@ -50,7 +50,9 @@ fun VerticalGridMovies(
             label = LABEL,
         ) { movies ->
             if (movies.itemCount == 0
-                && movies.loadState.hasError
+                && (movies.loadState.refresh is LoadState.Error
+                        || movies.loadState.append is LoadState.Error
+                        || movies.loadState.prepend is LoadState.Error)
             ) {
                 ErrorState(
                     modifier = Modifier.align(Alignment.Center)

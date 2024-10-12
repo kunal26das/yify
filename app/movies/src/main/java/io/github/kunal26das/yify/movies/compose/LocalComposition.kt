@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.movies.compose
 
-import android.app.Activity
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -14,16 +13,12 @@ val LocalShimmerAnimation = compositionLocalOf<ShimmerAnimation> {
     error("No active shimmer animation found!")
 }
 
-val LocalStatusBarHeight = compositionLocalOf<Dp> { 8.dp }
-
-val LocalNavigationBarHeight = compositionLocalOf<Dp> { 8.dp }
-
-val LocalCornerRadius = compositionLocalOf<Dp> { 8.dp }
-
 val LocalNavHostController = compositionLocalOf<NavHostController?> {
     error("No active nav host controller found!")
 }
 
-val LocalActivity = compositionLocalOf<Activity> {
-    error("No active activity found!")
-}
+val LocalCornerRadius = compositionLocalOf<Dp> { 8.dp }
+
+val LocalStatusBarHeight = compositionLocalOf<Dp> { 8.dp }
+
+val LocalNavigationBarHeight = compositionLocalOf<Dp> { 8.dp }

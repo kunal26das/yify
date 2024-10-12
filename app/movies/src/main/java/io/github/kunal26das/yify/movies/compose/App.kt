@@ -1,6 +1,5 @@
 package io.github.kunal26das.yify.movies.compose
 
-import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -15,30 +14,29 @@ import kotlin.reflect.typeOf
 @Composable
 fun App(
     modifier: Modifier = Modifier,
-    activity: Activity,
 ) {
     val navHostController = rememberNavController()
-    Theme(
-        activity = activity,
-        navHostController = navHostController
-    ) {
-        NavHost(
-            modifier = modifier,
-            navController = navHostController,
-            startDestination = Destination.Movies,
-        ) {
-            composable<Destination.Movies> {
-                Movies(modifier = modifier)
-            }
-            composable<Destination.MovieDetails>(
-                typeMap = mapOf(typeOf<Movie>() to MovieNavType)
+    CompositionLocalProvider(
+        navHostController = navHostController,
+        content = {
+            NavHost(
+                modifier = modifier,
+                navController = navHostController,
+                startDestination = Destination.Movies,
             ) {
-                val details = it.toRoute<Destination.MovieDetails>()
-                MovieDialog(
-                    modifier = modifier,
-                    movie = details.movie,
-                )
+                composable<Destination.Movies> {
+                    Movies(modifier = modifier)
+                }
+                composable<Destination.MovieDetails>(
+                    typeMap = mapOf(typeOf<Movie>() to MovieNavType)
+                ) {
+                    val details = it.toRoute<Destination.MovieDetails>()
+                    MovieDialog(
+                        modifier = modifier,
+                        movie = details.movie,
+                    )
+                }
             }
         }
-    }
+    )
 }
