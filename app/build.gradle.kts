@@ -39,9 +39,6 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
 
-            implementation(project(":app:common"))
-            implementation(project(":app:common:domain"))
-
             implementation(project(":app:movies"))
             implementation(project(":app:movies:domain"))
 

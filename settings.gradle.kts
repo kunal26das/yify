@@ -31,8 +31,6 @@ rootProject.name = "yify"
 
 include(":app")
 include(":app:di")
-include(":app:common")
-include(":app:common:domain")
 include(":app:movies")
 include(":app:movies:data")
 include(":app:movies:domain")

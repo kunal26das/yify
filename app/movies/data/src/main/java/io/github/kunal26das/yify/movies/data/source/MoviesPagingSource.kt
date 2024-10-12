@@ -2,11 +2,11 @@ package io.github.kunal26das.yify.movies.data.source
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import io.github.kunal26das.common.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.data.mapper.GenreMapper
 import io.github.kunal26das.yify.movies.data.mapper.MovieMapper
 import io.github.kunal26das.yify.movies.data.mapper.key
 import io.github.kunal26das.yify.movies.data.service.MovieService
+import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
 

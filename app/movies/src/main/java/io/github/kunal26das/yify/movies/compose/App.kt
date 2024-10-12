@@ -7,7 +7,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import io.github.kunal26das.common.compose.Theme
 import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.presentation.Destination
 import io.github.kunal26das.yify.movies.presentation.MovieNavType

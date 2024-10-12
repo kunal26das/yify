@@ -1,7 +1,7 @@
 package io.github.kunal26das.yify.movies.data.service
 
-import io.github.kunal26das.common.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.data.dto.ResponseDto
+import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get

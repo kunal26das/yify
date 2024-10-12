@@ -1,9 +1,9 @@
 package io.github.kunal26das.yify.movies.data.mapper
 
-import io.github.kunal26das.common.domain.logger.ExceptionLogger
-import io.github.kunal26das.common.domain.logger.Logger
-import io.github.kunal26das.common.domain.logger.Priority
 import io.github.kunal26das.yify.movies.data.UnknownLanguageException
+import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
+import io.github.kunal26das.yify.movies.domain.logger.Logger
+import io.github.kunal26das.yify.movies.domain.logger.Priority
 import io.github.kunal26das.yify.movies.domain.model.Language
 import java.util.Locale
 import javax.inject.Inject

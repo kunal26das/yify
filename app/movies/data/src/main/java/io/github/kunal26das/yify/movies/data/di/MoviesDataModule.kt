@@ -6,14 +6,14 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import io.github.kunal26das.common.domain.logger.ExceptionLogger
-import io.github.kunal26das.common.domain.preference.DataStoreCreator
-import io.github.kunal26das.common.domain.preference.DataStoreFileProducer
 import io.github.kunal26das.yify.movies.data.preference.MoviePreferenceDto
 import io.github.kunal26das.yify.movies.data.preference.MoviePreferencesImpl
 import io.github.kunal26das.yify.movies.data.repo.MovieRepositoryImpl
 import io.github.kunal26das.yify.movies.data.service.MovieService
 import io.github.kunal26das.yify.movies.data.service.MovieServiceImpl
+import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
+import io.github.kunal26das.yify.movies.domain.preference.DataStoreCreator
+import io.github.kunal26das.yify.movies.domain.preference.DataStoreFileProducer
 import io.github.kunal26das.yify.movies.domain.preference.MoviePreferences
 import io.github.kunal26das.yify.movies.domain.repo.MovieRepository
 import kotlinx.serialization.json.Json

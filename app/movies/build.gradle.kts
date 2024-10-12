@@ -23,8 +23,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":app:common"))
-    implementation(project(":app:common:domain"))
     implementation(project(":app:movies:domain"))
 
     implementation(libs.androidx.core.ktx)
@@ -43,6 +41,9 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.paging.compose)
     implementation(libs.coil.compose)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics.ktx)
 
     implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.hilt.android)

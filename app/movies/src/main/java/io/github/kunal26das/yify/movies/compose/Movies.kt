@@ -65,10 +65,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import io.github.kunal26das.common.compose.Dropdown
-import io.github.kunal26das.common.compose.LocalCornerRadius
-import io.github.kunal26das.common.compose.LocalNavigationBarHeight
-import io.github.kunal26das.common.compose.LocalStatusBarHeight
 import io.github.kunal26das.yify.movies.R
 import io.github.kunal26das.yify.movies.domain.model.Genre
 import io.github.kunal26das.yify.movies.domain.model.OrderBy

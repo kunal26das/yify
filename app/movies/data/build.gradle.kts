@@ -11,7 +11,6 @@ java {
 }
 
 dependencies {
-    implementation(project(":app:common:domain"))
     implementation(project(":app:movies:domain"))
 
     implementation(libs.ktor.client.core)

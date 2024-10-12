@@ -6,10 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import io.github.kunal26das.common.compose.LocalCornerRadius
-import io.github.kunal26das.common.compose.LocalNavHostController
-import io.github.kunal26das.common.compose.YifyAsyncImage
-import io.github.kunal26das.common.compose.YifySubcomposeAsyncImage
 import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.presentation.Destination
 

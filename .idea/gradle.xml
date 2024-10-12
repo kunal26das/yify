@@ -22,8 +22,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/app/common" />
-            <option value="$PROJECT_DIR$/app/common/domain" />
             <option value="$PROJECT_DIR$/app/di" />
             <option value="$PROJECT_DIR$/app/movies" />
             <option value="$PROJECT_DIR$/app/movies/data" />

@@ -14,9 +14,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.kunal26das.common.compose.LocalActivity
-import io.github.kunal26das.common.contract.LauncherContract
 import io.github.kunal26das.yify.movies.R
+import io.github.kunal26das.yify.movies.contract.LauncherContract
 
 @Composable
 fun ErrorState(
