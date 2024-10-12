@@ -3,9 +3,8 @@ package io.github.kunal26das.yify.movies.logger
 import android.util.Log
 import io.github.kunal26das.yify.movies.domain.logger.Logger
 import io.github.kunal26das.yify.movies.domain.logger.Priority
-import javax.inject.Inject
 
-internal class AndroidLogger @Inject constructor() : Logger {
+internal class AndroidLogger() : Logger {
     override fun log(
         priority: Priority,
         tag: String,

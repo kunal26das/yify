@@ -9,9 +9,8 @@ import io.github.kunal26das.yify.movies.domain.model.Movie
 import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
 import io.github.kunal26das.yify.movies.domain.repo.MovieRepository
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
-class MoviesPagerUseCase @Inject constructor(
+class MoviesPagerUseCase(
     private val movieRepository: MovieRepository,
 ) {
     fun getMoviesPagingData(

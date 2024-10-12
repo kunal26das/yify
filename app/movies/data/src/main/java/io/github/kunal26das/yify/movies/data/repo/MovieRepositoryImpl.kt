@@ -12,9 +12,8 @@ import io.github.kunal26das.yify.movies.domain.model.OrderBy
 import io.github.kunal26das.yify.movies.domain.model.SortBy
 import io.github.kunal26das.yify.movies.domain.preference.MoviePreference
 import io.github.kunal26das.yify.movies.domain.repo.MovieRepository
-import javax.inject.Inject
 
-internal class MovieRepositoryImpl @Inject constructor(
+internal class MovieRepositoryImpl(
     private val movieService: MovieService,
     private val movieMapper: MovieMapper,
     private val genreMapper: GenreMapper,

@@ -63,7 +63,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import io.github.kunal26das.yify.movies.R
 import io.github.kunal26das.yify.movies.domain.model.Genre
@@ -72,11 +71,12 @@ import io.github.kunal26das.yify.movies.domain.model.Quality
 import io.github.kunal26das.yify.movies.domain.model.SortBy
 import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun Movies(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel(),
+    viewModel: MoviesViewModel = koinViewModel(),
 ) {
     val state = rememberLazyGridState()
     val cornerRadius = LocalCornerRadius.current
@@ -223,7 +223,7 @@ private fun DrawerContent(
 @OptIn(ExperimentalLayoutApi::class)
 private fun SearchTextField(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel(),
+    viewModel: MoviesViewModel = koinViewModel(),
     shape: Shape = OutlinedTextFieldDefaults.shape,
 ) {
     val focusManager = LocalFocusManager.current
@@ -290,7 +290,7 @@ private fun SearchTextField(
 @Composable
 private fun GenreDropdown(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel()
+    viewModel: MoviesViewModel = koinViewModel()
 ) {
     val cornerRadius = LocalCornerRadius.current
     val moviePreference by viewModel.moviePreference.collectAsState()
@@ -310,7 +310,7 @@ private fun GenreDropdown(
 @Composable
 private fun QualityDropdown(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel(),
+    viewModel: MoviesViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val cornerRadius = LocalCornerRadius.current
@@ -339,7 +339,7 @@ private fun QualityDropdown(
 @Composable
 private fun SortByDropdown(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel(),
+    viewModel: MoviesViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
     val cornerRadius = LocalCornerRadius.current
@@ -390,7 +390,7 @@ private fun SortByDropdown(
 @Composable
 private fun MinimumRating(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel(),
+    viewModel: MoviesViewModel = koinViewModel(),
 ) {
     val moviePreference by viewModel.moviePreference.collectAsState()
     Row(
@@ -416,7 +416,7 @@ private fun MinimumRating(
 @Composable
 private fun ClearButton(
     modifier: Modifier = Modifier,
-    viewModel: MoviesViewModel = hiltViewModel()
+    viewModel: MoviesViewModel = koinViewModel()
 ) {
     OutlinedButton(
         modifier = modifier,
