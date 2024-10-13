@@ -30,6 +30,5 @@ dependencyResolutionManagement {
 rootProject.name = "yify"
 
 include(":app")
-include(":app:movies")
-include(":app:movies:data")
-include(":app:movies:domain")
+include(":app:data")
+include(":app:domain")
