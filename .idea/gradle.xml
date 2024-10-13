@@ -22,9 +22,8 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/app/movies" />
-            <option value="$PROJECT_DIR$/app/movies/data" />
-            <option value="$PROJECT_DIR$/app/movies/domain" />
+            <option value="$PROJECT_DIR$/app/data" />
+            <option value="$PROJECT_DIR$/app/domain" />
             <option value="$PROJECT_DIR$/buildSrc" />
           </set>
         </option>
