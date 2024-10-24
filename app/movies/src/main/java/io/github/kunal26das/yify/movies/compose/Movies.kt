@@ -2,6 +2,7 @@ package io.github.kunal26das.yify.movies.compose
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -38,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -52,8 +55,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -73,6 +77,7 @@ import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Movies(
     modifier: Modifier = Modifier,
@@ -132,7 +137,19 @@ fun Movies(
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = {},
+            topBar = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(statusBarHeight)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                0f to Color.White.copy(alpha = 0.9f),
+                                1f to Color.Transparent,
+                            )
+                        )
+                )
+            },
             content = { contentPadding ->
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -151,7 +168,7 @@ fun Movies(
                     )
                     AnimatedVisibility(
                         modifier = Modifier
-                            .padding(bottom = LocalNavigationBarHeight.current + 24.dp)
+                            .padding(bottom = contentPadding.calculateBottomPadding() + 8.dp)
                             .align(Alignment.BottomCenter),
                         visible = moviesCount > 0 && firstVisibleItemIndex > 0,
                         enter = fadeIn(),
@@ -174,26 +191,36 @@ fun Movies(
                         )
                     }
                 }
-
             },
             bottomBar = {
-                SearchTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            shape = RoundedCornerShape(
-                                topStart = cornerRadius / 1.5f,
-                                topEnd = cornerRadius / 1.5f,
-                            )
-                        )
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.9f))
-                        .padding(
-                            horizontal = 10.dp,
-                            vertical = 8.dp,
-                        )
-                        .navigationBarsPadding(),
-                    shape = RoundedCornerShape(cornerRadius / 1.5f)
+                val isImeVisible by rememberUpdatedState(WindowInsets.isImeVisible)
+                val bottomPadding by animateDpAsState(
+                    targetValue = if (isImeVisible) 16.dp else 0.dp,
+                    label = "bottomPadding"
                 )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(
+                        topStart = cornerRadius / 1.5f,
+                        topEnd = cornerRadius / 1.5f,
+                    ),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shadowElevation = 16.dp,
+                ) {
+                    SearchTextField(
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .padding(
+                                horizontal = 10.dp,
+                                vertical = 8.dp,
+                            )
+                            .padding(
+                                bottom = bottomPadding,
+                            ),
+                        shape = RoundedCornerShape(cornerRadius / 1.5f)
+                    )
+                }
             }
         )
     }
