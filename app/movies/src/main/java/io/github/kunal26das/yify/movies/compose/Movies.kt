@@ -144,7 +144,7 @@ fun Movies(
                         .height(statusBarHeight)
                         .background(
                             brush = Brush.verticalGradient(
-                                0f to Color.White.copy(alpha = 0.9f),
+                                0f to MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
                                 1f to Color.Transparent,
                             )
                         )
