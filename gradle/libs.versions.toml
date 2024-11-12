@@ -4,8 +4,8 @@ agp = "8.5.2"
 appcompat = "1.7.0"
 coilCompose = "2.7.0"
 compose = "1.7.0"
-composeBom = "2024.10.00"
-coreKtx = "1.13.1"
+composeBom = "2024.10.01"
+coreKtx = "1.15.0"
 coreSplashscreen = "1.0.1"
 crashlytics = "3.0.2"
 datastore = "1.1.1"
@@ -19,7 +19,7 @@ kotlinxCoroutinesCore = "1.9.0"
 kotlinxSerializationJson = "1.7.3"
 ktor = "3.0.1"
 ksp = "2.0.21-1.0.27"
-lifecycle = "2.8.6"
+lifecycle = "2.8.7"
 material = "1.12.0"
 navigation = "2.8.3"
 okhttpDnsoverhttps = "4.12.0"
@@ -89,8 +89,8 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
+firebasePerf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerf" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-firebasePerf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerf" }
