@@ -8,20 +8,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.github.kunal26das.yify.movies.domain.model.Movie
-import io.github.kunal26das.yify.movies.presentation.Destination
 
 @Composable
 fun MovieCard(
     modifier: Modifier = Modifier,
     movie: Movie? = null,
 ) {
+    val selectedMovie = LocalSelectedMovie.current
     val navHostController = LocalNavHostController.current
     Surface(
         modifier = modifier
             .clickable {
-                if (movie != null) {
-                    navHostController?.navigate(Destination.MovieDetails(movie))
-                }
+                selectedMovie.value = movie
+//                if (movie != null) {
+//                    navHostController?.navigate(Destination.MovieDetails(movie))
+//                }
             },
         shape = RoundedCornerShape(LocalCornerRadius.current / 1.5f),
         shadowElevation = 8.dp

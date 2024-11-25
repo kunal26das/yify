@@ -1,10 +1,13 @@
 package io.github.kunal26das.yify.movies.compose
 
 import android.app.Activity
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import io.github.kunal26das.yify.movies.domain.model.Movie
 
 val LocalShimmer = compositionLocalOf<Shimmer> {
     error("No active shimmer found!")
@@ -27,3 +30,5 @@ val LocalNavHostController = compositionLocalOf<NavHostController?> {
 val LocalActivity = compositionLocalOf<Activity> {
     error("No active activity found!")
 }
+
+val LocalSelectedMovie = compositionLocalOf<MutableState<Movie?>> { mutableStateOf(null) }
