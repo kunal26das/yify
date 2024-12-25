@@ -123,6 +123,7 @@ android {
 
             isDebuggable = true
             isMinifyEnabled = false
+            isShrinkResources = false
 
             buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
             buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
@@ -130,7 +131,8 @@ android {
 
         release {
             isDebuggable = false
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
 
             buildConfigField("String", "BASE_URL", "\"https://yts.mx/api/v2/\"")
             buildConfigField("String", "DNS_URL", "\"https://1.1.1.1/dns-query\"")
