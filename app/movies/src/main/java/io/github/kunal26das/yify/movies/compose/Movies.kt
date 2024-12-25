@@ -145,8 +145,16 @@ fun Movies(
                                     .clip(RoundedCornerShape(cornerRadius / 1.5f)),
                                 videoId = movie.youtubeTrailerCode,
                                 onStateChange = {
-                                    if (it == PlayerConstants.PlayerState.VIDEO_CUED) {
-                                        play()
+                                    when (it) {
+                                        PlayerConstants.PlayerState.VIDEO_CUED -> {
+                                            play()
+                                        }
+
+                                        PlayerConstants.PlayerState.ENDED -> {
+                                            selectedMovie = null
+                                        }
+
+                                        else -> Unit
                                     }
                                 }
                             )
