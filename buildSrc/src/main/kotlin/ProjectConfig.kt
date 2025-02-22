@@ -7,5 +7,5 @@ object ProjectConfig {
     const val compileSdk = 35
     const val versionCode = 13
     const val versionName = versionCode.toString()
-    val javaVersion = JavaVersion.VERSION_17
+    val javaVersion = JavaVersion.VERSION_21
 }
