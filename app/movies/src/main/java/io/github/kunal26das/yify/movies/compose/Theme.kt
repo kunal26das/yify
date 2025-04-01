@@ -20,15 +20,10 @@ fun Theme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val shimmer = Shimmer.shimmer()
-    val animation = shimmer.animation()
-    val selectedMovie = remember { mutableStateOf<Movie?>(null) }
     CompositionLocalProvider(
-        LocalShimmer provides shimmer,
         LocalActivity provides activity,
+        LocalShimmer provides Shimmer.shimmer(),
         LocalCornerRadius provides cornerRadius,
-        LocalShimmerAnimation provides animation,
-        LocalSelectedMovie provides selectedMovie,
         LocalStatusBarHeight provides statusBarHeight,
         LocalNavHostController provides navHostController,
         LocalNavigationBarHeight provides navigationBarHeight,

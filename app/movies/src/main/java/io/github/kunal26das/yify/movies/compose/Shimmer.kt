@@ -27,7 +27,7 @@ typealias ShimmerAnimation = State<Float>
 
 class Shimmer private constructor(
     private val size: MutableStateFlow<IntSize>,
-    private val animation: State<Float>,
+    private val animation: ShimmerAnimation,
 ) {
 
     fun setSize(size: IntSize) {
@@ -35,7 +35,7 @@ class Shimmer private constructor(
     }
 
     @Composable
-    fun animation(): State<Float> {
+    fun animation(): ShimmerAnimation {
         return animation
     }
 
@@ -75,7 +75,7 @@ fun Modifier.yifyShimmer(
 ): Modifier = composed {
     if (enabled.not()) return@composed this
     val shimmer = LocalShimmer.current
-    val animation by LocalShimmerAnimation.current
+    val animation by shimmer.animation()
     var size by remember { mutableStateOf(IntSize.Zero) }
     background(
         brush = Brush.linearGradient(
