@@ -64,10 +64,9 @@ internal class GenreMapper(
         Genre.Thriller -> GENRE_THRILLER
         Genre.War -> GENRE_WAR
         Genre.Western -> GENRE_WESTERN
-        else -> null
     }
 
-    fun toGenre(genre: String) = when (genre) {
+    private fun toGenre(genre: String) = when (genre) {
         GENRE_ACTION -> Genre.Action
         GENRE_ADVENTURE -> Genre.Adventure
         GENRE_ANIMATION -> Genre.Animation
