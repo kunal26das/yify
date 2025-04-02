@@ -91,7 +91,6 @@ private fun QualityDropdown(
                 Quality.Low -> context.getString(R.string.low)
                 Quality.Medium -> context.getString(R.string.medium)
                 Quality.High -> context.getString(R.string.high)
-                else -> ""
             }
         },
         onSelect = {
