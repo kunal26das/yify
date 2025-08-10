@@ -21,5 +21,4 @@ val Quality.key
         Quality.Low -> QUALITY_720p
         Quality.Medium -> QUALITY_1080p
         Quality.High -> QUALITY_2160p
-        else -> QUALITY_ALL
     }

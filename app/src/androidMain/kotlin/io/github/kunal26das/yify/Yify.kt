@@ -7,14 +7,20 @@ import io.github.kunal26das.yify.movies.data.di.moviesDataModule
 import io.github.kunal26das.yify.movies.di.moviesModule
 import io.github.kunal26das.yify.movies.di.networkModule
 import org.koin.android.ext.koin.androidContext
-import org.koin.androix.startup.KoinStartup.onKoinStartup
+import org.koin.androix.startup.KoinStartup
 import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.dsl.KoinConfiguration
 
 @OptIn(KoinExperimentalAPI::class)
-class Yify : Application() {
+class Yify : Application(), KoinStartup {
 
-    init {
-        onKoinStartup {
+    override fun onCreate() {
+        super.onCreate()
+        DynamicColors.applyToActivitiesIfAvailable(this)
+    }
+
+    override fun onKoinStartup(): KoinConfiguration {
+        return KoinConfiguration {
             androidContext(this@Yify)
             modules(
                 moviesModule,
@@ -27,10 +33,5 @@ class Yify : Application() {
                 ),
             )
         }
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        DynamicColors.applyToActivitiesIfAvailable(this)
     }
 }

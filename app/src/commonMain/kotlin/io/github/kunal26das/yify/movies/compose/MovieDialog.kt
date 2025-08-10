@@ -42,8 +42,8 @@ fun MovieDialog(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                bottom = LocalStatusBarHeight.current,
                 top = 8.dp,
-                bottom = LocalStatusBarHeight.current
             ),
             content = {
                 item {
