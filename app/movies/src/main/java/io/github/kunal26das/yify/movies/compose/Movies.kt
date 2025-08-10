@@ -110,8 +110,8 @@ fun Movies(
                     .width(360.dp)
                     .fillMaxHeight(),
                 shape = RoundedCornerShape(
-                    bottomEnd = LocalCornerRadius.current,
                     topEnd = LocalCornerRadius.current,
+                    bottomEnd = 0.dp,
                 )
             ) {
                 DrawerContent()

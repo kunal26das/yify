@@ -2,9 +2,7 @@ package io.github.kunal26das.yify.movies.logger
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
-import javax.inject.Singleton
 
-@Singleton
 internal class CrashlyticsLogger(
     private val crashlytics: FirebaseCrashlytics,
 ) : ExceptionLogger {

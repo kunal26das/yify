@@ -1,9 +1,9 @@
 package io.github.kunal26das.yify.movies.di
 
 import androidx.datastore.dataStoreFile
+import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import io.github.kunal26das.yify.movies.domain.logger.ExceptionLogger
 import io.github.kunal26das.yify.movies.domain.logger.Logger
 import io.github.kunal26das.yify.movies.domain.preference.DataStoreFileProducer

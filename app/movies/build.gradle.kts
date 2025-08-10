@@ -41,7 +41,7 @@ dependencies {
     implementation(libs.coil.compose)
 
     implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.palette.ktx)
