@@ -63,9 +63,9 @@ fun Movies(
     val cornerRadius = LocalCornerRadius.current
     val coroutineScope = rememberCoroutineScope()
     var selectedMovie by LocalSelectedMovie.current
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val moviesCount by viewModel.moviesCount.collectAsState()
     val moviePreference by viewModel.moviePreference.collectAsState()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
 
     val firstVisibleItemIndex by remember {
@@ -246,7 +246,14 @@ fun Movies(
                             .padding(
                                 bottom = bottomPadding,
                             ),
-                        shape = RoundedCornerShape(cornerRadius / 1.5f)
+                        shape = RoundedCornerShape(cornerRadius / 1.5f),
+                        onFilterClick = {
+                            if (drawerState.isClosed) {
+                                coroutineScope.launch {
+                                    drawerState.open()
+                                }
+                            }
+                        }
                     )
                 }
             }

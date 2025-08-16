@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -37,9 +38,10 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
 fun SearchTextField(
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     viewModel: MoviesViewModel = koinViewModel(),
     shape: Shape = OutlinedTextFieldDefaults.shape,
+    onFilterClick: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
@@ -72,7 +74,7 @@ fun SearchTextField(
         trailingIcon = {
             if (searchQuery.isNotEmpty()) {
                 IconButton(
-                    modifier = Modifier.Companion.padding(end = 8.dp),
+                    modifier = Modifier.padding(end = 8.dp),
                     onClick = {
                         viewModel.search(null)
                         focusManager.clearFocus()
@@ -80,6 +82,17 @@ fun SearchTextField(
                     content = {
                         Icon(
                             imageVector = Icons.Filled.Clear,
+                            contentDescription = null,
+                        )
+                    }
+                )
+            } else {
+                IconButton(
+                    modifier = Modifier.padding(end = 8.dp),
+                    onClick = onFilterClick,
+                    content = {
+                        Icon(
+                            imageVector = Icons.Filled.FilterList,
                             contentDescription = null,
                         )
                     }
