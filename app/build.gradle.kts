@@ -1,14 +1,14 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.googleServices)
+    alias(libs.plugins.google.services)
     alias(libs.plugins.crashlytics)
-    alias(libs.plugins.firebasePerf)
+    alias(libs.plugins.firebase.performance)
 }
 
 kotlin {
@@ -78,7 +78,7 @@ kotlin {
         val commonMain by getting
         val androidMain by getting {
             dependencies {
-                implementation(libs.symbol.processing.api)
+                implementation(libs.ksp.symbol.processing)
             }
         }
     }
@@ -103,7 +103,6 @@ android {
         targetSdk = ProjectConfig.targetSdk
         versionCode = ProjectConfig.versionCode
         versionName = ProjectConfig.versionName
-        setProperty("archivesBaseName", "v${versionName}-${versionCode}")
     }
     buildFeatures {
         buildConfig = true

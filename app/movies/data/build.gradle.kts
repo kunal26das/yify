@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
     id("java-library")
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 java {
