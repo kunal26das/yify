@@ -28,7 +28,7 @@ internal val cornerRadius: Dp
     @Composable get() {
         val displayCutoutPaddingValues = WindowInsets.displayCutout.asPaddingValues()
         val radius = displayCutoutPaddingValues.calculateTopPadding()
-        return maxOf(radius, 8.dp)
+        return maxOf(radius, 56.dp)
     }
 
 val AsyncImagePainter.State.isLoading
