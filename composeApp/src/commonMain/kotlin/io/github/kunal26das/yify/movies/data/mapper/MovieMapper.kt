@@ -4,7 +4,6 @@ import io.github.kunal26das.yify.movies.data.dto.MovieDto
 import io.github.kunal26das.yify.movies.domain.model.Movie
 
 internal class MovieMapper(
-    private val languageMapper: LanguageMapper,
     private val genreMapper: GenreMapper,
 ) {
     fun toMovie(movieDto: MovieDto) = Movie(
@@ -18,7 +17,6 @@ internal class MovieMapper(
         description = movieDto.descriptionFull.orEmpty(),
         genres = genreMapper.toGenres(movieDto.genres),
         imdbCode = movieDto.imdbCode.orEmpty(),
-        language = languageMapper.toLanguage(movieDto.language),
         mpaRating = movieDto.mpaRating.orEmpty(),
         peers = movieDto.torrentDtos.maxPeers,
         quality = movieDto.torrentDtos.bestQuality,

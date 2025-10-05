@@ -14,7 +14,6 @@ data class Movie(
     val description: String,
     val genres: List<Genre>,
     val imdbCode: String,
-    val language: Language,
     val mpaRating: String,
     val peers: Int,
     val quality: Quality?,
