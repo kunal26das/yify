@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import chaintech.videoplayer.host.MediaPlayerHost
+import chaintech.videoplayer.model.VideoPlayerConfig
 import chaintech.videoplayer.ui.youtube.YouTubePlayerComposable
 import io.github.kunal26das.yify.BackHandler
 import io.github.kunal26das.yify.movies.Constants.TRAILER_ASPECT_RATIO
@@ -129,6 +130,21 @@ fun Movies(
                     contentAlignment = Alignment.TopCenter,
                     label = selectedMovie?.title.orEmpty(),
                 ) { movie ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    0f to MaterialTheme.colorScheme.background,
+                                    1f to Color.Transparent,
+                                )
+                            ).padding(
+                                top = when (movie) {
+                                    null -> statusBarHeight
+                                    else -> statusBarHeight * 4
+                                }
+                            )
+                    )
                     if (movie != null) {
                         Surface(
                             modifier = Modifier
@@ -144,20 +160,18 @@ fun Movies(
                                     .aspectRatio(TRAILER_ASPECT_RATIO),
                                 playerHost = remember {
                                     MediaPlayerHost(mediaUrl = movie.youtubeTrailerCode)
-                                }
+                                },
+                                playerConfig = VideoPlayerConfig(
+                                    isFastForwardBackwardEnabled = false,
+                                    isSpeedControlEnabled = false,
+                                    isMuteControlEnabled = false,
+                                    isPauseResumeEnabled = true,
+                                    isFullScreenEnabled = false,
+                                    isScreenLockEnabled = false,
+                                    isSeekBarVisible = false,
+                                )
                             )
                         }
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        0f to MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
-                                        1f to Color.Transparent,
-                                    )
-                                ).padding(top = statusBarHeight)
-                        )
                     }
                 }
             },
@@ -170,9 +184,9 @@ fun Movies(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
                             bottom = contentPadding.calculateBottomPadding(),
-                            top = contentPadding.calculateTopPadding() + when (selectedMovie) {
-                                null -> 0.dp
-                                else -> 5.dp
+                            top = when (selectedMovie) {
+                                null -> statusBarHeight
+                                else -> contentPadding.calculateTopPadding()
                             },
                             start = 5.dp,
                             end = 5.dp,
@@ -183,7 +197,7 @@ fun Movies(
                     )
                     AnimatedVisibility(
                         modifier = Modifier
-                            .padding(bottom = contentPadding.calculateBottomPadding() + 8.dp)
+                            .padding(bottom = contentPadding.calculateBottomPadding())
                             .align(Alignment.BottomCenter),
                         visible = moviesCount > 0 && firstVisibleItemIndex > 0,
                         enter = fadeIn(),
