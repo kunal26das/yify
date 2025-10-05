@@ -79,20 +79,6 @@ fun Movies(
         }
     }
 
-//    BackHandler(selectedMovie != null) {
-//        if (selectedMovie != null) {
-//            selectedMovie = null
-//        }
-//    }
-
-//    BackHandler(drawerState.isOpen) {
-//        if (drawerState.isOpen) {
-//            coroutineScope.launch {
-//                drawerState.close()
-//            }
-//        }
-//    }
-
     LaunchedEffect(moviePreference) {
         try {
             state.scrollToItem(0)

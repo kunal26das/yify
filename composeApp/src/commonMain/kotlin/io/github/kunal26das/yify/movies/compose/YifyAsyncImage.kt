@@ -30,8 +30,6 @@ fun YifyAsyncImage(
     AsyncImage(
         modifier = modifier.yifyShimmer(enableShimmer and state.isLoading),
         model = ImageRequest.Builder(LocalPlatformContext.current).apply {
-//            dispatcher(Dispatchers.IO)
-//            crossfade(true)
             builder.invoke(this)
         }.build(),
         contentDescription = contentDescription,

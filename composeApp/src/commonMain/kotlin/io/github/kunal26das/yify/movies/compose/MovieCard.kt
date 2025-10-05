@@ -19,9 +19,6 @@ fun MovieCard(
         modifier = modifier
             .clickable {
                 selectedMovie.value = movie
-//                if (movie != null) {
-//                    navHostController?.navigate(Destination.MovieDetails(movie))
-//                }
             },
         shape = RoundedCornerShape(LocalCornerRadius.current / 1.5f),
         shadowElevation = 8.dp

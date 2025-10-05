@@ -35,12 +35,6 @@ val networkModule = module {
                     request.headers.append("x-retry-count", retryCount.toString())
                 }
             }
-            engine {
-//                config {
-//                    retryOnConnectionFailure(true)
-//                    dns(getDns(this))
-//                }
-            }
         }
     }
 }
