@@ -3,7 +3,6 @@ package io.github.kunal26das.yify.movies.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +25,6 @@ fun ErrorState(
         Text(
             modifier = Modifier.padding(16.dp),
             text = "Something Went Wrong",
-            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             fontSize = 20.sp,
         )
@@ -34,10 +32,7 @@ fun ErrorState(
             modifier = Modifier,
             onClick = onRefresh,
             content = {
-                Text(
-                    text = "Refresh",
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Text("Refresh")
             }
         )
     }

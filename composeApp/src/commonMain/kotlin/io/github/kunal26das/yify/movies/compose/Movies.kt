@@ -63,8 +63,8 @@ fun Movies(
     val coroutineScope = rememberCoroutineScope()
     var selectedMovie by LocalSelectedMovie.current
     val moviesCount by viewModel.moviesCount.collectAsState()
-    val moviePreference by viewModel.moviePreference.collectAsState()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val moviePreference by viewModel.moviePreference.collectAsState()
     val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
 
     val firstVisibleItemIndex by remember {
@@ -119,7 +119,6 @@ fun Movies(
                                 .padding(8.dp)
                                 .statusBarsPadding(),
                             shape = RoundedCornerShape(cornerRadius / 1.5f),
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
                             shadowElevation = 16.dp,
                         ) {
                             YouTubePlayerComposable(
@@ -185,7 +184,6 @@ fun Movies(
                                     vertical = 2.dp,
                                 ),
                             text = "${firstVisibleItemIndex + visibleItemsCount}/${moviesCount}",
-                            color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
                             fontSize = 12.sp,
                         )
@@ -205,7 +203,6 @@ fun Movies(
                         topStart = cornerRadius / 1.5f,
                         topEnd = cornerRadius / 1.5f,
                     ),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shadowElevation = 16.dp,
                 ) {
                     SearchTextField(
