@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.coil.network.ktor)
             implementation(libs.androidx.paging.compose)
             implementation(libs.ktor.client.core)
+            implementation(libs.mediaplayer)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -65,16 +66,20 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
         }
     }
+
+    targets.all {
+        compilations.removeAll { it.name == "test" }
+    }
 }
 
 android {
     namespace = "io.github.kunal26das.yify"
-    compileSdk = 36 // libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.kunal26das.yify"
-        minSdk = 35 // libs.versions.android.minSdk.get().toInt()
-        targetSdk = 36 // libs.versions.android.targetSdk.get().toInt()
+        minSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }

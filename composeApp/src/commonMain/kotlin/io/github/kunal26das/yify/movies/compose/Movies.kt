@@ -9,12 +9,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -42,11 +45,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
+import chaintech.videoplayer.host.MediaPlayerHost
+import chaintech.videoplayer.ui.youtube.YouTubePlayerComposable
+import io.github.kunal26das.yify.movies.Constants.TRAILER_ASPECT_RATIO
 import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun Movies(
     modifier: Modifier = Modifier,
@@ -123,14 +129,20 @@ fun Movies(
                     if (movie != null) {
                         Surface(
                             modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(
-                                bottomStart = cornerRadius / 1.5f,
-                                bottomEnd = cornerRadius / 1.5f,
-                            ),
+                                .fillMaxWidth()
+                                .statusBarsPadding(),
+                            shape = RoundedCornerShape(cornerRadius / 1.5f),
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             shadowElevation = 16.dp,
                         ) {
+                            YouTubePlayerComposable(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(TRAILER_ASPECT_RATIO),
+                                playerHost = remember {
+                                    MediaPlayerHost(mediaUrl = movie.youtubeTrailerCode)
+                                }
+                            )
                         }
                     } else {
                         Box(

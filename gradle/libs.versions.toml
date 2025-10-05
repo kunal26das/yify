@@ -8,6 +8,7 @@ icons = "1.7.3"
 koin = "4.1.1"
 kotlin = "2.2.20"
 ktor = "3.3.0"
+mediaplayer = "1.0.46"
 multiplatform = "1.9.0"
 paging = "3.4.0-alpha04"
 
@@ -26,6 +27,7 @@ ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.r
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+mediaplayer = { group = "network.chaintech", name = "compose-multiplatform-media-player", version.ref = "mediaplayer" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
