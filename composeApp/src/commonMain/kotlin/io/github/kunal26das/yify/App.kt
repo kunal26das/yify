@@ -9,6 +9,7 @@ import coil3.compose.LocalPlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
+import coil3.request.crossfade
 import io.github.kunal26das.yify.movies.compose.LocalCornerRadius
 import io.github.kunal26das.yify.movies.compose.LocalNavigationBarHeight
 import io.github.kunal26das.yify.movies.compose.LocalShimmer
@@ -28,26 +29,14 @@ fun App() {
         ImageLoader.Builder(context).apply {
             networkCachePolicy(CachePolicy.ENABLED)
             memoryCachePolicy(CachePolicy.ENABLED)
+            diskCachePolicy(CachePolicy.ENABLED)
+            crossfade(true)
             memoryCache {
                 MemoryCache.Builder().apply {
                     strongReferencesEnabled(true)
-                    maxSizePercent(context, 0.2) // 20%
+                    maxSizePercent(context, 1.0)
                 }.build()
             }
-            diskCachePolicy(CachePolicy.ENABLED)
-//            diskCache {
-//                DiskCache.Builder().apply {
-//                    directory(context.cacheDir)
-//                    maxSizePercent(0.02) // 2%
-//                }.build()
-//            }
-//            respectCacheHeaders(false)
-//            okHttpClient {
-//                val builder = OkHttpClient.Builder()
-//                builder.retryOnConnectionFailure(true)
-//                val dns = getDns(builder)
-//                builder.dns(dns).build()
-//            }
         }.build()
     }
     CompositionLocalProvider(

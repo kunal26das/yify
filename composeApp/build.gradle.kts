@@ -36,13 +36,11 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.okhttp.dnsoverhttps)
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.okhttp.dnsoverhttps)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -57,6 +55,7 @@ kotlin {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
             implementation(libs.androidx.paging.compose)
             implementation(libs.ktor.client.core)
         }
@@ -69,7 +68,6 @@ kotlin {
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.okhttp.dnsoverhttps)
         }
     }
 }
