@@ -13,6 +13,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            name = "JOGL"
+            url = uri("https://jogamp.org/deployment/maven")
+        }
     }
 }
 

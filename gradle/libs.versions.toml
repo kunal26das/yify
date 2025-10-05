@@ -9,12 +9,15 @@ koin = "4.1.1"
 kotlin = "2.2.20"
 ktor = "3.3.0"
 material = "1.14.0-alpha05"
+androidx-material3 = "1.5.0-alpha04"
+material3 = "1.9.0-beta06"
 mediaplayer = "1.0.47"
 multiplatform = "1.9.0"
 paging = "3.4.0-alpha04"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "androidx-material3" }
 material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "icons" }
 androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
@@ -28,6 +31,7 @@ ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.r
 ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 mediaplayer = { group = "network.chaintech", name = "compose-multiplatform-media-player", version.ref = "mediaplayer" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 

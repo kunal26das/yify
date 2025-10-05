@@ -37,7 +37,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.material)
-            implementation("androidx.compose.material3:material3:1.5.0-alpha04")
+            implementation(libs.androidx.material3)
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -59,7 +59,7 @@ kotlin {
             implementation(libs.androidx.paging.compose)
             implementation(libs.ktor.client.core)
             implementation(libs.mediaplayer)
-            implementation("org.jetbrains.compose.material3:material3:1.9.0-beta06")
+            implementation(libs.material3)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
