@@ -169,6 +169,6 @@ private fun ClearButton(
         modifier = modifier,
         onClick = { viewModel.clear() },
         contentPadding = PaddingValues(12.dp),
-        content = { "Reset" }
+        content = { Text("Reset") }
     )
 }

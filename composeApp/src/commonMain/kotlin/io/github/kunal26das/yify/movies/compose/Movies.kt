@@ -130,6 +130,7 @@ fun Movies(
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(8.dp)
                                 .statusBarsPadding(),
                             shape = RoundedCornerShape(cornerRadius / 1.5f),
                             color = MaterialTheme.colorScheme.surfaceContainerLow,

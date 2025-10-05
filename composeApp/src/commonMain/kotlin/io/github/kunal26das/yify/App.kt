@@ -40,9 +40,9 @@ fun App() {
         }.build()
     }
     CompositionLocalProvider(
-        LocalShimmer provides Shimmer.Companion.shimmer(),
         LocalCornerRadius provides cornerRadius,
         LocalStatusBarHeight provides statusBarHeight,
+        LocalShimmer provides Shimmer.Companion.shimmer(),
         LocalNavigationBarHeight provides navigationBarHeight,
     ) {
         Movies(modifier = Modifier.fillMaxSize())

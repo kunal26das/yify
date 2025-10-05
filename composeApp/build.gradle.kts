@@ -36,6 +36,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.material)
         }
         appleMain.dependencies {
             implementation(libs.ktor.client.darwin)

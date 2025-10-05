@@ -1,6 +1,7 @@
 package io.github.kunal26das.yify
 
 import android.app.Application
+import com.google.android.material.color.DynamicColors
 import org.koin.android.ext.koin.androidContext
 
 class Yify : Application() {
@@ -10,5 +11,6 @@ class Yify : Application() {
             androidContext(applicationContext)
             modules(networkModule)
         }
+        DynamicColors.applyToActivitiesIfAvailable(this)
     }
 }
