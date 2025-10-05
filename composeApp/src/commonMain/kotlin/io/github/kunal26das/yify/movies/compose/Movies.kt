@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import chaintech.videoplayer.host.MediaPlayerHost
 import chaintech.videoplayer.ui.youtube.YouTubePlayerComposable
+import io.github.kunal26das.yify.BackHandler
 import io.github.kunal26das.yify.movies.Constants.TRAILER_ASPECT_RATIO
 import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
 import kotlinx.coroutines.launch
@@ -65,6 +66,16 @@ fun Movies(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val moviePreference by viewModel.moviePreference.collectAsState()
     val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
+
+    BackHandler(selectedMovie != null) {
+        selectedMovie = null
+    }
+
+    BackHandler(drawerState.isOpen) {
+        coroutineScope.launch {
+            drawerState.close()
+        }
+    }
 
     val firstVisibleItemIndex by remember {
         derivedStateOf {
