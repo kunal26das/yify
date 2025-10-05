@@ -1,7 +1,9 @@
 package io.github.kunal26das.yify.movies.compose
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,10 +21,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -38,11 +42,12 @@ fun SearchTextField(
     shape: Shape = OutlinedTextFieldDefaults.shape,
     onFilterClick: () -> Unit = {},
 ) {
+    val density = LocalDensity.current
     val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
     val searchQuery by viewModel.searchQuery.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
-    val isImeVisible = false // by rememberUpdatedState(WindowInsets.Companion.isImeVisible)
+    val isImeVisible by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
 
     LaunchedEffect(isImeVisible) {
         if (isImeVisible.not()) {
