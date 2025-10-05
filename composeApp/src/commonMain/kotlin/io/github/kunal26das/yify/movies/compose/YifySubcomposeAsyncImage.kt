@@ -66,7 +66,6 @@ fun YifySubcomposeAsyncImage(
             }
         },
         error = {
-            throw it.result.throwable
             Box(
                 modifier = Modifier.fillMaxSize(),
             ) {
