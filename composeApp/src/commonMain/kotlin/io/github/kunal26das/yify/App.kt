@@ -11,14 +11,10 @@ import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import io.github.kunal26das.yify.movies.compose.LocalCornerRadius
-import io.github.kunal26das.yify.movies.compose.LocalNavigationBarHeight
 import io.github.kunal26das.yify.movies.compose.LocalShimmer
-import io.github.kunal26das.yify.movies.compose.LocalStatusBarHeight
 import io.github.kunal26das.yify.movies.compose.Movies
 import io.github.kunal26das.yify.movies.compose.Shimmer
 import io.github.kunal26das.yify.movies.compose.cornerRadius
-import io.github.kunal26das.yify.movies.compose.navigationBarHeight
-import io.github.kunal26das.yify.movies.compose.statusBarHeight
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -41,9 +37,7 @@ fun App() {
     }
     CompositionLocalProvider(
         LocalCornerRadius provides cornerRadius,
-        LocalStatusBarHeight provides statusBarHeight,
         LocalShimmer provides Shimmer.Companion.shimmer(),
-        LocalNavigationBarHeight provides navigationBarHeight,
     ) {
         Movies(modifier = Modifier.fillMaxSize())
     }

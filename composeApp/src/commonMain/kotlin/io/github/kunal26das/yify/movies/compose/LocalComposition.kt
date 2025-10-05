@@ -9,7 +9,5 @@ private const val DEFAULT_ERROR_MESSAGE = "No active local composition found!"
 private const val DEFAULT_DP = 16
 
 val LocalCornerRadius = compositionLocalOf { DEFAULT_DP.dp }
-val LocalStatusBarHeight = compositionLocalOf { DEFAULT_DP.dp }
-val LocalNavigationBarHeight = compositionLocalOf { DEFAULT_DP.dp }
 val LocalSelectedMovie = compositionLocalOf { mutableStateOf<Movie?>(null) }
 val LocalShimmer = compositionLocalOf<Shimmer> { error(DEFAULT_ERROR_MESSAGE) }

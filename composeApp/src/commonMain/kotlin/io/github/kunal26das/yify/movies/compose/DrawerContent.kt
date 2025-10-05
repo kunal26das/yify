@@ -34,10 +34,7 @@ fun DrawerContent(
 ) {
     val contentModifier = Modifier.fillMaxWidth()
     Column(
-        modifier = modifier.padding(
-            vertical = LocalStatusBarHeight.current,
-            horizontal = 16.dp,
-        ),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         GenreDropdown(modifier = contentModifier)

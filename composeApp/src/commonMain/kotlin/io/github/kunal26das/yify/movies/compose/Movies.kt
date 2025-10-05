@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -99,7 +98,11 @@ fun Movies(
                     bottomEnd = 0.dp,
                 )
             ) {
-                DrawerContent()
+                DrawerContent(
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp)
+                )
             }
         },
     ) {
@@ -134,13 +137,12 @@ fun Movies(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(statusBarHeight)
                                 .background(
                                     brush = Brush.verticalGradient(
                                         0f to MaterialTheme.colorScheme.background.copy(alpha = 0.9f),
                                         1f to Color.Transparent,
                                     )
-                                )
+                                ).statusBarsPadding()
                         )
                     }
                 }
