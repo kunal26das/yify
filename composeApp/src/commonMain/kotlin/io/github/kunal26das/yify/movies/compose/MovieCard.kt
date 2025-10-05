@@ -20,8 +20,8 @@ fun MovieCard(
             .clickable {
                 selectedMovie.value = movie
             },
-        shape = RoundedCornerShape(LocalCornerRadius.current / 1.5f),
-        shadowElevation = 8.dp
+        shape = RoundedCornerShape(LocalCornerRadius.current),
+        shadowElevation = 4.dp
     ) {
         YifySubcomposeAsyncImage(
             builder = {

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -136,8 +135,8 @@ fun Movies(
                                 .fillMaxWidth()
                                 .padding(8.dp)
                                 .statusBarsPadding(),
-                            shape = RoundedCornerShape(cornerRadius / 1.5f),
-                            shadowElevation = 16.dp,
+                            shape = RoundedCornerShape(cornerRadius),
+                            shadowElevation = 4.dp,
                         ) {
                             YouTubePlayerComposable(
                                 modifier = Modifier
@@ -211,29 +210,26 @@ fun Movies(
                 val density = LocalDensity.current
                 val isImeVisible by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
                 val bottomPadding by animateDpAsState(
-                    targetValue = if (isImeVisible) 16.dp else 0.dp,
+                    targetValue = if (isImeVisible) 48.dp else 32.dp,
                     label = "bottomPadding"
                 )
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(
-                        topStart = cornerRadius / 1.5f,
-                        topEnd = cornerRadius / 1.5f,
-                    ),
-                    shadowElevation = 16.dp,
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 24.dp,
+                            vertical = bottomPadding,
+                        ),
+                    shape = RoundedCornerShape(cornerRadius),
+                    shadowElevation = 4.dp,
                 ) {
                     SearchTextField(
-                        modifier = Modifier
-                            .navigationBarsPadding()
-                            .padding(
-                                horizontal = 10.dp,
-                                vertical = 8.dp,
-                            )
-                            .padding(
-                                bottom = bottomPadding,
-                            ),
-                        shape = RoundedCornerShape(cornerRadius / 1.5f),
+                        modifier = Modifier.padding(
+                            bottom = 8.dp,
+                            start = 8.dp,
+                            end = 8.dp,
+                        ),
+                        shape = RoundedCornerShape(cornerRadius),
                         onFilterClick = {
                             if (drawerState.isClosed) {
                                 coroutineScope.launch {

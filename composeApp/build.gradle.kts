@@ -10,6 +10,10 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+private val appVersionCode = 1
+private val appVersion = "1.0.0"
+private val appId = "io.github.kunal26das.yify"
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -77,19 +81,19 @@ kotlin {
 }
 
 android {
-    namespace = "io.github.kunal26das.yify"
+    namespace = appId
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.kunal26das.yify"
         minSdk = 35
         targetSdk = 36
-        versionCode = 1
-        versionName = versionCode.toString()
+        applicationId = appId
+        versionName = appVersion
+        versionCode = appVersionCode
     }
     packaging {
         resources {
-            excludes += "/META-INF/**"
+            excludes.add("META-INF/**")
         }
     }
     buildTypes {
@@ -118,12 +122,12 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "io.github.kunal26das.yify.MainKt"
+        mainClass = "$appId.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "io.github.kunal26das.yify"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
+            packageName = appId
         }
     }
 }

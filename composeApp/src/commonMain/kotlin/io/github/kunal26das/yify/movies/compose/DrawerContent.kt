@@ -55,7 +55,7 @@ private fun GenreDropdown(
     Dropdown(
         modifier2 = modifier,
         label = "Genre",
-        shape = RoundedCornerShape(cornerRadius / 1.5f),
+        shape = RoundedCornerShape(cornerRadius),
         selection = moviePreference.genre,
         items = Genre.entries,
         name = { it.name },
@@ -75,7 +75,7 @@ private fun QualityDropdown(
     Dropdown(
         modifier2 = modifier,
         label = "Quality",
-        shape = RoundedCornerShape(cornerRadius / 1.5f),
+        shape = RoundedCornerShape(cornerRadius),
         selection = moviePreference.quality,
         items = Quality.entries.reversed(),
         showTrailingIcon = false,
@@ -100,7 +100,7 @@ private fun SortByDropdown(
         modifier2 = Modifier.fillMaxWidth(),
         label = "Sort By",
         selection = moviePreference.sortBy,
-        shape = RoundedCornerShape(cornerRadius / 1.5f),
+        shape = RoundedCornerShape(cornerRadius),
         items = listOf(SortBy.DateAdded, SortBy.Title, SortBy.Year, SortBy.Rating),
         name = {
             it.name
