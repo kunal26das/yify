@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-private val appVersionCode = 20
+private val appVersionCode = 21
 private val appVersion = "1.0.0"
 private val appId = "io.github.kunal26das.yify"
 

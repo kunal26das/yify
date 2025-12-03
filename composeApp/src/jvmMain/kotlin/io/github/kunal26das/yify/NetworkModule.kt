@@ -19,7 +19,7 @@ val networkModule = module {
             }
             install(DefaultRequest) {
                 contentType(ContentType.Application.Json)
-                url("https://yts.mx/api/v2/")
+                url("https://yts.lt/api/v2/")
             }
             install(HttpRequestRetry) {
                 retryOnServerErrors(maxRetries = 5)

@@ -37,7 +37,7 @@ fun App() {
     }
     CompositionLocalProvider(
         LocalCornerRadius provides cornerRadius,
-        LocalShimmer provides Shimmer.Companion.shimmer(),
+        LocalShimmer provides Shimmer.shimmer(),
     ) {
         Movies(modifier = Modifier.fillMaxSize())
     }

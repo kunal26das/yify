@@ -64,7 +64,7 @@ fun SearchTextField(
         label = {
             if (isFocused.not() && searchQuery.isEmpty()) {
                 Text(
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 8.dp),
                     text = "Search",
@@ -104,7 +104,7 @@ fun SearchTextField(
             viewModel.search(it)
         },
         keyboardOptions = KeyboardOptions(
-            imeAction = ImeAction.Companion.Search,
+            imeAction = ImeAction.Search,
             autoCorrectEnabled = false,
         ),
         keyboardActions = KeyboardActions(
