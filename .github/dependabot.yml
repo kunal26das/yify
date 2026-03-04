@@ -1,0 +1,9 @@
+# Dependabot: open PRs when new dependency versions are available
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
