@@ -13,7 +13,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@expo/vector-icons": "15.0.3",
+    "@expo/vector-icons": "15.1.1",
     "@gorhom/bottom-sheet": "5.2.8",
     "@react-navigation/bottom-tabs": "7.4.7",
     "@react-navigation/elements": "2.6.3",
