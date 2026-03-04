@@ -1,0 +1,259 @@
+package io.github.kunal26das.yify.movies.compose
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DismissibleNavigationDrawer
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.paging.compose.collectAsLazyPagingItems
+import chaintech.videoplayer.host.MediaPlayerHost
+import chaintech.videoplayer.model.VideoPlayerConfig
+import chaintech.videoplayer.ui.youtube.YouTubePlayerComposable
+import io.github.kunal26das.yify.BackHandler
+import io.github.kunal26das.yify.movies.Constants.TRAILER_ASPECT_RATIO
+import io.github.kunal26das.yify.movies.presentation.MoviesViewModel
+import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalComposeUiApi::class)
+@Composable
+fun Movies(
+    modifier: Modifier = Modifier,
+    viewModel: MoviesViewModel = koinViewModel(),
+) {
+    val state = rememberLazyGridState()
+    val cornerRadius = LocalCornerRadius.current
+    val coroutineScope = rememberCoroutineScope()
+    var selectedMovie by LocalSelectedMovie.current
+    val moviesCount by viewModel.moviesCount.collectAsState()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val moviePreference by viewModel.moviePreference.collectAsState()
+    val uncategorizedMovies = viewModel.uncategorizedMovies.collectAsLazyPagingItems()
+
+    BackHandler(selectedMovie != null) {
+        selectedMovie = null
+    }
+
+    BackHandler(drawerState.isOpen) {
+        coroutineScope.launch {
+            drawerState.close()
+        }
+    }
+
+    val firstVisibleItemIndex by remember {
+        derivedStateOf {
+            state.firstVisibleItemIndex
+        }
+    }
+
+    val visibleItemsCount by remember {
+        derivedStateOf {
+            state.layoutInfo.visibleItemsInfo.size
+        }
+    }
+
+    LaunchedEffect(moviePreference) {
+        try {
+            state.scrollToItem(0)
+        } catch (_: IndexOutOfBoundsException) {
+        }
+    }
+
+    DismissibleNavigationDrawer(
+        modifier = modifier,
+        drawerState = drawerState,
+        drawerContent = {
+            ElevatedCard(
+                modifier = Modifier
+                    .width(360.dp)
+                    .fillMaxHeight(),
+                shape = RoundedCornerShape(
+                    topEnd = LocalCornerRadius.current,
+                    bottomEnd = 0.dp,
+                )
+            ) {
+                DrawerContent(
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp)
+                )
+            }
+        },
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                AnimatedContent(
+                    modifier = Modifier,
+                    targetState = selectedMovie,
+                    contentAlignment = Alignment.TopCenter,
+                    label = selectedMovie?.title.orEmpty(),
+                ) { movie ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    0f to MaterialTheme.colorScheme.background,
+                                    1f to Color.Transparent,
+                                )
+                            ).padding(
+                                top = when (movie) {
+                                    null -> statusBarHeight
+                                    else -> statusBarHeight * 4
+                                }
+                            )
+                    )
+                    if (movie != null) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .statusBarsPadding(),
+                            shape = RoundedCornerShape(cornerRadius),
+                            shadowElevation = 4.dp,
+                        ) {
+                            YouTubePlayerComposable(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(TRAILER_ASPECT_RATIO),
+                                playerHost = remember {
+                                    MediaPlayerHost(mediaUrl = movie.youtubeTrailerCode)
+                                },
+                                playerConfig = VideoPlayerConfig(
+                                    isFastForwardBackwardEnabled = false,
+                                    isSpeedControlEnabled = false,
+                                    isMuteControlEnabled = false,
+                                    isPauseResumeEnabled = true,
+                                    isFullScreenEnabled = false,
+                                    isScreenLockEnabled = false,
+                                    isSeekBarVisible = false,
+                                )
+                            )
+                        }
+                    }
+                }
+            },
+            content = { contentPadding ->
+                val selectedMovie by LocalSelectedMovie.current
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    VerticalGridMovies(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            bottom = contentPadding.calculateBottomPadding(),
+                            top = when (selectedMovie) {
+                                null -> statusBarHeight
+                                else -> contentPadding.calculateTopPadding()
+                            },
+                            start = 5.dp,
+                            end = 5.dp,
+                        ),
+                        moviePadding = PaddingValues(5.dp),
+                        movies = uncategorizedMovies,
+                        state = state,
+                    )
+                    AnimatedVisibility(
+                        modifier = Modifier
+                            .padding(bottom = contentPadding.calculateBottomPadding())
+                            .align(Alignment.BottomCenter),
+                        visible = moviesCount > 0 && firstVisibleItemIndex > 0,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .background(
+                                    shape = RoundedCornerShape(32.dp),
+                                    color = MaterialTheme.colorScheme.background,
+                                )
+                                .padding(
+                                    horizontal = 10.dp,
+                                    vertical = 2.dp,
+                                ),
+                            text = "${firstVisibleItemIndex + visibleItemsCount}/${moviesCount}",
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+            },
+            bottomBar = {
+                val density = LocalDensity.current
+                val isImeVisible by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
+                val bottomPadding by animateDpAsState(
+                    targetValue = if (isImeVisible) 48.dp else 32.dp,
+                    label = "bottomPadding"
+                )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = 24.dp,
+                            vertical = bottomPadding,
+                        ),
+                    shape = RoundedCornerShape(cornerRadius),
+                    shadowElevation = 4.dp,
+                ) {
+                    SearchTextField(
+                        modifier = Modifier.padding(
+                            bottom = 8.dp,
+                            start = 8.dp,
+                            end = 8.dp,
+                        ),
+                        shape = RoundedCornerShape(cornerRadius),
+                        onFilterClick = {
+                            if (drawerState.isClosed) {
+                                coroutineScope.launch {
+                                    drawerState.open()
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        )
+    }
+}

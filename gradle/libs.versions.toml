@@ -1,0 +1,58 @@
+[versions]
+activity = "1.12.0"
+agp = "8.13.1"
+coil = "3.3.0"
+coroutines = "1.10.2"
+firebase = "34.6.0"
+firebase-appdistribution = "5.2.0"
+firebase-crashlytics = "3.0.6"
+firebase-performance = "2.0.2"
+hotreload = "1.0.0"
+icons = "1.7.3"
+koin = "4.1.1"
+kotlin = "2.2.21"
+ktor = "3.3.3"
+material = "1.14.0-alpha07"
+androidx-material3 = "1.5.0-alpha09"
+material3 = "1.9.0"
+mediaplayer = "1.0.50"
+multiplatform = "1.9.3"
+paging = "3.4.0-alpha04"
+
+[libraries]
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-material3" }
+material-icons-extended = { group = "org.jetbrains.compose.material", name = "material-icons-extended", version.ref = "icons" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
+firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
+firebase-performance = { group = "com.google.firebase", name = "firebase-perf" }
+koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
+kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "coroutines" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
+ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "material3" }
+mediaplayer = { group = "network.chaintech", name = "compose-multiplatform-media-player", version.ref = "mediaplayer" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-hotreload = { id = "org.jetbrains.compose.hot-reload", version.ref = "hotreload" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "multiplatform" }
+firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebase-appdistribution" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
+firebase-performance = { id = "com.google.firebase.firebase-perf", version.ref = "firebase-performance" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
