@@ -1,66 +1,51 @@
-import { LiquidGlassView } from '@/components/liquid-glass-view';
 import { Image } from 'expo-image';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import type { Movie } from '@/domain/entities/Movie';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDeviceCornerRadius } from '@/hooks/use-device-corner-radius';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import { getPosterContainerStyle } from '@/presentation/movies/components/moviePosterLayout';
 
 export function MoviePosterItem({ movie }: { movie: Movie }) {
+  const { posterUrls } = movie;
   const cornerRadius = useDeviceCornerRadius();
-  const colorScheme = useColorScheme();
-  const iconColor = useThemeColor({}, 'icon');
-  const { posterUrls, posterUrl } = movie;
+  const [visibleUpToIndex, setVisibleUpToIndex] = useState(0);
 
-  const urls = useMemo(() => {
-    if (posterUrls.length > 0) return posterUrls;
-    if (posterUrl?.trim()) return [posterUrl.trim()];
-    return [];
-  }, [posterUrls, posterUrl]);
+  useEffect(() => {
+    if (posterUrls.length <= 1) return;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    for (let i = 1; i < posterUrls.length; i++) {
+      timeouts.push(
+        setTimeout(() => setVisibleUpToIndex(i), __DEV__ ? 2000 : 0)
+      );
+    }
+    return () => timeouts.forEach((t) => clearTimeout(t));
+  }, [posterUrls.length]);
 
   const posterStyle = [styles.poster, { borderRadius: cornerRadius }];
 
-  if (urls.length === 0) {
-    const glassTint = colorScheme === 'dark' ? 'dark' : 'light';
-    return (
-      <View
-        style={[
-          styles.container,
-          getPosterContainerStyle(),
-        ]}>
-        <LiquidGlassView
-          tint={glassTint}
-          intensity={50}
-          fallbackBackgroundColor={iconColor + '28'}
-          style={[styles.glassPlaceholder, { borderRadius: cornerRadius }]}
-        >
-          <View style={styles.placeholder}>
-            <IconSymbol name="film.fill" size={32} color={iconColor} />
-          </View>
-        </LiquidGlassView>
-      </View>
-    );
-  }
-
   return (
-    <View
-      style={[
-        styles.container,
-        getPosterContainerStyle(),
-      ]}>
-      {urls.map((uri, index) => {
-        const isFirst = index === 0;
+    <View style={[styles.container, getPosterContainerStyle()]}>
+      {posterUrls.map((uri, index) => {
+        if (index > visibleUpToIndex) return null;
         return (
-          <Image
+          <View
             key={`${movie.id}-${index}`}
-            source={{ uri }}
-            cachePolicy="memory-disk"
-            style={isFirst ? posterStyle : [styles.posterOverlay, posterStyle]}
-            contentFit="cover"
-          />
+            style={[
+              styles.layer,
+              {
+                zIndex: index,
+                borderRadius: cornerRadius,
+                overflow: 'hidden',
+              },
+            ]}
+          >
+            <Image
+              source={{ uri }}
+              contentFit="cover"
+              style={posterStyle}
+              cachePolicy="memory-disk"
+            />
+          </View>
         );
       })}
     </View>
@@ -68,21 +53,14 @@ export function MoviePosterItem({ movie }: { movie: Movie }) {
 }
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {
+    position: 'relative',
+  },
+  layer: {
+    ...StyleSheet.absoluteFillObject,
+  },
   poster: {
     width: '100%',
     height: '100%',
-  },
-  posterOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  glassPlaceholder: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  placeholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -3,6 +3,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
+    Animated,
     FlatList,
     Pressable,
     RefreshControl,
@@ -51,8 +52,27 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     } = viewModel;
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
+    const [isAtTop, setIsAtTop] = useState(true);
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
+    const scrollToTopOpacity = useRef(new Animated.Value(0)).current;
+
+    const SCROLL_AT_TOP_THRESHOLD = 8;
+
+    useEffect(() => {
+        Animated.timing(scrollToTopOpacity, {
+            toValue: isAtTop ? 0 : 1,
+            duration: 220,
+            useNativeDriver: true,
+        }).start();
+    }, [isAtTop, scrollToTopOpacity]);
+
+    const onScroll = useCallback(
+        ({nativeEvent}: { nativeEvent: { contentOffset: { y: number } } }) => {
+            setIsAtTop(nativeEvent.contentOffset.y <= SCROLL_AT_TOP_THRESHOLD);
+        },
+        []
+    );
     const colorScheme = useColorScheme();
 
     useEffect(() => {
@@ -86,7 +106,9 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     }, [hasMore, loading, loadMore]);
 
     const renderItem = useCallback(
-        ({item}: { item: (typeof movies)[0] }) => <MoviePosterItem movie={item}/>,
+        ({item}: { item: (typeof movies)[0] }) => (
+            <MoviePosterItem movie={item} />
+        ),
         []
     );
 
@@ -115,6 +137,16 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
         []
     );
 
+    if (loading && movies.length === 0) {
+        return (
+            <ThemedView style={styles.centered}>
+                <SafeAreaView style={styles.centered} edges={['top']}>
+                    <ActivityIndicator size="large" />
+                </SafeAreaView>
+            </ThemedView>
+        );
+    }
+
     const currentIndex = lastVisibleIndex + 1;
 
     if (error) {
@@ -122,16 +154,6 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
             <ThemedView style={styles.centered}>
                 <SafeAreaView style={styles.centered} edges={['top']}>
                     <ThemedText>{error}</ThemedText>
-                </SafeAreaView>
-            </ThemedView>
-        );
-    }
-
-    if (loading && movies.length === 0) {
-        return (
-            <ThemedView style={styles.centered}>
-                <SafeAreaView style={styles.centered} edges={['top']}>
-                    <ActivityIndicator size="large"/>
                 </SafeAreaView>
             </ThemedView>
         );
@@ -175,6 +197,8 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         ) : null
                     }
                     showsVerticalScrollIndicator={false}
+                    onScroll={onScroll}
+                    scrollEventThrottle={16}
                 />
                 <View
                     style={[styles.searchBarOverlay, {paddingTop: insets.top}]}
@@ -190,7 +214,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             <View style={styles.searchFieldWrapper}>
                                 <TextInput
                                     style={[styles.searchInput, {color: '#000'}]}
-                                    placeholder="Search movies"
+                                    placeholder="Search Movies"
                                     placeholderTextColor="#000"
                                     value={searchQuery}
                                     onChangeText={setSearchQuery}
@@ -225,22 +249,25 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         pointerEvents="box-none"
                     >
                         <View style={styles.countRow}>
-                            <Pressable
-                                onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
-                                style={({pressed}) => [
-                                    styles.scrollToTopButton,
-                                    {opacity: pressed ? 0.6 : 1},
-                                ]}
-                                hitSlop={8}
-                            >
-                                <LiquidGlassView
-                                    tint={glassTint}
-                                    fallbackBackgroundColor={iconColor + '28'}
-                                    style={styles.scrollToTopGlass}
+                            <Animated.View style={{opacity: scrollToTopOpacity}}>
+                                <Pressable
+                                    onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                                    style={({pressed}) => [
+                                        styles.scrollToTopButton,
+                                        {opacity: pressed ? 0.6 : 1},
+                                    ]}
+                                    pointerEvents={isAtTop ? 'none' : 'auto'}
+                                    hitSlop={8}
                                 >
-                                    <Ionicons name="arrow-up" size={20} color="#000"/>
-                                </LiquidGlassView>
-                            </Pressable>
+                                    <LiquidGlassView
+                                        tint={glassTint}
+                                        fallbackBackgroundColor={iconColor + '28'}
+                                        style={styles.scrollToTopGlass}
+                                    >
+                                        <Ionicons name="arrow-up" size={20} color="#000"/>
+                                    </LiquidGlassView>
+                                </Pressable>
+                            </Animated.View>
                             <LiquidGlassView
                                 tint={glassTint}
                                 fallbackBackgroundColor={iconColor + '28'}

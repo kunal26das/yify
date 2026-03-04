@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "scripts": {
     "start": "CI=false expo start",
-    "android": "bash scripts/run-android.sh",
+    "android": "expo run:android",
+    "android:debug": "bash scripts/run-android-debug.sh",
+    "android:release": "bash scripts/run-android-release.sh",
     "ios": "CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "ios:dev": "CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
     "web": "CI=false expo start --web",
@@ -12,6 +14,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "15.0.3",
+    "@gorhom/bottom-sheet": "5.2.8",
     "@react-navigation/bottom-tabs": "7.4.0",
     "@react-navigation/elements": "2.6.3",
     "@react-navigation/native": "7.1.17",

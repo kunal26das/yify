@@ -23,10 +23,9 @@ export class MovieRepositoryImpl implements MovieRepository {
 
     const movies: Movie[] = (response.data.movies ?? []).map((m) => {
       const posterUrls = [m.small_cover_image, m.medium_cover_image, m.large_cover_image]
-        .filter((url): url is string => typeof url === 'string' && url.length > 0);
+        .filter((url): url is string => url.length > 0);
       return {
         id: m.id,
-        posterUrl: posterUrls[posterUrls.length - 1] ?? m.medium_cover_image,
         posterUrls,
       };
     });
