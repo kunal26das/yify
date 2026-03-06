@@ -10,7 +10,8 @@
     "ios": "CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
     "ios:start": "CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "web": "CI=false expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/vector-icons": "15.1.1",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@types/react": "19.2.10",
     "eslint": "9.39.3",
+    "patch-package": "8.0.0",
     "eslint-config-expo": "55.0.0",
     "typescript": "5.9.3"
   },
