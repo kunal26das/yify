@@ -1,0 +1,102 @@
+import {DarkTheme, DefaultTheme, Stack, ThemeProvider} from 'expo-router';
+import {StatusBar} from 'expo-status-bar';
+import 'react-native-reanimated';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {StyleSheet} from 'react-native';
+import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
+import {
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    HankenGrotesk_800ExtraBold,
+    useFonts,
+} from '@expo-google-fonts/hanken-grotesk';
+import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-google-fonts/fraunces';
+
+import {Colors, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
+import {initRemoteConfig} from '@/lib/remote-config';
+
+void initRemoteConfig();
+
+// Top space reserved for the macOS title bar / traffic lights. Mirrors
+// TITLEBAR_INSET in desktop/main.js. Surfaced as a safe-area inset so the
+// existing safe-area-aware layouts render edge-to-edge but clear the controls.
+const DESKTOP_TOP_INSET = 44;
+
+export default function RootLayout() {
+    const [fontsLoaded, fontError] = useFonts({
+        HankenGrotesk_400Regular,
+        HankenGrotesk_500Medium,
+        HankenGrotesk_600SemiBold,
+        HankenGrotesk_700Bold,
+        HankenGrotesk_800ExtraBold,
+        Fraunces_600SemiBold,
+        Fraunces_700Bold,
+        Fraunces_900Black,
+    });
+    const colorScheme = useColorScheme();
+    // macOS uses a frameless overlay needing a top inset; macOS + Windows both get
+    // a translucent window the navigator must not paint over.
+    const isMacDesktop = useIsMacDesktop();
+    const isFrosted = useIsFrostedDesktop();
+
+    const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+    const palette = Colors[scheme];
+    const navBase = scheme === 'dark' ? DarkTheme : DefaultTheme;
+    // Align the navigator chrome with the cinematic palette so there is no
+    // white flash between screen transitions.
+    const baseTheme = {
+        ...navBase,
+        colors: {
+            ...navBase.colors,
+            background: palette.background,
+            card: palette.surface,
+            text: palette.text,
+            border: palette.border,
+            primary: palette.accent,
+        },
+    };
+    // On frosted desktops the window is translucent; keep the navigator transparent
+    // so it shows through instead of painting a solid background.
+    const theme = isFrosted
+        ? {...baseTheme, colors: {...baseTheme.colors, background: 'transparent', card: 'transparent'}}
+        : baseTheme;
+
+    // Hold the first paint until the bundled typefaces are ready (or failed) so
+    // text doesn't flash in the system font and reflow. The native splash
+    // screen stays up in the meantime.
+    if (!fontsLoaded && !fontError) {
+        return null;
+    }
+
+    const content = (
+        <ThemeProvider value={theme}>
+            <Stack>
+                <Stack.Screen name="index" options={{headerShown: false}}/>
+                <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
+            </Stack>
+            <StatusBar style="auto"/>
+        </ThemeProvider>
+    );
+
+    return (
+        <GestureHandlerRootView style={styles.flex}>
+            <SafeAreaProvider>
+                {isMacDesktop ? (
+                    <SafeAreaInsetsContext.Provider
+                        value={{top: DESKTOP_TOP_INSET, left: 0, right: 0, bottom: 0}}
+                    >
+                        {content}
+                    </SafeAreaInsetsContext.Provider>
+                ) : (
+                    content
+                )}
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
+    );
+}
+
+const styles = StyleSheet.create({
+    flex: { flex: 1 },
+});

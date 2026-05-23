@@ -1,0 +1,77 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+desktop-dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# IDE
+/.idea/
+
+# Per-platform .gitignore files are merged here; ignore the prebuild-generated copies
+/android/.gitignore
+/ios/.gitignore
+
+# Build artifacts
+*.apk
+*.aab
+*.ipa
+/android/app/release/
+
+# Native build output & local config (android/ and ios/ source are tracked)
+/android/**/build/
+/android/**/.gradle/
+/android/**/.cxx/
+/android/**/.idea/
+/android/**/*.iml
+/android/**/*.hprof
+/android/local.properties
+/android/app/src/main/java/inline/
+/android/**/*.jsbundle
+/ios/Pods/
+/ios/build/
+/ios/**/xcuserdata/
+/ios/**/*.xcuserstate
+/ios/**/*.pbxuser
+/ios/**/*.xccheckout
+/ios/**/*.hmap
+/ios/**/*.ipa
+/ios/**/project.xcworkspace
+/ios/**/.xcode.env.local
+/ios/**/*.jsbundle
+/android/keystore.properties
