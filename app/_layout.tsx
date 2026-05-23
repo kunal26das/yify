@@ -1,4 +1,3 @@
-import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {DarkTheme, DefaultTheme, Stack, ThemeProvider} from 'expo-router';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -16,8 +15,7 @@ export default function RootLayout() {
 
     return (
         <GestureHandlerRootView style={styles.flex}>
-            <BottomSheetModalProvider>
-                <SafeAreaProvider>
+            <SafeAreaProvider>
                 <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                     <Stack>
                         <Stack.Screen name="index" options={{headerShown: false}}/>
@@ -25,7 +23,6 @@ export default function RootLayout() {
                     <StatusBar style="auto"/>
                 </ThemeProvider>
             </SafeAreaProvider>
-            </BottomSheetModalProvider>
         </GestureHandlerRootView>
     );
 }

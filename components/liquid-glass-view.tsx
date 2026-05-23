@@ -1,7 +1,8 @@
 import { BlurView } from 'expo-blur';
 import {
+  GlassContainer,
   GlassView,
-  isGlassEffectAPIAvailable,
+  isLiquidGlassAvailable,
 } from 'expo-glass-effect';
 import { Platform, StyleProp, ViewStyle } from 'react-native';
 
@@ -16,10 +17,18 @@ interface LiquidGlassViewProps {
   intensity?: number;
   /** Optional background color for fallback on Android (e.g. iconColor + '28'). */
   fallbackBackgroundColor?: string;
+  /**
+   * Marks the glass as interactive so iOS 26 applies the press-response
+   * animation native to Liquid Glass buttons.
+   * @default false
+   */
+  interactive?: boolean;
+  /** Optional explicit glass effect style. Defaults to 'regular'. */
+  glassEffectStyle?: 'clear' | 'regular';
 }
 
-const useNativeLiquidGlass =
-  Platform.OS === 'ios' && isGlassEffectAPIAvailable();
+const supportsLiquidGlass =
+  Platform.OS === 'ios' && isLiquidGlassAvailable();
 
 export function LiquidGlassView({
   children,
@@ -27,12 +36,15 @@ export function LiquidGlassView({
   tint = 'light',
   intensity = 60,
   fallbackBackgroundColor,
+  interactive = false,
+  glassEffectStyle = 'regular',
 }: LiquidGlassViewProps) {
-  if (useNativeLiquidGlass) {
+  if (supportsLiquidGlass) {
     return (
       <GlassView
         colorScheme={tint}
-        glassEffectStyle="regular"
+        glassEffectStyle={glassEffectStyle}
+        isInteractive={interactive}
         style={[style]}
       >
         {children}
@@ -55,3 +67,29 @@ export function LiquidGlassView({
     </BlurView>
   );
 }
+
+/**
+ * Groups multiple `LiquidGlassView` elements so iOS 26 morphs and blends them
+ * as a single Liquid Glass surface (matching the native toolbar/control-cluster
+ * behavior). On non-iOS / pre-26, renders a plain pass-through.
+ */
+export function LiquidGlassGroup({
+  children,
+  spacing = 12,
+  style,
+}: {
+  children?: React.ReactNode;
+  spacing?: number;
+  style?: StyleProp<ViewStyle>;
+}) {
+  if (supportsLiquidGlass) {
+    return (
+      <GlassContainer spacing={spacing} style={style}>
+        {children}
+      </GlassContainer>
+    );
+  }
+  return <>{children}</>;
+}
+
+export const isNativeLiquidGlass = supportsLiquidGlass;

@@ -1,4 +1,5 @@
-import {LiquidGlassView} from '@/components/liquid-glass-view';
+import {LiquidGlassGroup, LiquidGlassView} from '@/components/liquid-glass-view';
+import {Host, TextInput as NativeTextInput} from '@expo/ui';
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
@@ -8,7 +9,6 @@ import {
     Pressable,
     RefreshControl,
     StyleSheet,
-    TextInput,
     useWindowDimensions,
     View,
 } from 'react-native';
@@ -212,16 +212,15 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             style={styles.glassWrapper}
                         >
                             <View style={styles.searchFieldWrapper}>
-                                <TextInput
-                                    style={[styles.searchInput, {color: '#000'}]}
-                                    placeholder="Search Movies"
-                                    placeholderTextColor="#000"
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    returnKeyType="search"
-                                />
+                                <Host matchContents style={styles.searchInputHost}>
+                                    <NativeTextInput
+                                        placeholder="Search Movies"
+                                        onChangeText={setSearchQuery}
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        returnKeyType="search"
+                                    />
+                                </Host>
                                 {searchQuery.length > 0 ? (
                                     <Pressable
                                         onPress={() => setSearchQuery('')}
@@ -248,7 +247,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         ]}
                         pointerEvents="box-none"
                     >
-                        <View style={styles.countRow}>
+                        <LiquidGlassGroup spacing={16} style={styles.countRow}>
                             <Animated.View style={{opacity: scrollToTopOpacity}}>
                                 <Pressable
                                     onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
@@ -261,6 +260,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                                 >
                                     <LiquidGlassView
                                         tint={glassTint}
+                                        interactive
                                         fallbackBackgroundColor={iconColor + '28'}
                                         style={styles.scrollToTopGlass}
                                     >
@@ -287,13 +287,14 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             >
                                 <LiquidGlassView
                                     tint={glassTint}
+                                    interactive
                                     fallbackBackgroundColor={iconColor + '28'}
                                     style={styles.scrollToTopGlass}
                                 >
                                     <Ionicons name="filter" size={20} color="#000"/>
                                 </LiquidGlassView>
                             </Pressable>
-                        </View>
+                        </LiquidGlassGroup>
                     </View>
                 )}
                 <MovieFilterModal
@@ -347,11 +348,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 14,
     },
-    searchInput: {
+    searchInputHost: {
         flex: 1,
         height: 40,
-        paddingHorizontal: 0,
-        fontSize: 17,
     },
     clearButton: {
         paddingLeft: 8,

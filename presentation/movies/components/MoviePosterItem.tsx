@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   poster: {
     width: '100%',

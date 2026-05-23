@@ -14,11 +14,9 @@
     "prebuild": "expo prebuild"
   },
   "dependencies": {
+    "@expo/material-symbols": "0.1.1",
+    "@expo/ui": "56.0.12",
     "@expo/vector-icons": "15.0.3",
-    "@gorhom/bottom-sheet": "5.2.8",
-    "@react-navigation/bottom-tabs": "7.4.0",
-    "@react-navigation/elements": "2.6.3",
-    "@react-navigation/native": "7.1.33",
     "expo": "56.0.3",
     "expo-blur": "56.0.3",
     "expo-constants": "56.0.14",
