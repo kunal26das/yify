@@ -891,11 +891,6 @@
     anser "^1.4.9"
     stacktrace-parser "^0.1.10"
 
-"@expo/material-symbols@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@expo/material-symbols/-/material-symbols-0.1.1.tgz#ee86c79e5eebed9c0eccaf7341ba61791b9e6ebd"
-  integrity sha512-ruA6hZATOPKxo1qSd1NE3HI9FrmEDwcMDhsvzTAdMkP9AapdHfJ/0tKmBMWFJir85voxs1twYxLVrGW9OLGaOg==
-
 "@expo/metro-config@~56.0.11", "@expo/metro-config@~56.0.12":
   version "56.0.12"
   resolved "https://registry.yarnpkg.com/@expo/metro-config/-/metro-config-56.0.12.tgz#9322f4a0d56155a7a6fa85725075e615ae031367"
@@ -3594,11 +3589,6 @@ expo-glass-effect@56.0.4, expo-glass-effect@^56.0.4:
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-56.0.4.tgz#4549a8c84058fb88619ecb2e818be36f2fe003ee"
   integrity sha512-xI9rXtDwi7RW82uAlfyaXO6+k21ApWJ2tHAWYqPr/FjfmZbKsgNJ4Q0iZzGPCwboqjTGxaRZ61SZxBl8hDt5iA==
 
-expo-haptics@56.0.3:
-  version "56.0.3"
-  resolved "https://registry.yarnpkg.com/expo-haptics/-/expo-haptics-56.0.3.tgz#55112832e0834ca8f505ee099f70092cfacdd945"
-  integrity sha512-ycoahZJnR9tWAVh/0mJYxbETtHRYaWjiWS8cHlP6aDGU6Q6Y8rZ5NKsuBwWw6HR2Pe30mfVFgbF2HrBR6gtYmw==
-
 expo-image@56.0.8:
   version "56.0.8"
   resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-56.0.8.tgz#b3d8b19fb130fceef7c762a358b17f23c87a9515"
@@ -3610,11 +3600,6 @@ expo-keep-awake@~56.0.3:
   version "56.0.3"
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-56.0.3.tgz#88991b4859c77af73cf68c500839a18fe5d8febe"
   integrity sha512-CLMJXtEiMKknD3Rpm8CRwE6ZJUzu2yCEmRk1sgfHAJ1zIbuEWY3dpPDubtsnuzWm+2k6Sru+yaFbYsvPWmTiBA==
-
-expo-linear-gradient@56.0.4:
-  version "56.0.4"
-  resolved "https://registry.yarnpkg.com/expo-linear-gradient/-/expo-linear-gradient-56.0.4.tgz#80560824dfedf23934cff4cfb8017c78ecc158e3"
-  integrity sha512-KUp1dNSRtuMyiExhf6FJf5YUtmw2cRaPytl10HQi7isj5Yac38udmD55T2tglNYTZlvgT5+oflpyFoH15hmOcw==
 
 expo-linking@56.0.11:
   version "56.0.11"
