@@ -882,7 +882,7 @@
     "@expo/config" "~56.0.8"
     chalk "^4.1.2"
 
-"@expo/log-box@^56.0.12":
+"@expo/log-box@56.0.12", "@expo/log-box@^56.0.12":
   version "56.0.12"
   resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-56.0.12.tgz#ed5bd7d76f36d5b100a191d800a53513c14f89f2"
   integrity sha512-budE6AGmJbpOJfGSOz+JVP3+FevElT82IEIg+ukQ4gZpW/dGO7QX1unFjanKdSaYgudBwJ4FCFGMwWhW/1tXVQ==
@@ -938,7 +938,7 @@
     micromatch "^4.0.4"
     walker "^1.0.8"
 
-"@expo/metro-runtime@^56.0.11":
+"@expo/metro-runtime@56.0.12", "@expo/metro-runtime@^56.0.11":
   version "56.0.12"
   resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-56.0.12.tgz#bf576cbc31ace8c70de308ebc55b1e90026fb813"
   integrity sha512-7fWsZfIq+Kn6ilr5lx1YNQGJjukmvwnrl91cTRASdQIKXQoXF7AXRAU0CrDjA+dNMZ6UWDK3l8wpQjk7CA1Z/A==

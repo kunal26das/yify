@@ -14,7 +14,9 @@
     "prebuild": "expo prebuild"
   },
   "dependencies": {
+    "@expo/log-box": "56.0.12",
     "@expo/material-symbols": "0.1.1",
+    "@expo/metro-runtime": "56.0.12",
     "@expo/ui": "56.0.12",
     "@expo/vector-icons": "15.0.3",
     "expo": "56.0.3",
