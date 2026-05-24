@@ -1,4 +1,4 @@
-import {LiquidGlassGroup, LiquidGlassView} from '@/presentation';
+import {LiquidGlassGroup, LiquidGlassView, ThemedText, ThemedView, useThemeColor} from '@/presentation';
 import {Host, TextInput as NativeTextInput} from '@expo/ui';
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
@@ -11,9 +11,9 @@ import {
     StyleSheet,
     useWindowDimensions,
     View,
-useColorScheme} from 'react-native';
+    useColorScheme
+} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ThemedText, ThemedView, useThemeColor} from '@/presentation';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import type {MovieFilters, MoviesViewModel} from '@/presentation';
@@ -106,7 +106,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
 
     const renderItem = useCallback(
         ({item}: { item: (typeof movies)[0] }) => (
-            <MoviePosterItem movie={item} />
+            <MoviePosterItem movie={item}/>
         ),
         []
     );
@@ -125,7 +125,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     );
 
     const onViewableItemsChanged = useCallback(
-        ({viewableItems}: { viewableItems: Array<{ index: number | null }> }) => {
+        ({viewableItems}: { viewableItems: { index: number | null }[] }) => {
             const maxIndex = viewableItems.reduce(
                 (acc, item) =>
                     item.index != null && item.index > acc ? item.index : acc,
@@ -140,7 +140,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
         return (
             <ThemedView style={styles.centered}>
                 <SafeAreaView style={styles.centered} edges={['top']}>
-                    <ActivityIndicator size="large" />
+                    <ActivityIndicator size="large"/>
                 </SafeAreaView>
             </ThemedView>
         );
@@ -258,7 +258,6 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             >
                                 <LiquidGlassView
                                     tint={glassTint}
-                                    interactive
                                     fallbackBackgroundColor={iconColor + '28'}
                                     style={styles.scrollToTopGlass}
                                 >
