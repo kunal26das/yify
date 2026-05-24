@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { Movie } from '@/domain/entities/Movie';
-import { useDeviceCornerRadius } from '@/hooks/use-device-corner-radius';
-import { getPosterContainerStyle } from '@/presentation/movies/components/moviePosterLayout';
+import type { Movie } from '@yify/domain';
+import { useDeviceCornerRadius } from '@/presentation';
+import { getPosterContainerStyle } from './moviePosterLayout';
 
 export function MoviePosterItem({ movie }: { movie: Movie }) {
   const { posterUrls } = movie;

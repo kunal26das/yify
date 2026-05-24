@@ -1,10 +1,5 @@
-import type {Movie} from '@/domain/entities/Movie';
-import type {
-    ListMoviesParams,
-    ListMoviesResult,
-    MovieRepository,
-} from '@/domain/repositories/MovieRepository';
-import type {ListMoviesApi} from '@/data/datasources/YtsApiDataSource';
+import type { Movie, ListMoviesParams, ListMoviesResult, MovieRepository } from '@yify/domain';
+import type { ListMoviesApi } from '@/data';
 
 export class MovieRepositoryImpl implements MovieRepository {
     constructor(private readonly api: ListMoviesApi) {

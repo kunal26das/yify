@@ -1,8 +1,7 @@
 import { BottomSheet, Button, Host, Picker, RNHostView } from '@expo/ui';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/themed-text';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { ThemedText , useThemeColor } from '@/presentation';
 import {
     Genre,
     GENRE_OPTIONS,
@@ -13,8 +12,8 @@ import {
     RATING_OPTIONS,
     SortBy,
     SORT_BY_OPTIONS,
-} from '@/presentation/movies/constants/movieFilterOptions';
-import type { MovieFilters } from '@/presentation/movies/useMoviesViewModel';
+} from '../constants/movieFilterOptions';
+import type { MovieFilters } from '@/presentation';
 
 interface MovieFilterModalProps {
     visible: boolean;

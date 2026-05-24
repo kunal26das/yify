@@ -1,4 +1,4 @@
-import type { Movie } from '@/domain/entities/Movie';
+import type { Movie } from '@/domain';
 
 export interface ListMoviesParams {
   page: number;

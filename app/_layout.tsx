@@ -5,7 +5,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {StyleSheet} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
-import {useColorScheme} from '@/hooks/use-color-scheme';
+import {useColorScheme} from '@yify/presentation';
 import {getFirebaseApp} from '@/lib/firebase';
 
 getFirebaseApp();

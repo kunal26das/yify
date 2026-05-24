@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Movie } from '@/domain/entities/Movie';
-import type { MovieRepository } from '@/domain/repositories/MovieRepository';
+import type { Movie, MovieRepository } from '@yify/domain';
 import {
   Quality,
   type Genre,
   type OrderBy,
   type SortBy,
-} from '@/presentation/movies/constants/movieFilterOptions';
+} from './constants/movieFilterOptions';
 
 const PAGE_SIZE = 50;
 const SEARCH_DEBOUNCE_MS = 400;

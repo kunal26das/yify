@@ -4,7 +4,7 @@ import {
   GlassView,
   isLiquidGlassAvailable,
 } from 'expo-glass-effect';
-import { Platform, StyleProp, ViewStyle } from 'react-native';
+import { Platform, StyleProp, View, ViewStyle } from 'react-native';
 
 type Tint = 'light' | 'dark';
 
@@ -71,7 +71,7 @@ export function LiquidGlassView({
 /**
  * Groups multiple `LiquidGlassView` elements so iOS 26 morphs and blends them
  * as a single Liquid Glass surface (matching the native toolbar/control-cluster
- * behavior). On non-iOS / pre-26, renders a plain pass-through.
+ * behavior). On Android, web, and iOS < 26, wraps children in a plain View.
  */
 export function LiquidGlassGroup({
   children,
@@ -89,7 +89,7 @@ export function LiquidGlassGroup({
       </GlassContainer>
     );
   }
-  return <>{children}</>;
+  return <View style={style}>{children}</View>;
 }
 
 export const isNativeLiquidGlass = supportsLiquidGlass;

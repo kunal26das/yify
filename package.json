@@ -2,6 +2,12 @@
   "name": "yify",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "domain",
+    "data",
+    "presentation"
+  ],
   "scripts": {
     "start": "CI=false expo start",
     "android": "expo run:android",
@@ -14,6 +20,9 @@
     "prebuild": "expo prebuild"
   },
   "dependencies": {
+    "@yify/domain": "*",
+    "@yify/data": "*",
+    "@yify/presentation": "*",
     "@expo/log-box": "56.0.12",
     "@expo/material-symbols": "0.1.1",
     "@expo/metro-runtime": "56.0.12",
@@ -52,6 +61,5 @@
     "eslint-config-expo": "56.0.4",
     "eslint-import-resolver-typescript": "3.10.1",
     "typescript": "6.0.3"
-  },
-  "private": true
+  }
 }

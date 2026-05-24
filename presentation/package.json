@@ -1,0 +1,22 @@
+{
+  "name": "@yify/presentation",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@yify/domain": "*",
+    "@expo/ui": "*",
+    "@expo/vector-icons": "*",
+    "expo-blur": "*",
+    "expo-constants": "*",
+    "expo-device-corner-radius": "*",
+    "expo-glass-effect": "*",
+    "expo-image": "*",
+    "expo-symbols": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*"
+  }
+}

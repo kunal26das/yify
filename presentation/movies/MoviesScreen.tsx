@@ -1,4 +1,4 @@
-import {LiquidGlassGroup, LiquidGlassView} from '@/components/liquid-glass-view';
+import {LiquidGlassGroup, LiquidGlassView} from '@/presentation';
 import {Host, TextInput as NativeTextInput} from '@expo/ui';
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
@@ -11,21 +11,20 @@ import {
     StyleSheet,
     useWindowDimensions,
     View,
-} from 'react-native';
+useColorScheme} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ThemedText} from '@/components/themed-text';
-import {ThemedView} from '@/components/themed-view';
-import {useColorScheme} from '@/hooks/use-color-scheme';
-import {useThemeColor} from '@/hooks/use-theme-color';
-import {MovieFilterModal} from '@/presentation/movies/components/MovieFilterModal';
-import {MoviePosterItem} from '@/presentation/movies/components/MoviePosterItem';
-import type {MovieFilters, MoviesViewModel} from '@/presentation/movies/useMoviesViewModel';
+import {ThemedText, ThemedView, useThemeColor} from '@/presentation';
+import {MovieFilterModal} from './components/MovieFilterModal';
+import {MoviePosterItem} from './components/MoviePosterItem';
+import type {MovieFilters, MoviesViewModel} from '@/presentation';
 import {
     POSTER_GAP,
     POSTER_MIN_WIDTH,
-} from '@/presentation/movies/components/moviePosterLayout';
+} from './components/moviePosterLayout';
 
 const HORIZONTAL_PADDING = 16;
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
@@ -113,7 +112,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     );
 
     const keyExtractor = useCallback(
-        (item: (typeof movies)[0], index: number) => `${item.id}-${index}`,
+        (item: (typeof movies)[0]) => String(item.id),
         []
     );
 
@@ -248,26 +247,24 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         pointerEvents="box-none"
                     >
                         <LiquidGlassGroup spacing={16} style={styles.countRow}>
-                            <Animated.View style={{opacity: scrollToTopOpacity}}>
-                                <Pressable
-                                    onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
-                                    style={({pressed}) => [
-                                        styles.scrollToTopButton,
-                                        {opacity: pressed ? 0.6 : 1},
-                                    ]}
-                                    pointerEvents={isAtTop ? 'none' : 'auto'}
-                                    hitSlop={8}
+                            <AnimatedPressable
+                                onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                                style={[
+                                    styles.scrollToTopButton,
+                                    {opacity: scrollToTopOpacity},
+                                ]}
+                                pointerEvents={isAtTop ? 'none' : 'auto'}
+                                hitSlop={8}
+                            >
+                                <LiquidGlassView
+                                    tint={glassTint}
+                                    interactive
+                                    fallbackBackgroundColor={iconColor + '28'}
+                                    style={styles.scrollToTopGlass}
                                 >
-                                    <LiquidGlassView
-                                        tint={glassTint}
-                                        interactive
-                                        fallbackBackgroundColor={iconColor + '28'}
-                                        style={styles.scrollToTopGlass}
-                                    >
-                                        <Ionicons name="arrow-up" size={20} color="#000"/>
-                                    </LiquidGlassView>
-                                </Pressable>
-                            </Animated.View>
+                                    <Ionicons name="arrow-up" size={20} color={textColor}/>
+                                </LiquidGlassView>
+                            </AnimatedPressable>
                             <LiquidGlassView
                                 tint={glassTint}
                                 fallbackBackgroundColor={iconColor + '28'}
@@ -291,7 +288,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                                     fallbackBackgroundColor={iconColor + '28'}
                                     style={styles.scrollToTopGlass}
                                 >
-                                    <Ionicons name="filter" size={20} color="#000"/>
+                                    <Ionicons name="filter" size={20} color={textColor}/>
                                 </LiquidGlassView>
                             </Pressable>
                         </LiquidGlassGroup>

@@ -1,4 +1,4 @@
-import type { YtsListMoviesResponse } from '@/data/models/YtsApiResponse';
+import type { YtsListMoviesResponse } from '../models/YtsApiResponse';
 
 const BASE_URLS = [
   'https://movies-api.accel.li/api/v2',
