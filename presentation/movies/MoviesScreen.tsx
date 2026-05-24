@@ -1,3 +1,4 @@
+import type {MovieFilters, MoviesViewModel} from '@/presentation';
 import {LiquidGlassGroup, LiquidGlassView, ThemedText, ThemedView, useThemeColor} from '@/presentation';
 import {Host, TextInput as NativeTextInput} from '@expo/ui';
 import {Ionicons} from '@expo/vector-icons';
@@ -9,18 +10,14 @@ import {
     Pressable,
     RefreshControl,
     StyleSheet,
+    useColorScheme,
     useWindowDimensions,
-    View,
-    useColorScheme
+    View
 } from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
-import type {MovieFilters, MoviesViewModel} from '@/presentation';
-import {
-    POSTER_GAP,
-    POSTER_MIN_WIDTH,
-} from './components/moviePosterLayout';
+import {POSTER_GAP, POSTER_MIN_WIDTH,} from './components/moviePosterLayout';
 
 const HORIZONTAL_PADDING = 16;
 
@@ -283,7 +280,6 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             >
                                 <LiquidGlassView
                                     tint={glassTint}
-                                    interactive
                                     fallbackBackgroundColor={iconColor + '28'}
                                     style={styles.scrollToTopGlass}
                                 >
