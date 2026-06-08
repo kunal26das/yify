@@ -24,7 +24,7 @@
     "@yify/data": "*",
     "@yify/presentation": "*",
     "@expo/log-box": "56.0.12",
-    "@expo/metro-runtime": "56.0.12",
+    "@expo/metro-runtime": "56.0.14",
     "expo": "56.0.3",
     "expo-font": "56.0.5",
     "expo-linking": "56.0.11",
