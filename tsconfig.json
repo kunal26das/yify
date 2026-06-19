@@ -5,15 +5,6 @@
     "paths": {
       "@/*": [
         "./*"
-      ],
-      "@yify/domain": [
-        "./domain/index.ts"
-      ],
-      "@yify/data": [
-        "./data/index.ts"
-      ],
-      "@yify/presentation": [
-        "./presentation/index.ts"
       ]
     }
   },

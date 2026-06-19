@@ -1,4 +1,4 @@
-import type { Movie, ListMoviesParams, ListMoviesResult, MovieRepository } from '@yify/domain';
+import type { Movie, ListMoviesParams, ListMoviesResult, MovieRepository } from '@/domain';
 import type { ListMoviesApi } from '@/data';
 
 export class MovieRepositoryImpl implements MovieRepository {

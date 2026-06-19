@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { YtsApiDataSource, MovieRepositoryImpl } from '@yify/data';
-import { MoviesScreen, useMoviesViewModel } from '@yify/presentation';
+import { YtsApiDataSource, MovieRepositoryImpl } from '@/data';
+import { MoviesScreen, useMoviesViewModel } from '@/presentation';
 
 export default function HomeScreen() {
   const api = useMemo(() => new YtsApiDataSource(), []);

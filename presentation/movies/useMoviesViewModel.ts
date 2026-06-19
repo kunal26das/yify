@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Movie, MovieRepository } from '@yify/domain';
+import type { Movie, MovieRepository } from '@/domain';
 import {
   Quality,
   type Genre,
@@ -37,10 +37,15 @@ export function useMoviesViewModel(repository: MovieRepository) {
   const pageRef = useRef(page);
   const hasMoreRef = useRef(hasMore);
 
-  searchQueryRef.current = searchQuery;
-  filtersRef.current = filters;
-  pageRef.current = page;
-  hasMoreRef.current = hasMore;
+  // Mirror the latest committed state into refs so the async callbacks below
+  // (loadMovies, loadMore, …) always read current values without being
+  // recreated. Writing in an effect keeps this out of render.
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+    filtersRef.current = filters;
+    pageRef.current = page;
+    hasMoreRef.current = hasMore;
+  });
 
   const loadMovies = useCallback(
     async (

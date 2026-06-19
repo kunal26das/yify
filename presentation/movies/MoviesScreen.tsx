@@ -51,7 +51,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     const [isAtTop, setIsAtTop] = useState(true);
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
-    const scrollToTopOpacity = useRef(new Animated.Value(0)).current;
+    const [scrollToTopOpacity] = useState(() => new Animated.Value(0));
 
     const SCROLL_AT_TOP_THRESHOLD = 8;
 

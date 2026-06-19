@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { Movie } from '@yify/domain';
+import type { Movie } from '@/domain';
 import { useDeviceCornerRadius } from '@/presentation';
 import { getPosterContainerStyle } from './moviePosterLayout';
 

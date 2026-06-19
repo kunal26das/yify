@@ -12,7 +12,7 @@ npm run android         # Run on Android emulator
 npm run android:debug   # Debug build via script
 npm run android:release # Release build via script
 npm run web             # Run in browser
-npm run lint            # Run ESLint (expo lint)
+npm run lint            # Run ESLint over app + the data/domain/presentation modules (enforces module boundaries)
 npm run prebuild        # Generate native project files
 ```
 
@@ -23,6 +23,8 @@ No test suite is configured.
 This is a React Native / Expo movie browsing app (TypeScript, strict mode) following clean architecture with three layers:
 
 **Data → Domain → Presentation**
+
+`data`, `domain`, and `presentation` are independent modules (plain folders, each with an `index.ts` barrel as its public API, resolved via the `@/*` alias). The dependency graph mirrors Gradle modules and is **enforced by ESLint** (`import/no-restricted-paths` in `eslint.config.js`): `domain` depends on nothing; `data` and `presentation` each depend only on `domain`; they may not import each other; `app` is the composition root and may depend on all of them. An illegal cross-module import fails `npm run lint`. Cross-module imports must go through a module's barrel (e.g. `@/domain`), never a deep path.
 
 ### Data Layer (`/data`)
 - `YtsApiDataSource` — HTTP client for the YTS movie API. Has dual-endpoint fallback (`movies-api.accel.li` → `yts.bz`) with 15s AbortController timeout.
