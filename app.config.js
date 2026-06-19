@@ -4,10 +4,8 @@ const isRelease =
     process.env.EAS_BUILD_PROFILE === 'production' ||
     process.env.APP_VARIANT === 'release';
 
-const googleServicesFile = isRelease
-    ? './config/android/google-services.release.json'
-    : './config/android/google-services.debug.json';
-
+// Debug builds get a distinct package so they can coexist with a release
+// install; the single google-services.json registers both packages.
 const basePackage = base.expo.android.package;
 const packageName = isRelease ? basePackage : `${basePackage}.debug`;
 
@@ -18,7 +16,11 @@ module.exports = {
         android: {
             ...base.expo.android,
             package: packageName,
-            googleServicesFile,
+            googleServicesFile: './config/android/google-services.json',
+        },
+        ios: {
+            ...base.expo.ios,
+            googleServicesFile: './config/ios/GoogleService-Info.plist',
         },
     },
 };

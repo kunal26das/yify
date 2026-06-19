@@ -7,7 +7,7 @@ export type {
   MovieParentalGuidesApi,
   YtsApi,
 } from './datasources/YtsApiDataSource';
-export { YtsApiDataSource } from './datasources/YtsApiDataSource';
+export {YtsApiDataSource, DEFAULT_BASE_URL} from './datasources/YtsApiDataSource';
 export { MovieRepositoryImpl } from './repositories/MovieRepositoryImpl';
 
 // Raw API response DTOs

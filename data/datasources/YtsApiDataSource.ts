@@ -7,7 +7,7 @@ import type {
 } from '../models';
 import {YtsEndpoint} from './YtsEndpoint';
 
-const BASE_URL = 'https://movies-api.accel.li/api/v2';
+export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -76,6 +76,15 @@ async function fetchWithTimeout<T extends { status: string; status_message?: str
 }
 
 export class YtsApiDataSource implements YtsApi {
+  /**
+   * @param resolveBaseUrl returns the API base URL for each request, so a
+   * remotely-configured value (e.g. Firebase Remote Config, wired in the app
+   * layer) takes effect without rebuilding the data source. Defaults to
+   * {@link DEFAULT_BASE_URL}.
+   */
+  constructor(private readonly resolveBaseUrl: () => string = () => DEFAULT_BASE_URL) {
+  }
+
   async listMovies(params: ListMoviesApiParams): Promise<YtsListMoviesResponse> {
     const searchParams = new URLSearchParams({
       page: String(params.page),
@@ -142,6 +151,7 @@ export class YtsApiDataSource implements YtsApi {
   ): Promise<T> {
     const query = searchParams.toString();
     const suffix = query ? `?${query}` : '';
-    return fetchWithTimeout<T>(`${BASE_URL}/${endpoint}${suffix}`);
+    const baseUrl = this.resolveBaseUrl().replace(/\/+$/, '');
+    return fetchWithTimeout<T>(`${baseUrl}/${endpoint}${suffix}`);
   }
 }

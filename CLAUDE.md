@@ -28,8 +28,9 @@ This is a React Native / Expo movie browsing app (TypeScript, strict mode) follo
 
 ### Data Layer (`/data`)
 
-- `YtsApiDataSource` — HTTP client for the YTS movie API. Single base URL (`movies-api.accel.li`); endpoint paths come
-  from the `YtsEndpoint` enum; 15s AbortController timeout.
+- `YtsApiDataSource` — HTTP client for the YTS movie API. Base URL is injected via a `() => string` provider
+  (defaults to `DEFAULT_BASE_URL`; the app wires Firebase Remote Config's `getApiBaseUrl` in); endpoint paths come
+  from the `YtsEndpoint` enum; 15s AbortController timeout. The data module stays Firebase-agnostic.
 - `MovieRepositoryImpl` — Transforms raw API responses into domain `Movie` entities. Rewrites image URLs through `wsrv.nl` (which both enforces HTTPS and resizes on the fly).
 - `models/` — Raw API response DTOs, one per file (`YtsMovieDto`, `YtsTorrentDto`, `YtsCastMemberDto`,
   `YtsParentalGuideDto`, the generic `YtsApiResponse<T>` envelope, and a per-endpoint `Yts*Response.ts`), re-exported
@@ -59,7 +60,18 @@ This is a React Native / Expo movie browsing app (TypeScript, strict mode) follo
 - `app/index.tsx` — Home screen; constructs `YtsApiDataSource → MovieRepositoryImpl`, passes to `useMoviesViewModel`, renders `MoviesScreen`.
 
 ### Firebase
-Optional integration in `/lib/firebase.ts`. Degrades gracefully if `.env` keys are absent. Copy `.env.example` → `.env` to enable.
+
+- `/lib/firebase.ts` — optional Firebase JS (web) SDK app init; degrades gracefully if `.env` keys are absent (copy
+  `.env.example` → `.env`).
+- `/lib/remote-config.ts` (+ `.web.ts`) — Remote Config provider for the API base URL. Native uses
+  `@react-native-firebase/remote-config`; web uses the Firebase JS SDK (gated on `isSupported()`). Exposes
+  `initRemoteConfig()` (called once at the top of `app/_layout.tsx`) and `getApiBaseUrl()`, which is injected into
+  `YtsApiDataSource` from `app/index.tsx`. Both fall back to the data module's `DEFAULT_BASE_URL`. Remote Config
+  parameter key: `base_url_yify` (the data source strips any trailing slash from the value). Native Firebase config (
+  both wired in `app.config.js`): `config/android/google-services.json` (registers both the `io.github.kunal26das.yify`
+  and `.debug` packages) and `config/ios/GoogleService-Info.plist`. Debug builds use the `.debug` Android package,
+  covered by the same json. `expo-build-properties` sets iOS `useFrameworks: static` (required by
+  `@react-native-firebase`).
 
 ### Path Alias
 `@/*` maps to the project root (configured in `tsconfig.json`).

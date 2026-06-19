@@ -1811,6 +1811,22 @@
   resolved "https://registry.yarnpkg.com/@radix-ui/react-use-layout-effect/-/react-use-layout-effect-1.1.2.tgz#c882e66497174d061f250e65251974b699c65b65"
   integrity sha512-jrBWOxZITuGcnjRCM2t2U5ZPkCLxD+Ym6DjfssS5haTj2iiak/DOb64JeN6OdLfLgptb6/e2kKR+ZuTrGoZTPA==
 
+"@react-native-firebase/app@^24.1.1":
+  version "24.1.1"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/app/-/app-24.1.1.tgz#9b66d5f85aca5fcfad01b882f9ce4d2a1199bb0a"
+  integrity sha512-NKCUgBeilQvchHQeKwB6RuE3Ne2AZMlClXjJBVySkCAF2FNO73ML2brqrAyegRkuVswtqHsB6wAgypmP82WnnA==
+  dependencies:
+    firebase "12.14.0"
+
+"@react-native-firebase/remote-config@^24.1.1":
+  version "24.1.1"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/remote-config/-/remote-config-24.1.1.tgz#41e64614705e97e78a82b11c84a6d00a4352304f"
+  integrity sha512-szpK91TG6is229I8SD0il9P2nNQeCkZTzEoDBFa3zgJIavEOf1J37AG3JRvRs+1uYvBLbfKvNeXCbEmUcNH2XA==
+  dependencies:
+    react-native-fetch-api "^3.0.0"
+    text-encoding "^0.7.0"
+    web-streams-polyfill "^4.2.0"
+
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@react-native-masked-view/masked-view/-/masked-view-0.3.2.tgz#7064533a573e3539ec912f59c1f457371bf49dd9"
@@ -3495,6 +3511,15 @@ expo-blur@~56.0.3:
   version "56.0.3"
   resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-56.0.3.tgz#4420700813be7ed47298b9280d83fdfb32d04cdb"
   integrity sha512-KDDtrpWc2tYlm1WCPaOgBtv+YEGqe5ELheFPIgSNgHt28NQUDcfBcFsA9Us2StDh6osmSD6NbKxOt5bU6PcDbQ==
+
+expo-build-properties@~56.0.19:
+  version "56.0.19"
+  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-56.0.19.tgz#705871cacc8aad4689ada1ad9ca8518a86357fe9"
+  integrity sha512-InoviXcxWosNp4cC7L3SWoiY99Xr2HdgN+LYHb6mUm/BBVxy1mIMrZR+3PJ2gwDZzW6EJNDz8ioASWGHBTmzpA==
+  dependencies:
+    "@expo/schema-utils" "^56.0.0"
+    resolve-from "^5.0.0"
+    semver "^7.6.0"
 
 expo-constants@~56.0.18:
   version "56.0.18"
@@ -5224,6 +5249,11 @@ own-keys@^1.0.1:
     object-keys "^1.1.1"
     safe-push-apply "^1.0.0"
 
+p-defer@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/p-defer/-/p-defer-3.0.0.tgz#d1dceb4ee9b2b604b1d94ffec83760175d4e6f83"
+  integrity sha512-ugZxsxmtTln604yeYd29EGrNhazN2lywetzpKhfmQjW/VJmhpDmWbiX+h0zL8V91R0UXkhb3KtPmyq9PZw3aYw==
+
 p-limit@^3.0.2:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/p-limit/-/p-limit-3.1.0.tgz#e1daccbe78d0d1388ca18c64fea38e3e57e3706b"
@@ -5474,6 +5504,13 @@ react-native-drawer-layout@^4.2.2:
   dependencies:
     color "^4.2.3"
     use-latest-callback "^0.2.4"
+
+react-native-fetch-api@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-fetch-api/-/react-native-fetch-api-3.0.0.tgz#81e1bb6562c292521bc4eca52fe1097f4c1ebab5"
+  integrity sha512-g2rtqPjdroaboDKTsJCTlcmtw54E25OjyaunUP0anOZn4Fuo2IKs8BVfe02zVggA/UysbmfSnRJIqtNkAgggNA==
+  dependencies:
+    p-defer "^3.0.0"
 
 react-native-gesture-handler@~2.31.1:
   version "2.31.2"
@@ -6218,6 +6255,11 @@ terser@^5.15.0:
     commander "^2.20.0"
     source-map-support "~0.5.20"
 
+text-encoding@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/text-encoding/-/text-encoding-0.7.0.tgz#f895e836e45990624086601798ea98e8f36ee643"
+  integrity sha512-oJQ3f1hrOnbRLOcwKz0Liq2IcrvDeZRHXhd9RgLrsT+DjWY/nty1Hi7v3dtkaEYbPYe0mUoOfzRrMwfXXwgPUA==
+
 throat@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/throat/-/throat-5.0.0.tgz#c5199235803aad18754a667d659b5e72ce16764b"
@@ -6508,6 +6550,11 @@ wcwidth@^1.0.1:
   integrity sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==
   dependencies:
     defaults "^1.0.3"
+
+web-streams-polyfill@^4.2.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/web-streams-polyfill/-/web-streams-polyfill-4.3.0.tgz#2f5fe004e2c53f09f7e03aef25b892953cab99a6"
+  integrity sha512-/Gnggvj9oSrEvJbDyyPtAnxBt5fGQM2iWOKQNu7ie1OxDgK40iZpyV3TKaRiEzVj1oA1UxKnEy9XPXh6PW3eVw==
 
 web-vitals@^4.2.4:
   version "4.2.4"

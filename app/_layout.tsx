@@ -6,9 +6,9 @@ import {StyleSheet} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {useColorScheme} from '@/presentation';
-import {getFirebaseApp} from '@/lib/firebase';
+import {initRemoteConfig} from '@/lib/remote-config';
 
-getFirebaseApp();
+void initRemoteConfig();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();

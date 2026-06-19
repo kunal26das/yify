@@ -1,5 +1,5 @@
-import type { Movie, ListMoviesParams, ListMoviesResult, MovieRepository } from '@/domain';
-import type { ListMoviesApi } from '@/data';
+import type {ListMoviesParams, ListMoviesResult, Movie, MovieRepository} from '@/domain';
+import type {ListMoviesApi} from '@/data';
 
 export class MovieRepositoryImpl implements MovieRepository {
     constructor(private readonly api: ListMoviesApi) {
