@@ -41,5 +41,15 @@ app-example
 
 # generated native folders
 /ios
-/android
 /.idea/
+
+# Android (native folder is tracked — ignore build output & local config)
+/android/**/build/
+/android/**/.gradle/
+/android/**/.cxx/
+/android/**/.idea/
+/android/**/*.iml
+/android/**/*.hprof
+/android/local.properties
+/android/app/src/main/java/inline/
+/android/**/*.jsbundle

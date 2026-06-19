@@ -1,7 +1,15 @@
-import { BottomSheet, Button, Host, Picker, RNHostView } from '@expo/ui';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { BottomSheet, Button, Host, RNHostView } from '@expo/ui';
+import {
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    useColorScheme,
+    useWindowDimensions,
+    View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText , useThemeColor } from '@/presentation';
+import { ThemedText, useThemeColor } from '@/presentation';
 import {
     Genre,
     GENRE_OPTIONS,
@@ -24,17 +32,58 @@ interface MovieFilterModalProps {
     onClear: () => void;
 }
 
-function FilterRow({
-    title,
-    children,
-}: {
+interface FilterChipGroupProps<T extends string | number> {
     title: string;
-    children: React.ReactNode;
-}) {
+    options: { value: T; label: string }[];
+    selectedValue: T;
+    onSelect: (value: T) => void;
+}
+
+function FilterChipGroup<T extends string | number>({
+    title,
+    options,
+    selectedValue,
+    onSelect,
+}: FilterChipGroupProps<T>) {
+    const colorScheme = useColorScheme();
+    const chipBackground =
+        colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(17, 24, 28, 0.06)';
+    const selectedBackground =
+        colorScheme === 'dark' ? 'rgba(10, 126, 164, 0.35)' : 'rgba(10, 126, 164, 0.14)';
+    const accentColor = colorScheme === 'dark' ? '#6ec8e8' : '#0a7ea4';
+
     return (
-        <View style={styles.row}>
-            <ThemedText style={styles.rowLabel}>{title}</ThemedText>
-            <View style={styles.rowControl}>{children}</View>
+        <View style={styles.section}>
+            <ThemedText style={styles.sectionLabel}>{title}</ThemedText>
+            <View style={styles.chipRow}>
+                {options.map(({ value, label }) => {
+                    const selected = selectedValue === value;
+                    return (
+                        <Pressable
+                            key={String(value) || 'all'}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected }}
+                            onPress={() => onSelect(value)}
+                            style={[
+                                styles.chip,
+                                {
+                                    backgroundColor: selected ? selectedBackground : chipBackground,
+                                    borderColor: selected ? accentColor : 'transparent',
+                                },
+                            ]}
+                        >
+                            <ThemedText
+                                style={[
+                                    styles.chipLabel,
+                                    selected && { color: accentColor, fontWeight: '600' },
+                                ]}
+                            >
+                                {label}
+                            </ThemedText>
+                        </Pressable>
+                    );
+                })}
+            </View>
         </View>
     );
 }
@@ -48,7 +97,15 @@ export function MovieFilterModal({
     onClear,
 }: MovieFilterModalProps) {
     const insets = useSafeAreaInsets();
+    const { height: windowHeight } = useWindowDimensions();
     const textColor = useThemeColor({}, 'text');
+    const backgroundColor = useThemeColor({}, 'background');
+    const footerBottomPadding =
+        (Platform.OS === 'android' ? Math.max(insets.bottom, 24) : insets.bottom) + 16;
+    const androidScrollMaxHeight =
+        Platform.OS === 'android'
+            ? windowHeight - 72 - 88 - footerBottomPadding
+            : undefined;
 
     const handleApply = () => {
         onApply(filters);
@@ -67,15 +124,17 @@ export function MovieFilterModal({
             snapPoints={['full']}
             showDragIndicator
         >
-            <RNHostView>
-            <View style={styles.flex}>
+            <RNHostView style={styles.host}>
+            <View style={styles.container}>
             <ScrollView
-                style={styles.flex}
-                contentContainerStyle={[
-                    styles.scrollContent,
-                    { paddingBottom: insets.bottom + 96 },
+                style={[
+                    styles.scrollView,
+                    androidScrollMaxHeight != null && { maxHeight: androidScrollMaxHeight },
                 ]}
+                contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={Platform.OS === 'android'}
+                keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.header}>
                     <ThemedText type="subtitle">Filters</ThemedText>
@@ -84,131 +143,73 @@ export function MovieFilterModal({
                     </Host>
                 </View>
 
-                <FilterRow title="Quality">
-                    <Host matchContents style={styles.pickerHost}>
-                        <Picker
-                            selectedValue={(filters.quality ?? Quality.All) as string}
-                            onValueChange={(value: string | number) =>
-                                onFiltersChange({
-                                    ...filters,
-                                    quality:
-                                        (value as Quality) === Quality.All
-                                            ? undefined
-                                            : (value as Quality),
-                                })
-                            }
-                        >
-                            {QUALITY_OPTIONS.map(({ value, label }) => (
-                                <Picker.Item
-                                    key={value || 'all'}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
-                        </Picker>
-                    </Host>
-                </FilterRow>
+                <FilterChipGroup
+                    title="Quality"
+                    options={QUALITY_OPTIONS}
+                    selectedValue={filters.quality ?? Quality.All}
+                    onSelect={(value) =>
+                        onFiltersChange({
+                            ...filters,
+                            quality: value === Quality.All ? undefined : (value as Quality),
+                        })
+                    }
+                />
 
-                <FilterRow title="Minimum rating">
-                    <Host matchContents style={styles.pickerHost}>
-                        <Picker
-                            selectedValue={filters.minimum_rating ?? 0}
-                            onValueChange={(value: string | number) =>
-                                onFiltersChange({
-                                    ...filters,
-                                    minimum_rating:
-                                        Number(value) === 0
-                                            ? undefined
-                                            : Number(value),
-                                })
-                            }
-                        >
-                            {RATING_OPTIONS.map(({ value, label }) => (
-                                <Picker.Item
-                                    key={value}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
-                        </Picker>
-                    </Host>
-                </FilterRow>
+                <FilterChipGroup
+                    title="Minimum rating"
+                    options={RATING_OPTIONS}
+                    selectedValue={filters.minimum_rating ?? 0}
+                    onSelect={(value) =>
+                        onFiltersChange({
+                            ...filters,
+                            minimum_rating: value === 0 ? undefined : Number(value),
+                        })
+                    }
+                />
 
-                <FilterRow title="Genre">
-                    <Host matchContents style={styles.pickerHost}>
-                        <Picker
-                            selectedValue={(filters.genre ?? Genre.All) as string}
-                            onValueChange={(value: string | number) =>
-                                onFiltersChange({
-                                    ...filters,
-                                    genre:
-                                        (value as Genre) === Genre.All
-                                            ? undefined
-                                            : (value as Genre),
-                                })
-                            }
-                        >
-                            {GENRE_OPTIONS.map(({ value, label }) => (
-                                <Picker.Item
-                                    key={value || 'all'}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
-                        </Picker>
-                    </Host>
-                </FilterRow>
+                <FilterChipGroup
+                    title="Genre"
+                    options={GENRE_OPTIONS}
+                    selectedValue={filters.genre ?? Genre.All}
+                    onSelect={(value) =>
+                        onFiltersChange({
+                            ...filters,
+                            genre: value === Genre.All ? undefined : (value as Genre),
+                        })
+                    }
+                />
 
-                <FilterRow title="Sort by">
-                    <Host matchContents style={styles.pickerHost}>
-                        <Picker
-                            selectedValue={(filters.sort_by ?? SortBy.DateAdded) as string}
-                            onValueChange={(value: string | number) =>
-                                onFiltersChange({
-                                    ...filters,
-                                    sort_by: value as SortBy,
-                                })
-                            }
-                        >
-                            {SORT_BY_OPTIONS.map(({ value, label }) => (
-                                <Picker.Item
-                                    key={value}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
-                        </Picker>
-                    </Host>
-                </FilterRow>
+                <FilterChipGroup
+                    title="Sort by"
+                    options={SORT_BY_OPTIONS}
+                    selectedValue={filters.sort_by ?? SortBy.DateAdded}
+                    onSelect={(value) =>
+                        onFiltersChange({
+                            ...filters,
+                            sort_by: value as SortBy,
+                        })
+                    }
+                />
 
-                <FilterRow title="Order">
-                    <Host matchContents style={styles.pickerHost}>
-                        <Picker
-                            selectedValue={(filters.order_by ?? OrderBy.Desc) as string}
-                            onValueChange={(value: string | number) =>
-                                onFiltersChange({
-                                    ...filters,
-                                    order_by: value as OrderBy,
-                                })
-                            }
-                        >
-                            {ORDER_OPTIONS.map(({ value, label }) => (
-                                <Picker.Item
-                                    key={value}
-                                    label={label}
-                                    value={value}
-                                />
-                            ))}
-                        </Picker>
-                    </Host>
-                </FilterRow>
+                <FilterChipGroup
+                    title="Order"
+                    options={ORDER_OPTIONS}
+                    selectedValue={filters.order_by ?? OrderBy.Desc}
+                    onSelect={(value) =>
+                        onFiltersChange({
+                            ...filters,
+                            order_by: value as OrderBy,
+                        })
+                    }
+                />
             </ScrollView>
 
             <View
                 style={[
                     styles.footer,
                     {
-                        paddingBottom: insets.bottom + 16,
+                        backgroundColor,
+                        paddingBottom: footerBottomPadding,
                         borderTopColor: textColor + '20',
                     },
                 ]}
@@ -224,12 +225,23 @@ export function MovieFilterModal({
 }
 
 const styles = StyleSheet.create({
-    flex: {
+    host: {
         flex: 1,
+        minHeight: 0,
+        width: '100%',
+    },
+    container: {
+        flex: 1,
+        minHeight: 0,
+    },
+    scrollView: {
+        flex: 1,
+        minHeight: 0,
     },
     scrollContent: {
         paddingHorizontal: 20,
         paddingTop: 12,
+        paddingBottom: 16,
     },
     header: {
         flexDirection: 'row',
@@ -241,28 +253,30 @@ const styles = StyleSheet.create({
     headerButtonHost: {
         alignSelf: 'flex-end',
     },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 10,
+    section: {
+        paddingVertical: 12,
     },
-    rowLabel: {
+    sectionLabel: {
         fontSize: 16,
-        flexShrink: 0,
+        fontWeight: '600',
+        marginBottom: 10,
     },
-    rowControl: {
-        flex: 1,
-        alignItems: 'flex-end',
+    chipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
     },
-    pickerHost: {
-        minWidth: 120,
+    chip: {
+        borderRadius: 999,
+        borderWidth: 1,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+    },
+    chipLabel: {
+        fontSize: 14,
+        lineHeight: 18,
     },
     footer: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
         paddingHorizontal: 20,
         paddingTop: 12,
         borderTopWidth: StyleSheet.hairlineWidth,
