@@ -27,7 +27,9 @@ This is a React Native / Expo movie browsing app (TypeScript, strict mode) follo
 `data`, `domain`, and `presentation` are independent modules (plain folders, each with an `index.ts` barrel as its public API, resolved via the `@/*` alias). The dependency graph mirrors Gradle modules and is **enforced by ESLint** (`import/no-restricted-paths` in `eslint.config.js`): `domain` depends on nothing; `data` and `presentation` each depend only on `domain`; they may not import each other; `app` is the composition root and may depend on all of them. An illegal cross-module import fails `npm run lint`. Cross-module imports must go through a module's barrel (e.g. `@/domain`), never a deep path.
 
 ### Data Layer (`/data`)
-- `YtsApiDataSource` — HTTP client for the YTS movie API. Has dual-endpoint fallback (`movies-api.accel.li` → `yts.bz`) with 15s AbortController timeout.
+
+- `YtsApiDataSource` — HTTP client for the YTS movie API. Single base URL (`movies-api.accel.li`); endpoint paths come
+  from the `YtsEndpoint` enum; 15s AbortController timeout.
 - `MovieRepositoryImpl` — Transforms raw API responses into domain `Movie` entities. Rewrites image URLs through `wsrv.nl` (which both enforces HTTPS and resizes on the fly).
 - `models/` — Raw API response DTOs, one per file (`YtsMovieDto`, `YtsTorrentDto`, `YtsCastMemberDto`,
   `YtsParentalGuideDto`, the generic `YtsApiResponse<T>` envelope, and a per-endpoint `Yts*Response.ts`), re-exported

@@ -5,11 +5,9 @@ import type {
   YtsMovieParentalGuidesResponse,
   YtsMovieSuggestionsResponse,
 } from '../models';
+import {YtsEndpoint} from './YtsEndpoint';
 
-const BASE_URLS = [
-  'https://movies-api.accel.li/api/v2',
-  'https://yts.bz/api/v2',
-];
+const BASE_URL = 'https://movies-api.accel.li/api/v2';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -104,7 +102,7 @@ export class YtsApiDataSource implements YtsApi {
     if (params.with_rt_ratings) {
       searchParams.set('with_rt_ratings', 'true');
     }
-    return this.request<YtsListMoviesResponse>('list_movies.json', searchParams);
+    return this.request<YtsListMoviesResponse>(YtsEndpoint.ListMovies, searchParams);
   }
 
   async getMovieDetails(params: MovieDetailsApiParams): Promise<YtsMovieDetailsResponse> {
@@ -121,38 +119,29 @@ export class YtsApiDataSource implements YtsApi {
     if (params.with_cast) {
       searchParams.set('with_cast', 'true');
     }
-    return this.request<YtsMovieDetailsResponse>('movie_details.json', searchParams);
+    return this.request<YtsMovieDetailsResponse>(YtsEndpoint.MovieDetails, searchParams);
   }
 
   async getMovieSuggestions(movieId: number): Promise<YtsMovieSuggestionsResponse> {
     const searchParams = new URLSearchParams({movie_id: String(movieId)});
-    return this.request<YtsMovieSuggestionsResponse>('movie_suggestions.json', searchParams);
+    return this.request<YtsMovieSuggestionsResponse>(YtsEndpoint.MovieSuggestions, searchParams);
   }
 
   async getMovieParentalGuides(movieId: number): Promise<YtsMovieParentalGuidesResponse> {
     const searchParams = new URLSearchParams({movie_id: String(movieId)});
     return this.request<YtsMovieParentalGuidesResponse>(
-        'movie_parental_guides.json',
+        YtsEndpoint.MovieParentalGuides,
         searchParams
     );
   }
 
-  /** GET `endpoint`, trying each base URL in turn until one succeeds. */
+  /** GET `endpoint` from the YTS API. */
   private async request<T extends YtsApiResponse<unknown>>(
-      endpoint: string,
+      endpoint: YtsEndpoint,
       searchParams: URLSearchParams
   ): Promise<T> {
     const query = searchParams.toString();
     const suffix = query ? `?${query}` : '';
-
-    let lastError: Error | null = null;
-    for (const baseUrl of BASE_URLS) {
-      try {
-        return await fetchWithTimeout<T>(`${baseUrl}/${endpoint}${suffix}`);
-      } catch (e) {
-        lastError = e instanceof Error ? e : new Error(String(e));
-      }
-    }
-    throw lastError ?? new Error(`Failed to request ${endpoint}`);
+    return fetchWithTimeout<T>(`${BASE_URL}/${endpoint}${suffix}`);
   }
 }
