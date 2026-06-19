@@ -5,7 +5,6 @@ import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
-    Animated,
     FlatList,
     Pressable,
     RefreshControl,
@@ -20,8 +19,6 @@ import {MoviePosterItem} from './components/MoviePosterItem';
 import {POSTER_GAP, POSTER_MIN_WIDTH,} from './components/moviePosterLayout';
 
 const HORIZONTAL_PADDING = 16;
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
@@ -51,17 +48,8 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     const [isAtTop, setIsAtTop] = useState(true);
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
-    const [scrollToTopOpacity] = useState(() => new Animated.Value(0));
 
     const SCROLL_AT_TOP_THRESHOLD = 8;
-
-    useEffect(() => {
-        Animated.timing(scrollToTopOpacity, {
-            toValue: isAtTop ? 0 : 1,
-            duration: 220,
-            useNativeDriver: true,
-        }).start();
-    }, [isAtTop, scrollToTopOpacity]);
 
     const onScroll = useCallback(
         ({nativeEvent}: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -244,23 +232,24 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         pointerEvents="box-none"
                     >
                         <LiquidGlassGroup spacing={16} style={styles.countRow}>
-                            <AnimatedPressable
-                                onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
-                                style={[
-                                    styles.scrollToTopButton,
-                                    {opacity: scrollToTopOpacity},
-                                ]}
-                                pointerEvents={isAtTop ? 'none' : 'auto'}
-                                hitSlop={8}
-                            >
-                                <LiquidGlassView
-                                    tint={glassTint}
-                                    fallbackBackgroundColor={iconColor + '28'}
-                                    style={styles.scrollToTopGlass}
+                            {!isAtTop && (
+                                <Pressable
+                                    onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                                    style={({pressed}) => [
+                                        styles.scrollToTopButton,
+                                        {opacity: pressed ? 0.6 : 1},
+                                    ]}
+                                    hitSlop={8}
                                 >
-                                    <Ionicons name="arrow-up" size={20} color={textColor}/>
-                                </LiquidGlassView>
-                            </AnimatedPressable>
+                                    <LiquidGlassView
+                                        tint={glassTint}
+                                        fallbackBackgroundColor={iconColor + '28'}
+                                        style={styles.scrollToTopGlass}
+                                    >
+                                        <Ionicons name="arrow-up" size={20} color={textColor}/>
+                                    </LiquidGlassView>
+                                </Pressable>
+                            )}
                             <LiquidGlassView
                                 tint={glassTint}
                                 fallbackBackgroundColor={iconColor + '28'}
