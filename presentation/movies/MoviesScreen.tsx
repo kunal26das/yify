@@ -1,6 +1,5 @@
 import type {MovieFilters, MoviesViewModel} from '@/presentation';
 import {LiquidGlassGroup, LiquidGlassView, ThemedText, ThemedView, useThemeColor} from '@/presentation';
-import {Host, TextInput as NativeTextInput} from '@expo/ui';
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
@@ -10,6 +9,7 @@ import {
     Pressable,
     RefreshControl,
     StyleSheet,
+    TextInput,
     useColorScheme,
     useWindowDimensions,
     View
@@ -207,15 +207,23 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             style={styles.glassWrapper}
                         >
                             <View style={styles.searchFieldWrapper}>
-                                <Host matchContents style={styles.searchInputHost}>
-                                    <NativeTextInput
-                                        placeholder="Search Movies"
-                                        onChangeText={setSearchQuery}
-                                        autoCapitalize="none"
-                                        autoCorrect={false}
-                                        returnKeyType="search"
-                                    />
-                                </Host>
+                                <Ionicons
+                                    name="search"
+                                    size={18}
+                                    color={iconColor}
+                                    style={styles.searchIcon}
+                                />
+                                <TextInput
+                                    style={[styles.searchInput, {color: textColor}]}
+                                    placeholder="Search Movies"
+                                    placeholderTextColor={iconColor}
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                    autoCapitalize="none"
+                                    autoCorrect={false}
+                                    returnKeyType="search"
+                                    clearButtonMode="never"
+                                />
                                 {searchQuery.length > 0 ? (
                                     <Pressable
                                         onPress={() => setSearchQuery('')}
@@ -225,9 +233,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                                         ]}
                                         hitSlop={8}
                                     >
-                                        <ThemedText style={[styles.clearButtonLabel, {color: iconColor}]}>
-                                            ✕
-                                        </ThemedText>
+                                        <Ionicons name="close-circle" size={18} color={iconColor}/>
                                     </Pressable>
                                 ) : null}
                             </View>
@@ -343,9 +349,14 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 14,
     },
-    searchInputHost: {
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
         flex: 1,
         height: 40,
+        fontSize: 16,
+        padding: 0,
     },
     clearButton: {
         paddingLeft: 8,
@@ -353,10 +364,6 @@ const styles = StyleSheet.create({
         minWidth: 32,
         minHeight: 32,
         alignItems: 'center',
-    },
-    clearButtonLabel: {
-        fontSize: 18,
-        fontWeight: '400',
     },
     row: {
         flexDirection: 'row',
