@@ -933,18 +933,7 @@
     micromatch "^4.0.4"
     walker "^1.0.8"
 
-"@expo/metro-runtime@56.0.12":
-  version "56.0.12"
-  resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-56.0.12.tgz#bf576cbc31ace8c70de308ebc55b1e90026fb813"
-  integrity sha512-7fWsZfIq+Kn6ilr5lx1YNQGJjukmvwnrl91cTRASdQIKXQoXF7AXRAU0CrDjA+dNMZ6UWDK3l8wpQjk7CA1Z/A==
-  dependencies:
-    "@expo/log-box" "^56.0.12"
-    anser "^1.4.9"
-    pretty-format "^29.7.0"
-    stacktrace-parser "^0.1.10"
-    whatwg-fetch "^3.0.0"
-
-"@expo/metro-runtime@^56.0.11":
+"@expo/metro-runtime@56.0.14", "@expo/metro-runtime@^56.0.11":
   version "56.0.14"
   resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-56.0.14.tgz#dd7bba9fc41e3b7ca1b3211145c753ee34c45e31"
   integrity sha512-xqSWX7W1jd/B8MzDOJkc/iHAtIsHOMYrDya/jJkEj8A6XdN4XqtmxqfAQ2oWcpYi47vH97lECDp8aoP7jO6v0Q==
