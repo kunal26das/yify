@@ -38,7 +38,12 @@ This is a React Native / Expo movie browsing app (TypeScript, strict mode) follo
   source covers `list_movies`, `movie_details`, `movie_suggestions`, and `movie_parental_guides`.
 
 ### Domain Layer (`/domain`)
-- Plain interfaces split into `entities/Movie.ts` (`Movie`) and `repositories/MovieRepository.ts` (`MovieRepository`, `ListMoviesParams`, `ListMoviesResult`). No logic here.
+
+- Plain interfaces, one entity per file under `entities/` (`Movie`, `MovieDetails`, `Torrent`, `CastMember`,
+  `ParentalGuide`) and `repositories/MovieRepository.ts` (`MovieRepository`, `ListMoviesParams`, `ListMoviesResult`). No
+  logic here. The repository exposes `listMovies`, `getMovieDetails`, `getMovieSuggestions`, and
+  `getMovieParentalGuides`; `MovieRepositoryImpl` maps the raw DTOs into these entities (image URLs run through
+  `wsrv.nl`, torrent `uploadedAt` from the unix timestamp).
 
 ### Presentation Layer (`/presentation/movies`)
 - `useMoviesViewModel` — Central state hook. Manages search (400ms debounce via ref), infinite scroll pagination (page size 50), filter state (quality/rating/genre/sort), pull-to-refresh, and loading guards using refs to prevent race conditions.

@@ -1,4 +1,4 @@
-import type { Movie } from '@/domain';
+import type {Movie, MovieDetails, ParentalGuide} from '@/domain';
 
 export interface ListMoviesParams {
   page: number;
@@ -20,4 +20,10 @@ export interface ListMoviesResult {
 
 export interface MovieRepository {
   listMovies(params: ListMoviesParams): Promise<ListMoviesResult>;
+
+  getMovieDetails(movieId: number): Promise<MovieDetails>;
+
+  getMovieSuggestions(movieId: number): Promise<Movie[]>;
+
+  getMovieParentalGuides(movieId: number): Promise<ParentalGuide[]>;
 }
