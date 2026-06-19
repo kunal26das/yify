@@ -39,11 +39,14 @@ yarn-error.*
 
 app-example
 
-# generated native folders
-/ios
+# IDE
 /.idea/
 
-# Android (native folder is tracked — ignore build output & local config)
+# Per-platform .gitignore files are merged here; ignore the prebuild-generated copies
+/android/.gitignore
+/ios/.gitignore
+
+# Native build output & local config (android/ and ios/ source are tracked)
 /android/**/build/
 /android/**/.gradle/
 /android/**/.cxx/
@@ -53,3 +56,14 @@ app-example
 /android/local.properties
 /android/app/src/main/java/inline/
 /android/**/*.jsbundle
+/ios/Pods/
+/ios/build/
+/ios/**/xcuserdata/
+/ios/**/*.xcuserstate
+/ios/**/*.pbxuser
+/ios/**/*.xccheckout
+/ios/**/*.hmap
+/ios/**/*.ipa
+/ios/**/project.xcworkspace
+/ios/**/.xcode.env.local
+/ios/**/*.jsbundle
