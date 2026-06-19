@@ -5,6 +5,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
+    Animated,
     FlatList,
     Pressable,
     RefreshControl,
@@ -48,8 +49,18 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     const [isAtTop, setIsAtTop] = useState(true);
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
+    // Scale (not opacity) so the native Liquid Glass effect stays live while animating.
+    const [scrollToTopScale] = useState(() => new Animated.Value(0));
 
     const SCROLL_AT_TOP_THRESHOLD = 8;
+
+    useEffect(() => {
+        Animated.timing(scrollToTopScale, {
+            toValue: isAtTop ? 0 : 1,
+            duration: 200,
+            useNativeDriver: true,
+        }).start();
+    }, [isAtTop, scrollToTopScale]);
 
     const onScroll = useCallback(
         ({nativeEvent}: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -232,13 +243,16 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         pointerEvents="box-none"
                     >
                         <LiquidGlassGroup spacing={16} style={styles.countRow}>
-                            {!isAtTop && (
+                            <Animated.View
+                                style={[
+                                    styles.scrollToTopButton,
+                                    {transform: [{scale: scrollToTopScale}]},
+                                ]}
+                                pointerEvents={isAtTop ? 'none' : 'auto'}
+                            >
                                 <Pressable
                                     onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
-                                    style={({pressed}) => [
-                                        styles.scrollToTopButton,
-                                        {opacity: pressed ? 0.6 : 1},
-                                    ]}
+                                    style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
                                     hitSlop={8}
                                 >
                                     <LiquidGlassView
@@ -249,7 +263,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                                         <Ionicons name="arrow-up" size={20} color={textColor}/>
                                     </LiquidGlassView>
                                 </Pressable>
-                            )}
+                            </Animated.View>
                             <LiquidGlassView
                                 tint={glassTint}
                                 fallbackBackgroundColor={iconColor + '28'}
