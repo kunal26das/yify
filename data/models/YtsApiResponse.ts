@@ -1,17 +1,9 @@
-export interface YtsMovieDto {
-  id: number;
-  medium_cover_image?: string;
-  large_cover_image?: string;
-  small_cover_image?: string;
-}
+import type {YtsMetaDto} from './YtsMetaDto';
 
-export interface YtsListMoviesResponse {
+/** Generic YTS response envelope shared by every endpoint. */
+export interface YtsApiResponse<TData> {
   status: 'ok' | 'error';
   status_message: string;
-  data: {
-    movie_count: number;
-    limit: number;
-    page_number: number;
-    movies: YtsMovieDto[];
-  };
+  data: TData;
+  '@meta'?: YtsMetaDto;
 }

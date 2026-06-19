@@ -29,7 +29,10 @@ This is a React Native / Expo movie browsing app (TypeScript, strict mode) follo
 ### Data Layer (`/data`)
 - `YtsApiDataSource` — HTTP client for the YTS movie API. Has dual-endpoint fallback (`movies-api.accel.li` → `yts.bz`) with 15s AbortController timeout.
 - `MovieRepositoryImpl` — Transforms raw API responses into domain `Movie` entities. Rewrites image URLs through `wsrv.nl` (which both enforces HTTPS and resizes on the fly).
-- `models/YtsApiResponse.ts` — Raw API response shapes; the intermediate type `MovieRepositoryImpl` maps from. Import from here when adding new fields from the API.
+- `models/` — Raw API response DTOs, one per file (`YtsMovieDto`, `YtsTorrentDto`, `YtsCastMemberDto`,
+  `YtsParentalGuideDto`, the generic `YtsApiResponse<T>` envelope, and a per-endpoint `Yts*Response.ts`), re-exported
+  via `models/index.ts`. These are the intermediate types `MovieRepositoryImpl` maps from; add new fields here. The data
+  source covers `list_movies`, `movie_details`, `movie_suggestions`, and `movie_parental_guides`.
 
 ### Domain Layer (`/domain`)
 - Plain interfaces split into `entities/Movie.ts` (`Movie`) and `repositories/MovieRepository.ts` (`MovieRepository`, `ListMoviesParams`, `ListMoviesResult`). No logic here.
