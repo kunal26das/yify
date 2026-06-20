@@ -1,5 +1,6 @@
 import {Modal, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View,} from 'react-native';
 import {ThemedText} from '../../components/themed-text';
+import {useDeviceCornerRadius} from '../../hooks/use-device-corner-radius';
 import {useThemeColor} from '../../hooks/use-theme-color';
 import {
     Genre,
@@ -31,12 +32,13 @@ interface FilterChipGroupProps<T extends string | number> {
     onSelect: (value: T) => void;
 }
 
-function FilterChipGroup<T extends string | number>({
-    title,
-    options,
-    selectedValue,
-    onSelect,
-}: FilterChipGroupProps<T>) {
+function FilterChipGroup<T extends string | number>(
+    {
+        title,
+        options,
+        selectedValue,
+        onSelect,
+    }: FilterChipGroupProps<T>) {
     const colorScheme = useColorScheme();
     const chipBackground =
         colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(17, 24, 28, 0.06)';
@@ -48,13 +50,13 @@ function FilterChipGroup<T extends string | number>({
         <View style={styles.section}>
             <ThemedText style={styles.sectionLabel}>{title}</ThemedText>
             <View style={styles.chipRow}>
-                {options.map(({ value, label }) => {
+                {options.map(({value, label}) => {
                     const selected = selectedValue === value;
                     return (
                         <Pressable
                             key={String(value) || 'all'}
                             accessibilityRole="button"
-                            accessibilityState={{ selected }}
+                            accessibilityState={{selected}}
                             onPress={() => onSelect(value)}
                             style={[
                                 styles.chip,
@@ -67,7 +69,7 @@ function FilterChipGroup<T extends string | number>({
                             <ThemedText
                                 style={[
                                     styles.chipLabel,
-                                    selected && { color: accentColor, fontWeight: '600' },
+                                    selected && {color: accentColor, fontWeight: '600'},
                                 ]}
                             >
                                 {label}
@@ -80,18 +82,20 @@ function FilterChipGroup<T extends string | number>({
     );
 }
 
-export function MovieFilterModal({
-    visible,
-    onClose,
-    filters,
-    onFiltersChange,
-    onApply,
-    onClear,
-                                     bottomInset,
-}: MovieFilterModalProps) {
-    const { height: windowHeight } = useWindowDimensions();
+export function MovieFilterModal(
+    {
+        visible,
+        onClose,
+        filters,
+        onFiltersChange,
+        onApply,
+        onClear,
+        bottomInset,
+    }: MovieFilterModalProps) {
+    const {height: windowHeight} = useWindowDimensions();
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
+    const cornerRadius = useDeviceCornerRadius();
     const colorScheme = useColorScheme();
     const accentColor = colorScheme === 'dark' ? '#6ec8e8' : '#0a7ea4';
 
@@ -119,9 +123,19 @@ export function MovieFilterModal({
                     onPress={onClose}
                     accessibilityLabel="Close filters"
                 />
-                <View style={[styles.sheet, {backgroundColor, maxHeight: windowHeight * 0.9}]}>
+                <View
+                    style={[
+                        styles.sheet,
+                        {
+                            backgroundColor,
+                            maxHeight: windowHeight * 0.9,
+                            borderTopLeftRadius: cornerRadius,
+                            borderTopRightRadius: cornerRadius,
+                        },
+                    ]}
+                >
                     <View style={[styles.dragIndicator, {backgroundColor: textColor + '40'}]}/>
-                    <View style={styles.header}>
+                    <View style={[styles.header, {padding: Math.max(16, cornerRadius / 3)}]}>
                         <ThemedText type="subtitle">Filters</ThemedText>
                         <Pressable
                             onPress={handleReset}
@@ -232,8 +246,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     sheet: {
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
         overflow: 'hidden',
     },
     dragIndicator: {
@@ -256,9 +268,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingTop: 8,
-        paddingBottom: 12,
     },
     resetLabel: {
         fontSize: 16,
