@@ -2,6 +2,9 @@
 export { MoviesScreen } from './movies/MoviesScreen';
 export { useMoviesViewModel, DEFAULT_FILTERS } from './movies/useMoviesViewModel';
 export type { MoviesViewModel, MovieFilters } from './movies/useMoviesViewModel';
+export { MovieDetailsScreen } from './movies/MovieDetailsScreen';
+export { useMovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
+export type { MovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 
 // shared UI primitives
 export { LiquidGlassView, LiquidGlassGroup, isNativeLiquidGlass } from './components/liquid-glass-view';

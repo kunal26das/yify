@@ -1,6 +1,7 @@
 import {Image} from 'expo-image';
+import {router} from 'expo-router';
 import {useEffect, useState} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
 import type {Movie} from '@/domain';
 import {useDeviceCornerRadius} from '../../hooks/use-device-corner-radius';
 import {getPosterContainerStyle} from './moviePosterLayout';
@@ -24,7 +25,10 @@ export function MoviePosterItem({ movie }: { movie: Movie }) {
   const posterStyle = [styles.poster, { borderRadius: cornerRadius }];
 
   return (
-    <View style={[styles.container, getPosterContainerStyle()]}>
+    <Pressable
+      onPress={() => router.push(`/movie/${movie.id}`)}
+      style={[styles.container, getPosterContainerStyle()]}
+    >
       {posterUrls.map((uri, index) => {
         if (index > visibleUpToIndex) return null;
         return (
@@ -48,7 +52,7 @@ export function MoviePosterItem({ movie }: { movie: Movie }) {
           </View>
         );
       })}
-    </View>
+    </Pressable>
   );
 }
 

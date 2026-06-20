@@ -115,6 +115,7 @@ export class MovieRepositoryImpl implements MovieRepository {
       genres: dto.genres ?? [],
       summary: dto.summary,
       language: dto.language,
+      mpaRating: dto.mpa_rating,
       posterUrls: this.toPosterUrls(dto),
       backgroundImageUrl:
           this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 1280) ??

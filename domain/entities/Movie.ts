@@ -10,6 +10,7 @@ export interface Movie {
   genres: string[];
   summary: string;
   language: string;
+  mpaRating: string;
   /** Display-ready poster URLs ordered small → large. */
   posterUrls: string[];
   backgroundImageUrl?: string;
