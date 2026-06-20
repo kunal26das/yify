@@ -45,6 +45,7 @@
     "react-native-safe-area-context": "5.7.0",
     "react-native-screens": "4.25.2",
     "react-native-web": "0.21.2",
+    "react-native-web-webview": "1.0.2",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.8.3",
     "react-native-youtube-iframe": "2.4.1"
