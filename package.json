@@ -11,6 +11,7 @@
     "ios": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
     "ios:start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "web": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --web",
+    "export:web": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL=/yify expo export --platform web",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild"
   },

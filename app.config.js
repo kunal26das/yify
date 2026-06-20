@@ -4,15 +4,19 @@ const isRelease =
     process.env.EAS_BUILD_PROFILE === 'production' ||
     process.env.APP_VARIANT === 'release';
 
-// Debug builds get a distinct package so they can coexist with a release
-// install; the single google-services.json registers both packages.
 const basePackage = base.expo.android.package;
 const packageName = isRelease ? basePackage : `${basePackage}.debug`;
+
+const baseUrl = process.env.EXPO_WEB_BASE_URL ?? '';
 
 module.exports = {
     ...base,
     expo: {
         ...base.expo,
+        experiments: {
+            ...base.expo.experiments,
+            baseUrl,
+        },
         android: {
             ...base.expo.android,
             package: packageName,
