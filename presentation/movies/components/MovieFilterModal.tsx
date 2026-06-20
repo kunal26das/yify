@@ -1,6 +1,4 @@
-import {BottomSheet, RNHostView} from '@expo/ui';
-import {Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View,} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Modal, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View,} from 'react-native';
 import {ThemedText} from '../../components/themed-text';
 import {useThemeColor} from '../../hooks/use-theme-color';
 import {
@@ -23,6 +21,7 @@ interface MovieFilterModalProps {
     onFiltersChange: (f: MovieFilters) => void;
     onApply: (filters: MovieFilters) => void;
     onClear: () => void;
+    bottomInset: number;
 }
 
 interface FilterChipGroupProps<T extends string | number> {
@@ -88,19 +87,13 @@ export function MovieFilterModal({
     onFiltersChange,
     onApply,
     onClear,
+                                     bottomInset,
 }: MovieFilterModalProps) {
-    const insets = useSafeAreaInsets();
     const { height: windowHeight } = useWindowDimensions();
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
     const colorScheme = useColorScheme();
     const accentColor = colorScheme === 'dark' ? '#6ec8e8' : '#0a7ea4';
-    const footerBottomPadding =
-        (Platform.OS === 'android' ? Math.max(insets.bottom, 24) : insets.bottom) + 16;
-    const androidScrollMaxHeight =
-        Platform.OS === 'android'
-            ? windowHeight - 72 - 88 - footerBottomPadding
-            : undefined;
 
     const handleApply = () => {
         onApply(filters);
@@ -113,150 +106,159 @@ export function MovieFilterModal({
     };
 
     return (
-        <BottomSheet
-            isPresented={visible}
-            onDismiss={onClose}
-            snapPoints={['full']}
-            showDragIndicator
+        <Modal
+            visible={visible}
+            transparent
+            animationType="slide"
+            onRequestClose={onClose}
+            statusBarTranslucent
         >
-            <RNHostView style={styles.host}>
-            <View style={styles.container}>
-            <ScrollView
-                style={[
-                    styles.scrollView,
-                    androidScrollMaxHeight != null && { maxHeight: androidScrollMaxHeight },
-                ]}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled={Platform.OS === 'android'}
-                keyboardShouldPersistTaps="handled"
-            >
-                <View style={styles.header}>
-                    <ThemedText type="subtitle">Filters</ThemedText>
-                    <Pressable
-                        onPress={handleReset}
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
-                    >
-                        <ThemedText style={[styles.resetLabel, {color: accentColor}]}>
-                            Reset
-                        </ThemedText>
-                    </Pressable>
-                </View>
-
-                <FilterChipGroup
-                    title="Quality"
-                    options={QUALITY_OPTIONS}
-                    selectedValue={filters.quality ?? Quality.All}
-                    onSelect={(value) =>
-                        onFiltersChange({
-                            ...filters,
-                            quality: value === Quality.All ? undefined : (value as Quality),
-                        })
-                    }
-                />
-
-                <FilterChipGroup
-                    title="Minimum rating"
-                    options={RATING_OPTIONS}
-                    selectedValue={filters.minimum_rating ?? 0}
-                    onSelect={(value) =>
-                        onFiltersChange({
-                            ...filters,
-                            minimum_rating: value === 0 ? undefined : Number(value),
-                        })
-                    }
-                />
-
-                <FilterChipGroup
-                    title="Genre"
-                    options={GENRE_OPTIONS}
-                    selectedValue={filters.genre ?? Genre.All}
-                    onSelect={(value) =>
-                        onFiltersChange({
-                            ...filters,
-                            genre: value === Genre.All ? undefined : (value as Genre),
-                        })
-                    }
-                />
-
-                <FilterChipGroup
-                    title="Sort by"
-                    options={SORT_BY_OPTIONS}
-                    selectedValue={filters.sort_by ?? SortBy.DateAdded}
-                    onSelect={(value) =>
-                        onFiltersChange({
-                            ...filters,
-                            sort_by: value as SortBy,
-                        })
-                    }
-                />
-
-                <FilterChipGroup
-                    title="Order"
-                    options={ORDER_OPTIONS}
-                    selectedValue={filters.order_by ?? OrderBy.Desc}
-                    onSelect={(value) =>
-                        onFiltersChange({
-                            ...filters,
-                            order_by: value as OrderBy,
-                        })
-                    }
-                />
-            </ScrollView>
-
-            <View
-                style={[
-                    styles.footer,
-                    {
-                        backgroundColor,
-                        paddingBottom: footerBottomPadding,
-                        borderTopColor: textColor + '20',
-                    },
-                ]}
-            >
-                {/* Custom pill (not @expo/ui Button) so Android matches iOS instead of
-                    rendering a Material tonal container. */}
+            <View style={styles.backdrop}>
                 <Pressable
-                    onPress={handleApply}
-                    accessibilityRole="button"
-                    style={({pressed}) => [styles.applyButton, {opacity: pressed ? 0.85 : 1}]}
-                >
-                    <ThemedText style={styles.applyButtonLabel}>Apply filters</ThemedText>
-                </Pressable>
+                    style={StyleSheet.absoluteFill}
+                    onPress={onClose}
+                    accessibilityLabel="Close filters"
+                />
+                <View style={[styles.sheet, {backgroundColor, maxHeight: windowHeight * 0.9}]}>
+                    <View style={[styles.dragIndicator, {backgroundColor: textColor + '40'}]}/>
+                    <View style={styles.header}>
+                        <ThemedText type="subtitle">Filters</ThemedText>
+                        <Pressable
+                            onPress={handleReset}
+                            hitSlop={8}
+                            accessibilityRole="button"
+                            style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
+                        >
+                            <ThemedText style={[styles.resetLabel, {color: accentColor}]}>
+                                Reset
+                            </ThemedText>
+                        </Pressable>
+                    </View>
+
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        <FilterChipGroup
+                            title="Quality"
+                            options={QUALITY_OPTIONS}
+                            selectedValue={filters.quality ?? Quality.All}
+                            onSelect={(value) =>
+                                onFiltersChange({
+                                    ...filters,
+                                    quality: value === Quality.All ? undefined : (value as Quality),
+                                })
+                            }
+                        />
+
+                        <FilterChipGroup
+                            title="Minimum rating"
+                            options={RATING_OPTIONS}
+                            selectedValue={filters.minimum_rating ?? 0}
+                            onSelect={(value) =>
+                                onFiltersChange({
+                                    ...filters,
+                                    minimum_rating: value === 0 ? undefined : Number(value),
+                                })
+                            }
+                        />
+
+                        <FilterChipGroup
+                            title="Genre"
+                            options={GENRE_OPTIONS}
+                            selectedValue={filters.genre ?? Genre.All}
+                            onSelect={(value) =>
+                                onFiltersChange({
+                                    ...filters,
+                                    genre: value === Genre.All ? undefined : (value as Genre),
+                                })
+                            }
+                        />
+
+                        <FilterChipGroup
+                            title="Sort by"
+                            options={SORT_BY_OPTIONS}
+                            selectedValue={filters.sort_by ?? SortBy.DateAdded}
+                            onSelect={(value) =>
+                                onFiltersChange({
+                                    ...filters,
+                                    sort_by: value as SortBy,
+                                })
+                            }
+                        />
+
+                        <FilterChipGroup
+                            title="Order"
+                            options={ORDER_OPTIONS}
+                            selectedValue={filters.order_by ?? OrderBy.Desc}
+                            onSelect={(value) =>
+                                onFiltersChange({
+                                    ...filters,
+                                    order_by: value as OrderBy,
+                                })
+                            }
+                        />
+                    </ScrollView>
+
+                    <View
+                        style={[
+                            styles.footer,
+                            {
+                                paddingBottom: bottomInset + 16,
+                                borderTopColor: textColor + '20',
+                            },
+                        ]}
+                    >
+                        <Pressable
+                            onPress={handleApply}
+                            accessibilityRole="button"
+                            style={({pressed}) => [styles.applyButton, {opacity: pressed ? 0.85 : 1}]}
+                        >
+                            <ThemedText style={styles.applyButtonLabel}>Apply filters</ThemedText>
+                        </Pressable>
+                    </View>
+                </View>
             </View>
-            </View>
-            </RNHostView>
-        </BottomSheet>
+        </Modal>
     );
 }
 
 const styles = StyleSheet.create({
-    host: {
+    backdrop: {
         flex: 1,
-        minHeight: 0,
-        width: '100%',
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
-    container: {
-        flex: 1,
-        minHeight: 0,
+    sheet: {
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        overflow: 'hidden',
+    },
+    dragIndicator: {
+        alignSelf: 'center',
+        width: 36,
+        height: 5,
+        borderRadius: 3,
+        marginTop: 8,
+        marginBottom: 4,
     },
     scrollView: {
-        flex: 1,
-        minHeight: 0,
+        flexShrink: 1,
     },
     scrollContent: {
         paddingHorizontal: 20,
-        paddingTop: 12,
+        paddingTop: 8,
         paddingBottom: 16,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 8,
         paddingBottom: 12,
-        marginBottom: 8,
     },
     resetLabel: {
         fontSize: 16,

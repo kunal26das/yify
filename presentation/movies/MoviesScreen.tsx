@@ -303,6 +303,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                 )}
                 <MovieFilterModal
                     visible={filterModalVisible}
+                    bottomInset={insets.bottom}
                     onClose={() => setFilterModalVisible(false)}
                     filters={filters}
                     onFiltersChange={setFilters}
