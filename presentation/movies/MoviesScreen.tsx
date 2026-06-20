@@ -1,5 +1,8 @@
-import type {MovieFilters, MoviesViewModel} from '@/presentation';
-import {LiquidGlassGroup, LiquidGlassView, ThemedText, ThemedView, useThemeColor} from '@/presentation';
+import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
+import {LiquidGlassGroup, LiquidGlassView} from '../components/liquid-glass-view';
+import {ThemedText} from '../components/themed-text';
+import {ThemedView} from '../components/themed-view';
+import {useThemeColor} from '../hooks/use-theme-color';
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {

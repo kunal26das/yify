@@ -1,27 +1,20 @@
-import { BottomSheet, Button, Host, RNHostView } from '@expo/ui';
-import {
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    useColorScheme,
-    useWindowDimensions,
-    View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText, useThemeColor } from '@/presentation';
+import {BottomSheet, RNHostView} from '@expo/ui';
+import {Platform, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View,} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {ThemedText} from '../../components/themed-text';
+import {useThemeColor} from '../../hooks/use-theme-color';
 import {
     Genre,
     GENRE_OPTIONS,
-    OrderBy,
     ORDER_OPTIONS,
+    OrderBy,
     Quality,
     QUALITY_OPTIONS,
     RATING_OPTIONS,
-    SortBy,
     SORT_BY_OPTIONS,
+    SortBy,
 } from '../constants/movieFilterOptions';
-import type { MovieFilters } from '@/presentation';
+import type {MovieFilters} from '../useMoviesViewModel';
 
 interface MovieFilterModalProps {
     visible: boolean;
@@ -100,6 +93,8 @@ export function MovieFilterModal({
     const { height: windowHeight } = useWindowDimensions();
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
+    const colorScheme = useColorScheme();
+    const accentColor = colorScheme === 'dark' ? '#6ec8e8' : '#0a7ea4';
     const footerBottomPadding =
         (Platform.OS === 'android' ? Math.max(insets.bottom, 24) : insets.bottom) + 16;
     const androidScrollMaxHeight =
@@ -138,9 +133,16 @@ export function MovieFilterModal({
             >
                 <View style={styles.header}>
                     <ThemedText type="subtitle">Filters</ThemedText>
-                    <Host matchContents style={styles.headerButtonHost}>
-                        <Button variant="text" label="Reset" onPress={handleReset} />
-                    </Host>
+                    <Pressable
+                        onPress={handleReset}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
+                    >
+                        <ThemedText style={[styles.resetLabel, {color: accentColor}]}>
+                            Reset
+                        </ThemedText>
+                    </Pressable>
                 </View>
 
                 <FilterChipGroup
@@ -214,9 +216,15 @@ export function MovieFilterModal({
                     },
                 ]}
             >
-                <Host matchContents style={styles.applyButtonHost}>
-                    <Button variant="filled" label="Apply filters" onPress={handleApply} />
-                </Host>
+                {/* Custom pill (not @expo/ui Button) so Android matches iOS instead of
+                    rendering a Material tonal container. */}
+                <Pressable
+                    onPress={handleApply}
+                    accessibilityRole="button"
+                    style={({pressed}) => [styles.applyButton, {opacity: pressed ? 0.85 : 1}]}
+                >
+                    <ThemedText style={styles.applyButtonLabel}>Apply filters</ThemedText>
+                </Pressable>
             </View>
             </View>
             </RNHostView>
@@ -250,8 +258,9 @@ const styles = StyleSheet.create({
         paddingBottom: 12,
         marginBottom: 8,
     },
-    headerButtonHost: {
-        alignSelf: 'flex-end',
+    resetLabel: {
+        fontSize: 16,
+        fontWeight: '500',
     },
     section: {
         paddingVertical: 12,
@@ -281,7 +290,16 @@ const styles = StyleSheet.create({
         paddingTop: 12,
         borderTopWidth: StyleSheet.hairlineWidth,
     },
-    applyButtonHost: {
-        width: '100%',
+    applyButton: {
+        backgroundColor: '#0a84ff',
+        borderRadius: 999,
+        paddingVertical: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    applyButtonLabel: {
+        color: '#ffffff',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
