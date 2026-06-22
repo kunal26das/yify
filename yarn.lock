@@ -3545,10 +3545,10 @@ expo-constants@56.0.18, expo-constants@~56.0.18:
   dependencies:
     "@expo/env" "~2.3.0"
 
-expo-device-corner-radius@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/expo-device-corner-radius/-/expo-device-corner-radius-0.1.0.tgz#8ae2a74daf7b008f0cce889aaf212da9371431aa"
-  integrity sha512-k2eQO3gJbP1hw4mx//z78YFJpy6iifzwao33lx66FJo6u5SOrBbpG8YE+JY91CZLqLgrGbL7bs0txt8F7/M6MQ==
+expo-device-corner-radius@0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/expo-device-corner-radius/-/expo-device-corner-radius-0.1.1.tgz#945c90bf4bb0b335e2b5445f353907868142a2ca"
+  integrity sha512-b4EwP8rxZK2ZBmyaDSYCPrFoNtKp+O1Ai/QUQTAehNiiRmigT+IN5n0b3cbuT8gpAWwnIxRh5WrxJUsJIUflYg==
 
 expo-file-system@~56.0.8:
   version "56.0.8"
