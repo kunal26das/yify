@@ -32,8 +32,8 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (56.0.3):
     - ExpoModulesCore
-  - ExpoDeviceCornerRadius (0.1.0):
-    - DeviceKit (~> 5.7)
+  - ExpoDeviceCornerRadius (0.1.1):
+    - DeviceKit (~> 5.8)
     - ExpoModulesCore
   - ExpoDomWebView (56.0.5):
     - ExpoModulesCore
@@ -1613,7 +1613,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-webview (13.16.1):
+  - react-native-webview (14.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2089,7 +2089,7 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNGestureHandler (2.31.2):
+  - RNGestureHandler (2.31.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2650,7 +2650,7 @@ SPEC CHECKSUMS:
   Expo: 57b3c2937eb9408ab6091fcfd1e7a888b4df5769
   ExpoAsset: 1e436e9aee7015d5c6d203c1ddfe1adbb521a623
   ExpoBlur: caddd80171e5f8f3581ff3d865e99c6465047240
-  ExpoDeviceCornerRadius: 22422973aa47fd9a93c5560effebebc57a184c8f
+  ExpoDeviceCornerRadius: 377b9d5945ff38bb86de9e0831c615dd2dca3b0e
   ExpoDomWebView: 27205be8754f9992913b8a9a08e65019f2207075
   ExpoFileSystem: 9dc04ec1e11bc3c7b965d7feb2de12c789755c7b
   ExpoFont: 274487aa78f8c65d6551e2558eca3ec6ce3432ce
@@ -2719,7 +2719,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 3a42e75434099fd10030e36fe9f3b27e3811afd5
   React-mutationobservernativemodule: a7f3dc483d3e0e0fade0ea00e2cc95e2e462e023
   react-native-safe-area-context: ba7283e541a5f57c6b27a7e33f2c40b8977888c0
-  react-native-webview: 2a4da2e03d3ec2c731c4d1a389cb86aaa4902167
+  react-native-webview: 8ea93f5c9c986e9ce9888953759aa3db77eaa379
   React-NativeModulesApple: deba264b03bd79c6bd61014fa30e40321b5e443a
   React-networking: 905170b05255ad7025dd16e9d0cf5a7b9458208a
   React-oscompat: 64a0c7ef5441855dc6e2a6afe8ba8f92aa05075e
@@ -2757,7 +2757,7 @@ SPEC CHECKSUMS:
   RNCMaskedView: 8069b4d4e23b3d28b4fcac70bf266be43ffc3d2e
   RNFBApp: b6ff63eaeb1bf85585fce3d25b7d123178fac05e
   RNFBRemoteConfig: feeadcd71f8e546ce483e807144ebe88feb9d668
-  RNGestureHandler: a97cc64efbfcb7a53969a38310a189a3d5246c65
+  RNGestureHandler: 0d9f93773e381105773bc6c47646abbcf60faab5
   RNReanimated: dbe1365727409813696964826b407873304f4d51
   RNScreens: d3490d0fe7b77d694f59fa8caeced736f9345298
   RNWorklets: 4931990f73bc8f347586918b2e13f11dfadf3b75

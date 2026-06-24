@@ -54,8 +54,8 @@ if [ -z "$DEVICES" ]; then
   echo "Emulator ready."
 fi
 
-# Prebuild with debug package (.debug suffix), then build and install debug APK
-echo "Prebuilding Android (debug package: io.github.kunal26das.yify.debug)..."
+# Prebuild, then build and install debug APK
+echo "Prebuilding Android (package: io.github.kunal26das.yify)..."
 npx expo prebuild --platform android --clean
 echo "Building and installing debug app..."
 exec env CI=false npx expo run:android --variant debug
