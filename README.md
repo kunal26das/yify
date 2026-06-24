@@ -12,7 +12,7 @@ clean-architecture core.
 [![React Native](https://img.shields.io/badge/React%20Native-0.85.3-61DAFB?logo=react&logoColor=white)](https://reactnative.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Architecture](https://img.shields.io/badge/architecture-clean-success)](#-architecture)
-[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20Web-lightgrey)](#-get-started)
+[![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-lightgrey)](#-get-started)
 
 </div>
 
@@ -157,6 +157,7 @@ yify/
 │  └─ hooks/                 #    color scheme, theme color, corner radius
 ├─ lib/                      # 🔌 Firebase + Remote Config (native + .web split)
 ├─ config/                   # 🔥 google-services.json / GoogleService-Info.plist
+├─ desktop/                  # 🖥️ Electron shell (wraps the web export)
 └─ scripts/                  # 🛠️ android debug/release build helpers
 ```
 
@@ -184,6 +185,8 @@ npm start
 | `npm run android:debug` | Scripted Android **debug** build |
 | `npm run android:release` | Scripted Android **release** build (standalone APK) |
 | `npm run web` | Browser |
+| `npm run desktop` | Build the web export and launch the **Electron** desktop app |
+| `npm run desktop:build` | Package a macOS desktop binary (`:build:all` for mac/win/linux) |
 | `npm run lint` | ESLint **+ module-boundary enforcement** |
 | `npm run prebuild` | Regenerate native `ios/` & `android/` |
 
@@ -203,6 +206,9 @@ mindmap
       TypeScript strict
     Navigation
       expo-router
+    Desktop
+      Electron
+      electron-builder
     UI
       expo-glass-effect
       expo-blur
