@@ -1,0 +1,40 @@
+appId: io.github.kunal26das.yify.desktop
+productName: Yify
+copyright: Copyright © kunal26das
+
+directories:
+  output: desktop-dist
+  buildResources: desktop/assets
+
+# package.json `main` points at expo-router/entry for the RN/web app, so override
+# the Electron entry point here without touching it.
+extraMetadata:
+  main: desktop/main.js
+
+files:
+  - desktop/**/*
+  - package.json
+
+# Ship the exported Expo web build alongside the app; main.js loads it from
+# process.resourcesPath/dist in production.
+extraResources:
+  - from: dist
+    to: dist
+
+mac:
+  category: public.app-category.entertainment
+  target:
+    - dmg
+    - zip
+  icon: desktop/assets/icon.png
+
+win:
+  target:
+    - nsis
+  icon: desktop/assets/icon.png
+
+linux:
+  target:
+    - AppImage
+  category: AudioVideo
+  icon: desktop/assets/icon.png

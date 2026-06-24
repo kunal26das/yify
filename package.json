@@ -12,6 +12,11 @@
     "ios:start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "web": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --web",
     "export:web": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL=/yify expo export --platform web",
+    "export:desktop": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL='' expo export --platform web",
+    "desktop": "yarn export:desktop && electron desktop/main.js",
+    "desktop:dev": "electron desktop/main.js",
+    "desktop:build": "yarn export:desktop && electron-builder --mac",
+    "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild"
   },
@@ -53,6 +58,8 @@
   },
   "devDependencies": {
     "@types/react": "19.2.17",
+    "electron": "42.5.0",
+    "electron-builder": "26.15.3",
     "eslint": "9.39.3",
     "eslint-config-expo": "56.0.4",
     "eslint-import-resolver-typescript": "3.10.1",

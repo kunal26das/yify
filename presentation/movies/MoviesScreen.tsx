@@ -13,10 +13,10 @@ import {
     RefreshControl,
     StyleSheet,
     TextInput,
-    useColorScheme,
     useWindowDimensions,
     View
 } from 'react-native';
+import {useColorScheme} from '../hooks/use-color-scheme';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';

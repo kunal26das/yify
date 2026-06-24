@@ -1,4 +1,5 @@
-import {Modal, Pressable, ScrollView, StyleSheet, useColorScheme, useWindowDimensions, View,} from 'react-native';
+import {Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View,} from 'react-native';
+import {useColorScheme} from '../../hooks/use-color-scheme';
 import {ThemedText} from '../../components/themed-text';
 import {useDeviceCornerRadius} from '../../hooks/use-device-corner-radius';
 import {useThemeColor} from '../../hooks/use-theme-color';
