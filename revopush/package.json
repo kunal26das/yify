@@ -1,0 +1,30 @@
+{
+  "name": "revopush-release-console",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive TUI/GUI for RevoPush 2.0 base releases and CodePush updates, with login + base-release guardrails.",
+  "type": "module",
+  "main": "dist/presentation/gui/main.js",
+  "scripts": {
+    "tui": "tsx presentation/tui/index.tsx",
+    "build": "tsc -p tsconfig.json && npm run copy-assets",
+    "copy-assets": "node dist/scripts/copyAssets.js",
+    "gui": "npm run build && electron dist/presentation/gui/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@revopush/code-push-cli": "0.0.10",
+    "app-info-parser": "1.1.6",
+    "ink": "4.4.1",
+    "ink-select-input": "5.0.0",
+    "ink-text-input": "5.0.1",
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.0",
+    "@types/react": "18.2.0",
+    "electron": "29.0.0",
+    "tsx": "4.7.0",
+    "typescript": "6.0.3"
+  }
+}

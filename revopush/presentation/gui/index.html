@@ -1,0 +1,2042 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta
+            content="default-src 'self'; style-src 'unsafe-inline' https://api.fontshare.com; img-src 'self' data:; font-src 'self' data: https://cdn.fontshare.com;"
+            http-equiv="Content-Security-Policy"
+    />
+    <title>Licious — Release Console</title>
+
+    <link href="icon.png" rel="icon" type="image/png"/>
+    <link
+            href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
+            rel="stylesheet"
+    />
+    <style>
+
+        :root {
+            --lic-red: #F47C5D;
+            --lic-red-2: #FF9E7A;
+            --lic-maroon: #C9543A;
+            --lic-coral: #FFB59E;
+            --lic-amber: #FFC773;
+            --lic-teal: #4FC9BC;
+            --lic-grey: #6A7480;
+            --lic-cream: #FFF6EF;
+
+            --bg: #17120F;
+            --bg-2: #201813;
+            --panel: rgba(40, 31, 27, 0.72);
+            --panel-solid: #271E1A;
+            --panel-2: rgba(255, 255, 255, 0.035);
+            --line: rgba(255, 238, 228, 0.10);
+            --line-strong: rgba(255, 238, 228, 0.18);
+            --ink: #FBEFE9;
+            --ink-soft: #EAD8CD;
+            --muted: #B29B8F;
+            --muted-2: #87705F;
+
+            --ok: #4ED8A0;
+            --bad: #FF6B6B;
+            --warn: var(--lic-amber);
+
+            --grad-red: linear-gradient(135deg, #FF9E7A 0%, #F47C5D 48%, #E06A4E 100%);
+            --grad-warm: linear-gradient(120deg, #FFC773 0%, #FF9E7A 42%, #F47C5D 100%);
+            --radius: 18px;
+            --radius-sm: 11px;
+            --ctl-w: 172px;
+            --shadow: 0 24px 60px -22px rgba(0, 0, 0, 0.7);
+            --shadow-red: 0 12px 28px -16px rgba(244, 124, 93, 0.5);
+            --glass-tint: rgba(23, 18, 15, 0.55);
+            --card-sheen: rgba(255, 255, 255, 0.06);
+            --font: "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --mono: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, monospace;
+            color-scheme: dark;
+        }
+
+        body.theme-light {
+            --bg: #FFEFE4;
+            --bg-2: #FFE3D2;
+            --panel: rgba(255, 251, 247, 0.94);
+            --panel-solid: #FFFFFF;
+            --panel-2: rgba(196, 84, 58, 0.05);
+            --line: rgba(120, 58, 42, 0.16);
+            --line-strong: rgba(120, 58, 42, 0.26);
+            --ink: #2A1714;
+            --ink-soft: #4A2C25;
+            --muted: #7C5A4D;
+            --muted-2: #A98C7E;
+            --shadow: 0 20px 44px -22px rgba(120, 58, 42, 0.4);
+            --glass-tint: rgba(255, 240, 231, 0.86);
+            --card-sheen: rgba(255, 255, 255, 0.7);
+            color-scheme: light;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: default;
+        }
+
+        input, textarea, [contenteditable="true"], #log {
+            -webkit-user-select: text;
+            user-select: text;
+            cursor: auto;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        html, body {
+            background: transparent;
+        }
+
+        html:not(.glass) body {
+            background-color: var(--bg);
+        }
+
+        body {
+            font-family: var(--font);
+            margin: 0;
+            color: var(--ink);
+            background: radial-gradient(80vw 70vh at 88% -8%, rgba(244, 124, 93, 0.22), transparent 60%),
+            radial-gradient(70vw 62vh at -6% 4%, rgba(255, 183, 50, 0.14), transparent 58%),
+            linear-gradient(var(--glass-tint), var(--glass-tint));
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            min-height: 100vh;
+        }
+
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 24px 34px 18px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main#app {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        header.topbar {
+            -webkit-app-region: drag;
+            padding-top: 24px;
+        }
+
+        header.topbar button,
+        header.topbar a,
+        header.topbar input,
+        header.topbar select {
+            -webkit-app-region: no-drag;
+        }
+
+        ::selection {
+            background: rgba(244, 124, 93, 0.32);
+        }
+
+        ::-webkit-scrollbar {
+            width: 11px;
+            height: 11px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(244, 124, 93, 0.35);
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(244, 124, 93, 0.55);
+            background-clip: content-box;
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            z-index: 1800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: var(--glass-tint);
+            transition: opacity .35s ease;
+        }
+
+        #loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #loader .loader-spinner {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 3px solid var(--line-strong);
+            border-top-color: var(--lic-red);
+            animation: loaderSpin .8s linear infinite;
+        }
+
+        #loader .loader-text {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            color: var(--muted);
+        }
+
+        @keyframes loaderSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #titlebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 38px;
+            z-index: 1500;
+            -webkit-app-region: drag;
+        }
+
+        #runbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            z-index: 2000;
+            background: transparent;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #runbar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            width: 40%;
+            background: var(--grad-warm);
+            border-radius: 0 4px 4px 0;
+            transform: translateX(-120%);
+            opacity: 0;
+        }
+
+        #runbar.active::after {
+            opacity: 1;
+            animation: sweep 1.15s cubic-bezier(.4, 0, .2, 1) infinite;
+        }
+
+        @keyframes sweep {
+            0% {
+                transform: translateX(-120%);
+            }
+            100% {
+                transform: translateX(360%);
+            }
+        }
+
+        header.topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            margin-left: 22px;
+        }
+
+        .brand-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 15px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            background: var(--grad-red);
+            box-shadow: var(--shadow-red), inset 0 1px 0 rgba(255, 255, 255, .25);
+            position: relative;
+        }
+
+        .brand-logo svg {
+            width: 34px;
+            height: 34px;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+            min-width: 0;
+        }
+
+        .brand-lockup {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-weight: 800;
+            font-size: 21px;
+            letter-spacing: -0.4px;
+            white-space: nowrap;
+        }
+
+        .brand-lockup .lic {
+            color: var(--ink);
+        }
+
+        .brand-lockup .revo {
+            background: var(--grad-warm);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-lockup .ver {
+            font-weight: 800;
+            color: var(--muted);
+        }
+
+        .brand-lockup .ver:empty {
+            display: none;
+        }
+
+        .brand-sub {
+            margin-top: 7px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2.4px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .head-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-right: 22px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            backdrop-filter: blur(8px);
+            white-space: nowrap;
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--muted-2);
+            flex: none;
+        }
+
+        .chip.online .dot {
+            background: var(--ok);
+            box-shadow: 0 0 0 3px rgba(78, 216, 160, .18);
+        }
+
+        .chip svg {
+            width: 14px;
+            height: 14px;
+            opacity: .8;
+            flex: none;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--ink-soft);
+            cursor: pointer;
+            transition: .18s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .icon-btn:hover {
+            border-color: var(--lic-red);
+            color: var(--lic-red-2);
+            transform: translateY(-1px);
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .sun {
+            display: none;
+        }
+
+        body.theme-light .sun {
+            display: block;
+        }
+
+        body.theme-light .moon {
+            display: none;
+        }
+
+        .repoline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 4px 0 22px;
+            font-size: 12px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .repoline #repo {
+            white-space: nowrap;
+        }
+
+        .note.repoline-note {
+            margin-top: 0;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .note.repoline-note svg {
+            margin-top: 0;
+        }
+
+        .repoline svg {
+            width: 13px;
+            height: 13px;
+            opacity: .7;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        @media (max-width: 880px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            position: relative;
+            border-radius: var(--radius);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 20px 22px;
+            backdrop-filter: blur(20px) saturate(1.6);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            box-shadow: var(--shadow), inset 0 1px 0 var(--card-sheen);
+            overflow: hidden;
+            transition: border-color .25s ease, transform .25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-foot {
+            margin-top: auto;
+        }
+
+        .card-foot .glabel:first-child,
+        .card-foot .chips:first-child {
+            margin-top: 16px;
+        }
+
+        .card.glow {
+            border-color: rgba(244, 124, 93, .45);
+        }
+
+        .card.busy {
+            animation: cardPulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes cardPulse {
+            0%, 100% {
+                border-color: var(--line);
+            }
+            50% {
+                border-color: rgba(255, 199, 115, .55);
+            }
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .badge-no {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+            background: var(--grad-red);
+            box-shadow: var(--shadow-red);
+        }
+
+        .card-head h2 {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 800;
+            letter-spacing: -.2px;
+            text-transform: none;
+            color: var(--ink);
+            opacity: 1;
+        }
+
+        .card-ico {
+            margin-left: auto;
+            color: var(--muted);
+        }
+
+        .card-ico svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12.5px;
+            margin: 0 0 10px;
+            line-height: 1.45;
+            min-height: 2.9em;
+        }
+
+        .glabel {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: var(--muted-2);
+            margin: 12px 0 7px;
+        }
+
+        .drop {
+            position: relative;
+            border: 1.5px dashed var(--line-strong);
+            border-radius: var(--radius-sm);
+            padding: 11px 13px 11px;
+            margin-top: 8px;
+            min-height: 100px;
+            transition: .2s ease;
+            background: var(--panel-2);
+        }
+
+        .drop .drop-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .drop .fileico {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            background: rgba(244, 124, 93, .12);
+            color: var(--lic-red-2);
+            transition: .2s ease;
+        }
+
+        .drop .fileico svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .drop b {
+            color: var(--ink);
+        }
+
+        .drop .ext {
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        .drop input[type=text] {
+            width: 100%;
+            padding: 8px 11px;
+            border-radius: 9px;
+            margin-top: 8px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            color: var(--ink);
+            font-size: 12.5px;
+            font-family: var(--mono);
+            transition: .18s ease;
+        }
+
+        .drop input::placeholder {
+            color: var(--muted-2);
+        }
+
+        .drop input:focus {
+            outline: none;
+            border-color: var(--lic-red);
+            box-shadow: 0 0 0 3px rgba(244, 124, 93, .16);
+        }
+
+        .drop.over {
+            border-color: var(--lic-teal);
+            background: rgba(79, 201, 188, .08);
+            border-style: solid;
+            transform: scale(1.01);
+        }
+
+        .drop.over .fileico {
+            background: rgba(79, 201, 188, .18);
+            color: var(--lic-teal);
+            transform: scale(1.08);
+        }
+
+        .drop.has:has(.check-pop input:checked) {
+            border-color: var(--ok);
+            border-style: solid;
+        }
+
+        .drop.has:has(.check-pop input:checked) .fileico {
+            background: rgba(78, 216, 160, .16);
+            color: var(--ok);
+        }
+
+        .drop.has:not(:has(.check-pop input:checked)) {
+            opacity: .68;
+        }
+
+        .drop .check-pop {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1.5px solid var(--muted-2);
+            background: transparent;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transform: scale(.4);
+            cursor: pointer;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1), background .15s ease, border-color .15s ease;
+        }
+
+        .drop .check-pop input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .drop .check-pop svg {
+            width: 12px;
+            height: 12px;
+            color: #06210f;
+            opacity: 0;
+            transition: opacity .15s ease;
+        }
+
+        .drop.has {
+            cursor: pointer;
+        }
+
+        .drop.has .check-pop {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .drop.has .check-pop:hover {
+            border-color: var(--ok);
+        }
+
+        .drop .check-pop:has(input:checked) {
+            background: var(--ok);
+            border-color: transparent;
+        }
+
+        .drop .check-pop:has(input:checked) svg {
+            opacity: 1;
+        }
+
+        .chips {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        label.toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 9px 14px;
+            min-width: var(--ctl-w);
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--line-strong);
+            background: var(--panel-2);
+            color: var(--ink-soft);
+            user-select: none;
+            transition: .16s ease;
+            position: relative;
+        }
+
+        label.toggle:hover {
+            border-color: var(--muted);
+            transform: translateY(-1px);
+        }
+
+        label.toggle svg {
+            width: 15px;
+            height: 15px;
+            opacity: .75;
+        }
+
+        label.toggle input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        label.toggle .tick {
+            width: 16px;
+            height: 16px;
+            border-radius: 5px;
+            border: 1.5px solid var(--muted-2);
+            display: grid;
+            place-items: center;
+            transition: .16s ease;
+            flex: none;
+        }
+
+        label.toggle .tick svg {
+            width: 11px;
+            height: 11px;
+            opacity: 0;
+            color: #fff;
+            transition: .16s ease;
+        }
+
+        label.toggle:has(input:checked) {
+            border-color: var(--ok);
+            background: rgba(78, 216, 160, .13);
+            color: var(--ink);
+            box-shadow: 0 6px 16px -10px rgba(78, 216, 160, .7);
+        }
+
+        label.toggle:has(input:checked) svg {
+            opacity: 1;
+        }
+
+        label.toggle:has(input:checked) .tick {
+            background: var(--ok);
+            border-color: transparent;
+        }
+
+        label.toggle:has(input:checked) .tick svg {
+            opacity: 1;
+        }
+
+        label.toggle:has(input:disabled) {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+        .field {
+            position: relative;
+            margin-top: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 11px 13px;
+            border-radius: 11px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            color: var(--ink);
+            font-size: 14px;
+            font-family: var(--mono);
+            transition: .18s ease;
+        }
+
+        .field input::placeholder {
+            color: var(--muted-2);
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--lic-red);
+            box-shadow: 0 0 0 3px rgba(244, 124, 93, .16);
+        }
+
+        .field input:disabled {
+            opacity: .5;
+        }
+
+        .platbox {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 100px;
+            margin-top: 8px;
+            padding: 11px 13px;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-sm);
+            background: var(--panel-2);
+            cursor: pointer;
+            user-select: none;
+            transition: .18s ease;
+        }
+
+        .platbox .platbox-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--ink-soft);
+        }
+
+        .platbox:hover {
+            border-color: var(--muted);
+        }
+
+        .platbox input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .platbox .platbox-ico {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            background: rgba(244, 124, 93, .12);
+            color: var(--lic-red-2);
+        }
+
+        .platbox .platbox-ico svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .platbox .platbox-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .platbox .platbox-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .platbox .platbox-sub {
+            width: 100%;
+            padding: 8px 11px;
+            border-radius: 9px;
+            border: 1px solid var(--line);
+            background: var(--panel-2);
+            font-size: 12.5px;
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        .platbox .platbox-check {
+            position: absolute;
+            top: 18px;
+            right: 13px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex: none;
+            border: 1.5px solid var(--muted-2);
+            display: grid;
+            place-items: center;
+            color: #fff;
+            transition: .16s ease;
+        }
+
+        .platbox .platbox-check svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0;
+            transition: .16s ease;
+        }
+
+        .platbox:has(input:checked) {
+            border-color: var(--ok);
+            background: rgba(78, 216, 160, .08);
+        }
+
+        .platbox:has(input:checked) .platbox-ico {
+            background: rgba(78, 216, 160, .16);
+            color: var(--ok);
+        }
+
+        .platbox:has(input:checked) .platbox-check {
+            background: var(--ok);
+            border-color: transparent;
+        }
+
+        .platbox:has(input:checked) .platbox-check svg {
+            opacity: 1;
+        }
+
+        .platbox:has(input:disabled) {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .field.cpver {
+            display: flex;
+            width: 100%;
+            margin-top: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .field.cpver input {
+            flex: 1;
+            width: 100%;
+            text-align: center;
+            border-color: var(--line-strong);
+        }
+
+        .note {
+            margin-top: 10px;
+            font-size: 11.5px;
+            color: var(--muted);
+            line-height: 1.5;
+            display: flex;
+            gap: 7px;
+            align-items: flex-start;
+        }
+
+        .note svg {
+            width: 14px;
+            height: 14px;
+            flex: none;
+            margin-top: 1px;
+            opacity: .8;
+        }
+
+        code {
+            font-family: var(--mono);
+            font-size: 11px;
+            background: rgba(244, 124, 93, .12);
+            color: var(--lic-coral);
+            padding: 1.5px 6px;
+            border-radius: 5px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .card-foot .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            justify-content: stretch;
+        }
+
+        #validateBtn,
+        #baseRunBtn,
+        #cpRunBtn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        button {
+            font-family: var(--font);
+            font-size: 13.5px;
+            font-weight: 700;
+            letter-spacing: .1px;
+            padding: 11px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: .18s ease;
+        }
+
+        button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        button.primary {
+            color: #fff;
+            background: var(--grad-red);
+            box-shadow: var(--shadow-red);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.primary::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, .28), transparent 70%);
+            transform: translateX(-120%);
+            transition: transform .5s ease;
+        }
+
+        button.primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px -16px rgba(244, 124, 93, .65);
+        }
+
+        button.primary:hover:not(:disabled)::after {
+            transform: translateX(120%);
+        }
+
+        button.primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: var(--panel-2);
+            color: var(--ink);
+            border-color: var(--line-strong);
+        }
+
+        button.secondary:hover:not(:disabled) {
+            border-color: var(--lic-red);
+            color: var(--lic-red-2);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        button.is-loading {
+            color: transparent !important;
+            pointer-events: none;
+            position: relative;
+        }
+
+        button.is-loading svg {
+            opacity: 0;
+        }
+
+        button.is-loading::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .4);
+            border-top-color: #fff;
+            animation: loaderSpin .7s linear infinite;
+        }
+
+        .status {
+            margin-top: 14px;
+            min-height: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            line-height: 1.45;
+            transition: .2s ease;
+        }
+
+        .status:empty::before {
+            display: none;
+        }
+
+        .status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex: none;
+            background: var(--muted-2);
+            transition: .2s ease;
+        }
+
+        .status.ok {
+            color: var(--ok);
+        }
+
+        .status.ok::before {
+            background: var(--ok);
+            box-shadow: 0 0 0 4px rgba(78, 216, 160, .16);
+        }
+
+        .status.bad {
+            color: var(--bad);
+        }
+
+        .status.bad::before {
+            background: var(--bad);
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, .16);
+        }
+
+        .status.warn {
+            color: var(--warn);
+        }
+
+        .status.warn::before {
+            background: var(--warn);
+            box-shadow: 0 0 0 4px rgba(255, 199, 115, .18);
+        }
+
+        .status.run::before {
+            background: var(--lic-teal);
+            animation: blip 1s ease-in-out infinite;
+        }
+
+        @keyframes blip {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(79, 201, 188, .5);
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(79, 201, 188, 0);
+            }
+        }
+
+        #gate {
+            text-align: center;
+            padding: 40px 24px;
+            margin-top: 20px;
+        }
+
+        #gate .lockwrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            margin: 0 auto 16px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 199, 115, .14);
+            border: 1px solid rgba(255, 199, 115, .3);
+            color: var(--lic-amber);
+        }
+
+        #gate .lockwrap svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        #gate h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        #gate p {
+            margin: 4px 0;
+            color: var(--muted);
+            font-size: 13.5px;
+        }
+
+        #gate .cmd {
+            display: inline-block;
+            margin: 6px 0 0;
+            font-family: var(--mono);
+            font-size: 13px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            padding: 9px 15px;
+            border-radius: 10px;
+            color: var(--lic-coral);
+        }
+
+        #gate .login-form {
+            width: 100%;
+            max-width: 420px;
+            margin: 18px auto 0;
+            text-align: left;
+        }
+
+        #gate .login-form .field input {
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        #gate .login-form .actions {
+            justify-content: center;
+        }
+
+        #gate .login-form #loginBtn, #gate .login-form #openLoginBtn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        #gate .gate-alt {
+            max-width: 420px;
+            margin: 16px auto 0;
+        }
+
+        #gate .gate-divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 420px;
+            margin: 14px auto 0;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        #gate .gate-divider::before,
+        #gate .gate-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: currentColor;
+            opacity: .35;
+        }
+
+        #gate .gate-cli {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        #gate .gate-cli .cmd-row {
+            justify-content: center;
+        }
+
+        #gate .gate-cli #recheck {
+            width: 100%;
+            justify-content: center;
+        }
+
+        #gate .field-row {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        #gate .field-row .field {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        #gate .paste-btn {
+            flex: none;
+            width: 46px;
+            padding: 0;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            cursor: pointer;
+            transition: .16s ease;
+        }
+
+        #gate .paste-btn:hover {
+            border-color: var(--lic-red);
+            color: var(--lic-red-2);
+            transform: translateY(-1px);
+        }
+
+        #gate .paste-btn.has-text:hover {
+            border-color: var(--bad);
+            color: var(--bad);
+        }
+
+        #gate .paste-btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        #gate .paste-btn .ic-clear {
+            display: none;
+        }
+
+        #gate .paste-btn.has-text .ic-paste {
+            display: none;
+        }
+
+        #gate .paste-btn.has-text .ic-clear {
+            display: inline-flex;
+        }
+
+        #gate .cmd-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #gate .cmd-row .cmd {
+            margin: 0;
+        }
+
+        #gate .cmd-copy {
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            cursor: pointer;
+            transition: .16s ease;
+        }
+
+        #gate .cmd-copy:hover {
+            border-color: var(--lic-red);
+            color: var(--lic-red-2);
+            transform: translateY(-1px);
+        }
+
+        #gate .cmd-copy svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        #gate .cmd-copy.done {
+            color: var(--ok);
+            border-color: rgba(78, 216, 160, .4);
+        }
+
+        #gate .gate-alt p {
+            font-size: 12px;
+            color: var(--muted-2);
+            margin: 12px 0 0;
+        }
+
+        #gate #gateStatus {
+            justify-content: center;
+            margin-top: 10px;
+            min-height: 0;
+        }
+
+        .term {
+            margin-top: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 2px 8px;
+        }
+
+        .term-bar h2 {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .term-bar .count {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--muted-2);
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .term-bar .tools {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+
+        .term-bar .tbtn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: .16s ease;
+        }
+
+        .term-bar .tbtn:hover {
+            border-color: var(--lic-red);
+            color: var(--lic-red-2);
+        }
+
+        .term-bar .tbtn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .term-bar .tbtn.on {
+            color: var(--lic-teal);
+            border-color: rgba(79, 201, 188, .4);
+        }
+
+        pre#log {
+            background: linear-gradient(180deg, rgba(0, 0, 0, .25), transparent 60px),
+            #0C0908;
+            color: #E6D8CF;
+            padding: 16px;
+            border-radius: var(--radius);
+            flex: 1;
+            min-height: 130px;
+            overflow: auto;
+            font-size: 12px;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            font-family: var(--mono);
+            border: 1px solid var(--line);
+            margin: 0;
+            position: relative;
+        }
+
+        body.theme-light pre#log {
+            background: linear-gradient(180deg, rgba(120, 58, 42, .05), transparent 60px),
+            #FFFBF7;
+            color: #3A2A22;
+            border-color: var(--line);
+        }
+
+        pre#log:empty::before {
+            content: "▸ Waiting for activity… release output streams here in real time.";
+            color: var(--muted-2);
+            font-style: italic;
+        }
+
+        pre#log .err {
+            color: #FF8A80;
+        }
+
+        body.theme-light pre#log .err {
+            color: #C0392B;
+        }
+
+        pre#log .sys {
+            color: var(--lic-teal);
+        }
+
+        body.theme-light pre#log .sys {
+            color: #0E7C71;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade {
+            animation: fade .45s ease both;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .foot {
+            margin-top: 26px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: var(--muted-2);
+        }
+
+        .foot .made {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .foot .made b {
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        #toasts {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: 340px;
+            min-height: 74px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--panel-solid);
+            border: 1px solid var(--line-strong);
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateX(40px) scale(.96);
+            transition: opacity .28s ease, transform .28s cubic-bezier(.34, 1.56, .64, 1);
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: visible;
+            pointer-events: auto;
+        }
+
+        .toast .tclose {
+            position: absolute;
+            top: -7px;
+            left: -7px;
+            right: auto;
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            border: 1px solid var(--line-strong);
+            border-radius: 50%;
+            background: var(--panel-solid);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+            color: var(--ink);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            opacity: 0;
+            transform: scale(.7);
+            transition: opacity .15s ease, transform .15s ease, background .15s ease;
+        }
+
+        .toast:hover .tclose,
+        .toast .tclose:focus-visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .toast .tclose.left {
+            left: -7px;
+            right: auto;
+        }
+
+        .toast .tclose.right {
+            right: -7px;
+            left: auto;
+        }
+
+        .toast .tclose:hover {
+            background: var(--line-strong);
+        }
+
+        .toast .tclose svg {
+            width: 11px;
+            height: 11px;
+        }
+
+        .toast .ticon {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            flex: none;
+            display: grid;
+            place-items: center;
+            background: var(--grad-red);
+            color: #fff;
+        }
+
+        .toast .ticon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .toast .tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast .tmsg {
+            color: var(--ink);
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .toast .ttime {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--muted-2);
+            letter-spacing: .3px;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+
+        .toast.warn .ticon {
+            background: var(--grad-warm);
+            color: #1a1300;
+        }
+
+        .toast.bad .ticon {
+            background: linear-gradient(135deg, #FF6B6B, #C0392B);
+        }
+    </style>
+</head>
+<body>
+<div id="titlebar"></div>
+<div id="runbar"></div>
+
+<div aria-busy="true" aria-live="polite" id="loader">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Loading RevoPush…</div>
+</div>
+
+<div class="wrap">
+
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-text">
+                <div class="brand-lockup">
+                    <span class="lic">Licious</span>
+                    <span class="ver" id="brandVersion"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="head-right">
+          <span class="chip" id="who" title="Account status">
+            <span class="dot"></span><span>…</span>
+          </span>
+            <span class="chip" id="branch"></span>
+            <button aria-label="Log out" class="icon-btn hidden" id="logoutBtn" title="Log out">
+                <svg fill="none" viewBox="0 0 24 24">
+                    <path d="M15 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="1.8"/>
+                    <path d="M10 16l-4-4 4-4M6 12h11" stroke="currentColor" stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.8"/>
+                </svg>
+            </button>
+            <button aria-label="Toggle theme" class="icon-btn" id="themeToggle" title="Toggle theme">
+                <svg class="moon" fill="none" viewBox="0 0 24 24">
+                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke="currentColor" stroke-linejoin="round"
+                          stroke-width="1.8"/>
+                </svg>
+                <svg class="sun" fill="none" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/>
+                    <path
+                            d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+                            stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+
+    <section class="card hidden" id="gate">
+        <div class="lockwrap">
+            <svg fill="none" viewBox="0 0 24 24">
+                <rect height="10" rx="2.4" stroke="currentColor" stroke-width="1.8" width="15" x="4.5" y="10.5"/>
+                <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+            </svg>
+        </div>
+        <h3>You're not logged in to RevoPush</h3>
+        <p>Grab an access key from the login page, paste it below, and you're in.</p>
+
+        <div class="login-form">
+            <div class="actions">
+                <button class="secondary" id="openLoginBtn">
+                    <svg fill="none" viewBox="0 0 24 24">
+                        <path d="M14 4h6v6M20 4l-8 8" stroke="currentColor" stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="1.9"/>
+                        <path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" stroke="currentColor"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9"/>
+                    </svg>
+                    Open login page
+                </button>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <input autocapitalize="off" autocomplete="off" id="accessKey" placeholder="Paste your access key"
+                           spellcheck="false" type="password"/>
+                </div>
+                <button aria-label="Paste access key" class="paste-btn" id="pasteKeyBtn" title="Paste from clipboard"
+                        type="button">
+                    <svg class="ic-paste" fill="none" viewBox="0 0 24 24">
+                        <rect height="4" rx="1" stroke="currentColor" stroke-width="1.7" width="8" x="8" y="3"/>
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"
+                              stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+                    </svg>
+                    <svg class="ic-clear" fill="none" viewBox="0 0 24 24">
+                        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-linecap="round" stroke-width="1.9"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="actions" style="margin-top:10px;">
+                <button class="primary" id="loginBtn">
+                    <svg fill="none" viewBox="0 0 24 24">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" stroke-linecap="round"
+                              stroke-linejoin="round" stroke-width="1.9"/>
+                        <path d="M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="1.9"/>
+                    </svg>
+                    Log in
+                </button>
+            </div>
+            <div class="status" id="gateStatus"></div>
+        </div>
+
+        <div class="gate-divider">or</div>
+
+        <div class="gate-alt">
+            <div class="gate-cli">
+                <div class="cmd-row">
+                    <span class="cmd">$ revopush login</span>
+                    <button aria-label="Copy command" class="cmd-copy" id="copyCmdBtn" title="Copy command">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <rect height="11" rx="2" stroke="currentColor" stroke-width="1.7" width="11" x="9" y="9"/>
+                            <path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-linecap="round"
+                                  stroke-width="1.7"/>
+                        </svg>
+                    </button>
+                </div>
+                <button class="secondary" id="recheck">
+                    <svg fill="none" viewBox="0 0 24 24">
+                        <path d="M20 11a8 8 0 1 0-2.3 5.6M20 5v6h-6" stroke="currentColor" stroke-linecap="round"
+                              stroke-linejoin="round" stroke-width="1.9"/>
+                    </svg>
+                    Re-check login
+                </button>
+            </div>
+            <p>Run the command above in a terminal, then re-check.</p>
+        </div>
+    </section>
+
+    <main class="hidden" id="app">
+        <div class="grid">
+
+            <section class="card" id="baseCard">
+                <div class="card-head">
+                    <span class="badge-no">1</span>
+                    <h2 id="baseTitle">BasePush</h2>
+                </div>
+                <div class="drop" data-kind="apk" id="apkDrop">
+            <span class="check-pop" title="Include Android in this release">
+              <input class="dropInc" disabled id="apkInc" type="checkbox"/>
+              <svg fill="none" viewBox="0 0 24 24">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"/>
+              </svg>
+            </span>
+                    <div class="drop-top">
+              <span class="fileico"><svg fill="none" viewBox="0 0 24 24"><path
+                      d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
+                      stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="1.7"/></svg></span>
+                        <span>Drop the <b>Android</b> build · <span class="ext">.apk</span></span>
+                    </div>
+                    <input id="apkPath" placeholder="…or paste an absolute .apk path" type="text"/>
+                </div>
+
+                <div class="drop" data-kind="ipa" id="ipaDrop">
+            <span class="check-pop" title="Include iOS in this release">
+              <input class="dropInc" disabled id="ipaInc" type="checkbox"/>
+              <svg fill="none" viewBox="0 0 24 24">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                      stroke-width="3"/>
+              </svg>
+            </span>
+                    <div class="drop-top">
+              <span class="fileico"><svg fill="none" viewBox="0 0 24 24"><path
+                      d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
+                      stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="1.7"/></svg></span>
+                        <span>Drop the <b>iOS</b> build · <span class="ext">.ipa</span></span>
+                    </div>
+                    <input id="ipaPath" placeholder="…or paste an absolute .ipa path" type="text"/>
+                </div>
+
+                <div class="card-foot">
+                    <div class="chips">
+                        <label class="toggle">
+                            <input class="baseDep" type="checkbox" value="Staging"/>
+                            <span class="tick"><svg fill="none" viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"
+                                                                                          stroke="currentColor"
+                                                                                          stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          stroke-width="3"/></svg></span>
+                            Staging
+                        </label>
+                        <label class="toggle">
+                            <input class="baseDep" type="checkbox" value="Production"/>
+                            <span class="tick"><svg fill="none" viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"
+                                                                                          stroke="currentColor"
+                                                                                          stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          stroke-width="3"/></svg></span>
+                            Production
+                        </label>
+                    </div>
+
+                    <div class="actions">
+                        <button class="secondary" id="validateBtn">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="1.9"/>
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                            Validate
+                        </button>
+                        <button class="primary" disabled id="baseRunBtn">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path d="M12 3v12m0-12 4 4m-4-4-4 4" stroke="currentColor" stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="1.9"/>
+                                <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor"
+                                      stroke-linecap="round"
+                                      stroke-width="1.9"/>
+                            </svg>
+                            BasePush
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" id="cpCard">
+                <div class="card-head">
+                    <span class="badge-no">2</span>
+                    <h2 id="cpTitle">CodePush</h2>
+                </div>
+                <label class="platbox">
+                    <input class="cpPlat" type="checkbox" value="android"/>
+                    <div class="platbox-top">
+              <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path
+                      d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
+                      stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="1.7"/></svg></span>
+                        <span class="platbox-title">Android</span>
+                    </div>
+                    <span class="platbox-sub">JS bundle · android</span>
+                    <span class="platbox-check"><svg fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"
+                                                                                           stroke="currentColor"
+                                                                                           stroke-linecap="round"
+                                                                                           stroke-linejoin="round"
+                                                                                           stroke-width="3"/></svg></span>
+                </label>
+                <label class="platbox">
+                    <input class="cpPlat" type="checkbox" value="ios"/>
+                    <div class="platbox-top">
+              <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path
+                      d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
+                      stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="1.7"/></svg></span>
+                        <span class="platbox-title">iOS</span>
+                    </div>
+                    <span class="platbox-sub">JS bundle · ios</span>
+                    <span class="platbox-check"><svg fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"
+                                                                                           stroke="currentColor"
+                                                                                           stroke-linecap="round"
+                                                                                           stroke-linejoin="round"
+                                                                                           stroke-width="3"/></svg></span>
+                </label>
+
+                <div class="card-foot">
+                    <div class="chips">
+                        <label class="toggle">
+                            <input class="cpDep" type="checkbox" value="Staging"/>
+                            <span class="tick"><svg fill="none" viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"
+                                                                                          stroke="currentColor"
+                                                                                          stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          stroke-width="3"/></svg></span>
+                            Staging
+                        </label>
+                        <label class="toggle">
+                            <input class="cpDep" type="checkbox" value="Production"/>
+                            <span class="tick"><svg fill="none" viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"
+                                                                                          stroke="currentColor"
+                                                                                          stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          stroke-width="3"/></svg></span>
+                            Production
+                        </label>
+                    </div>
+
+                    <div class="actions">
+                        <div class="field cpver">
+                            <input id="cpVersion" placeholder="Version" type="text"/>
+                        </div>
+                        <button class="primary" id="cpRunBtn">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path d="M12 3c3 1.5 5 5 5 9l-2.2 2.2H9.2L7 12c0-4 2-7.5 5-9Z" stroke="currentColor"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+                                <circle cx="12" cy="10" r="1.6" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M9.2 14.2 7 16.5m7.8-2.3L17 16.5M10.5 17.5c-.4 1.2-.3 2.5.2 3.5.7-.8 1.1-1.9 1.3-3"
+                                      stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="1.6"/>
+                            </svg>
+                            CodePush
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="term">
+            <div class="term-bar">
+                <h2>Output</h2>
+                <span class="count" id="logCount">0 lines</span>
+                <div class="tools">
+                    <button class="tbtn on" id="autoscrollBtn" title="Toggle auto-scroll">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <path d="M12 5v14m0 0 5-5m-5 5-5-5" stroke="currentColor" stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="1.9"/>
+                        </svg>
+                        Auto-scroll
+                    </button>
+                    <button class="tbtn" id="copyLogBtn" title="Copy log">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <rect height="11" rx="2" stroke="currentColor" stroke-width="1.7" width="11" x="9" y="9"/>
+                            <path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-linecap="round"
+                                  stroke-width="1.7"/>
+                        </svg>
+                        Copy
+                    </button>
+                    <button class="tbtn" id="clearLogBtn" title="Clear log">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12"
+                                  stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                  stroke-width="1.7"/>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <pre id="log"></pre>
+        </section>
+
+    </main>
+</div>
+
+<div aria-live="polite" id="toasts"></div>
+
+<script src="renderer.js" type="module"></script>
+</body>
+</html>
