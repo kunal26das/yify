@@ -48,6 +48,14 @@
         }
       ],
       "@react-native-firebase/app",
+      "expo-background-task",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/splash-icon.png",
+          "color": "#D97757"
+        }
+      ],
       [
         "expo-build-properties",
         {

@@ -11,6 +11,7 @@ import {Image as ExpoImage} from 'expo-image';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Animated, FlatList, Platform, Pressable, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {checkForNewMovies} from '@/lib/new-movies-task';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
@@ -111,6 +112,11 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     const handleEndReached = useCallback(() => {
         if (hasMore && !loading) loadMore();
     }, [hasMore, loading, loadMore]);
+
+    const handleRefresh = useCallback(() => {
+        loadInitial();
+        void checkForNewMovies(true);
+    }, [loadInitial]);
 
     const renderItem = useCallback(
         ({item}: { item: (typeof movies)[0] }) => <MoviePosterItem movie={item} width={itemWidth}/>,
@@ -217,7 +223,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
-                            onRefresh={loadInitial}
+                            onRefresh={handleRefresh}
                             tintColor={colors.accent}
                             colors={[colors.accent]}
                             progressViewOffset={insets.top + searchBarHeight}
