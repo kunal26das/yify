@@ -1,4 +1,6 @@
-import {DarkTheme, DefaultTheme, Stack, ThemeProvider} from 'expo-router';
+import {useEffect} from 'react';
+import {DarkTheme, DefaultTheme, router, Stack, ThemeProvider} from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -16,8 +18,17 @@ import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-g
 
 import {Colors, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
 import {initRemoteConfig} from '@/lib/remote-config';
+import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 
 void initRemoteConfig();
+void requestNotificationPermission().then(() => registerNewMoviesTask());
+
+function handleNotificationData(data: unknown) {
+    const movieId = (data as { movieId?: number } | null)?.movieId;
+    if (typeof movieId === 'number') {
+        router.push(`/movie/${movieId}`);
+    }
+}
 
 // Top space reserved for the macOS title bar / traffic lights. Mirrors
 // TITLEBAR_INSET in desktop/main.js. Surfaced as a safe-area inset so the
@@ -35,6 +46,13 @@ export default function RootLayout() {
         Fraunces_700Bold,
         Fraunces_900Black,
     });
+    const lastResponse = Notifications.useLastNotificationResponse();
+    const navReady = fontsLoaded || !!fontError;
+    useEffect(() => {
+        if (!lastResponse || !navReady) return;
+        handleNotificationData(lastResponse.notification.request.content.data);
+    }, [lastResponse, navReady]);
+
     const colorScheme = useColorScheme();
     // macOS uses a frameless overlay needing a top inset; macOS + Windows both get
     // a translucent window the navigator must not paint over.
