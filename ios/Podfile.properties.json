@@ -2,7 +2,7 @@
   "expo.jsEngine": "hermes",
   "EX_DEV_CLIENT_NETWORK_INSPECTOR": "true",
   "expo.inlineModules.watchedDirectories": "[]",
-  "expo.inlineModules.xcodeProjectTargets": "{\"mainTarget\":\"yify\",\"targets\":[]}",
+  "expo.inlineModules.xcodeProjectTargets": "{\"mainTarget\":\"Yify\",\"targets\":[]}",
   "ios.useFrameworks": "static",
   "ios.forceStaticLinking": "[]",
   "apple.privacyManifestAggregationEnabled": "true",

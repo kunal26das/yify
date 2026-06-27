@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "yify.app"
-               BlueprintName = "yify"
-               ReferencedContainer = "container:yify.xcodeproj">
+               BuildableName = "Yify.app"
+               BlueprintName = "Yify"
+               ReferencedContainer = "container:Yify.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "yifyTests.xctest"
-               BlueprintName = "yifyTests"
-               ReferencedContainer = "container:yify.xcodeproj">
+               BuildableName = "YifyTests.xctest"
+               BlueprintName = "YifyTests"
+               ReferencedContainer = "container:Yify.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "yify.app"
-            BlueprintName = "yify"
-            ReferencedContainer = "container:yify.xcodeproj">
+            BuildableName = "Yify.app"
+            BlueprintName = "Yify"
+            ReferencedContainer = "container:Yify.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "yify.app"
-            BlueprintName = "yify"
-            ReferencedContainer = "container:yify.xcodeproj">
+            BuildableName = "Yify.app"
+            BlueprintName = "Yify"
+            ReferencedContainer = "container:Yify.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
