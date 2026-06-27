@@ -92,7 +92,7 @@ android {
         applicationId 'io.github.kunal26das.yify'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 24
+        versionCode 22
         versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
@@ -182,3 +182,5 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+// @revopush/gradle
+apply from: "../../node_modules/@revopush/react-native-code-push/android/codepush.gradle"

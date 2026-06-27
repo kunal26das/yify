@@ -1,6 +1,9 @@
 internal import Expo
 import FirebaseCore
 import React
+// @generated begin revopush-updates-header - expo prebuild (DO NOT MODIFY) sync-1ba9c8bf0aed4942895f95d6664fec89eb587603
+import CodePush
+// @generated end revopush-updates-header
 import ReactAppDependencyProvider
 
 @main
@@ -67,7 +70,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #if DEBUG
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
-    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    return CodePush.bundleURL()
 #endif
   }
 }

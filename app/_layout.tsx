@@ -4,7 +4,8 @@ import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
+import codePush from '@revopush/react-native-code-push';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
     HankenGrotesk_400Regular,
@@ -35,7 +36,7 @@ function handleNotificationData(data: unknown) {
 // existing safe-area-aware layouts render edge-to-edge but clear the controls.
 const DESKTOP_TOP_INSET = 44;
 
-export default function RootLayout() {
+function RootLayout() {
     const [fontsLoaded, fontError] = useFonts({
         HankenGrotesk_400Regular,
         HankenGrotesk_500Medium,
@@ -118,3 +119,12 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
     flex: { flex: 1 },
 });
+
+// CodePush/Revopush ships over-the-air JS bundles to the native builds only.
+// Web and the Electron desktop target (react-native-web) have no native module,
+// so wrap with the HOC on iOS/Android and export the bare component elsewhere.
+const codePushOptions = {checkFrequency: codePush.CheckFrequency.ON_APP_RESUME};
+
+export default Platform.OS === 'web'
+    ? RootLayout
+    : codePush(codePushOptions)(RootLayout);

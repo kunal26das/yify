@@ -1,4 +1,10 @@
 PODS:
+  - Base64 (1.1.2)
+  - CodePush (2.6.0):
+    - Base64 (~> 1.1)
+    - JWT (~> 3.0.0-beta.12)
+    - React-Core
+    - SSZipArchive (~> 2.5.5)
   - DeviceKit (5.8.0)
   - EXApplication (56.0.3):
     - ExpoModulesCore
@@ -154,6 +160,8 @@ PODS:
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
   - hermes-engine/Pre-built (250829098.0.10)
+  - JWT (3.0.0-beta.14):
+    - Base64 (~> 1.1.2)
   - MMKVCore (2.4.0)
   - NitroMmkv (4.3.2):
     - hermes-engine
@@ -2363,10 +2371,12 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - SSZipArchive (2.5.5)
   - UMAppLoader (56.0.1)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "CodePush (from `../node_modules/@revopush/react-native-code-push`)"
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - Expo (from `../node_modules/expo`)
@@ -2484,6 +2494,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - Base64
     - DeviceKit
     - Firebase
     - FirebaseABTesting
@@ -2494,10 +2505,14 @@ SPEC REPOS:
     - FirebaseRemoteConfigInterop
     - FirebaseSharedSwift
     - GoogleUtilities
+    - JWT
     - MMKVCore
     - PromisesObjC
+    - SSZipArchive
 
 EXTERNAL SOURCES:
+  CodePush:
+    :path: "../node_modules/@revopush/react-native-code-push"
   EXApplication:
     :path: "../node_modules/expo-application/ios"
   EXConstants:
@@ -2727,6 +2742,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  Base64: cecfb41a004124895a7bcee567a89bae5a89d49b
+  CodePush: 76023fae7788fac6e03a36b7ce5bd15c39b1883b
   DeviceKit: 57636054c827d171a22baa3fd320b65a70f3fda7
   EXApplication: e6040c92edc5522accd62852342e6b14742d42c0
   EXConstants: e836b478e4f5c835f3c77921d8162e1918e2c06e
@@ -2766,6 +2783,7 @@ SPEC CHECKSUMS:
   FirebaseSharedSwift: 3d1e448b7202e36821a492941c84592d1308ea14
   GoogleUtilities: 4f2618a4a1e762a1ee134a1e2323bba9843e06da
   hermes-engine: 3265b0c26c209dbf1a3c5e28e62985dccf81897c
+  JWT: ef71dfb03e1f842081e64dc42eef0e164f35d251
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   NitroMmkv: 38b271a19e7e152025a6893160c98326872ea05f
   NitroModules: d77b54b0e34d91b31705431eccc8b83e18bcb0dd
@@ -2850,6 +2868,7 @@ SPEC CHECKSUMS:
   RNReanimated: dbe1365727409813696964826b407873304f4d51
   RNScreens: d3490d0fe7b77d694f59fa8caeced736f9345298
   RNWorklets: 4931990f73bc8f347586918b2e13f11dfadf3b75
+  SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   UMAppLoader: b7d22886a244871c20b5a8f2fcea13c18534e677
   Yoga: e240fec777ff1f21ef42ccebbb44b6d262125855
 
