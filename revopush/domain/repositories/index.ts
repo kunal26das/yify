@@ -14,6 +14,8 @@ export interface Workspace {
     readonly apps: Record<Platform, AppTarget>;
     readonly deployments: Deployment[];
 
+    deploymentName(platform: Platform, deployment: Deployment): string;
+
     currentBranch(root?: string): string | undefined;
 }
 

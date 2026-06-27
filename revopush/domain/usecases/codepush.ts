@@ -1,18 +1,5 @@
-import type {
-    CodePushResult,
-    CodePushStep,
-    CodePushSummary,
-    Deployment,
-    OnLine,
-    Platform,
-} from '../entities/index.js';
-import type {
-    Cancellation,
-    Installer,
-    ManagementApi,
-    ReleaseCli,
-    Workspace,
-} from '../repositories/index.js';
+import type {CodePushResult, CodePushStep, CodePushSummary, Deployment, OnLine, Platform,} from '../entities/index.js';
+import type {Cancellation, Installer, ManagementApi, ReleaseCli, Workspace,} from '../repositories/index.js';
 import type {OperationGuard} from '../services/operationGuard.js';
 import {buildJobs, jobLabel} from '../services/jobs.js';
 
@@ -159,11 +146,11 @@ export function createCodePushUseCases(deps: {
                 });
                 const result = await cli.run(
                     [
-                        'release-react',
+                        'release-expo',
                         app,
                         c.platform,
                         '-d',
-                        c.deployment,
+                        workspace.deploymentName(c.platform, c.deployment),
                         '--targetBinaryVersion',
                         version,
                     ],

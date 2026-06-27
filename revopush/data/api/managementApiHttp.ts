@@ -105,10 +105,11 @@ export function createManagementApi(deps: {
     ): Promise<unknown | null> {
         const session = requireSession();
         const app = workspace.apps[platform].name;
+        const deploymentSlug = workspace.deploymentName(platform, deployment);
         const endpoint = `/apps/${encodeURIComponent(
             app,
         )}/deployments/${encodeURIComponent(
-            deployment,
+            deploymentSlug,
         )}/basebundle?appVersion=${encodeURIComponent(version)}`;
         const {status, body} = await getJson(session, endpoint);
         if (status === 404) return null;
