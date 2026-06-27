@@ -5,7 +5,6 @@ import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Platform, StyleSheet} from 'react-native';
-import codePush from '@revopush/react-native-code-push';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
     HankenGrotesk_400Regular,
@@ -122,9 +121,14 @@ const styles = StyleSheet.create({
 
 // CodePush/Revopush ships over-the-air JS bundles to the native builds only.
 // Web and the Electron desktop target (react-native-web) have no native module,
-// so wrap with the HOC on iOS/Android and export the bare component elsewhere.
-const codePushOptions = {checkFrequency: codePush.CheckFrequency.ON_APP_RESUME};
+// and importing it under static web/node rendering crashes (it destructures
+// `Alert` from react-native's node export), so require it lazily on native only.
+function withCodePush(component: typeof RootLayout) {
+    if (Platform.OS === 'web') {
+        return component;
+    }
+    const codePush = require('@revopush/react-native-code-push').default;
+    return codePush({checkFrequency: codePush.CheckFrequency.ON_APP_RESUME})(component);
+}
 
-export default Platform.OS === 'web'
-    ? RootLayout
-    : codePush(codePushOptions)(RootLayout);
+export default withCodePush(RootLayout);
