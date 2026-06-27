@@ -1,4 +1,5 @@
 package io.github.kunal26das.yify
+import com.microsoft.codepush.react.CodePush
 
 import android.app.Application
 import android.content.res.Configuration
@@ -23,7 +24,10 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
-        }
+        },
+// @generated begin @revopush/main-application-kt-react-host - expo prebuild (DO NOT MODIFY) sync-8344f67eadd16a2e28483a17f2f8c844f24b9963
+      jsBundleFilePath = CodePush.getJSBundleFile(),
+// @generated end @revopush/main-application-kt-react-host
     )
   }
 

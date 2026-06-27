@@ -48,6 +48,32 @@
         }
       ],
       "@react-native-firebase/app",
+      [
+        "@revopush/expo-code-push-plugin",
+        {
+          "ios": {
+            "CodePushDeploymentKey": "$(CODE_PUSH_DEPLOYMENT_KEY)",
+            "CodePushServerUrl": "https://api.revopush.org"
+          },
+          "android": {
+            "CodePushDeploymentKey": "O1gPIeWjIRClEh_5DKEg70q7ghuwVyKxs3_GVg",
+            "CodePushServerUrl": "https://api.revopush.org"
+          }
+        }
+      ],
+      [
+        "./plugins/withCodePushDeploymentKeys",
+        {
+          "ios": {
+            "production": "FP-zGPwhhqzKotc3Km27sJMxxykjVyKxs3_GVg",
+            "staging": "I6xkySK3Nj2auM-6kCE0ZYyZEbOPVyKxs3_GVg"
+          },
+          "android": {
+            "production": "O1gPIeWjIRClEh_5DKEg70q7ghuwVyKxs3_GVg",
+            "staging": "DZwA885KXrPooaOUZxGSFcQ0Im1TVyKxs3_GVg"
+          }
+        }
+      ],
       "expo-background-task",
       [
         "expo-notifications",
