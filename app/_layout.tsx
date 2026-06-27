@@ -21,7 +21,11 @@ import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 
 void initRemoteConfig();
-void requestNotificationPermission().then(() => registerNewMoviesTask());
+// Push notifications / background tasks are native-only; expo-notifications throws
+// on web (e.g. ExpoNotifications.getLastNotificationResponse is unavailable).
+if (Platform.OS !== 'web') {
+    void requestNotificationPermission().then(() => registerNewMoviesTask());
+}
 
 function handleNotificationData(data: unknown) {
     const movieId = (data as { movieId?: number } | null)?.movieId;
@@ -46,7 +50,10 @@ function RootLayout() {
         Fraunces_700Bold,
         Fraunces_900Black,
     });
-    const lastResponse = Notifications.useLastNotificationResponse();
+    // Notification taps only exist on native; the hook throws on web. Platform.OS
+    // is constant for the runtime, so this conditional call keeps hook order stable.
+    const lastResponse =
+        Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = fontsLoaded || !!fontError;
     useEffect(() => {
         if (!lastResponse || !navReady) return;
