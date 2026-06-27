@@ -135,7 +135,7 @@ function withCodePush(component: typeof RootLayout) {
     if (Platform.OS === 'web') {
         return component;
     }
-    const codePush = require('@revopush/react-native-code-push').default;
+    const codePush = require('@revopush/react-native-code-push');
     return codePush({checkFrequency: codePush.CheckFrequency.ON_APP_RESUME})(component);
 }
 
