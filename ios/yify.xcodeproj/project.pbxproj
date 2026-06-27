@@ -151,6 +151,7 @@
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				1C3CD0EA644270B3BAE33D35 /* [CP] Embed Pods Frameworks */,
 				D306505E0D516D81D99A4D28 /* [CP-User] [RNFB] Core Configuration */,
+				AABBCCDD0000000000000001 /* [Yify] Set version from package.json */,
 			);
 			buildRules = (
 			);
@@ -208,6 +209,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		AABBCCDD0000000000000001 /* [Yify] Set version from package.json */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[Yify] Set version from package.json";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nPACKAGE_JSON=\"$PROJECT_DIR/../package.json\"\nMARKETING=$(/usr/bin/sed -n 's/.*\"version\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' \"$PACKAGE_JSON\" | head -n 1)\nBUILD=$(/usr/bin/sed -n 's/.*\"versionCode\"[[:space:]]*:[[:space:]]*\\([0-9][0-9]*\\).*/\\1/p' \"$PACKAGE_JSON\" | head -n 1)\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $MARKETING\" \"$PLIST\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD\" \"$PLIST\"\necho \"Set version to $MARKETING ($BUILD) from package.json\"\n";
+		};
 		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
