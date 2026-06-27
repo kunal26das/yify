@@ -21,11 +21,12 @@ import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 
 void initRemoteConfig();
-// Push notifications / background tasks are native-only; expo-notifications throws
-// on web (e.g. ExpoNotifications.getLastNotificationResponse is unavailable).
-if (Platform.OS !== 'web') {
-    void requestNotificationPermission().then(() => registerNewMoviesTask());
-}
+// "New movies" notifications: native uses a background task; web/desktop fall back
+// to a foreground check via the browser Notification API (see new-movies-task.web).
+// Each platform's implementation is resolved by the bundler (.web.ts on web).
+void requestNotificationPermission().then((granted) => {
+    if (granted) void registerNewMoviesTask();
+});
 
 function handleNotificationData(data: unknown) {
     const movieId = (data as { movieId?: number } | null)?.movieId;

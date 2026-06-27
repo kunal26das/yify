@@ -1,6 +1,7 @@
-const {app, BrowserWindow, shell, Menu, nativeTheme} = require('electron');
+const {app, BrowserWindow, shell, Menu, Tray, nativeImage, nativeTheme} = require('electron');
 const path = require('path');
 const {startStaticServer} = require('./static-server');
+const {startNewMoviesNotifier, checkForNewMovies} = require('./new-movies-notifier');
 
 const isDev = !app.isPackaged;
 
@@ -49,10 +50,17 @@ const DIST_DIR = isDev
 
 let mainWindow = null;
 let staticServer = null;
+let tray = null;
+let currentPort = null;
+let stopNotifier = null;
+// True only once the user explicitly quits; until then, closing the window hides
+// it to the tray so the daily new-movies check keeps running in the background.
+let isQuitting = false;
 
 async function createWindow() {
     const {server, port} = await startStaticServer(DIST_DIR);
     staticServer = server;
+    currentPort = port;
 
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -98,9 +106,69 @@ async function createWindow() {
 
     await mainWindow.loadURL(`http://127.0.0.1:${port}`);
 
+    // Closing the window hides it to the tray (so background checks continue)
+    // rather than tearing it down — unless the user chose Quit.
+    mainWindow.on('close', (event) => {
+        if (isQuitting) return;
+        event.preventDefault();
+        mainWindow.hide();
+        if (isMac && app.dock) app.dock.hide();
+    });
+
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
+}
+
+function showWindow() {
+    if (isMac && app.dock) void app.dock.show();
+    if (!mainWindow) {
+        void createWindow();
+        return;
+    }
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+}
+
+// Bring the app to the foreground and deep-link to a movie when a notification is
+// clicked. `movieId` is undefined for the "N new movies" summary notification.
+async function showMovie(movieId) {
+    if (!mainWindow) await createWindow();
+    showWindow();
+    if (typeof movieId === 'number' && currentPort) {
+        await mainWindow.loadURL(`http://127.0.0.1:${currentPort}/movie/${movieId}`);
+    }
+}
+
+function createTray() {
+    const icon = nativeImage
+        .createFromPath(path.join(__dirname, 'assets', 'icon.png'))
+        .resize({width: 18, height: 18});
+    tray = new Tray(icon);
+    tray.setToolTip('Yify');
+    tray.setContextMenu(
+        Menu.buildFromTemplate([
+            {label: 'Open Yify', click: () => showWindow()},
+            {
+                label: 'Check for new movies now',
+                click: () => {
+                    checkForNewMovies((id) => void showMovie(id), true).catch((e) =>
+                        console.warn('[new-movies] manual check failed', e),
+                    );
+                },
+            },
+            {type: 'separator'},
+            {
+                label: 'Quit',
+                click: () => {
+                    isQuitting = true;
+                    app.quit();
+                },
+            },
+        ]),
+    );
+    tray.on('click', () => showWindow());
 }
 
 app.whenReady().then(() => {
@@ -111,25 +179,28 @@ app.whenReady().then(() => {
         app.dock.setIcon(path.join(__dirname, 'assets', 'icon.png'));
     }
     Menu.setApplicationMenu(buildMenu());
+    createTray();
     void createWindow();
+    stopNotifier = startNewMoviesNotifier((id) => void showMovie(id));
 
     app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            void createWindow();
-        }
+        showWindow();
     });
 });
 
+// The tray keeps the app running after the last window closes, so the daily
+// check still fires. Quitting goes through the tray's Quit item (isQuitting).
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    // Intentionally no-op: stay alive in the tray on every platform.
+});
+
+app.on('before-quit', () => {
+    isQuitting = true;
 });
 
 app.on('quit', () => {
-    if (staticServer) {
-        staticServer.close();
-    }
+    if (stopNotifier) stopNotifier();
+    if (staticServer) staticServer.close();
 });
 
 function buildMenu() {
