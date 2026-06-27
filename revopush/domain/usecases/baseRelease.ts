@@ -224,7 +224,7 @@ export function createBaseReleaseUseCases(deps: {
                         job.platform,
                         job.file,
                         '-d',
-                        job.deployment,
+                        workspace.deploymentName(job.platform, job.deployment),
                         '-t',
                         version,
                     ],

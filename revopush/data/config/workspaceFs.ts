@@ -1,21 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import type {
-    AppTarget,
-    Deployment,
-    Platform,
-    Workspace,
-} from '../../domain/index.js';
+import type {AppTarget, Deployment, Platform, Workspace,} from '../../domain/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const APP_NAME = 'Yify';
+
+const PLATFORM_LABEL: Record<Platform, string> = {
+    android: 'Android',
+    ios: 'iOS',
+};
+
 const APPS: Record<Platform, AppTarget> = {
-    android: {name: 'Android', platform: 'android'},
-    ios: {name: 'iOS', platform: 'ios'},
+    android: {name: APP_NAME, platform: 'android'},
+    ios: {name: APP_NAME, platform: 'ios'},
 };
 
 const DEPLOYMENTS: Deployment[] = ['Staging', 'Production'];
+
+function deploymentName(platform: Platform, deployment: Deployment): string {
+    return `${deployment}-${PLATFORM_LABEL[platform]}`;
+}
 
 export function findRepoRoot(): string {
     let dir = __dirname;
@@ -63,6 +69,7 @@ export function createWorkspace(): Workspace {
         repoRoot,
         apps: APPS,
         deployments: DEPLOYMENTS,
+        deploymentName,
         currentBranch(root: string = repoRoot) {
             return currentBranch(root);
         },
