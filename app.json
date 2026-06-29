@@ -2,7 +2,7 @@
   "expo": {
     "name": "Yify",
     "slug": "yify",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "yify",
@@ -19,7 +19,7 @@
       }
     },
     "android": {
-      "versionCode": 25,
+      "versionCode": 26,
       "adaptiveIcon": {
         "backgroundColor": "#D97757",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

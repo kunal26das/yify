@@ -1,5 +1,6 @@
 import {$} from './dom.js';
 import {clearToasts, showToast} from './toast.js';
+import {errMessage} from './errMessage.js';
 import type {AuthViewModel} from './authViewModel.js';
 import type {LogViewModel} from './logViewModel.js';
 import type {Info} from './types.js';
@@ -81,8 +82,8 @@ export class AuthView {
             btn.classList.add('done');
             setTimeout(() => btn.classList.remove('done'), 1200);
             showToast('Command copied to clipboard.');
-        } catch {
-            showToast("Couldn't copy command.", 'warn');
+        } catch (e) {
+            showToast(errMessage(e), 'warn');
         }
     }
 
@@ -129,8 +130,8 @@ export class AuthView {
         try {
             await this.vm.refresh();
             showToast('Status refreshed.');
-        } catch {
-            showToast("Couldn't refresh status.", 'bad');
+        } catch (e) {
+            showToast(errMessage(e), 'bad');
         } finally {
             btn.disabled = false;
         }
@@ -146,8 +147,8 @@ export class AuthView {
                 res.ok ? 'ok' : 'warn',
             );
             await this.vm.refresh();
-        } catch {
-            showToast("Couldn't sign out — something went wrong.", 'bad');
+        } catch (e) {
+            showToast(errMessage(e), 'bad');
         } finally {
             btn.disabled = false;
         }
@@ -163,11 +164,10 @@ export class AuthView {
             gs.className = 'status ok';
             showToast('Opened the login page in your browser.');
             $('#accessKey').focus();
-        } catch {
-            gs.textContent =
-                "Couldn't open the login page — open app.revopush.org manually.";
+        } catch (e) {
+            gs.textContent = errMessage(e);
             gs.className = 'status bad';
-            showToast("Couldn't open the login page.", 'bad');
+            showToast(errMessage(e), 'bad');
         }
     }
 
@@ -205,10 +205,10 @@ export class AuthView {
                 gs.className = 'status bad';
                 showToast('Login failed — check the access key.', 'bad');
             }
-        } catch {
-            gs.textContent = 'Login failed — something went wrong. Try again.';
+        } catch (e) {
+            gs.textContent = errMessage(e);
             gs.className = 'status bad';
-            showToast('Login failed — something went wrong.', 'bad');
+            showToast(errMessage(e), 'bad');
         } finally {
             loginBtn.disabled = false;
             loginBtn.classList.remove('is-loading');

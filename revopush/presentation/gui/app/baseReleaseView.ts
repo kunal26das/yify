@@ -1,5 +1,6 @@
 import {$, $$} from './dom.js';
 import {showToast} from './toast.js';
+import {errMessage} from './errMessage.js';
 import {runState} from './runState.js';
 import type {BaseReleaseViewModel} from './baseReleaseViewModel.js';
 import type {Coverage, Deployment, Platform} from './types.js';
@@ -9,12 +10,17 @@ type DropFile = File & { path?: string };
 export class BaseReleaseView {
     vm: BaseReleaseViewModel;
     #baseReady = false;
-
     constructor(vm: BaseReleaseViewModel) {
         this.vm = vm;
 
-        this.#wireDrop('#apkDrop', '#apkPath', '#apkInc', '.apk', 'Android', () =>
-            this.#onFilesChanged(),
+        this.#apkSync = this.#wireDrop(
+            '#apkDrop',
+            '#apkPath',
+            '#apkInc',
+            '.apk',
+            'Android',
+            () => this.#onFilesChanged(),
+            () => true,
         );
         this.#wireDrop('#ipaDrop', '#ipaPath', '#ipaInc', '.ipa', 'iOS', () =>
             this.#onFilesChanged(),
@@ -23,6 +29,7 @@ export class BaseReleaseView {
         $('#validateBtn').addEventListener('click', () => this.#validate());
         $$<HTMLInputElement>('.baseDep').forEach((cb) =>
             cb.addEventListener('change', () => {
+                this.#apkSync();
                 this.#evaluateValidate();
                 this.#evaluateBases();
             }),
@@ -34,13 +41,16 @@ export class BaseReleaseView {
         this.#evaluateValidate();
     }
 
+    #apkSync: () => void = () => {
+    };
+
+    #productionSelected(): boolean {
+        return this.#selectedDeployments().includes('Production');
+    }
+
     #selectedPlatforms(): Platform[] {
         const plats: Platform[] = [];
-        if (
-            this.#fileReady('#apkPath', '.apk') &&
-            $<HTMLInputElement>('#apkInc').checked
-        )
-            plats.push('android');
+        if ($<HTMLInputElement>('#apkInc').checked) plats.push('android');
         if (
             this.#fileReady('#ipaPath', '.ipa') &&
             $<HTMLInputElement>('#ipaInc').checked
@@ -55,7 +65,8 @@ export class BaseReleaseView {
     }
 
     #apkArg(): string {
-        return this.#selectedPlatforms().includes('android')
+        return this.#selectedPlatforms().includes('android') &&
+        this.#fileReady('#apkPath', '.apk')
             ? $<HTMLInputElement>('#apkPath').value.trim()
             : '';
     }
@@ -79,7 +90,8 @@ export class BaseReleaseView {
         ext: string,
         label: string,
         onChange: () => void,
-    ): void {
+        allowWithoutFile?: () => boolean,
+    ): () => void {
         const drop = $(dropId);
         const input = $<HTMLInputElement>(inputId);
         const inc = $<HTMLInputElement>(incId);
@@ -89,9 +101,9 @@ export class BaseReleaseView {
 
         const sync = () => {
             const valid = isValid(input.value);
-            drop.classList.toggle('has', valid);
-            inc.disabled = !valid;
-            if (!valid) inc.checked = false;
+            const allow = valid || (allowWithoutFile?.() ?? false);
+            inc.disabled = !allow;
+            if (!allow) inc.checked = false;
             onChange?.();
         };
 
@@ -130,14 +142,9 @@ export class BaseReleaseView {
             if (v && !isValid(v)) reject();
         });
 
-        drop.addEventListener('click', (e: MouseEvent) => {
-            if ((e.target as HTMLElement).closest('input[type="text"]')) return;
-            if (inc.disabled) return;
-            inc.checked = !inc.checked;
-            onChange?.();
-        });
-
         inc.addEventListener('change', () => onChange?.());
+
+        return sync;
     }
 
     #onFilesChanged(): void {
@@ -183,11 +190,12 @@ export class BaseReleaseView {
         $<HTMLButtonElement>('#baseRunBtn').disabled = true;
 
         const plats = this.#selectedPlatforms();
+        const deps = this.#selectedDeployments();
         if (plats.length === 0) {
             showToast('Drop the .apk and/or .ipa first.', 'warn');
             return;
         }
-        if (this.#selectedDeployments().length === 0) {
+        if (deps.length === 0) {
             showToast('Select at least one deployment.', 'warn');
             return;
         }
@@ -196,9 +204,14 @@ export class BaseReleaseView {
         try {
             let res;
             try {
-                res = await this.vm.validate(this.#apkArg(), this.#ipaArg(), plats);
-            } catch {
-                showToast('Validation failed — something went wrong.', 'bad');
+                res = await this.vm.validate(
+                    this.#apkArg(),
+                    this.#ipaArg(),
+                    plats,
+                    deps,
+                );
+            } catch (e) {
+                showToast(errMessage(e), 'bad');
                 return;
             }
             if (!res.ok) {
@@ -267,8 +280,8 @@ export class BaseReleaseView {
             } else {
                 showToast('Base release finished with errors.', 'bad');
             }
-        } catch {
-            showToast('Base release failed — something went wrong.', 'bad');
+        } catch (e) {
+            showToast(errMessage(e), 'bad');
         } finally {
             runState.end();
             this.#evaluateBases();
@@ -283,8 +296,7 @@ export class BaseReleaseView {
             this.#selectedDeployments().length === 0;
         $<HTMLButtonElement>('#baseRunBtn').disabled = busy || !this.#baseReady;
         $$<HTMLInputElement>('.baseDep').forEach((c) => (c.disabled = busy));
-        $<HTMLInputElement>('#apkInc').disabled =
-            busy || !this.#fileReady('#apkPath', '.apk');
+        $<HTMLInputElement>('#apkInc').disabled = busy;
         $<HTMLInputElement>('#ipaInc').disabled =
             busy || !this.#fileReady('#ipaPath', '.ipa');
         $('#baseCard').classList.toggle('busy', runState.active === 'base');

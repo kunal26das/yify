@@ -1,4 +1,5 @@
 import type {
+    AndroidPublisher,
     BinaryInspector,
     Installer,
     ManagementApi,
@@ -10,14 +11,12 @@ import type {
 import {createWorkspace} from './config/workspaceFs.js';
 import {createSessionStore} from './session/sessionStoreFs.js';
 import {createManagementApi} from './api/managementApiHttp.js';
-import {
-    type CancellationRegistry,
-    createCancellation,
-} from './process/cancellationRegistry.js';
+import {type CancellationRegistry, createCancellation,} from './process/cancellationRegistry.js';
 import {createReleaseCli} from './cli/releaseCliProcess.js';
 import {createInstaller} from './install/installerShell.js';
 import {createBinaryInspector} from './version/binaryInspectorAppInfo.js';
 import {createUrlOpener} from './system/urlOpenerOs.js';
+import {createAndroidPublisher} from './android/androidPublisherShell.js';
 
 export interface DataLayer {
     workspace: Workspace;
@@ -28,6 +27,7 @@ export interface DataLayer {
     installer: Installer;
     binary: BinaryInspector;
     urlOpener: UrlOpener;
+    androidPublisher: AndroidPublisher;
 }
 
 export function createDataLayer(): DataLayer {
@@ -39,6 +39,7 @@ export function createDataLayer(): DataLayer {
     const installer = createInstaller({workspace, cancellation});
     const binary = createBinaryInspector({workspace});
     const urlOpener = createUrlOpener();
+    const androidPublisher = createAndroidPublisher({workspace, cancellation});
 
     return {
         workspace,
@@ -49,5 +50,6 @@ export function createDataLayer(): DataLayer {
         installer,
         binary,
         urlOpener,
+        androidPublisher,
     };
 }

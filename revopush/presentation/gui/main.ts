@@ -1,11 +1,6 @@
-import {
-    app,
-    BrowserWindow,
-    ipcMain,
-    nativeImage,
-    nativeTheme,
-    shell,
-} from 'electron';
+import {app, BrowserWindow, ipcMain, nativeImage, nativeTheme, shell,} from 'electron';
+import dns from 'node:dns';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -28,6 +23,9 @@ import {
     summarizeCodePush,
     validateBinaries,
 } from '../container.js';
+
+dns.setDefaultResultOrder('ipv4first');
+net.setDefaultAutoSelectFamily?.(true);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -112,8 +110,14 @@ app.whenReady().then(() => {
 
     ipcMain.handle(
         'base:validate',
-        async (_e, apkPath: string, ipaPath: string, platforms: Platform[]) => {
-            return validateBinaries(apkPath, ipaPath, platforms);
+        async (
+            _e,
+            apkPath: string,
+            ipaPath: string,
+            platforms: Platform[],
+            deployments: Deployment[],
+        ) => {
+            return validateBinaries(apkPath, ipaPath, platforms, deployments);
         },
     );
 
