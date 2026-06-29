@@ -28,8 +28,9 @@ export const bridge = {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        deployments: Deployment[],
     ): Promise<ValidateResult> =>
-        api.validateBinaries!(apkPath, ipaPath, platforms),
+        api.validateBinaries!(apkPath, ipaPath, platforms, deployments),
     baseCoverage: (
         version: string,
         platforms: Platform[],

@@ -1,5 +1,6 @@
 import {$, $$} from './dom.js';
 import {showToast} from './toast.js';
+import {errMessage} from './errMessage.js';
 import {runState} from './runState.js';
 import type {AuthViewModel} from './authViewModel.js';
 import type {CodePushViewModel} from './codePushViewModel.js';
@@ -110,8 +111,8 @@ export class CodePushView {
             } else {
                 showToast('CodePush finished with errors.', 'bad');
             }
-        } catch {
-            showToast('CodePush failed — something went wrong.', 'bad');
+        } catch (e) {
+            showToast(errMessage(e), 'bad');
         } finally {
             runState.end();
         }

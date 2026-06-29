@@ -1,12 +1,6 @@
 import {Emitter} from './emitter.js';
 import {bridge} from './bridge.js';
-import type {
-    BaseReleaseResult,
-    Coverage,
-    Deployment,
-    Platform,
-    ValidateResult,
-} from './types.js';
+import type {BaseReleaseResult, Coverage, Deployment, Platform, ValidateResult,} from './types.js';
 
 export class BaseReleaseViewModel extends Emitter {
     validatedVersion = '';
@@ -19,9 +13,15 @@ export class BaseReleaseViewModel extends Emitter {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        deployments: Deployment[],
     ): Promise<ValidateResult> {
         this.validatedVersion = '';
-        const res = await bridge.validateBinaries(apkPath, ipaPath, platforms);
+        const res = await bridge.validateBinaries(
+            apkPath,
+            ipaPath,
+            platforms,
+            deployments,
+        );
         if (res.ok) this.validatedVersion = res.version;
         return res;
     }

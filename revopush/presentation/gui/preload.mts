@@ -9,8 +9,19 @@ contextBridge.exposeInMainWorld('revopush', {
     openLoginPage: () => ipcRenderer.invoke('auth:openLoginPage'),
     login: (accessKey: string) => ipcRenderer.invoke('auth:login', accessKey),
     logout: () => ipcRenderer.invoke('auth:logout'),
-    validateBinaries: (apkPath: string, ipaPath: string, platforms: string[]) =>
-        ipcRenderer.invoke('base:validate', apkPath, ipaPath, platforms),
+    validateBinaries: (
+        apkPath: string,
+        ipaPath: string,
+        platforms: string[],
+        deployments: string[],
+    ) =>
+        ipcRenderer.invoke(
+            'base:validate',
+            apkPath,
+            ipaPath,
+            platforms,
+            deployments,
+        ),
     baseCoverage: (version: string, platforms: string[], deployments: string[]) =>
         ipcRenderer.invoke('base:coverage', version, platforms, deployments),
     runBaseRelease: (

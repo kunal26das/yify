@@ -77,6 +77,7 @@ export interface RevopushApi {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        deployments: Deployment[],
     ) => Promise<ValidateResult>;
     baseCoverage: (
         version: string,

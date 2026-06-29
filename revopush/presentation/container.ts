@@ -18,6 +18,7 @@ const {
     installer,
     binary,
     urlOpener,
+    androidPublisher,
 } = data;
 
 const operation = createOperationGuard(cancellation);
@@ -31,6 +32,7 @@ const base = createBaseReleaseUseCases({
     operation,
     workspace,
     binary,
+    androidPublisher,
 });
 const codepush = createCodePushUseCases({
     api,

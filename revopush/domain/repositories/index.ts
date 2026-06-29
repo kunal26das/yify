@@ -51,6 +51,30 @@ export interface ReleaseCli {
     run(args: string[], onLine: OnLine, opts?: RunOptions): Promise<RunResult>;
 }
 
+export interface AndroidArtifacts {
+    apkPath: string;
+    aabPath: string;
+}
+
+export interface AndroidPublisher {
+    build(
+        onLine: OnLine,
+        label?: string,
+    ): Promise<{ ok: boolean; artifacts?: AndroidArtifacts }>;
+
+    publishProduction(
+        aabPath: string,
+        onLine: OnLine,
+        label?: string,
+    ): Promise<{ ok: boolean; versionCode?: number }>;
+
+    distributeToFirebase(
+        apkPath: string,
+        onLine: OnLine,
+        label?: string,
+    ): Promise<{ ok: boolean; release?: string }>;
+}
+
 export interface Installer {
     installCommand(): string;
 

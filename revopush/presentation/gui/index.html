@@ -565,15 +565,24 @@
             margin: 12px 0 7px;
         }
 
-        .drop {
+        .tile {
             position: relative;
-            border: 1.5px dashed var(--line-strong);
-            border-radius: var(--radius-sm);
-            padding: 11px 13px 11px;
-            margin-top: 8px;
             min-height: 100px;
-            transition: .2s ease;
+            margin-top: 8px;
+            padding: 11px 13px;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-sm);
             background: var(--panel-2);
+            transition: .18s ease;
+        }
+
+        .tile:hover {
+            border-color: var(--muted);
+        }
+
+        .drop {
+            border-style: dashed;
+            border-width: 1.5px;
         }
 
         .drop .drop-top {
@@ -582,6 +591,18 @@
             gap: 10px;
             font-size: 13px;
             color: var(--ink-soft);
+        }
+
+        .drop .drop-top .drop-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 26px;
+        }
+
+        .drop .drop-top .opt {
+            color: var(--muted-2);
+            font-style: italic;
         }
 
         .drop .fileico {
@@ -672,11 +693,15 @@
             padding: 0;
             display: grid;
             place-items: center;
-            opacity: 0;
-            transform: scale(.4);
+            opacity: 1;
+            transform: scale(1);
             cursor: pointer;
-            pointer-events: none;
+            pointer-events: auto;
             transition: opacity .2s ease, transform .2s cubic-bezier(.34, 1.56, .64, 1), background .15s ease, border-color .15s ease;
+        }
+
+        .drop .check-pop:hover {
+            border-color: var(--ok);
         }
 
         .drop .check-pop input {
@@ -697,12 +722,19 @@
             cursor: pointer;
         }
 
-        .drop.has .check-pop {
+        .drop.has .check-pop,
+        .drop.allow .check-pop {
             opacity: 1;
             transform: scale(1);
+            pointer-events: auto;
         }
 
-        .drop.has .check-pop:hover {
+        .drop.allow {
+            cursor: pointer;
+        }
+
+        .drop.has .check-pop:hover,
+        .drop.allow .check-pop:hover {
             border-color: var(--ok);
         }
 
@@ -713,6 +745,11 @@
 
         .drop .check-pop:has(input:checked) svg {
             opacity: 1;
+        }
+
+        .drop .check-pop:has(input:disabled) {
+            opacity: .35;
+            cursor: default;
         }
 
         .chips {
@@ -833,19 +870,11 @@
         }
 
         .platbox {
-            position: relative;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            min-height: 100px;
-            margin-top: 8px;
-            padding: 11px 13px;
-            border: 1px solid var(--line-strong);
-            border-radius: var(--radius-sm);
-            background: var(--panel-2);
             cursor: pointer;
             user-select: none;
-            transition: .18s ease;
         }
 
         .platbox .platbox-top {
@@ -856,14 +885,31 @@
             color: var(--ink-soft);
         }
 
-        .platbox:hover {
-            border-color: var(--muted);
-        }
-
-        .platbox input {
+        .platbox input[type="checkbox"] {
             position: absolute;
             opacity: 0;
             pointer-events: none;
+        }
+
+        .platbox .platbox-path {
+            user-select: text;
+            cursor: text;
+            color: var(--ink);
+        }
+
+        .platbox .platbox-path::placeholder {
+            color: var(--muted-2);
+        }
+
+        .platbox .platbox-path:focus {
+            outline: none;
+            border-color: var(--lic-red);
+            box-shadow: 0 0 0 3px rgba(244, 124, 93, .16);
+        }
+
+        .platbox.dropcard.over {
+            border-color: var(--lic-red);
+            background: rgba(244, 124, 93, .08);
         }
 
         .platbox .platbox-ico {
@@ -1471,11 +1517,14 @@
             padding: 16px;
             border-radius: var(--radius);
             flex: 1;
-            min-height: 130px;
-            overflow: auto;
+            min-height: 100px;
+            max-height: 50vh;
+            overflow-x: hidden;
+            overflow-y: auto;
             font-size: 12px;
             line-height: 1.65;
             white-space: pre-wrap;
+            overflow-wrap: anywhere;
             font-family: var(--mono);
             border: 1px solid var(--line);
             margin: 0;
@@ -1831,43 +1880,43 @@
                     <span class="badge-no">1</span>
                     <h2 id="baseTitle">BasePush</h2>
                 </div>
-                <div class="drop" data-kind="apk" id="apkDrop">
-            <span class="check-pop" title="Include Android in this release">
-              <input class="dropInc" disabled id="apkInc" type="checkbox"/>
-              <svg fill="none" viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                      stroke-width="3"/>
-              </svg>
-            </span>
-                    <div class="drop-top">
-              <span class="fileico"><svg fill="none" viewBox="0 0 24 24"><path
+                <label class="tile platbox dropcard" data-kind="apk" id="apkDrop">
+                    <input class="cardInc" id="apkInc" type="checkbox"/>
+                    <div class="platbox-top">
+              <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path
                       d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
                       stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
                                                                         stroke-linejoin="round"
                                                                         stroke-width="1.7"/></svg></span>
-                        <span>Drop the <b>Android</b> build · <span class="ext">.apk</span></span>
+                        <span class="platbox-title">Android</span>
                     </div>
-                    <input id="apkPath" placeholder="…or paste an absolute .apk path" type="text"/>
-                </div>
+                    <input class="platbox-sub platbox-path" id="apkPath"
+                           placeholder="Drop / paste .apk" type="text"/>
+                    <span class="platbox-check"><svg fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"
+                                                                                           stroke="currentColor"
+                                                                                           stroke-linecap="round"
+                                                                                           stroke-linejoin="round"
+                                                                                           stroke-width="3"/></svg></span>
+                </label>
 
-                <div class="drop" data-kind="ipa" id="ipaDrop">
-            <span class="check-pop" title="Include iOS in this release">
-              <input class="dropInc" disabled id="ipaInc" type="checkbox"/>
-              <svg fill="none" viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                      stroke-width="3"/>
-              </svg>
-            </span>
-                    <div class="drop-top">
-              <span class="fileico"><svg fill="none" viewBox="0 0 24 24"><path
+                <label class="tile platbox dropcard" data-kind="ipa" id="ipaDrop">
+                    <input class="cardInc" disabled id="ipaInc" type="checkbox"/>
+                    <div class="platbox-top">
+              <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path
                       d="M7 4h7l5 5v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="currentColor"
                       stroke-linejoin="round" stroke-width="1.7"/><path d="M13 4v6h6" stroke="currentColor"
                                                                         stroke-linejoin="round"
                                                                         stroke-width="1.7"/></svg></span>
-                        <span>Drop the <b>iOS</b> build · <span class="ext">.ipa</span></span>
+                        <span class="platbox-title">iOS</span>
                     </div>
-                    <input id="ipaPath" placeholder="…or paste an absolute .ipa path" type="text"/>
-                </div>
+                    <input class="platbox-sub platbox-path" id="ipaPath"
+                           placeholder="Drop / paste .ipa" type="text"/>
+                    <span class="platbox-check"><svg fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"
+                                                                                           stroke="currentColor"
+                                                                                           stroke-linecap="round"
+                                                                                           stroke-linejoin="round"
+                                                                                           stroke-width="3"/></svg></span>
+                </label>
 
                 <div class="card-foot">
                     <div class="chips">
@@ -1921,7 +1970,7 @@
                     <span class="badge-no">2</span>
                     <h2 id="cpTitle">CodePush</h2>
                 </div>
-                <label class="platbox">
+                <label class="tile platbox">
                     <input class="cpPlat" type="checkbox" value="android"/>
                     <div class="platbox-top">
               <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path
@@ -1938,7 +1987,7 @@
                                                                                            stroke-linejoin="round"
                                                                                            stroke-width="3"/></svg></span>
                 </label>
-                <label class="platbox">
+                <label class="tile platbox">
                     <input class="cpPlat" type="checkbox" value="ios"/>
                     <div class="platbox-top">
               <span class="platbox-ico"><svg fill="none" viewBox="0 0 24 24"><path

@@ -10,6 +10,8 @@ import {
     type RunBaseReleaseOptions,
 } from '../entities/index.js';
 import type {
+    AndroidArtifacts,
+    AndroidPublisher,
     BinaryInspector,
     Cancellation,
     Installer,
@@ -30,6 +32,7 @@ export interface BaseReleaseUseCases {
         apkPath: string,
         ipaPath: string,
         platforms?: Platform[],
+        deployments?: Deployment[],
     ): Promise<BinaryValidation>;
 
     findExistingBases(
@@ -58,15 +61,25 @@ export function createBaseReleaseUseCases(deps: {
     operation: OperationGuard;
     workspace: Workspace;
     binary: BinaryInspector;
+    androidPublisher: AndroidPublisher;
 }): BaseReleaseUseCases {
-    const {api, installer, cli, cancellation, operation, workspace, binary} =
-        deps;
+    const {
+        api,
+        installer,
+        cli,
+        cancellation,
+        operation,
+        workspace,
+        binary,
+        androidPublisher,
+    } = deps;
     const apps = workspace.apps;
 
     async function validateBinaries(
         apkPath: string,
         ipaPath: string,
         platforms: Platform[] = ALL_PLATFORMS,
+        deployments: Deployment[] = workspace.deployments,
     ): Promise<BinaryValidation> {
         const needAndroid = platforms.includes('android');
         const needIos = platforms.includes('ios');
@@ -80,8 +93,9 @@ export function createBaseReleaseUseCases(deps: {
         let apkVersion: string | undefined;
         let ipaVersion: string | undefined;
 
+        const apkGenerated = needAndroid && !apkPath;
+
         const missing: string[] = [];
-        if (needAndroid && !apkPath) missing.push('Android (.apk)');
         if (needIos && !ipaPath) missing.push('iOS (.ipa)');
         if (missing.length === 1) {
             return {ok: false, error: `An ${missing[0]} file is required.`};
@@ -93,7 +107,16 @@ export function createBaseReleaseUseCases(deps: {
             };
         }
 
-        if (needAndroid) {
+        if (apkGenerated) {
+            try {
+                apkVersion = binary.repoTargetVersion();
+            } catch (e: any) {
+                return {
+                    ok: false,
+                    error: `Could not read the app version from package.json: ${e.message}`,
+                };
+            }
+        } else if (needAndroid && apkPath) {
             if (!binary.exists(apkPath))
                 return {ok: false, error: `Android file not found: ${apkPath}`};
             if (!extOk(apkPath, ['.apk'])) {
@@ -186,10 +209,28 @@ export function createBaseReleaseUseCases(deps: {
                 return {ok: false, steps: []};
             }
 
-            const jobs = buildJobs(platforms, deployments).map((job) => ({
-                ...job,
-                file: job.platform === 'android' ? apkPath : ipaPath,
-            }));
+            const jobs = buildJobs(platforms, deployments);
+
+            let androidBuild:
+                | { ok: boolean; artifacts?: AndroidArtifacts }
+                | undefined;
+
+            async function ensureAndroidArtifacts(
+                label: string,
+            ): Promise<{ ok: boolean; artifacts?: AndroidArtifacts }> {
+                if (androidBuild) return androidBuild;
+                if (apkPath) {
+                    androidBuild = {ok: true, artifacts: {apkPath, aabPath: ''}};
+                    return androidBuild;
+                }
+                onLine({
+                    stream: 'system',
+                    text: 'Android: building signed APK + AAB (shared across deployments)…',
+                    label,
+                });
+                androidBuild = await androidPublisher.build(onLine, label);
+                return androidBuild;
+            }
 
             const steps: BaseReleaseStep[] = [];
             for (const job of jobs) {
@@ -212,6 +253,92 @@ export function createBaseReleaseUseCases(deps: {
                     continue;
                 }
 
+                let file: string;
+                if (job.platform === 'android') {
+                    const built = await ensureAndroidArtifacts(label);
+                    if (!built.ok || !built.artifacts) {
+                        onLine({
+                            stream: 'system',
+                            text: `Aborting ${app} ${job.deployment}: Android build failed.`,
+                            label,
+                        });
+                        steps.push({
+                            platform: job.platform,
+                            deployment: job.deployment,
+                            ok: false,
+                        });
+                        continue;
+                    }
+                    const {apkPath: builtApk, aabPath: builtAab} =
+                        built.artifacts;
+
+                    if (job.deployment === 'Production') {
+                        if (!builtAab) {
+                            onLine({
+                                stream: 'stderr',
+                                text: `Production Android needs a generated AAB — don't drop an .apk when targeting Production; let RevoPush build it.`,
+                                label,
+                            });
+                            steps.push({
+                                platform: job.platform,
+                                deployment: job.deployment,
+                                ok: false,
+                            });
+                            continue;
+                        }
+                        onLine({
+                            stream: 'system',
+                            text: `Publishing AAB to Play Store production track (100% rollout)…`,
+                            label,
+                        });
+                        const pub = await androidPublisher.publishProduction(
+                            builtAab,
+                            onLine,
+                            label,
+                        );
+                        if (!pub.ok) {
+                            onLine({
+                                stream: 'system',
+                                text: `Aborting ${app} Production base release: Play Store publish failed.`,
+                                label,
+                            });
+                            steps.push({
+                                platform: job.platform,
+                                deployment: job.deployment,
+                                ok: false,
+                            });
+                            continue;
+                        }
+                    } else {
+                        onLine({
+                            stream: 'system',
+                            text: `Staging Android: uploading APK to Firebase App Distribution…`,
+                            label,
+                        });
+                        const dist = await androidPublisher.distributeToFirebase(
+                            builtApk,
+                            onLine,
+                            label,
+                        );
+                        if (!dist.ok) {
+                            onLine({
+                                stream: 'system',
+                                text: `Aborting ${app} Staging base release: Firebase App Distribution upload failed.`,
+                                label,
+                            });
+                            steps.push({
+                                platform: job.platform,
+                                deployment: job.deployment,
+                                ok: false,
+                            });
+                            continue;
+                        }
+                    }
+                    file = builtApk;
+                } else {
+                    file = ipaPath;
+                }
+
                 onLine({
                     stream: 'system',
                     text: `Base release: ${app} (${job.platform}) v${version} -> ${job.deployment}`,
@@ -222,7 +349,7 @@ export function createBaseReleaseUseCases(deps: {
                         'release-native',
                         app,
                         job.platform,
-                        job.file,
+                        file,
                         '-d',
                         workspace.deploymentName(job.platform, job.deployment),
                         '-t',
