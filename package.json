@@ -52,7 +52,7 @@
     "expo-status-bar": "56.0.4",
     "expo-symbols": "57.0.0",
     "expo-system-ui": "57.0.0",
-    "expo-task-manager": "56.0.19",
+    "expo-task-manager": "57.0.1",
     "expo-web-browser": "56.0.5",
     "firebase": "12.15.0",
     "react": "19.2.3",
