@@ -4454,10 +4454,10 @@ expo-background-task@56.0.19:
   dependencies:
     expo-task-manager "~56.0.19"
 
-expo-blur@56.0.3:
-  version "56.0.3"
-  resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-56.0.3.tgz#4420700813be7ed47298b9280d83fdfb32d04cdb"
-  integrity sha512-KDDtrpWc2tYlm1WCPaOgBtv+YEGqe5ELheFPIgSNgHt28NQUDcfBcFsA9Us2StDh6osmSD6NbKxOt5bU6PcDbQ==
+expo-blur@57.0.0:
+  version "57.0.0"
+  resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-57.0.0.tgz#971431708bb4f26acbbfd3dbc5ff172a7c8cf328"
+  integrity sha512-cn+LlmOdf7swx80v6yngW9AVl7m1F4cQGpfeJx/Jckgb6C4/sdA5jy/f4wBJCGCZs+2qpPEjlUkQ2Q2+7LQiuA==
 
 expo-build-properties@56.0.19:
   version "56.0.19"
