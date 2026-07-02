@@ -923,19 +923,19 @@
   resolved "https://registry.yarnpkg.com/@expo/dom-webview/-/dom-webview-56.0.5.tgz#2a09924714d7419f24c7f573c00bba0b55e1eb38"
   integrity sha512-UIEJxkLg6cHqofKrpWpkn9E6ApxVRtCgZhZkARPr9VV7rBVloJgeroTHs31YgU/JpbI5lLQOnfOlGo54W6C2Ew==
 
-"@expo/env@^2.3.0", "@expo/env@~2.3.0":
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.3.0.tgz#dbdecd1b64b07840f9d5922a48a06c66bea5fe7c"
-  integrity sha512-9HnnIbzwTTdbwSjNLXTk0fPm9ZwMJ7c1/31tsni8HZ8Q62KzYCyspahH+V365vg5J6lr001DzNwBxVWSaYCQLg==
+"@expo/env@^2.3.0", "@expo/env@~2.4.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.4.0.tgz#8ab7de1edde7d98763332d6e99cf0b2c5c9f9a95"
+  integrity sha512-tSlakVnFqdWlXnw5KCFSC1rQU8W5l0Ko8Pb96wi5XU4lCqc0UeLuZCQFpCeAhZGmd91Lo89mCNmr5tnXzZwtFA==
   dependencies:
     chalk "^4.0.0"
     debug "^4.3.4"
     getenv "^2.0.0"
 
-"@expo/env@~2.4.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.4.0.tgz#8ab7de1edde7d98763332d6e99cf0b2c5c9f9a95"
-  integrity sha512-tSlakVnFqdWlXnw5KCFSC1rQU8W5l0Ko8Pb96wi5XU4lCqc0UeLuZCQFpCeAhZGmd91Lo89mCNmr5tnXzZwtFA==
+"@expo/env@~2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.3.0.tgz#dbdecd1b64b07840f9d5922a48a06c66bea5fe7c"
+  integrity sha512-9HnnIbzwTTdbwSjNLXTk0fPm9ZwMJ7c1/31tsni8HZ8Q62KzYCyspahH+V365vg5J6lr001DzNwBxVWSaYCQLg==
   dependencies:
     chalk "^4.0.0"
     debug "^4.3.4"
@@ -4468,10 +4468,10 @@ expo-build-properties@56.0.19:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@56.0.18, expo-constants@~56.0.18:
-  version "56.0.18"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.18.tgz#f9be4f8af7470144578ac945bfa98c271cf39120"
-  integrity sha512-8AMtbDGl/WVPnWlmbpGmvcdnNCy9E4PFnwdVwj600vljkMDPSxcAcjw8GVXEPk3PpZ+ngTqsrkltWyj0UKYAxw==
+expo-constants@56.0.19, expo-constants@~56.0.18:
+  version "56.0.19"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.19.tgz#9105da1dbb6b48a5577717f3e24500041bb73a19"
+  integrity sha512-9qUBOnUggmGMng8/J+T5hC/roLWCaG+xh7Lsk7yrqi3ulNOTDX6PzT4MNrNdmhqpD1sUc+KIDxctNxEZ1GxM5Q==
   dependencies:
     "@expo/env" "~2.3.0"
 
