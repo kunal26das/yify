@@ -1,12 +1,7 @@
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import type {
-    Installer,
-    OnLine,
-    RunResult,
-    Workspace,
-} from '../../domain/index.js';
+import type {Installer, OnLine, RunResult, Workspace,} from '../../domain/index.js';
 import {pumpLines} from '../process/linePump.js';
 import type {CancellationRegistry} from '../process/cancellationRegistry.js';
 
@@ -33,7 +28,7 @@ export function createInstaller(deps: {
                 return;
             }
             const cmd = installCommand();
-            const full = `rm -rf node_modules && ${cmd}`;
+            const full = `rm -rf node_modules yarn.lock && ${cmd}`;
             onLine({
                 stream: 'system',
                 text: `$ ${full}  (cwd: ${repoRoot})`,
