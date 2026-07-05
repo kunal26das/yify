@@ -4576,7 +4576,12 @@ expo-font@~57.0.0:
   dependencies:
     fontfaceobserver "^2.1.0"
 
-expo-glass-effect@56.0.4, expo-glass-effect@^56.0.4:
+expo-glass-effect@57.0.0:
+  version "57.0.0"
+  resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.0.tgz#2842ae7d49305ebbc18bed27b5eca543ce1f24d2"
+  integrity sha512-QadzKSKpjXOlkIEnkX7SqHwCgUJZLjhWUvg1AauaUgKVnz35Ror41juM4y+KNr9pFxnukSDUz8L+UvdZVCNu6Q==
+
+expo-glass-effect@^56.0.4:
   version "56.0.4"
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-56.0.4.tgz#4549a8c84058fb88619ecb2e818be36f2fe003ee"
   integrity sha512-xI9rXtDwi7RW82uAlfyaXO6+k21ApWJ2tHAWYqPr/FjfmZbKsgNJ4Q0iZzGPCwboqjTGxaRZ61SZxBl8hDt5iA==
