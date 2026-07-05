@@ -4233,15 +4233,15 @@ escodegen@^2.1.0:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-expo@56.0.4:
-  version "56.0.4"
-  resolved "https://registry.yarnpkg.com/eslint-config-expo/-/eslint-config-expo-56.0.4.tgz#e1d4973c5ed3d4649c93280e0c93844cd003c38d"
-  integrity sha512-1OD7rJMxCchKHxq+U+OQsAxVtzAxeUb9875g6+15KsSD9fqKTgq7DEEWYwunzU9r9E8kYJ+mh7+j86vF9m9NMw==
+eslint-config-expo@57.0.0:
+  version "57.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-expo/-/eslint-config-expo-57.0.0.tgz#409f700e8d605d545be2dad6ae7be37fa98b4fcd"
+  integrity sha512-T7OTN9xrSZYjLw4qTkL1Mn2WfAUVmMGY38+OYAcraI1uiTFVH6jfkSkv84WLTqnneblLcb6AsMDV+SHcUj3hGw==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^8.59.0"
     "@typescript-eslint/parser" "^8.59.0"
     eslint-import-resolver-typescript "^3.6.3"
-    eslint-plugin-expo "^1.0.1"
+    eslint-plugin-expo "^1.1.0"
     eslint-plugin-import "^2.30.0"
     eslint-plugin-react "^7.37.3"
     eslint-plugin-react-hooks "^7.0.0"
@@ -4276,7 +4276,7 @@ eslint-module-utils@^2.12.1:
   dependencies:
     debug "^3.2.7"
 
-eslint-plugin-expo@^1.0.1:
+eslint-plugin-expo@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-expo/-/eslint-plugin-expo-1.1.0.tgz#88b58f0d5064aee94d7a670cb1e3807c61f54a6d"
   integrity sha512-vPP0EPx7IA7ZfP49dY4rq9RV5jqkFWG+Pih3/oGjzIRjMI+ogcOE8i6isYkLXAdw/yvFV2BRZkTaQaiOGQqn6Q==
