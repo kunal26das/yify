@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.0.3",
-  "versionCode": 28,
+  "version": "1.0.4",
+  "versionCode": 29,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -20,10 +20,8 @@
     "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
-    "ota:android": "revopush release-expo Yify android -d Production-Android",
-    "ota:ios": "revopush release-expo Yify ios -d Production-iOS",
-    "ota:android:staging": "revopush release-expo Yify android -d Staging-Android",
-    "ota:ios:staging": "revopush release-expo Yify ios -d Staging-iOS"
+    "postinstall": "patch-package",
+    "revopush": "cd revopush && yarn gui"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",
@@ -77,6 +75,8 @@
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.0",
     "eslint-import-resolver-typescript": "3.10.1",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "typescript": "6.0.3"
   }
 }

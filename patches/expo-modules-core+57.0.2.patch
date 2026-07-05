@@ -1,0 +1,638 @@
+diff --git a/node_modules/expo-modules-core/android/src/main/cpp/NativeArrayBuffer.cpp b/node_modules/expo-modules-core/android/src/main/cpp/NativeArrayBuffer.cpp
+index e89730c..98040ee 100644
+--- a/node_modules/expo-modules-core/android/src/main/cpp/NativeArrayBuffer.cpp
++++ b/node_modules/expo-modules-core/android/src/main/cpp/NativeArrayBuffer.cpp
+@@ -57,15 +57,6 @@ NativeArrayBuffer::initHybrid(jni::alias_ref<JavaPart::javaobject>,
+ jni::local_ref<NativeArrayBuffer::javaobject>
+ NativeArrayBuffer::newInstance(JSIContext *jsiContext, jsi::Runtime &runtime,
+                                jsi::ArrayBuffer &arrayBuffer) {
+-  auto mutableBuffer = arrayBuffer.tryGetMutableBuffer(runtime);
+-  if (mutableBuffer) {
+-    auto byteBuffer = jni::JByteBuffer::wrapBytes(mutableBuffer->data(), mutableBuffer->size());
+-    byteBuffer->order(jni::JByteOrder::nativeOrder());
+-    auto value = NativeArrayBuffer::newObjectCxxArgs(byteBuffer, std::move(mutableBuffer));
+-    jsiContext->jniDeallocator->addReference(value);
+-    return value;
+-  }
+-
+   size_t size = arrayBuffer.size(runtime);
+   auto byteBuffer = jni::JByteBuffer::allocateDirect(size);
+   byteBuffer->order(jni::JByteOrder::nativeOrder());
+@@ -81,18 +72,6 @@ NativeArrayBuffer::newInstance(JSIContext *jsiContext, jsi::Runtime &runtime,
+                                expo::TypedArray& typedArray) {
+   size_t size = typedArray.byteLength(runtime);
+ 
+-  auto backingBuffer = typedArray.getBuffer(runtime);
+-  auto mutableBuffer = backingBuffer.tryGetMutableBuffer(runtime);
+-  if (mutableBuffer) {
+-    size_t offset = typedArray.byteOffset(runtime);
+-    auto byteBuffer = jni::JByteBuffer::wrapBytes(
+-      mutableBuffer->data() + offset, size);
+-    byteBuffer->order(jni::JByteOrder::nativeOrder());
+-    auto value = NativeArrayBuffer::newObjectCxxArgs(byteBuffer, std::move(mutableBuffer));
+-    jsiContext->jniDeallocator->addReference(value);
+-    return value;
+-  }
+-
+   auto byteBuffer = jni::JByteBuffer::allocateDirect(static_cast<jint>(size));
+   byteBuffer->order(jni::JByteOrder::nativeOrder());
+   memcpy(byteBuffer->getDirectAddress(), typedArray.getRawPointer(runtime), size);
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.bin b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.bin
+new file mode 100644
+index 0000000..e08ef8d
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.bin differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.lock b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.lock
+new file mode 100644
+index 0000000..9287a5e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/9.3.1/executionHistory/executionHistory.lock differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..95c4db4
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..65eef3f
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Sun Jul 05 23:45:52 IST 2026
++gradle.version=9.3.1
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/outputFiles.bin b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/outputFiles.bin
+new file mode 100644
+index 0000000..fd83456
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/outputFiles.bin differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/META-INF/expo-module-gradle-plugin.kotlin_module b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/META-INF/expo-module-gradle-plugin.kotlin_module
+new file mode 100644
+index 0000000..0f063e1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/META-INF/expo-module-gradle-plugin.kotlin_module differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegration.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegration.class
+new file mode 100644
+index 0000000..27ff905
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegration.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegrationImpl.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegrationImpl.class
+new file mode 100644
+index 0000000..586bfef
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/AutolinkingIntegrationImpl.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin$apply$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin$apply$1$1.class
+new file mode 100644
+index 0000000..33452f6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin$apply$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin.class
+new file mode 100644
+index 0000000..c513b20
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePlugin.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePluginKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePluginKt.class
+new file mode 100644
+index 0000000..fcf0826
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExpoModulesGradlePluginKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExtraPropertiesExtensionKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExtraPropertiesExtensionKt.class
+new file mode 100644
+index 0000000..17196f3
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ExtraPropertiesExtensionKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1$1.class
+new file mode 100644
+index 0000000..be613c2
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1.class
+new file mode 100644
+index 0000000..1fb0b72
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt$applyPublishing$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt.class
+new file mode 100644
+index 0000000..698ffc0
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/ProjectConfigurationKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version$Companion.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version$Companion.class
+new file mode 100644
+index 0000000..89c6f78
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version$Companion.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version.class
+new file mode 100644
+index 0000000..fb44b24
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/Version.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/WarningsKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/WarningsKt.class
+new file mode 100644
+index 0000000..8f37eb4
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/WarningsKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/AndroidLibraryExtensionKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/AndroidLibraryExtensionKt.class
+new file mode 100644
+index 0000000..b31c06e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/AndroidLibraryExtensionKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$1.class
+new file mode 100644
+index 0000000..7ebd13f
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1$1.class
+new file mode 100644
+index 0000000..0f04e7d
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1.class
+new file mode 100644
+index 0000000..9658028
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishTask$taskProvider$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$1.class
+new file mode 100644
+index 0000000..6130a12
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1$1.class
+new file mode 100644
+index 0000000..95d3b89
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1.class
+new file mode 100644
+index 0000000..fefce38
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createEmptyExpoPublishToMavenLocalTask$taskProvider$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$1.class
+new file mode 100644
+index 0000000..0de9062
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1$1.class
+new file mode 100644
+index 0000000..903993d
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1.class
+new file mode 100644
+index 0000000..265f778
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishTask$taskProvider$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$1.class
+new file mode 100644
+index 0000000..f0b4b75
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1$1.class
+new file mode 100644
+index 0000000..5ab8263
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1.class
+new file mode 100644
+index 0000000..322974a
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createExpoPublishToMavenLocalTask$taskProvider$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createReleasePublication$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createReleasePublication$1.class
+new file mode 100644
+index 0000000..523af09
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$createReleasePublication$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1$1.class
+new file mode 100644
+index 0000000..f63fb38
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1.class
+new file mode 100644
+index 0000000..d1daa67
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$2.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$2.class
+new file mode 100644
+index 0000000..6d45b1d
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$2.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3$1.class
+new file mode 100644
+index 0000000..1e525d6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3.class
+new file mode 100644
+index 0000000..943b9e6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$3.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$4.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$4.class
+new file mode 100644
+index 0000000..0123322
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1$4.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1.class
+new file mode 100644
+index 0000000..c85f844
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$defaultPom$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$expoPublishBody$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$expoPublishBody$1.class
+new file mode 100644
+index 0000000..9dc4636
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt$expoPublishBody$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt.class
+new file mode 100644
+index 0000000..60319cc
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/MavenPublicationExtensionKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/PublicationInfo.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/PublicationInfo.class
+new file mode 100644
+index 0000000..81fe8dc
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/android/PublicationInfo.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension$getReactNativeDir$1$1.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension$getReactNativeDir$1$1.class
+new file mode 100644
+index 0000000..ac788f6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension$getReactNativeDir$1$1.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension.class
+new file mode 100644
+index 0000000..1c7b41b
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoGradleHelperExtension.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtension.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtension.class
+new file mode 100644
+index 0000000..94686e6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtension.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtensionKt.class b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtensionKt.class
+new file mode 100644
+index 0000000..ff32cda
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main/expo/modules/plugin/gradle/ExpoModuleExtensionKt.class differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab
+new file mode 100644
+index 0000000..625cbe9
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream
+new file mode 100644
+index 0000000..22518fb
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len
+new file mode 100644
+index 0000000..666fb56
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len
+new file mode 100644
+index 0000000..a541356
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at
+new file mode 100644
+index 0000000..30a1966
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i
+new file mode 100644
+index 0000000..d6a146a
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/inputs/source-to-output.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab
+new file mode 100644
+index 0000000..fb174fd
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream
+new file mode 100644
+index 0000000..b49e701
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len
+new file mode 100644
+index 0000000..2553f37
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len
+new file mode 100644
+index 0000000..fa606b6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at
+new file mode 100644
+index 0000000..de0b0a4
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i
+new file mode 100644
+index 0000000..32ff494
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-attributes.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab
+new file mode 100644
+index 0000000..fb06e23
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..b49e701
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..2553f37
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len
+new file mode 100644
+index 0000000..fa606b6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..dab39d1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i
+new file mode 100644
+index 0000000..32ff494
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/class-fq-name-to-source.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab
+new file mode 100644
+index 0000000..bdf584a
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream
+new file mode 100644
+index 0000000..75ada3e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream.len
+new file mode 100644
+index 0000000..2409504
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.len
+new file mode 100644
+index 0000000..2a17e6e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.values.at
+new file mode 100644
+index 0000000..27d01a4
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i
+new file mode 100644
+index 0000000..0a6a825
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/inline-functions.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab
+new file mode 100644
+index 0000000..7ffc417
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream
+new file mode 100644
+index 0000000..b66e2c6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len
+new file mode 100644
+index 0000000..5f9a78b
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len
+new file mode 100644
+index 0000000..73e7fcf
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at
+new file mode 100644
+index 0000000..f3f7b68
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i
+new file mode 100644
+index 0000000..fe0f59b
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/internal-name-to-source.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab
+new file mode 100644
+index 0000000..72da6a0
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream
+new file mode 100644
+index 0000000..5149d07
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream.len
+new file mode 100644
+index 0000000..1e4d21e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.len
+new file mode 100644
+index 0000000..817b326
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.values.at
+new file mode 100644
+index 0000000..65367f7
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i
+new file mode 100644
+index 0000000..886eaec
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/package-parts.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab
+new file mode 100644
+index 0000000..2eccfff
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream
+new file mode 100644
+index 0000000..a371651
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len
+new file mode 100644
+index 0000000..7ec4a9c
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len
+new file mode 100644
+index 0000000..9911af5
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at
+new file mode 100644
+index 0000000..142aebb
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i
+new file mode 100644
+index 0000000..98e77a8
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/proto.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab
+new file mode 100644
+index 0000000..78580e6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream
+new file mode 100644
+index 0000000..22518fb
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len
+new file mode 100644
+index 0000000..666fb56
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len
+new file mode 100644
+index 0000000..a541356
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at
+new file mode 100644
+index 0000000..46f10b5
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i
+new file mode 100644
+index 0000000..d6a146a
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/source-to-classes.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab
+new file mode 100644
+index 0000000..5dbc487
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream
+new file mode 100644
+index 0000000..49d70c3
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len
+new file mode 100644
+index 0000000..a8206a1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at
+new file mode 100644
+index 0000000..00bcfdc
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i
+new file mode 100644
+index 0000000..56c7ed1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/subtypes.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab
+new file mode 100644
+index 0000000..a25e8e9
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream
+new file mode 100644
+index 0000000..3214a6f
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len
+new file mode 100644
+index 0000000..8790089
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len
+new file mode 100644
+index 0000000..01bdaa1
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at
+new file mode 100644
+index 0000000..e15fbd6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i
+new file mode 100644
+index 0000000..84e6a94
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/jvm/kotlin/supertypes.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/counters.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/counters.tab
+new file mode 100644
+index 0000000..920202f
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/counters.tab
+@@ -0,0 +1,2 @@
++11
++0
+\ No newline at end of file
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab
+new file mode 100644
+index 0000000..1b64afe
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream
+new file mode 100644
+index 0000000..22518fb
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len
+new file mode 100644
+index 0000000..666fb56
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len
+new file mode 100644
+index 0000000..a541356
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at
+new file mode 100644
+index 0000000..afce831
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i
+new file mode 100644
+index 0000000..d6a146a
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/file-to-id.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab
+new file mode 100644
+index 0000000..b4a40de
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream
+new file mode 100644
+index 0000000..b73411e
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len
+new file mode 100644
+index 0000000..296694d
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len
+new file mode 100644
+index 0000000..a541356
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at
+new file mode 100644
+index 0000000..6346e37
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i
+new file mode 100644
+index 0000000..fd27401
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/id-to-file.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab
+new file mode 100644
+index 0000000..4e787bd
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream
+new file mode 100644
+index 0000000..374c1fb
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len
+new file mode 100644
+index 0000000..fd722f3
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.keystream.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.len
+new file mode 100644
+index 0000000..6ba5f4f
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at
+new file mode 100644
+index 0000000..9304004
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab.values.at differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i
+new file mode 100644
+index 0000000..b65fa47
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len
+new file mode 100644
+index 0000000..131e265
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/caches-jvm/lookups/lookups.tab_i.len differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/last-build.bin b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/last-build.bin
+new file mode 100644
+index 0000000..73b5d25
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable/last-build.bin differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin
+new file mode 100644
+index 0000000..2213ca6
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/classpath-snapshot/shrunk-classpath-snapshot.bin differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state/build-history.bin b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state/build-history.bin
+new file mode 100644
+index 0000000..a8ed459
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state/build-history.bin differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/libs/expo-module-gradle-plugin.jar b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/libs/expo-module-gradle-plugin.jar
+new file mode 100644
+index 0000000..b197032
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/libs/expo-module-gradle-plugin.jar differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/pluginDescriptors/expo-module-gradle-plugin.properties b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/pluginDescriptors/expo-module-gradle-plugin.properties
+new file mode 100644
+index 0000000..08df140
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/pluginDescriptors/expo-module-gradle-plugin.properties
+@@ -0,0 +1 @@
++implementation-class=expo.modules.plugin.ExpoModulesGradlePlugin
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/resources/main/META-INF/gradle-plugins/expo-module-gradle-plugin.properties b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/resources/main/META-INF/gradle-plugins/expo-module-gradle-plugin.properties
+new file mode 100644
+index 0000000..08df140
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/resources/main/META-INF/gradle-plugins/expo-module-gradle-plugin.properties
+@@ -0,0 +1 @@
++implementation-class=expo.modules.plugin.ExpoModulesGradlePlugin
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/build/tmp/jar/MANIFEST.MF b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/tmp/jar/MANIFEST.MF
+new file mode 100644
+index 0000000..58630c0
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/build/tmp/jar/MANIFEST.MF
+@@ -0,0 +1,2 @@
++Manifest-Version: 1.0
++
