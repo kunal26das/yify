@@ -938,7 +938,7 @@
     debug "^4.3.4"
     getenv "^2.0.0"
 
-"@expo/env@~2.3.0", "@expo/env@~2.3.1":
+"@expo/env@~2.3.1":
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.3.1.tgz#098629f2422d50a9ce5513c2df8954a928d19f59"
   integrity sha512-JvBdZa5OkTd+dGEtt3fLW9OF6RlIp9SNu9VyMSiWPV5szMDTSAYbX8Uj3cRvZcU1zzaRbqnTSsHk2AE8WXHfxQ==
@@ -4549,14 +4549,7 @@ expo-build-properties@57.0.2:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@56.0.19:
-  version "56.0.19"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.19.tgz#9105da1dbb6b48a5577717f3e24500041bb73a19"
-  integrity sha512-9qUBOnUggmGMng8/J+T5hC/roLWCaG+xh7Lsk7yrqi3ulNOTDX6PzT4MNrNdmhqpD1sUc+KIDxctNxEZ1GxM5Q==
-  dependencies:
-    "@expo/env" "~2.3.0"
-
-expo-constants@~56.0.18:
+expo-constants@56.0.20, expo-constants@~56.0.18:
   version "56.0.20"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.20.tgz#e28a4994cd552d25e01fd01546e9c19821c71a08"
   integrity sha512-4HgoVvUiMvcqujr/CUj7L1tumLWj8WX0PLM77OriDPoaJrMEwUHd841m4o4IoUyMPVT8XTiTiPFwJtGali8+9Q==
