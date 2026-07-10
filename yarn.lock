@@ -1180,7 +1180,7 @@
   resolved "https://registry.yarnpkg.com/@expo/schema-utils/-/schema-utils-56.0.2.tgz#c659ff01599117d49fece720c8387a0d4de52aa7"
   integrity sha512-WcOH1E6rwxRqNwBzPOVhd5GBbMlS04+5n+ZMdhdwKOg/Kt3suV+F8F6An+z8mUJ8eSuMM3HD9Sj09t7vc/Xjkw==
 
-"@expo/schema-utils@^57.0.0", "@expo/schema-utils@^57.0.1":
+"@expo/schema-utils@^57.0.1":
   version "57.0.1"
   resolved "https://registry.yarnpkg.com/@expo/schema-utils/-/schema-utils-57.0.1.tgz#c687f8b32729d745c1d7644715d352d67401a8a8"
   integrity sha512-IVdaqtP3+iHFRE/y22mKijQtZanLcB18q1zi2kfN6RINTCryyzM7qHGsWHc5LBJbOuj1G4avCOECs97hOJm0GQ==
@@ -4540,12 +4540,12 @@ expo-blur@57.0.0:
   resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-57.0.0.tgz#971431708bb4f26acbbfd3dbc5ff172a7c8cf328"
   integrity sha512-cn+LlmOdf7swx80v6yngW9AVl7m1F4cQGpfeJx/Jckgb6C4/sdA5jy/f4wBJCGCZs+2qpPEjlUkQ2Q2+7LQiuA==
 
-expo-build-properties@57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-57.0.2.tgz#c89cf9f49abe2db35103c2b3980077c14b10e230"
-  integrity sha512-6S1tXlb05sLNmBn5dyIgSNPlP22pGNuw2OeTxN7BXjeiQmfMJh0pZZGdmdi9d1KIhNWfbWnvffcfnoINaPm2vA==
+expo-build-properties@57.0.3:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-57.0.3.tgz#1913cdb6004bd7d17be14d238a5c9a62d089a469"
+  integrity sha512-oiqyD583acVmFVdF5nPSYEI7B/1ulOfIJhmfhr3bT51/64jtwaY0FzgVL8C2o23Z+CvCnEL8gOnhtH0sqcRWiA==
   dependencies:
-    "@expo/schema-utils" "^57.0.0"
+    "@expo/schema-utils" "^57.0.1"
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
