@@ -52,7 +52,7 @@
     "expo-system-ui": "57.0.0",
     "expo-task-manager": "57.0.1",
     "expo-web-browser": "57.0.0",
-    "firebase": "12.15.0",
+    "firebase": "12.16.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
