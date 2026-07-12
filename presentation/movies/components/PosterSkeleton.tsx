@@ -4,7 +4,6 @@ import {Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {getPosterContainerStyle} from './moviePosterLayout';
 
-/** A single shimmering poster placeholder matching the real card footprint. */
 export function PosterSkeleton({width}: { width?: number }) {
     const {colors, scheme} = usePalette();
     const pulse = useRef(new Animated.Value(0)).current;

@@ -26,11 +26,6 @@ function send(res, status, body, type) {
     res.end(body);
 }
 
-/**
- * Serves the exported Expo web build (`dist/`) over localhost so absolute
- * asset paths (`/_expo/...`) and expo-router client-side routing both work.
- * Falls back to index.html for unknown paths (SPA behaviour).
- */
 function startStaticServer(rootDir) {
     return new Promise((resolve, reject) => {
         const server = http.createServer((req, res) => {
@@ -41,7 +36,6 @@ function startStaticServer(rootDir) {
                 return send(res, 400, 'Bad request');
             }
 
-            // Resolve within rootDir, guarding against path traversal.
             const resolved = path.normalize(path.join(rootDir, urlPath));
             if (!resolved.startsWith(rootDir)) {
                 return send(res, 403, 'Forbidden');
@@ -56,7 +50,6 @@ function startStaticServer(rootDir) {
                     tryFiles.push(resolved + '.html');
                 }
             }
-            // SPA fallback.
             tryFiles.push(path.join(rootDir, 'index.html'));
 
             for (const file of tryFiles) {
@@ -71,7 +64,6 @@ function startStaticServer(rootDir) {
         });
 
         server.on('error', reject);
-        // Port 0 = let the OS pick a free port.
         server.listen(0, '127.0.0.1', () => {
             const {port} = server.address();
             resolve({server, port});

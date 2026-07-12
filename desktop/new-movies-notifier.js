@@ -1,17 +1,7 @@
-// Desktop "new movies" notifications, run from the Electron main process.
-//
-// The shared React Native code uses expo-background-task on native and a
-// foreground check on web; neither covers a desktop window that's closed to the
-// tray. The main process IS long-lived, so here we poll YTS on a daily timer,
-// diff against a small JSON cache in userData, and fire native notifications even
-// when the window is hidden. Clicking a notification deep-links into the app.
-
 const {app, Notification} = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-// Mirrors DEFAULT_BASE_URL in data/datasources/YtsApiDataSource.ts. The desktop
-// main process has no access to Firebase Remote Config, so it uses the default.
 const BASE_URL = 'https://movies-api.accel.li/api/v2';
 const PAGE_SIZE = 50;
 const QUALITY = '2160p';
@@ -66,7 +56,6 @@ async function fetchFirstPage() {
     }
 }
 
-// Mirrors buildNotificationContent in lib/new-movies-diff.ts.
 function buildNotificationContent(newMovies) {
     if (newMovies.length === 1) {
         return {title: 'New movie added', body: newMovies[0].title, movieId: newMovies[0].id};
@@ -77,11 +66,6 @@ function buildNotificationContent(newMovies) {
     };
 }
 
-/**
- * @param {(movieId?: number) => void} onClick invoked when the user clicks a
- *   notification, with the movie id to deep-link to (undefined for the multi
- *   "N new movies" case).
- */
 async function checkForNewMovies(onClick, force = false) {
     if (!Notification.isSupported()) return 0;
 
@@ -93,7 +77,6 @@ async function checkForNewMovies(onClick, force = false) {
     const ids = movies.map((m) => m.id);
     const cachedIds = new Set(cache.ids);
 
-    // First run seeds the baseline silently.
     if (cache.ids.length === 0) {
         writeCache({ids, lastRunDate: today});
         return 0;
@@ -111,18 +94,12 @@ async function checkForNewMovies(onClick, force = false) {
     return newMovies.length;
 }
 
-/**
- * Run a check shortly after launch and then once a day. Returns a disposer that
- * clears the timer.
- * @param {(movieId?: number) => void} onClick
- */
 function startNewMoviesNotifier(onClick) {
     const run = () => {
         checkForNewMovies(onClick).catch((e) =>
             console.warn('[new-movies] desktop check failed', e),
         );
     };
-    // Defer the first run so launch isn't blocked on the network.
     const startupTimer = setTimeout(run, 10_000);
     const dailyTimer = setInterval(run, DAY_MS);
     return () => {

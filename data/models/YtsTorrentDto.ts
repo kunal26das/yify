@@ -1,4 +1,3 @@
-/** A single downloadable torrent attached to a movie. */
 export interface YtsTorrentDto {
     url: string;
     hash: string;

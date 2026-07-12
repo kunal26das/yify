@@ -7,7 +7,6 @@ const FALLBACK_RADIUS = 20;
 
 function getInitialRadius(): number {
   if (Platform.OS === 'web') return FALLBACK_RADIUS;
-  // expo-device-corner-radius requires a dev build; not available in Expo Go
   if (Constants.appOwnership === 'expo') return FALLBACK_RADIUS;
   try {
     const value = getCornerRadius();

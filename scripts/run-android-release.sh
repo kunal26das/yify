@@ -2,10 +2,8 @@
 set -e
 
 export APP_VARIANT=release
-# Use ANDROID_HOME or ANDROID_SDK_ROOT (default common SDK path on macOS)
 export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 
-# Find Java (Gradle needs it). Prefer: existing JAVA_HOME → Android Studio JBR → macOS java_home → Homebrew
 if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
   if [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
     export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -29,7 +27,6 @@ if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
   fi
 fi
 
-# Prebuild with release package, then build and install release APK
 echo "Prebuilding Android (release package: io.github.kunal26das.yify)..."
 npx expo prebuild --platform android --clean
 echo "Building and installing release app..."

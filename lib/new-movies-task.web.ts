@@ -8,11 +8,6 @@ import {buildNotificationContent, selectNewMovies, type NewMoviesNotification} f
 import {NewMoviesCache} from '@/lib/new-movies-cache';
 import {createLocalStorageStore} from '@/lib/storage/local-storage-key-value-store';
 
-// Web has no OS background scheduler (expo-background-task / TaskManager are
-// native-only), so this is a *foreground* port: while the tab/desktop window is
-// open we poll YTS, diff against a localStorage cache, and surface new titles via
-// the browser Notification API. Closed-tab delivery would need a service worker
-// + push backend (see Tier 3 in the notifications plan).
 
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 
@@ -67,8 +62,6 @@ export async function requestNotificationPermission(): Promise<boolean> {
     if (Notification.permission === 'granted') return true;
     if (Notification.permission === 'denied') return false;
     try {
-        // Some browsers only honour this from a user gesture and otherwise leave
-        // permission at 'default'; that just means no prompt — never a crash.
         return (await Notification.requestPermission()) === 'granted';
     } catch {
         return false;
@@ -88,7 +81,6 @@ export async function checkForNewMovies(force = false): Promise<number> {
 
     cache.setLastRunDate(today);
 
-    // First run on this device seeds the baseline silently.
     if (cachedIds.size === 0) {
         cache.setCachedIds(movies.map((m) => m.id));
         return 0;
@@ -108,9 +100,6 @@ let listenersBound = false;
 export async function registerNewMoviesTask(): Promise<void> {
     if (typeof document === 'undefined') return;
 
-    // No background scheduler on web; run the check now and again each time the
-    // app returns to the foreground. The cache's per-day guard keeps it to at
-    // most one notification batch per calendar day.
     void checkForNewMovies();
 
     if (listenersBound) return;

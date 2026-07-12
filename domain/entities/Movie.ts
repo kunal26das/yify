@@ -1,4 +1,3 @@
-/** A movie as shown in lists and grids. */
 export interface Movie {
   id: number;
   imdbCode: string;
@@ -11,7 +10,6 @@ export interface Movie {
   summary: string;
   language: string;
   mpaRating: string;
-  /** Display-ready poster URLs ordered small → large. */
   posterUrls: string[];
   backgroundImageUrl?: string;
 }

@@ -2,12 +2,10 @@
 set -e
 
 export APP_VARIANT=debug
-# Use ANDROID_HOME or ANDROID_SDK_ROOT (default common SDK path on macOS)
 export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 EMULATOR="${ANDROID_HOME}/emulator/emulator"
 ADB="${ANDROID_HOME}/platform-tools/adb"
 
-# Find Java (Gradle needs it). Prefer: existing JAVA_HOME → Android Studio JBR → macOS java_home → Homebrew
 if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
   if [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
     export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -31,10 +29,8 @@ if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
   fi
 fi
 
-# Check if any Android device/emulator is already connected
 DEVICES=$("${ADB}" devices 2>/dev/null | grep -E 'emulator|device' | grep -v 'List of' || true)
 if [ -z "$DEVICES" ]; then
-  # No device: start emulator
   if [ ! -x "$EMULATOR" ]; then
     echo "Android emulator not found at $EMULATOR. Set ANDROID_HOME or install Android Studio."
     exit 1
@@ -54,7 +50,6 @@ if [ -z "$DEVICES" ]; then
   echo "Emulator ready."
 fi
 
-# Prebuild, then build and install debug APK
 echo "Prebuilding Android (package: io.github.kunal26das.yify)..."
 npx expo prebuild --platform android --clean
 echo "Building and installing debug app..."

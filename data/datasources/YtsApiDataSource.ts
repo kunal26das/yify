@@ -11,13 +11,8 @@ export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
 const REQUEST_TIMEOUT_MS = 15000;
 
-// In-memory response cache shared across data-source instances (the router
-// rebuilds the data source on every screen mount, so a module-level cache is
-// what makes back-navigation and re-opening a movie instant). Keyed by full
-// request URL; stores the in-flight Promise so concurrent identical requests
-// de-duplicate. Failures are never cached, so errors can be retried.
-const LIST_TTL_MS = 60_000; // lists change rarely — 1 min keeps back-nav instant while pull-to-refresh stays fresh
-const DETAILS_TTL_MS = 10 * 60_000; // details/suggestions/guides are effectively static within a session
+const LIST_TTL_MS = 60_000;
+const DETAILS_TTL_MS = 10 * 60_000;
 const MAX_CACHE_ENTRIES = 120;
 
 interface CacheEntry {
@@ -45,7 +40,6 @@ function setCachedResponse(key: string, value: Promise<unknown>, ttlMs: number):
   responseCache.set(key, {expiresAt: Date.now() + ttlMs, value});
 }
 
-/** Clears the in-memory API response cache (e.g. on sign-out or a hard refresh). */
 export function clearApiResponseCache(): void {
   responseCache.clear();
 }
@@ -85,7 +79,6 @@ export interface MovieParentalGuidesApi {
   getMovieParentalGuides(movieId: number): Promise<YtsMovieParentalGuidesResponse>;
 }
 
-/** Full YTS API surface. */
 export interface YtsApi
     extends ListMoviesApi,
         MovieDetailsApi,
@@ -115,12 +108,6 @@ async function fetchWithTimeout<T extends { status: string; status_message?: str
 }
 
 export class YtsApiDataSource implements YtsApi {
-  /**
-   * @param resolveBaseUrl returns the API base URL for each request, so a
-   * remotely-configured value (e.g. Firebase Remote Config, wired in the app
-   * layer) takes effect without rebuilding the data source. Defaults to
-   * {@link DEFAULT_BASE_URL}.
-   */
   constructor(private readonly resolveBaseUrl: () => string = () => DEFAULT_BASE_URL) {
   }
 
@@ -188,10 +175,6 @@ export class YtsApiDataSource implements YtsApi {
     );
   }
 
-  /**
-   * GET `endpoint` from the YTS API, served from the in-memory cache when a
-   * fresh entry exists (and de-duplicating concurrent identical requests).
-   */
   private async request<T extends YtsApiResponse<unknown>>(
       endpoint: YtsEndpoint,
       searchParams: URLSearchParams,
@@ -207,7 +190,6 @@ export class YtsApiDataSource implements YtsApi {
       if (cached) return cached;
     }
 
-    // Never cache a rejected request, so transient failures can be retried.
     const promise = fetchWithTimeout<T>(url).catch((error) => {
       responseCache.delete(url);
       throw error;

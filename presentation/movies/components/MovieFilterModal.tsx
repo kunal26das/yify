@@ -96,8 +96,6 @@ export function MovieFilterModal({
     const {isLarge} = useResponsive();
     const {colors} = usePalette();
 
-    // Drive the backdrop fade and the sheet slide/scale from one progress value
-    // so the scrim fades in place instead of sliding up with the sheet.
     const [mounted, setMounted] = useState(visible);
     const progress = useRef(new Animated.Value(0)).current;
 
@@ -210,7 +208,6 @@ export function MovieFilterModal({
                                 onSelect={(value) => onFiltersChange({...filters, order_by: value as OrderBy})}
                             />
                         </ScrollView>
-                        {/* Bottom fade cues that the list scrolls. */}
                         <LinearGradient
                             colors={[colors.surface + '00', colors.surface]}
                             bands={10}

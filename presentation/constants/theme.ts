@@ -1,23 +1,10 @@
-/**
- * Cinematic design system for YIFY.
- *
- * Dark-first palette built around an "aurora" accent gradient (violet → pink)
- * with IMDb-style gold for ratings. The original Expo color keys
- * (`text`, `background`, `tint`, `icon`, `tabIconDefault`, `tabIconSelected`)
- * are preserved for backward compatibility; everything new lives alongside them
- * and is surfaced through the `usePalette()` hook plus the `Spacing`, `Radius`,
- * `Typography`, and `Gradients` scales.
- */
-
 import { Platform } from 'react-native';
 
-// Claude / Anthropic brand palette: warm "clay" coral on ivory & charcoal.
 const accentLight = '#BD5D3A';
 const accentDark = '#D97757';
 
 export const Colors = {
   light: {
-      // --- Original Expo keys (kept for backward compatibility) ---
       text: '#1F1D1A',
       background: '#FAF9F5',
       tint: accentLight,
@@ -25,7 +12,6 @@ export const Colors = {
       tabIconDefault: '#73706B',
       tabIconSelected: accentLight,
 
-      // --- Extended semantic tokens ---
       textMuted: '#73706B',
       textFaint: '#A39E95',
       surface: '#FFFFFF',
@@ -43,7 +29,6 @@ export const Colors = {
       scrim: 'rgba(31, 29, 26, 0.55)',
   },
     dark: {
-        // --- Original Expo keys (kept for backward compatibility) ---
         text: '#F5F4EE',
         background: '#262624',
         tint: accentDark,
@@ -51,7 +36,6 @@ export const Colors = {
         tabIconDefault: '#9A958C',
         tabIconSelected: accentDark,
 
-        // --- Extended semantic tokens ---
         textMuted: '#B4AFA6',
         textFaint: '#827D74',
         surface: '#30302E',
@@ -72,7 +56,6 @@ export const Colors = {
 
 export type Palette = Record<keyof (typeof Colors)['light'], string>;
 
-/** Warm accent gradient stops (coral → clay / amber), light → dark variants. */
 export const Gradients = {
     light: {
         accent: ['#D97757', '#BD5D3A'] as const,
@@ -84,7 +67,6 @@ export const Gradients = {
   },
 } as const;
 
-/** 4-pt based spacing scale. */
 export const Spacing = {
     xs: 4,
     sm: 8,
@@ -95,7 +77,6 @@ export const Spacing = {
     xxxl: 48,
 } as const;
 
-/** Corner-radius scale. */
 export const Radius = {
     sm: 8,
     md: 12,
@@ -104,27 +85,17 @@ export const Radius = {
     pill: 999,
 } as const;
 
-/**
- * Bundled typefaces (loaded in app/_layout via expo-font), echoing Claude's
- * brand pairing: Fraunces (a warm transitional serif, à la Tiempos/Copernicus)
- * for expressive display/headings, and Hanken Grotesk (a Styrene-like humanist
- * grotesque) for body & UI. Each weight is its own family, so set `fontFamily`
- * (not `fontWeight`) to select a weight reliably across iOS, Android and web.
- */
 export const FontFamily = {
-    // Body / UI — Hanken Grotesk
     regular: 'HankenGrotesk_400Regular',
     medium: 'HankenGrotesk_500Medium',
     semibold: 'HankenGrotesk_600SemiBold',
     bold: 'HankenGrotesk_700Bold',
     extrabold: 'HankenGrotesk_800ExtraBold',
-    // Display / headings — Fraunces (serif)
     displaySemibold: 'Fraunces_600SemiBold',
     displayBold: 'Fraunces_700Bold',
     displayExtra: 'Fraunces_900Black',
 } as const;
 
-/** Typography presets (size / lineHeight / weight / family). */
 export const Typography = {
     display: {fontSize: 34, lineHeight: 40, fontFamily: FontFamily.displayExtra, letterSpacing: -0.5},
     title: {fontSize: 26, lineHeight: 32, fontFamily: FontFamily.displayExtra, letterSpacing: -0.3},
@@ -138,13 +109,9 @@ export const Typography = {
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

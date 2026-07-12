@@ -12,13 +12,9 @@ export interface Responsive {
     breakpoint: Breakpoint;
     isPhone: boolean;
     isTablet: boolean;
-    /** tablet or larger */
     isLarge: boolean;
-    /** desktop or larger */
     isDesktop: boolean;
-    /** Comfortable content max-width; full width on phones. */
     contentMaxWidth: number;
-    /** Standard horizontal screen padding for the current size. */
     gutter: number;
 }
 
