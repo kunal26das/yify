@@ -21,9 +21,6 @@ import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 
 void initRemoteConfig();
-// "New movies" notifications: native uses a background task; web/desktop fall back
-// to a foreground check via the browser Notification API (see new-movies-task.web).
-// Each platform's implementation is resolved by the bundler (.web.ts on web).
 void requestNotificationPermission().then((granted) => {
     if (granted) void registerNewMoviesTask();
 });
@@ -35,9 +32,6 @@ function handleNotificationData(data: unknown) {
     }
 }
 
-// Top space reserved for the macOS title bar / traffic lights. Mirrors
-// TITLEBAR_INSET in desktop/main.js. Surfaced as a safe-area inset so the
-// existing safe-area-aware layouts render edge-to-edge but clear the controls.
 const DESKTOP_TOP_INSET = 44;
 
 function RootLayout() {
@@ -51,8 +45,6 @@ function RootLayout() {
         Fraunces_700Bold,
         Fraunces_900Black,
     });
-    // Notification taps only exist on native; the hook throws on web. Platform.OS
-    // is constant for the runtime, so this conditional call keeps hook order stable.
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = fontsLoaded || !!fontError;
@@ -62,16 +54,12 @@ function RootLayout() {
     }, [lastResponse, navReady]);
 
     const colorScheme = useColorScheme();
-    // macOS uses a frameless overlay needing a top inset; macOS + Windows both get
-    // a translucent window the navigator must not paint over.
     const isMacDesktop = useIsMacDesktop();
     const isFrosted = useIsFrostedDesktop();
 
     const scheme = colorScheme === 'dark' ? 'dark' : 'light';
     const palette = Colors[scheme];
     const navBase = scheme === 'dark' ? DarkTheme : DefaultTheme;
-    // Align the navigator chrome with the cinematic palette so there is no
-    // white flash between screen transitions.
     const baseTheme = {
         ...navBase,
         colors: {
@@ -83,15 +71,10 @@ function RootLayout() {
             primary: palette.accent,
         },
     };
-    // On frosted desktops the window is translucent; keep the navigator transparent
-    // so it shows through instead of painting a solid background.
     const theme = isFrosted
         ? {...baseTheme, colors: {...baseTheme.colors, background: 'transparent', card: 'transparent'}}
         : baseTheme;
 
-    // Hold the first paint until the bundled typefaces are ready (or failed) so
-    // text doesn't flash in the system font and reflow. The native splash
-    // screen stays up in the meantime.
     if (!fontsLoaded && !fontError) {
         return null;
     }
@@ -100,6 +83,7 @@ function RootLayout() {
         <ThemeProvider value={theme}>
             <Stack>
                 <Stack.Screen name="index" options={{headerShown: false}}/>
+                <Stack.Screen name="browse" options={{headerShown: false}}/>
                 <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
             </Stack>
             <StatusBar style="auto"/>
@@ -127,10 +111,6 @@ const styles = StyleSheet.create({
     flex: { flex: 1 },
 });
 
-// CodePush/Revopush ships over-the-air JS bundles to the native builds only.
-// Web and the Electron desktop target (react-native-web) have no native module,
-// and importing it under static web/node rendering crashes (it destructures
-// `Alert` from react-native's node export), so require it lazily on native only.
 function withCodePush(component: typeof RootLayout) {
     if (Platform.OS === 'web') {
         return component;

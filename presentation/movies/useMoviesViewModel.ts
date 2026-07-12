@@ -20,7 +20,12 @@ export interface MovieFilters {
 
 export const DEFAULT_FILTERS: MovieFilters = { quality: Quality.P2160 };
 
-export function useMoviesViewModel(repository: MovieRepository) {
+export interface UseMoviesOptions {
+  initialFilters?: MovieFilters;
+  initialQuery?: string;
+}
+
+export function useMoviesViewModel(repository: MovieRepository, options?: UseMoviesOptions) {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalMovieCount, setTotalMovieCount] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -28,23 +33,28 @@ export function useMoviesViewModel(repository: MovieRepository) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQueryState] = useState('');
-  const [filters, setFiltersState] = useState<MovieFilters>(DEFAULT_FILTERS);
+  const [searchQuery, setSearchQueryState] = useState(options?.initialQuery ?? '');
+  const [filters, setFiltersState] = useState<MovieFilters>(options?.initialFilters ?? DEFAULT_FILTERS);
+  const [appliedQuery, setAppliedQuery] = useState(options?.initialQuery ?? '');
+  const [appliedFilters, setAppliedFilters] = useState<MovieFilters>(options?.initialFilters ?? DEFAULT_FILTERS);
   const loadingRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchQueryRef = useRef(searchQuery);
   const filtersRef = useRef(filters);
   const pageRef = useRef(page);
   const hasMoreRef = useRef(hasMore);
+  const appliedFiltersRef = useRef(appliedFilters);
+  const pendingReloadRef = useRef<{ query?: string; filterOverrides?: MovieFilters } | null>(null);
+  const loadMoviesRef = useRef<
+    ((pageToLoad: number, query?: string, filterOverrides?: MovieFilters) => void) | null
+  >(null);
 
-  // Mirror the latest committed state into refs so the async callbacks below
-  // (loadMovies, loadMore, …) always read current values without being
-  // recreated. Writing in an effect keeps this out of render.
   useEffect(() => {
     searchQueryRef.current = searchQuery;
     filtersRef.current = filters;
     pageRef.current = page;
     hasMoreRef.current = hasMore;
+    appliedFiltersRef.current = appliedFilters;
   });
 
   const loadMovies = useCallback(
@@ -53,13 +63,20 @@ export function useMoviesViewModel(repository: MovieRepository) {
       query?: string,
       filterOverrides?: MovieFilters
     ) => {
-      if (loadingRef.current) return;
+      if (loadingRef.current) {
+        if (pageToLoad === 1) pendingReloadRef.current = { query, filterOverrides };
+        return;
+      }
       loadingRef.current = true;
       setLoading(true);
       if (pageToLoad === 1) setRefreshing(true);
       setError(null);
 
       const activeFilters = filterOverrides ?? filtersRef.current;
+      if (pageToLoad === 1) {
+        setAppliedQuery(query?.trim() ?? '');
+        setAppliedFilters(activeFilters);
+      }
 
       try {
         const result = await repository.listMovies({
@@ -85,10 +102,19 @@ export function useMoviesViewModel(repository: MovieRepository) {
         loadingRef.current = false;
         setLoading(false);
         if (pageToLoad === 1) setRefreshing(false);
+        const pending = pendingReloadRef.current;
+        if (pending) {
+          pendingReloadRef.current = null;
+          loadMoviesRef.current?.(1, pending.query, pending.filterOverrides);
+        }
       }
     },
     [repository]
   );
+
+  useEffect(() => {
+    loadMoviesRef.current = loadMovies;
+  }, [loadMovies]);
 
   const loadInitial = useCallback(() => {
     loadMovies(1, searchQueryRef.current);
@@ -122,7 +148,6 @@ export function useMoviesViewModel(repository: MovieRepository) {
   const clearFiltersAndReload = useCallback(() => {
     setFiltersState(DEFAULT_FILTERS);
     filtersRef.current = DEFAULT_FILTERS;
-      // Resetting filters also clears the search query.
       if (debounceRef.current) {
           clearTimeout(debounceRef.current);
           debounceRef.current = null;
@@ -141,7 +166,7 @@ export function useMoviesViewModel(repository: MovieRepository) {
   const loadMore = useCallback(() => {
     if (!hasMoreRef.current || loadingRef.current) return;
     const nextPage = pageRef.current + 1;
-    loadMovies(nextPage, searchQueryRef.current);
+    loadMovies(nextPage, searchQueryRef.current, appliedFiltersRef.current);
   }, [loadMovies]);
 
   return {
@@ -155,6 +180,8 @@ export function useMoviesViewModel(repository: MovieRepository) {
     setSearchQuery,
     filters,
     setFilters,
+    appliedQuery,
+    appliedFilters,
     applyFilters,
     clearFiltersAndReload,
     loadInitial,

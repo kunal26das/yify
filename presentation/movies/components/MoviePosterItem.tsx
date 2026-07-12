@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {router} from 'expo-router';
+import {Link} from 'expo-router';
 import {useRef} from 'react';
 import {Animated, Platform, Pressable, StyleSheet, View} from 'react-native';
 import type {Movie} from '@/domain';
@@ -17,9 +17,6 @@ export function MoviePosterItem({movie, width}: { movie: Movie; width?: number }
   const scale = useRef(new Animated.Value(1)).current;
   const lift = useRef(new Animated.Value(0)).current;
 
-  // Grid cells are small (~150–290px), so display the medium poster and use the
-  // tiny one as an instant placeholder. The large (720px) image is reserved for
-  // the detail screen — loading it here wastes bandwidth and decode time.
   const placeholderUrl = posterUrls.length > 1 ? posterUrls[0] : undefined;
   const sourceUrl = posterUrls[Math.min(1, posterUrls.length - 1)] ?? posterUrls[0];
 
@@ -34,47 +31,48 @@ export function MoviePosterItem({movie, width}: { movie: Movie; width?: number }
   const hasRating = movie.rating > 0;
 
   return (
-    <Pressable
-      onPress={() => router.push(`/movie/${movie.id}`)}
-      onPressIn={() => animate(0.96, 0)}
-      onPressOut={() => animate(1, 0)}
-      onHoverIn={() => Platform.OS === 'web' && animate(1.02, 1)}
-      onHoverOut={() => Platform.OS === 'web' && animate(1, 0)}
-      style={getPosterContainerStyle(width)}
-    >
-      <Animated.View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surfaceSunken,
-              borderColor: colors.border,
-              transform: [{scale}, {translateY}],
-              shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
-            },
-          ]}
+    <Link href={`/movie/${movie.id}`} asChild>
+      <Pressable
+        onPressIn={() => animate(0.96, 0)}
+        onPressOut={() => animate(1, 0)}
+        onHoverIn={() => Platform.OS === 'web' && animate(1.02, 1)}
+        onHoverOut={() => Platform.OS === 'web' && animate(1, 0)}
+        style={getPosterContainerStyle(width)}
       >
-        <Image
-            style={StyleSheet.absoluteFill}
-            source={sourceUrl ? {uri: sourceUrl} : undefined}
-            placeholder={placeholderUrl ? {uri: placeholderUrl} : undefined}
-            placeholderContentFit="cover"
-            contentFit="cover"
-            transition={180}
-            priority="high"
-            cachePolicy="memory-disk"
-            recyclingKey={String(movie.id)}
-        />
+        <Animated.View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surfaceSunken,
+                borderColor: colors.border,
+                transform: [{scale}, {translateY}],
+                shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
+              },
+            ]}
+        >
+          <Image
+              style={StyleSheet.absoluteFill}
+              source={sourceUrl ? {uri: sourceUrl} : undefined}
+              placeholder={placeholderUrl ? {uri: placeholderUrl} : undefined}
+              placeholderContentFit="cover"
+              contentFit="cover"
+              transition={180}
+              priority="high"
+              cachePolicy="memory-disk"
+              recyclingKey={String(movie.id)}
+          />
 
-        {hasRating ? (
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={11} color={colors.gold}/>
-              <ThemedText style={styles.ratingText} lightColor="#fff" darkColor="#fff">
-                {movie.rating.toFixed(1)}
-              </ThemedText>
-            </View>
-        ) : null}
-      </Animated.View>
-    </Pressable>
+          {hasRating ? (
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={11} color={colors.gold}/>
+                <ThemedText style={styles.ratingText} lightColor="#fff" darkColor="#fff">
+                  {movie.rating.toFixed(1)}
+                </ThemedText>
+              </View>
+          ) : null}
+        </Animated.View>
+      </Pressable>
+    </Link>
   );
 }
 

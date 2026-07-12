@@ -1,6 +1,7 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
+import {useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Torrent} from '@/domain';
@@ -10,21 +11,26 @@ import {LinearGradient} from '../components/linear-gradient';
 import {LiquidGlassView} from '../components/liquid-glass-view';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {Radius, Spacing} from '../constants/theme';
+import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {YoutubePlayer} from './components/YoutubePlayer';
+import {MovieRail} from './components/MovieRail';
+import {ScreenshotLightbox} from './components/ScreenshotLightbox';
+import {useIsInWatchlist} from './useWatchlist';
+import {toggleWatchlist} from '@/lib/watchlist';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
 
 const COLUMN_MAX = 920;
 
 export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewModel }) {
-  const { details, loading, error, reload } = viewModel;
+  const { details, suggestions, loading, error, reload } = viewModel;
   const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
-    const {width} = useResponsive();
+    const {width, isPhone} = useResponsive();
     const columnWidth = Math.min(width, COLUMN_MAX);
+    const [showTrailer, setShowTrailer] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const saved = useIsInWatchlist(details?.id ?? -1);
 
-    // Uniform torrent grid: pick a column count, then give every card the exact
-    // same width so rows align instead of staggering.
     const TORRENT_GAP = 10;
     const bodyWidth = columnWidth - Spacing.lg * 2;
     const torrentCols = Math.max(2, Math.floor(bodyWidth / 250));
@@ -32,7 +38,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
 
   const BackButton = (
     <Pressable
-      onPress={() => router.back()}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       hitSlop={10}
       accessibilityRole="button"
       accessibilityLabel="Go back"
@@ -91,6 +97,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
   const description = details.descriptionFull || details.descriptionIntro || details.summary;
     const posterUrl = details.posterUrls[details.posterUrls.length - 1] ?? details.posterUrls[0];
     const hasTrailer = !!details.ytTrailerCode;
+    const backdropUrl = details.screenshotUrls[0] ?? details.backgroundImageUrl;
 
   return (
     <ThemedView style={styles.container}>
@@ -99,33 +106,51 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
         showsVerticalScrollIndicator={false}
       >
           <View style={styles.column}>
-              {/* Hero: trailer, else backdrop */}
               <View style={styles.hero}>
-                  {hasTrailer ? (
+                  {showTrailer && hasTrailer ? (
                       <YoutubePlayer videoId={details.ytTrailerCode} width={columnWidth}/>
-                  ) : details.backgroundImageUrl ? (
-                      <View style={styles.backdropWrap}>
-                          <Image
-                              source={{uri: details.backgroundImageUrl}}
-                              style={StyleSheet.absoluteFill}
-                              contentFit="cover"
-                              transition={220}
-                              cachePolicy="memory-disk"
-                          />
-                      </View>
                   ) : (
-                      <View style={[styles.backdropWrap, {backgroundColor: colors.surfaceElevated}]}/>
+                      <View style={styles.backdropWrap}>
+                          {backdropUrl ? (
+                              <Image
+                                  source={{uri: backdropUrl}}
+                                  style={StyleSheet.absoluteFill}
+                                  contentFit="cover"
+                                  transition={220}
+                                  cachePolicy="memory-disk"
+                              />
+                          ) : (
+                              <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceElevated}]}/>
+                          )}
+                          {hasTrailer ? (
+                              <Pressable
+                                  onPress={() => setShowTrailer(true)}
+                                  style={styles.playOverlay}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Play trailer"
+                              >
+                                  <LiquidGlassView
+                                      tint={scheme === 'dark' ? 'dark' : 'light'}
+                                      fallbackBackgroundColor="rgba(8,8,12,0.5)"
+                                      style={styles.playCircle}
+                                  >
+                                      <Ionicons name="play" size={30} color="#fff" style={styles.playIcon}/>
+                                  </LiquidGlassView>
+                              </Pressable>
+                          ) : null}
+                      </View>
                   )}
-                  <LinearGradient
-                      colors={['rgba(0,0,0,0)', scheme === 'dark' ? 'rgba(38,38,36,0.9)' : 'rgba(250,249,245,0.95)']}
-                      bands={12}
-                      style={styles.heroFade}
-                      pointerEvents="none"
-                  />
+                  {!showTrailer ? (
+                      <LinearGradient
+                          colors={['rgba(0,0,0,0)', scheme === 'dark' ? 'rgba(38,38,36,0.9)' : 'rgba(250,249,245,0.95)']}
+                          bands={12}
+                          style={styles.heroFade}
+                          pointerEvents="none"
+                      />
+                  ) : null}
           </View>
 
-              {/* Poster + title block */}
-              <View style={[styles.headerBlock, hasTrailer ? styles.headerSpaced : styles.headerOverlap]}>
+              <View style={[styles.headerBlock, showTrailer ? styles.headerSpaced : styles.headerOverlap]}>
                   {posterUrl ? (
                       <Image
                           source={{uri: posterUrl}}
@@ -184,7 +209,57 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
           </View>
 
               <View style={styles.body}>
-                  {/* Genres */}
+                  <View style={styles.actionsRow}>
+                      {hasTrailer ? (
+                          <Pressable
+                              onPress={() => setShowTrailer((v) => !v)}
+                              accessibilityRole="button"
+                              accessibilityLabel={showTrailer ? 'Hide trailer' : 'Play trailer'}
+                              style={({pressed}) => [styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
+                          >
+                              <View
+                                  style={[
+                                      styles.playButton,
+                                      showTrailer
+                                          ? {backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth}
+                                          : {backgroundColor: colors.accent},
+                                  ]}
+                              >
+                                  <Ionicons
+                                      name={showTrailer ? 'chevron-up' : 'play'}
+                                      size={18}
+                                      color={showTrailer ? colors.text : colors.onAccent}
+                                  />
+                                  <ThemedText style={[styles.playLabel, {color: showTrailer ? colors.text : colors.onAccent}]}>
+                                      {showTrailer ? 'Hide trailer' : 'Play trailer'}
+                                  </ThemedText>
+                              </View>
+                          </Pressable>
+                      ) : null}
+                      <Pressable
+                          onPress={() => toggleWatchlist(details)}
+                          accessibilityRole="button"
+                          accessibilityState={{selected: saved}}
+                          accessibilityLabel={saved ? 'Remove from My List' : 'Add to My List'}
+                          style={({pressed}) => [hasTrailer ? undefined : styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
+                      >
+                          <View
+                              style={[
+                                  styles.saveButton,
+                                  {
+                                      backgroundColor: saved ? colors.accentSoft : colors.surfaceElevated,
+                                      borderColor: saved ? colors.accent + '66' : colors.border,
+                                  },
+                              ]}
+                          >
+                              <Ionicons name={saved ? 'checkmark' : 'add'} size={18} color={saved ? colors.accent : colors.text}/>
+                              <ThemedText style={[styles.saveLabel, {color: saved ? colors.accent : colors.text}]}>
+                                  {saved ? 'Saved' : 'My List'}
+                              </ThemedText>
+                          </View>
+                      </Pressable>
+                  </View>
+
                   {details.genres.length > 0 ? (
                       <View style={styles.chipRow}>
                           {details.genres.map((g) => (
@@ -198,33 +273,37 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       </View>
                   ) : null}
 
-                  {/* Synopsis */}
                   {description ? (
                       <Section title="Synopsis" colors={colors}>
                           <ThemedText style={[styles.paragraph, {color: colors.text + 'cc'}]}>{description}</ThemedText>
                       </Section>
                   ) : null}
 
-                  {/* Screenshots */}
                   {details.screenshotUrls.length > 0 ? (
                       <Section title="Screenshots" colors={colors} flush>
                           <ScrollView horizontal showsHorizontalScrollIndicator={false}
                                       contentContainerStyle={styles.hScroll}>
                               {details.screenshotUrls.map((uri, i) => (
-                                  <Image
+                                  <Pressable
                                       key={i}
-                                      source={{uri}}
-                                      style={[styles.screenshot, {backgroundColor: colors.surfaceElevated}]}
-                                      contentFit="cover"
-                                      transition={220}
-                                      cachePolicy="memory-disk"
-                                  />
+                                      onPress={() => setLightboxIndex(i)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`View screenshot ${i + 1} full screen`}
+                                      style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                                  >
+                                      <Image
+                                          source={{uri}}
+                                          style={[styles.screenshot, {backgroundColor: colors.surfaceElevated}]}
+                                          contentFit="cover"
+                                          transition={220}
+                                          cachePolicy="memory-disk"
+                                      />
+                                  </Pressable>
                               ))}
                           </ScrollView>
                       </Section>
                   ) : null}
 
-                  {/* Cast */}
                   {details.cast.length > 0 ? (
                       <Section title="Cast" colors={colors} flush>
                           <ScrollView horizontal showsHorizontalScrollIndicator={false}
@@ -236,7 +315,6 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       </Section>
                   ) : null}
 
-                  {/* Available qualities (informational only) */}
                   {details.torrents.length > 0 ? (
                       <Section title="Available Qualities" colors={colors}>
                           <View style={[styles.torrentGrid, {gap: TORRENT_GAP}]}>
@@ -247,9 +325,27 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       </Section>
                   ) : null}
               </View>
+
+              {suggestions.length > 0 ? (
+                  <View style={styles.moreLikeThis}>
+                      <MovieRail
+                          title="More like this"
+                          movies={suggestions}
+                          posterWidth={isPhone ? 118 : 132}
+                          gutter={Spacing.lg}
+                      />
+                  </View>
+              ) : null}
         </View>
       </ScrollView>
       {BackButton}
+      {lightboxIndex != null ? (
+          <ScreenshotLightbox
+              images={details.screenshotUrls}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxIndex(null)}
+          />
+      ) : null}
     </ThemedView>
   );
 }
@@ -378,6 +474,39 @@ const styles = StyleSheet.create({
     hero: {width: '100%'},
   backdropWrap: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000' },
     heroFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 90},
+    playOverlay: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center'},
+    playCircle: {
+        width: 74,
+        height: 74,
+        borderRadius: 37,
+        overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    playIcon: {marginLeft: 4},
+    actionsRow: {flexDirection: 'row', alignItems: 'stretch', gap: 10, marginBottom: Spacing.lg},
+    actionFlex: {flex: 1},
+    playButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderRadius: Radius.pill,
+        paddingVertical: 13,
+    },
+    saveButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 7,
+        borderRadius: Radius.pill,
+        paddingVertical: 13,
+        paddingHorizontal: 20,
+        borderWidth: StyleSheet.hairlineWidth,
+    },
+    saveLabel: {fontSize: 15, fontFamily: FontFamily.semibold},
+    playLabel: {fontSize: 16, fontFamily: FontFamily.bold},
+    moreLikeThis: {marginTop: Spacing.xxl},
 
     headerBlock: {flexDirection: 'row', gap: Spacing.lg, paddingHorizontal: Spacing.lg},
     headerOverlap: {marginTop: -56},

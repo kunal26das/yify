@@ -74,11 +74,6 @@ export class MovieRepositoryImpl implements MovieRepository {
     return url;
   }
 
-  /**
-   * Rewrites an image URL through wsrv.nl to enforce HTTPS and resize on the fly.
-   * Serves WebP (smaller than JPEG at equal quality, supported on iOS/Android/
-   * Chromium) and caps quality to trim bytes further without visible loss.
-   */
   private toDisplayImageUrl(url: string | undefined, width: number): string | null {
     if (typeof url !== 'string') return null;
     const trimmed = url.trim();
@@ -122,7 +117,7 @@ export class MovieRepositoryImpl implements MovieRepository {
       mpaRating: dto.mpa_rating,
       posterUrls: this.toPosterUrls(dto),
       backgroundImageUrl:
-          this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 1280) ??
+          this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 1920) ??
           undefined,
     };
   }
