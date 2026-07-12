@@ -10,7 +10,6 @@ export type {
 export {YtsApiDataSource, DEFAULT_BASE_URL} from './datasources/YtsApiDataSource';
 export { MovieRepositoryImpl } from './repositories/MovieRepositoryImpl';
 
-// Raw API response DTOs
 export type {
   YtsMetaDto,
   YtsTorrentDto,

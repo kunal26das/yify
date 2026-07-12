@@ -12,11 +12,6 @@ export interface ThemePalette {
     gradients: GradientSet;
 }
 
-/**
- * Returns the full themed palette plus the active accent gradient for the
- * current color scheme. Preferred over `useThemeColor` for new code that needs
- * several tokens at once.
- */
 export function usePalette(): ThemePalette {
     const raw = useColorScheme();
     const scheme: 'light' | 'dark' = raw === 'dark' ? 'dark' : 'light';

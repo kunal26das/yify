@@ -1,11 +1,6 @@
 import type {YtsCastMemberDto} from './YtsCastMemberDto';
 import type {YtsTorrentDto} from './YtsTorrentDto';
 
-/**
- * A movie object. The list endpoint returns the core fields; `movie_details`
- * adds `description_intro`, `like_count`, the screenshot images (when
- * `with_images=true`) and `cast` (when `with_cast=true`).
- */
 export interface YtsMovieDto {
     id: number;
     url: string;
@@ -32,19 +27,15 @@ export interface YtsMovieDto {
     torrents: YtsTorrentDto[];
     date_uploaded: string;
     date_uploaded_unix: number;
-    // List-only / conditional fields
     state?: string;
     like_count?: number;
     download_count?: number;
-    // `movie_details` only
     description_intro?: string;
-    // `movie_details` with `with_images=true`
     medium_screenshot_image1?: string;
     medium_screenshot_image2?: string;
     medium_screenshot_image3?: string;
     large_screenshot_image1?: string;
     large_screenshot_image2?: string;
     large_screenshot_image3?: string;
-    // `movie_details` with `with_cast=true`
     cast?: YtsCastMemberDto[];
 }

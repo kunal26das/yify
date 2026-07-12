@@ -2,23 +2,6 @@ const {withXcodeProject, withDangerousMod} = require('@expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 
-/**
- * Makes the RevoPush/CodePush deployment key build-type aware so OTA updates
- * are isolated per environment:
- *   - Release builds  -> Production-<platform> deployment
- *   - Debug builds    -> Staging-<platform> deployment
- *
- * Must run AFTER @revopush/expo-code-push-plugin, which writes the base
- * (Production) key into Info.plist / strings.xml and wires the native bridge.
- *
- * iOS:    the RevoPush plugin writes Info.plist `CodePushDeploymentKey` as the
- *         build variable `$(CODE_PUSH_DEPLOYMENT_KEY)` (see app.json); this plugin
- *         defines that variable per Xcode configuration (Debug=Staging,
- *         Release=Production), which Xcode substitutes into Info.plist at build time.
- * Android: the main strings.xml keeps the Production key (used by `release`),
- *         and a `src/debug/res/values/strings.xml` override supplies the Staging
- *         key for `debug` builds (debug source set wins during resource merge).
- */
 const withIos = (config, {ios}) => {
     config = withXcodeProject(config, (cfg) => {
         const project = cfg.modResults;
@@ -26,7 +9,7 @@ const withIos = (config, {ios}) => {
         for (const id of Object.keys(configurations)) {
             const entry = configurations[id];
             const settings = entry && entry.buildSettings;
-            if (!settings) continue; // skip comment entries
+            if (!settings) continue;
             if (entry.name === 'Release') {
                 settings.CODE_PUSH_DEPLOYMENT_KEY = `"${ios.production}"`;
             } else if (entry.name === 'Debug') {

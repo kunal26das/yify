@@ -7,19 +7,10 @@ const isDev = !app.isPackaged;
 
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
-// Platforms that get a translucent ("liquid glass") window: macOS vibrancy and
-// Windows acrylic. Linux keeps a solid background.
 const isFrosted = isMac || isWin;
 
-// Height of the macOS title-bar / traffic-light strip. The app mirrors this as a
-// top safe-area inset (DESKTOP_TOP_INSET in app/_layout.tsx) so content renders
-// edge-to-edge yet still clears the traffic lights. Only macOS uses the frameless
-// overlay; Windows keeps its native frame, so no inset there.
 const TITLEBAR_INSET = isMac ? 44 : 0;
 
-// Make the web layers transparent so the frosted window material shows through.
-// On macOS the frameless window also needs a draggable top strip in place of the
-// hidden title bar; Windows keeps its native frame, so it gets neither.
 function applyDesktopChrome(contents) {
     if (!isFrosted) return;
     const dragRegion = isMac
@@ -43,7 +34,6 @@ function applyDesktopChrome(contents) {
     }
 }
 
-// In production the web build is bundled next to this file (see build config).
 const DIST_DIR = isDev
     ? path.join(__dirname, '..', 'dist')
     : path.join(process.resourcesPath, 'dist');
@@ -53,8 +43,6 @@ let staticServer = null;
 let tray = null;
 let currentPort = null;
 let stopNotifier = null;
-// True only once the user explicitly quits; until then, closing the window hides
-// it to the tray so the daily new-movies check keeps running in the background.
 let isQuitting = false;
 
 async function createWindow() {
@@ -68,14 +56,7 @@ async function createWindow() {
         minWidth: 720,
         minHeight: 480,
         show: false,
-        // macOS uses the dock icon (set in app.whenReady); Windows/Linux read the
-        // window icon here for the taskbar in the unpackaged dev run.
         ...(isMac ? {} : {icon: path.join(__dirname, 'assets', 'icon.png')}),
-        // Per-platform window chrome:
-        //  - macOS: frameless inset title bar (traffic lights over content) on a
-        //    full-window vibrancy "liquid glass" surface.
-        //  - Windows: native frame with an acrylic frosted background.
-        //  - Linux: solid background (no reliable frosted material in Electron).
         ...(isMac ? {titleBarStyle: 'hiddenInset', trafficLightPosition: {x: 18, y: 22}} : {}),
         ...(isMac
             ? {vibrancy: 'under-window', visualEffectState: 'active', backgroundColor: '#00000000'}
@@ -89,13 +70,10 @@ async function createWindow() {
         },
     });
 
-    // Make the web layers transparent for the vibrancy material on every (re)load.
     mainWindow.webContents.on('dom-ready', () => applyDesktopChrome(mainWindow.webContents));
 
-    // Avoid white flash; reveal once content is painted.
     mainWindow.once('ready-to-show', () => mainWindow.show());
 
-    // Open external links (e.g. trailers) in the system browser, not the app.
     mainWindow.webContents.setWindowOpenHandler(({url}) => {
         if (url.startsWith('http://127.0.0.1') || url.startsWith('http://localhost')) {
             return {action: 'allow'};
@@ -106,8 +84,6 @@ async function createWindow() {
 
     await mainWindow.loadURL(`http://127.0.0.1:${port}`);
 
-    // Closing the window hides it to the tray (so background checks continue)
-    // rather than tearing it down — unless the user chose Quit.
     mainWindow.on('close', (event) => {
         if (isQuitting) return;
         event.preventDefault();
@@ -131,8 +107,6 @@ function showWindow() {
     mainWindow.focus();
 }
 
-// Bring the app to the foreground and deep-link to a movie when a notification is
-// clicked. `movieId` is undefined for the "N new movies" summary notification.
 async function showMovie(movieId) {
     if (!mainWindow) await createWindow();
     showWindow();
@@ -172,9 +146,6 @@ function createTray() {
 }
 
 app.whenReady().then(() => {
-    // Packaged builds get their icon from electron-builder (electron-builder.yml).
-    // The unpackaged `yarn desktop` run otherwise shows the default Electron dock
-    // icon, so set it explicitly here for macOS dev.
     if (isMac && isDev && app.dock) {
         app.dock.setIcon(path.join(__dirname, 'assets', 'icon.png'));
     }
@@ -188,10 +159,7 @@ app.whenReady().then(() => {
     });
 });
 
-// The tray keeps the app running after the last window closes, so the daily
-// check still fires. Quitting goes through the tray's Quit item (isQuitting).
 app.on('window-all-closed', () => {
-    // Intentionally no-op: stay alive in the tray on every platform.
 });
 
 app.on('before-quit', () => {

@@ -1,4 +1,3 @@
-// https://docs.expo.dev/guides/using-eslint/
 const path = require('path');
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
@@ -19,13 +18,6 @@ module.exports = defineConfig([
       },
     },
     rules: {
-      // Clean architecture module boundaries — the React Native equivalent of
-      // Gradle module dependencies. Each `target` lists the modules it is NOT
-      // allowed to import from, enforcing the dependency graph:
-      //   domain        → depends on nothing (innermost layer)
-      //   data          → depends only on domain
-      //   presentation  → depends only on domain
-      //   app           → composition root, may depend on everything
       'import/no-restricted-paths': [
         'error',
         {

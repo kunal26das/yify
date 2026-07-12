@@ -22,7 +22,6 @@ export type ThemedTextProps = TextProps & {
 
 const DISPLAY_TYPES = new Set<ThemedTextType>(['display', 'title', 'heading', 'subtitle']);
 
-// Family used when the caller doesn't override the weight.
 const PRESET_FAMILY: Record<ThemedTextType, string> = {
     display: FontFamily.displayExtra,
     title: FontFamily.displayExtra,
@@ -35,12 +34,6 @@ const PRESET_FAMILY: Record<ThemedTextType, string> = {
     link: FontFamily.semibold,
 };
 
-/**
- * Map an explicit font weight to a concrete bundled family. Display text uses
- * Sora; everything else uses Inter. Selecting the family (rather than relying on
- * fontWeight) keeps weights correct on Android and web, where a single-weight
- * @font-face would otherwise be faux-bolded.
- */
 function pickFamily(type: ThemedTextType, weight: TextStyle['fontWeight']): string {
     const w = String(weight);
     if (DISPLAY_TYPES.has(type)) {
@@ -78,7 +71,6 @@ export function ThemedText({style, lightColor, darkColor, type = 'default', ...r
                                         ? styles.link
                                         : styles.default;
 
-    // Caller-supplied weight wins; otherwise use the type's preset family.
     const callerWeight = (StyleSheet.flatten(style) as TextStyle | undefined)?.fontWeight;
     const family = callerWeight != null ? pickFamily(type, callerWeight) : PRESET_FAMILY[type];
 
