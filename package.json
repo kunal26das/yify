@@ -75,8 +75,8 @@
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.0",
     "eslint-import-resolver-typescript": "3.10.1",
-    "patch-package": "^8.0.1",
-    "postinstall-postinstall": "^2.1.0",
+    "patch-package": "8.0.1",
+    "postinstall-postinstall": "2.1.0",
     "typescript": "6.0.3"
   }
 }
