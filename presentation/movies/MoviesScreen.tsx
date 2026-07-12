@@ -1,3 +1,4 @@
+import type {Movie} from '@/domain';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
 import {LiquidGlassGroup, LiquidGlassView} from '../components/liquid-glass-view';
 import {LinearGradient} from '../components/linear-gradient';
@@ -5,9 +6,10 @@ import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {FontFamily, Radius, Spacing} from '../constants/theme';
+import {FontFamily, Radius} from '../constants/theme';
 import {Ionicons} from '@expo/vector-icons';
 import {Image as ExpoImage} from 'expo-image';
+import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Animated, FlatList, Platform, Pressable, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -19,11 +21,18 @@ import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
+    showBack?: boolean;
+    autoFocus?: boolean;
 }
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
 
-export function MoviesScreen({viewModel}: MoviesScreenProps) {
+type SkeletonItem = {__skeleton: true; id: string};
+type GridItem = Movie | SkeletonItem;
+const isSkeleton = (item: GridItem): item is SkeletonItem =>
+    (item as SkeletonItem).__skeleton === true;
+
+export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps) {
     const insets = useSafeAreaInsets();
     const {colors, gradients, scheme} = usePalette();
     const {width, contentMaxWidth, isLarge} = useResponsive();
@@ -61,16 +70,25 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
         [gridWidth]
     );
 
-    // Fixed cell width so a partial last row stays left-aligned at normal size
-    // instead of stretching to fill the row.
     const itemWidth = useMemo(() => {
-        const available = gridWidth - POSTER_GAP; // content padding (POSTER_GAP/2 each side)
+        const available = gridWidth - POSTER_GAP;
         return Math.floor(available / numColumns) - POSTER_GAP;
     }, [gridWidth, numColumns]);
 
-    // Warm the cache for each newly appended movie with the *medium* poster —
-    // the exact size the grid renders — so it's ready before the card scrolls in.
-    // (The card uses the small image as an instant placeholder.)
+    const loadingMore = loading && !refreshing && hasMore && movies.length > 0;
+
+    const gridData = useMemo<GridItem[]>(() => {
+        if (!loadingMore) return movies;
+        const remainder = movies.length % numColumns;
+        const fillLastRow = remainder === 0 ? 0 : numColumns - remainder;
+        const count = fillLastRow + numColumns;
+        const skeletons: GridItem[] = Array.from({length: count}, (_, i) => ({
+            __skeleton: true,
+            id: `sk-${i}`,
+        }));
+        return [...movies, ...skeletons];
+    }, [movies, loadingMore, numColumns]);
+
     const prefetchedRef = useRef(0);
     useEffect(() => {
         if (movies.length <= prefetchedRef.current) {
@@ -119,10 +137,18 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     }, [loadInitial]);
 
     const renderItem = useCallback(
-        ({item}: { item: (typeof movies)[0] }) => <MoviePosterItem movie={item} width={itemWidth}/>,
+        ({item}: { item: GridItem }) =>
+            isSkeleton(item) ? (
+                <PosterSkeleton width={itemWidth}/>
+            ) : (
+                <MoviePosterItem movie={item} width={itemWidth}/>
+            ),
         [itemWidth]
     );
-    const keyExtractor = useCallback((item: (typeof movies)[0]) => String(item.id), []);
+    const keyExtractor = useCallback(
+        (item: GridItem) => (isSkeleton(item) ? item.id : `m-${item.id}`),
+        []
+    );
 
     const viewabilityConfig = useMemo(
         () => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}),
@@ -140,15 +166,80 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
         []
     );
 
-    // --- Loading (first page): cinematic skeleton grid ---
+    const SearchBar = (
+        <View style={[styles.searchBarOverlay, {paddingTop: insets.top}]} pointerEvents="box-none">
+            <View
+                style={[
+                    styles.searchBarFixed,
+                    isLarge && {maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%'},
+                ]}
+            >
+                <View style={styles.searchRow}>
+                    {showBack ? (
+                        <Pressable
+                            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+                            hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel="Go back"
+                            style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
+                        >
+                            <LiquidGlassView
+                                tint={glassTint}
+                                fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.82)' : 'rgba(255,255,255,0.82)'}
+                                style={[styles.searchBackGlass, {borderColor: colors.border}]}
+                            >
+                                <Ionicons name="chevron-back" size={22} color={colors.text}/>
+                            </LiquidGlassView>
+                        </Pressable>
+                    ) : null}
+                    <LiquidGlassView
+                        tint={glassTint}
+                        intensity={80}
+                        fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.82)' : 'rgba(255,255,255,0.82)'}
+                        style={[styles.glassWrapper, styles.searchPill, {borderColor: colors.border}]}
+                    >
+                        <View style={styles.searchFieldWrapper}>
+                            <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon}/>
+                            <TextInput
+                                style={[
+                                    styles.searchInput,
+                                    {color: colors.text},
+                                    Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
+                                ]}
+                                placeholder="Search movies, genres, years…"
+                                placeholderTextColor={colors.textFaint}
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                autoFocus={autoFocus}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                returnKeyType="search"
+                                clearButtonMode="never"
+                            />
+                            {searchQuery.length > 0 ? (
+                                <Pressable
+                                    onPress={() => setSearchQuery('')}
+                                    style={({pressed}) => [styles.clearButton, {opacity: pressed ? 0.6 : 1}]}
+                                    hitSlop={8}
+                                >
+                                    <Ionicons name="close-circle" size={18} color={colors.textMuted}/>
+                                </Pressable>
+                            ) : null}
+                        </View>
+                    </LiquidGlassView>
+                </View>
+            </View>
+        </View>
+    );
+
     if (loading && movies.length === 0 && !error) {
         return (
             <ThemedView style={styles.container}>
                 <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
-                <SafeAreaView style={styles.container} edges={['top']}>
+                <SafeAreaView style={styles.container} edges={[]}>
                     <View style={[styles.centeredContent, {
                         maxWidth: contentMaxWidth,
-                        paddingTop: insets.top + POSTER_GAP
+                        paddingTop: listTopPadding,
                     }]}>
                         <View style={styles.skeletonGrid}>
                             {Array.from({length: numColumns * 4}).map((_, i) => (
@@ -156,12 +247,12 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                             ))}
                         </View>
                     </View>
+                    {SearchBar}
                 </SafeAreaView>
             </ThemedView>
         );
     }
 
-    // --- Error state ---
     if (error) {
         return (
             <ThemedView style={styles.container}>
@@ -185,7 +276,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
         );
     }
 
-    const currentIndex = lastVisibleIndex + 1;
+    const currentIndex = Math.min(lastVisibleIndex + 1, movies.length);
     const isEmpty = movies.length === 0;
 
     return (
@@ -196,7 +287,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                     ref={listRef}
                     key={`grid-${numColumns}`}
                     style={[styles.list, isLarge && {maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%'}]}
-                    data={movies}
+                    data={gridData}
                     renderItem={renderItem}
                     keyExtractor={keyExtractor}
                     numColumns={numColumns}
@@ -215,7 +306,7 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                     onViewableItemsChanged={onViewableItemsChanged}
                     viewabilityConfig={viewabilityConfig}
                     onEndReached={handleEndReached}
-                    onEndReachedThreshold={1.25}
+                    onEndReachedThreshold={3}
                     initialNumToRender={numColumns * 4}
                     maxToRenderPerBatch={numColumns * 3}
                     updateCellsBatchingPeriod={40}
@@ -233,66 +324,13 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
                         styles.listContent,
                         {paddingTop: listTopPadding, paddingBottom: insets.bottom + 96},
                     ]}
-                    ListFooterComponent={
-                        loading && hasMore && !isEmpty ? (
-                            <View style={styles.footerSkeletons}>
-                                {Array.from({length: numColumns}).map((_, i) => (
-                                    <PosterSkeleton key={i} width={itemWidth}/>
-                                ))}
-                            </View>
-                        ) : null
-                    }
                     showsVerticalScrollIndicator={false}
                     onScroll={onScroll}
                     scrollEventThrottle={16}
                 />
 
-                {/* Pinned glass search bar */}
-                <View style={[styles.searchBarOverlay, {paddingTop: insets.top}]} pointerEvents="box-none">
-                    <View
-                        style={[
-                            styles.searchBarFixed,
-                            isLarge && {maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%'},
-                        ]}
-                    >
-                        <LiquidGlassView
-                            tint={glassTint}
-                            intensity={80}
-                            fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.82)' : 'rgba(255,255,255,0.82)'}
-                            style={[styles.glassWrapper, {borderColor: colors.border}]}
-                        >
-                            <View style={styles.searchFieldWrapper}>
-                                <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon}/>
-                                <TextInput
-                                    style={[
-                                        styles.searchInput,
-                                        {color: colors.text},
-                                        Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
-                                    ]}
-                                    placeholder="Search movies, genres, years…"
-                                    placeholderTextColor={colors.textFaint}
-                                    value={searchQuery}
-                                    onChangeText={setSearchQuery}
-                                    autoCapitalize="none"
-                                    autoCorrect={false}
-                                    returnKeyType="search"
-                                    clearButtonMode="never"
-                                />
-                                {searchQuery.length > 0 ? (
-                                    <Pressable
-                                        onPress={() => setSearchQuery('')}
-                                        style={({pressed}) => [styles.clearButton, {opacity: pressed ? 0.6 : 1}]}
-                                        hitSlop={8}
-                                    >
-                                        <Ionicons name="close-circle" size={18} color={colors.textMuted}/>
-                                    </Pressable>
-                                ) : null}
-                            </View>
-                        </LiquidGlassView>
-                    </View>
-                </View>
+                {SearchBar}
 
-                {/* Floating control cluster */}
                 {totalMovieCount != null && !isEmpty && (
                     <View style={[styles.countOverlay, {paddingBottom: insets.bottom + 16}]} pointerEvents="box-none">
                         <LiquidGlassGroup spacing={16} style={styles.countRow}>
@@ -362,7 +400,6 @@ export function MoviesScreen({viewModel}: MoviesScreenProps) {
     );
 }
 
-/** Soft accent glow anchored to the top of the screen. */
 function AuroraGlow({colors, top}: { colors: readonly string[]; top: number }) {
     return (
         <LinearGradient
@@ -383,6 +420,17 @@ const styles = StyleSheet.create({
 
     searchBarOverlay: {position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1},
     searchBarFixed: {paddingHorizontal: POSTER_GAP, paddingVertical: POSTER_GAP},
+    searchRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
+    searchPill: {flex: 1},
+    searchBackGlass: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        overflow: 'hidden',
+        borderWidth: StyleSheet.hairlineWidth,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     glassWrapper: {borderRadius: Radius.md, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth},
     searchFieldWrapper: {
         flexDirection: 'row',
@@ -397,9 +445,8 @@ const styles = StyleSheet.create({
 
     row: {flexDirection: 'row'},
     centered: {flex: 1, justifyContent: 'center', alignItems: 'center'},
-    footerSkeletons: {flexDirection: 'row', flexWrap: 'wrap'},
 
-    skeletonGrid: {flexDirection: 'row', flexWrap: 'wrap', paddingTop: Spacing.xs},
+    skeletonGrid: {flexDirection: 'row', flexWrap: 'wrap'},
 
     stateBox: {alignItems: 'center', paddingHorizontal: 40, paddingTop: 80, gap: 6},
     stateTitle: {marginTop: 12},
