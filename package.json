@@ -70,7 +70,7 @@
   },
   "devDependencies": {
     "@types/react": "19.2.17",
-    "electron": "43.0.0",
+    "electron": "43.1.0",
     "electron-builder": "26.15.3",
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.0",
