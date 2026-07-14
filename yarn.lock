@@ -4735,14 +4735,7 @@ expo-system-ui@57.0.0:
     "@react-native/normalize-colors" "0.86.0"
     debug "^4.3.2"
 
-expo-task-manager@57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
-  integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
-  dependencies:
-    unimodules-app-loader "~57.0.0"
-
-expo-task-manager@~57.0.2:
+expo-task-manager@57.0.2, expo-task-manager@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
   integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
@@ -7393,10 +7386,10 @@ react-native-safe-area-context@5.7.0:
   resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-5.7.0.tgz#035699d5ec17fefb98cc1fa44a9ec852c7d530d0"
   integrity sha512-/9/MtQz8ODphjsLdZ+GZAIcC/RtoqW9EeShf7Uvnfgm/pzYrJ75y3PV/J1wuAV1T5Dye5ygq4EAW20RoBq0ABQ==
 
-react-native-screens@4.26.0, react-native-screens@^4.25.2:
-  version "4.26.0"
-  resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-4.26.0.tgz#2d5a7df42678692dc5f3c3a546c3fce46fa29c7c"
-  integrity sha512-8DkONnr4496K6ECMfprqyYM4ya1IQO5mA3ROOAJ1P6OVvNL6rVtjD2Elikd/INC7CrePdFTOHUEahOMSHmWgUA==
+react-native-screens@4.26.1, react-native-screens@^4.25.2:
+  version "4.26.1"
+  resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-4.26.1.tgz#98a580bcb244f93e931391f4af43d405b557efba"
+  integrity sha512-4aaCRSm1CXqjTiph37uFytz5NUxIeiOdYTnetkRoUbEIQhqUa4ShsjQUuKC42Pe+JEBw13YkM05TJXMdlrPy/A==
   dependencies:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
