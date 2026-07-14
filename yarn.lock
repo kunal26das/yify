@@ -4535,12 +4535,12 @@ expo-asset@~57.0.3:
     "@expo/image-utils" "^0.11.1"
     expo-constants "~57.0.3"
 
-expo-background-task@56.0.19:
-  version "56.0.19"
-  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-56.0.19.tgz#e660ad93937b65fad35efb6e085a10676a2396dd"
-  integrity sha512-TuFqorlz4HXtWAwQGcg+/URXpBwjwNsAxdis/6m5mhtgBIVbX2gYYv/s6eIf8lh2cAI1zFkb+/bHHuC2aOAGGA==
+expo-background-task@57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.2.tgz#069ee5145c9323ff749838fb20c21158666c8943"
+  integrity sha512-DA5VIVmbY/f2wlrSNW+EjsagCaAmyuvy1OXwouvTPFLU4rX7lFAPRw1+kb0fXSeq8fO9Z4s1lN4x/vTParoLWw==
   dependencies:
-    expo-task-manager "~56.0.19"
+    expo-task-manager "~57.0.2"
 
 expo-blur@57.0.0:
   version "57.0.0"
@@ -4742,12 +4742,12 @@ expo-task-manager@57.0.1:
   dependencies:
     unimodules-app-loader "~57.0.0"
 
-expo-task-manager@~56.0.19:
-  version "56.0.21"
-  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-56.0.21.tgz#1c37862fc30151a1b7f3d0d3110930bf6552e2c9"
-  integrity sha512-yo0F2bnowFn/YbOidyuDTINbAxg/amFCL+XuCElFQEoK9/KsBJ5bwJbiPJl+rHP9ruUw1OMRuHieYjMCrus5QQ==
+expo-task-manager@~57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
+  integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
   dependencies:
-    unimodules-app-loader "~56.0.0"
+    unimodules-app-loader "~57.0.0"
 
 expo-web-browser@57.0.0:
   version "57.0.0"
@@ -8616,11 +8616,6 @@ unicode-property-aliases-ecmascript@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-2.2.0.tgz#301d4f8a43d2b75c97adfad87c9dd5350c9475d1"
   integrity sha512-hpbDzxUY9BFwX+UeBnxv3Sh1q7HFxj48DTmXchNgRa46lO8uj3/1iEn3MiNUYTg1g9ctIqXCCERn8gYZhHC5lQ==
-
-unimodules-app-loader@~56.0.0:
-  version "56.0.1"
-  resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-56.0.1.tgz#443b9b17c8ca04733eb1f5572cf0c944024373b5"
-  integrity sha512-Z801jeBOQMUF/ExklxT1BqhEV/oF2/Bii7PFYAj/8Sauxl7oKvZbf70peRzzAU0mG7UQ3yU/UO/EpD1JyJ2WcA==
 
 unimodules-app-loader@~57.0.0:
   version "57.0.0"

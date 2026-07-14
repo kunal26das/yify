@@ -35,7 +35,7 @@
     "@revopush/expo-code-push-plugin": "1.1.0",
     "@revopush/react-native-code-push": "2.6.0",
     "expo": "57",
-    "expo-background-task": "56.0.19",
+    "expo-background-task": "57.0.2",
     "expo-blur": "57.0.0",
     "expo-build-properties": "57.0.3",
     "expo-constants": "56.0.20",
