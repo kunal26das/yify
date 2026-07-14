@@ -4027,10 +4027,10 @@ electron-to-chromium@^1.5.389:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.389.tgz#538be9ebec78026d4daba6be321ab854dfac2a8f"
   integrity sha512-cEto7aeOqBfU1D+c5py5pE+ooscKE75JifxLBdFUZsqAxRS6y7kebtxAZvICszSl05gPjYHDTjY+lXpyGvpJbg==
 
-electron@43.1.0:
-  version "43.1.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-43.1.0.tgz#bf620e32bb919009f564a05804f6e89477ef9ec2"
-  integrity sha512-DPfxpQLd4NL3BJ8DBxYAfmLUKKesF5Rx9dQx5FyczAP8bhOPScjHE48GArVeXu68LlAainuwkmQTQvdZwpIIAQ==
+electron@43.1.1:
+  version "43.1.1"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-43.1.1.tgz#a7309c6a625d6f6621b1108a65bd53ada1184fa9"
+  integrity sha512-I5c5vfuVvaXpWx3IZdwvXgxQW44+e7OP1wXGVQkogLeSFSkUZ6sLCcWV05AdEcs65AO5tAIJJwbp7ixw+LdarA==
   dependencies:
     "@electron-internal/extract-zip" "^1.0.1"
     "@electron/get" "^5.0.0"
@@ -4735,14 +4735,7 @@ expo-system-ui@57.0.0:
     "@react-native/normalize-colors" "0.86.0"
     debug "^4.3.2"
 
-expo-task-manager@57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
-  integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
-  dependencies:
-    unimodules-app-loader "~57.0.0"
-
-expo-task-manager@~57.0.2:
+expo-task-manager@57.0.2, expo-task-manager@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
   integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
