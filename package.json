@@ -40,7 +40,7 @@
     "expo-build-properties": "57.0.3",
     "expo-constants": "56.0.20",
     "expo-device-corner-radius": "0.1.1",
-    "expo-font": "56.0.7",
+    "expo-font": "57.0.0",
     "expo-glass-effect": "57.0.0",
     "expo-image": "57.0.0",
     "expo-linking": "56.0.15",
