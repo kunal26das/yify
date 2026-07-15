@@ -4597,10 +4597,10 @@ expo-glass-effect@^56.0.4:
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-56.0.4.tgz#4549a8c84058fb88619ecb2e818be36f2fe003ee"
   integrity sha512-xI9rXtDwi7RW82uAlfyaXO6+k21ApWJ2tHAWYqPr/FjfmZbKsgNJ4Q0iZzGPCwboqjTGxaRZ61SZxBl8hDt5iA==
 
-expo-image@57.0.0:
-  version "57.0.0"
-  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.0.tgz#10b60f69be16f3278cd4cf2ba2c074d14e30fc61"
-  integrity sha512-vR7q07izYiPzUDBCBZf9t6EmtCPp9mIvWimX0TqWQb17AKg/wZytuJD6VWLQxnUlzqXsVBysNcz1jnXkBBQrIg==
+expo-image@57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.1.tgz#22071afe3194e049d0dd14cf8f2da90a0504b7e3"
+  integrity sha512-EP0lisd2bUqtErry4weRcMW9bLMxtKsht/MLLK3/3do5u4ZMiJbWkY5zfYV+WYmeGab7x9G0sjbeFeEagYGjMw==
   dependencies:
     sf-symbols-typescript "^2.2.0"
 
@@ -4735,14 +4735,7 @@ expo-system-ui@57.0.0:
     "@react-native/normalize-colors" "0.86.0"
     debug "^4.3.2"
 
-expo-task-manager@57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
-  integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
-  dependencies:
-    unimodules-app-loader "~57.0.0"
-
-expo-task-manager@~57.0.2:
+expo-task-manager@57.0.2, expo-task-manager@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.2.tgz#fedbd96de551e1037bdf438074debae5c675039a"
   integrity sha512-UMhs+Vc8TQoJOJRRRNapKNEFcBjmUIP0kFpk9xHBRZc//I9qkfxTG6Pxgakg7j7Be/6v03HO68wlIL8KwbPzHA==
