@@ -19,7 +19,10 @@ export function YoutubePlayer({
         playsinline: '1',
         ...(autoplay ? {autoplay: '1'} : {}),
     });
-    const src = `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+    // youtube-nocookie.com is a separate origin from youtube.com, so the embed can't read the
+    // viewer's YouTube login cookies — it plays anonymously and isn't tied to their account (which
+    // otherwise surfaces sign-in/verification prompts, e.g. for a blocked account).
+    const src = `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 
     return (
         <View style={[styles.container, {width, height}]}>
