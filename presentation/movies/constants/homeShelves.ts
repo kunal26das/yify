@@ -64,19 +64,19 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         query: {sort_by: SortBy.Rating, order_by: OrderBy.Desc, minimum_rating: 7},
     },
     {
-        key: 'loved',
-        title: 'Loved by Viewers',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {sort_by: SortBy.LikeCount, order_by: OrderBy.Desc},
-    },
-    {
         key: 'uhd',
         title: '4K Ultra HD',
         subtitle: 'Pristine 2160p transfers',
         variant: 'standard',
         limit: RAIL_LIMIT,
         query: {quality: Quality.P2160, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
+    },
+    {
+        key: 'loved',
+        title: 'Loved by Viewers',
+        variant: 'standard',
+        limit: RAIL_LIMIT,
+        query: {sort_by: SortBy.LikeCount, order_by: OrderBy.Desc},
     },
     ...GENRE_SHELVES,
 ];
