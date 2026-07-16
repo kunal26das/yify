@@ -27,13 +27,27 @@ const COPIES = 5;
 const CENTER_COPY = 2;
 const RANKED_MIN_LOOP_ITEMS = 8;
 
-function rankedMetrics(posterWidth: number) {
-    const numeralSize = posterWidth * 1.5 * 0.86;
-    // Trim the empty gutter that reserved 1.3x the glyph, but keep the box wide enough for the
-    // two-digit "10" (any narrower and RN clips it), and tuck the poster further over the numeral.
-    const numeralArea = Math.round(numeralSize * 1.12);
-    const overlap = Math.round(posterWidth * 0.4);
-    return {numeralSize, numeralArea, overlap};
+const RANKED_NUMERAL_SCALE = 0.86;
+const RANKED_OVERLAP_RATIO = 0.28;
+
+function rankedNumeralSize(posterWidth: number) {
+    return posterWidth * 1.5 * RANKED_NUMERAL_SCALE;
+}
+
+function rankedOverlap(posterWidth: number) {
+    return Math.round(posterWidth * RANKED_OVERLAP_RATIO);
+}
+
+// Width of the numeral box. Single digits (ranks 1-9) hug the glyph so the rail stays tight; only
+// the two-digit "10" gets the wide box it needs (any narrower and RN clips it). Keeping this
+// per-rank is what stops the lone "10" from forcing every item apart.
+function rankedNumeralArea(rank: number, posterWidth: number) {
+    const size = rankedNumeralSize(posterWidth);
+    return Math.round(size * (String(rank).length >= 2 ? 1.12 : 0.66));
+}
+
+function rankedItemWidth(rank: number, posterWidth: number) {
+    return rankedNumeralArea(rank, posterWidth) - rankedOverlap(posterWidth) + posterWidth + POSTER_GAP;
 }
 
 interface RailMetrics {
@@ -65,22 +79,41 @@ export function MovieRail({
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
     const posterHeight = posterWidth * 1.5;
-    const rankedM = rankedMetrics(posterWidth);
-    const itemFullWidth = ranked
-        ? rankedM.numeralArea - rankedM.overlap + posterWidth + POSTER_GAP
-        : posterWidth + POSTER_GAP;
-    const oneCopy = n * itemFullWidth;
-    const centerOffset = CENTER_COPY * oneCopy;
-    const maxScroll = Math.max(0, metrics.contentW - metrics.layoutW);
-    const page = Math.max(itemFullWidth, metrics.layoutW - itemFullWidth);
-
-    const canLeft = loop || metrics.scrollX > 1;
-    const canRight = loop || metrics.scrollX < maxScroll - 1;
 
     const data = useMemo(
         () => (loop ? Array.from({length: COPIES * n}, (_, i) => movies[i % n]) : movies),
         [loop, movies, n]
     );
+
+    // Ranked items have per-rank widths (single vs two-digit numeral), so item widths and offsets
+    // can't be derived from a single itemFullWidth — build them explicitly for getItemLayout/looping.
+    const {itemWidths, oneCopy, avgItemWidth} = useMemo(() => {
+        if (ranked) {
+            const widths = data.map((_, i) => rankedItemWidth((i % n) + 1, posterWidth));
+            let copy = 0;
+            for (let rank = 1; rank <= n; rank++) copy += rankedItemWidth(rank, posterWidth);
+            return {itemWidths: widths, oneCopy: copy, avgItemWidth: n > 0 ? copy / n : 0};
+        }
+        const w = posterWidth + POSTER_GAP;
+        return {itemWidths: data.map(() => w), oneCopy: n * w, avgItemWidth: w};
+    }, [ranked, data, n, posterWidth]);
+
+    const itemOffsets = useMemo(() => {
+        const arr: number[] = new Array(itemWidths.length);
+        let acc = 0;
+        for (let i = 0; i < itemWidths.length; i++) {
+            arr[i] = acc;
+            acc += itemWidths[i];
+        }
+        return arr;
+    }, [itemWidths]);
+
+    const centerOffset = CENTER_COPY * oneCopy;
+    const maxScroll = Math.max(0, metrics.contentW - metrics.layoutW);
+    const page = Math.max(avgItemWidth, metrics.layoutW - avgItemWidth);
+
+    const canLeft = loop || metrics.scrollX > 1;
+    const canRight = loop || metrics.scrollX < maxScroll - 1;
 
     const normalize = useCallback(
         (x: number): number => {
@@ -202,11 +235,11 @@ export function MovieRail({
 
     const getItemLayout = useCallback(
         (_: ArrayLike<Movie> | null | undefined, index: number) => ({
-            length: itemFullWidth,
-            offset: itemFullWidth * index,
+            length: itemWidths[index] ?? avgItemWidth,
+            offset: itemOffsets[index] ?? avgItemWidth * index,
             index,
         }),
-        [itemFullWidth]
+        [itemWidths, itemOffsets, avgItemWidth]
     );
 
     const trackEvents = IS_WEB || loop;
@@ -312,7 +345,9 @@ function RailHandle({
 function RankedPoster({movie, rank, posterWidth}: {movie: Movie; rank: number; posterWidth: number}) {
     const {colors, scheme} = usePalette();
     const posterHeight = posterWidth * 1.5;
-    const {numeralSize, numeralArea, overlap} = rankedMetrics(posterWidth);
+    const numeralSize = rankedNumeralSize(posterWidth);
+    const numeralArea = rankedNumeralArea(rank, posterWidth);
+    const overlap = rankedOverlap(posterWidth);
     const numeralColor = scheme === 'dark' ? colors.surfaceElevated : colors.surfaceSunken;
 
     return (

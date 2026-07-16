@@ -1,4 +1,4 @@
-import {Genre, OrderBy, Quality, SortBy} from './movieFilterOptions';
+import {Genre, GENRE_OPTIONS, OrderBy, Quality, SortBy} from './movieFilterOptions';
 
 export type ShelfVariant = 'standard' | 'ranked';
 
@@ -28,6 +28,17 @@ export const HERO_LIMIT = 6;
 
 const RAIL_LIMIT = 50;
 
+// One shelf per genre, derived from the canonical option list so none can be missed.
+const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
+    (option) => option.value !== Genre.All
+).map((option) => ({
+    key: `genre-${option.value}`,
+    title: option.label,
+    variant: 'standard' as const,
+    limit: RAIL_LIMIT,
+    query: {genre: option.value, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
+}));
+
 export const HOME_SHELVES: readonly HomeShelf[] = [
     {
         key: 'top-10',
@@ -37,20 +48,20 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
     },
     {
-        key: 'top-rated',
-        title: 'Critically Acclaimed',
-        subtitle: 'The highest-rated titles in the catalog',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {sort_by: SortBy.Rating, order_by: OrderBy.Desc, minimum_rating: 7},
-    },
-    {
         key: 'just-added',
         title: 'Just Added',
         subtitle: 'Fresh from the catalog',
         variant: 'standard',
         limit: RAIL_LIMIT,
         query: {sort_by: SortBy.DateAdded, order_by: OrderBy.Desc},
+    },
+    {
+        key: 'top-rated',
+        title: 'Critically Acclaimed',
+        subtitle: 'The highest-rated titles in the catalog',
+        variant: 'standard',
+        limit: RAIL_LIMIT,
+        query: {sort_by: SortBy.Rating, order_by: OrderBy.Desc, minimum_rating: 7},
     },
     {
         key: 'loved',
@@ -67,32 +78,5 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         limit: RAIL_LIMIT,
         query: {quality: Quality.P2160, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
     },
-    {
-        key: 'genre-action',
-        title: 'Action & Adventure',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {genre: Genre.Action, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
-    },
-    {
-        key: 'genre-scifi',
-        title: 'Sci-Fi & Fantasy',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {genre: Genre.SciFi, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
-    },
-    {
-        key: 'genre-comedy',
-        title: 'Comedy',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {genre: Genre.Comedy, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
-    },
-    {
-        key: 'genre-horror',
-        title: 'Horror',
-        variant: 'standard',
-        limit: RAIL_LIMIT,
-        query: {genre: Genre.Horror, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
-    },
-] as const;
+    ...GENRE_SHELVES,
+];
