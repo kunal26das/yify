@@ -107,39 +107,40 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
       >
           <View style={styles.column}>
               <View style={styles.hero}>
-                  {showTrailer && hasTrailer ? (
-                      <YoutubePlayer videoId={details.ytTrailerCode} width={columnWidth}/>
-                  ) : (
-                      <View style={styles.backdropWrap}>
-                          {backdropUrl ? (
-                              <Image
-                                  source={{uri: backdropUrl}}
-                                  style={StyleSheet.absoluteFill}
-                                  contentFit="cover"
-                                  transition={220}
-                                  cachePolicy="memory-disk"
-                              />
-                          ) : (
-                              <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceElevated}]}/>
-                          )}
-                          {hasTrailer ? (
-                              <Pressable
-                                  onPress={() => setShowTrailer(true)}
-                                  style={styles.playOverlay}
-                                  accessibilityRole="button"
-                                  accessibilityLabel="Play trailer"
+                  <View style={styles.backdropWrap}>
+                      {backdropUrl ? (
+                          <Image
+                              source={{uri: backdropUrl}}
+                              style={StyleSheet.absoluteFill}
+                              contentFit="cover"
+                              transition={220}
+                              cachePolicy="memory-disk"
+                          />
+                      ) : (
+                          <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceElevated}]}/>
+                      )}
+                      {hasTrailer && !showTrailer ? (
+                          <Pressable
+                              onPress={() => setShowTrailer(true)}
+                              style={styles.playOverlay}
+                              accessibilityRole="button"
+                              accessibilityLabel="Play trailer"
+                          >
+                              <LiquidGlassView
+                                  tint={scheme === 'dark' ? 'dark' : 'light'}
+                                  fallbackBackgroundColor="rgba(8,8,12,0.5)"
+                                  style={styles.playCircle}
                               >
-                                  <LiquidGlassView
-                                      tint={scheme === 'dark' ? 'dark' : 'light'}
-                                      fallbackBackgroundColor="rgba(8,8,12,0.5)"
-                                      style={styles.playCircle}
-                                  >
-                                      <Ionicons name="play" size={30} color="#fff" style={styles.playIcon}/>
-                                  </LiquidGlassView>
-                              </Pressable>
-                          ) : null}
-                      </View>
-                  )}
+                                  <Ionicons name="play" size={30} color="#fff" style={styles.playIcon}/>
+                              </LiquidGlassView>
+                          </Pressable>
+                      ) : null}
+                      {hasTrailer && showTrailer ? (
+                          <View style={[StyleSheet.absoluteFill, styles.trailerOverlay]}>
+                              <YoutubePlayer videoId={details.ytTrailerCode} width={columnWidth} autoplay/>
+                          </View>
+                      ) : null}
+                  </View>
                   {!showTrailer ? (
                       <LinearGradient
                           colors={['rgba(0,0,0,0)', scheme === 'dark' ? 'rgba(38,38,36,0.9)' : 'rgba(250,249,245,0.95)']}
@@ -150,7 +151,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                   ) : null}
           </View>
 
-              <View style={[styles.headerBlock, showTrailer ? styles.headerSpaced : styles.headerOverlap]}>
+              <View style={styles.headerBlock}>
                   {posterUrl ? (
                       <Image
                           source={{uri: posterUrl}}
@@ -484,6 +485,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     playIcon: {marginLeft: 4},
+    trailerOverlay: {backgroundColor: '#000'},
     actionsRow: {flexDirection: 'row', alignItems: 'stretch', gap: 10, marginBottom: Spacing.lg},
     actionFlex: {flex: 1},
     playButton: {
@@ -508,9 +510,7 @@ const styles = StyleSheet.create({
     playLabel: {fontSize: 16, fontFamily: FontFamily.bold},
     moreLikeThis: {marginTop: Spacing.xxl},
 
-    headerBlock: {flexDirection: 'row', gap: Spacing.lg, paddingHorizontal: Spacing.lg},
-    headerOverlap: {marginTop: -56},
-    headerSpaced: {marginTop: Spacing.xl},
+    headerBlock: {flexDirection: 'row', gap: Spacing.lg, paddingHorizontal: Spacing.lg, marginTop: Spacing.md},
     poster: {
         width: 104,
         height: 156,

@@ -11,7 +11,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image as ExpoImage} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Animated, FlatList, Platform, Pressable, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
+import {Animated, FlatList, InteractionManager, Platform, Pressable, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {checkForNewMovies} from '@/lib/new-movies-task';
 import {MovieFilterModal} from './components/MovieFilterModal';
@@ -58,6 +58,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
     const [isAtTop, setIsAtTop] = useState(true);
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
+    const searchInputRef = useRef<TextInput>(null);
     const [scrollToTopScale] = useState(() => new Animated.Value(0));
 
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
@@ -126,6 +127,16 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
     useEffect(() => {
         loadInitial();
     }, [loadInitial]);
+
+    // autoFocus places the cursor but frequently fails to raise the soft keyboard when the
+    // input mounts mid-navigation. Focus imperatively once the push transition has settled.
+    useEffect(() => {
+        if (!autoFocus) return;
+        const task = InteractionManager.runAfterInteractions(() => {
+            searchInputRef.current?.focus();
+        });
+        return () => task.cancel();
+    }, [autoFocus]);
 
     const handleEndReached = useCallback(() => {
         if (hasMore && !loading) loadMore();
@@ -201,6 +212,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                         <View style={styles.searchFieldWrapper}>
                             <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon}/>
                             <TextInput
+                                ref={searchInputRef}
                                 style={[
                                     styles.searchInput,
                                     {color: colors.text},
@@ -210,7 +222,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                                 placeholderTextColor={colors.textFaint}
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
-                                autoFocus={autoFocus}
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 returnKeyType="search"

@@ -2,7 +2,14 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {Animated, Pressable, StyleSheet, View} from 'react-native';
+import {
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
+} from 'react-native';
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
@@ -10,8 +17,8 @@ import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 
 const ROTATE_MS = 6500;
-const FADE_OUT_MS = 320;
-const FADE_IN_MS = 460;
+
+type Colors = ReturnType<typeof usePalette>['colors'];
 
 interface HeroBillboardProps {
     movies: Movie[];
@@ -23,45 +30,75 @@ interface HeroBillboardProps {
 export function HeroBillboard({movies, width, height, rounded}: HeroBillboardProps) {
     const {colors} = usePalette();
     const [index, setIndex] = useState(0);
-    const [opacity] = useState(() => new Animated.Value(1));
     const indexRef = useRef(0);
+    const scrollRef = useRef<ScrollView>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scheduleNextRef = useRef<() => void>(() => {});
     const count = movies.length;
 
-    const swapTo = useCallback(
-        (next: number) => {
-            indexRef.current = next;
-            Animated.timing(opacity, {toValue: 0, duration: FADE_OUT_MS, useNativeDriver: true}).start(
-                ({finished}) => {
-                    if (!finished) return;
-                    setIndex(next);
-                    Animated.timing(opacity, {
-                        toValue: 1,
-                        duration: FADE_IN_MS,
-                        useNativeDriver: true,
-                    }).start();
-                }
-            );
-        },
-        [opacity]
-    );
+    const clearTimer = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
+
+    const scheduleNext = useCallback(() => {
+        clearTimer();
+        if (count <= 1 || width <= 0) return;
+        timerRef.current = setTimeout(() => {
+            const next = (indexRef.current + 1) % count;
+            // Slide forward; wrap back to the first slide instantly to avoid a long rewind sweep.
+            scrollRef.current?.scrollTo({x: next * width, animated: next !== 0});
+            // Continue the loop directly — onScroll continuation isn't guaranteed on every platform.
+            scheduleNextRef.current();
+        }, ROTATE_MS);
+    }, [clearTimer, count, width]);
 
     useEffect(() => {
-        if (count <= 1) return;
-        const timer = setInterval(() => {
-            swapTo((indexRef.current + 1) % count);
-        }, ROTATE_MS);
-        return () => clearInterval(timer);
-    }, [count, swapTo]);
+        scheduleNextRef.current = scheduleNext;
+    }, [scheduleNext]);
+
+    const setActive = useCallback(
+        (next: number) => {
+            if (next === indexRef.current || next < 0 || next >= count) return;
+            indexRef.current = next;
+            setIndex(next);
+        },
+        [count]
+    );
+
+    // Start the auto-advance loop; any scroll activity defers it via onScroll (below).
+    useEffect(() => {
+        scheduleNext();
+        return clearTimer;
+    }, [scheduleNext, clearTimer]);
+
+    // Keep the active slide aligned when the viewport width changes (e.g. rotation).
+    useEffect(() => {
+        if (width > 0) scrollRef.current?.scrollTo({x: indexRef.current * width, animated: false});
+    }, [width]);
+
+    const onScroll = useCallback(
+        (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (width <= 0) return;
+            setActive(Math.round(e.nativeEvent.contentOffset.x / width));
+            // onScroll fires on every platform (native drag/momentum + web wheel/touch/programmatic),
+            // so it — not the web-dead drag/momentum callbacks — is what defers auto-advance.
+            scheduleNext();
+        },
+        [setActive, scheduleNext, width]
+    );
+
+    const goTo = useCallback(
+        (i: number) => {
+            scrollRef.current?.scrollTo({x: i * width, animated: true});
+            setActive(i);
+        },
+        [setActive, width]
+    );
 
     if (count === 0) return null;
-
-    const movie = movies[Math.min(index, count - 1)];
-    const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
-    const meta = [
-        movie.year ? String(movie.year) : null,
-        formatRuntime(movie.runtimeMinutes),
-        movie.mpaRating || null,
-    ].filter(Boolean) as string[];
 
     return (
         <View
@@ -71,31 +108,83 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
                 rounded && styles.rounded,
             ]}
         >
-            <Animated.View style={[StyleSheet.absoluteFill, {opacity}]}>
-                {backdrop ? (
-                    <Image
-                        source={{uri: backdrop}}
-                        style={StyleSheet.absoluteFill}
-                        contentFit="cover"
-                        transition={260}
-                        cachePolicy="memory-disk"
-                    />
-                ) : null}
-                <LinearGradient
-                    colors={['rgba(6,6,8,0)', 'rgba(6,6,8,0.35)', 'rgba(6,6,8,0.88)']}
-                    bands={16}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                />
-                <LinearGradient
-                    colors={['rgba(6,6,8,0)', colors.background]}
-                    bands={12}
-                    style={styles.meltFade}
-                    pointerEvents="none"
-                />
-            </Animated.View>
+            <ScrollView
+                ref={scrollRef}
+                horizontal
+                pagingEnabled
+                style={{width, height}}
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onScroll={onScroll}
+                decelerationRate="fast"
+            >
+                {movies.map((movie) => (
+                    <HeroSlide key={movie.id} movie={movie} width={width} height={height} colors={colors}/>
+                ))}
+            </ScrollView>
 
-            <Animated.View style={[styles.content, {opacity}]}>
+            {count > 1 ? (
+                <View style={styles.dots} pointerEvents="box-none">
+                    {movies.map((m, i) => (
+                        <Pressable
+                            key={m.id}
+                            hitSlop={6}
+                            onPress={() => goTo(i)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Featured ${i + 1}`}
+                        >
+                            <View style={[styles.dot, i === index ? styles.dotActive : styles.dotInactive]}/>
+                        </Pressable>
+                    ))}
+                </View>
+            ) : null}
+        </View>
+    );
+}
+
+function HeroSlide({
+                       movie,
+                       width,
+                       height,
+                       colors,
+                   }: {
+    movie: Movie;
+    width: number;
+    height: number;
+    colors: Colors;
+}) {
+    const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
+    const meta = [
+        movie.year ? String(movie.year) : null,
+        formatRuntime(movie.runtimeMinutes),
+        movie.mpaRating || null,
+    ].filter(Boolean) as string[];
+
+    return (
+        <View style={[styles.slide, {width, height}]}>
+            {backdrop ? (
+                <Image
+                    source={{uri: backdrop}}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                    transition={260}
+                    cachePolicy="memory-disk"
+                />
+            ) : null}
+            <LinearGradient
+                colors={['rgba(6,6,8,0)', 'rgba(6,6,8,0.35)', 'rgba(6,6,8,0.88)']}
+                bands={16}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+            />
+            <LinearGradient
+                colors={['rgba(6,6,8,0)', colors.background]}
+                bands={12}
+                style={styles.meltFade}
+                pointerEvents="none"
+            />
+
+            <View style={styles.content}>
                 <Pressable
                     onPress={() => router.push(`/movie/${movie.id}`)}
                     accessibilityRole="button"
@@ -151,31 +240,8 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
                             <ThemedText style={[styles.viewLabel, {color: colors.onAccent}]}>View</ThemedText>
                         </View>
                     </Pressable>
-
-                    {count > 1 ? (
-                        <View style={styles.dots}>
-                            {movies.map((m, i) => (
-                                <Pressable
-                                    key={m.id}
-                                    hitSlop={6}
-                                    onPress={() => i !== index && swapTo(i)}
-                                    accessibilityRole="button"
-                                    accessibilityLabel={`Featured ${i + 1}`}
-                                >
-                                    <View
-                                        style={[
-                                            styles.dot,
-                                            i === index
-                                                ? {backgroundColor: '#fff', width: 22}
-                                                : {backgroundColor: 'rgba(255,255,255,0.45)'},
-                                        ]}
-                                    />
-                                </Pressable>
-                            ))}
-                        </View>
-                    ) : null}
                 </View>
-            </Animated.View>
+            </View>
         </View>
     );
 }
@@ -189,8 +255,9 @@ function formatRuntime(minutes: number): string | null {
 }
 
 const styles = StyleSheet.create({
-    container: {overflow: 'hidden', justifyContent: 'flex-end'},
+    container: {overflow: 'hidden'},
     rounded: {borderRadius: Radius.xl},
+    slide: {justifyContent: 'flex-end', overflow: 'hidden'},
     meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
 
     content: {paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl},
@@ -233,6 +300,18 @@ const styles = StyleSheet.create({
         borderRadius: Radius.pill,
     },
     viewLabel: {fontSize: 16, fontFamily: FontFamily.bold},
-    dots: {flexDirection: 'row', alignItems: 'center', gap: 6},
+
+    dots: {
+        position: 'absolute',
+        bottom: Spacing.xl + 12,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
     dot: {width: 7, height: 7, borderRadius: 4},
+    dotActive: {backgroundColor: '#fff', width: 22},
+    dotInactive: {backgroundColor: 'rgba(255,255,255,0.45)'},
 });
