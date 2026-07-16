@@ -140,7 +140,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 ListFooterComponent={
                     <Pressable
                         onPress={() => router.push('/browse' as never)}
-                        style={({pressed}) => [styles.browseAll, {borderColor: colors.borderStrong, opacity: pressed ? 0.8 : 1}]}
+                        style={({pressed}) => [styles.browseAll, {borderColor: colors.accent, opacity: pressed ? 0.8 : 1}]}
                     >
                         <ThemedText style={[styles.browseAllLabel, {color: colors.text}]}>
                             Browse the full catalog
@@ -350,7 +350,8 @@ const styles = StyleSheet.create({
         marginTop: Spacing.sm,
         paddingVertical: 16,
         borderRadius: Radius.lg,
-        borderWidth: 1,
+        borderWidth: 1.5,
+        borderStyle: 'solid',
     },
     browseAllLabel: {fontSize: 15, fontFamily: FontFamily.semibold},
 
