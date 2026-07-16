@@ -60,15 +60,21 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     );
 
     const TopBar = (
-        <View style={[styles.topBar, {paddingTop: insets.top + 6}]} pointerEvents="box-none">
-            <ThemedText type="title" style={[styles.wordmark, {color: colors.text}]}>
-                YIFY
-            </ThemedText>
-            <View style={styles.topActions}>
-                <TopButton icon="search" tint={glassTint} colors={colors}
-                           onPress={() => router.push('/browse?focus=1' as never)} label="Search"/>
-                <TopButton icon="grid" tint={glassTint} colors={colors}
-                           onPress={() => router.push('/browse' as never)} label="Browse all"/>
+        <View style={styles.topBar} pointerEvents="box-none">
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+                <LiquidGlassView
+                    tint={glassTint}
+                    fallbackBackgroundColor={scheme === 'dark' ? 'rgba(20,20,22,0.55)' : 'rgba(250,249,245,0.6)'}
+                    style={StyleSheet.absoluteFill}
+                />
+            </View>
+            <View style={[styles.topBarRow, {paddingTop: insets.top + 6}]} pointerEvents="box-none">
+                <View style={styles.topActions}>
+                    <TopButton icon="search" scheme={scheme} colors={colors}
+                               onPress={() => router.push('/browse?focus=1' as never)} label="Search"/>
+                    <TopButton icon="grid" scheme={scheme} colors={colors}
+                               onPress={() => router.push('/browse' as never)} label="Browse all"/>
+                </View>
             </View>
         </View>
     );
@@ -158,13 +164,13 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
 
 function TopButton({
                        icon,
-                       tint,
+                       scheme,
                        colors,
                        onPress,
                        label,
                    }: {
     icon: keyof typeof Ionicons.glyphMap;
-    tint: 'light' | 'dark';
+    scheme: 'light' | 'dark';
     colors: ReturnType<typeof usePalette>['colors'];
     onPress: () => void;
     label: string;
@@ -172,13 +178,17 @@ function TopButton({
     return (
         <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={label}
                    style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}>
-            <LiquidGlassView
-                tint={tint}
-                fallbackBackgroundColor={tint === 'dark' ? 'rgba(48,48,46,0.72)' : 'rgba(255,255,255,0.72)'}
-                style={[styles.topButton, {borderColor: colors.border}]}
+            <View
+                style={[
+                    styles.topButton,
+                    {
+                        borderColor: colors.border,
+                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(31,29,26,0.06)',
+                    },
+                ]}
             >
                 <Ionicons name={icon} size={19} color={colors.text}/>
-            </LiquidGlassView>
+            </View>
         </Pressable>
     );
 }
@@ -227,19 +237,19 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 10,
+    },
+    topBarRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         paddingHorizontal: Spacing.lg,
-        paddingBottom: 6,
+        paddingBottom: 8,
     },
-    wordmark: {fontSize: 24, letterSpacing: 1, fontFamily: FontFamily.displayExtra},
     topActions: {flexDirection: 'row', alignItems: 'center', gap: 10},
     topButton: {
         width: 42,
         height: 42,
         borderRadius: 21,
-        overflow: 'hidden',
         borderWidth: StyleSheet.hairlineWidth,
         justifyContent: 'center',
         alignItems: 'center',

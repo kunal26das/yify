@@ -29,8 +29,10 @@ const RANKED_MIN_LOOP_ITEMS = 8;
 
 function rankedMetrics(posterWidth: number) {
     const numeralSize = posterWidth * 1.5 * 0.86;
-    const numeralArea = Math.round(numeralSize * 1.3);
-    const overlap = Math.round(posterWidth * 0.3);
+    // Trim the empty gutter that reserved 1.3x the glyph, but keep the box wide enough for the
+    // two-digit "10" (any narrower and RN clips it), and tuck the poster further over the numeral.
+    const numeralArea = Math.round(numeralSize * 1.12);
+    const overlap = Math.round(posterWidth * 0.4);
     return {numeralSize, numeralArea, overlap};
 }
 

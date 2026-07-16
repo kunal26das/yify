@@ -74,12 +74,18 @@ export class MovieRepositoryImpl implements MovieRepository {
     return url;
   }
 
-  private toDisplayImageUrl(url: string | undefined, width: number): string | null {
+  private toDisplayImageUrl(
+      url: string | undefined,
+      width: number,
+      opts?: {quality?: number; noEnlarge?: boolean},
+  ): string | null {
     if (typeof url !== 'string') return null;
     const trimmed = url.trim();
     if (!trimmed) return null;
     const normalized = this.upgradeHttpUrlToHttps(trimmed);
-    return `https://wsrv.nl/?url=${encodeURIComponent(normalized)}&w=${width}&fit=cover&output=webp&q=80`;
+    const quality = opts?.quality ?? 80;
+    const withoutEnlargement = opts?.noEnlarge ? '&we' : '';
+    return `https://wsrv.nl/?url=${encodeURIComponent(normalized)}&w=${width}&fit=cover&output=webp&q=${quality}${withoutEnlargement}`;
   }
 
   private toPosterUrls(dto: YtsMovieDto): string[] {
@@ -117,8 +123,10 @@ export class MovieRepositoryImpl implements MovieRepository {
       mpaRating: dto.mpa_rating,
       posterUrls: this.toPosterUrls(dto),
       backgroundImageUrl:
-          this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 1920) ??
-          undefined,
+          this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 2560, {
+            quality: 90,
+            noEnlarge: true,
+          }) ?? undefined,
     };
   }
 
