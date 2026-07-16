@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.1.0",
-  "versionCode": 32,
+  "version": "1.1.1",
+  "versionCode": 33,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
