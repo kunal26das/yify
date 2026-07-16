@@ -75,6 +75,7 @@ export function MovieRail({
     const pagingRef = useRef(false);
     const pagingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const centeredRef = useRef(false);
+    const wrapRef = useRef<View>(null);
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
@@ -221,6 +222,28 @@ export function MovieRail({
         []
     );
 
+    // Track hover with native pointerenter/pointerleave on the wrapper DOM node. Unlike RN
+    // Pressable's onHoverIn/Out (which fire when the pointer crosses onto a child poster), these
+    // don't fire on child transitions, so the arrows stay visible while hovering the posters. The
+    // pointerType guard suppresses touch, so tapping a poster on touch-web doesn't stick the arrows.
+    useEffect(() => {
+        if (!IS_WEB) return;
+        const node = wrapRef.current as unknown as HTMLElement | null;
+        if (!node?.addEventListener) return;
+        const enter = (e: PointerEvent) => {
+            if (e.pointerType !== 'touch') setHovered(true);
+        };
+        const leave = (e: PointerEvent) => {
+            if (e.pointerType !== 'touch') setHovered(false);
+        };
+        node.addEventListener('pointerenter', enter as EventListener);
+        node.addEventListener('pointerleave', leave as EventListener);
+        return () => {
+            node.removeEventListener('pointerenter', enter as EventListener);
+            node.removeEventListener('pointerleave', leave as EventListener);
+        };
+    }, []);
+
     const renderItem = useCallback(
         ({item, index}: {item: Movie; index: number}) =>
             ranked ? (
@@ -294,11 +317,7 @@ export function MovieRail({
             </View>
 
             {IS_WEB ? (
-                <Pressable
-                    onHoverIn={() => setHovered(true)}
-                    onHoverOut={() => setHovered(false)}
-                    style={styles.listWrap}
-                >
+                <View ref={wrapRef} style={styles.listWrap}>
                     {list}
                     {hovered && canLeft ? (
                         <RailHandle side="left" height={posterHeight} onPress={() => scrollByPage(-1)}/>
@@ -306,7 +325,7 @@ export function MovieRail({
                     {hovered && canRight ? (
                         <RailHandle side="right" height={posterHeight} onPress={() => scrollByPage(1)}/>
                     ) : null}
-                </Pressable>
+                </View>
             ) : (
                 list
             )}

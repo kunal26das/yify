@@ -1,7 +1,7 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
@@ -29,74 +29,106 @@ interface HeroBillboardProps {
 
 export function HeroBillboard({movies, width, height, rounded}: HeroBillboardProps) {
     const {colors} = usePalette();
+    const count = movies.length;
+    const looped = count > 1;
+
     const [index, setIndex] = useState(0);
     const indexRef = useRef(0);
+    const scrollXRef = useRef(0);
     const scrollRef = useRef<ScrollView>(null);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scheduleNextRef = useRef<() => void>(() => {});
-    const count = movies.length;
 
-    const clearTimer = useCallback(() => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
+    // Append a copy of the first slide after the last, so auto-advancing past the end slides
+    // forward into it and then hops back to the real first slide instantly (same image = invisible)
+    // — a seamless loop instead of the abrupt rewind to index 0.
+    const data = useMemo(() => (looped ? [...movies, movies[0]] : movies), [looped, movies]);
+
+    const realForData = useCallback(
+        (d: number) =>
+            looped ? (d >= count ? 0 : Math.max(0, d)) : Math.max(0, Math.min(count - 1, d)),
+        [looped, count]
+    );
+
+    const scrollToData = useCallback(
+        (d: number, animated: boolean) => scrollRef.current?.scrollTo({x: d * width, animated}),
+        [width]
+    );
+
+    const clearAuto = useCallback(() => {
+        if (autoTimerRef.current) {
+            clearTimeout(autoTimerRef.current);
+            autoTimerRef.current = null;
         }
     }, []);
 
     const scheduleNext = useCallback(() => {
-        clearTimer();
-        if (count <= 1 || width <= 0) return;
-        timerRef.current = setTimeout(() => {
-            const next = (indexRef.current + 1) % count;
-            // Slide forward; wrap back to the first slide instantly to avoid a long rewind sweep.
-            scrollRef.current?.scrollTo({x: next * width, animated: next !== 0});
-            // Continue the loop directly — onScroll continuation isn't guaranteed on every platform.
+        clearAuto();
+        if (!looped || width <= 0) return;
+        autoTimerRef.current = setTimeout(() => {
+            // Always animated — the appended clone makes even the wrap a smooth forward slide.
+            scrollToData(indexRef.current + 1, true);
             scheduleNextRef.current();
         }, ROTATE_MS);
-    }, [clearTimer, count, width]);
+    }, [clearAuto, looped, width, scrollToData]);
 
     useEffect(() => {
         scheduleNextRef.current = scheduleNext;
     }, [scheduleNext]);
 
     const setActive = useCallback(
-        (next: number) => {
-            if (next === indexRef.current || next < 0 || next >= count) return;
-            indexRef.current = next;
-            setIndex(next);
+        (real: number) => {
+            if (real === indexRef.current || real < 0 || real >= count) return;
+            indexRef.current = real;
+            setIndex(real);
         },
         [count]
     );
 
-    // Start the auto-advance loop; any scroll activity defers it via onScroll (below).
-    useEffect(() => {
-        scheduleNext();
-        return clearTimer;
-    }, [scheduleNext, clearTimer]);
-
-    // Keep the active slide aligned when the viewport width changes (e.g. rotation).
-    useEffect(() => {
-        if (width > 0) scrollRef.current?.scrollTo({x: indexRef.current * width, animated: false});
-    }, [width]);
+    // Once motion settles exactly on the appended clone page, hop back to the real first slide with
+    // no animation. Requiring the offset to be *at* the clone boundary (not just past the halfway
+    // point) avoids hopping mid-drag when a finger pauses between the last slide and the clone.
+    const scheduleReposition = useCallback(() => {
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = setTimeout(() => {
+            if (looped && width > 0 && Math.abs(scrollXRef.current - count * width) < width * 0.04) {
+                scrollToData(0, false);
+            }
+        }, 90);
+    }, [looped, width, count, scrollToData]);
 
     const onScroll = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
             if (width <= 0) return;
-            setActive(Math.round(e.nativeEvent.contentOffset.x / width));
-            // onScroll fires on every platform (native drag/momentum + web wheel/touch/programmatic),
-            // so it — not the web-dead drag/momentum callbacks — is what defers auto-advance.
+            const x = e.nativeEvent.contentOffset.x;
+            scrollXRef.current = x;
+            setActive(realForData(Math.round(x / width)));
+            // onScroll fires on every platform, so it — not the web-dead drag/momentum callbacks —
+            // both defers auto-advance and drives the seamless clone hop.
             scheduleNext();
+            scheduleReposition();
         },
-        [setActive, scheduleNext, width]
+        [width, setActive, realForData, scheduleNext, scheduleReposition]
     );
 
     const goTo = useCallback(
-        (i: number) => {
-            scrollRef.current?.scrollTo({x: i * width, animated: true});
-            setActive(i);
+        (real: number) => {
+            scrollToData(real, true);
+            setActive(real);
         },
-        [setActive, width]
+        [scrollToData, setActive]
     );
+
+    // Start auto-advance; realign to the active slide when the viewport width changes (e.g. rotation).
+    useEffect(() => {
+        if (width > 0) scrollToData(indexRef.current, false);
+        scheduleNext();
+        return () => {
+            clearAuto();
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        };
+    }, [width, scrollToData, scheduleNext, clearAuto]);
 
     if (count === 0) return null;
 
@@ -118,12 +150,12 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
                 onScroll={onScroll}
                 decelerationRate="fast"
             >
-                {movies.map((movie) => (
-                    <HeroSlide key={movie.id} movie={movie} width={width} height={height} colors={colors}/>
+                {data.map((movie, i) => (
+                    <HeroSlide key={`${movie.id}:${i}`} movie={movie} width={width} height={height} colors={colors}/>
                 ))}
             </ScrollView>
 
-            {count > 1 ? (
+            {looped ? (
                 <View style={styles.dots} pointerEvents="box-none">
                     {movies.map((m, i) => (
                         <Pressable
