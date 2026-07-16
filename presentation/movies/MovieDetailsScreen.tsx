@@ -242,7 +242,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           accessibilityRole="button"
                           accessibilityState={{selected: saved}}
                           accessibilityLabel={saved ? 'Remove from My List' : 'Add to My List'}
-                          style={({pressed}) => [hasTrailer ? undefined : styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
+                          style={({pressed}) => [styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
                       >
                           <View
                               style={[

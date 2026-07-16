@@ -13,9 +13,12 @@ import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {HeroBillboard} from './components/HeroBillboard';
 import {MovieRail} from './components/MovieRail';
 import {PosterSkeleton} from './components/PosterSkeleton';
+import {POSTER_GAP} from './components/moviePosterLayout';
 import {useWatchlist} from './useWatchlist';
 import type {ShelfQuery} from './constants/homeShelves';
-import type {HomeViewModel, LoadedShelf} from './useHomeViewModel';
+import type {HomeViewModel, ShelfState} from './useHomeViewModel';
+
+type Palette = ReturnType<typeof usePalette>['colors'];
 
 function buildBrowseHref(query: ShelfQuery): string {
     const params = new URLSearchParams();
@@ -33,7 +36,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     const {colors, scheme} = usePalette();
     const {width, isPhone, isTablet, gutter} = useResponsive();
     const {height} = useWindowDimensions();
-    const {heroMovies, shelves, loading, refreshing, error, loadInitial, reload} = viewModel;
+    const {heroMovies, shelves, loading, refreshing, error, loadInitial, loadShelf, reload} = viewModel;
     const myList = useWatchlist();
 
     useEffect(() => {
@@ -45,18 +48,16 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
 
     const renderShelf = useCallback(
-        ({item}: {item: LoadedShelf}) => (
-            <MovieRail
-                title={item.title}
-                subtitle={item.subtitle}
-                movies={item.movies}
-                variant={item.variant}
+        ({item}: {item: ShelfState}) => (
+            <ShelfRow
+                shelf={item}
                 posterWidth={posterWidth}
                 gutter={gutter}
-                onSeeAll={() => router.push(buildBrowseHref(item.query) as never)}
+                colors={colors}
+                onLoad={loadShelf}
             />
         ),
-        [posterWidth, gutter]
+        [posterWidth, gutter, colors, loadShelf]
     );
 
     const TopBar = (
@@ -69,6 +70,9 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 />
             </View>
             <View style={[styles.topBarRow, {paddingTop: insets.top + 6}]} pointerEvents="box-none">
+                <ThemedText type="title" style={[styles.wordmark, {color: colors.text}]}>
+                    YIFY
+                </ThemedText>
                 <View style={styles.topActions}>
                     <TopButton icon="search" scheme={scheme} colors={colors}
                                onPress={() => router.push('/browse?focus=1' as never)} label="Search"/>
@@ -79,7 +83,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
         </View>
     );
 
-    if (loading && shelves.length === 0 && heroMovies.length === 0 && !error) {
+    if (loading && heroMovies.length === 0 && !error) {
         return (
             <ThemedView style={styles.container}>
                 <HomeSkeleton heroHeight={heroHeight} posterWidth={posterWidth} gutter={gutter} colors={colors}/>
@@ -88,7 +92,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
         );
     }
 
-    if (error && shelves.length === 0) {
+    if (error && heroMovies.length === 0) {
         return (
             <ThemedView style={styles.container}>
                 <View style={[styles.centered, {paddingTop: insets.top}]}>
@@ -136,7 +140,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 ListFooterComponent={
                     <Pressable
                         onPress={() => router.push('/browse' as never)}
-                        style={({pressed}) => [styles.browseAll, {borderColor: colors.border, opacity: pressed ? 0.8 : 1}]}
+                        style={({pressed}) => [styles.browseAll, {borderColor: colors.borderStrong, opacity: pressed ? 0.8 : 1}]}
                     >
                         <ThemedText style={[styles.browseAllLabel, {color: colors.text}]}>
                             Browse the full catalog
@@ -154,11 +158,75 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                         progressViewOffset={insets.top + 44}
                     />
                 }
-                initialNumToRender={4}
-                windowSize={9}
+                initialNumToRender={3}
+                maxToRenderPerBatch={3}
+                windowSize={5}
             />
             {TopBar}
         </ThemedView>
+    );
+}
+
+// One home shelf. Requests its data the first time it mounts near the viewport (so the home
+// doesn't fetch every shelf at once), shows a skeleton until it arrives, and collapses if empty.
+function ShelfRow({
+                      shelf,
+                      posterWidth,
+                      gutter,
+                      colors,
+                      onLoad,
+                  }: {
+    shelf: ShelfState;
+    posterWidth: number;
+    gutter: number;
+    colors: Palette;
+    onLoad: (key: string) => void;
+}) {
+    useEffect(() => {
+        if (shelf.status === 'idle') onLoad(shelf.key);
+    }, [shelf.status, shelf.key, onLoad]);
+
+    if (shelf.status === 'empty' || shelf.status === 'error') return null;
+
+    if (shelf.status === 'loaded') {
+        return (
+            <MovieRail
+                title={shelf.title}
+                subtitle={shelf.subtitle}
+                movies={shelf.movies}
+                variant={shelf.variant}
+                posterWidth={posterWidth}
+                gutter={gutter}
+                onSeeAll={() => router.push(buildBrowseHref(shelf.query) as never)}
+            />
+        );
+    }
+
+    return <ShelfSkeleton title={shelf.title} posterWidth={posterWidth} gutter={gutter} colors={colors}/>;
+}
+
+function ShelfSkeleton({
+                           title,
+                           posterWidth,
+                           gutter,
+                           colors,
+                       }: {
+    title: string;
+    posterWidth: number;
+    gutter: number;
+    colors: Palette;
+}) {
+    return (
+        <View style={styles.skeletonRail}>
+            <ThemedText type="heading" style={[styles.shelfSkeletonTitle, {color: colors.text, marginLeft: gutter}]}>
+                {title}
+            </ThemedText>
+            <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
+                {Array.from({length: 6}).map((_, i) => (
+                    <PosterSkeleton key={i} width={posterWidth}/>
+                ))}
+            </View>
+        </View>
     );
 }
 
@@ -241,10 +309,11 @@ const styles = StyleSheet.create({
     topBarRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         paddingHorizontal: Spacing.lg,
         paddingBottom: 8,
     },
+    wordmark: {fontSize: 24, letterSpacing: 1, fontFamily: FontFamily.displayExtra},
     topActions: {flexDirection: 'row', alignItems: 'center', gap: 10},
     topButton: {
         width: 42,
@@ -281,11 +350,12 @@ const styles = StyleSheet.create({
         marginTop: Spacing.sm,
         paddingVertical: 16,
         borderRadius: Radius.lg,
-        borderWidth: StyleSheet.hairlineWidth,
+        borderWidth: 1,
     },
     browseAllLabel: {fontSize: 15, fontFamily: FontFamily.semibold},
 
     skeletonRail: {marginBottom: Spacing.xl},
     skeletonTitle: {width: 160, height: 20, borderRadius: 6, marginBottom: Spacing.md},
+    shelfSkeletonTitle: {fontSize: 21, lineHeight: 26, marginBottom: Spacing.md},
     skeletonRow: {flexDirection: 'row'},
 });

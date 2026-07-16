@@ -3,7 +3,7 @@ export { useMoviesViewModel, DEFAULT_FILTERS } from './movies/useMoviesViewModel
 export type { MoviesViewModel, MovieFilters, UseMoviesOptions } from './movies/useMoviesViewModel';
 export { HomeScreen } from './movies/HomeScreen';
 export { useHomeViewModel } from './movies/useHomeViewModel';
-export type { HomeViewModel, LoadedShelf } from './movies/useHomeViewModel';
+export type { HomeViewModel, ShelfState, ShelfStatus } from './movies/useHomeViewModel';
 export { MovieDetailsScreen } from './movies/MovieDetailsScreen';
 export { useMovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export type { MovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
