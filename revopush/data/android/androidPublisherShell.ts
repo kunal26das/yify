@@ -1,4 +1,4 @@
-import {spawn} from 'node:child_process';
+import {spawn, spawnSync} from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import https from 'node:https';
@@ -109,6 +109,103 @@ export function createAndroidPublisher(deps: {
         return {appId: String(appId), projectNumber: String(projectNumber)};
     }
 
+    function keytoolBin(): string {
+        const home = process.env.JAVA_HOME;
+        if (home) {
+            const candidate = path.join(home, 'bin', 'keytool');
+            if (fs.existsSync(candidate)) return candidate;
+        }
+        return 'keytool';
+    }
+
+    function signerSha1(args: string[]): string | null {
+        try {
+            const res = spawnSync(keytoolBin(), args, {encoding: 'utf8'});
+            if (res.status !== 0 || !res.stdout) return null;
+            const m = res.stdout.match(/SHA1:\s*([0-9A-Fa-f:]+)/);
+            return m ? m[1].toUpperCase() : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function ensureReleaseSigning(onLine: OnLine, label?: string): boolean {
+        const propsPath = path.join(androidDir, 'keystore.properties');
+        const script = path.join(repoRoot, 'scripts', 'setup-android-signing.sh');
+        if (fs.existsSync(script)) {
+            const res = spawnSync('bash', [script], {
+                cwd: repoRoot,
+                env: process.env,
+                encoding: 'utf8',
+            });
+            const out = `${res.stdout || ''}${res.stderr || ''}`.trim();
+            if (out) {
+                onLine({
+                    stream: res.status === 0 ? 'system' : 'stderr',
+                    text: out,
+                    label,
+                });
+            }
+            if (res.status !== 0 && !fs.existsSync(propsPath)) {
+                onLine({
+                    stream: 'stderr',
+                    text: `Release signing not configured (${path.basename(script)} failed and ${propsPath} is missing). Aborting to avoid a debug-signed AAB.`,
+                    label,
+                });
+                return false;
+            }
+            return true;
+        }
+        if (!fs.existsSync(propsPath)) {
+            onLine({
+                stream: 'stderr',
+                text: `Release signing not configured: ${propsPath} is missing and scripts/setup-android-signing.sh was not found. A release build would be debug-signed and rejected by Play. Aborting.`,
+                label,
+            });
+            return false;
+        }
+        return true;
+    }
+
+    // After building, refuse to proceed if the AAB was signed with the debug key
+    // (the exact failure that yields Play's 403). Fails locally and instantly
+    // instead of after a multi-minute upload.
+    function assertNotDebugSigned(
+        aabPath: string,
+        onLine: OnLine,
+        label?: string,
+    ): boolean {
+        const aabSha1 = signerSha1(['-printcert', '-jarfile', aabPath]);
+        if (!aabSha1) {
+            onLine({
+                stream: 'stderr',
+                text: 'Warning: could not read AAB signer certificate (keytool unavailable?). Skipping the signing check.',
+                label,
+            });
+            return true;
+        }
+        const debugSha1 = signerSha1([
+            '-list', '-v',
+            '-keystore', path.join(androidDir, 'app', 'debug.keystore'),
+            '-storepass', 'android',
+            '-alias', 'androiddebugkey',
+        ]);
+        if (debugSha1 && aabSha1 === debugSha1) {
+            onLine({
+                stream: 'stderr',
+                text: `Refusing to publish: the release AAB is signed with the DEBUG key (SHA1 ${aabSha1}). android/keystore.properties is missing or wrong — run scripts/setup-android-signing.sh and rebuild.`,
+                label,
+            });
+            return false;
+        }
+        onLine({
+            stream: 'system',
+            text: `Release AAB signer verified (SHA1 ${aabSha1}).`,
+            label,
+        });
+        return true;
+    }
+
     function build(onLine: OnLine, label?: string): Promise<{
         ok: boolean;
         artifacts?: AndroidArtifacts;
@@ -125,6 +222,11 @@ export function createAndroidPublisher(deps: {
                     text: `Cannot build: ${gradlew} not found. Run an Expo prebuild first.`,
                     label,
                 });
+                resolve({ok: false});
+                return;
+            }
+
+            if (!ensureReleaseSigning(onLine, label)) {
                 resolve({ok: false});
                 return;
             }
@@ -182,6 +284,10 @@ export function createAndroidPublisher(deps: {
                             .join(', ')}.`,
                         label,
                     });
+                    resolve({ok: false});
+                    return;
+                }
+                if (!assertNotDebugSigned(aabPath, onLine, label)) {
                     resolve({ok: false});
                     return;
                 }
