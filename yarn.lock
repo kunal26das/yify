@@ -4741,10 +4741,10 @@ expo-symbols@^56.0.6:
     "@expo-google-fonts/material-symbols" "^0.4.1"
     sf-symbols-typescript "^2.0.0"
 
-expo-system-ui@57.0.0:
-  version "57.0.0"
-  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.0.tgz#4d4d578a2430a849e05d15afacf8246524a4fde0"
-  integrity sha512-jkGRY0RQsncEhaCPdoiNbRCPAe8q5kFrrMbkiLr7p0oFMMY8LOviSKBpUXLnuwzM1gHC/J531tntrhj+nwpFZA==
+expo-system-ui@57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.1.tgz#50f73de080e04789823e7f5f88e646f19c1dd792"
+  integrity sha512-r8a6Jk2suL0vI7Uq4iKJab5Eesk8dkB56Q6HksVNkzuAExV0axoikQwZv8aAyHGbu2VHp0artB0N1/PQDLSgBg==
   dependencies:
     "@react-native/normalize-colors" "0.86.0"
     debug "^4.3.2"
