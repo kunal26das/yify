@@ -4756,10 +4756,10 @@ expo-task-manager@57.0.5, expo-task-manager@~57.0.4:
   dependencies:
     unimodules-app-loader "~57.0.1"
 
-expo-web-browser@57.0.0:
-  version "57.0.0"
-  resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-57.0.0.tgz#72b7e406d86c3f05dcc0c0a7af30311f4a768a62"
-  integrity sha512-J+kQAqbH423Ge6YXrQTVKkmH+cS2SSjnc7ocoRDjhmfZ2+XSBXX3Ogds5/aEKjNKUe7ObtPMkVq9uWbXJv4BGw==
+expo-web-browser@57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-57.0.1.tgz#fa9339374f290e5d6f177c6acb82e04fd8d1ec54"
+  integrity sha512-akqnOoJRzKXbFbiqTwxnmn8mVoSfPKEBxwDNxQJHAGElgneL28jlEPYaTDpOONz9azPWVfEHZ/i7kqQgN2ExXg==
 
 expo@57:
   version "57.0.6"
