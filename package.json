@@ -80,5 +80,8 @@
     "patch-package": "8.0.1",
     "postinstall-postinstall": "2.1.0",
     "typescript": "6.0.3"
+  },
+  "resolutions": {
+    "**/xcode/uuid": "^11.1.1"
   }
 }
