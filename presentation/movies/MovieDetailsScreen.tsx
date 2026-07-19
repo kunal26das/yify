@@ -15,6 +15,7 @@ import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {YoutubePlayer} from './components/YoutubePlayer';
 import {MovieRail} from './components/MovieRail';
 import {ScreenshotLightbox} from './components/ScreenshotLightbox';
+import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {useIsInWatchlist} from './useWatchlist';
 import {toggleWatchlist} from '@/lib/watchlist';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
@@ -29,6 +30,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const columnWidth = Math.min(width, COLUMN_MAX);
     const [showTrailer, setShowTrailer] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const [noticeTorrent, setNoticeTorrent] = useState<Torrent | null>(null);
     const saved = useIsInWatchlist(details?.id ?? -1);
 
     const TORRENT_GAP = 10;
@@ -320,7 +322,8 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       <Section title="Available Qualities" colors={colors}>
                           <View style={[styles.torrentGrid, {gap: TORRENT_GAP}]}>
                               {details.torrents.map((t, i) => (
-                                  <TorrentRow key={i} torrent={t} colors={colors} width={torrentCardWidth}/>
+                                  <TorrentRow key={i} torrent={t} colors={colors} width={torrentCardWidth}
+                                              onPress={() => setNoticeTorrent(t)}/>
                               ))}
                           </View>
                       </Section>
@@ -347,6 +350,8 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
               onClose={() => setLightboxIndex(null)}
           />
       ) : null}
+      <TorrentNoticeSheet torrent={noticeTorrent} onClose={() => setNoticeTorrent(null)}
+                          bottomInset={insets.bottom}/>
     </ThemedView>
   );
 }
@@ -405,14 +410,23 @@ function TorrentRow({
   torrent,
                         colors,
                         width,
+                        onPress,
 }: {
   torrent: Torrent;
     colors: Colors;
     width: number;
+    onPress: () => void;
 }) {
     const source = [torrent.type, torrent.videoCodec].filter(Boolean).join(' · ') || 'Torrent';
   return (
-      <View style={[styles.torrentCard, {width, backgroundColor: colors.surface, borderColor: colors.border}]}>
+      <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          style={({pressed}) => [
+              styles.torrentCard,
+              {width, backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1},
+          ]}
+      >
           <View style={styles.torrentTop}>
               <View style={[styles.torrentQualityPill, {backgroundColor: colors.accent}]}>
                   <ThemedText
@@ -435,7 +449,7 @@ function TorrentRow({
                   <ThemedText style={[styles.torrentMeta, {color: colors.peer}]}>{torrent.peers}</ThemedText>
               </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

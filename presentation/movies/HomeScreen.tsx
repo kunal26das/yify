@@ -76,8 +76,6 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 <View style={styles.topActions}>
                     <TopButton icon="search" scheme={scheme} colors={colors}
                                onPress={() => router.push('/browse?focus=1' as never)} label="Search"/>
-                    <TopButton icon="grid" scheme={scheme} colors={colors}
-                               onPress={() => router.push('/browse' as never)} label="Browse all"/>
                 </View>
             </View>
         </View>
