@@ -17,6 +17,7 @@ import {POSTER_GAP} from './components/moviePosterLayout';
 import {useWatchlist} from './useWatchlist';
 import type {ShelfQuery} from './constants/homeShelves';
 import type {HomeViewModel, ShelfState} from './useHomeViewModel';
+import {Analytics} from '@/lib/analytics-events';
 
 type Palette = ReturnType<typeof usePalette>['colors'];
 
@@ -42,6 +43,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     useEffect(() => {
         loadInitial();
     }, [loadInitial]);
+
+    useEffect(() => {
+        if (error) Analytics.loadError('home');
+    }, [error]);
 
     const posterWidth = isPhone ? 126 : isTablet ? 146 : 158;
     const heroHeight = isPhone ? Math.round(Math.min(height * 0.62, 560)) : 468;
@@ -75,7 +80,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 </ThemedText>
                 <View style={styles.topActions}>
                     <TopButton icon="search" scheme={scheme} colors={colors}
-                               onPress={() => router.push('/browse?focus=1' as never)} label="Search"/>
+                               onPress={() => {
+                                   Analytics.searchOpen('home_top_bar');
+                                   router.push('/browse?focus=1' as never);
+                               }} label="Search"/>
                 </View>
             </View>
         </View>
@@ -97,7 +105,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
                     <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
-                    <Pressable onPress={reload} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
+                    <Pressable onPress={() => {
+                        Analytics.retry('home');
+                        reload();
+                    }} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
                         <View style={[styles.cta, {backgroundColor: colors.accent}]}>
                             <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                             <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
@@ -137,7 +148,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 }
                 ListFooterComponent={
                     <Pressable
-                        onPress={() => router.push('/browse' as never)}
+                        onPress={() => {
+                            Analytics.browseAllOpen('home_footer');
+                            router.push('/browse' as never);
+                        }}
                         style={({pressed}) => [styles.browseAll, {borderColor: colors.accent, opacity: pressed ? 0.8 : 1}]}
                     >
                         <ThemedText style={[styles.browseAllLabel, {color: colors.text}]}>
@@ -184,6 +198,10 @@ function ShelfRow({
         if (shelf.status === 'idle') onLoad(shelf.key);
     }, [shelf.status, shelf.key, onLoad]);
 
+    useEffect(() => {
+        if (shelf.status === 'loaded' && shelf.movies.length > 0) Analytics.shelfImpression(shelf.key);
+    }, [shelf.status, shelf.key, shelf.movies.length]);
+
     if (shelf.status === 'empty' || shelf.status === 'error') return null;
 
     if (shelf.status === 'loaded') {
@@ -195,7 +213,10 @@ function ShelfRow({
                 variant={shelf.variant}
                 posterWidth={posterWidth}
                 gutter={gutter}
-                onSeeAll={() => router.push(buildBrowseHref(shelf.query) as never)}
+                onSeeAll={() => {
+                    Analytics.shelfSeeAll(shelf.title);
+                    router.push(buildBrowseHref(shelf.query) as never);
+                }}
             />
         );
     }

@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {DarkTheme, DefaultTheme, router, Stack, ThemeProvider} from 'expo-router';
+import {DarkTheme, DefaultTheme, router, Stack, ThemeProvider, usePathname} from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -19,6 +19,7 @@ import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-g
 import {Colors, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
 import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
+import {Analytics} from '@/lib/analytics-events';
 
 void initRemoteConfig();
 void requestNotificationPermission().then((granted) => {
@@ -28,6 +29,7 @@ void requestNotificationPermission().then((granted) => {
 function handleNotificationData(data: unknown) {
     const movieId = (data as { movieId?: number } | null)?.movieId;
     if (typeof movieId === 'number') {
+        Analytics.notificationOpen(movieId);
         router.push(`/movie/${movieId}`);
     }
 }
@@ -52,6 +54,11 @@ function RootLayout() {
         if (!lastResponse || !navReady) return;
         handleNotificationData(lastResponse.notification.request.content.data);
     }, [lastResponse, navReady]);
+
+    const pathname = usePathname();
+    useEffect(() => {
+        Analytics.screenView(pathname);
+    }, [pathname]);
 
     const colorScheme = useColorScheme();
     const isMacDesktop = useIsMacDesktop();
