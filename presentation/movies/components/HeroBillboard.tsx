@@ -15,6 +15,7 @@ import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
+import {Analytics} from '@/lib/analytics-events';
 
 const ROTATE_MS = 6500;
 
@@ -130,6 +131,15 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
         };
     }, [width, scrollToData, scheduleNext, clearAuto]);
 
+    // One impression per hero slide per mount, fired as each slide becomes active.
+    const seenRef = useRef<Set<number>>(new Set());
+    useEffect(() => {
+        const movie = movies[index];
+        if (!movie || seenRef.current.has(movie.id)) return;
+        seenRef.current.add(movie.id);
+        Analytics.heroImpression(movie, index);
+    }, [index, movies]);
+
     if (count === 0) return null;
 
     return (
@@ -218,7 +228,10 @@ function HeroSlide({
 
             <View style={styles.content}>
                 <Pressable
-                    onPress={() => router.push(`/movie/${movie.id}`)}
+                    onPress={() => {
+                        Analytics.movieOpen(movie, 'hero_slide');
+                        router.push(`/movie/${movie.id}`);
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={`View ${movie.title}`}
                 >
@@ -263,7 +276,10 @@ function HeroSlide({
 
                 <View style={styles.ctaRow}>
                     <Pressable
-                        onPress={() => router.push(`/movie/${movie.id}`)}
+                        onPress={() => {
+                            Analytics.heroCta(movie);
+                            router.push(`/movie/${movie.id}`);
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel={`View ${movie.title}`}
                     >

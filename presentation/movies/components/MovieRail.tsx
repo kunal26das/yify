@@ -7,6 +7,7 @@ import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 import {MoviePosterItem} from './MoviePosterItem';
+import {Analytics} from '@/lib/analytics-events';
 import {POSTER_GAP} from './moviePosterLayout';
 
 export type RailVariant = 'standard' | 'ranked';
@@ -247,11 +248,11 @@ export function MovieRail({
     const renderItem = useCallback(
         ({item, index}: {item: Movie; index: number}) =>
             ranked ? (
-                <RankedPoster movie={item} rank={(index % n) + 1} posterWidth={posterWidth}/>
+                <RankedPoster movie={item} rank={(index % n) + 1} posterWidth={posterWidth} source={title}/>
             ) : (
-                <MoviePosterItem movie={item} width={posterWidth}/>
+                <MoviePosterItem movie={item} width={posterWidth} source={title}/>
             ),
-        [ranked, posterWidth, n]
+        [ranked, posterWidth, n, title]
     );
 
     const keyExtractor = useCallback((item: Movie, index: number) => `${item.id}:${index}`, []);
@@ -320,10 +321,16 @@ export function MovieRail({
                 <View ref={wrapRef} style={styles.listWrap}>
                     {list}
                     {hovered && canLeft ? (
-                        <RailHandle side="left" height={posterHeight} onPress={() => scrollByPage(-1)}/>
+                        <RailHandle side="left" height={posterHeight} onPress={() => {
+                            Analytics.railPage(title, 'back');
+                            scrollByPage(-1);
+                        }}/>
                     ) : null}
                     {hovered && canRight ? (
-                        <RailHandle side="right" height={posterHeight} onPress={() => scrollByPage(1)}/>
+                        <RailHandle side="right" height={posterHeight} onPress={() => {
+                            Analytics.railPage(title, 'forward');
+                            scrollByPage(1);
+                        }}/>
                     ) : null}
                 </View>
             ) : (
@@ -361,7 +368,7 @@ function RailHandle({
     );
 }
 
-function RankedPoster({movie, rank, posterWidth}: {movie: Movie; rank: number; posterWidth: number}) {
+function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: number; posterWidth: number; source?: string}) {
     const {colors, scheme} = usePalette();
     const posterHeight = posterWidth * 1.5;
     const numeralSize = rankedNumeralSize(posterWidth);
@@ -379,7 +386,7 @@ function RankedPoster({movie, rank, posterWidth}: {movie: Movie; rank: number; p
                     {rank}
                 </ThemedText>
             </View>
-            <MoviePosterItem movie={movie} width={posterWidth}/>
+            <MoviePosterItem movie={movie} width={posterWidth} source={source}/>
         </View>
     );
 }

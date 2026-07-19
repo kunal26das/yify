@@ -15,6 +15,7 @@ import {Animated, FlatList, InteractionManager, Platform, Pressable, RefreshCont
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {checkForNewMovies} from '@/lib/new-movies-task';
 import {MovieFilterModal} from './components/MovieFilterModal';
+import {Analytics} from '@/lib/analytics-events';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
@@ -51,7 +52,20 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         clearFiltersAndReload,
         loadInitial,
         loadMore,
+        appliedQuery,
     } = viewModel;
+
+    // Log searches once the debounced query is applied (skips the initial value).
+    const loggedQueryRef = useRef<string | null>(null);
+    useEffect(() => {
+        const q = appliedQuery.trim();
+        if (loggedQueryRef.current === null) {
+            loggedQueryRef.current = q;
+            return;
+        }
+        if (q && q !== loggedQueryRef.current) Analytics.search(q);
+        loggedQueryRef.current = q;
+    }, [appliedQuery]);
 
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
@@ -128,6 +142,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         loadInitial();
     }, [loadInitial]);
 
+    useEffect(() => {
+        if (error) Analytics.loadError('browse');
+    }, [error]);
+
     // autoFocus places the cursor but frequently fails to raise the soft keyboard when the
     // input mounts mid-navigation. Focus imperatively once the push transition has settled.
     useEffect(() => {
@@ -139,8 +157,11 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
     }, [autoFocus]);
 
     const handleEndReached = useCallback(() => {
-        if (hasMore && !loading) loadMore();
-    }, [hasMore, loading, loadMore]);
+        if (hasMore && !loading) {
+            Analytics.browseLoadMore(movies.length);
+            loadMore();
+        }
+    }, [hasMore, loading, loadMore, movies.length]);
 
     const handleRefresh = useCallback(() => {
         loadInitial();
@@ -152,7 +173,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
             isSkeleton(item) ? (
                 <PosterSkeleton width={itemWidth}/>
             ) : (
-                <MoviePosterItem movie={item} width={itemWidth}/>
+                <MoviePosterItem movie={item} width={itemWidth} source="browse_grid"/>
             ),
         [itemWidth]
     );
@@ -229,7 +250,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                             />
                             {searchQuery.length > 0 ? (
                                 <Pressable
-                                    onPress={() => setSearchQuery('')}
+                                    onPress={() => {
+                                        Analytics.searchCleared();
+                                        setSearchQuery('');
+                                    }}
                                     style={({pressed}) => [styles.clearButton, {opacity: pressed ? 0.6 : 1}]}
                                     hitSlop={8}
                                 >
@@ -275,7 +299,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                             Something went wrong
                         </ThemedText>
                         <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
-                        <Pressable onPress={loadInitial} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
+                        <Pressable onPress={() => {
+                            Analytics.retry('browse');
+                            loadInitial();
+                        }} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
                             <View style={[styles.cta, {backgroundColor: colors.accent}]}>
                                 <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                                 <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
@@ -350,7 +377,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                                 pointerEvents={isAtTop ? 'none' : 'auto'}
                             >
                                 <Pressable
-                                    onPress={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                                    onPress={() => {
+                                        Analytics.scrollToTop();
+                                        listRef.current?.scrollToOffset({offset: 0, animated: true});
+                                    }}
                                     style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
                                     hitSlop={8}
                                 >
@@ -379,7 +409,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                             </LiquidGlassView>
 
                             <Pressable
-                                onPress={() => setFilterModalVisible(true)}
+                                onPress={() => {
+                                    Analytics.filtersOpen();
+                                    setFilterModalVisible(true);
+                                }}
                                 style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
                                 hitSlop={8}
                             >
@@ -398,10 +431,18 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                     filters={filters}
                     onFiltersChange={setFilters}
                     onApply={(f: MovieFilters) => {
+                        Analytics.filtersApplied({
+                            genre: f.genre,
+                            quality: f.quality,
+                            minimum_rating: f.minimum_rating,
+                            sort_by: f.sort_by,
+                            order_by: f.order_by,
+                        });
                         applyFilters(f);
                         listRef.current?.scrollToOffset({offset: 0, animated: true});
                     }}
                     onClear={() => {
+                        Analytics.filtersReset();
                         clearFiltersAndReload();
                         listRef.current?.scrollToOffset({offset: 0, animated: true});
                     }}

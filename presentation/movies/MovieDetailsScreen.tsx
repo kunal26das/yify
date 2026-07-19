@@ -1,7 +1,7 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Torrent} from '@/domain';
@@ -19,6 +19,7 @@ import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {useIsInWatchlist} from './useWatchlist';
 import {toggleWatchlist} from '@/lib/watchlist';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
+import {Analytics} from '@/lib/analytics-events';
 
 const COLUMN_MAX = 920;
 
@@ -32,6 +33,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [noticeTorrent, setNoticeTorrent] = useState<Torrent | null>(null);
     const saved = useIsInWatchlist(details?.id ?? -1);
+
+    useEffect(() => {
+        if (error) Analytics.loadError('details');
+    }, [error]);
 
     const TORRENT_GAP = 10;
     const bodyWidth = columnWidth - Spacing.lg * 2;
@@ -77,7 +82,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
             <ThemedText style={[styles.errorMessage, {color: colors.textMuted}]}>
             {error ?? 'Movie not found'}
           </ThemedText>
-            <Pressable onPress={reload} accessibilityRole="button"
+            <Pressable onPress={() => {
+                Analytics.retry('details');
+                reload();
+            }} accessibilityRole="button"
                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
                 <View style={[styles.retryButton, {backgroundColor: colors.accent}]}>
                     <Ionicons name="refresh" size={18} color={colors.onAccent}/>
@@ -123,7 +131,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       )}
                       {hasTrailer && !showTrailer ? (
                           <Pressable
-                              onPress={() => setShowTrailer(true)}
+                              onPress={() => {
+                                  Analytics.trailerPlay(details);
+                                  setShowTrailer(true);
+                              }}
                               style={styles.playOverlay}
                               accessibilityRole="button"
                               accessibilityLabel="Play trailer"
@@ -215,7 +226,11 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                   <View style={styles.actionsRow}>
                       {hasTrailer ? (
                           <Pressable
-                              onPress={() => setShowTrailer((v) => !v)}
+                              onPress={() => {
+                                  if (showTrailer) Analytics.trailerClose(details);
+                                  else Analytics.trailerPlay(details);
+                                  setShowTrailer((v) => !v);
+                              }}
                               accessibilityRole="button"
                               accessibilityLabel={showTrailer ? 'Hide trailer' : 'Play trailer'}
                               style={({pressed}) => [styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
@@ -240,7 +255,11 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           </Pressable>
                       ) : null}
                       <Pressable
-                          onPress={() => toggleWatchlist(details)}
+                          onPress={() => {
+                              if (saved) Analytics.watchlistRemove(details);
+                              else Analytics.watchlistAdd(details);
+                              toggleWatchlist(details);
+                          }}
                           accessibilityRole="button"
                           accessibilityState={{selected: saved}}
                           accessibilityLabel={saved ? 'Remove from My List' : 'Add to My List'}
@@ -289,7 +308,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                               {details.screenshotUrls.map((uri, i) => (
                                   <Pressable
                                       key={i}
-                                      onPress={() => setLightboxIndex(i)}
+                                      onPress={() => {
+                                          Analytics.screenshotOpen(details.id, i);
+                                          setLightboxIndex(i);
+                                      }}
                                       accessibilityRole="button"
                                       accessibilityLabel={`View screenshot ${i + 1} full screen`}
                                       style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
@@ -323,7 +345,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           <View style={[styles.torrentGrid, {gap: TORRENT_GAP}]}>
                               {details.torrents.map((t, i) => (
                                   <TorrentRow key={i} torrent={t} colors={colors} width={torrentCardWidth}
-                                              onPress={() => setNoticeTorrent(t)}/>
+                                              onPress={() => {
+                                                  Analytics.torrentTap(details.id, t);
+                                                  setNoticeTorrent(t);
+                                              }}/>
                               ))}
                           </View>
                       </Section>
@@ -350,7 +375,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
               onClose={() => setLightboxIndex(null)}
           />
       ) : null}
-      <TorrentNoticeSheet torrent={noticeTorrent} onClose={() => setNoticeTorrent(null)}
+      <TorrentNoticeSheet torrent={noticeTorrent} onClose={() => {
+          if (noticeTorrent) Analytics.torrentNoticeDismissed(details.id);
+          setNoticeTorrent(null);
+      }}
                           bottomInset={insets.bottom}/>
     </ThemedView>
   );

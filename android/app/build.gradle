@@ -198,5 +198,6 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 // @revopush/gradle
 apply from: "../../node_modules/@revopush/react-native-code-push/android/codepush.gradle"

@@ -8,10 +8,11 @@ import {Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
 import {getPosterContainerStyle} from './moviePosterLayout';
+import {Analytics} from '@/lib/analytics-events';
 
 const POSTER_RADIUS = Radius.lg;
 
-export function MoviePosterItem({movie, width}: { movie: Movie; width?: number }) {
+export function MoviePosterItem({movie, width, source = 'unknown'}: { movie: Movie; width?: number; source?: string }) {
   const { posterUrls } = movie;
   const {colors, scheme} = usePalette();
   const scale = useRef(new Animated.Value(1)).current;
@@ -33,6 +34,7 @@ export function MoviePosterItem({movie, width}: { movie: Movie; width?: number }
   return (
     <Link href={`/movie/${movie.id}`} asChild>
       <Pressable
+        onPress={() => Analytics.movieOpen(movie, source)}
         onPressIn={() => animate(0.96, 0)}
         onPressOut={() => animate(1, 0)}
         onHoverIn={() => Platform.OS === 'web' && animate(1.02, 1)}
