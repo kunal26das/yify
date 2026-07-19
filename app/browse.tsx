@@ -1,4 +1,5 @@
 import {router, useLocalSearchParams} from 'expo-router';
+import Head from 'expo-router/head';
 import {useEffect, useMemo, useRef} from 'react';
 import {MovieRepositoryImpl, YtsApiDataSource} from '@/data';
 import {
@@ -69,5 +70,16 @@ export default function BrowseRoute() {
     router.setParams(next);
   }, [appliedQuery, appliedFilters]);
 
-  return <MoviesScreen viewModel={viewModel} showBack autoFocus={params.focus === '1'} />;
+  return (
+    <>
+      <Head>
+        <title>Browse Movies — Yify</title>
+        <meta
+          name="description"
+          content="Search and filter thousands of movies by genre, rating and quality on Yify."
+        />
+      </Head>
+      <MoviesScreen viewModel={viewModel} showBack autoFocus={params.focus === '1'} />
+    </>
+  );
 }
