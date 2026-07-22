@@ -43,17 +43,16 @@ export function LiquidGlassView({
     );
   }
 
+  if (Platform.OS === 'android') {
+    return (
+      <View style={[style, fallbackBackgroundColor ? {backgroundColor: fallbackBackgroundColor} : undefined]}>
+        {children}
+      </View>
+    );
+  }
+
   return (
-    <BlurView
-      intensity={intensity}
-      tint={tint}
-      style={[
-        style,
-        Platform.OS === 'android' && fallbackBackgroundColor
-          ? { backgroundColor: fallbackBackgroundColor }
-          : undefined,
-      ]}
-    >
+    <BlurView intensity={intensity} tint={tint} style={style}>
       {children}
     </BlurView>
   );
