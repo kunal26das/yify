@@ -20,6 +20,7 @@ import {Colors, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/pr
 import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 import {Analytics} from '@/lib/analytics-events';
+import {startPlayServices} from '@/lib/play-services';
 
 void initRemoteConfig();
 void requestNotificationPermission().then((granted) => {
@@ -50,6 +51,9 @@ function RootLayout() {
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = fontsLoaded || !!fontError;
+    useEffect(() => {
+        void startPlayServices();
+    }, []);
     useEffect(() => {
         if (!lastResponse || !navReady) return;
         handleNotificationData(lastResponse.notification.request.content.data);
