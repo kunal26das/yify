@@ -4568,7 +4568,7 @@ expo-constants@56.0.21:
   dependencies:
     "@expo/env" "~2.3.1"
 
-expo-constants@~56.0.20:
+expo-constants@~56.0.22:
   version "56.0.22"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.22.tgz#df0c7bb02574801ea034d832c3baf5e862e50e19"
   integrity sha512-XNRssTBSGDR3gsaYhhp513WdpPsLi89wgfYT0wLsCtMY8vXAgXR4jNlaYGXFCnvNVbx9gEDSBHOSntqRK1i8Lw==
@@ -4626,12 +4626,12 @@ expo-keep-awake@~57.0.1:
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-57.0.1.tgz#75dfd3d6faeb0f32eb8b670d6b736375fdf2cdb8"
   integrity sha512-28lkFImeXTS+bhAjuCFV7w7tW5bXg27BJVrxv+nC/nyYa86qEa0oFeHwqol6ha5k4pdVDQgBF09GM4A1k76Ssg==
 
-expo-linking@56.0.15:
-  version "56.0.15"
-  resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-56.0.15.tgz#51b9899f9475c694398ecb82b3d51e24a88dbc75"
-  integrity sha512-V3tkCxHIWO624ayw2L5Nfi0/bPgYy/0MgmoQR7g3FAKF4nyAayK8IhgAInz4MZ5Ao5Bb+5uZWDdUaS4yyEb+Gw==
+expo-linking@56.0.16:
+  version "56.0.16"
+  resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-56.0.16.tgz#332528ccfa8297f231a5e2b15641280a0d3a3186"
+  integrity sha512-rI/ZE22t0sgYqnE0WnDUbld/vTzOiTxEX/uKuNFGTIUZ9tmes/nvcqJufEMqRV7u6REUEIBCFxbROOBibvwG4g==
   dependencies:
-    expo-constants "~56.0.20"
+    expo-constants "~56.0.22"
     invariant "^2.2.4"
 
 expo-modules-autolinking@~57.0.9:
