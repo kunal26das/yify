@@ -1078,9 +1078,9 @@
     whatwg-fetch "^3.0.0"
 
 "@expo/metro-runtime@^56.0.15":
-  version "56.0.17"
-  resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-56.0.17.tgz#a1fe7cec5859add6adcc9c7e813aacae279904ef"
-  integrity sha512-mYZXMOX3SYqF4VC4G3eVq8+Hd0YfEjs/sSf2eKpqJl54fDtBxeJIu5DLHg9YIMsICPhUZ/r73syEm0835ZEM+g==
+  version "56.0.18"
+  resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-56.0.18.tgz#4c922000f93472a210a8b34373a2b07ffbb6c904"
+  integrity sha512-j/y6F0uigTn5H/sfN1v/Db+ecrbb14sLsejBEQ7tNyKajrqM86D+yLTUqTP0KdufYqcXc/DfGVa+UmtvcdlIaA==
   dependencies:
     "@expo/log-box" "^56.0.14"
     anser "^1.4.9"
@@ -1204,9 +1204,9 @@
     vaul "^1.1.2"
 
 "@expo/ui@^56.0.18":
-  version "56.0.22"
-  resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-56.0.22.tgz#ca9d0010d44bdb106c032b611da005ced5a05bc2"
-  integrity sha512-B6CXc+WJg2GE4KF6LrCPTf+ozMWKMG9TAVc//gQYUsLzFZzm0vCgUqXRiaNJ6BukpHoZPLKsQZ95VsSyTVda3A==
+  version "56.0.23"
+  resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-56.0.23.tgz#59c7e6f49711a410346398622fd2d54926b15465"
+  integrity sha512-NEYz6dYmGU51mwtx/ce5FpsyN1HJSG600mNafdzR9dWYfgAbP/bZQurXC3M6EFXdh+cI4HArJ/ltLDeM+spVqw==
   dependencies:
     sf-symbols-typescript "^2.1.0"
     vaul "^1.1.2"
@@ -3333,9 +3333,9 @@ brace-expansion@^2.0.1, brace-expansion@^2.0.2:
     balanced-match "^1.0.0"
 
 brace-expansion@^5.0.5:
-  version "5.0.7"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-5.0.7.tgz#1b0e46965b479dad65af737b4a02790a05498337"
-  integrity sha512-7oFy703dxfY3/NLxC1fh2SUCQ0H9rmAY+5EpDVfXjUTTs+HEwR2nYaqLv+GWcTsumwxPfiz6CzCNkwXwBUwqCA==
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-5.0.8.tgz#135ad0d8d808eb18eb5e0ec9a21f3a0b92ef18cf"
+  integrity sha512-JZyDyq3D4AUifKTPOB7DELf6XsB3WdPuNxCtob1vFXPsSXhdAiHBWJ/tJ8HAc9aH84BK+5JFZLNkJKx3G9kzQg==
   dependencies:
     balanced-match "^4.0.2"
 
@@ -4561,10 +4561,17 @@ expo-build-properties@57.0.6:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@56.0.21, expo-constants@~56.0.20:
+expo-constants@56.0.21:
   version "56.0.21"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.21.tgz#49564028edefe7c920cf4acf41ccfe185b85ed85"
   integrity sha512-q9LkK9tNTW2z/5hXgpwWoCXO1fBrqn4FgwTiLerM9WOu1wtg99NevAtG3BEG8t5Awtub+NsLidiFZzBat45RKw==
+  dependencies:
+    "@expo/env" "~2.3.1"
+
+expo-constants@~56.0.20:
+  version "56.0.22"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-56.0.22.tgz#df0c7bb02574801ea034d832c3baf5e862e50e19"
+  integrity sha512-XNRssTBSGDR3gsaYhhp513WdpPsLi89wgfYT0wLsCtMY8vXAgXR4jNlaYGXFCnvNVbx9gEDSBHOSntqRK1i8Lw==
   dependencies:
     "@expo/env" "~2.3.1"
 
@@ -4608,6 +4615,11 @@ expo-image@57.0.1:
   integrity sha512-EP0lisd2bUqtErry4weRcMW9bLMxtKsht/MLLK3/3do5u4ZMiJbWkY5zfYV+WYmeGab7x9G0sjbeFeEagYGjMw==
   dependencies:
     sf-symbols-typescript "^2.2.0"
+
+expo-in-app-updates@0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/expo-in-app-updates/-/expo-in-app-updates-0.12.0.tgz#d32b86227f66e9c6d98f1110237f219d590b52dc"
+  integrity sha512-RqqT0KEqZNbOk5Zxq+JQ7ph7mH/ZNfKOowPyZI8K2YnYBjjNIOyt5PlSZz5/JtmPsBGe6/oKiu1QY+4rGfY+Eg==
 
 expo-keep-awake@~57.0.1:
   version "57.0.1"
@@ -4715,6 +4727,11 @@ expo-status-bar@57.0.1:
   version "57.0.1"
   resolved "https://registry.yarnpkg.com/expo-status-bar/-/expo-status-bar-57.0.1.tgz#0a8ec1657fcd0987f9612ca411a0c3d002f0eaf0"
   integrity sha512-Xwaq1gAoVRWx5dPG5VhT5RSbnI9OilhZnO5qoPBnUaBAa5VzRzfdS8q0/bsPt0jR2DKLtGuP0bQ6efMJ4RIMDg==
+
+expo-store-review@57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-store-review/-/expo-store-review-57.0.1.tgz#ead8367b2207e3d3b3ea3979fc4fb71c20422d4d"
+  integrity sha512-OktDBfIEe4DQXVxz7umFyg+slkZo/nrr4GfwiFJlNjOXl+F+vNsaGBdEn1aE4W5DAnSVpLQsjaZt1dts2HJXlQ==
 
 expo-symbols@57.0.1:
   version "57.0.1"
