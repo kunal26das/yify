@@ -27,7 +27,7 @@
     "@expo-google-fonts/fraunces": "0.4.1",
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
     "@expo/log-box": "56.0.13",
-    "@expo/metro-runtime": "~57.0.7",
+    "@expo/metro-runtime": "57.0.7",
     "@expo/ui": "57.0.7",
     "@expo/vector-icons": "15.0.2",
     "@react-native-firebase/analytics": "24.1.1",
@@ -36,19 +36,19 @@
     "@react-native-firebase/remote-config": "24.1.1",
     "@revopush/expo-code-push-plugin": "1.1.0",
     "@revopush/react-native-code-push": "2.6.0",
-    "expo": "57",
-    "expo-background-task": "~57.0.6",
+    "expo": "57.0.8",
+    "expo-background-task": "57.0.6",
     "expo-blur": "57.0.2",
     "expo-build-properties": "57.0.7",
-    "expo-constants": "~57.0.7",
+    "expo-constants": "57.0.7",
     "expo-device-corner-radius": "0.1.1",
     "expo-font": "57.0.1",
     "expo-glass-effect": "57.0.1",
     "expo-image": "57.0.1",
     "expo-in-app-updates": "0.12.0",
-    "expo-linking": "~57.0.4",
+    "expo-linking": "57.0.4",
     "expo-notifications": "57.0.7",
-    "expo-router": "~57.0.8",
+    "expo-router": "57.0.8",
     "expo-splash-screen": "57.0.5",
     "expo-status-bar": "57.0.1",
     "expo-store-review": "57.0.1",
@@ -60,7 +60,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
-    "react-native-gesture-handler": "~2.32.0",
+    "react-native-gesture-handler": "2.32.0",
     "react-native-mmkv": "4.3.2",
     "react-native-nitro-modules": "0.36.1",
     "react-native-reanimated": "4.5.0",
@@ -84,6 +84,6 @@
     "typescript": "6.0.3"
   },
   "resolutions": {
-    "**/xcode/uuid": "^11.1.1"
+    "**/xcode/uuid": "11.1.1"
   }
 }
