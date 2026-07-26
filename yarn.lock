@@ -4568,7 +4568,7 @@ expo-constants@56.0.22, expo-constants@~56.0.22:
   dependencies:
     "@expo/env" "~2.3.1"
 
-expo-constants@~57.0.6, expo-constants@~57.0.7:
+expo-constants@~57.0.7:
   version "57.0.7"
   resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.7.tgz#6ffd3d68b72141d71281e5dd8c6b1b7741ac1a23"
   integrity sha512-ShDwaKnh3UieCQ/dG0kO8PuicTTatn3WDGmXbq/fukyzPXWhdUxf37DINVDQS6D3DDG7nfqItij+QvnDHSQhTg==
@@ -4651,16 +4651,16 @@ expo-modules-jsi@~57.0.4:
   resolved "https://registry.yarnpkg.com/expo-modules-jsi/-/expo-modules-jsi-57.0.4.tgz#5d607faf0fa8e295955ad63ab003a0db9664281f"
   integrity sha512-vt7FyqUqqFXiRVnBqYD7y+GSPTgeua5Ocoy0+SYt+RSHkZEA2Fyop7If3g1TYDzQObYybPRo7TG2Rle1XLaWFw==
 
-expo-notifications@57.0.6:
-  version "57.0.6"
-  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.6.tgz#4d006dec7b3e8b77567ece47b389ec9b1a68c3f1"
-  integrity sha512-eRzJrcJiaIPTGnI916WZ0NL6vzNDE6WeOdvyDzwSPQrYsoinPZSp0f8hudLrE54crysyAO/rdrOrmJBXsx9w4g==
+expo-notifications@57.0.7:
+  version "57.0.7"
+  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.7.tgz#97c9f57713071a0b7fdd341c6b6480f8f0c96dc8"
+  integrity sha512-77cqQ1E3B8RQ7FadKSl+bOeSzUfbMhbjMxklqQffXIHx1dILrRELFhq5/UkBW66r+F58KtGEMlw0atPVY2qJyQ==
   dependencies:
-    "@expo/image-utils" "^0.11.3"
+    "@expo/image-utils" "^0.11.4"
     abort-controller "^3.0.0"
     badgin "^1.1.5"
     expo-application "~57.0.2"
-    expo-constants "~57.0.6"
+    expo-constants "~57.0.7"
 
 expo-router@56.2.11:
   version "56.2.11"
