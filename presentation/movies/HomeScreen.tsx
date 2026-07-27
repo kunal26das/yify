@@ -32,6 +32,11 @@ function buildBrowseHref(query: ShelfQuery): string {
     return qs ? `/browse?${qs}` : '/browse';
 }
 
+function skeletonCount(width: number, posterWidth: number, gutter: number): number {
+    const available = Math.max(0, width - gutter * 2);
+    return Math.max(3, Math.ceil(available / (posterWidth + POSTER_GAP)) + 1);
+}
+
 export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
@@ -50,6 +55,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
 
     const posterWidth = isPhone ? 126 : isTablet ? 146 : 158;
     const heroHeight = isPhone ? Math.round(Math.min(height * 0.62, 560)) : 468;
+    const skeletons = skeletonCount(width, posterWidth, gutter);
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
 
     const renderShelf = useCallback(
@@ -59,10 +65,11 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 posterWidth={posterWidth}
                 gutter={gutter}
                 colors={colors}
+                skeletons={skeletons}
                 onLoad={loadShelf}
             />
         ),
-        [posterWidth, gutter, colors, loadShelf]
+        [posterWidth, gutter, colors, skeletons, loadShelf]
     );
 
     const TopBar = (
@@ -92,7 +99,8 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     if (loading && heroMovies.length === 0 && !error) {
         return (
             <ThemedView style={styles.container}>
-                <HomeSkeleton heroHeight={heroHeight} posterWidth={posterWidth} gutter={gutter} colors={colors}/>
+                <HomeSkeleton heroHeight={heroHeight} posterWidth={posterWidth} gutter={gutter} colors={colors}
+                              skeletons={skeletons}/>
                 {TopBar}
             </ThemedView>
         );
@@ -136,6 +144,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                         ) : (
                             <View style={{height: insets.top + 64}}/>
                         )}
+                    </>
+                }
+                ListFooterComponent={
+                    <>
                         {myList.length > 0 ? (
                             <MovieRail
                                 title="My List"
@@ -144,21 +156,22 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                                 gutter={gutter}
                             />
                         ) : null}
+                        <Pressable
+                            onPress={() => {
+                                Analytics.browseAllOpen('home_footer');
+                                router.push('/browse' as never);
+                            }}
+                            style={({pressed}) => [
+                                styles.browseAll,
+                                {borderColor: colors.accent, opacity: pressed ? 0.8 : 1},
+                            ]}
+                        >
+                            <ThemedText style={[styles.browseAllLabel, {color: colors.text}]}>
+                                Browse the full catalog
+                            </ThemedText>
+                            <Ionicons name="arrow-forward" size={18} color={colors.accent}/>
+                        </Pressable>
                     </>
-                }
-                ListFooterComponent={
-                    <Pressable
-                        onPress={() => {
-                            Analytics.browseAllOpen('home_footer');
-                            router.push('/browse' as never);
-                        }}
-                        style={({pressed}) => [styles.browseAll, {borderColor: colors.accent, opacity: pressed ? 0.8 : 1}]}
-                    >
-                        <ThemedText style={[styles.browseAllLabel, {color: colors.text}]}>
-                            Browse the full catalog
-                        </ThemedText>
-                        <Ionicons name="arrow-forward" size={18} color={colors.accent}/>
-                    </Pressable>
                 }
                 contentContainerStyle={{paddingBottom: insets.bottom + 40}}
                 refreshControl={
@@ -186,12 +199,14 @@ function ShelfRow({
                       posterWidth,
                       gutter,
                       colors,
+                      skeletons,
                       onLoad,
                   }: {
     shelf: ShelfState;
     posterWidth: number;
     gutter: number;
     colors: Palette;
+    skeletons: number;
     onLoad: (key: string) => void;
 }) {
     useEffect(() => {
@@ -221,7 +236,8 @@ function ShelfRow({
         );
     }
 
-    return <ShelfSkeleton title={shelf.title} posterWidth={posterWidth} gutter={gutter} colors={colors}/>;
+    return <ShelfSkeleton title={shelf.title} posterWidth={posterWidth} gutter={gutter} colors={colors}
+                          skeletons={skeletons}/>;
 }
 
 function ShelfSkeleton({
@@ -229,11 +245,13 @@ function ShelfSkeleton({
                            posterWidth,
                            gutter,
                            colors,
+                           skeletons,
                        }: {
     title: string;
     posterWidth: number;
     gutter: number;
     colors: Palette;
+    skeletons: number;
 }) {
     return (
         <View style={styles.skeletonRail}>
@@ -241,7 +259,7 @@ function ShelfSkeleton({
                 {title}
             </ThemedText>
             <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
-                {Array.from({length: 6}).map((_, i) => (
+                {Array.from({length: skeletons}).map((_, i) => (
                     <PosterSkeleton key={i} width={posterWidth}/>
                 ))}
             </View>
@@ -285,11 +303,13 @@ function HomeSkeleton({
                           posterWidth,
                           gutter,
                           colors,
+                          skeletons,
                       }: {
     heroHeight: number;
     posterWidth: number;
     gutter: number;
     colors: ReturnType<typeof usePalette>['colors'];
+    skeletons: number;
 }) {
     return (
         <View>
@@ -305,7 +325,7 @@ function HomeSkeleton({
                 <View key={row} style={styles.skeletonRail}>
                     <View style={[styles.skeletonTitle, {backgroundColor: colors.surfaceSunken, marginLeft: gutter}]}/>
                     <View style={[styles.skeletonRow, {paddingHorizontal: gutter - 6}]}>
-                        {Array.from({length: 6}).map((_, i) => (
+                        {Array.from({length: skeletons}).map((_, i) => (
                             <PosterSkeleton key={i} width={posterWidth}/>
                         ))}
                     </View>
@@ -377,5 +397,5 @@ const styles = StyleSheet.create({
     skeletonRail: {marginBottom: Spacing.xl},
     skeletonTitle: {width: 160, height: 20, borderRadius: 6, marginBottom: Spacing.md},
     shelfSkeletonTitle: {fontSize: 21, lineHeight: 26, marginBottom: Spacing.md},
-    skeletonRow: {flexDirection: 'row'},
+    skeletonRow: {flexDirection: 'row', overflow: 'hidden'},
 });

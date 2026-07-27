@@ -20,13 +20,17 @@ export interface HomeShelf {
 }
 
 export const HERO_QUERY: ShelfQuery = {
-    sort_by: SortBy.DownloadCount,
+    sort_by: SortBy.DateAdded,
     order_by: OrderBy.Desc,
     minimum_rating: 6,
 };
-export const HERO_LIMIT = 6;
+export const HERO_LIMIT = 10;
 
-const RAIL_LIMIT = 50;
+// The YTS API caps `limit` at 50, so that is what every shelf request asks for: the widest page
+// the API will give us, which leaves the most headroom for cross-shelf dedupe to eat into.
+export const API_MAX_LIMIT = 50;
+
+const RAIL_LIMIT = API_MAX_LIMIT;
 
 // One shelf per genre, derived from the canonical option list so none can be missed.
 const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
@@ -42,7 +46,8 @@ const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
 export const HOME_SHELVES: readonly HomeShelf[] = [
     {
         key: 'top-10',
-        title: 'Top 10 This Week',
+        // Sorted by all-time download count, so it must not claim to be a weekly chart.
+        title: 'Top 10 of All Time',
         variant: 'ranked',
         limit: 10,
         query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},

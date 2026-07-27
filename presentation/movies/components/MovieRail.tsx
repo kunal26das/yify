@@ -23,10 +23,6 @@ interface MovieRailProps {
 }
 
 const IS_WEB = Platform.OS === 'web';
-const MIN_LOOP_ITEMS = 20;
-const COPIES = 5;
-const CENTER_COPY = 2;
-const RANKED_MIN_LOOP_ITEMS = 8;
 
 const RANKED_NUMERAL_SCALE = 0.86;
 const RANKED_OVERLAP_RATIO = 0.28;
@@ -69,35 +65,29 @@ export function MovieRail({
     const {colors} = usePalette();
     const ranked = variant === 'ranked';
     const n = movies.length;
-    const loop = n >= (ranked ? RANKED_MIN_LOOP_ITEMS : MIN_LOOP_ITEMS);
 
     const listRef = useRef<FlatList<Movie>>(null);
     const scrollXRef = useRef(0);
     const pagingRef = useRef(false);
     const pagingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const centeredRef = useRef(false);
     const wrapRef = useRef<View>(null);
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
     const posterHeight = posterWidth * 1.5;
 
-    const data = useMemo(
-        () => (loop ? Array.from({length: COPIES * n}, (_, i) => movies[i % n]) : movies),
-        [loop, movies, n]
-    );
+    const data = movies;
 
     // Ranked items have per-rank widths (single vs two-digit numeral), so item widths and offsets
-    // can't be derived from a single itemFullWidth — build them explicitly for getItemLayout/looping.
-    const {itemWidths, oneCopy, avgItemWidth} = useMemo(() => {
+    // can't be derived from a single itemFullWidth — build them explicitly for getItemLayout.
+    const {itemWidths, avgItemWidth} = useMemo(() => {
         if (ranked) {
-            const widths = data.map((_, i) => rankedItemWidth((i % n) + 1, posterWidth));
-            let copy = 0;
-            for (let rank = 1; rank <= n; rank++) copy += rankedItemWidth(rank, posterWidth);
-            return {itemWidths: widths, oneCopy: copy, avgItemWidth: n > 0 ? copy / n : 0};
+            const widths = data.map((_, i) => rankedItemWidth(i + 1, posterWidth));
+            const total = widths.reduce((sum, w) => sum + w, 0);
+            return {itemWidths: widths, avgItemWidth: n > 0 ? total / n : 0};
         }
         const w = posterWidth + POSTER_GAP;
-        return {itemWidths: data.map(() => w), oneCopy: n * w, avgItemWidth: w};
+        return {itemWidths: data.map(() => w), avgItemWidth: w};
     }, [ranked, data, n, posterWidth]);
 
     const itemOffsets = useMemo(() => {
@@ -110,25 +100,11 @@ export function MovieRail({
         return arr;
     }, [itemWidths]);
 
-    const centerOffset = CENTER_COPY * oneCopy;
     const maxScroll = Math.max(0, metrics.contentW - metrics.layoutW);
     const page = Math.max(avgItemWidth, metrics.layoutW - avgItemWidth);
 
-    const canLeft = loop || metrics.scrollX > 1;
-    const canRight = loop || metrics.scrollX < maxScroll - 1;
-
-    const normalize = useCallback(
-        (x: number): number => {
-            if (oneCopy <= 0) return x;
-            const lo = (CENTER_COPY - 0.5) * oneCopy;
-            const hi = (CENTER_COPY + 1.5) * oneCopy;
-            let v = x;
-            while (v < lo) v += oneCopy;
-            while (v >= hi) v -= oneCopy;
-            return v;
-        },
-        [oneCopy]
-    );
+    const canLeft = metrics.scrollX > 1;
+    const canRight = metrics.scrollX < maxScroll - 1;
 
     const scrollRailTo = useCallback((offset: number, animated: boolean) => {
         const node = listRef.current?.getScrollableNode?.() as
@@ -159,16 +135,9 @@ export function MovieRail({
         ({nativeEvent}: {nativeEvent: {contentOffset: {x: number}}}) => {
             const x = nativeEvent.contentOffset.x;
             scrollXRef.current = x;
-            if (loop) {
-                if (!pagingRef.current) {
-                    const nx = normalize(x);
-                    if (Math.abs(nx - x) > 0.5) scrollRailTo(nx, false);
-                }
-            } else {
-                setMetrics((m) => (m.scrollX === x ? m : {...m, scrollX: x}));
-            }
+            setMetrics((m) => (m.scrollX === x ? m : {...m, scrollX: x}));
         },
-        [loop, normalize, scrollRailTo]
+        []
     );
 
     const onLayout = useCallback(
@@ -178,43 +147,26 @@ export function MovieRail({
     );
 
     const onContentSizeChange = useCallback(
-        (w: number) => {
-            setMetrics((m) => ({...m, contentW: w}));
-            if (loop && !centeredRef.current && w >= centerOffset + 200) {
-                centeredRef.current = true;
-                scrollXRef.current = centerOffset;
-                scrollRailTo(centerOffset, false);
-            }
-        },
-        [loop, centerOffset, scrollRailTo]
+        (w: number) => setMetrics((m) => ({...m, contentW: w})),
+        []
     );
 
     const scrollByPage = useCallback(
         (direction: 1 | -1) => {
-            let start = scrollXRef.current;
-            if (loop) {
-                const centered = normalize(start);
-                if (Math.abs(centered - start) > 0.5) {
-                    scrollRailTo(centered, false);
-                }
-                start = centered;
-            }
-            const raw = start + direction * page;
-            const target = loop ? raw : Math.min(maxScroll, Math.max(0, raw));
+            const raw = scrollXRef.current + direction * page;
             pagingRef.current = true;
-            scrollRailTo(target, true);
+            scrollRailTo(Math.min(maxScroll, Math.max(0, raw)), true);
             if (pagingTimerRef.current) clearTimeout(pagingTimerRef.current);
             pagingTimerRef.current = setTimeout(() => {
                 pagingRef.current = false;
             }, 500);
         },
-        [loop, normalize, page, maxScroll, scrollRailTo]
+        [page, maxScroll, scrollRailTo]
     );
 
     useEffect(() => {
-        centeredRef.current = false;
-        scrollXRef.current = loop ? centerOffset : 0;
-    }, [loop, centerOffset, movies]);
+        scrollXRef.current = 0;
+    }, [movies]);
 
     useEffect(
         () => () => {
@@ -248,11 +200,11 @@ export function MovieRail({
     const renderItem = useCallback(
         ({item, index}: {item: Movie; index: number}) =>
             ranked ? (
-                <RankedPoster movie={item} rank={(index % n) + 1} posterWidth={posterWidth} source={title}/>
+                <RankedPoster movie={item} rank={index + 1} posterWidth={posterWidth} source={title}/>
             ) : (
                 <MoviePosterItem movie={item} width={posterWidth} source={title}/>
             ),
-        [ranked, posterWidth, n, title]
+        [ranked, posterWidth, title]
     );
 
     const keyExtractor = useCallback((item: Movie, index: number) => `${item.id}:${index}`, []);
@@ -266,7 +218,8 @@ export function MovieRail({
         [itemWidths, itemOffsets, avgItemWidth]
     );
 
-    const trackEvents = IS_WEB || loop;
+    // Only web needs scroll metrics — they drive the enabled state of the hover arrows.
+    const trackEvents = IS_WEB;
     const list = (
         <FlatList
             ref={listRef}
