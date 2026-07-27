@@ -2,11 +2,13 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
-import {Animated, Platform, Pressable, StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
+import {Duration, PressableScale, enterFade, enterPop} from '../../components/motion';
 import {getPosterContainerStyle} from './moviePosterLayout';
 import {Analytics} from '@/lib/analytics-events';
 import {useHoverCard} from './HoverCard';
@@ -42,8 +44,6 @@ export function MoviePosterItem({
 }) {
   const { posterUrls } = movie;
   const {colors, scheme} = usePalette();
-  const scale = useRef(new Animated.Value(1)).current;
-  const lift = useRef(new Animated.Value(0)).current;
   const nodeRef = useRef<View>(null);
   const hoverCard = useHoverCard();
   const rank = useTopTenRank(movie.id);
@@ -51,44 +51,36 @@ export function MoviePosterItem({
   const placeholderUrl = posterUrls.length > 1 ? posterUrls[0] : undefined;
   const sourceUrl = posterUrls[Math.min(1, posterUrls.length - 1)] ?? posterUrls[0];
 
-  const animate = (toScale: number, toLift: number) => {
-    Animated.parallel([
-      Animated.spring(scale, {toValue: toScale, useNativeDriver: true, speed: 50, bounciness: 0}),
-      Animated.spring(lift, {toValue: toLift, useNativeDriver: true, speed: 50, bounciness: 0}),
-    ]).start();
-  };
-
-  const translateY = lift.interpolate({inputRange: [0, 1], outputRange: [0, -4]});
   const hasRating = movie.rating > 0;
 
   return (
     <View ref={nodeRef} style={getPosterContainerStyle(width)} collapsable={false}>
     <Link href={`/movie/${movie.id}`} asChild>
-      <Pressable
+      <PressableScale
         accessibilityRole="link"
         accessibilityLabel={posterAccessibilityLabel(movie, rank)}
         onPress={() => Analytics.movieOpen(movie, source)}
-        onPressIn={() => animate(0.96, 0)}
-        onPressOut={() => animate(1, 0)}
+        hoveredScale={IS_WEB ? 1.03 : 1}
+        lift={IS_WEB ? 5 : 0}
+        duration={Duration.fast}
         onHoverIn={() => {
           if (!IS_WEB) return;
-          animate(1.02, 1);
           if (hoverCard.enabled) hoverCard.open(movie, nodeRef.current, source);
         }}
         onHoverOut={() => {
           if (!IS_WEB) return;
-          animate(1, 0);
           if (hoverCard.enabled) hoverCard.close();
         }}
         style={styles.pressable}
+        contentStyle={styles.pressable}
       >
         <Animated.View
+            entering={enterFade()}
             style={[
               styles.card,
               {
                 backgroundColor: colors.surfaceSunken,
                 borderColor: colors.border,
-                transform: [{scale}, {translateY}],
                 shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
               },
             ]}
@@ -115,23 +107,23 @@ export function MoviePosterItem({
           />
 
           {hasRating ? (
-              <View style={styles.ratingBadge}>
+              <Animated.View entering={enterPop(1)} style={styles.ratingBadge}>
                 <Ionicons name="star" size={9} color={colors.gold}/>
                 <ThemedText style={styles.ratingText} lightColor="#fff" darkColor="#fff">
                   {movie.rating.toFixed(1)}
                 </ThemedText>
-              </View>
+              </Animated.View>
           ) : null}
 
           {rank && !hideRankFlag ? (
-              <View style={styles.rankFlag}>
+              <Animated.View entering={enterPop(2)} style={styles.rankFlag}>
                 <ThemedText style={styles.rankFlagText}>TOP{'\n'}10</ThemedText>
-              </View>
+              </Animated.View>
           ) : isNew ? (
               <NewBadge style={styles.newBadge}/>
           ) : null}
         </Animated.View>
-      </Pressable>
+      </PressableScale>
     </Link>
     </View>
   );

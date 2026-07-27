@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {DarkTheme, DefaultTheme, router, Stack, ThemeProvider, usePathname} from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
-import 'react-native-reanimated';
+import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {AppState, Platform, StyleSheet} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
@@ -102,6 +102,7 @@ function RootLayout() {
 
     const content = (
         <ThemeProvider value={theme}>
+            <ReducedMotionConfig mode={ReduceMotion.System}/>
             <Stack>
                 <Stack.Screen name="index" options={{headerShown: false}}/>
                 <Stack.Screen name="browse" options={{headerShown: false}}/>

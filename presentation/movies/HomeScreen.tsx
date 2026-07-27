@@ -5,14 +5,15 @@ import {
     Animated,
     FlatList,
     Platform,
-    Pressable,
     RefreshControl,
     StyleSheet,
     View,
     useWindowDimensions,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Reanimated from 'react-native-reanimated';
 import {LinearGradient} from '../components/linear-gradient';
+import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {usePalette} from '../hooks/use-palette';
@@ -137,20 +138,25 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     if (error && heroMovies.length === 0) {
         return (
             <ThemedView style={styles.container}>
-                <View style={[styles.centered, {paddingTop: navHeight}]}>
+                <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: navHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
                     <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
-                    <Pressable onPress={() => {
-                        Analytics.retry('home');
-                        reload();
-                    }} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
+                    <PressableScale
+                        onPress={() => {
+                            Analytics.retry('home');
+                            reload();
+                        }}
+                        pressedScale={0.94}
+                        pressedOpacity={0.85}
+                        hoveredScale={1.03}
+                    >
                         <View style={[styles.cta, {backgroundColor: colors.accent}]}>
                             <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                             <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
                         </View>
-                    </Pressable>
-                </View>
+                    </PressableScale>
+                </Reanimated.View>
                 <TopNav active="home"/>
             </ThemedView>
         );
@@ -321,7 +327,7 @@ function ShelfSkeleton({
         : skeletons;
 
     return (
-        <View style={styles.skeletonRail}>
+        <Reanimated.View entering={enterFade()} style={styles.skeletonRail}>
             <ThemedText type="heading" style={[styles.shelfSkeletonTitle, {color: colors.text, marginLeft: gutter}]}>
                 {title}
             </ThemedText>
@@ -334,7 +340,7 @@ function ShelfSkeleton({
                     )
                 )}
             </View>
-        </View>
+        </Reanimated.View>
     );
 }
 

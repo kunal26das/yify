@@ -7,14 +7,15 @@ import {
     type NativeScrollEvent,
     type NativeSyntheticEvent,
     Platform,
-    Pressable,
     StyleSheet,
     View,
     useWindowDimensions,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Gesture, GestureDetector, GestureHandlerRootView} from 'react-native-gesture-handler';
-import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import Animated, {useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
+import {scheduleOnRN} from 'react-native-worklets';
+import {PressableScale, enterFade, enterPop} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 
 interface ScreenshotLightboxProps {
@@ -154,50 +155,62 @@ export function ScreenshotLightbox({images, initialIndex, onClose}: ScreenshotLi
                     removeClippedSubviews={false}
                 />
 
-                <Pressable
-                    onPress={onClose}
-                    hitSlop={12}
-                    accessibilityRole="button"
-                    accessibilityLabel="Close"
-                    style={({pressed}) => [styles.close, {top: insets.top + 12, opacity: pressed ? 0.7 : 1}]}
-                >
-                    <View style={styles.circle}>
-                        <Ionicons name="close" size={24} color="#fff"/>
-                    </View>
-                </Pressable>
+                <Animated.View entering={enterPop()} style={[styles.close, {top: insets.top + 12}]}>
+                    <PressableScale
+                        onPress={onClose}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel="Close"
+                        pressedScale={0.86}
+                        pressedOpacity={0.7}
+                        hoveredScale={1.1}
+                    >
+                        <View style={styles.circle}>
+                            <Ionicons name="close" size={24} color="#fff"/>
+                        </View>
+                    </PressableScale>
+                </Animated.View>
 
                 {count > 1 ? (
-                    <View style={[styles.counter, {bottom: insets.bottom + 22}]} pointerEvents="none">
+                    <Animated.View entering={enterFade()} style={[styles.counter, {bottom: insets.bottom + 22}]} pointerEvents="none">
                         <ThemedText style={styles.counterText} lightColor="#fff" darkColor="#fff">
                             {index + 1} / {count}
                         </ThemedText>
-                    </View>
+                    </Animated.View>
                 ) : null}
 
                 {count > 1 && !zoomed ? (
                     <>
-                        <Pressable
-                            onPress={() => goTo(-1)}
-                            hitSlop={10}
-                            accessibilityRole="button"
-                            accessibilityLabel="Previous screenshot"
-                            style={({pressed}) => [styles.arrow, styles.arrowLeft, {opacity: pressed ? 0.7 : 1}]}
-                        >
-                            <View style={styles.circle}>
-                                <Ionicons name="chevron-back" size={26} color="#fff"/>
-                            </View>
-                        </Pressable>
-                        <Pressable
-                            onPress={() => goTo(1)}
-                            hitSlop={10}
-                            accessibilityRole="button"
-                            accessibilityLabel="Next screenshot"
-                            style={({pressed}) => [styles.arrow, styles.arrowRight, {opacity: pressed ? 0.7 : 1}]}
-                        >
-                            <View style={styles.circle}>
-                                <Ionicons name="chevron-forward" size={26} color="#fff"/>
-                            </View>
-                        </Pressable>
+                        <Animated.View entering={enterFade()} style={[styles.arrow, styles.arrowLeft]}>
+                            <PressableScale
+                                onPress={() => goTo(-1)}
+                                hitSlop={10}
+                                accessibilityRole="button"
+                                accessibilityLabel="Previous screenshot"
+                                pressedScale={0.86}
+                                pressedOpacity={0.7}
+                                hoveredScale={1.1}
+                            >
+                                <View style={styles.circle}>
+                                    <Ionicons name="chevron-back" size={26} color="#fff"/>
+                                </View>
+                            </PressableScale>
+                        </Animated.View>
+                        <Animated.View entering={enterFade()} style={[styles.arrow, styles.arrowRight]}>
+                            <PressableScale
+                                onPress={() => goTo(1)}
+                                hitSlop={10}
+                                accessibilityRole="button"
+                                accessibilityLabel="Next screenshot"
+                                pressedScale={0.86}
+                                pressedOpacity={0.7}
+                                hoveredScale={1.1}
+                            >
+                                <View style={styles.circle}>
+                                    <Ionicons name="chevron-forward" size={26} color="#fff"/>
+                                </View>
+                            </PressableScale>
+                        </Animated.View>
                     </>
                 ) : null}
             </View>
@@ -272,7 +285,7 @@ function ZoomableImage({
             ty.value = withTiming(0);
             savedTx.value = 0;
             savedTy.value = 0;
-            runOnJS(notifyZoom)(false);
+            scheduleOnRN(notifyZoom, false);
         };
 
         const pinch = Gesture.Pinch()
@@ -285,7 +298,7 @@ function ZoomableImage({
                     return;
                 }
                 settle();
-                runOnJS(notifyZoom)(true);
+                scheduleOnRN(notifyZoom, true);
             });
 
         const pan = Gesture.Pan()
@@ -310,7 +323,7 @@ function ZoomableImage({
                 }
                 scale.value = withTiming(DOUBLE_TAP_SCALE);
                 savedScale.value = DOUBLE_TAP_SCALE;
-                runOnJS(notifyZoom)(true);
+                scheduleOnRN(notifyZoom, true);
             });
 
         const singleTap = Gesture.Tap()
@@ -320,7 +333,7 @@ function ZoomableImage({
                     reset();
                     return;
                 }
-                runOnJS(onClose)();
+                scheduleOnRN(onClose);
             });
 
         return Gesture.Race(
