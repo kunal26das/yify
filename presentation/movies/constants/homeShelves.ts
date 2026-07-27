@@ -1,6 +1,6 @@
 import {Genre, GENRE_OPTIONS, OrderBy, Quality, SortBy} from './movieFilterOptions';
 
-export type ShelfVariant = 'standard' | 'ranked';
+export type ShelfVariant = 'standard' | 'ranked' | 'landscape';
 
 export interface ShelfQuery {
     quality?: Quality;
@@ -17,6 +17,8 @@ export interface HomeShelf {
     variant: ShelfVariant;
     limit: number;
     query: ShelfQuery;
+    /** Flags the rail's titles as new. Only honest on shelves sorted by date added. */
+    markNew?: boolean;
 }
 
 export const HERO_QUERY: ShelfQuery = {
@@ -56,9 +58,12 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         key: 'just-added',
         title: 'Just Added',
         subtitle: 'Fresh from the catalog',
-        variant: 'standard',
+        // Wide backdrop art for the newest titles, so the row directly under the Top 10 reads as a
+        // different kind of shelf rather than another wall of posters.
+        variant: 'landscape',
         limit: RAIL_LIMIT,
         query: {sort_by: SortBy.DateAdded, order_by: OrderBy.Desc},
+        markNew: true,
     },
     {
         key: 'top-rated',

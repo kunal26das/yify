@@ -2,7 +2,6 @@
   "expo": {
     "name": "Yify",
     "slug": "yify",
-    "version": "1.1.6",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "yify",
@@ -11,7 +10,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "io.github.kunal26das.yify",
-      "buildNumber": "22",
       "icon": {
         "light": "./assets/images/icon.png",
         "dark": "./assets/images/icon-dark.png",
@@ -19,7 +17,6 @@
       }
     },
     "android": {
-      "versionCode": 39,
       "adaptiveIcon": {
         "backgroundColor": "#D97757",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

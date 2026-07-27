@@ -8,6 +8,7 @@ import {Quality} from '@/presentation/movies/constants/movieFilterOptions';
 import {getApiBaseUrl} from '@/lib/remote-config';
 import {buildNotificationContent, selectNewMovies} from '@/lib/new-movies-diff';
 import {NewMoviesCache} from '@/lib/new-movies-cache';
+import {areNotificationsEnabled} from '@/lib/settings';
 import {createMmkvStore} from '@/lib/storage/mmkv-key-value-store';
 
 export {buildNotificationContent, selectNewMovies} from '@/lib/new-movies-diff';
@@ -63,6 +64,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
+    // Turned off in Settings — skip the fetch entirely, not just the notification.
+    if (!areNotificationsEnabled()) return 0;
+
     const today = localDateKey(new Date());
     if (!force && cache.getLastRunDate() === today) {
         return 0;

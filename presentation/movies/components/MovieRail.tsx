@@ -7,10 +7,11 @@ import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 import {MoviePosterItem} from './MoviePosterItem';
+import {MovieLandscapeItem, landscapeCellHeight, landscapeWidth} from './MovieLandscapeItem';
 import {Analytics} from '@/lib/analytics-events';
 import {POSTER_GAP} from './moviePosterLayout';
 
-export type RailVariant = 'standard' | 'ranked';
+export type RailVariant = 'standard' | 'ranked' | 'landscape';
 
 interface MovieRailProps {
     title: string;
@@ -20,6 +21,8 @@ interface MovieRailProps {
     posterWidth: number;
     gutter: number;
     onSeeAll?: () => void;
+    /** Flags every title in this rail as newly added. */
+    markNew?: boolean;
 }
 
 const IS_WEB = Platform.OS === 'web';
@@ -61,9 +64,11 @@ export function MovieRail({
                               posterWidth,
                               gutter,
                               onSeeAll,
+                              markNew,
                           }: MovieRailProps) {
     const {colors} = usePalette();
     const ranked = variant === 'ranked';
+    const landscape = variant === 'landscape';
     const n = movies.length;
 
     const listRef = useRef<FlatList<Movie>>(null);
@@ -74,7 +79,8 @@ export function MovieRail({
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
-    const posterHeight = posterWidth * 1.5;
+    // Height of the scrollable strip, which the hover arrows match so they don't overhang the row.
+    const posterHeight = landscape ? landscapeCellHeight(posterWidth) : posterWidth * 1.5;
 
     const data = movies;
 
@@ -86,9 +92,9 @@ export function MovieRail({
             const total = widths.reduce((sum, w) => sum + w, 0);
             return {itemWidths: widths, avgItemWidth: n > 0 ? total / n : 0};
         }
-        const w = posterWidth + POSTER_GAP;
+        const w = (landscape ? landscapeWidth(posterWidth) : posterWidth) + POSTER_GAP;
         return {itemWidths: data.map(() => w), avgItemWidth: w};
-    }, [ranked, data, n, posterWidth]);
+    }, [ranked, landscape, data, n, posterWidth]);
 
     const itemOffsets = useMemo(() => {
         const arr: number[] = new Array(itemWidths.length);
@@ -198,13 +204,23 @@ export function MovieRail({
     }, []);
 
     const renderItem = useCallback(
-        ({item, index}: {item: Movie; index: number}) =>
-            ranked ? (
-                <RankedPoster movie={item} rank={index + 1} posterWidth={posterWidth} source={title}/>
-            ) : (
-                <MoviePosterItem movie={item} width={posterWidth} source={title}/>
-            ),
-        [ranked, posterWidth, title]
+        ({item, index}: {item: Movie; index: number}) => {
+            if (ranked) {
+                return <RankedPoster movie={item} rank={index + 1} posterWidth={posterWidth} source={title}/>;
+            }
+            if (landscape) {
+                return (
+                    <MovieLandscapeItem
+                        movie={item}
+                        posterWidth={posterWidth}
+                        source={title}
+                        isNew={markNew}
+                    />
+                );
+            }
+            return <MoviePosterItem movie={item} width={posterWidth} source={title} isNew={markNew}/>;
+        },
+        [ranked, landscape, posterWidth, title, markNew]
     );
 
     const keyExtractor = useCallback((item: Movie, index: number) => `${item.id}:${index}`, []);
@@ -264,7 +280,7 @@ export function MovieRail({
                         accessibilityLabel={`See all ${title}`}
                         style={({pressed}) => [styles.seeAll, {opacity: pressed ? 0.6 : 1}]}
                     >
-                        <ThemedText style={[styles.seeAllLabel, {color: colors.accent}]}>All</ThemedText>
+                        <ThemedText style={[styles.seeAllLabel, {color: colors.accent}]}>View All</ThemedText>
                         <Ionicons name="chevron-forward" size={15} color={colors.accent}/>
                     </Pressable>
                 ) : null}
@@ -339,7 +355,7 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
                     {rank}
                 </ThemedText>
             </View>
-            <MoviePosterItem movie={movie} width={posterWidth} source={source}/>
+            <MoviePosterItem movie={movie} width={posterWidth} source={source} hideRankFlag/>
         </View>
     );
 }
