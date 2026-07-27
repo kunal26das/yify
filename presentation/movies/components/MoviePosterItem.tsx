@@ -26,9 +26,7 @@ export function MoviePosterItem({
   movie: Movie;
   width?: number;
   source?: string;
-  /** Set inside the Top 10 rail, where the oversized numeral already states the rank. */
   hideRankFlag?: boolean;
-  /** Shows the NEW flag — set by rails that are sorted by date added. */
   isNew?: boolean;
 }) {
   const { posterUrls } = movie;
@@ -53,9 +51,6 @@ export function MoviePosterItem({
   const hasRating = movie.rating > 0;
 
   return (
-    // The ref lives on this wrapper rather than on the Pressable: `Link asChild` clones its child
-    // and supplies its own ref, so a ref handed to the Pressable never arrives. The hover card
-    // measures this node instead, which nothing else claims.
     <View ref={nodeRef} style={getPosterContainerStyle(width)} collapsable={false}>
     <Link href={`/movie/${movie.id}`} asChild>
       <Pressable
@@ -65,8 +60,6 @@ export function MoviePosterItem({
         onHoverIn={() => {
           if (!IS_WEB) return;
           animate(1.02, 1);
-          // On a pointer device the poster grows into a full card; the lift above is just the
-          // acknowledgement while the open delay runs.
           if (hoverCard.enabled) hoverCard.open(movie, nodeRef.current, source);
         }}
         onHoverOut={() => {
@@ -108,8 +101,6 @@ export function MoviePosterItem({
               </View>
           ) : null}
 
-          {/* A charting title is flagged wherever it turns up, not only inside the Top 10 rail.
-              The rank takes the corner when a title is both new and charting. */}
           {rank && !hideRankFlag ? (
               <View style={styles.rankFlag}>
                 <ThemedText style={styles.rankFlagText}>TOP{'\n'}10</ThemedText>

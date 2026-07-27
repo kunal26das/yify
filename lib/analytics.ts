@@ -1,8 +1,6 @@
 import {getAnalytics, logEvent, logScreenView} from '@react-native-firebase/analytics';
 import {getCrashlytics, log} from '@react-native-firebase/crashlytics';
 
-// Every event also leaves a Crashlytics breadcrumb, so crash reports show
-// what the user was doing right before the crash.
 function breadcrumb(name: string, params?: Record<string, string | number | boolean>): void {
     try {
         log(getCrashlytics(), params ? `${name} ${JSON.stringify(params)}` : name);

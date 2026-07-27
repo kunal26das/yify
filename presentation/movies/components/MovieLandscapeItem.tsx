@@ -15,22 +15,16 @@ import {POSTER_GAP} from './moviePosterLayout';
 const IS_WEB = Platform.OS === 'web';
 const ART_ASPECT = 16 / 9;
 
-/** Width of a landscape card for a rail sized by its poster width. */
 export function landscapeWidth(posterWidth: number): number {
     return Math.round(posterWidth * 1.9);
 }
 
-/** Full height a landscape cell occupies, including the caption under the art. */
 export function landscapeCellHeight(posterWidth: number): number {
     return Math.round(landscapeWidth(posterWidth) / ART_ASPECT) + CAPTION_HEIGHT;
 }
 
 const CAPTION_HEIGHT = 46;
 
-/**
- * A wide card built from the movie's backdrop rather than its poster, captioned underneath —
- * the shape Hotstar uses for Continue Watching and its editorial rows.
- */
 export function MovieLandscapeItem({
                                        movie,
                                        posterWidth,
@@ -50,8 +44,6 @@ export function MovieLandscapeItem({
     const width = landscapeWidth(posterWidth);
     const artHeight = Math.round(width / ART_ASPECT);
 
-    // Backdrops are the point of this card; a poster is only the fallback when there is none, and
-    // it gets cropped to the same 16:9 box so the rail keeps one rhythm.
     const art = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
 
     const animate = (to: number) =>

@@ -1,6 +1,6 @@
+import {router} from 'expo-router';
 import {OrderBy, SortBy} from './movieFilterOptions';
 
-/** The screens the app can navigate to as a top-level destination. */
 export type DestinationKey = 'home' | 'movies' | 'new' | 'my-list';
 
 export interface Destination {
@@ -9,10 +9,6 @@ export interface Destination {
     href: string;
 }
 
-/**
- * One list shared by the nav, the footer and the landing-page setting, so a destination can't be
- * added in one place and quietly missing from the others.
- */
 export const DESTINATIONS: readonly Destination[] = [
     {key: 'home', label: 'Home', href: '/'},
     {key: 'movies', label: 'Movies', href: '/browse'},
@@ -27,3 +23,29 @@ export const DESTINATIONS: readonly Destination[] = [
 export function destinationHref(key: DestinationKey): string {
     return DESTINATIONS.find((d) => d.key === key)?.href ?? '/';
 }
+
+export function goToDestination(href: string, currentPathname: string): void {
+    const [path, query = ''] = href.split('?');
+    const target = path || '/';
+    if (target !== currentPathname) {
+        router.push(href as never);
+        return;
+    }
+
+    const incoming = new URLSearchParams(query);
+    const next: Record<string, string | undefined> = {};
+    for (const key of BROWSE_PARAM_KEYS) {
+        next[key] = incoming.get(key) ?? undefined;
+    }
+    router.setParams(next);
+}
+
+const BROWSE_PARAM_KEYS = [
+    'query',
+    'genre',
+    'quality',
+    'minimum_rating',
+    'sort_by',
+    'order_by',
+    'focus',
+] as const;

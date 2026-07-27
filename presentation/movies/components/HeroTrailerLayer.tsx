@@ -1,13 +1,6 @@
 import {StyleSheet, View} from 'react-native';
 import {YoutubePlayer} from './YoutubePlayer';
 
-/**
- * A 16:9 trailer scaled to *cover* the hero box rather than letterbox inside it.
- *
- * The billboard is far taller than 16:9 on phones, so fitting the video to the width would leave
- * black bars top and bottom. Instead the video is blown up until both axes are filled and the
- * overflow is clipped — the same crop Netflix uses for its background trailers.
- */
 export function HeroTrailerLayer({
     videoId,
     width,
@@ -47,11 +40,6 @@ export function HeroTrailerLayer({
                 />
             </View>
 
-            {/* The ambient trailer is scenery, not a player, so the pointer must never reach it —
-                otherwise YouTube fades in its own title bar and transport controls on hover. A
-                `pointerEvents="none"` wrapper is not enough: React Native Web writes
-                `pointer-events: auto` onto child views, which overrides the parent for the iframe
-                below. A transparent pane over the video is what actually keeps hover off it. */}
             {controls ? null : <View style={StyleSheet.absoluteFill}/>}
         </View>
     );

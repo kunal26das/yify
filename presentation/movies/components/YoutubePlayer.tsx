@@ -13,7 +13,6 @@ export function YoutubePlayer({
 }: {
   videoId: string;
   width: number;
-  /** Defaults to 16:9 against `width`. Pass explicitly to letterbox-free cover a taller box. */
   height?: number;
   autoplay?: boolean;
   muted?: boolean;
@@ -37,7 +36,6 @@ export function YoutubePlayer({
         mute={muted}
         forceAndroidAutoplay={autoplay}
         onChangeState={(state: string) => {
-          // A looping background trailer restarts itself instead of settling into a paused frame.
           if (state === 'ended') setPlaying(loop);
           else if (state === 'paused') setPlaying(false);
           else if (state === 'playing') setPlaying(true);

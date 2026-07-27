@@ -7,7 +7,6 @@ function subscribe(callback: () => void) {
   return () => subscription.remove();
 }
 
-/** See the native file — same override, with the web's own system-scheme subscription. */
 export function useColorScheme() {
   const system = useSyncExternalStore(
     subscribe,

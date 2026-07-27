@@ -22,18 +22,13 @@ import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {useIsInWatchlist} from '../useWatchlist';
 import {useTopTenRank} from './TopTenContext';
 
-// Long enough that sweeping the pointer across a rail doesn't strobe cards open, short enough to
-// feel like a hover rather than a long-press.
 const OPEN_DELAY_MS = 480;
-// Grace period for the pointer to travel the gap between the poster and the card it opened.
 const CLOSE_DELAY_MS = 140;
 
 const CARD_WIDTH = 340;
 const CARD_MARGIN = 12;
 const CARD_ART_HEIGHT = Math.round((CARD_WIDTH * 9) / 16);
 const CARD_HEIGHT = CARD_ART_HEIGHT + 172;
-// Slack around the poster and the card so a pointer resting on the seam between them doesn't
-// register as "outside both" and dismiss.
 const HIT_PADDING = 10;
 
 interface Rect {
@@ -47,18 +42,9 @@ interface HoverState {
     movie: Movie;
     rect: Rect;
     card: Rect;
-    /** The list the poster lives in, so a wheel over the card can still drive it. See `onWheel`. */
     scroller: HTMLElement | null;
 }
 
-/**
- * Nearest ancestor of `node` that actually scrolls vertically.
- *
- * The card is rendered at screen level rather than inside the rail, which is what keeps it from
- * being clipped — but it also means the card sits outside the list's scroll container, so the
- * browser has nothing to scroll when the wheel turns over it. Finding the scroller up front lets
- * the wheel handler drive it directly.
- */
 function scrollableAncestor(node: Element | null): HTMLElement | null {
     let el = node?.parentElement ?? null;
     while (el) {
@@ -84,10 +70,6 @@ function clamp(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
 }
 
-/**
- * Where the card sits for a given poster: centred on it, then pulled back inside the viewport so
- * cards at the ends of a rail stay fully visible instead of running off the edge.
- */
 function cardLayoutFor(rect: Rect): Rect {
     const viewportW = typeof window === 'undefined' ? CARD_WIDTH : window.innerWidth;
     const viewportH = typeof window === 'undefined' ? CARD_HEIGHT : window.innerHeight;
@@ -123,21 +105,11 @@ export function useHoverCard(): HoverCardController {
     return useContext(HoverCardContext);
 }
 
-/**
- * Screen-level host for the expand-on-hover poster card.
- *
- * The card is rendered here, at the root, rather than inside the rail that owns the poster: a
- * horizontal FlatList is a scroll container, so a card drawn inside it would be clipped at the
- * row's edges exactly where it needs to overflow. Anchoring to the poster's measured viewport rect
- * gives the same visual result with nothing to clip against.
- */
 export function HoverCardHost({children}: {children: ReactNode}) {
     const {isDesktop} = useResponsive();
     const [state, setState] = useState<HoverState | null>(null);
     const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // Mirrors `state` so `open` can tell whether it is already showing this title without taking
-    // a dependency on it (which would rebuild the controller on every open and close).
     const openRef = useRef<HoverState | null>(null);
     useEffect(() => {
         openRef.current = state;
@@ -154,7 +126,6 @@ export function HoverCardHost({children}: {children: ReactNode}) {
         (movie: Movie, anchor: unknown, source: string) => {
             const node = anchor as {getBoundingClientRect?: () => DOMRect} | null;
             if (!node?.getBoundingClientRect) return;
-            // Already showing this title — a re-entered hover must not restart the animation.
             if (openRef.current?.movie.id === movie.id) return;
             clearTimers();
             openTimerRef.current = setTimeout(() => {
@@ -173,16 +144,11 @@ export function HoverCardHost({children}: {children: ReactNode}) {
         [clearTimers]
     );
 
-    // Only cancels a pending open. Once a card is up, dismissal is owned by the pointer-position
-    // watcher below: the card lands under a stationary cursor, which makes the poster report a
-    // hover-out that would otherwise close the card and immediately reopen it in a loop.
     const close = useCallback(() => {
         if (openTimerRef.current) clearTimeout(openTimerRef.current);
         openTimerRef.current = null;
     }, []);
 
-    // Dismiss once the pointer is over neither the poster nor the card. Tracking position beats
-    // pointerenter/leave here because a card inserted under a still cursor never receives an enter.
     useEffect(() => {
         if (!state) return;
         const onMove = (e: PointerEvent) => {
@@ -205,16 +171,10 @@ export function HoverCardHost({children}: {children: ReactNode}) {
             onMoveCancelsClose(e);
             onMove(e);
         };
-        // Any scroll invalidates the measured anchor, so the card goes rather than floating over
-        // the wrong poster. Capture phase catches the rails' inner scrollers, which don't bubble.
         const dismiss = () => {
             clearTimers();
             setState(null);
         };
-        // A wheel turned over the card would otherwise go nowhere: the card is not inside the list's
-        // scroll container, so the browser finds nothing to scroll and the page sits still. Drive
-        // the list by hand for that case, then get out of the way — scrolling means the viewer is
-        // done with this card.
         const onWheel = (e: WheelEvent) => {
             if (contains(state.card, e.clientX, e.clientY, 0) && state.scroller) {
                 e.preventDefault();

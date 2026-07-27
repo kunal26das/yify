@@ -1,5 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
+import {router, usePathname} from 'expo-router';
 import {Animated, Platform, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LiquidGlassView} from '../../components/liquid-glass-view';
@@ -8,9 +8,8 @@ import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {Analytics} from '@/lib/analytics-events';
-import {OrderBy, SortBy} from '../constants/movieFilterOptions';
+import {DESTINATIONS, goToDestination} from '../constants/destinations';
 
-/** Distance scrolled before the bar is fully opaque — roughly the height of the bar itself. */
 const SOLID_AT = 90;
 
 export type NavKey = 'home' | 'movies' | 'new' | 'my-list' | 'settings';
@@ -21,35 +20,15 @@ interface NavItem {
     href: string;
 }
 
-const NAV_ITEMS: readonly NavItem[] = [
-    {key: 'home', label: 'Home', href: '/'},
-    {key: 'movies', label: 'Movies', href: '/browse'},
-    {
-        key: 'new',
-        label: 'New & Popular',
-        href: `/browse?sort_by=${SortBy.DateAdded}&order_by=${OrderBy.Desc}`,
-    },
-    {key: 'my-list', label: 'My List', href: '/my-list'},
-];
+const NAV_ITEMS: readonly NavItem[] = DESTINATIONS;
 
-// Kept out of the row above: it's a utility destination, not part of the catalogue, so on wide
-// screens it sits at the far end of the bar rather than among the browse links.
 const SETTINGS_ITEM: NavItem = {key: 'settings', label: 'Settings', href: '/settings'};
 
-/**
- * The app bar over the billboard: transparent while the hero is in view and fading to a solid
- * surface as the rails scroll under it.
- *
- * `scrollY` drives that fade on the native thread, so it stays smooth on a list that is also busy
- * mounting shelves. Without a `scrollY` the bar renders permanently solid, which is what secondary
- * screens (Browse, My List) want.
- */
 export function TopNav({
                            active,
                            scrollY,
                            onBack,
                        }: {
-    /** Omitted on screens that aren't a nav destination, such as movie details. */
     active?: NavKey;
     scrollY?: Animated.Value;
     onBack?: () => void;
@@ -57,6 +36,7 @@ export function TopNav({
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
     const {isPhone, gutter} = useResponsive();
+    const pathname = usePathname();
 
     const backgroundOpacity = scrollY
         ? scrollY.interpolate({
@@ -67,9 +47,8 @@ export function TopNav({
         : 1;
 
     const go = (item: NavItem) => {
-        if (item.key === active) return;
         Analytics.navSelect(item.key);
-        router.push(item.href as never);
+        goToDestination(item.href, pathname);
     };
 
     const renderLink = (item: NavItem) => (
@@ -110,8 +89,6 @@ export function TopNav({
             </Animated.View>
 
             <View style={[styles.row, {paddingTop: insets.top + 6, paddingHorizontal: gutter}]} pointerEvents="box-none">
-                {/* The browser supplies its own back affordance, so the bar only carries one on
-                    native, where there is no chrome around the app. */}
                 {onBack && Platform.OS !== 'web' ? (
                     <Pressable
                         onPress={onBack}
@@ -135,8 +112,6 @@ export function TopNav({
                     </ThemedText>
                 </Pressable>
 
-                {/* One row at every size. A phone can't fit four labels beside the wordmark, so the
-                    links scroll horizontally there instead of wrapping onto a second row. */}
                 {isPhone ? (
                     <ScrollView
                         horizontal
@@ -160,7 +135,6 @@ export function TopNav({
     );
 }
 
-/** Height the nav occupies, so screens can offset their first row clear of it. */
 export function useTopNavHeight(): number {
     const insets = useSafeAreaInsets();
     return insets.top + 58;
@@ -189,7 +163,6 @@ const styles = StyleSheet.create({
         ...Platform.select({web: {cursor: 'pointer'}, default: {}}),
     },
     links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
-    // Takes the remaining width so the links scroll within it rather than pushing the row wider.
     phoneLinks: {flex: 1},
     link: {paddingVertical: 4},
     linkLabel: {fontSize: 14.5},

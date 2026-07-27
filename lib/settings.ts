@@ -1,12 +1,6 @@
 import {createKeyValueStore} from './storage/create-key-value-store';
 import type {KeyValueStore} from './storage/key-value-store';
 
-/**
- * User preferences that persist across launches.
- *
- * Same shape as the watchlist store: a single in-memory snapshot backed by the platform key-value
- * store, with a subscribe/get pair so React can read it through `useSyncExternalStore`.
- */
 
 const STORE_ID = 'settings';
 const THEME_KEY = 'theme';
@@ -14,14 +8,11 @@ const NOTIFICATIONS_KEY = 'notifications';
 const LANDING_KEY = 'landing';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-/** Mirrors DestinationKey; kept as a plain union so lib/ doesn't reach into presentation/. */
 export type LandingPage = 'home' | 'movies' | 'new' | 'my-list';
 
 export interface Settings {
     theme: ThemePreference;
-    /** Whether the new-movie check is allowed to notify. */
     notifications: boolean;
-    /** The screen the app opens on. */
     landingPage: LandingPage;
 }
 
@@ -52,8 +43,6 @@ function read(): Settings {
     snapshot = {
         theme: isThemePreference(theme) ? theme : DEFAULTS.theme,
         landingPage: isLandingPage(landing) ? landing : DEFAULTS.landingPage,
-        // Absent means "never set", which is on — the app asks for permission before it can
-        // actually notify, so defaulting to on is not the same as notifying uninvited.
         notifications: s.getString(NOTIFICATIONS_KEY) !== 'false',
     };
     return snapshot;
@@ -87,12 +76,10 @@ export function setLandingPage(landingPage: LandingPage): void {
     write({...read(), landingPage});
 }
 
-/** Read outside React — the entry route consults this once on launch. */
 export function getLandingPage(): LandingPage {
     return read().landingPage;
 }
 
-/** Read outside React — the background check consults this before notifying. */
 export function areNotificationsEnabled(): boolean {
     return read().notifications;
 }

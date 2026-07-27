@@ -24,15 +24,8 @@ import {Analytics} from '@/lib/analytics-events';
 
 const COLUMN_MAX = 920;
 
-// A missing maxresdefault answers 404 with a real 120x90 grey "unavailable" JPEG rather than a
-// transport error, so the image decodes fine and onError never fires. Anything this small is that
-// placeholder — every genuine maxresdefault is 1280x720.
 const YT_PLACEHOLDER_MAX_WIDTH = 500;
 
-// The hero doubles as the trailer's play surface, so it leads with the trailer's own poster frame
-// rather than an arbitrary screenshot. `maxresdefault` is the only 16:9 size YouTube serves large
-// enough for a full-bleed backdrop, but it 404s on trailers that were never uploaded in HD — hence
-// the fallbacks. (hqdefault/sddefault always exist but are 4:3 letterboxed, so they'd show bars.)
 function backdropCandidates(ytTrailerCode: string | undefined, screenshot: string | undefined, background: string | undefined): string[] {
     return [
         ytTrailerCode ? `https://img.youtube.com/vi/${ytTrailerCode}/maxresdefault.jpg` : undefined,
@@ -67,8 +60,6 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const torrentCols = Math.max(2, Math.floor(bodyWidth / 250));
     const torrentCardWidth = Math.floor((bodyWidth - TORRENT_GAP * (torrentCols - 1)) / torrentCols);
 
-  // The app bar carries the back action here, so details keeps the same header as every other
-  // screen instead of a lone floating chevron.
   const BackButton = (
     <TopNav onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}/>
   );
@@ -425,8 +416,6 @@ function Section({
 }) {
   return (
     <View style={[styles.section, flush && styles.sectionFlush]}>
-        {/* Same treatment as the "More like this" rail heading below, so every section on the
-            screen reads as one hierarchy rather than the rail looking like a different component. */}
         <View style={[styles.sectionTitleRow, flush && {marginLeft: Spacing.lg}]}>
             <ThemedText type="heading" style={styles.sectionTitle}>{title}</ThemedText>
         </View>
@@ -617,7 +606,6 @@ const styles = StyleSheet.create({
     section: {marginTop: Spacing.xxl},
     sectionFlush: {marginHorizontal: -Spacing.lg},
     sectionTitleRow: {flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md},
-    // Matches MovieRail's header type ramp exactly.
     sectionTitle: {fontSize: 21, lineHeight: 26},
     paragraph: {fontSize: 15, lineHeight: 23},
 

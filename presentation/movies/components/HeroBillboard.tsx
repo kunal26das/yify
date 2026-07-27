@@ -23,11 +23,7 @@ import {HeroTrailerLayer} from './HeroTrailerLayer';
 import {useTopTenRank} from './TopTenContext';
 
 const ROTATE_MS = 6500;
-// While a background trailer is running the slide holds far longer, so the trailer gets to play
-// rather than being swept away a beat after it fades in.
 const ROTATE_WITH_TRAILER_MS = 30000;
-// Netflix lets the artwork land before the video starts; the same pause keeps the billboard from
-// feeling like a video player and avoids burning bandwidth on a slide being scrolled past.
 const TRAILER_START_DELAY_MS = 2400;
 
 type Colors = ReturnType<typeof usePalette>['colors'];
@@ -37,7 +33,6 @@ interface HeroBillboardProps {
     width: number;
     height: number;
     rounded?: boolean;
-    /** Trailer id per movie id: string to play, null for "checked, has none", missing for "unknown". */
     trailers?: Record<number, string | null>;
     onRequestTrailer?: (movieId: number) => void;
 }
@@ -57,8 +52,6 @@ export function HeroBillboard({
 
     const [index, setIndex] = useState(0);
     const [muted, setMuted] = useState(true);
-    // Trailer playback for the active slide: 'idle' before the delay elapses, 'ambient' for the
-    // silent looping backdrop, 'feature' once the viewer hits Play (sound + controls, no rotation).
     const [mode, setMode] = useState<'idle' | 'ambient' | 'feature'>('idle');
     const indexRef = useRef(0);
     const scrollXRef = useRef(0);
@@ -71,9 +64,6 @@ export function HeroBillboard({
     const activeMovie = movies[index];
     const activeTrailer = activeMovie ? trailers?.[activeMovie.id] : undefined;
 
-    // Append a copy of the first slide after the last, so auto-advancing past the end slides
-    // forward into it and then hops back to the real first slide instantly (same image = invisible)
-    // — a seamless loop instead of the abrupt rewind to index 0.
     const data = useMemo(() => (looped ? [...movies, movies[0]] : movies), [looped, movies]);
 
     const realForData = useCallback(
@@ -97,10 +87,8 @@ export function HeroBillboard({
     const scheduleNext = useCallback(() => {
         clearAuto();
         if (!looped || width <= 0) return;
-        // A trailer the viewer chose to play owns the billboard until they leave it.
         if (mode === 'feature') return;
         autoTimerRef.current = setTimeout(() => {
-            // Always animated — the appended clone makes even the wrap a smooth forward slide.
             scrollToData(indexRef.current + 1, true);
             scheduleNextRef.current();
         }, mode === 'ambient' ? ROTATE_WITH_TRAILER_MS : ROTATE_MS);
@@ -119,9 +107,6 @@ export function HeroBillboard({
         [count]
     );
 
-    // Once motion settles exactly on the appended clone page, hop back to the real first slide with
-    // no animation. Requiring the offset to be *at* the clone boundary (not just past the halfway
-    // point) avoids hopping mid-drag when a finger pauses between the last slide and the clone.
     const scheduleReposition = useCallback(() => {
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
         idleTimerRef.current = setTimeout(() => {
@@ -137,8 +122,6 @@ export function HeroBillboard({
             const x = e.nativeEvent.contentOffset.x;
             scrollXRef.current = x;
             setActive(realForData(Math.round(x / width)));
-            // onScroll fires on every platform, so it — not the web-dead drag/momentum callbacks —
-            // both defers auto-advance and drives the seamless clone hop.
             scheduleNext();
             scheduleReposition();
         },
@@ -153,7 +136,6 @@ export function HeroBillboard({
         [scrollToData, setActive]
     );
 
-    // Start auto-advance; realign to the active slide when the viewport width changes (e.g. rotation).
     useEffect(() => {
         if (width > 0) scrollToData(indexRef.current, false);
         scheduleNext();
@@ -163,8 +145,6 @@ export function HeroBillboard({
         };
     }, [width, scrollToData, scheduleNext, clearAuto]);
 
-    // Ask for the active slide's trailer, then fade it in once the artwork has had its moment.
-    // Changing slides resets both, so a trailer never bleeds onto the wrong backdrop.
     useEffect(() => {
         setMode('idle');
         if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
@@ -180,7 +160,6 @@ export function HeroBillboard({
         };
     }, [activeMovie, activeTrailer, onRequestTrailer]);
 
-    // One impression per hero slide per mount, fired as each slide becomes active.
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
         if (!activeMovie || seenRef.current.has(activeMovie.id)) return;
@@ -197,7 +176,6 @@ export function HeroBillboard({
             setMode('feature');
             return;
         }
-        // Nothing to play inline — the details screen is where the torrents live.
         router.push(`/movie/${activeMovie.id}`);
     }, [activeMovie, activeTrailer]);
 
@@ -237,10 +215,6 @@ export function HeroBillboard({
                         width={width}
                         height={height}
                         colors={colors}
-                        // Only the slide currently on screen carries the video, so at most one
-                        // YouTube embed exists at a time no matter how many slides are mounted.
-                        // Compared against the raw index, not the real one, so the appended clone
-                        // never mounts a second copy of slide 0's trailer.
                         trailerId={i === index && mode !== 'idle' ? activeTrailer ?? null : null}
                         feature={mode === 'feature'}
                         muted={muted}
@@ -261,9 +235,6 @@ export function HeroBillboard({
                 </Pressable>
             ) : null}
 
-            {/* The thumbnail strip needs room beside the buttons; on a phone the CTA row already
-                spans the width, so those sizes get dots instead — the same split Hotstar makes
-                between its web and mobile billboards. */}
             {looped && mode !== 'feature' ? (
                 isPhone ? (
                     <View style={styles.dots} pointerEvents="box-none">
@@ -291,11 +262,6 @@ export function HeroBillboard({
 const THUMB_WIDTH = 74;
 const THUMB_HEIGHT = Math.round((THUMB_WIDTH * 9) / 16);
 
-/**
- * The featured-title selector Hotstar puts in the corner of its billboard: a strip of backdrop
- * thumbnails, the active one lit up. It replaces a row of dots, which say how many slides there are
- * but nothing about what they hold.
- */
 function HeroThumbStrip({
                             movies,
                             index,
@@ -307,7 +273,6 @@ function HeroThumbStrip({
 }) {
     const scrollRef = useRef<ScrollView>(null);
 
-    // Keep the active thumbnail in view as the billboard rotates on its own.
     useEffect(() => {
         scrollRef.current?.scrollTo({
             x: Math.max(0, (index - 2) * (THUMB_WIDTH + 8)),
@@ -412,8 +377,6 @@ function HeroSlide({
                 />
             ) : null}
 
-            {/* Scrims: a bottom ramp so the copy stays legible over any artwork, and a left ramp
-                that keeps the text side dark on wide screens where the video fills the frame. */}
             <LinearGradient
                 colors={['rgba(6,6,8,0.30)', 'rgba(6,6,8,0.10)', 'rgba(6,6,8,0.55)', 'rgba(6,6,8,0.94)']}
                 bands={16}
@@ -434,15 +397,12 @@ function HeroSlide({
                 pointerEvents="none"
             />
 
-            {/* The controls-on feature trailer owns the pointer; the copy steps aside for it. */}
             <View style={styles.content} pointerEvents={feature ? 'none' : 'box-none'}>
                 <Pressable
                     onPress={() => openDetails('hero_slide')}
                     accessibilityRole="button"
                     accessibilityLabel={`View ${movie.title}`}
                 >
-                    {/* Hotstar leads with a line of context in amber — why this title is here —
-                        rather than a generic "featured" chip. */}
                     <ThemedText style={[styles.tagline, {color: colors.gold}]} numberOfLines={1}>
                         {taglineFor(movie, rank)}
                     </ThemedText>
@@ -531,10 +491,6 @@ function HeroSlide({
     );
 }
 
-/**
- * The line of context above the title. Chart position is the strongest claim available, then a
- * high score, then the genre — never an empty "featured", which tells the viewer nothing.
- */
 function taglineFor(movie: Movie, rank: number | null): string {
     if (rank) return `#${rank} in Movies Today`;
     if (movie.rating >= 8) return 'Critically acclaimed';
@@ -603,7 +559,6 @@ const styles = StyleSheet.create({
     muteButton: {
         position: 'absolute',
         right: Spacing.xl,
-        // Clears the thumbnail strip below it rather than sitting on top of the first thumbnail.
         bottom: Spacing.xxl + THUMB_HEIGHT + 20,
         width: 38,
         height: 38,

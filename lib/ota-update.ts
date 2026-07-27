@@ -1,20 +1,8 @@
-/**
- * Over-the-air update progress, published as a tiny observable store.
- *
- * The CodePush higher-order component syncs on its own but gives the app no way to observe what it
- * is doing, so the sync is driven from here instead — `sync()` hands back both a status callback and
- * a byte-progress callback, which is everything the snackbar needs.
- *
- * The module is only ever reached on native: Metro serves ota-update.web.ts on web, so
- * `@revopush/react-native-code-push` is never pulled into the web bundle (a static import of it
- * breaks `expo export --platform web`). Even here the require stays inside the functions.
- */
 
 export type OtaState = 'idle' | 'checking' | 'downloading' | 'installing' | 'ready' | 'error';
 
 export interface OtaStatus {
     state: OtaState;
-    /** 0–1 while downloading; 1 once installed. */
     progress: number;
 }
 
@@ -39,7 +27,6 @@ export function subscribeOta(listener: () => void): () => void {
     };
 }
 
-/** Clears the snackbar without touching the pending update, which still applies on next resume. */
 export function dismissOta(): void {
     publish(IDLE);
 }
@@ -71,7 +58,6 @@ export async function syncOta(): Promise<void> {
                     case Status.UNKNOWN_ERROR:
                         publish({state: 'error', progress: 0});
                         break;
-                    // UP_TO_DATE and UPDATE_IGNORED are the normal quiet outcomes: say nothing.
                     default:
                         publish(IDLE);
                 }
@@ -95,6 +81,5 @@ export function restartApp(): void {
         const codePush = require('@revopush/react-native-code-push');
         codePush.restartApp();
     } catch {
-        // Nothing to restart into — leave the app as it is.
     }
 }

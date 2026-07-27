@@ -21,17 +21,10 @@ export interface AppInfo {
     platform: string;
 }
 
-/**
- * State and actions behind the settings screen, so the screen itself only lays things out — the
- * same split the movie screens use.
- */
 export function useSettingsViewModel() {
     const settings: Settings = useSettings();
     const watchlist = useWatchlist();
 
-    // True once the viewer has asked for notifications but the OS or browser refuses to deliver
-    // them. Kept separate from the preference: the switch reflects what they asked for, and this
-    // explains why nothing will arrive.
     const [permissionBlocked, setPermissionBlocked] = useState(false);
     const [listCleared, setListCleared] = useState(false);
 
@@ -57,9 +50,6 @@ export function useSettingsViewModel() {
         setLandingPage(landingPage);
     }, []);
 
-    // The preference always follows the switch. Permission is requested after, and only affects the
-    // explanatory notice — otherwise a denied permission would pin the switch off and it would look
-    // broken with no way back.
     const toggleNotifications = useCallback(async (next: boolean) => {
         Analytics.settingChanged('notifications', String(next));
         setNotificationsEnabled(next);
