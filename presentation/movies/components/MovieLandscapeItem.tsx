@@ -19,11 +19,15 @@ export function landscapeWidth(posterWidth: number): number {
     return Math.round(posterWidth * 1.9);
 }
 
-export function landscapeCellHeight(posterWidth: number): number {
-    return Math.round(landscapeWidth(posterWidth) / ART_ASPECT) + CAPTION_HEIGHT;
+export function landscapeArtHeight(posterWidth: number): number {
+    return Math.round(landscapeWidth(posterWidth) / ART_ASPECT);
 }
 
-const CAPTION_HEIGHT = 46;
+export function landscapeCellHeight(posterWidth: number): number {
+    return landscapeArtHeight(posterWidth) + CAPTION_HEIGHT;
+}
+
+const CAPTION_HEIGHT = 44;
 
 export function MovieLandscapeItem({
                                        movie,
@@ -42,7 +46,7 @@ export function MovieLandscapeItem({
     const hoverCard = useHoverCard();
 
     const width = landscapeWidth(posterWidth);
-    const artHeight = Math.round(width / ART_ASPECT);
+    const artHeight = landscapeArtHeight(posterWidth);
 
     const art = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
 
@@ -57,6 +61,8 @@ export function MovieLandscapeItem({
         <View ref={nodeRef} style={[styles.cell, {width, marginHorizontal: POSTER_GAP / 2}]} collapsable={false}>
             <Link href={`/movie/${movie.id}`} asChild>
                 <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={[movie.title, meta].filter(Boolean).join(', ')}
                     onPress={() => Analytics.movieOpen(movie, source)}
                     onPressIn={() => animate(0.97)}
                     onPressOut={() => animate(1)}

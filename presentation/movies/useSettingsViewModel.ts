@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import {useCallback, useMemo, useState} from 'react';
 import {Platform} from 'react-native';
 import {Analytics} from '@/lib/analytics-events';
-import {requestNotificationPermission} from '@/lib/new-movies-task';
+import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 import {
     setLandingPage,
     setNotificationsEnabled,
@@ -17,8 +17,6 @@ import {useWatchlist} from './useWatchlist';
 
 export interface AppInfo {
     version: string;
-    build: string | null;
-    platform: string;
 }
 
 export function useSettingsViewModel() {
@@ -33,11 +31,8 @@ export function useSettingsViewModel() {
             Platform.OS === 'android'
                 ? Constants.expoConfig?.android?.versionCode
                 : Constants.expoConfig?.ios?.buildNumber;
-        return {
-            version: Constants.expoConfig?.version ?? '—',
-            build: build != null ? String(build) : null,
-            platform: Platform.OS === 'web' ? 'Web' : Platform.OS === 'ios' ? 'iOS' : 'Android',
-        };
+        const version = Constants.expoConfig?.version ?? '—';
+        return {version: build != null ? `${version} (${build})` : version};
     }, []);
 
     const selectTheme = useCallback((theme: ThemePreference) => {
@@ -57,7 +52,9 @@ export function useSettingsViewModel() {
             setPermissionBlocked(false);
             return;
         }
-        setPermissionBlocked(!(await requestNotificationPermission()));
+        const granted = await requestNotificationPermission();
+        setPermissionBlocked(!granted);
+        if (granted) void registerNewMoviesTask();
     }, []);
 
     const clearList = useCallback(() => {

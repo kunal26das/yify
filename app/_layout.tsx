@@ -19,12 +19,12 @@ import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-g
 import {Colors, UpdateSnackbar, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
 import {syncOta} from '@/lib/ota-update';
 import {initRemoteConfig} from '@/lib/remote-config';
-import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
+import {hasNotificationPermission, registerNewMoviesTask} from '@/lib/new-movies-task';
 import {Analytics} from '@/lib/analytics-events';
 import {startPlayServices} from '@/lib/play-services';
 
 void initRemoteConfig();
-void requestNotificationPermission().then((granted) => {
+void hasNotificationPermission().then((granted) => {
     if (granted) void registerNewMoviesTask();
 });
 

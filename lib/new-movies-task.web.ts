@@ -58,6 +58,10 @@ function showWebNotification(content: NewMoviesNotification): void {
     };
 }
 
+export async function hasNotificationPermission(): Promise<boolean> {
+    return hasNotificationApi() && Notification.permission === 'granted';
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
     if (!hasNotificationApi()) return false;
     if (Notification.permission === 'granted') return true;

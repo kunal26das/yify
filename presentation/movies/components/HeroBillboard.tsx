@@ -10,6 +10,7 @@ import {
     StyleSheet,
     View,
 } from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
@@ -47,12 +48,14 @@ export function HeroBillboard({
                               }: HeroBillboardProps) {
     const {colors} = usePalette();
     const {isPhone} = useResponsive();
+    const insets = useSafeAreaInsets();
     const count = movies.length;
     const looped = count > 1;
 
     const [index, setIndex] = useState(0);
     const [muted, setMuted] = useState(true);
     const [mode, setMode] = useState<'idle' | 'ambient' | 'feature'>('idle');
+    const [trailerPlaying, setTrailerPlaying] = useState(false);
     const indexRef = useRef(0);
     const scrollXRef = useRef(0);
     const scrollRef = useRef<ScrollView>(null);
@@ -147,6 +150,7 @@ export function HeroBillboard({
 
     useEffect(() => {
         setMode('idle');
+        setTrailerPlaying(false);
         if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         if (!activeMovie) return;
         onRequestTrailer?.(activeMovie.id);
@@ -219,17 +223,22 @@ export function HeroBillboard({
                         feature={mode === 'feature'}
                         muted={muted}
                         onPlay={onPlay}
+                        onTrailerStarted={() => setTrailerPlaying(true)}
                     />
                 ))}
             </ScrollView>
 
-            {mode !== 'idle' && activeTrailer ? (
+            {mode !== 'idle' && activeTrailer && trailerPlaying ? (
                 <Pressable
                     onPress={toggleMute}
                     hitSlop={10}
                     accessibilityRole="button"
                     accessibilityLabel={muted ? 'Unmute trailer' : 'Mute trailer'}
-                    style={({pressed}) => [styles.muteButton, {opacity: pressed ? 0.7 : 1}]}
+                    style={({pressed}) => [
+                        styles.muteButton,
+                        isPhone ? {top: insets.top + 64} : styles.muteButtonWide,
+                        {opacity: pressed ? 0.7 : 1},
+                    ]}
                 >
                     <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color="#fff"/>
                 </Pressable>
@@ -330,6 +339,7 @@ function HeroSlide({
                        feature,
                        muted,
                        onPlay,
+                       onTrailerStarted,
                    }: {
     movie: Movie;
     width: number;
@@ -339,6 +349,7 @@ function HeroSlide({
     feature: boolean;
     muted: boolean;
     onPlay: () => void;
+    onTrailerStarted: () => void;
 }) {
     const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
     const rank = useTopTenRank(movie.id);
@@ -374,6 +385,7 @@ function HeroSlide({
                     height={height}
                     muted={muted}
                     controls={feature}
+                    onStarted={onTrailerStarted}
                 />
             ) : null}
 
@@ -397,7 +409,7 @@ function HeroSlide({
                 pointerEvents="none"
             />
 
-            <View style={styles.content} pointerEvents={feature ? 'none' : 'box-none'}>
+            <View style={styles.content} pointerEvents="box-none">
                 <Pressable
                     onPress={() => openDetails('hero_slide')}
                     accessibilityRole="button"
@@ -446,12 +458,27 @@ function HeroSlide({
                         onPress={onPlay}
                         accessibilityRole="button"
                         accessibilityLabel={`Watch ${movie.title}`}
-                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                        style={({pressed}) => [styles.ctaFlex, {opacity: pressed ? 0.85 : 1}]}
                     >
                         <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
                             <Ionicons name="play" size={20} color="#fff"/>
                             <ThemedText style={styles.playLabel}>Watch Now</ThemedText>
                         </LinearGradient>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => {
+                            Analytics.heroMoreInfo(movie);
+                            openDetails('hero_more_info');
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`More info about ${movie.title}`}
+                        style={({pressed}) => [styles.ctaFlex, {opacity: pressed ? 0.85 : 1}]}
+                    >
+                        <View style={styles.infoButton}>
+                            <Ionicons name="information-circle-outline" size={20} color="#fff"/>
+                            <ThemedText style={styles.infoLabel}>More Info</ThemedText>
+                        </View>
                     </Pressable>
 
                     <Pressable
@@ -466,23 +493,17 @@ function HeroSlide({
                         }
                         style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
                     >
-                        <View style={styles.addButton}>
-                            <Ionicons name={saved ? 'checkmark' : 'add'} size={22} color="#fff"/>
-                        </View>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => {
-                            Analytics.heroMoreInfo(movie);
-                            openDetails('hero_more_info');
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={`More info about ${movie.title}`}
-                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
-                    >
-                        <View style={styles.infoButton}>
-                            <Ionicons name="information-circle-outline" size={20} color="#fff"/>
-                            <ThemedText style={styles.infoLabel}>More Info</ThemedText>
+                        <View
+                            style={[
+                                styles.addButton,
+                                saved && {backgroundColor: colors.accent, borderColor: colors.accent},
+                            ]}
+                        >
+                            <Ionicons
+                                name={saved ? 'checkmark' : 'add'}
+                                size={22}
+                                color={saved ? colors.onAccent : '#fff'}
+                            />
                         </View>
                     </Pressable>
                 </View>
@@ -512,12 +533,12 @@ const styles = StyleSheet.create({
     slide: {justifyContent: 'flex-end', overflow: 'hidden'},
     meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
 
-    content: {paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl},
+    content: {paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxl + Spacing.sm},
 
     tagline: {fontSize: 14, marginBottom: 8, fontFamily: FontFamily.bold},
 
     title: {color: '#fff', fontSize: 34, lineHeight: 38},
-    metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 8},
+    metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap', overflow: 'hidden', marginTop: 8},
     metaItem: {flexDirection: 'row', alignItems: 'center', gap: 4},
     metaDot: {width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.6)', marginHorizontal: 8},
     metaText: {color: 'rgba(255,255,255,0.9)', fontSize: 13, fontFamily: FontFamily.semibold},
@@ -525,20 +546,21 @@ const styles = StyleSheet.create({
     summary: {color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 20, marginTop: 10, maxWidth: 560},
 
     ctaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18},
+    ctaFlex: {flex: 1},
     playButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingHorizontal: 30,
-        paddingVertical: 13,
+        height: 48,
+        paddingHorizontal: 16,
         borderRadius: Radius.pill,
     },
     playLabel: {fontSize: 16, color: '#fff', fontFamily: FontFamily.bold},
     addButton: {
         width: 48,
         height: 48,
-        borderRadius: Radius.md,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(109,109,110,0.5)',
@@ -548,9 +570,10 @@ const styles = StyleSheet.create({
     infoButton: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        paddingHorizontal: 22,
-        paddingVertical: 12,
+        height: 48,
+        paddingHorizontal: 16,
         borderRadius: Radius.pill,
         backgroundColor: 'rgba(109,109,110,0.65)',
     },
@@ -559,7 +582,6 @@ const styles = StyleSheet.create({
     muteButton: {
         position: 'absolute',
         right: Spacing.xl,
-        bottom: Spacing.xxl + THUMB_HEIGHT + 20,
         width: 38,
         height: 38,
         borderRadius: 19,
@@ -570,6 +592,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(6,6,8,0.35)',
         zIndex: 15,
     },
+    muteButtonWide: {bottom: Spacing.xxl + THUMB_HEIGHT + 20},
 
     thumbStrip: {
         position: 'absolute',

@@ -19,13 +19,11 @@ import {Analytics} from '@/lib/analytics-events';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
-import {TopNav, useTopNavHeight, type NavKey} from './components/TopNav';
+import {SEARCH_ROW_HEIGHT, TopNav, useTopNavHeight} from './components/TopNav';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
-    showBack?: boolean;
     autoFocus?: boolean;
-    navActive?: NavKey;
 }
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
@@ -35,10 +33,10 @@ type GridItem = Movie | SkeletonItem;
 const isSkeleton = (item: GridItem): item is SkeletonItem =>
     (item as SkeletonItem).__skeleton === true;
 
-export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movies'}: MoviesScreenProps) {
+export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const insets = useSafeAreaInsets();
     const {colors, gradients, scheme} = usePalette();
-    const {width, contentMaxWidth, isLarge} = useResponsive();
+    const {width, contentMaxWidth, isLarge, gutter} = useResponsive();
     const {
         movies,
         totalMovieCount,
@@ -50,6 +48,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
         setSearchQuery,
         filters,
         setFilters,
+        appliedFilters,
         applyFilters,
         clearFiltersAndReload,
         loadInitial,
@@ -68,7 +67,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
         loggedQueryRef.current = q;
     }, [appliedQuery]);
 
-    const navHeight = useTopNavHeight();
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
@@ -79,8 +77,8 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
 
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
     const gridWidth = Math.min(width, contentMaxWidth);
-    const searchBarHeight = 44 + POSTER_GAP * 2;
-    const listTopPadding = navHeight + searchBarHeight + POSTER_GAP / 2;
+    const navHeight = useTopNavHeight();
+    const listTopPadding = navHeight + SEARCH_ROW_HEIGHT + POSTER_GAP / 2;
 
     const numColumns = useMemo(
         () => Math.max(2, Math.floor(gridWidth / (POSTER_MIN_WIDTH + POSTER_GAP))),
@@ -198,30 +196,15 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
         []
     );
 
-    const Nav = (
-        <TopNav
-            active={navActive}
-            onBack={
-                showBack ? () => (router.canGoBack() ? router.back() : router.replace('/')) : undefined
-            }
-        />
-    );
-
-    const SearchBar = (
-        <View style={[styles.searchBarOverlay, {paddingTop: navHeight}]} pointerEvents="box-none">
+    const SearchField = (
+        <View style={[styles.searchBarFixed, {paddingHorizontal: gutter}]} pointerEvents="box-none">
             <View
                 style={[
-                    styles.searchBarFixed,
                     isLarge && {maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%'},
                 ]}
             >
                 <View style={styles.searchRow}>
-                    <LiquidGlassView
-                        tint={glassTint}
-                        intensity={80}
-                        fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.82)' : 'rgba(255,255,255,0.82)'}
-                        style={[styles.glassWrapper, styles.searchPill, {borderColor: colors.border}]}
-                    >
+                    <View style={styles.searchPill}>
                         <View style={styles.searchFieldWrapper}>
                             <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon}/>
                             <TextInput
@@ -253,11 +236,13 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                                 </Pressable>
                             ) : null}
                         </View>
-                    </LiquidGlassView>
+                    </View>
                 </View>
             </View>
         </View>
     );
+
+    const Nav = <TopNav active="movies" below={SearchField}/>;
 
     if (loading && movies.length === 0 && !error) {
         return (
@@ -274,14 +259,13 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                             ))}
                         </View>
                     </View>
-                    {SearchBar}
                 </SafeAreaView>
                 {Nav}
             </ThemedView>
         );
     }
 
-    if (error) {
+    if (error && movies.length === 0) {
         return (
             <ThemedView style={styles.container}>
                 <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
@@ -307,6 +291,12 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
             </ThemedView>
         );
     }
+
+    const activeFilterCount = [
+        appliedFilters.quality,
+        appliedFilters.genre,
+        appliedFilters.minimum_rating,
+    ].filter((v) => v != null).length;
 
     const currentIndex = Math.min(lastVisibleIndex + 1, movies.length);
     const isEmpty = movies.length === 0;
@@ -335,6 +325,30 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                             </ThemedText>
                         </View>
                     }
+                    ListFooterComponent={
+                        error ? (
+                            <View style={styles.footerError}>
+                                <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
+                                    Couldn&apos;t load more movies.
+                                </ThemedText>
+                                <Pressable
+                                    onPress={() => {
+                                        Analytics.retry('browse_more');
+                                        loadMore();
+                                    }}
+                                    accessibilityRole="button"
+                                    style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                                >
+                                    <View style={[styles.footerRetry, {borderColor: colors.border}]}>
+                                        <Ionicons name="refresh" size={16} color={colors.accent}/>
+                                        <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>
+                                            Try again
+                                        </ThemedText>
+                                    </View>
+                                </Pressable>
+                            </View>
+                        ) : null
+                    }
                     onViewableItemsChanged={onViewableItemsChanged}
                     viewabilityConfig={viewabilityConfig}
                     onEndReached={handleEndReached}
@@ -349,7 +363,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                             onRefresh={handleRefresh}
                             tintColor={colors.accent}
                             colors={[colors.accent]}
-                            progressViewOffset={navHeight + searchBarHeight}
+                            progressViewOffset={navHeight + SEARCH_ROW_HEIGHT}
                         />
                     }
                     contentContainerStyle={[
@@ -360,8 +374,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                     onScroll={onScroll}
                     scrollEventThrottle={16}
                 />
-
-                {SearchBar}
 
                 {totalMovieCount != null && !isEmpty && (
                     <View style={[styles.countOverlay, {paddingBottom: insets.bottom + 16}]} pointerEvents="box-none">
@@ -412,6 +424,16 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                             >
                                 <View style={[styles.circleSolid, {backgroundColor: colors.accent}]}>
                                     <Ionicons name="options" size={20} color={colors.onAccent}/>
+                                    {activeFilterCount > 0 ? (
+                                        <View style={[styles.filterBadge, {
+                                            backgroundColor: colors.onAccent,
+                                            borderColor: colors.accent
+                                        }]}>
+                                            <ThemedText style={[styles.filterBadgeText, {color: colors.accent}]}>
+                                                {activeFilterCount}
+                                            </ThemedText>
+                                        </View>
+                                    ) : null}
                                 </View>
                             </Pressable>
                         </LiquidGlassGroup>
@@ -421,7 +443,10 @@ export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movie
                 <MovieFilterModal
                     visible={filterModalVisible}
                     bottomInset={insets.bottom}
-                    onClose={() => setFilterModalVisible(false)}
+                    onClose={() => {
+                        setFilters(appliedFilters);
+                        setFilterModalVisible(false);
+                    }}
                     filters={filters}
                     onFiltersChange={setFilters}
                     onApply={(f: MovieFilters) => {
@@ -465,10 +490,10 @@ const styles = StyleSheet.create({
     centeredContent: {flex: 1, width: '100%', alignSelf: 'center', paddingHorizontal: POSTER_GAP / 2},
     aurora: {position: 'absolute', top: 0, left: 0, right: 0, opacity: 0.5},
 
-    searchBarOverlay: {position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1},
-    searchBarFixed: {paddingHorizontal: POSTER_GAP, paddingVertical: POSTER_GAP},
+    searchBarFixed: {paddingBottom: 8},
     searchRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
     searchPill: {flex: 1},
+
     searchBackGlass: {
         width: 44,
         height: 44,
@@ -478,13 +503,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    glassWrapper: {borderRadius: Radius.md, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth},
     searchFieldWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
         height: 44,
-        borderRadius: Radius.md,
-        paddingHorizontal: 14,
     },
     searchIcon: {marginRight: 8},
     searchInput: {flex: 1, height: 44, fontSize: 16, padding: 0, fontFamily: FontFamily.regular},
@@ -507,7 +529,17 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         marginTop: 20,
     },
-    ctaLabel: {color: '#fff', fontSize: 15, fontWeight: '700'},
+    ctaLabel: {fontSize: 15, fontWeight: '700'},
+    footerError: {alignItems: 'center', paddingVertical: 24, gap: 12, width: '100%'},
+    footerRetry: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        borderRadius: Radius.pill,
+        borderWidth: StyleSheet.hairlineWidth,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
 
     countOverlay: {position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', zIndex: 1},
     countRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
@@ -541,6 +573,19 @@ const styles = StyleSheet.create({
         height: 46,
         justifyContent: 'center',
     },
+    filterBadge: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        borderWidth: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 3,
+    },
+    filterBadgeText: {fontSize: 11, lineHeight: 14, fontWeight: '800'},
     countText: {fontSize: 14, fontWeight: '800'},
     countTotal: {fontSize: 13, fontWeight: '600'},
 });

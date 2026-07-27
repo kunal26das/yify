@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
-import {Platform, Pressable, ScrollView, StyleSheet, Switch, View} from 'react-native';
+import {Analytics} from '@/lib/analytics-events';
+import {Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {LandingPage, ThemePreference} from '@/lib/settings';
 import {ThemedText} from '../components/themed-text';
@@ -9,11 +9,16 @@ import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {DESTINATIONS} from './constants/destinations';
+import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {TopNav, useTopNavHeight} from './components/TopNav';
 import {useSettingsViewModel, type SettingsViewModel} from './useSettingsViewModel';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
+
+const WEBSITE_URL = 'https://kunal26das.github.io/yify';
+
+const LANDING_OPTIONS = DESTINATIONS.filter((d) => d.key !== 'my-list');
 
 const THEME_OPTIONS: {value: ThemePreference; label: string; icon: keyof typeof Ionicons.glyphMap}[] = [
     {value: 'system', label: 'System', icon: 'phone-portrait-outline'},
@@ -29,6 +34,20 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
     const {colors} = usePalette();
     const {gutter, contentMaxWidth} = useResponsive();
     const navHeight = useTopNavHeight();
+
+    const confirmClear = () => {
+        const count = vm.watchlistCount;
+        const message = `This removes ${count} ${count === 1 ? 'title' : 'titles'} from My List. This can't be undone.`;
+        if (Platform.OS === 'web') {
+            if (typeof window !== 'undefined' && !window.confirm(message)) return;
+            vm.clearList();
+            return;
+        }
+        Alert.alert('Clear My List?', message, [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Clear', style: 'destructive', onPress: vm.clearList},
+        ]);
+    };
 
     return (
         <ThemedView style={styles.container}>
@@ -68,7 +87,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                         Where the app opens. Home by default.
                     </ThemedText>
                     <View style={styles.choices}>
-                        {DESTINATIONS.map((destination) => (
+                        {LANDING_OPTIONS.map((destination) => (
                             <Choice
                                 key={destination.key}
                                 label={destination.label}
@@ -94,6 +113,8 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                             value={vm.notifications}
                             onValueChange={(v) => void vm.toggleNotifications(v)}
                             trackColor={{true: colors.accent, false: colors.surfaceSunken}}
+                            thumbColor={vm.notifications ? colors.onAccent : colors.surface}
+                            ios_backgroundColor={colors.surfaceSunken}
                         />
                     </View>
                     {vm.notifications && vm.permissionBlocked ? (
@@ -120,7 +141,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                         </View>
                         <Pressable
                             disabled={vm.watchlistCount === 0}
-                            onPress={vm.clearList}
+                            onPress={confirmClear}
                             accessibilityRole="button"
                             accessibilityLabel="Clear My List"
                             style={({pressed}) => [
@@ -141,11 +162,6 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
 
                 <Section title="About" colors={colors}>
                     <InfoRow label="Version" value={vm.appInfo.version} colors={colors}/>
-                    {vm.appInfo.build ? (
-                        <InfoRow label="Build" value={vm.appInfo.build} colors={colors}/>
-                    ) : null}
-                    <InfoRow label="Platform" value={vm.appInfo.platform} colors={colors}/>
-                    <InfoRow label="Catalogue" value="YTS API" colors={colors}/>
 
                     {Platform.OS === 'android' ? (
                         <Pressable
@@ -164,16 +180,24 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                         </View>
                     )}
 
-                    <ThemedText style={[styles.disclaimer, {color: colors.textFaint}]}>
-                        Yify is an unofficial client for the YTS API. It indexes what that API
-                        returns and hosts no files itself.
-                    </ThemedText>
+                    {Platform.OS !== 'web' ? (
+                        <Pressable
+                            onPress={() => {
+                                Analytics.websiteOpen('settings');
+                                void WebBrowser.openBrowserAsync(WEBSITE_URL);
+                            }}
+                            accessibilityRole="link"
+                            style={({pressed}) => [styles.linkRow, {opacity: pressed ? 0.7 : 1}]}
+                        >
+                            <ThemedText style={[styles.rowTitle, {color: colors.accent}]}>
+                                Open Yify on the web
+                            </ThemedText>
+                            <Ionicons name="open-outline" size={16} color={colors.accent}/>
+                        </Pressable>
+                    ) : null}
                 </Section>
             </ScrollView>
-            <TopNav
-                active="settings"
-                onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            />
+            <TopNav active="settings"/>
         </ThemedView>
     );
 }
@@ -335,5 +359,4 @@ const styles = StyleSheet.create({
     infoValue: {fontSize: 14, fontFamily: FontFamily.medium},
     linkRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
     store: {marginTop: Spacing.xs},
-    disclaimer: {fontSize: 12, lineHeight: 17, marginTop: Spacing.xs, fontFamily: FontFamily.regular},
 });

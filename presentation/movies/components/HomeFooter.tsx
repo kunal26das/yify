@@ -1,12 +1,10 @@
-import {usePathname} from 'expo-router';
-import Constants from 'expo-constants';
-import {Platform, Pressable, StyleSheet, View} from 'react-native';
+import {Pressable, StyleSheet, View} from 'react-native';
 import {Analytics} from '@/lib/analytics-events';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
-import {DESTINATIONS, goToDestination} from '../constants/destinations';
+import {DESTINATIONS, useGoTo} from '../constants/destinations';
 import {PlayStoreButton} from './PlayStoreButton';
 
 interface FooterLink {
@@ -25,16 +23,14 @@ const GENRE_LINKS: readonly FooterLink[] = [
 
 const APP_LINKS: readonly FooterLink[] = [{label: 'Settings', href: '/settings'}];
 
-export const APP_VERSION = Constants.expoConfig?.version ?? '—';
-
 export function HomeFooter() {
     const {colors} = usePalette();
     const {isPhone, gutter} = useResponsive();
-    const pathname = usePathname();
+    const goTo = useGoTo();
 
     const go = (link: FooterLink) => {
         Analytics.footerLink(link.label);
-        goToDestination(link.href, pathname);
+        goTo(link.href);
     };
 
     const column = (title: string, links: readonly FooterLink[]) => (
@@ -75,15 +71,6 @@ export function HomeFooter() {
                 </View>
             </View>
 
-            <View style={[styles.bottom, {borderTopColor: colors.border}]}>
-                <ThemedText style={[styles.fine, {color: colors.textFaint}]}>
-                    Movie data and artwork come from the YTS API. Yify is an unofficial client: it
-                    indexes what that API returns and hosts no files itself.
-                </ThemedText>
-                <ThemedText style={[styles.fine, {color: colors.textFaint}]}>
-                    v{APP_VERSION} · {Platform.OS === 'web' ? 'Web' : Platform.OS === 'ios' ? 'iOS' : 'Android'}
-                </ThemedText>
-            </View>
         </View>
     );
 }
@@ -109,11 +96,4 @@ const styles = StyleSheet.create({
     columnTitle: {fontSize: 13, letterSpacing: 0.6, marginBottom: 2, fontFamily: FontFamily.bold},
     link: {fontSize: 13.5, fontFamily: FontFamily.regular},
 
-    bottom: {
-        marginTop: Spacing.xl,
-        paddingTop: Spacing.lg,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        gap: 6,
-    },
-    fine: {fontSize: 11.5, lineHeight: 17, fontFamily: FontFamily.regular},
 });

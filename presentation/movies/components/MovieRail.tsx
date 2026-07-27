@@ -251,9 +251,7 @@ export function MovieRail({
         <View style={styles.rail}>
             <View style={[styles.header, {paddingHorizontal: gutter}]}>
                 <View style={styles.headerText}>
-                    <ThemedText type="heading" style={styles.title}>
-                        {title}
-                    </ThemedText>
+                    <ThemedText type="heading">{title}</ThemedText>
                     {subtitle ? (
                         <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>
                             {subtitle}
@@ -326,19 +324,18 @@ function RailHandle({
 }
 
 function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: number; posterWidth: number; source?: string}) {
-    const {colors, scheme} = usePalette();
+    const {colors} = usePalette();
     const posterHeight = posterWidth * 1.5;
     const numeralSize = rankedNumeralSize(posterWidth);
     const numeralArea = rankedNumeralArea(rank, posterWidth);
     const overlap = rankedOverlap(posterWidth);
-    const numeralColor = scheme === 'dark' ? colors.surfaceElevated : colors.surfaceSunken;
 
     return (
         <View style={[styles.rankedCell, {height: posterHeight}]}>
             <View style={[styles.numeralArea, {width: numeralArea, marginRight: -overlap}]} pointerEvents="none">
                 <ThemedText
                     type="display"
-                    style={[styles.numeral, {fontSize: numeralSize, lineHeight: numeralSize, color: numeralColor}]}
+                    style={[styles.numeral, {fontSize: numeralSize, lineHeight: numeralSize, color: colors.rankNumeral}]}
                 >
                     {rank}
                 </ThemedText>
@@ -358,7 +355,6 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
     },
     headerText: {flexShrink: 1},
-    title: {fontSize: 21, lineHeight: 26},
     subtitle: {fontSize: 13, marginTop: 2, fontFamily: FontFamily.regular},
     seeAll: {flexDirection: 'row', alignItems: 'center', gap: 1, paddingVertical: 2},
     seeAllLabel: {fontSize: 14, fontWeight: '700'},

@@ -1,5 +1,4 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
 import {useMemo} from 'react';
 import {FlatList, Pressable, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -15,6 +14,7 @@ import {MoviePosterItem} from './components/MoviePosterItem';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {TopNav, useTopNavHeight} from './components/TopNav';
 import {useWatchlist} from './useWatchlist';
+import {useGoTo} from './constants/destinations';
 
 export function MyListScreen() {
     const insets = useSafeAreaInsets();
@@ -22,6 +22,7 @@ export function MyListScreen() {
     const {width, contentMaxWidth, gutter} = useResponsive();
     const navHeight = useTopNavHeight();
     const movies = useWatchlist();
+    const goTo = useGoTo();
 
     const gridWidth = Math.min(width, contentMaxWidth);
     const numColumns = useMemo(
@@ -41,12 +42,12 @@ export function MyListScreen() {
                         <Ionicons name="bookmark-outline" size={54} color={colors.textMuted}/>
                         <ThemedText type="heading" style={styles.emptyTitle}>Your list is empty</ThemedText>
                         <ThemedText style={[styles.emptyBody, {color: colors.textMuted}]}>
-                            Tap the bookmark on any movie to keep it here.
+                            Open any movie and tap My List to keep it here.
                         </ThemedText>
                         <Pressable
                             onPress={() => {
                                 Analytics.browseAllOpen('my_list_empty');
-                                router.push('/browse' as never);
+                                goTo('/browse');
                             }}
                             style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
                         >
