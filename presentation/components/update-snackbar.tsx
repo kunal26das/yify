@@ -1,8 +1,10 @@
 import {Ionicons} from '@expo/vector-icons';
 import {useSyncExternalStore} from 'react';
-import {Animated, Pressable, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {dismissOta, getOtaStatus, restartApp, subscribeOta, type OtaStatus} from '@/lib/ota-update';
+import {Duration, PressableScale, enterPop, enterRise} from './motion';
 import {ThemedText} from './themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -33,7 +35,8 @@ export function UpdateSnackbar() {
 
     return (
         <View style={[styles.wrap, {bottom: insets.bottom + Spacing.lg}]} pointerEvents="box-none">
-            <View
+            <Animated.View
+                entering={enterRise()}
                 style={[
                     styles.bar,
                     {
@@ -42,11 +45,13 @@ export function UpdateSnackbar() {
                     },
                 ]}
             >
-                <Ionicons
-                    name={failed ? 'alert-circle-outline' : ready ? 'checkmark-circle-outline' : 'cloud-download-outline'}
-                    size={19}
-                    color="#fff"
-                />
+                <Animated.View key={state} entering={enterPop()}>
+                    <Ionicons
+                        name={failed ? 'alert-circle-outline' : ready ? 'checkmark-circle-outline' : 'cloud-download-outline'}
+                        size={19}
+                        color="#fff"
+                    />
+                </Animated.View>
                 <View style={styles.body}>
                     <ThemedText style={styles.message} numberOfLines={1}>
                         {message}
@@ -56,7 +61,13 @@ export function UpdateSnackbar() {
                             <Animated.View
                                 style={[
                                     styles.fill,
-                                    {backgroundColor: colors.accent, width: `${Math.round(progress * 100)}%`},
+                                    {
+                                        backgroundColor: colors.accent,
+                                        width: `${Math.round(progress * 100)}%`,
+                                        transitionProperty: 'width',
+                                        transitionDuration: Duration.base,
+                                        transitionTimingFunction: 'ease-out',
+                                    },
                                 ]}
                             />
                         </View>
@@ -64,31 +75,35 @@ export function UpdateSnackbar() {
                 </View>
 
                 {ready ? (
-                    <Pressable
+                    <PressableScale
                         onPress={restartApp}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel="Restart to apply the update"
-                        style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
+                        pressedScale={0.92}
+                        pressedOpacity={0.7}
+                        hoveredScale={1.05}
                     >
                         <ThemedText style={[styles.action, {color: colors.accentSecondary}]}>
                             Restart
                         </ThemedText>
-                    </Pressable>
+                    </PressableScale>
                 ) : null}
 
                 {ready || failed ? (
-                    <Pressable
+                    <PressableScale
                         onPress={dismissOta}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel="Dismiss"
-                        style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
+                        pressedScale={0.86}
+                        pressedOpacity={0.7}
+                        hoveredScale={1.12}
                     >
                         <Ionicons name="close" size={18} color="rgba(255,255,255,0.7)"/>
-                    </Pressable>
+                    </PressableScale>
                 ) : null}
-            </View>
+            </Animated.View>
         </View>
     );
 }

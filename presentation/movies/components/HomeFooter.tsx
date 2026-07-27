@@ -1,5 +1,7 @@
-import {Pressable, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {Analytics} from '@/lib/analytics-events';
+import {PressableScale, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
@@ -33,26 +35,29 @@ export function HomeFooter() {
         goTo(link.href);
     };
 
-    const column = (title: string, links: readonly FooterLink[]) => (
-        <View style={styles.column} key={title}>
+    const column = (title: string, links: readonly FooterLink[], index: number) => (
+        <Animated.View entering={enterRise(index + 1)} style={styles.column} key={title}>
             <ThemedText style={[styles.columnTitle, {color: colors.text}]}>{title}</ThemedText>
             {links.map((link) => (
-                <Pressable
+                <PressableScale
                     key={link.label}
                     onPress={() => go(link)}
                     accessibilityRole="link"
-                    style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
+                    pressedScale={0.94}
+                    pressedOpacity={0.6}
+                    hoveredScale={1.04}
+                    contentStyle={styles.linkHit}
                 >
                     <ThemedText style={[styles.link, {color: colors.textMuted}]}>{link.label}</ThemedText>
-                </Pressable>
+                </PressableScale>
             ))}
-        </View>
+        </Animated.View>
     );
 
     return (
         <View style={[styles.footer, {borderTopColor: colors.border, paddingHorizontal: gutter}]}>
             <View style={[styles.top, isPhone && styles.topPhone]}>
-                <View style={styles.brand}>
+                <Animated.View entering={enterRise()} style={styles.brand}>
                     <ThemedText type="title" style={[styles.wordmark, {color: colors.accent}]}>
                         YIFY
                     </ThemedText>
@@ -62,12 +67,12 @@ export function HomeFooter() {
                     <View style={styles.store}>
                         <PlayStoreButton source="home_footer"/>
                     </View>
-                </View>
+                </Animated.View>
 
                 <View style={[styles.columns, isPhone && styles.columnsPhone]}>
-                    {column('Browse', BROWSE_LINKS)}
-                    {column('Genres', GENRE_LINKS)}
-                    {column('App', APP_LINKS)}
+                    {column('Browse', BROWSE_LINKS, 0)}
+                    {column('Genres', GENRE_LINKS, 1)}
+                    {column('App', APP_LINKS, 2)}
                 </View>
             </View>
 
@@ -95,5 +100,6 @@ const styles = StyleSheet.create({
     column: {gap: 7},
     columnTitle: {fontSize: 13, letterSpacing: 0.6, marginBottom: 2, fontFamily: FontFamily.bold},
     link: {fontSize: 13.5, fontFamily: FontFamily.regular},
+    linkHit: {alignSelf: 'flex-start'},
 
 });

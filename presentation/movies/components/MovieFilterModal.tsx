@@ -1,5 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Animated, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View} from 'react-native';
+import Reanimated from 'react-native-reanimated';
+import {Duration, PressableScale, enterPop, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {LinearGradient} from '../../components/linear-gradient';
 import {usePalette} from '../../hooks/use-palette';
@@ -40,46 +42,52 @@ function FilterChipGroup<T extends string | number>({
                                                         options,
                                                         selectedValue,
                                                         onSelect,
-                                                    }: FilterChipGroupProps<T>) {
+                                                        index = 0,
+                                                    }: FilterChipGroupProps<T> & {index?: number}) {
     const {colors} = usePalette();
 
     return (
-        <View style={styles.section}>
+        <Reanimated.View entering={enterRise(index)} style={styles.section}>
             <ThemedText style={[styles.sectionLabel, {color: colors.textMuted}]}>{title}</ThemedText>
             <View style={styles.chipRow}>
-                {options.map(({value, label}) => {
+                {options.map(({value, label}, i) => {
                     const selected = selectedValue === value;
                     return (
-                        <Pressable
-                            key={String(value) || 'all'}
-                            accessibilityRole="button"
-                            accessibilityState={{selected}}
-                            onPress={() => onSelect(value)}
-                            style={({pressed}) => [
-                                styles.chip,
-                                {
-                                    backgroundColor: selected ? colors.accent : colors.surfaceSunken,
-                                    borderColor: selected ? colors.accent : colors.border,
-                                    opacity: pressed ? 0.85 : 1,
-                                },
-                            ]}
-                        >
-                            <ThemedText
-                                style={[
-                                    styles.chipLabel,
+                        <Reanimated.View key={String(value) || 'all'} entering={enterPop(i)}>
+                            <PressableScale
+                                accessibilityRole="button"
+                                accessibilityState={{selected}}
+                                onPress={() => onSelect(value)}
+                                pressedScale={0.93}
+                                pressedOpacity={0.85}
+                                hoveredScale={1.05}
+                                contentStyle={[
+                                    styles.chip,
                                     {
-                                        color: selected ? colors.onAccent : colors.text,
-                                        fontWeight: selected ? '700' : '500'
+                                        backgroundColor: selected ? colors.accent : colors.surfaceSunken,
+                                        borderColor: selected ? colors.accent : colors.border,
+                                        transitionProperty: ['backgroundColor', 'borderColor'],
+                                        transitionDuration: Duration.fast,
                                     },
                                 ]}
                             >
-                                {label}
-                            </ThemedText>
-                        </Pressable>
+                                <ThemedText
+                                    style={[
+                                        styles.chipLabel,
+                                        {
+                                            color: selected ? colors.onAccent : colors.text,
+                                            fontWeight: selected ? '700' : '500'
+                                        },
+                                    ]}
+                                >
+                                    {label}
+                                </ThemedText>
+                            </PressableScale>
+                        </Reanimated.View>
                     );
                 })}
             </View>
-        </View>
+        </Reanimated.View>
     );
 }
 
@@ -149,10 +157,10 @@ export function MovieFilterModal({
                         <View style={[styles.dragIndicator, {backgroundColor: colors.textMuted + '55'}]}/> : null}
                     <View style={styles.header}>
                         <ThemedText type="heading">Filters</ThemedText>
-                        <Pressable onPress={handleReset} hitSlop={8} accessibilityRole="button"
-                                   style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}>
+                        <PressableScale onPress={handleReset} hitSlop={8} accessibilityRole="button"
+                                        pressedScale={0.92} pressedOpacity={0.6} hoveredScale={1.05}>
                             <ThemedText style={[styles.resetLabel, {color: colors.accent}]}>Reset</ThemedText>
-                        </Pressable>
+                        </PressableScale>
                     </View>
 
                     <View style={styles.scrollWrap}>
@@ -164,6 +172,7 @@ export function MovieFilterModal({
                         >
                             <FilterChipGroup
                                 title="Quality"
+                                index={0}
                                 options={QUALITY_OPTIONS}
                                 selectedValue={filters.quality ?? Quality.All}
                                 onSelect={(value) =>
@@ -175,6 +184,7 @@ export function MovieFilterModal({
                             />
                             <FilterChipGroup
                                 title="Minimum rating"
+                                index={1}
                                 options={RATING_OPTIONS}
                                 selectedValue={filters.minimum_rating ?? 0}
                                 onSelect={(value) =>
@@ -186,6 +196,7 @@ export function MovieFilterModal({
                             />
                             <FilterChipGroup
                                 title="Genre"
+                                index={2}
                                 options={GENRE_OPTIONS}
                                 selectedValue={filters.genre ?? Genre.All}
                                 onSelect={(value) =>
@@ -197,12 +208,14 @@ export function MovieFilterModal({
                             />
                             <FilterChipGroup
                                 title="Sort by"
+                                index={3}
                                 options={SORT_BY_OPTIONS}
                                 selectedValue={filters.sort_by ?? SortBy.DateAdded}
                                 onSelect={(value) => onFiltersChange({...filters, sort_by: value as SortBy})}
                             />
                             <FilterChipGroup
                                 title="Order"
+                                index={4}
                                 options={ORDER_OPTIONS}
                                 selectedValue={filters.order_by ?? OrderBy.Desc}
                                 onSelect={(value) => onFiltersChange({...filters, order_by: value as OrderBy})}
@@ -220,13 +233,13 @@ export function MovieFilterModal({
                         paddingBottom: (isLarge ? 16 : bottomInset + 16),
                         borderTopColor: colors.border
                     }]}>
-                        <Pressable onPress={handleApply} accessibilityRole="button"
-                                   style={({pressed}) => ({opacity: pressed ? 0.9 : 1})}>
+                        <PressableScale onPress={handleApply} accessibilityRole="button"
+                                        pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
                             <View style={[styles.applyButton, {backgroundColor: colors.accent}]}>
                                 <ThemedText style={[styles.applyButtonLabel, {color: colors.onAccent}]}>Apply
                                     filters</ThemedText>
                             </View>
-                        </Pressable>
+                        </PressableScale>
                     </View>
                 </Animated.View>
             </View>

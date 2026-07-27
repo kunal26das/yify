@@ -1,8 +1,10 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Analytics} from '@/lib/analytics-events';
-import {Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, View} from 'react-native';
+import {Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {LandingPage, ThemePreference} from '@/lib/settings';
+import {Duration, PressableScale, enterFade, enterPop, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
@@ -62,9 +64,11 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                 }}
                 showsVerticalScrollIndicator={false}
             >
-                <ThemedText type="title" style={styles.heading}>Settings</ThemedText>
+                <Animated.View entering={enterRise()}>
+                    <ThemedText type="title" style={styles.heading}>Settings</ThemedText>
+                </Animated.View>
 
-                <Section title="Appearance" colors={colors}>
+                <Section title="Appearance" colors={colors} index={0}>
                     <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>
                         Match the device, or pin the app to one theme.
                     </ThemedText>
@@ -82,7 +86,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     </View>
                 </Section>
 
-                <Section title="Landing page" colors={colors}>
+                <Section title="Landing page" colors={colors} index={1}>
                     <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>
                         Where the app opens. Home by default.
                     </ThemedText>
@@ -99,7 +103,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     </View>
                 </Section>
 
-                <Section title="Notifications" colors={colors}>
+                <Section title="Notifications" colors={colors} index={2}>
                     <View style={styles.row}>
                         <View style={styles.rowText}>
                             <ThemedText style={[styles.rowTitle, {color: colors.text}]}>
@@ -118,18 +122,18 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                         />
                     </View>
                     {vm.notifications && vm.permissionBlocked ? (
-                        <View style={styles.notice}>
+                        <Animated.View entering={enterRise()} style={styles.notice}>
                             <Ionicons name="warning-outline" size={15} color={colors.gold}/>
                             <ThemedText style={[styles.rowHint, styles.noticeText, {color: colors.textMuted}]}>
                                 {Platform.OS === 'web'
                                     ? 'Your browser is blocking notifications for this site. Allow them in its site settings and this will start working.'
                                     : 'Notifications are turned off for Yify in your device settings. Allow them there and this will start working.'}
                             </ThemedText>
-                        </View>
+                        </Animated.View>
                     ) : null}
                 </Section>
 
-                <Section title="My List" colors={colors}>
+                <Section title="My List" colors={colors} index={3}>
                     <View style={styles.row}>
                         <View style={styles.rowText}>
                             <ThemedText style={[styles.rowTitle, {color: colors.text}]}>
@@ -139,41 +143,49 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                                 Your list is kept on this device only.
                             </ThemedText>
                         </View>
-                        <Pressable
+                        <PressableScale
                             disabled={vm.watchlistCount === 0}
                             onPress={confirmClear}
                             accessibilityRole="button"
                             accessibilityLabel="Clear My List"
-                            style={({pressed}) => [
+                            pressedScale={0.93}
+                            pressedOpacity={0.7}
+                            hoveredScale={1.04}
+                            contentStyle={[
                                 styles.dangerButton,
                                 {
                                     borderColor: colors.border,
-                                    opacity: vm.watchlistCount === 0 ? 0.4 : pressed ? 0.7 : 1,
+                                    opacity: vm.watchlistCount === 0 ? 0.4 : 1,
                                 },
                             ]}
                         >
                             <ThemedText style={[styles.dangerLabel, {color: colors.peer}]}>Clear</ThemedText>
-                        </Pressable>
+                        </PressableScale>
                     </View>
                     {vm.listCleared && vm.watchlistCount === 0 ? (
-                        <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>Cleared.</ThemedText>
+                        <Animated.View entering={enterFade()}>
+                            <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>Cleared.</ThemedText>
+                        </Animated.View>
                     ) : null}
                 </Section>
 
-                <Section title="About" colors={colors}>
+                <Section title="About" colors={colors} index={4}>
                     <InfoRow label="Version" value={vm.appInfo.version} colors={colors}/>
 
                     {Platform.OS === 'android' ? (
-                        <Pressable
+                        <PressableScale
                             onPress={() => void openPlayStore('settings')}
                             accessibilityRole="link"
-                            style={({pressed}) => [styles.linkRow, {opacity: pressed ? 0.7 : 1}]}
+                            pressedScale={0.96}
+                            pressedOpacity={0.7}
+                            hoveredScale={1.02}
+                            contentStyle={styles.linkRow}
                         >
                             <ThemedText style={[styles.rowTitle, {color: colors.accent}]}>
                                 Rate on Google Play
                             </ThemedText>
                             <Ionicons name="open-outline" size={16} color={colors.accent}/>
-                        </Pressable>
+                        </PressableScale>
                     ) : (
                         <View style={styles.store}>
                             <PlayStoreButton source="settings"/>
@@ -181,19 +193,22 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     )}
 
                     {Platform.OS !== 'web' ? (
-                        <Pressable
+                        <PressableScale
                             onPress={() => {
                                 Analytics.websiteOpen('settings');
                                 void WebBrowser.openBrowserAsync(WEBSITE_URL);
                             }}
                             accessibilityRole="link"
-                            style={({pressed}) => [styles.linkRow, {opacity: pressed ? 0.7 : 1}]}
+                            pressedScale={0.96}
+                            pressedOpacity={0.7}
+                            hoveredScale={1.02}
+                            contentStyle={styles.linkRow}
                         >
                             <ThemedText style={[styles.rowTitle, {color: colors.accent}]}>
                                 Open Yify on the web
                             </ThemedText>
                             <Ionicons name="open-outline" size={16} color={colors.accent}/>
-                        </Pressable>
+                        </PressableScale>
                     ) : null}
                 </Section>
             </ScrollView>
@@ -216,24 +231,30 @@ function Segment({
     colors: Colors;
 }) {
     return (
-        <Pressable
+        <PressableScale
             onPress={onPress}
             accessibilityRole="button"
             accessibilityState={{selected}}
-            style={({pressed}) => [
+            pressedScale={0.95}
+            pressedOpacity={0.85}
+            style={styles.segmentHit}
+            contentStyle={[
                 styles.segment,
                 {
                     backgroundColor: selected ? colors.accent : colors.surfaceSunken,
                     borderColor: selected ? colors.accent : colors.border,
-                    opacity: pressed ? 0.85 : 1,
+                    transitionProperty: ['backgroundColor', 'borderColor'],
+                    transitionDuration: Duration.base,
                 },
             ]}
         >
-            <Ionicons name={icon} size={17} color={selected ? colors.onAccent : colors.text}/>
+            <Animated.View key={selected ? 'on' : 'off'} entering={enterPop()}>
+                <Ionicons name={icon} size={17} color={selected ? colors.onAccent : colors.text}/>
+            </Animated.View>
             <ThemedText style={[styles.segmentLabel, {color: selected ? colors.onAccent : colors.text}]}>
                 {label}
             </ThemedText>
-        </Pressable>
+        </PressableScale>
     );
 }
 
@@ -249,26 +270,32 @@ function Choice({
     colors: Colors;
 }) {
     return (
-        <Pressable
+        <PressableScale
             onPress={onPress}
             accessibilityRole="button"
             accessibilityState={{selected}}
-            style={({pressed}) => [
+            pressedScale={0.94}
+            pressedOpacity={0.85}
+            hoveredScale={1.03}
+            contentStyle={[
                 styles.choice,
                 {
                     backgroundColor: selected ? colors.accentSoft : 'transparent',
                     borderColor: selected ? colors.accent : colors.border,
-                    opacity: pressed ? 0.85 : 1,
+                    transitionProperty: ['backgroundColor', 'borderColor'],
+                    transitionDuration: Duration.base,
                 },
             ]}
         >
-            <Ionicons
-                name={selected ? 'radio-button-on' : 'radio-button-off'}
-                size={16}
-                color={selected ? colors.accent : colors.textMuted}
-            />
+            <Animated.View key={selected ? 'on' : 'off'} entering={enterPop()}>
+                <Ionicons
+                    name={selected ? 'radio-button-on' : 'radio-button-off'}
+                    size={16}
+                    color={selected ? colors.accent : colors.textMuted}
+                />
+            </Animated.View>
             <ThemedText style={[styles.choiceLabel, {color: colors.text}]}>{label}</ThemedText>
-        </Pressable>
+        </PressableScale>
     );
 }
 
@@ -276,20 +303,22 @@ function Section({
                      title,
                      colors,
                      children,
+                     index = 0,
                  }: {
     title: string;
     colors: Colors;
     children: React.ReactNode;
+    index?: number;
 }) {
     return (
-        <View style={styles.section}>
+        <Animated.View entering={enterRise(index)} style={styles.section}>
             <ThemedText style={[styles.sectionTitle, {color: colors.textMuted}]}>
                 {title.toUpperCase()}
             </ThemedText>
             <View style={[styles.card, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 {children}
             </View>
-        </View>
+        </Animated.View>
     );
 }
 
@@ -333,6 +362,7 @@ const styles = StyleSheet.create({
         borderRadius: Radius.md,
         borderWidth: StyleSheet.hairlineWidth,
     },
+    segmentHit: {flex: 1},
     segmentLabel: {fontSize: 14, fontFamily: FontFamily.semibold},
 
     choices: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},

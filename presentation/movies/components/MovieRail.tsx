@@ -1,11 +1,13 @@
 import {Ionicons} from '@expo/vector-icons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, Platform, Pressable, StyleSheet, View} from 'react-native';
+import {FlatList, Platform, StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
+import {Duration, PressableScale, enterFade, enterRise, exitFade} from '../../components/motion';
 import {MoviePosterItem} from './MoviePosterItem';
 import {MovieLandscapeItem, landscapeCellHeight, landscapeWidth} from './MovieLandscapeItem';
 import {Analytics} from '@/lib/analytics-events';
@@ -249,7 +251,7 @@ export function MovieRail({
 
     return (
         <View style={styles.rail}>
-            <View style={[styles.header, {paddingHorizontal: gutter}]}>
+            <Animated.View entering={enterRise()} style={[styles.header, {paddingHorizontal: gutter}]}>
                 <View style={styles.headerText}>
                     <ThemedText type="heading">{title}</ThemedText>
                     {subtitle ? (
@@ -259,18 +261,21 @@ export function MovieRail({
                     ) : null}
                 </View>
                 {onSeeAll ? (
-                    <Pressable
+                    <PressableScale
                         onPress={onSeeAll}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel={`See all ${title}`}
-                        style={({pressed}) => [styles.seeAll, {opacity: pressed ? 0.6 : 1}]}
+                        pressedScale={0.93}
+                        pressedOpacity={0.6}
+                        hoveredScale={IS_WEB ? 1.06 : 1}
+                        contentStyle={styles.seeAll}
                     >
                         <ThemedText style={[styles.seeAllLabel, {color: colors.accent}]}>View All</ThemedText>
                         <Ionicons name="chevron-forward" size={15} color={colors.accent}/>
-                    </Pressable>
+                    </PressableScale>
                 ) : null}
-            </View>
+            </Animated.View>
 
             {IS_WEB ? (
                 <View ref={wrapRef} style={styles.listWrap}>
@@ -306,20 +311,30 @@ function RailHandle({
 }) {
     const left = side === 'left';
     return (
-        <Pressable
-            onPress={onPress}
-            accessibilityRole="button"
-            accessibilityLabel={left ? 'Scroll left' : 'Scroll right'}
+        <Animated.View
+            entering={enterFade()}
+            exiting={exitFade}
             style={[styles.handle, left ? styles.handleLeft : styles.handleRight, {height}]}
         >
-            <LinearGradient
-                colors={left ? ['rgba(8,8,10,0.72)', 'rgba(8,8,10,0)'] : ['rgba(8,8,10,0)', 'rgba(8,8,10,0.72)']}
-                direction="horizontal"
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-            />
-            <Ionicons name={left ? 'chevron-back' : 'chevron-forward'} size={30} color="#fff"/>
-        </Pressable>
+            <PressableScale
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel={left ? 'Scroll left' : 'Scroll right'}
+                pressedScale={0.9}
+                hoveredScale={1.12}
+                duration={Duration.fast}
+                style={styles.handleHit}
+                contentStyle={styles.handleHit}
+            >
+                <LinearGradient
+                    colors={left ? ['rgba(8,8,10,0.72)', 'rgba(8,8,10,0)'] : ['rgba(8,8,10,0)', 'rgba(8,8,10,0.72)']}
+                    direction="horizontal"
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
+                />
+                <Ionicons name={left ? 'chevron-back' : 'chevron-forward'} size={30} color="#fff"/>
+            </PressableScale>
+        </Animated.View>
     );
 }
 
@@ -332,14 +347,18 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
 
     return (
         <View style={[styles.rankedCell, {height: posterHeight}]}>
-            <View style={[styles.numeralArea, {width: numeralArea, marginRight: -overlap}]} pointerEvents="none">
+            <Animated.View
+                entering={enterFade()}
+                style={[styles.numeralArea, {width: numeralArea, marginRight: -overlap}]}
+                pointerEvents="none"
+            >
                 <ThemedText
                     type="display"
                     style={[styles.numeral, {fontSize: numeralSize, lineHeight: numeralSize, color: colors.rankNumeral}]}
                 >
                     {rank}
                 </ThemedText>
-            </View>
+            </Animated.View>
             <MoviePosterItem movie={movie} width={posterWidth} source={source} hideRankFlag/>
         </View>
     );
@@ -371,6 +390,7 @@ const styles = StyleSheet.create({
     },
     handleLeft: {left: 0},
     handleRight: {right: 0},
+    handleHit: {flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'},
 
     rankedCell: {flexDirection: 'row', alignItems: 'flex-end'},
     numeralArea: {height: '100%', justifyContent: 'flex-end', alignItems: 'flex-end'},

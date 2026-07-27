@@ -1,9 +1,11 @@
 import {Ionicons} from '@expo/vector-icons';
 import {useMemo} from 'react';
-import {FlatList, Pressable, StyleSheet, View} from 'react-native';
+import {FlatList, StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/lib/analytics-events';
+import {PressableScale, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {usePalette} from '../hooks/use-palette';
@@ -38,18 +40,20 @@ export function MyListScreen() {
         <HoverCardHost>
             <ThemedView style={styles.container}>
                 {movies.length === 0 ? (
-                    <View style={[styles.empty, {paddingTop: navHeight}]}>
+                    <Animated.View entering={enterRise()} style={[styles.empty, {paddingTop: navHeight}]}>
                         <Ionicons name="bookmark-outline" size={54} color={colors.textMuted}/>
                         <ThemedText type="heading" style={styles.emptyTitle}>Your list is empty</ThemedText>
                         <ThemedText style={[styles.emptyBody, {color: colors.textMuted}]}>
                             Open any movie and tap My List to keep it here.
                         </ThemedText>
-                        <Pressable
+                        <PressableScale
                             onPress={() => {
                                 Analytics.browseAllOpen('my_list_empty');
                                 goTo('/browse');
                             }}
-                            style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                            pressedScale={0.94}
+                            pressedOpacity={0.85}
+                            hoveredScale={1.03}
                         >
                             <View style={[styles.cta, {backgroundColor: colors.accent}]}>
                                 <Ionicons name="search" size={17} color={colors.onAccent}/>
@@ -57,8 +61,8 @@ export function MyListScreen() {
                                     Find something to watch
                                 </ThemedText>
                             </View>
-                        </Pressable>
-                    </View>
+                        </PressableScale>
+                    </Animated.View>
                 ) : (
                     <FlatList
                         key={numColumns}
@@ -70,12 +74,15 @@ export function MyListScreen() {
                         )}
                         showsVerticalScrollIndicator={false}
                         ListHeaderComponent={
-                            <View style={{paddingHorizontal: gutter - POSTER_GAP / 2}}>
+                            <Animated.View
+                                entering={enterRise()}
+                                style={{paddingHorizontal: gutter - POSTER_GAP / 2}}
+                            >
                                 <ThemedText type="title" style={styles.heading}>My List</ThemedText>
                                 <ThemedText style={[styles.count, {color: colors.textMuted}]}>
                                     {movies.length} {movies.length === 1 ? 'title' : 'titles'}
                                 </ThemedText>
-                            </View>
+                            </Animated.View>
                         }
                         contentContainerStyle={{
                             paddingTop: navHeight + Spacing.sm,

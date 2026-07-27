@@ -1,12 +1,14 @@
-import {StyleSheet, View, type StyleProp, type ViewStyle} from 'react-native';
+import {StyleSheet, type StyleProp, type ViewStyle} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily} from '../../constants/theme';
+import {enterPop} from '../../components/motion';
 
 export function NewBadge({style}: {style?: StyleProp<ViewStyle>}) {
     return (
-        <View style={[styles.badge, style]}>
+        <Animated.View entering={enterPop(2)} style={[styles.badge, style]}>
             <ThemedText style={styles.label}>NEW</ThemedText>
-        </View>
+        </Animated.View>
     );
 }
 

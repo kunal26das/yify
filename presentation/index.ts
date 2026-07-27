@@ -29,6 +29,22 @@ export { UpdateSnackbar } from './components/update-snackbar';
 export { ThemedText } from './components/themed-text';
 export type { ThemedTextProps } from './components/themed-text';
 export { ThemedView } from './components/themed-view';
+export {
+    Duration,
+    PressableScale,
+    Shimmer,
+    breatheKeyframes,
+    enterFade,
+    enterPop,
+    enterRise,
+    enterSlide,
+    exitFade,
+    exitPop,
+    pulseKeyframes,
+    shiftLayout,
+    staggerDelay,
+} from './components/motion';
+export type { MotionStyle } from './components/motion';
 export type { ThemedViewProps } from './components/themed-view';
 
 export { useColorScheme } from './hooks/use-color-scheme';

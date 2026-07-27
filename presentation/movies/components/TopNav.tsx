@@ -1,8 +1,10 @@
 import {Ionicons} from '@expo/vector-icons';
-import {Animated, Platform, Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {Animated, Platform, ScrollView, StyleSheet, View} from 'react-native';
+import Reanimated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LiquidGlassView} from '../../components/liquid-glass-view';
 import {ThemedText} from '../../components/themed-text';
+import {Duration, PressableScale} from '../../components/motion';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {FontFamily, Spacing} from '../../constants/theme';
@@ -34,10 +36,12 @@ export function TopNav({
                            active,
                            scrollY,
                            below,
+                           inline,
                        }: {
     active?: NavKey;
     scrollY?: Animated.Value;
     below?: React.ReactNode;
+    inline?: React.ReactNode;
 }) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
@@ -57,27 +61,45 @@ export function TopNav({
         goTo(item.href);
     };
 
-    const renderLink = (item: NavItem) => (
-        <Pressable
-            key={item.key}
-            onPress={() => go(item)}
-            hitSlop={6}
-            accessibilityRole="link"
-            accessibilityState={{selected: item.key === active}}
-            style={({pressed}) => [styles.link, {opacity: pressed ? 0.6 : 1}]}
-        >
-            <ThemedText
-                style={[
-                    styles.linkLabel,
-                    item.key === active
-                        ? {color: colors.text, fontFamily: FontFamily.bold}
-                        : {color: colors.textMuted},
-                ]}
+    const renderLink = (item: NavItem) => {
+        const selected = item.key === active;
+        return (
+            <PressableScale
+                key={item.key}
+                onPress={() => go(item)}
+                hitSlop={6}
+                accessibilityRole="link"
+                accessibilityState={{selected}}
+                pressedScale={0.92}
+                pressedOpacity={0.6}
+                contentStyle={styles.link}
             >
-                {item.label}
-            </ThemedText>
-        </Pressable>
-    );
+                <ThemedText
+                    style={[
+                        styles.linkLabel,
+                        selected
+                            ? {color: colors.text, fontFamily: FontFamily.bold}
+                            : {color: colors.textMuted},
+                    ]}
+                >
+                    {item.label}
+                </ThemedText>
+                <Reanimated.View
+                    style={[
+                        styles.underline,
+                        {
+                            backgroundColor: colors.accent,
+                            opacity: selected ? 1 : 0,
+                            transform: [{scaleX: selected ? 1 : 0}],
+                            transitionProperty: ['opacity', 'transform'],
+                            transitionDuration: Duration.base,
+                            transitionTimingFunction: 'ease-out',
+                        },
+                    ]}
+                />
+            </PressableScale>
+        );
+    };
 
     const links = NAV_ITEMS.map(renderLink);
 
@@ -95,16 +117,18 @@ export function TopNav({
             </Animated.View>
 
             <View style={[styles.row, {paddingTop: insets.top + ROW_PADDING_TOP, paddingHorizontal: gutter}]} pointerEvents="box-none">
-                <Pressable
+                <PressableScale
                     onPress={() => go(HOME_ITEM)}
                     accessibilityRole="link"
                     accessibilityLabel="Yify home"
-                    style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
+                    pressedScale={0.9}
+                    pressedOpacity={0.7}
+                    hoveredScale={1.06}
                 >
                     <ThemedText type="title" style={[styles.wordmark, {color: colors.accent}]}>
                         YIFY
                     </ThemedText>
-                </Pressable>
+                </PressableScale>
 
                 {isPhone ? (
                     <>
@@ -116,25 +140,41 @@ export function TopNav({
                         >
                             {links}
                         </ScrollView>
-                        <Pressable
+                        <PressableScale
                             onPress={() => go(SETTINGS_ITEM)}
                             hitSlop={8}
                             accessibilityRole="link"
                             accessibilityLabel="Settings"
                             accessibilityState={{selected: active === 'settings'}}
-                            style={({pressed}) => [styles.settingsButton, {opacity: pressed ? 0.6 : 1}]}
+                            pressedScale={0.86}
+                            pressedOpacity={0.6}
+                            hoveredScale={1.1}
+                            style={styles.settingsButton}
                         >
-                            <Ionicons
-                                name={active === 'settings' ? 'settings' : 'settings-outline'}
-                                size={22}
-                                color={active === 'settings' ? colors.text : colors.textMuted}
-                            />
-                        </Pressable>
+                            <Reanimated.View
+                                style={{
+                                    transform: [{rotate: active === 'settings' ? '90deg' : '0deg'}],
+                                    transitionProperty: 'transform',
+                                    transitionDuration: Duration.slow,
+                                    transitionTimingFunction: 'ease-out',
+                                }}
+                            >
+                                <Ionicons
+                                    name={active === 'settings' ? 'settings' : 'settings-outline'}
+                                    size={22}
+                                    color={active === 'settings' ? colors.text : colors.textMuted}
+                                />
+                            </Reanimated.View>
+                        </PressableScale>
                     </>
                 ) : (
                     <>
                         <View style={styles.links}>{links}</View>
-                        <View style={styles.spacer}/>
+                        {inline ? (
+                            <View style={styles.inlineSlot}>{inline}</View>
+                        ) : (
+                            <View style={styles.spacer}/>
+                        )}
                         {renderLink(SETTINGS_ITEM)}
                     </>
                 )}
@@ -150,6 +190,8 @@ export function useTopNavHeightWithSearch(): number {
 }
 
 export const SEARCH_ROW_HEIGHT = 44 + Spacing.sm * 2;
+
+export const INLINE_SEARCH_HEIGHT = 32;
 
 const NAV_ROW_HEIGHT = ROW_PADDING_TOP + NAV_LINE_HEIGHT + ROW_PADDING_BOTTOM;
 
@@ -181,9 +223,16 @@ const styles = StyleSheet.create({
         ...Platform.select({web: {cursor: 'pointer'}, default: {}}),
     },
     links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
+    inlineSlot: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: (NAV_LINE_HEIGHT - INLINE_SEARCH_HEIGHT) / 2,
+    },
     phoneLinks: {flex: 1},
     settingsButton: {marginLeft: -Spacing.sm},
     link: {paddingVertical: 4},
     linkLabel: {fontSize: NAV_FONT_SIZE, lineHeight: NAV_LINE_HEIGHT},
+    underline: {height: 2, borderRadius: 1, marginTop: 1},
     spacer: {flex: 1},
 });

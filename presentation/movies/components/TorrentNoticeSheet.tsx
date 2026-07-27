@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState} from 'react';
 import {Animated, Modal, Pressable, StyleSheet, useWindowDimensions, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
+import Reanimated from 'react-native-reanimated';
+import {PressableScale, breatheKeyframes, enterPop, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
@@ -60,29 +62,47 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
                     {!isLarge ?
                         <View style={[styles.dragIndicator, {backgroundColor: colors.textMuted + '55'}]}/> : null}
                     <View style={styles.content}>
-                        <View style={[styles.iconBadge, {backgroundColor: colors.surfaceSunken}]}>
+                        <Reanimated.View
+                            entering={enterPop()}
+                            style={[
+                                styles.iconBadge,
+                                {
+                                    backgroundColor: colors.surfaceSunken,
+                                    animationName: breatheKeyframes,
+                                    animationDuration: '3200ms',
+                                    animationIterationCount: 'infinite',
+                                    animationTimingFunction: 'ease-in-out',
+                                },
+                            ]}
+                        >
                             <Ionicons name="information-circle-outline" size={30} color={colors.accent}/>
-                        </View>
-                        <ThemedText type="heading" style={styles.title}>Downloads aren&apos;t available</ThemedText>
-                        <ThemedText style={[styles.body, {color: colors.textMuted}]}>
-                            This app is a browsing companion for discovering movies — ratings, trailers, cast, and
-                            release details. The file listings you see here are shown for information only, and
-                            downloading them isn&apos;t supported in this app.
-                        </ThemedText>
-                        <ThemedText style={[styles.body, {color: colors.textMuted}]}>
-                            Many titles are protected by copyright, and we want to keep things safe and legal for
-                            everyone. To watch this movie, please check your favorite streaming service, digital
-                            store, or local cinema.
-                        </ThemedText>
+                        </Reanimated.View>
+                        <Reanimated.View entering={enterRise(1)}>
+                            <ThemedText type="heading" style={styles.title}>Downloads aren&apos;t available</ThemedText>
+                        </Reanimated.View>
+                        <Reanimated.View entering={enterRise(2)}>
+                            <ThemedText style={[styles.body, {color: colors.textMuted}]}>
+                                This app is a browsing companion for discovering movies — ratings, trailers, cast, and
+                                release details. The file listings you see here are shown for information only, and
+                                downloading them isn&apos;t supported in this app.
+                            </ThemedText>
+                        </Reanimated.View>
+                        <Reanimated.View entering={enterRise(3)}>
+                            <ThemedText style={[styles.body, {color: colors.textMuted}]}>
+                                Many titles are protected by copyright, and we want to keep things safe and legal for
+                                everyone. To watch this movie, please check your favorite streaming service, digital
+                                store, or local cinema.
+                            </ThemedText>
+                        </Reanimated.View>
                     </View>
                     <View style={[styles.footer, {paddingBottom: isLarge ? 16 : bottomInset + 16}]}>
-                        <Pressable onPress={onClose} accessibilityRole="button"
-                                   style={({pressed}) => ({opacity: pressed ? 0.9 : 1})}>
+                        <PressableScale onPress={onClose} accessibilityRole="button"
+                                        pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
                             <View style={[styles.dismissButton, {backgroundColor: colors.accent}]}>
                                 <ThemedText style={[styles.dismissLabel, {color: colors.onAccent}]}>Got
                                     it</ThemedText>
                             </View>
-                        </Pressable>
+                        </PressableScale>
                     </View>
                 </Animated.View>
             </View>

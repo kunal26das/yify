@@ -1,9 +1,19 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, ScrollView, StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Torrent} from '@/domain';
+import {
+    Duration,
+    PressableScale,
+    enterFade,
+    enterPop,
+    enterRise,
+    enterSlide,
+    exitFade,
+} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {LinearGradient} from '../components/linear-gradient';
@@ -77,7 +87,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     return (
       <ThemedView style={styles.centered}>
         {BackButton}
-        <View style={styles.errorBox}>
+        <Animated.View entering={enterRise()} style={styles.errorBox}>
             <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
             <ThemedText type="heading" style={styles.errorTitle}>
                 Couldn&apos;t load this movie
@@ -85,17 +95,22 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
             <ThemedText style={[styles.errorMessage, {color: colors.textMuted}]}>
             {error ?? 'Movie not found'}
           </ThemedText>
-            <Pressable onPress={() => {
-                Analytics.retry('details');
-                reload();
-            }} accessibilityRole="button"
-                       style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
+            <PressableScale
+                onPress={() => {
+                    Analytics.retry('details');
+                    reload();
+                }}
+                accessibilityRole="button"
+                pressedScale={0.94}
+                pressedOpacity={0.85}
+                hoveredScale={1.03}
+            >
                 <View style={[styles.retryButton, {backgroundColor: colors.accent}]}>
                     <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                     <ThemedText style={[styles.retryLabel, {color: colors.onAccent}]}>Try again</ThemedText>
                 </View>
-          </Pressable>
-        </View>
+          </PressableScale>
+        </Animated.View>
       </ThemedView>
     );
   }
@@ -147,28 +162,36 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceElevated}]}/>
                       )}
                       {hasTrailer && !showTrailer ? (
-                          <Pressable
-                              onPress={() => {
-                                  Analytics.trailerPlay(details);
-                                  setShowTrailer(true);
-                              }}
-                              style={styles.playOverlay}
-                              accessibilityRole="button"
-                              accessibilityLabel="Play trailer"
-                          >
-                              <LiquidGlassView
-                                  tint={scheme === 'dark' ? 'dark' : 'light'}
-                                  fallbackBackgroundColor="rgba(8,8,12,0.5)"
-                                  style={styles.playCircle}
+                          <Animated.View entering={enterPop()} exiting={exitFade} style={styles.playOverlay}>
+                              <PressableScale
+                                  onPress={() => {
+                                      Analytics.trailerPlay(details);
+                                      setShowTrailer(true);
+                                  }}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Play trailer"
+                                  pressedScale={0.88}
+                                  hoveredScale={1.12}
+                                  duration={Duration.fast}
                               >
-                                  <Ionicons name="play" size={30} color="#fff" style={styles.playIcon}/>
-                              </LiquidGlassView>
-                          </Pressable>
+                                  <LiquidGlassView
+                                      tint={scheme === 'dark' ? 'dark' : 'light'}
+                                      fallbackBackgroundColor="rgba(8,8,12,0.5)"
+                                      style={styles.playCircle}
+                                  >
+                                      <Ionicons name="play" size={30} color="#fff" style={styles.playIcon}/>
+                                  </LiquidGlassView>
+                              </PressableScale>
+                          </Animated.View>
                       ) : null}
                       {hasTrailer && showTrailer ? (
-                          <View style={[StyleSheet.absoluteFill, styles.trailerOverlay]}>
+                          <Animated.View
+                              entering={enterFade()}
+                              exiting={exitFade}
+                              style={[StyleSheet.absoluteFill, styles.trailerOverlay]}
+                          >
                               <YoutubePlayer videoId={details.ytTrailerCode} width={columnWidth} autoplay/>
-                          </View>
+                          </Animated.View>
                       ) : null}
                   </View>
                   {!showTrailer ? (
@@ -183,17 +206,19 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
 
               <View style={styles.headerBlock}>
                   {posterUrl ? (
-                      <Image
-                          source={{uri: posterUrl}}
-                          placeholder={details.posterUrls.length > 1 ? {uri: details.posterUrls[0]} : undefined}
-                          placeholderContentFit="cover"
-                          style={[styles.poster, {borderColor: colors.border, backgroundColor: colors.surfaceElevated}]}
-                          contentFit="cover"
-                          transition={220}
-                          cachePolicy="memory-disk"
-                      />
+                      <Animated.View entering={enterSlide()}>
+                          <Image
+                              source={{uri: posterUrl}}
+                              placeholder={details.posterUrls.length > 1 ? {uri: details.posterUrls[0]} : undefined}
+                              placeholderContentFit="cover"
+                              style={[styles.poster, {borderColor: colors.border, backgroundColor: colors.surfaceElevated}]}
+                              contentFit="cover"
+                              transition={220}
+                              cachePolicy="memory-disk"
+                          />
+                      </Animated.View>
                   ) : null}
-                  <View style={styles.titleBlock}>
+                  <Animated.View entering={enterRise(1)} style={styles.titleBlock}>
                       <ThemedText type="title" style={styles.title}>
                           {details.title}
                       </ThemedText>
@@ -236,13 +261,13 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                               </View>
                           ) : null}
                       </View>
-                  </View>
+                  </Animated.View>
           </View>
 
               <View style={styles.body}>
-                  <View style={styles.actionsRow}>
+                  <Animated.View entering={enterRise(2)} style={styles.actionsRow}>
                       {hasTrailer ? (
-                          <Pressable
+                          <PressableScale
                               onPress={() => {
                                   if (showTrailer) Analytics.trailerClose(details);
                                   else Analytics.trailerPlay(details);
@@ -250,28 +275,37 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                               }}
                               accessibilityRole="button"
                               accessibilityLabel={showTrailer ? 'Hide trailer' : 'Play trailer'}
-                              style={({pressed}) => [styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
+                              pressedScale={0.96}
+                              pressedOpacity={0.9}
+                              hoveredScale={1.02}
+                              style={styles.actionFlex}
                           >
-                              <View
+                              <Animated.View
                                   style={[
                                       styles.playButton,
                                       showTrailer
                                           ? {backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth}
                                           : {backgroundColor: colors.accent},
+                                      {
+                                          transitionProperty: 'backgroundColor',
+                                          transitionDuration: Duration.base,
+                                      },
                                   ]}
                               >
-                                  <Ionicons
-                                      name={showTrailer ? 'chevron-up' : 'play'}
-                                      size={18}
-                                      color={showTrailer ? colors.text : colors.onAccent}
-                                  />
+                                  <Animated.View key={showTrailer ? 'open' : 'closed'} entering={enterPop()}>
+                                      <Ionicons
+                                          name={showTrailer ? 'chevron-up' : 'play'}
+                                          size={18}
+                                          color={showTrailer ? colors.text : colors.onAccent}
+                                      />
+                                  </Animated.View>
                                   <ThemedText style={[styles.playLabel, {color: showTrailer ? colors.text : colors.onAccent}]}>
                                       {showTrailer ? 'Hide trailer' : 'Play trailer'}
                                   </ThemedText>
-                              </View>
-                          </Pressable>
+                              </Animated.View>
+                          </PressableScale>
                       ) : null}
-                      <Pressable
+                      <PressableScale
                           onPress={() => {
                               if (saved) Analytics.watchlistRemove(details);
                               else Analytics.watchlistAdd(details);
@@ -280,24 +314,31 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           accessibilityRole="button"
                           accessibilityState={{selected: saved}}
                           accessibilityLabel={saved ? 'Remove from My List' : 'Add to My List'}
-                          style={({pressed}) => [styles.actionFlex, {opacity: pressed ? 0.9 : 1}]}
+                          pressedScale={0.96}
+                          pressedOpacity={0.9}
+                          hoveredScale={1.02}
+                          style={styles.actionFlex}
                       >
-                          <View
+                          <Animated.View
                               style={[
                                   styles.saveButton,
                                   {
                                       backgroundColor: saved ? colors.accentSoft : colors.surfaceElevated,
                                       borderColor: saved ? colors.accent + '66' : colors.border,
+                                      transitionProperty: ['backgroundColor', 'borderColor'],
+                                      transitionDuration: Duration.base,
                                   },
                               ]}
                           >
-                              <Ionicons name={saved ? 'checkmark' : 'add'} size={18} color={saved ? colors.accent : colors.text}/>
+                              <Animated.View key={saved ? 'saved' : 'unsaved'} entering={enterPop()}>
+                                  <Ionicons name={saved ? 'checkmark' : 'add'} size={18} color={saved ? colors.accent : colors.text}/>
+                              </Animated.View>
                               <ThemedText style={[styles.saveLabel, {color: saved ? colors.accent : colors.text}]}>
                                   {saved ? 'Saved' : 'My List'}
                               </ThemedText>
-                          </View>
-                      </Pressable>
-                  </View>
+                          </Animated.View>
+                      </PressableScale>
+                  </Animated.View>
 
                   {details.genres.length > 0 ? (
                       <ScrollView
@@ -305,7 +346,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           showsHorizontalScrollIndicator={false}
                           contentContainerStyle={styles.chipRow}
                       >
-                          {details.genres.map((g) => {
+                          {details.genres.map((g, i) => {
                               const href = genreHref(g);
                               const chip = (
                                   <View style={[styles.chip, {
@@ -315,20 +356,23 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                                       <ThemedText style={[styles.chipText, {color: colors.accent}]}>{g}</ThemedText>
                                   </View>
                               );
-                              if (!href) return <View key={g}>{chip}</View>;
+                              if (!href) return <Animated.View key={g} entering={enterPop(i)}>{chip}</Animated.View>;
                               return (
-                                  <Pressable
-                                      key={g}
-                                      onPress={() => {
-                                          Analytics.genreOpen(g);
-                                          goTo(href);
-                                      }}
-                                      accessibilityRole="link"
-                                      accessibilityLabel={`Browse ${g} movies`}
-                                      style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
-                                  >
-                                      {chip}
-                                  </Pressable>
+                                  <Animated.View key={g} entering={enterPop(i)}>
+                                      <PressableScale
+                                          onPress={() => {
+                                              Analytics.genreOpen(g);
+                                              goTo(href);
+                                          }}
+                                          accessibilityRole="link"
+                                          accessibilityLabel={`Browse ${g} movies`}
+                                          pressedScale={0.92}
+                                          pressedOpacity={0.7}
+                                          hoveredScale={1.06}
+                                      >
+                                          {chip}
+                                      </PressableScale>
+                                  </Animated.View>
                               );
                           })}
                       </ScrollView>
@@ -345,24 +389,27 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           <ScrollView horizontal showsHorizontalScrollIndicator={false}
                                       contentContainerStyle={styles.hScroll}>
                               {details.screenshotUrls.map((uri, i) => (
-                                  <Pressable
-                                      key={i}
-                                      onPress={() => {
-                                          Analytics.screenshotOpen(details.id, i);
-                                          setLightboxIndex(i);
-                                      }}
-                                      accessibilityRole="button"
-                                      accessibilityLabel={`View screenshot ${i + 1} full screen`}
-                                      style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
-                                  >
-                                      <Image
-                                          source={{uri}}
-                                          style={[styles.screenshot, {backgroundColor: colors.surfaceElevated}]}
-                                          contentFit="cover"
-                                          transition={220}
-                                          cachePolicy="memory-disk"
-                                      />
-                                  </Pressable>
+                                  <Animated.View key={i} entering={enterSlide(i)}>
+                                      <PressableScale
+                                          onPress={() => {
+                                              Analytics.screenshotOpen(details.id, i);
+                                              setLightboxIndex(i);
+                                          }}
+                                          accessibilityRole="button"
+                                          accessibilityLabel={`View screenshot ${i + 1} full screen`}
+                                          pressedScale={0.96}
+                                          pressedOpacity={0.85}
+                                          hoveredScale={1.03}
+                                      >
+                                          <Image
+                                              source={{uri}}
+                                              style={[styles.screenshot, {backgroundColor: colors.surfaceElevated}]}
+                                              contentFit="cover"
+                                              transition={220}
+                                              cachePolicy="memory-disk"
+                                          />
+                                      </PressableScale>
+                                  </Animated.View>
                               ))}
                           </ScrollView>
                       </Section>
@@ -373,7 +420,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           <ScrollView horizontal showsHorizontalScrollIndicator={false}
                                       contentContainerStyle={styles.hScroll}>
                               {details.cast.map((c, i) => (
-                                  <CastCard key={i} cast={c} colors={colors}/>
+                                  <CastCard key={i} cast={c} colors={colors} index={i}/>
                               ))}
                           </ScrollView>
                       </Section>
@@ -384,6 +431,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                           <View style={[styles.torrentGrid, {gap: TORRENT_GAP}]}>
                               {details.torrents.map((t, i) => (
                                   <TorrentRow key={i} torrent={t} colors={colors} width={torrentCardWidth}
+                                              index={i}
                                               onPress={() => {
                                                   Analytics.torrentTap(details.id, t);
                                                   setNoticeTorrent(t);
@@ -437,18 +485,18 @@ function Section({
   flush?: boolean;
 }) {
   return (
-    <View style={[styles.section, flush && styles.sectionFlush]}>
+    <Animated.View entering={enterRise()} style={[styles.section, flush && styles.sectionFlush]}>
         <View style={[styles.sectionTitleRow, flush && {marginLeft: Spacing.lg}]}>
             <ThemedText type="heading">{title}</ThemedText>
         </View>
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
-function CastCard({cast, colors}: { cast: CastMember; colors: Colors }) {
+function CastCard({cast, colors, index}: { cast: CastMember; colors: Colors; index: number }) {
   return (
-    <View style={styles.castCard}>
+    <Animated.View entering={enterSlide(index)} style={styles.castCard}>
       {cast.imageUrl ? (
           <Image source={{uri: cast.imageUrl}} style={[styles.castImage, {backgroundColor: colors.surfaceElevated}]}
                  contentFit="cover" transition={220} cachePolicy="memory-disk"/>
@@ -468,7 +516,7 @@ function CastCard({cast, colors}: { cast: CastMember; colors: Colors }) {
           {cast.character}
         </ThemedText>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -476,21 +524,27 @@ function TorrentRow({
   torrent,
                         colors,
                         width,
+                        index,
                         onPress,
 }: {
   torrent: Torrent;
     colors: Colors;
     width: number;
+    index: number;
     onPress: () => void;
 }) {
     const source = [torrent.type, torrent.videoCodec].filter(Boolean).join(' · ') || 'Torrent';
   return (
-      <Pressable
+      <Animated.View entering={enterRise(index)} style={{width}}>
+      <PressableScale
           onPress={onPress}
           accessibilityRole="button"
-          style={({pressed}) => [
+          pressedScale={0.97}
+          pressedOpacity={0.8}
+          hoveredScale={1.02}
+          contentStyle={[
               styles.torrentCard,
-              {width, backgroundColor: colors.surface, borderColor: colors.border, opacity: pressed ? 0.8 : 1},
+              {width, backgroundColor: colors.surface, borderColor: colors.border},
           ]}
       >
           <View style={styles.torrentTop}>
@@ -515,7 +569,8 @@ function TorrentRow({
                   <ThemedText style={[styles.torrentMeta, {color: colors.peer}]}>{torrent.peers}</ThemedText>
               </View>
       </View>
-    </Pressable>
+    </PressableScale>
+    </Animated.View>
   );
 }
 

@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import {Image} from 'expo-image';
 import * as Linking from 'expo-linking';
-import {Platform, Pressable, StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
+import {PressableScale} from '../../components/motion';
 import {Analytics} from '@/lib/analytics-events';
 
 const PACKAGE_NAME = Constants.expoConfig?.android?.package ?? 'io.github.kunal26das.yify';
@@ -39,11 +40,15 @@ export function PlayStoreButton({source}: {source: string}) {
     if (Platform.OS === 'android') return null;
 
     return (
-        <Pressable
+        <PressableScale
             onPress={() => void openPlayStore(source)}
             accessibilityRole="link"
             accessibilityLabel="Get it on Google Play"
-            style={({pressed}) => [styles.hit, {opacity: pressed ? 0.85 : 1}]}
+            pressedScale={0.95}
+            pressedOpacity={0.85}
+            hoveredScale={1.04}
+            style={styles.hit}
+            contentStyle={styles.hit}
         >
             <Image
                 source={BADGE}
@@ -51,7 +56,7 @@ export function PlayStoreButton({source}: {source: string}) {
                 contentFit="contain"
                 accessibilityElementsHidden
             />
-        </Pressable>
+        </PressableScale>
     );
 }
 

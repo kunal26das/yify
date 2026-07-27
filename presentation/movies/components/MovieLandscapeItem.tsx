@@ -2,10 +2,12 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
-import {Animated, Platform, Pressable, StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
+import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/lib/analytics-events';
 import {ThemedText} from '../../components/themed-text';
+import {Duration, PressableScale, enterFade, enterPop} from '../../components/motion';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {useHoverCard} from './HoverCard';
@@ -41,7 +43,6 @@ export function MovieLandscapeItem({
     isNew?: boolean;
 }) {
     const {colors, scheme} = usePalette();
-    const scale = useRef(new Animated.Value(1)).current;
     const nodeRef = useRef<View>(null);
     const hoverCard = useHoverCard();
 
@@ -50,9 +51,6 @@ export function MovieLandscapeItem({
 
     const art = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
 
-    const animate = (to: number) =>
-        Animated.spring(scale, {toValue: to, useNativeDriver: true, speed: 50, bounciness: 0}).start();
-
     const meta = [movie.year ? String(movie.year) : null, formatRuntime(movie.runtimeMinutes)]
         .filter(Boolean)
         .join(' • ');
@@ -60,31 +58,31 @@ export function MovieLandscapeItem({
     return (
         <View ref={nodeRef} style={[styles.cell, {width, marginHorizontal: POSTER_GAP / 2}]} collapsable={false}>
             <Link href={`/movie/${movie.id}`} asChild>
-                <Pressable
+                <PressableScale
                     accessibilityRole="link"
                     accessibilityLabel={[movie.title, meta].filter(Boolean).join(', ')}
                     onPress={() => Analytics.movieOpen(movie, source)}
-                    onPressIn={() => animate(0.97)}
-                    onPressOut={() => animate(1)}
+                    pressedScale={0.97}
+                    hoveredScale={IS_WEB ? 1.03 : 1}
+                    lift={IS_WEB ? 4 : 0}
+                    duration={Duration.fast}
                     onHoverIn={() => {
                         if (!IS_WEB) return;
-                        animate(1.02);
                         if (hoverCard.enabled) hoverCard.open(movie, nodeRef.current, source);
                     }}
                     onHoverOut={() => {
                         if (!IS_WEB) return;
-                        animate(1);
                         if (hoverCard.enabled) hoverCard.close();
                     }}
                 >
                     <Animated.View
+                        entering={enterFade()}
                         style={[
                             styles.art,
                             {
                                 height: artHeight,
                                 backgroundColor: colors.surfaceSunken,
                                 borderColor: colors.border,
-                                transform: [{scale}],
                                 shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
                             },
                         ]}
@@ -105,17 +103,17 @@ export function MovieLandscapeItem({
                         </View>
 
                         {movie.rating > 0 ? (
-                            <View style={styles.ratingBadge}>
+                            <Animated.View entering={enterPop(1)} style={styles.ratingBadge}>
                                 <Ionicons name="star" size={10} color={colors.gold}/>
                                 <ThemedText style={styles.ratingText} lightColor="#fff" darkColor="#fff">
                                     {movie.rating.toFixed(1)}
                                 </ThemedText>
-                            </View>
+                            </Animated.View>
                         ) : null}
 
                         {isNew ? <NewBadge style={styles.newBadge}/> : null}
                     </Animated.View>
-                </Pressable>
+                </PressableScale>
             </Link>
 
             <ThemedText style={[styles.title, {color: colors.text}]} numberOfLines={1}>

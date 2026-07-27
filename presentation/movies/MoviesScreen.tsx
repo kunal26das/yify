@@ -11,15 +11,18 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image as ExpoImage} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Animated, FlatList, InteractionManager, Platform, Pressable, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
+import {FlatList, InteractionManager, Platform, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
+import Animated from 'react-native-reanimated';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Duration, PressableScale, enterPop, enterRise, exitPop} from '../components/motion';
 import {checkForNewMovies} from '@/lib/new-movies-task';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {Analytics} from '@/lib/analytics-events';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
-import {SEARCH_ROW_HEIGHT, TopNav, useTopNavHeight} from './components/TopNav';
+import {INLINE_SEARCH_HEIGHT, SEARCH_ROW_HEIGHT, TopNav, useTopNavHeight, type NavKey} from './components/TopNav';
+import {OrderBy, SortBy} from './constants/movieFilterOptions';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
@@ -27,6 +30,8 @@ interface MoviesScreenProps {
 }
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
+
+const INLINE_SEARCH_MIN_WIDTH = 720;
 
 type SkeletonItem = {__skeleton: true; id: string};
 type GridItem = Movie | SkeletonItem;
@@ -73,12 +78,17 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const prevMoviesLengthRef = useRef(0);
     const listRef = useRef<FlatList>(null);
     const searchInputRef = useRef<TextInput>(null);
-    const [scrollToTopScale] = useState(() => new Animated.Value(0));
 
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
     const gridWidth = Math.min(width, contentMaxWidth);
     const navHeight = useTopNavHeight();
-    const listTopPadding = navHeight + SEARCH_ROW_HEIGHT + POSTER_GAP / 2;
+    const inlineSearch = width >= INLINE_SEARCH_MIN_WIDTH;
+    const searchRowHeight = inlineSearch ? 0 : SEARCH_ROW_HEIGHT;
+    const listTopPadding = navHeight + searchRowHeight + POSTER_GAP / 2;
+    const activeNav: NavKey =
+        appliedFilters.sort_by === SortBy.DateAdded && appliedFilters.order_by === OrderBy.Desc
+            ? 'new'
+            : 'movies';
 
     const numColumns = useMemo(
         () => Math.max(2, Math.floor(gridWidth / (POSTER_MIN_WIDTH + POSTER_GAP))),
@@ -117,14 +127,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             .filter(Boolean) as string[];
         if (urls.length) ExpoImage.prefetch(urls, {cachePolicy: 'memory-disk'});
     }, [movies]);
-
-    useEffect(() => {
-        Animated.timing(scrollToTopScale, {
-            toValue: isAtTop ? 0 : 1,
-            duration: 200,
-            useNativeDriver: true,
-        }).start();
-    }, [isAtTop, scrollToTopScale]);
 
     const onScroll = useCallback(
         ({nativeEvent}: { nativeEvent: { contentOffset: { y: number } } }) => {
@@ -196,6 +198,51 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         []
     );
 
+    const searchField = (
+        <View style={inlineSearch ? styles.searchFieldWrapperInline : styles.searchFieldWrapper}>
+            <Ionicons name="search" size={inlineSearch ? 16 : 18} color={colors.textMuted} style={styles.searchIcon}/>
+            <TextInput
+                ref={searchInputRef}
+                style={[
+                    inlineSearch ? styles.searchInputInline : styles.searchInput,
+                    {color: colors.text},
+                    Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
+                ]}
+                placeholder={inlineSearch ? 'Search movies…' : 'Search movies, genres, years…'}
+                placeholderTextColor={colors.textFaint}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+                clearButtonMode="never"
+            />
+            {searchQuery.length > 0 ? (
+                <Animated.View entering={enterPop()} exiting={exitPop}>
+                    <PressableScale
+                        onPress={() => {
+                            Analytics.searchCleared();
+                            setSearchQuery('');
+                        }}
+                        pressedScale={0.85}
+                        pressedOpacity={0.6}
+                        hoveredScale={1.12}
+                        contentStyle={styles.clearButton}
+                        hitSlop={8}
+                    >
+                        <Ionicons name="close-circle" size={18} color={colors.textMuted}/>
+                    </PressableScale>
+                </Animated.View>
+            ) : null}
+        </View>
+    );
+
+    const InlineSearch = (
+        <View style={[styles.inlineSearchPill, {backgroundColor: colors.surfaceSunken, borderColor: colors.border}]}>
+            {searchField}
+        </View>
+    );
+
     const SearchField = (
         <View style={[styles.searchBarFixed, {paddingHorizontal: gutter}]} pointerEvents="box-none">
             <View
@@ -204,45 +251,19 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                 ]}
             >
                 <View style={styles.searchRow}>
-                    <View style={styles.searchPill}>
-                        <View style={styles.searchFieldWrapper}>
-                            <Ionicons name="search" size={18} color={colors.textMuted} style={styles.searchIcon}/>
-                            <TextInput
-                                ref={searchInputRef}
-                                style={[
-                                    styles.searchInput,
-                                    {color: colors.text},
-                                    Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
-                                ]}
-                                placeholder="Search movies, genres, years…"
-                                placeholderTextColor={colors.textFaint}
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                                returnKeyType="search"
-                                clearButtonMode="never"
-                            />
-                            {searchQuery.length > 0 ? (
-                                <Pressable
-                                    onPress={() => {
-                                        Analytics.searchCleared();
-                                        setSearchQuery('');
-                                    }}
-                                    style={({pressed}) => [styles.clearButton, {opacity: pressed ? 0.6 : 1}]}
-                                    hitSlop={8}
-                                >
-                                    <Ionicons name="close-circle" size={18} color={colors.textMuted}/>
-                                </Pressable>
-                            ) : null}
-                        </View>
-                    </View>
+                    <View style={styles.searchPill}>{searchField}</View>
                 </View>
             </View>
         </View>
     );
 
-    const Nav = <TopNav active="movies" below={SearchField}/>;
+    const Nav = (
+        <TopNav
+            active={activeNav}
+            below={inlineSearch ? undefined : SearchField}
+            inline={inlineSearch ? InlineSearch : undefined}
+        />
+    );
 
     if (loading && movies.length === 0 && !error) {
         return (
@@ -270,22 +291,27 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             <ThemedView style={styles.container}>
                 <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
                 <SafeAreaView style={styles.centered} edges={['top']}>
-                    <View style={styles.stateBox}>
+                    <Animated.View entering={enterRise()} style={styles.stateBox}>
                         <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                         <ThemedText type="heading" style={styles.stateTitle}>
                             Something went wrong
                         </ThemedText>
                         <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
-                        <Pressable onPress={() => {
-                            Analytics.retry('browse');
-                            loadInitial();
-                        }} style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}>
+                        <PressableScale
+                            onPress={() => {
+                                Analytics.retry('browse');
+                                loadInitial();
+                            }}
+                            pressedScale={0.94}
+                            pressedOpacity={0.85}
+                            hoveredScale={1.03}
+                        >
                             <View style={[styles.cta, {backgroundColor: colors.accent}]}>
                                 <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                                 <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
                             </View>
-                        </Pressable>
-                    </View>
+                        </PressableScale>
+                    </Animated.View>
                 </SafeAreaView>
                 {Nav}
             </ThemedView>
@@ -315,7 +341,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     numColumns={numColumns}
                     columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
                     ListEmptyComponent={
-                        <View style={styles.stateBox}>
+                        <Animated.View entering={enterRise()} style={styles.stateBox}>
                             <Ionicons name="search-outline" size={52} color={colors.textMuted}/>
                             <ThemedText type="heading" style={styles.stateTitle}>
                                 Nothing matches yet
@@ -323,21 +349,23 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
                                 Try another search, or reset the filters to see everything.
                             </ThemedText>
-                        </View>
+                        </Animated.View>
                     }
                     ListFooterComponent={
                         error ? (
-                            <View style={styles.footerError}>
+                            <Animated.View entering={enterRise()} style={styles.footerError}>
                                 <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
                                     Couldn&apos;t load more movies.
                                 </ThemedText>
-                                <Pressable
+                                <PressableScale
                                     onPress={() => {
                                         Analytics.retry('browse_more');
                                         loadMore();
                                     }}
                                     accessibilityRole="button"
-                                    style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                                    pressedScale={0.94}
+                                    pressedOpacity={0.85}
+                                    hoveredScale={1.03}
                                 >
                                     <View style={[styles.footerRetry, {borderColor: colors.border}]}>
                                         <Ionicons name="refresh" size={16} color={colors.accent}/>
@@ -345,8 +373,8 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                             Try again
                                         </ThemedText>
                                     </View>
-                                </Pressable>
-                            </View>
+                                </PressableScale>
+                            </Animated.View>
                         ) : null
                     }
                     onViewableItemsChanged={onViewableItemsChanged}
@@ -363,7 +391,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             onRefresh={handleRefresh}
                             tintColor={colors.accent}
                             colors={[colors.accent]}
-                            progressViewOffset={navHeight + SEARCH_ROW_HEIGHT}
+                            progressViewOffset={navHeight + searchRowHeight}
                         />
                     }
                     contentContainerStyle={[
@@ -379,15 +407,26 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     <View style={[styles.countOverlay, {paddingBottom: insets.bottom + 16}]} pointerEvents="box-none">
                         <LiquidGlassGroup spacing={16} style={styles.countRow}>
                             <Animated.View
-                                style={[styles.scrollToTopButton, {transform: [{scale: scrollToTopScale}]}]}
+                                style={[
+                                    styles.scrollToTopButton,
+                                    {
+                                        transform: [{scale: isAtTop ? 0 : 1}, {translateY: isAtTop ? 12 : 0}],
+                                        opacity: isAtTop ? 0 : 1,
+                                        transitionProperty: ['transform', 'opacity'],
+                                        transitionDuration: Duration.base,
+                                        transitionTimingFunction: 'ease-out',
+                                    },
+                                ]}
                                 pointerEvents={isAtTop ? 'none' : 'auto'}
                             >
-                                <Pressable
+                                <PressableScale
                                     onPress={() => {
                                         Analytics.scrollToTop();
                                         listRef.current?.scrollToOffset({offset: 0, animated: true});
                                     }}
-                                    style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
+                                    pressedScale={0.88}
+                                    pressedOpacity={0.6}
+                                    hoveredScale={1.08}
                                     hitSlop={8}
                                 >
                                     <LiquidGlassView
@@ -397,7 +436,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                     >
                                         <Ionicons name="arrow-up" size={20} color={colors.text}/>
                                     </LiquidGlassView>
-                                </Pressable>
+                                </PressableScale>
                             </Animated.View>
 
                             <LiquidGlassView
@@ -414,28 +453,30 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                 </ThemedText>
                             </LiquidGlassView>
 
-                            <Pressable
+                            <PressableScale
                                 onPress={() => {
                                     Analytics.filtersOpen();
                                     setFilterModalVisible(true);
                                 }}
-                                style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                                pressedScale={0.88}
+                                pressedOpacity={0.85}
+                                hoveredScale={1.08}
                                 hitSlop={8}
                             >
                                 <View style={[styles.circleSolid, {backgroundColor: colors.accent}]}>
                                     <Ionicons name="options" size={20} color={colors.onAccent}/>
                                     {activeFilterCount > 0 ? (
-                                        <View style={[styles.filterBadge, {
+                                        <Animated.View entering={enterPop()} exiting={exitPop} style={[styles.filterBadge, {
                                             backgroundColor: colors.onAccent,
                                             borderColor: colors.accent
                                         }]}>
                                             <ThemedText style={[styles.filterBadgeText, {color: colors.accent}]}>
                                                 {activeFilterCount}
                                             </ThemedText>
-                                        </View>
+                                        </Animated.View>
                                     ) : null}
                                 </View>
-                            </Pressable>
+                            </PressableScale>
                         </LiquidGlassGroup>
                     </View>
                 )}
@@ -507,6 +548,27 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         height: 44,
+    },
+    searchFieldWrapperInline: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: INLINE_SEARCH_HEIGHT,
+    },
+    inlineSearchPill: {
+        flex: 1,
+        maxWidth: 340,
+        height: INLINE_SEARCH_HEIGHT,
+        borderRadius: Radius.pill,
+        borderWidth: StyleSheet.hairlineWidth,
+        paddingHorizontal: 12,
+        justifyContent: 'center',
+    },
+    searchInputInline: {
+        flex: 1,
+        height: INLINE_SEARCH_HEIGHT,
+        fontSize: 14,
+        padding: 0,
+        fontFamily: FontFamily.regular,
     },
     searchIcon: {marginRight: 8},
     searchInput: {flex: 1, height: 44, fontSize: 16, padding: 0, fontFamily: FontFamily.regular},

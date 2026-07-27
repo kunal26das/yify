@@ -11,7 +11,9 @@ import {
     View,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
+import {Duration, PressableScale, enterFade, enterPop, enterRise} from '../../components/motion';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
@@ -47,7 +49,7 @@ export function HeroBillboard({
                                   onRequestTrailer,
                               }: HeroBillboardProps) {
     const {colors} = usePalette();
-    const {isPhone} = useResponsive();
+    const {isDesktop} = useResponsive();
     const insets = useSafeAreaInsets();
     const count = movies.length;
     const looped = count > 1;
@@ -229,23 +231,30 @@ export function HeroBillboard({
             </ScrollView>
 
             {mode !== 'idle' && activeTrailer && trailerPlaying ? (
-                <Pressable
-                    onPress={toggleMute}
-                    hitSlop={10}
-                    accessibilityRole="button"
-                    accessibilityLabel={muted ? 'Unmute trailer' : 'Mute trailer'}
-                    style={({pressed}) => [
-                        styles.muteButton,
-                        isPhone ? {top: insets.top + 64} : styles.muteButtonWide,
-                        {opacity: pressed ? 0.7 : 1},
-                    ]}
+                <Animated.View
+                    entering={enterPop()}
+                    style={[styles.muteButton, isDesktop ? styles.muteButtonWide : {top: insets.top + 64}]}
                 >
-                    <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color="#fff"/>
-                </Pressable>
+                    <PressableScale
+                        onPress={toggleMute}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={muted ? 'Unmute trailer' : 'Mute trailer'}
+                        pressedScale={0.86}
+                        pressedOpacity={0.7}
+                        hoveredScale={1.1}
+                        style={styles.muteHit}
+                        contentStyle={styles.muteHit}
+                    >
+                        <Animated.View key={muted ? 'muted' : 'loud'} entering={enterPop()}>
+                            <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color="#fff"/>
+                        </Animated.View>
+                    </PressableScale>
+                </Animated.View>
             ) : null}
 
             {looped && mode !== 'feature' ? (
-                isPhone ? (
+                !isDesktop ? (
                     <View style={styles.dots} pointerEvents="box-none">
                         {movies.map((m, i) => (
                             <Pressable
@@ -256,7 +265,17 @@ export function HeroBillboard({
                                 accessibilityState={{selected: i === index}}
                                 accessibilityLabel={`Featured: ${m.title}`}
                             >
-                                <View style={[styles.dot, i === index ? styles.dotActive : styles.dotInactive]}/>
+                                <Animated.View
+                                    style={[
+                                        styles.dot,
+                                        i === index ? styles.dotActive : styles.dotInactive,
+                                        {
+                                            transitionProperty: ['width', 'backgroundColor'],
+                                            transitionDuration: Duration.base,
+                                            transitionTimingFunction: 'ease-out',
+                                        },
+                                    ]}
+                                />
                             </Pressable>
                         ))}
                     </View>
@@ -301,16 +320,22 @@ function HeroThumbStrip({
                     const active = i === index;
                     const art = m.backgroundImageUrl ?? m.posterUrls[m.posterUrls.length - 1];
                     return (
-                        <Pressable
+                        <PressableScale
                             key={m.id}
                             onPress={() => onSelect(i)}
                             accessibilityRole="button"
                             accessibilityState={{selected: active}}
                             accessibilityLabel={`Featured: ${m.title}`}
-                            style={({pressed}) => [
+                            pressedScale={0.93}
+                            pressedOpacity={0.8}
+                            hoveredScale={1.08}
+                            contentStyle={[
                                 styles.thumb,
                                 active ? styles.thumbActive : styles.thumbInactive,
-                                {opacity: pressed ? 0.8 : 1},
+                                {
+                                    transitionProperty: ['borderColor', 'opacity'],
+                                    transitionDuration: Duration.base,
+                                },
                             ]}
                         >
                             {art ? (
@@ -322,7 +347,7 @@ function HeroThumbStrip({
                                     cachePolicy="memory-disk"
                                 />
                             ) : null}
-                        </Pressable>
+                        </PressableScale>
                     );
                 })}
             </ScrollView>
@@ -353,7 +378,7 @@ function HeroSlide({
 }) {
     const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
     const rank = useTopTenRank(movie.id);
-    const {isPhone} = useResponsive();
+    const {isDesktop} = useResponsive();
     const {gradients} = usePalette();
     const saved = useIsInWatchlist(movie.id);
     const meta = [
@@ -416,15 +441,19 @@ function HeroSlide({
                     accessibilityRole="button"
                     accessibilityLabel={`View ${movie.title}`}
                 >
-                    <ThemedText style={[styles.tagline, {color: colors.gold}]} numberOfLines={1}>
-                        {taglineFor(movie, rank)}
-                    </ThemedText>
+                    <Animated.View entering={enterRise()}>
+                        <ThemedText style={[styles.tagline, {color: colors.gold}]} numberOfLines={1}>
+                            {taglineFor(movie, rank)}
+                        </ThemedText>
+                    </Animated.View>
 
-                    <ThemedText type="display" style={styles.title} numberOfLines={2}>
-                        {movie.title}
-                    </ThemedText>
+                    <Animated.View entering={enterRise(1)}>
+                        <ThemedText type="display" style={styles.title} numberOfLines={2}>
+                            {movie.title}
+                        </ThemedText>
+                    </Animated.View>
 
-                    <View style={styles.metaRow}>
+                    <Animated.View entering={enterRise(2)} style={styles.metaRow}>
                         {movie.rating > 0 ? (
                             <View style={styles.metaItem}>
                                 <Ionicons name="star" size={12} color={colors.gold}/>
@@ -445,44 +474,52 @@ function HeroSlide({
                                 <ThemedText style={styles.metaText}>{g}</ThemedText>
                             </View>
                         ))}
-                    </View>
+                    </Animated.View>
 
                     {movie.summary ? (
-                        <ThemedText style={styles.summary} numberOfLines={2}>
-                            {movie.summary}
-                        </ThemedText>
+                        <Animated.View entering={enterRise(3)}>
+                            <ThemedText style={styles.summary} numberOfLines={2}>
+                                {movie.summary}
+                            </ThemedText>
+                        </Animated.View>
                     ) : null}
                 </Pressable>
 
-                <View style={[styles.ctaRow, isPhone ? null : styles.ctaRowWide]}>
-                    <Pressable
+                <Animated.View entering={enterFade(4)} style={[styles.ctaRow, isDesktop ? styles.ctaRowWide : null]}>
+                    <PressableScale
                         onPress={onPlay}
                         accessibilityRole="button"
                         accessibilityLabel={`Watch ${movie.title}`}
-                        style={({pressed}) => [styles.ctaFlex, {opacity: pressed ? 0.85 : 1}]}
+                        pressedScale={0.95}
+                        pressedOpacity={0.85}
+                        hoveredScale={1.03}
+                        style={styles.ctaFlex}
                     >
                         <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
                             <Ionicons name="play" size={20} color="#fff"/>
-                            <ThemedText style={styles.playLabel}>Watch Now</ThemedText>
+                            <ThemedText style={styles.playLabel} numberOfLines={1}>Watch Now</ThemedText>
                         </LinearGradient>
-                    </Pressable>
+                    </PressableScale>
 
-                    <Pressable
+                    <PressableScale
                         onPress={() => {
                             Analytics.heroMoreInfo(movie);
                             openDetails('hero_more_info');
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`More info about ${movie.title}`}
-                        style={({pressed}) => [styles.ctaFlex, {opacity: pressed ? 0.85 : 1}]}
+                        pressedScale={0.95}
+                        pressedOpacity={0.85}
+                        hoveredScale={1.03}
+                        style={styles.ctaFlex}
                     >
                         <View style={styles.infoButton}>
                             <Ionicons name="information-circle-outline" size={20} color="#fff"/>
-                            <ThemedText style={styles.infoLabel}>More Info</ThemedText>
+                            <ThemedText style={styles.infoLabel} numberOfLines={1}>More Info</ThemedText>
                         </View>
-                    </Pressable>
+                    </PressableScale>
 
-                    <Pressable
+                    <PressableScale
                         onPress={() => {
                             const added = toggleWatchlist(movie);
                             if (added) Analytics.watchlistAdd(movie);
@@ -492,22 +529,30 @@ function HeroSlide({
                         accessibilityLabel={
                             saved ? `Remove ${movie.title} from My List` : `Add ${movie.title} to My List`
                         }
-                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                        pressedScale={0.88}
+                        pressedOpacity={0.85}
+                        hoveredScale={1.08}
                     >
-                        <View
+                        <Animated.View
                             style={[
                                 styles.addButton,
                                 saved && {backgroundColor: colors.accent, borderColor: colors.accent},
+                                {
+                                    transitionProperty: ['backgroundColor', 'borderColor'],
+                                    transitionDuration: Duration.base,
+                                },
                             ]}
                         >
-                            <Ionicons
-                                name={saved ? 'checkmark' : 'add'}
-                                size={22}
-                                color={saved ? colors.onAccent : '#fff'}
-                            />
-                        </View>
-                    </Pressable>
-                </View>
+                            <Animated.View key={saved ? 'saved' : 'unsaved'} entering={enterPop()}>
+                                <Ionicons
+                                    name={saved ? 'checkmark' : 'add'}
+                                    size={22}
+                                    color={saved ? colors.onAccent : '#fff'}
+                                />
+                            </Animated.View>
+                        </Animated.View>
+                    </PressableScale>
+                </Animated.View>
             </View>
         </View>
     );
@@ -595,6 +640,7 @@ const styles = StyleSheet.create({
         zIndex: 15,
     },
     muteButtonWide: {bottom: Spacing.xxl + THUMB_HEIGHT + 20},
+    muteHit: {flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'},
 
     thumbStrip: {
         position: 'absolute',
