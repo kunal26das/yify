@@ -16,7 +16,6 @@ import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {TopNav, useTopNavHeight} from './components/TopNav';
 import {useWatchlist} from './useWatchlist';
 
-/** Everything the viewer saved, in the order they saved it. */
 export function MyListScreen() {
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();

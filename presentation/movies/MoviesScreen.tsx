@@ -19,12 +19,13 @@ import {Analytics} from '@/lib/analytics-events';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
-import {TopNav, useTopNavHeight} from './components/TopNav';
+import {TopNav, useTopNavHeight, type NavKey} from './components/TopNav';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
     showBack?: boolean;
     autoFocus?: boolean;
+    navActive?: NavKey;
 }
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
@@ -34,7 +35,7 @@ type GridItem = Movie | SkeletonItem;
 const isSkeleton = (item: GridItem): item is SkeletonItem =>
     (item as SkeletonItem).__skeleton === true;
 
-export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps) {
+export function MoviesScreen({viewModel, showBack, autoFocus, navActive = 'movies'}: MoviesScreenProps) {
     const insets = useSafeAreaInsets();
     const {colors, gradients, scheme} = usePalette();
     const {width, contentMaxWidth, isLarge} = useResponsive();
@@ -56,7 +57,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         appliedQuery,
     } = viewModel;
 
-    // Log searches once the debounced query is applied (skips the initial value).
     const loggedQueryRef = useRef<string | null>(null);
     useEffect(() => {
         const q = appliedQuery.trim();
@@ -148,8 +148,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         if (error) Analytics.loadError('browse');
     }, [error]);
 
-    // autoFocus places the cursor but frequently fails to raise the soft keyboard when the
-    // input mounts mid-navigation. Focus imperatively once the push transition has settled.
     useEffect(() => {
         if (!autoFocus) return;
         const task = InteractionManager.runAfterInteractions(() => {
@@ -202,7 +200,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
 
     const Nav = (
         <TopNav
-            active="movies"
+            active={navActive}
             onBack={
                 showBack ? () => (router.canGoBack() ? router.back() : router.replace('/')) : undefined
             }
@@ -210,8 +208,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
     );
 
     const SearchBar = (
-        // Sits under the app bar rather than at the top of the screen; the bar carries the back
-        // action now, so the search row no longer needs its own chevron.
         <View style={[styles.searchBarOverlay, {paddingTop: navHeight}]} pointerEvents="box-none">
             <View
                 style={[

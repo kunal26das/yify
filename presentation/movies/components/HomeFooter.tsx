@@ -1,4 +1,4 @@
-import {router} from 'expo-router';
+import {usePathname} from 'expo-router';
 import Constants from 'expo-constants';
 import {Platform, Pressable, StyleSheet, View} from 'react-native';
 import {Analytics} from '@/lib/analytics-events';
@@ -6,7 +6,7 @@ import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
-import {OrderBy, SortBy} from '../constants/movieFilterOptions';
+import {DESTINATIONS, goToDestination} from '../constants/destinations';
 import {PlayStoreButton} from './PlayStoreButton';
 
 interface FooterLink {
@@ -14,12 +14,7 @@ interface FooterLink {
     href: string;
 }
 
-const BROWSE_LINKS: readonly FooterLink[] = [
-    {label: 'Home', href: '/'},
-    {label: 'Movies', href: '/browse'},
-    {label: 'New & Popular', href: `/browse?sort_by=${SortBy.DateAdded}&order_by=${OrderBy.Desc}`},
-    {label: 'My List', href: '/my-list'},
-];
+const BROWSE_LINKS: readonly FooterLink[] = DESTINATIONS.map(({label, href}) => ({label, href}));
 
 const GENRE_LINKS: readonly FooterLink[] = [
     {label: 'Action', href: '/browse?genre=action'},
@@ -32,20 +27,14 @@ const APP_LINKS: readonly FooterLink[] = [{label: 'Settings', href: '/settings'}
 
 export const APP_VERSION = Constants.expoConfig?.version ?? '—';
 
-/**
- * The end of the home page.
- *
- * Rails stop dead at the last shelf otherwise, which reads as the page having failed to finish
- * loading. This gives the scroll somewhere to land: the same destinations as the nav, a few genre
- * entries worth deep-linking, the store link, and the boilerplate every catalogue site closes with.
- */
 export function HomeFooter() {
     const {colors} = usePalette();
     const {isPhone, gutter} = useResponsive();
+    const pathname = usePathname();
 
     const go = (link: FooterLink) => {
         Analytics.footerLink(link.label);
-        router.push(link.href as never);
+        goToDestination(link.href, pathname);
     };
 
     const column = (title: string, links: readonly FooterLink[]) => (

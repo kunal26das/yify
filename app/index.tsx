@@ -6,8 +6,6 @@ import {HomeScreen, destinationHref, useHomeViewModel} from '@/presentation';
 import {getApiBaseUrl} from '@/lib/remote-config';
 import {getLandingPage} from '@/lib/settings';
 
-// Applied once per launch. Without the flag, tapping Home in the nav would bounce straight back to
-// the chosen landing page and the viewer could never reach the home screen.
 let landingApplied = false;
 
 export default function HomeRoute() {

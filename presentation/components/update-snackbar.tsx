@@ -13,19 +13,11 @@ function useOtaStatus(): OtaStatus {
     return useSyncExternalStore(subscribeOta, getOtaStatus, () => IDLE);
 }
 
-/**
- * Update progress, pinned above every screen.
- *
- * Mounted once at the root rather than per screen, so a download that starts on the home page keeps
- * reporting while the viewer moves into a movie or into Settings. Renders nothing at all when there
- * is no update in flight, and never on web.
- */
 export function UpdateSnackbar() {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
     const {state, progress} = useOtaStatus();
 
-    // 'checking' stays silent: a routine poll that finds nothing shouldn't flash a bar at anyone.
     if (state === 'idle' || state === 'checking') return null;
 
     const ready = state === 'ready';

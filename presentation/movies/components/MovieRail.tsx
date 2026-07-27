@@ -21,7 +21,6 @@ interface MovieRailProps {
     posterWidth: number;
     gutter: number;
     onSeeAll?: () => void;
-    /** Flags every title in this rail as newly added. */
     markNew?: boolean;
 }
 
@@ -38,9 +37,6 @@ function rankedOverlap(posterWidth: number) {
     return Math.round(posterWidth * RANKED_OVERLAP_RATIO);
 }
 
-// Width of the numeral box. Single digits (ranks 1-9) hug the glyph so the rail stays tight; only
-// the two-digit "10" gets the wide box it needs (any narrower and RN clips it). Keeping this
-// per-rank is what stops the lone "10" from forcing every item apart.
 function rankedNumeralArea(rank: number, posterWidth: number) {
     const size = rankedNumeralSize(posterWidth);
     return Math.round(size * (String(rank).length >= 2 ? 1.12 : 0.66));
@@ -79,13 +75,10 @@ export function MovieRail({
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
-    // Height of the scrollable strip, which the hover arrows match so they don't overhang the row.
     const posterHeight = landscape ? landscapeCellHeight(posterWidth) : posterWidth * 1.5;
 
     const data = movies;
 
-    // Ranked items have per-rank widths (single vs two-digit numeral), so item widths and offsets
-    // can't be derived from a single itemFullWidth — build them explicitly for getItemLayout.
     const {itemWidths, avgItemWidth} = useMemo(() => {
         if (ranked) {
             const widths = data.map((_, i) => rankedItemWidth(i + 1, posterWidth));
@@ -181,10 +174,6 @@ export function MovieRail({
         []
     );
 
-    // Track hover with native pointerenter/pointerleave on the wrapper DOM node. Unlike RN
-    // Pressable's onHoverIn/Out (which fire when the pointer crosses onto a child poster), these
-    // don't fire on child transitions, so the arrows stay visible while hovering the posters. The
-    // pointerType guard suppresses touch, so tapping a poster on touch-web doesn't stick the arrows.
     useEffect(() => {
         if (!IS_WEB) return;
         const node = wrapRef.current as unknown as HTMLElement | null;
@@ -234,7 +223,6 @@ export function MovieRail({
         [itemWidths, itemOffsets, avgItemWidth]
     );
 
-    // Only web needs scroll metrics — they drive the enabled state of the hover arrows.
     const trackEvents = IS_WEB;
     const list = (
         <FlatList

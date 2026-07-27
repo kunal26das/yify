@@ -1,8 +1,5 @@
 import {StyleSheet, View} from 'react-native';
 
-// On web, react-native-youtube-iframe can't render (it depends on react-native-webview, which has
-// no web implementation), so embed YouTube with a real <iframe> instead. Metro serves this file
-// on web and the native YoutubePlayer.tsx on iOS/Android.
 export function YoutubePlayer({
     videoId,
     width,
@@ -14,7 +11,6 @@ export function YoutubePlayer({
 }: {
     videoId: string;
     width: number;
-    /** Defaults to 16:9 against `width`. Pass explicitly to letterbox-free cover a taller box. */
     height?: number;
     autoplay?: boolean;
     muted?: boolean;
@@ -28,15 +24,9 @@ export function YoutubePlayer({
         playsinline: '1',
         controls: controls ? '1' : '0',
         ...(autoplay ? {autoplay: '1'} : {}),
-        // Browsers only honour autoplay for muted video, so the background hero trailer must ask
-        // for mute up front rather than muting after the fact.
         ...(muted ? {mute: '1'} : {}),
-        // A single-video loop needs `playlist` set to the same id — YouTube ignores `loop` alone.
         ...(loop ? {loop: '1', playlist: videoId} : {}),
     });
-    // youtube-nocookie.com is a separate origin from youtube.com, so the embed can't read the
-    // viewer's YouTube login cookies — it plays anonymously and isn't tied to their account (which
-    // otherwise surfaces sign-in/verification prompts, e.g. for a blocked account).
     const src = `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 
     return (

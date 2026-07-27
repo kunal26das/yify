@@ -3,10 +3,6 @@ const pkg = require('./package.json');
 
 const packageName = base.expo.android.package;
 
-// package.json is the single source of truth for versioning: android/app/build.gradle already reads
-// `packageJson.version`/`packageJson.versionCode`, and the iOS project has a build phase that writes
-// CFBundleShortVersionString/CFBundleVersion from the same file. app.json used to carry its own
-// copies, which drifted — the binary shipped 1.2.2 while anything reading expoConfig said 1.1.6.
 const version = pkg.version;
 const buildNumber = String(pkg.versionCode);
 

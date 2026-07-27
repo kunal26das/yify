@@ -64,7 +64,6 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
-    // Turned off in Settings — skip the fetch entirely, not just the notification.
     if (!areNotificationsEnabled()) return 0;
 
     const today = localDateKey(new Date());

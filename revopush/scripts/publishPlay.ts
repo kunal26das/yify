@@ -1,4 +1,3 @@
-// One-shot CLI driver: build signed AAB and publish to Play production.
 import {createWorkspace} from '../data/config/workspaceFs.js';
 import {createCancellation} from '../data/process/cancellationRegistry.js';
 import {createAndroidPublisher} from '../data/android/androidPublisherShell.js';

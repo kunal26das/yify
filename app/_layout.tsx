@@ -56,9 +56,6 @@ function RootLayout() {
         void startPlayServices();
     }, []);
 
-    // The CodePush wrapper is set to MANUAL so the sync runs through `syncOta`, which is what
-    // reports progress to the snackbar. Checking on launch and on every resume keeps the same
-    // cadence the ON_APP_RESUME wrapper had.
     useEffect(() => {
         if (Platform.OS === 'web') return;
         void syncOta();
@@ -112,7 +109,6 @@ function RootLayout() {
                 <Stack.Screen name="settings" options={{headerShown: false}}/>
                 <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
             </Stack>
-            {/* Above the navigator, so update progress follows the viewer between screens. */}
             <UpdateSnackbar/>
             <StatusBar style="auto"/>
         </ThemeProvider>
@@ -144,9 +140,6 @@ function withCodePush(component: typeof RootLayout) {
         return component;
     }
     const codePush = require('@revopush/react-native-code-push');
-    // MANUAL: the wrapper still applies pending updates and reports to the server, but the check
-    // itself is triggered by `syncOta` so its progress can be surfaced. Leaving it on
-    // ON_APP_RESUME would run a second, invisible sync alongside ours.
     return codePush({checkFrequency: codePush.CheckFrequency.MANUAL})(component);
 }
 

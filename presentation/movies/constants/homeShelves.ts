@@ -17,7 +17,6 @@ export interface HomeShelf {
     variant: ShelfVariant;
     limit: number;
     query: ShelfQuery;
-    /** Flags the rail's titles as new. Only honest on shelves sorted by date added. */
     markNew?: boolean;
 }
 
@@ -28,13 +27,10 @@ export const HERO_QUERY: ShelfQuery = {
 };
 export const HERO_LIMIT = 10;
 
-// The YTS API caps `limit` at 50, so that is what every shelf request asks for: the widest page
-// the API will give us, which leaves the most headroom for cross-shelf dedupe to eat into.
 export const API_MAX_LIMIT = 50;
 
 const RAIL_LIMIT = API_MAX_LIMIT;
 
-// One shelf per genre, derived from the canonical option list so none can be missed.
 const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
     (option) => option.value !== Genre.All
 ).map((option) => ({
@@ -48,7 +44,6 @@ const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
 export const HOME_SHELVES: readonly HomeShelf[] = [
     {
         key: 'top-10',
-        // Sorted by all-time download count, so it must not claim to be a weekly chart.
         title: 'Top 10 of All Time',
         variant: 'ranked',
         limit: 10,
@@ -58,8 +53,6 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         key: 'just-added',
         title: 'Just Added',
         subtitle: 'Fresh from the catalog',
-        // Wide backdrop art for the newest titles, so the row directly under the Top 10 reads as a
-        // different kind of shelf rather than another wall of posters.
         variant: 'landscape',
         limit: RAIL_LIMIT,
         query: {sort_by: SortBy.DateAdded, order_by: OrderBy.Desc},

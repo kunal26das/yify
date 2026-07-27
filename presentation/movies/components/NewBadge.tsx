@@ -2,7 +2,6 @@ import {StyleSheet, View, type StyleProp, type ViewStyle} from 'react-native';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily} from '../../constants/theme';
 
-/** The magenta NEW flag Hotstar puts on freshly added titles. */
 export function NewBadge({style}: {style?: StyleProp<ViewStyle>}) {
     return (
         <View style={[styles.badge, style]}>

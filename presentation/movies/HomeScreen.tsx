@@ -71,9 +71,6 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     const myList = useWatchlist();
     const navHeight = useTopNavHeight();
 
-    // Drives the nav's transparent-over-hero fade. The native driver keeps it smooth while the list
-    // mounts shelves underneath — but on web there is no native scroll node to attach to and the
-    // value never advances, so web drives the same animation from JS instead.
     const scrollY = useRef(new Animated.Value(0)).current;
     const onScroll = useMemo(
         () =>
@@ -83,8 +80,6 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
         [scrollY]
     );
 
-    // The Top 10 shelf is the source of truth for chart rank; every poster on the screen reads it
-    // from context so a charting title is flagged wherever it appears.
     const topTenMovies = useMemo(
         () => shelves.find((s) => s.key === 'top-10')?.movies ?? [],
         [shelves]
@@ -215,8 +210,6 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     );
 }
 
-// One home shelf. Requests its data the first time it mounts near the viewport (so the home
-// doesn't fetch every shelf at once), shows a skeleton until it arrives, and collapses if empty.
 function ShelfRow({
                       shelf,
                       posterWidth,
@@ -232,8 +225,6 @@ function ShelfRow({
     skeletons: number;
     onLoad: (key: string) => void;
 }) {
-    // Keyed off `needsRequest`, not `status`: a shelf held back by the reveal gate displays as
-    // loading while its own request has not been made yet, and it still needs to make it.
     useEffect(() => {
         if (shelf.needsRequest) onLoad(shelf.key);
     }, [shelf.needsRequest, shelf.key, onLoad]);

@@ -1,8 +1,6 @@
 import type {Movie, Torrent} from '@/domain';
 import {trackEvent, trackScreenView} from './analytics';
 
-// Central catalog of every analytics event in the app. All UI code goes
-// through these helpers so event names/params stay consistent across platforms.
 
 function movieParams(movie: Pick<Movie, 'id' | 'title'>) {
     return {movie_id: movie.id, movie_title: movie.title};
@@ -11,12 +9,10 @@ function movieParams(movie: Pick<Movie, 'id' | 'title'>) {
 export const Analytics = {
     screenView: trackScreenView,
 
-    // Discovery / impressions
     heroImpression: (movie: Movie, index: number) =>
         trackEvent('hero_impression', {...movieParams(movie), hero_index: index}),
     shelfImpression: (shelfKey: string) => trackEvent('shelf_impression', {shelf_key: shelfKey}),
 
-    // Navigation CTAs
     movieOpen: (movie: Pick<Movie, 'id' | 'title'>, source: string) =>
         trackEvent('select_content', {content_type: 'movie', ...movieParams(movie), source}),
     heroCta: (movie: Movie) => trackEvent('hero_cta', movieParams(movie)),
@@ -38,7 +34,6 @@ export const Analytics = {
     railPage: (railTitle: string, direction: 'back' | 'forward') =>
         trackEvent('rail_page', {rail_title: railTitle, direction}),
 
-    // Browse / search
     search: (term: string, resultCount?: number) =>
         trackEvent('search', {search_term: term, ...(resultCount != null ? {result_count: resultCount} : {})}),
     searchCleared: () => trackEvent('search_cleared'),
@@ -51,7 +46,6 @@ export const Analytics = {
     browseLoadMore: (loadedCount: number) => trackEvent('browse_load_more', {loaded_count: loadedCount}),
     scrollToTop: () => trackEvent('browse_scroll_to_top'),
 
-    // Movie details engagement
     trailerPlay: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('trailer_play', movieParams(movie)),
     trailerClose: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('trailer_close', movieParams(movie)),
     watchlistAdd: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('watchlist_add', movieParams(movie)),
@@ -67,7 +61,6 @@ export const Analytics = {
         }),
     torrentNoticeDismissed: (movieId: number) => trackEvent('torrent_notice_dismissed', {movie_id: movieId}),
 
-    // System
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
     retry: (source: 'home' | 'browse' | 'details') => trackEvent('retry', {source}),
     loadError: (source: 'home' | 'browse' | 'details') => trackEvent('load_error', {source}),
