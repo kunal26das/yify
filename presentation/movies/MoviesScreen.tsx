@@ -19,6 +19,7 @@ import {Analytics} from '@/lib/analytics-events';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
+import {TopNav, useTopNavHeight} from './components/TopNav';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
@@ -67,6 +68,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         loggedQueryRef.current = q;
     }, [appliedQuery]);
 
+    const navHeight = useTopNavHeight();
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
@@ -78,7 +80,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
     const glassTint = scheme === 'dark' ? 'dark' : 'light';
     const gridWidth = Math.min(width, contentMaxWidth);
     const searchBarHeight = 44 + POSTER_GAP * 2;
-    const listTopPadding = insets.top + searchBarHeight + POSTER_GAP / 2;
+    const listTopPadding = navHeight + searchBarHeight + POSTER_GAP / 2;
 
     const numColumns = useMemo(
         () => Math.max(2, Math.floor(gridWidth / (POSTER_MIN_WIDTH + POSTER_GAP))),
@@ -198,8 +200,19 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
         []
     );
 
+    const Nav = (
+        <TopNav
+            active="movies"
+            onBack={
+                showBack ? () => (router.canGoBack() ? router.back() : router.replace('/')) : undefined
+            }
+        />
+    );
+
     const SearchBar = (
-        <View style={[styles.searchBarOverlay, {paddingTop: insets.top}]} pointerEvents="box-none">
+        // Sits under the app bar rather than at the top of the screen; the bar carries the back
+        // action now, so the search row no longer needs its own chevron.
+        <View style={[styles.searchBarOverlay, {paddingTop: navHeight}]} pointerEvents="box-none">
             <View
                 style={[
                     styles.searchBarFixed,
@@ -207,23 +220,6 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                 ]}
             >
                 <View style={styles.searchRow}>
-                    {showBack ? (
-                        <Pressable
-                            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-                            hitSlop={8}
-                            accessibilityRole="button"
-                            accessibilityLabel="Go back"
-                            style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
-                        >
-                            <LiquidGlassView
-                                tint={glassTint}
-                                fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.82)' : 'rgba(255,255,255,0.82)'}
-                                style={[styles.searchBackGlass, {borderColor: colors.border}]}
-                            >
-                                <Ionicons name="chevron-back" size={22} color={colors.text}/>
-                            </LiquidGlassView>
-                        </Pressable>
-                    ) : null}
                     <LiquidGlassView
                         tint={glassTint}
                         intensity={80}
@@ -284,6 +280,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                     </View>
                     {SearchBar}
                 </SafeAreaView>
+                {Nav}
             </ThemedView>
         );
     }
@@ -310,6 +307,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                         </Pressable>
                     </View>
                 </SafeAreaView>
+                {Nav}
             </ThemedView>
         );
     }
@@ -355,7 +353,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                             onRefresh={handleRefresh}
                             tintColor={colors.accent}
                             colors={[colors.accent]}
-                            progressViewOffset={insets.top + searchBarHeight}
+                            progressViewOffset={navHeight + searchBarHeight}
                         />
                     }
                     contentContainerStyle={[
@@ -448,6 +446,7 @@ export function MoviesScreen({viewModel, showBack, autoFocus}: MoviesScreenProps
                     }}
                 />
             </SafeAreaView>
+            {Nav}
         </ThemedView>
     );
 }

@@ -4,6 +4,15 @@ export type { MoviesViewModel, MovieFilters, UseMoviesOptions } from './movies/u
 export { HomeScreen } from './movies/HomeScreen';
 export { useHomeViewModel } from './movies/useHomeViewModel';
 export type { HomeViewModel, ShelfState, ShelfStatus } from './movies/useHomeViewModel';
+export { MyListScreen } from './movies/MyListScreen';
+export { SettingsScreen } from './movies/SettingsScreen';
+export { HomeFooter } from './movies/components/HomeFooter';
+export { PlayStoreButton, PLAY_STORE_URL } from './movies/components/PlayStoreButton';
+export { useSettings } from './hooks/use-settings';
+export { TopNav, useTopNavHeight } from './movies/components/TopNav';
+export type { NavKey } from './movies/components/TopNav';
+export { HoverCardHost, useHoverCard } from './movies/components/HoverCard';
+export { TopTenProvider, useTopTenRank } from './movies/components/TopTenContext';
 export { MovieDetailsScreen } from './movies/MovieDetailsScreen';
 export { useMovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export type { MovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
@@ -12,6 +21,7 @@ export { Quality, Genre, SortBy, OrderBy } from './movies/constants/movieFilterO
 
 export { LiquidGlassView, LiquidGlassGroup, isNativeLiquidGlass } from './components/liquid-glass-view';
 export {LinearGradient} from './components/linear-gradient';
+export { UpdateSnackbar } from './components/update-snackbar';
 export { ThemedText } from './components/themed-text';
 export type { ThemedTextProps } from './components/themed-text';
 export { ThemedView } from './components/themed-view';

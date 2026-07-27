@@ -4,19 +4,40 @@ import {Link} from 'expo-router';
 import {useRef} from 'react';
 import {Animated, Platform, Pressable, StyleSheet, View} from 'react-native';
 import type {Movie} from '@/domain';
-import {Radius, Spacing} from '../../constants/theme';
+import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
 import {getPosterContainerStyle} from './moviePosterLayout';
 import {Analytics} from '@/lib/analytics-events';
+import {useHoverCard} from './HoverCard';
+import {NewBadge} from './NewBadge';
+import {useTopTenRank} from './TopTenContext';
 
 const POSTER_RADIUS = Radius.lg;
+const IS_WEB = Platform.OS === 'web';
 
-export function MoviePosterItem({movie, width, source = 'unknown'}: { movie: Movie; width?: number; source?: string }) {
+export function MoviePosterItem({
+  movie,
+  width,
+  source = 'unknown',
+  hideRankFlag = false,
+  isNew = false,
+}: {
+  movie: Movie;
+  width?: number;
+  source?: string;
+  /** Set inside the Top 10 rail, where the oversized numeral already states the rank. */
+  hideRankFlag?: boolean;
+  /** Shows the NEW flag — set by rails that are sorted by date added. */
+  isNew?: boolean;
+}) {
   const { posterUrls } = movie;
   const {colors, scheme} = usePalette();
   const scale = useRef(new Animated.Value(1)).current;
   const lift = useRef(new Animated.Value(0)).current;
+  const nodeRef = useRef<View>(null);
+  const hoverCard = useHoverCard();
+  const rank = useTopTenRank(movie.id);
 
   const placeholderUrl = posterUrls.length > 1 ? posterUrls[0] : undefined;
   const sourceUrl = posterUrls[Math.min(1, posterUrls.length - 1)] ?? posterUrls[0];
@@ -32,14 +53,28 @@ export function MoviePosterItem({movie, width, source = 'unknown'}: { movie: Mov
   const hasRating = movie.rating > 0;
 
   return (
+    // The ref lives on this wrapper rather than on the Pressable: `Link asChild` clones its child
+    // and supplies its own ref, so a ref handed to the Pressable never arrives. The hover card
+    // measures this node instead, which nothing else claims.
+    <View ref={nodeRef} style={getPosterContainerStyle(width)} collapsable={false}>
     <Link href={`/movie/${movie.id}`} asChild>
       <Pressable
         onPress={() => Analytics.movieOpen(movie, source)}
         onPressIn={() => animate(0.96, 0)}
         onPressOut={() => animate(1, 0)}
-        onHoverIn={() => Platform.OS === 'web' && animate(1.02, 1)}
-        onHoverOut={() => Platform.OS === 'web' && animate(1, 0)}
-        style={getPosterContainerStyle(width)}
+        onHoverIn={() => {
+          if (!IS_WEB) return;
+          animate(1.02, 1);
+          // On a pointer device the poster grows into a full card; the lift above is just the
+          // acknowledgement while the open delay runs.
+          if (hoverCard.enabled) hoverCard.open(movie, nodeRef.current, source);
+        }}
+        onHoverOut={() => {
+          if (!IS_WEB) return;
+          animate(1, 0);
+          if (hoverCard.enabled) hoverCard.close();
+        }}
+        style={styles.pressable}
       >
         <Animated.View
             style={[
@@ -72,13 +107,25 @@ export function MoviePosterItem({movie, width, source = 'unknown'}: { movie: Mov
                 </ThemedText>
               </View>
           ) : null}
+
+          {/* A charting title is flagged wherever it turns up, not only inside the Top 10 rail.
+              The rank takes the corner when a title is both new and charting. */}
+          {rank && !hideRankFlag ? (
+              <View style={styles.rankFlag}>
+                <ThemedText style={styles.rankFlagText}>TOP{'\n'}10</ThemedText>
+              </View>
+          ) : isNew ? (
+              <NewBadge style={styles.newBadge}/>
+          ) : null}
         </Animated.View>
       </Pressable>
     </Link>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  pressable: {flex: 1},
   card: {
     flex: 1,
     borderRadius: POSTER_RADIUS,
@@ -105,5 +152,25 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 11,
     fontWeight: '800',
+  },
+  newBadge: {position: 'absolute', zIndex: 10, top: Spacing.sm, right: Spacing.sm},
+  rankFlag: {
+    position: 'absolute',
+    zIndex: 10,
+    top: 0,
+    right: Spacing.sm,
+    backgroundColor: '#E11D2E',
+    paddingHorizontal: 5,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  rankFlagText: {
+    color: '#fff',
+    fontSize: 8,
+    lineHeight: 9,
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    fontFamily: FontFamily.extrabold,
   },
 });

@@ -13,11 +13,22 @@ import {
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
+import {useResponsive} from '../../hooks/use-responsive';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 import {Analytics} from '@/lib/analytics-events';
+import {toggleWatchlist} from '@/lib/watchlist';
+import {useIsInWatchlist} from '../useWatchlist';
+import {HeroTrailerLayer} from './HeroTrailerLayer';
+import {useTopTenRank} from './TopTenContext';
 
 const ROTATE_MS = 6500;
+// While a background trailer is running the slide holds far longer, so the trailer gets to play
+// rather than being swept away a beat after it fades in.
+const ROTATE_WITH_TRAILER_MS = 30000;
+// Netflix lets the artwork land before the video starts; the same pause keeps the billboard from
+// feeling like a video player and avoids burning bandwidth on a slide being scrolled past.
+const TRAILER_START_DELAY_MS = 2400;
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -26,20 +37,39 @@ interface HeroBillboardProps {
     width: number;
     height: number;
     rounded?: boolean;
+    /** Trailer id per movie id: string to play, null for "checked, has none", missing for "unknown". */
+    trailers?: Record<number, string | null>;
+    onRequestTrailer?: (movieId: number) => void;
 }
 
-export function HeroBillboard({movies, width, height, rounded}: HeroBillboardProps) {
+export function HeroBillboard({
+                                  movies,
+                                  width,
+                                  height,
+                                  rounded,
+                                  trailers,
+                                  onRequestTrailer,
+                              }: HeroBillboardProps) {
     const {colors} = usePalette();
+    const {isPhone} = useResponsive();
     const count = movies.length;
     const looped = count > 1;
 
     const [index, setIndex] = useState(0);
+    const [muted, setMuted] = useState(true);
+    // Trailer playback for the active slide: 'idle' before the delay elapses, 'ambient' for the
+    // silent looping backdrop, 'feature' once the viewer hits Play (sound + controls, no rotation).
+    const [mode, setMode] = useState<'idle' | 'ambient' | 'feature'>('idle');
     const indexRef = useRef(0);
     const scrollXRef = useRef(0);
     const scrollRef = useRef<ScrollView>(null);
     const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const trailerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scheduleNextRef = useRef<() => void>(() => {});
+
+    const activeMovie = movies[index];
+    const activeTrailer = activeMovie ? trailers?.[activeMovie.id] : undefined;
 
     // Append a copy of the first slide after the last, so auto-advancing past the end slides
     // forward into it and then hops back to the real first slide instantly (same image = invisible)
@@ -67,12 +97,14 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
     const scheduleNext = useCallback(() => {
         clearAuto();
         if (!looped || width <= 0) return;
+        // A trailer the viewer chose to play owns the billboard until they leave it.
+        if (mode === 'feature') return;
         autoTimerRef.current = setTimeout(() => {
             // Always animated — the appended clone makes even the wrap a smooth forward slide.
             scrollToData(indexRef.current + 1, true);
             scheduleNextRef.current();
-        }, ROTATE_MS);
-    }, [clearAuto, looped, width, scrollToData]);
+        }, mode === 'ambient' ? ROTATE_WITH_TRAILER_MS : ROTATE_MS);
+    }, [clearAuto, looped, width, scrollToData, mode]);
 
     useEffect(() => {
         scheduleNextRef.current = scheduleNext;
@@ -131,14 +163,51 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
         };
     }, [width, scrollToData, scheduleNext, clearAuto]);
 
+    // Ask for the active slide's trailer, then fade it in once the artwork has had its moment.
+    // Changing slides resets both, so a trailer never bleeds onto the wrong backdrop.
+    useEffect(() => {
+        setMode('idle');
+        if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
+        if (!activeMovie) return;
+        onRequestTrailer?.(activeMovie.id);
+        if (!activeTrailer) return;
+        trailerTimerRef.current = setTimeout(() => {
+            setMode('ambient');
+            Analytics.heroTrailerAutoplay(activeMovie);
+        }, TRAILER_START_DELAY_MS);
+        return () => {
+            if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
+        };
+    }, [activeMovie, activeTrailer, onRequestTrailer]);
+
     // One impression per hero slide per mount, fired as each slide becomes active.
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
-        const movie = movies[index];
-        if (!movie || seenRef.current.has(movie.id)) return;
-        seenRef.current.add(movie.id);
-        Analytics.heroImpression(movie, index);
-    }, [index, movies]);
+        if (!activeMovie || seenRef.current.has(activeMovie.id)) return;
+        seenRef.current.add(activeMovie.id);
+        Analytics.heroImpression(activeMovie, index);
+    }, [index, activeMovie]);
+
+    const onPlay = useCallback(() => {
+        if (!activeMovie) return;
+        Analytics.heroCta(activeMovie);
+        if (activeTrailer) {
+            Analytics.trailerPlay(activeMovie);
+            setMuted(false);
+            setMode('feature');
+            return;
+        }
+        // Nothing to play inline — the details screen is where the torrents live.
+        router.push(`/movie/${activeMovie.id}`);
+    }, [activeMovie, activeTrailer]);
+
+    const toggleMute = useCallback(() => {
+        if (!activeMovie) return;
+        setMuted((m) => {
+            Analytics.heroMuteToggle(activeMovie, !m);
+            return !m;
+        });
+    }, [activeMovie]);
 
     if (count === 0) return null;
 
@@ -159,27 +228,130 @@ export function HeroBillboard({movies, width, height, rounded}: HeroBillboardPro
                 scrollEventThrottle={16}
                 onScroll={onScroll}
                 decelerationRate="fast"
+                scrollEnabled={mode !== 'feature'}
             >
                 {data.map((movie, i) => (
-                    <HeroSlide key={`${movie.id}:${i}`} movie={movie} width={width} height={height} colors={colors}/>
+                    <HeroSlide
+                        key={`${movie.id}:${i}`}
+                        movie={movie}
+                        width={width}
+                        height={height}
+                        colors={colors}
+                        // Only the slide currently on screen carries the video, so at most one
+                        // YouTube embed exists at a time no matter how many slides are mounted.
+                        // Compared against the raw index, not the real one, so the appended clone
+                        // never mounts a second copy of slide 0's trailer.
+                        trailerId={i === index && mode !== 'idle' ? activeTrailer ?? null : null}
+                        feature={mode === 'feature'}
+                        muted={muted}
+                        onPlay={onPlay}
+                    />
                 ))}
             </ScrollView>
 
-            {looped ? (
-                <View style={styles.dots} pointerEvents="box-none">
-                    {movies.map((m, i) => (
+            {mode !== 'idle' && activeTrailer ? (
+                <Pressable
+                    onPress={toggleMute}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={muted ? 'Unmute trailer' : 'Mute trailer'}
+                    style={({pressed}) => [styles.muteButton, {opacity: pressed ? 0.7 : 1}]}
+                >
+                    <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color="#fff"/>
+                </Pressable>
+            ) : null}
+
+            {/* The thumbnail strip needs room beside the buttons; on a phone the CTA row already
+                spans the width, so those sizes get dots instead — the same split Hotstar makes
+                between its web and mobile billboards. */}
+            {looped && mode !== 'feature' ? (
+                isPhone ? (
+                    <View style={styles.dots} pointerEvents="box-none">
+                        {movies.map((m, i) => (
+                            <Pressable
+                                key={m.id}
+                                hitSlop={6}
+                                onPress={() => goTo(i)}
+                                accessibilityRole="button"
+                                accessibilityState={{selected: i === index}}
+                                accessibilityLabel={`Featured: ${m.title}`}
+                            >
+                                <View style={[styles.dot, i === index ? styles.dotActive : styles.dotInactive]}/>
+                            </Pressable>
+                        ))}
+                    </View>
+                ) : (
+                    <HeroThumbStrip movies={movies} index={index} onSelect={goTo}/>
+                )
+            ) : null}
+        </View>
+    );
+}
+
+const THUMB_WIDTH = 74;
+const THUMB_HEIGHT = Math.round((THUMB_WIDTH * 9) / 16);
+
+/**
+ * The featured-title selector Hotstar puts in the corner of its billboard: a strip of backdrop
+ * thumbnails, the active one lit up. It replaces a row of dots, which say how many slides there are
+ * but nothing about what they hold.
+ */
+function HeroThumbStrip({
+                            movies,
+                            index,
+                            onSelect,
+                        }: {
+    movies: Movie[];
+    index: number;
+    onSelect: (i: number) => void;
+}) {
+    const scrollRef = useRef<ScrollView>(null);
+
+    // Keep the active thumbnail in view as the billboard rotates on its own.
+    useEffect(() => {
+        scrollRef.current?.scrollTo({
+            x: Math.max(0, (index - 2) * (THUMB_WIDTH + 8)),
+            animated: true,
+        });
+    }, [index]);
+
+    return (
+        <View style={styles.thumbStrip} pointerEvents="box-none">
+            <ScrollView
+                ref={scrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.thumbRow}
+            >
+                {movies.map((m, i) => {
+                    const active = i === index;
+                    const art = m.backgroundImageUrl ?? m.posterUrls[m.posterUrls.length - 1];
+                    return (
                         <Pressable
                             key={m.id}
-                            hitSlop={6}
-                            onPress={() => goTo(i)}
+                            onPress={() => onSelect(i)}
                             accessibilityRole="button"
-                            accessibilityLabel={`Featured ${i + 1}`}
+                            accessibilityState={{selected: active}}
+                            accessibilityLabel={`Featured: ${m.title}`}
+                            style={({pressed}) => [
+                                styles.thumb,
+                                active ? styles.thumbActive : styles.thumbInactive,
+                                {opacity: pressed ? 0.8 : 1},
+                            ]}
                         >
-                            <View style={[styles.dot, i === index ? styles.dotActive : styles.dotInactive]}/>
+                            {art ? (
+                                <Image
+                                    source={{uri: art}}
+                                    style={StyleSheet.absoluteFill}
+                                    contentFit="cover"
+                                    transition={120}
+                                    cachePolicy="memory-disk"
+                                />
+                            ) : null}
                         </Pressable>
-                    ))}
-                </View>
-            ) : null}
+                    );
+                })}
+            </ScrollView>
         </View>
     );
 }
@@ -189,18 +361,34 @@ function HeroSlide({
                        width,
                        height,
                        colors,
+                       trailerId,
+                       feature,
+                       muted,
+                       onPlay,
                    }: {
     movie: Movie;
     width: number;
     height: number;
     colors: Colors;
+    trailerId: string | null;
+    feature: boolean;
+    muted: boolean;
+    onPlay: () => void;
 }) {
     const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
+    const rank = useTopTenRank(movie.id);
+    const {gradients} = usePalette();
+    const saved = useIsInWatchlist(movie.id);
     const meta = [
         movie.year ? String(movie.year) : null,
         formatRuntime(movie.runtimeMinutes),
         movie.mpaRating || null,
     ].filter(Boolean) as string[];
+
+    const openDetails = (source: string) => {
+        Analytics.movieOpen(movie, source);
+        router.push(`/movie/${movie.id}`);
+    };
 
     return (
         <View style={[styles.slide, {width, height}]}>
@@ -213,9 +401,29 @@ function HeroSlide({
                     cachePolicy="memory-disk"
                 />
             ) : null}
+
+            {trailerId ? (
+                <HeroTrailerLayer
+                    videoId={trailerId}
+                    width={width}
+                    height={height}
+                    muted={muted}
+                    controls={feature}
+                />
+            ) : null}
+
+            {/* Scrims: a bottom ramp so the copy stays legible over any artwork, and a left ramp
+                that keeps the text side dark on wide screens where the video fills the frame. */}
             <LinearGradient
-                colors={['rgba(6,6,8,0)', 'rgba(6,6,8,0.35)', 'rgba(6,6,8,0.88)']}
+                colors={['rgba(6,6,8,0.30)', 'rgba(6,6,8,0.10)', 'rgba(6,6,8,0.55)', 'rgba(6,6,8,0.94)']}
                 bands={16}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+            />
+            <LinearGradient
+                colors={['rgba(6,6,8,0.72)', 'rgba(6,6,8,0)']}
+                direction="horizontal"
+                bands={10}
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
             />
@@ -226,36 +434,35 @@ function HeroSlide({
                 pointerEvents="none"
             />
 
-            <View style={styles.content}>
+            {/* The controls-on feature trailer owns the pointer; the copy steps aside for it. */}
+            <View style={styles.content} pointerEvents={feature ? 'none' : 'box-none'}>
                 <Pressable
-                    onPress={() => {
-                        Analytics.movieOpen(movie, 'hero_slide');
-                        router.push(`/movie/${movie.id}`);
-                    }}
+                    onPress={() => openDetails('hero_slide')}
                     accessibilityRole="button"
                     accessibilityLabel={`View ${movie.title}`}
                 >
-                    <View style={styles.badgeRow}>
-                        <View style={styles.brandBadge}>
-                            <Ionicons name="film" size={12} color="#fff"/>
-                            <ThemedText style={styles.brandBadgeText}>FEATURED</ThemedText>
-                        </View>
-                        {movie.rating > 0 ? (
-                            <View style={styles.ratingPill}>
-                                <Ionicons name="star" size={12} color={colors.gold}/>
-                                <ThemedText style={styles.ratingText}>{movie.rating.toFixed(1)}</ThemedText>
-                            </View>
-                        ) : null}
-                    </View>
+                    {/* Hotstar leads with a line of context in amber — why this title is here —
+                        rather than a generic "featured" chip. */}
+                    <ThemedText style={[styles.tagline, {color: colors.gold}]} numberOfLines={1}>
+                        {taglineFor(movie, rank)}
+                    </ThemedText>
 
                     <ThemedText type="display" style={styles.title} numberOfLines={2}>
                         {movie.title}
                     </ThemedText>
 
                     <View style={styles.metaRow}>
+                        {movie.rating > 0 ? (
+                            <View style={styles.metaItem}>
+                                <Ionicons name="star" size={12} color={colors.gold}/>
+                                <ThemedText style={[styles.metaText, styles.metaRating]}>
+                                    {movie.rating.toFixed(1)}
+                                </ThemedText>
+                            </View>
+                        ) : null}
                         {meta.map((m, i) => (
                             <View key={m} style={styles.metaItem}>
-                                {i > 0 ? <View style={styles.metaDot}/> : null}
+                                {(i > 0 || movie.rating > 0) ? <View style={styles.metaDot}/> : null}
                                 <ThemedText style={styles.metaText}>{m}</ThemedText>
                             </View>
                         ))}
@@ -276,22 +483,63 @@ function HeroSlide({
 
                 <View style={styles.ctaRow}>
                     <Pressable
+                        onPress={onPlay}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Watch ${movie.title}`}
+                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                    >
+                        <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
+                            <Ionicons name="play" size={20} color="#fff"/>
+                            <ThemedText style={styles.playLabel}>Watch Now</ThemedText>
+                        </LinearGradient>
+                    </Pressable>
+
+                    <Pressable
                         onPress={() => {
-                            Analytics.heroCta(movie);
-                            router.push(`/movie/${movie.id}`);
+                            const added = toggleWatchlist(movie);
+                            if (added) Analytics.watchlistAdd(movie);
+                            else Analytics.watchlistRemove(movie);
                         }}
                         accessibilityRole="button"
-                        accessibilityLabel={`View ${movie.title}`}
+                        accessibilityLabel={
+                            saved ? `Remove ${movie.title} from My List` : `Add ${movie.title} to My List`
+                        }
+                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
                     >
-                        <View style={[styles.viewButton, {backgroundColor: colors.accent}]}>
-                            <Ionicons name="play" size={17} color={colors.onAccent}/>
-                            <ThemedText style={[styles.viewLabel, {color: colors.onAccent}]}>View</ThemedText>
+                        <View style={styles.addButton}>
+                            <Ionicons name={saved ? 'checkmark' : 'add'} size={22} color="#fff"/>
+                        </View>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => {
+                            Analytics.heroMoreInfo(movie);
+                            openDetails('hero_more_info');
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`More info about ${movie.title}`}
+                        style={({pressed}) => ({opacity: pressed ? 0.85 : 1})}
+                    >
+                        <View style={styles.infoButton}>
+                            <Ionicons name="information-circle-outline" size={20} color="#fff"/>
+                            <ThemedText style={styles.infoLabel}>More Info</ThemedText>
                         </View>
                     </Pressable>
                 </View>
             </View>
         </View>
     );
+}
+
+/**
+ * The line of context above the title. Chart position is the strongest claim available, then a
+ * high score, then the genre — never an empty "featured", which tells the viewer nothing.
+ */
+function taglineFor(movie: Movie, rank: number | null): string {
+    if (rank) return `#${rank} in Movies Today`;
+    if (movie.rating >= 8) return 'Critically acclaimed';
+    if (movie.genres.length > 0) return `Popular in ${movie.genres[0]}`;
+    return 'Featured today';
 }
 
 function formatRuntime(minutes: number): string | null {
@@ -309,49 +557,86 @@ const styles = StyleSheet.create({
     meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
 
     content: {paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl},
-    badgeRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10},
-    brandBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-        paddingHorizontal: 9,
-        paddingVertical: 4,
-        borderRadius: Radius.sm,
-        backgroundColor: 'rgba(255,255,255,0.16)',
-    },
-    brandBadgeText: {color: '#fff', fontSize: 10, letterSpacing: 1.2, fontFamily: FontFamily.bold},
-    ratingPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: 9,
-        paddingVertical: 4,
-        borderRadius: Radius.pill,
-        backgroundColor: 'rgba(6,6,8,0.5)',
-    },
-    ratingText: {color: '#fff', fontSize: 12, fontFamily: FontFamily.extrabold},
+
+    tagline: {fontSize: 14, marginBottom: 8, fontFamily: FontFamily.bold},
 
     title: {color: '#fff', fontSize: 34, lineHeight: 38},
     metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 8},
-    metaItem: {flexDirection: 'row', alignItems: 'center'},
+    metaItem: {flexDirection: 'row', alignItems: 'center', gap: 4},
     metaDot: {width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.6)', marginHorizontal: 8},
     metaText: {color: 'rgba(255,255,255,0.9)', fontSize: 13, fontFamily: FontFamily.semibold},
+    metaRating: {fontFamily: FontFamily.extrabold},
     summary: {color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 20, marginTop: 10, maxWidth: 560},
 
-    ctaRow: {flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 18},
-    viewButton: {
+    ctaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18},
+    playButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingHorizontal: 30,
+        paddingVertical: 13,
+        borderRadius: Radius.pill,
+    },
+    playLabel: {fontSize: 16, color: '#fff', fontFamily: FontFamily.bold},
+    addButton: {
+        width: 48,
+        height: 48,
+        borderRadius: Radius.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(109,109,110,0.5)',
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.35)',
+    },
+    infoButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        paddingHorizontal: 24,
-        paddingVertical: 11,
+        paddingHorizontal: 22,
+        paddingVertical: 12,
         borderRadius: Radius.pill,
+        backgroundColor: 'rgba(109,109,110,0.65)',
     },
-    viewLabel: {fontSize: 16, fontFamily: FontFamily.bold},
+    infoLabel: {fontSize: 16, color: '#fff', fontFamily: FontFamily.bold},
+
+    muteButton: {
+        position: 'absolute',
+        right: Spacing.xl,
+        // Clears the thumbnail strip below it rather than sitting on top of the first thumbnail.
+        bottom: Spacing.xxl + THUMB_HEIGHT + 20,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.55)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(6,6,8,0.35)',
+        zIndex: 15,
+    },
+
+    thumbStrip: {
+        position: 'absolute',
+        right: 0,
+        bottom: Spacing.xxl + 8,
+        maxWidth: '52%',
+        zIndex: 12,
+    },
+    thumbRow: {flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.xl},
+    thumb: {
+        width: THUMB_WIDTH,
+        height: THUMB_HEIGHT,
+        borderRadius: Radius.sm,
+        overflow: 'hidden',
+        backgroundColor: 'rgba(6,6,8,0.6)',
+    },
+    thumbActive: {borderWidth: 2, borderColor: '#fff'},
+    thumbInactive: {borderWidth: 2, borderColor: 'rgba(255,255,255,0.18)', opacity: 0.62},
 
     dots: {
         position: 'absolute',
-        bottom: Spacing.xl + 12,
+        bottom: Spacing.md,
         left: 0,
         right: 0,
         flexDirection: 'row',

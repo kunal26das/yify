@@ -6,6 +6,7 @@ import {Quality} from '@/presentation/movies/constants/movieFilterOptions';
 import {getApiBaseUrl} from '@/lib/remote-config';
 import {buildNotificationContent, selectNewMovies, type NewMoviesNotification} from '@/lib/new-movies-diff';
 import {NewMoviesCache} from '@/lib/new-movies-cache';
+import {areNotificationsEnabled} from '@/lib/settings';
 import {createLocalStorageStore} from '@/lib/storage/local-storage-key-value-store';
 
 
@@ -69,6 +70,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
+    // Turned off in Settings — skip the fetch entirely, not just the notification.
+    if (!areNotificationsEnabled()) return 0;
     if (!hasNotificationApi() || Notification.permission !== 'granted') return 0;
 
     const today = localDateKey(new Date());

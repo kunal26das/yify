@@ -70,6 +70,11 @@ export function removeFromWatchlist(id: number): void {
     write(items.filter((m) => m.id !== id));
 }
 
+export function clearWatchlist(): void {
+    if (read().length === 0) return;
+    write([]);
+}
+
 export function toggleWatchlist(movie: Movie): boolean {
     if (isInWatchlist(movie.id)) {
         removeFromWatchlist(movie.id);

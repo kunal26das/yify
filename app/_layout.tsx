@@ -4,7 +4,7 @@ import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {Platform, StyleSheet} from 'react-native';
+import {AppState, Platform, StyleSheet} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
     HankenGrotesk_400Regular,
@@ -16,7 +16,8 @@ import {
 } from '@expo-google-fonts/hanken-grotesk';
 import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-google-fonts/fraunces';
 
-import {Colors, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
+import {Colors, UpdateSnackbar, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
+import {syncOta} from '@/lib/ota-update';
 import {initRemoteConfig} from '@/lib/remote-config';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 import {Analytics} from '@/lib/analytics-events';
@@ -53,6 +54,18 @@ function RootLayout() {
     const navReady = fontsLoaded || !!fontError;
     useEffect(() => {
         void startPlayServices();
+    }, []);
+
+    // The CodePush wrapper is set to MANUAL so the sync runs through `syncOta`, which is what
+    // reports progress to the snackbar. Checking on launch and on every resume keeps the same
+    // cadence the ON_APP_RESUME wrapper had.
+    useEffect(() => {
+        if (Platform.OS === 'web') return;
+        void syncOta();
+        const sub = AppState.addEventListener('change', (next) => {
+            if (next === 'active') void syncOta();
+        });
+        return () => sub.remove();
     }, []);
     useEffect(() => {
         if (!lastResponse || !navReady) return;
@@ -95,8 +108,12 @@ function RootLayout() {
             <Stack>
                 <Stack.Screen name="index" options={{headerShown: false}}/>
                 <Stack.Screen name="browse" options={{headerShown: false}}/>
+                <Stack.Screen name="my-list" options={{headerShown: false}}/>
+                <Stack.Screen name="settings" options={{headerShown: false}}/>
                 <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
             </Stack>
+            {/* Above the navigator, so update progress follows the viewer between screens. */}
+            <UpdateSnackbar/>
             <StatusBar style="auto"/>
         </ThemeProvider>
     );
@@ -127,7 +144,10 @@ function withCodePush(component: typeof RootLayout) {
         return component;
     }
     const codePush = require('@revopush/react-native-code-push');
-    return codePush({checkFrequency: codePush.CheckFrequency.ON_APP_RESUME})(component);
+    // MANUAL: the wrapper still applies pending updates and reports to the server, but the check
+    // itself is triggered by `syncOta` so its progress can be surfaced. Leaving it on
+    // ON_APP_RESUME would run a second, invisible sync alongside ours.
+    return codePush({checkFrequency: codePush.CheckFrequency.MANUAL})(component);
 }
 
 export default withCodePush(RootLayout);

@@ -15,6 +15,7 @@ import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {YoutubePlayer} from './components/YoutubePlayer';
 import {MovieRail} from './components/MovieRail';
 import {ScreenshotLightbox} from './components/ScreenshotLightbox';
+import {TopNav, useTopNavHeight} from './components/TopNav';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {useIsInWatchlist} from './useWatchlist';
 import {toggleWatchlist} from '@/lib/watchlist';
@@ -43,6 +44,7 @@ function backdropCandidates(ytTrailerCode: string | undefined, screenshot: strin
 export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewModel }) {
   const { details, suggestions, loading, error, reload } = viewModel;
   const insets = useSafeAreaInsets();
+  const navHeight = useTopNavHeight();
     const {colors, scheme} = usePalette();
     const {width, isPhone} = useResponsive();
     const columnWidth = Math.min(width, COLUMN_MAX);
@@ -65,22 +67,10 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const torrentCols = Math.max(2, Math.floor(bodyWidth / 250));
     const torrentCardWidth = Math.floor((bodyWidth - TORRENT_GAP * (torrentCols - 1)) / torrentCols);
 
+  // The app bar carries the back action here, so details keeps the same header as every other
+  // screen instead of a lone floating chevron.
   const BackButton = (
-    <Pressable
-      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-      hitSlop={10}
-      accessibilityRole="button"
-      accessibilityLabel="Go back"
-      style={[styles.backButton, { top: insets.top + 8 }]}
-    >
-        <LiquidGlassView
-            tint={scheme === 'dark' ? 'dark' : 'light'}
-            fallbackBackgroundColor="rgba(8,8,12,0.5)"
-            style={styles.backGlass}
-        >
-            <Ionicons name="chevron-back" size={24} color="#fff"/>
-        </LiquidGlassView>
-    </Pressable>
+    <TopNav onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}/>
   );
 
   if (loading) {
@@ -141,7 +131,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
   return (
     <ThemedView style={styles.container}>
       <ScrollView
-          contentContainerStyle={{paddingTop: insets.top, paddingBottom: insets.bottom + 40}}
+          contentContainerStyle={{paddingTop: navHeight, paddingBottom: insets.bottom + 40}}
         showsVerticalScrollIndicator={false}
       >
           <View style={styles.column}>

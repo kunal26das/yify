@@ -20,6 +20,18 @@ export const Analytics = {
     movieOpen: (movie: Pick<Movie, 'id' | 'title'>, source: string) =>
         trackEvent('select_content', {content_type: 'movie', ...movieParams(movie), source}),
     heroCta: (movie: Movie) => trackEvent('hero_cta', movieParams(movie)),
+    heroMoreInfo: (movie: Movie) => trackEvent('hero_more_info', movieParams(movie)),
+    heroTrailerAutoplay: (movie: Pick<Movie, 'id' | 'title'>) =>
+        trackEvent('hero_trailer_autoplay', movieParams(movie)),
+    heroMuteToggle: (movie: Pick<Movie, 'id' | 'title'>, muted: boolean) =>
+        trackEvent('hero_mute_toggle', {...movieParams(movie), muted}),
+    navSelect: (destination: string) => trackEvent('nav_select', {destination}),
+    playStoreOpen: (source: string) => trackEvent('play_store_open', {source}),
+    footerLink: (destination: string) => trackEvent('footer_link', {destination}),
+    settingChanged: (setting: string, value: string) =>
+        trackEvent('setting_changed', {setting, value}),
+    posterHoverCard: (movie: Pick<Movie, 'id' | 'title'>, source: string) =>
+        trackEvent('poster_hover_card', {...movieParams(movie), source}),
     searchOpen: (source: string) => trackEvent('search_open', {source}),
     browseAllOpen: (source: string) => trackEvent('browse_all_open', {source}),
     shelfSeeAll: (shelfTitle: string) => trackEvent('shelf_see_all', {shelf_title: shelfTitle}),
