@@ -1,5 +1,4 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router, usePathname} from 'expo-router';
 import {Animated, Platform, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LiquidGlassView} from '../../components/liquid-glass-view';
@@ -8,9 +7,14 @@ import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {Analytics} from '@/lib/analytics-events';
-import {DESTINATIONS, goToDestination} from '../constants/destinations';
+import {DESTINATIONS, useGoTo} from '../constants/destinations';
 
 const SOLID_AT = 90;
+
+const ROW_PADDING_TOP = 6;
+const ROW_PADDING_BOTTOM = 8;
+const NAV_FONT_SIZE = 14.5;
+const NAV_LINE_HEIGHT = 24;
 
 export type NavKey = 'home' | 'movies' | 'new' | 'my-list' | 'settings';
 
@@ -20,23 +24,25 @@ interface NavItem {
     href: string;
 }
 
-const NAV_ITEMS: readonly NavItem[] = DESTINATIONS;
+const NAV_ITEMS: readonly NavItem[] = DESTINATIONS.filter((d) => d.key !== 'home');
 
 const SETTINGS_ITEM: NavItem = {key: 'settings', label: 'Settings', href: '/settings'};
+
+const HOME_ITEM: NavItem = {key: 'home', label: 'Home', href: '/'};
 
 export function TopNav({
                            active,
                            scrollY,
-                           onBack,
+                           below,
                        }: {
     active?: NavKey;
     scrollY?: Animated.Value;
-    onBack?: () => void;
+    below?: React.ReactNode;
 }) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
     const {isPhone, gutter} = useResponsive();
-    const pathname = usePathname();
+    const goTo = useGoTo();
 
     const backgroundOpacity = scrollY
         ? scrollY.interpolate({
@@ -48,7 +54,7 @@ export function TopNav({
 
     const go = (item: NavItem) => {
         Analytics.navSelect(item.key);
-        goToDestination(item.href, pathname);
+        goTo(item.href);
     };
 
     const renderLink = (item: NavItem) => (
@@ -88,21 +94,9 @@ export function TopNav({
                 <View style={[styles.hairline, {backgroundColor: colors.border}]}/>
             </Animated.View>
 
-            <View style={[styles.row, {paddingTop: insets.top + 6, paddingHorizontal: gutter}]} pointerEvents="box-none">
-                {onBack && Platform.OS !== 'web' ? (
-                    <Pressable
-                        onPress={onBack}
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        accessibilityLabel="Go back"
-                        style={({pressed}) => [styles.backButton, {opacity: pressed ? 0.6 : 1}]}
-                    >
-                        <Ionicons name="chevron-back" size={24} color={colors.text}/>
-                    </Pressable>
-                ) : null}
-
+            <View style={[styles.row, {paddingTop: insets.top + ROW_PADDING_TOP, paddingHorizontal: gutter}]} pointerEvents="box-none">
                 <Pressable
-                    onPress={() => go(NAV_ITEMS[0])}
+                    onPress={() => go(HOME_ITEM)}
                     accessibilityRole="link"
                     accessibilityLabel="Yify home"
                     style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
@@ -113,15 +107,30 @@ export function TopNav({
                 </Pressable>
 
                 {isPhone ? (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.links}
-                        style={styles.phoneLinks}
-                    >
-                        {links}
-                        {renderLink(SETTINGS_ITEM)}
-                    </ScrollView>
+                    <>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.links}
+                            style={styles.phoneLinks}
+                        >
+                            {links}
+                        </ScrollView>
+                        <Pressable
+                            onPress={() => go(SETTINGS_ITEM)}
+                            hitSlop={8}
+                            accessibilityRole="link"
+                            accessibilityLabel="Settings"
+                            accessibilityState={{selected: active === 'settings'}}
+                            style={({pressed}) => [styles.settingsButton, {opacity: pressed ? 0.6 : 1}]}
+                        >
+                            <Ionicons
+                                name={active === 'settings' ? 'settings' : 'settings-outline'}
+                                size={22}
+                                color={active === 'settings' ? colors.text : colors.textMuted}
+                            />
+                        </Pressable>
+                    </>
                 ) : (
                     <>
                         <View style={styles.links}>{links}</View>
@@ -131,13 +140,22 @@ export function TopNav({
                 )}
             </View>
 
+            {below}
         </View>
     );
 }
 
+export function useTopNavHeightWithSearch(): number {
+    return useTopNavHeight() + SEARCH_ROW_HEIGHT;
+}
+
+export const SEARCH_ROW_HEIGHT = 44 + Spacing.sm * 2;
+
+const NAV_ROW_HEIGHT = ROW_PADDING_TOP + NAV_LINE_HEIGHT + ROW_PADDING_BOTTOM;
+
 export function useTopNavHeight(): number {
     const insets = useSafeAreaInsets();
-    return insets.top + 58;
+    return insets.top + NAV_ROW_HEIGHT;
 }
 
 const styles = StyleSheet.create({
@@ -152,19 +170,20 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: 8,
+        paddingBottom: ROW_PADDING_BOTTOM,
         gap: Spacing.lg,
     },
-    backButton: {marginRight: -Spacing.sm},
     wordmark: {
-        fontSize: 24,
+        fontSize: NAV_FONT_SIZE,
+        lineHeight: NAV_LINE_HEIGHT,
         letterSpacing: 1.5,
         fontFamily: FontFamily.displayExtra,
         ...Platform.select({web: {cursor: 'pointer'}, default: {}}),
     },
     links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
     phoneLinks: {flex: 1},
+    settingsButton: {marginLeft: -Spacing.sm},
     link: {paddingVertical: 4},
-    linkLabel: {fontSize: 14.5},
+    linkLabel: {fontSize: NAV_FONT_SIZE, lineHeight: NAV_LINE_HEIGHT},
     spacer: {flex: 1},
 });

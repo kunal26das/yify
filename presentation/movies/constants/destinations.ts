@@ -1,4 +1,5 @@
-import {router} from 'expo-router';
+import {useCallback} from 'react';
+import {router, useNavigation, usePathname} from 'expo-router';
 import {OrderBy, SortBy} from './movieFilterOptions';
 
 export type DestinationKey = 'home' | 'movies' | 'new' | 'my-list';
@@ -14,7 +15,7 @@ export const DESTINATIONS: readonly Destination[] = [
     {key: 'movies', label: 'Movies', href: '/browse'},
     {
         key: 'new',
-        label: 'New & Popular',
+        label: 'Latest',
         href: `/browse?sort_by=${SortBy.DateAdded}&order_by=${OrderBy.Desc}`,
     },
     {key: 'my-list', label: 'My List', href: '/my-list'},
@@ -22,22 +23,6 @@ export const DESTINATIONS: readonly Destination[] = [
 
 export function destinationHref(key: DestinationKey): string {
     return DESTINATIONS.find((d) => d.key === key)?.href ?? '/';
-}
-
-export function goToDestination(href: string, currentPathname: string): void {
-    const [path, query = ''] = href.split('?');
-    const target = path || '/';
-    if (target !== currentPathname) {
-        router.push(href as never);
-        return;
-    }
-
-    const incoming = new URLSearchParams(query);
-    const next: Record<string, string | undefined> = {};
-    for (const key of BROWSE_PARAM_KEYS) {
-        next[key] = incoming.get(key) ?? undefined;
-    }
-    router.setParams(next);
 }
 
 const BROWSE_PARAM_KEYS = [
@@ -49,3 +34,43 @@ const BROWSE_PARAM_KEYS = [
     'order_by',
     'focus',
 ] as const;
+
+function routeNameForPath(path: string): string {
+    return path === '/' ? 'index' : path.replace(/^\/+/, '');
+}
+
+function applyParams(query: string): void {
+    const incoming = new URLSearchParams(query);
+    const next: Record<string, string | undefined> = {};
+    for (const key of BROWSE_PARAM_KEYS) {
+        next[key] = incoming.get(key) ?? undefined;
+    }
+    router.setParams(next);
+}
+
+export function useGoTo(): (href: string) => void {
+    const pathname = usePathname();
+    const navigation = useNavigation();
+
+    return useCallback(
+        (href: string) => {
+            const [path, query = ''] = href.split('?');
+            const target = path || '/';
+
+            if (target === pathname) {
+                applyParams(query);
+                return;
+            }
+
+            const routes = navigation.getState()?.routes ?? [];
+            const name = routeNameForPath(target);
+            if (routes.some((route) => route.name === name)) {
+                router.dismissTo(href as never);
+                return;
+            }
+
+            router.push(href as never);
+        },
+        [pathname, navigation]
+    );
+}

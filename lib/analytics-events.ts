@@ -31,6 +31,8 @@ export const Analytics = {
     searchOpen: (source: string) => trackEvent('search_open', {source}),
     browseAllOpen: (source: string) => trackEvent('browse_all_open', {source}),
     shelfSeeAll: (shelfTitle: string) => trackEvent('shelf_see_all', {shelf_title: shelfTitle}),
+    genreOpen: (genre: string) => trackEvent('genre_open', {genre}),
+    websiteOpen: (source: string) => trackEvent('website_open', {source}),
     railPage: (railTitle: string, direction: 'back' | 'forward') =>
         trackEvent('rail_page', {rail_title: railTitle, direction}),
 
@@ -62,6 +64,6 @@ export const Analytics = {
     torrentNoticeDismissed: (movieId: number) => trackEvent('torrent_notice_dismissed', {movie_id: movieId}),
 
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
-    retry: (source: 'home' | 'browse' | 'details') => trackEvent('retry', {source}),
+    retry: (source: 'home' | 'browse' | 'browse_more' | 'details') => trackEvent('retry', {source}),
     loadError: (source: 'home' | 'browse' | 'details') => trackEvent('load_error', {source}),
 };

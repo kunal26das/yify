@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
-import {useCallback, useEffect, useMemo, useRef} from 'react';
+import {StatusBar} from 'expo-status-bar';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     Animated,
     FlatList,
@@ -22,16 +22,20 @@ import {HeroBillboard} from './components/HeroBillboard';
 import {HomeFooter} from './components/HomeFooter';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
-import {PosterSkeleton} from './components/PosterSkeleton';
+import {LandscapeSkeleton, PosterSkeleton, SkeletonBlock} from './components/PosterSkeleton';
 import {TopNav, useTopNavHeight} from './components/TopNav';
 import {TopTenProvider} from './components/TopTenContext';
 import {POSTER_GAP} from './components/moviePosterLayout';
 import {useWatchlist} from './useWatchlist';
-import type {ShelfQuery} from './constants/homeShelves';
+import {useGoTo} from './constants/destinations';
+import {landscapeWidth} from './components/MovieLandscapeItem';
+import type {ShelfQuery, ShelfVariant} from './constants/homeShelves';
 import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import {Analytics} from '@/lib/analytics-events';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<ShelfState>);
+
+const HERO_STATUS_BAR_THRESHOLD = 90;
 
 type Palette = ReturnType<typeof usePalette>['colors'];
 
@@ -70,8 +74,16 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
     } = viewModel;
     const myList = useWatchlist();
     const navHeight = useTopNavHeight();
+    const goTo = useGoTo();
 
     const scrollY = useRef(new Animated.Value(0)).current;
+    const [overHero, setOverHero] = useState(true);
+    useEffect(() => {
+        const id = scrollY.addListener(({value}) => {
+            setOverHero(value < HERO_STATUS_BAR_THRESHOLD);
+        });
+        return () => scrollY.removeListener(id);
+    }, [scrollY]);
     const onScroll = useMemo(
         () =>
             Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {
@@ -106,9 +118,10 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 colors={colors}
                 skeletons={skeletons}
                 onLoad={loadShelf}
+                onNavigate={goTo}
             />
         ),
-        [posterWidth, gutter, colors, skeletons, loadShelf]
+        [posterWidth, gutter, colors, skeletons, loadShelf, goTo]
     );
 
     if (loading && heroMovies.length === 0 && !error) {
@@ -157,7 +170,34 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 ListHeaderComponent={
                     <>
                         {heroMovies.length > 0 ? (
-                            <View style={styles.heroWrap}>
+                            <Animated.View
+                                style={[
+                                    styles.heroWrap,
+                                    {
+                                        opacity: scrollY.interpolate({
+                                            inputRange: [0, heroHeight * 0.75],
+                                            outputRange: [1, 0],
+                                            extrapolate: 'clamp',
+                                        }),
+                                        transform: [
+                                            {
+                                                scale: scrollY.interpolate({
+                                                    inputRange: [-heroHeight, 0, heroHeight],
+                                                    outputRange: [1.15, 1, 0.92],
+                                                    extrapolate: 'clamp',
+                                                }),
+                                            },
+                                            {
+                                                translateY: scrollY.interpolate({
+                                                    inputRange: [0, heroHeight],
+                                                    outputRange: [0, heroHeight * 0.22],
+                                                    extrapolate: 'clamp',
+                                                }),
+                                            },
+                                        ],
+                                    },
+                                ]}
+                            >
                                 <HeroBillboard
                                     movies={heroMovies}
                                     width={width}
@@ -165,7 +205,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                                     trailers={heroTrailers}
                                     onRequestTrailer={requestHeroTrailer}
                                 />
-                            </View>
+                            </Animated.View>
                         ) : (
                             <View style={{height: navHeight}}/>
                         )}
@@ -182,7 +222,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                                 gutter={gutter}
                                 onSeeAll={() => {
                                     Analytics.shelfSeeAll('My List');
-                                    router.push('/my-list' as never);
+                                    goTo('/my-list');
                                 }}
                             />
                         ) : null}
@@ -204,6 +244,7 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                 windowSize={5}
             />
             <TopNav active="home" scrollY={scrollY}/>
+            {heroMovies.length > 0 && overHero ? <StatusBar style="light"/> : null}
         </ThemedView>
         </HoverCardHost>
         </TopTenProvider>
@@ -217,6 +258,7 @@ function ShelfRow({
                       colors,
                       skeletons,
                       onLoad,
+                      onNavigate,
                   }: {
     shelf: ShelfState;
     posterWidth: number;
@@ -224,6 +266,7 @@ function ShelfRow({
     colors: Palette;
     skeletons: number;
     onLoad: (key: string) => void;
+    onNavigate: (href: string) => void;
 }) {
     useEffect(() => {
         if (shelf.needsRequest) onLoad(shelf.key);
@@ -247,38 +290,49 @@ function ShelfRow({
                 gutter={gutter}
                 onSeeAll={() => {
                     Analytics.shelfSeeAll(shelf.title);
-                    router.push(buildBrowseHref(shelf.query) as never);
+                    onNavigate(buildBrowseHref(shelf.query));
                 }}
             />
         );
     }
 
-    return <ShelfSkeleton title={shelf.title} posterWidth={posterWidth} gutter={gutter} colors={colors}
-                          skeletons={skeletons}/>;
+    return <ShelfSkeleton title={shelf.title} variant={shelf.variant} posterWidth={posterWidth} gutter={gutter}
+                          colors={colors} skeletons={skeletons}/>;
 }
 
 function ShelfSkeleton({
                            title,
+                           variant,
                            posterWidth,
                            gutter,
                            colors,
                            skeletons,
                        }: {
     title: string;
+    variant: ShelfVariant;
     posterWidth: number;
     gutter: number;
     colors: Palette;
     skeletons: number;
 }) {
+    const landscape = variant === 'landscape';
+    const count = landscape
+        ? Math.max(2, Math.ceil((skeletons * (posterWidth + POSTER_GAP)) / (landscapeWidth(posterWidth) + POSTER_GAP)))
+        : skeletons;
+
     return (
         <View style={styles.skeletonRail}>
             <ThemedText type="heading" style={[styles.shelfSkeletonTitle, {color: colors.text, marginLeft: gutter}]}>
                 {title}
             </ThemedText>
             <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
-                {Array.from({length: skeletons}).map((_, i) => (
-                    <PosterSkeleton key={i} width={posterWidth}/>
-                ))}
+                {Array.from({length: count}).map((_, i) =>
+                    landscape ? (
+                        <LandscapeSkeleton key={i} posterWidth={posterWidth}/>
+                    ) : (
+                        <PosterSkeleton key={i} width={posterWidth}/>
+                    )
+                )}
             </View>
         </View>
     );
@@ -299,7 +353,18 @@ function HomeSkeleton({
 }) {
     return (
         <View>
-            <View style={{height: heroHeight, backgroundColor: colors.surfaceSunken}}>
+            <View style={{height: heroHeight}}>
+                <SkeletonBlock style={styles.heroSkeletonFill}/>
+                <View style={styles.heroSkeletonContent}>
+                    <SkeletonBlock style={styles.heroSkeletonTagline}/>
+                    <SkeletonBlock style={styles.heroSkeletonTitle}/>
+                    <SkeletonBlock style={styles.heroSkeletonMeta}/>
+                    <View style={styles.heroSkeletonCtaRow}>
+                        <SkeletonBlock style={styles.heroSkeletonCta}/>
+                        <SkeletonBlock style={styles.heroSkeletonCta}/>
+                        <SkeletonBlock style={styles.heroSkeletonCircle}/>
+                    </View>
+                </View>
                 <LinearGradient
                     colors={['rgba(6,6,8,0)', colors.background]}
                     bands={12}
@@ -341,8 +406,23 @@ const styles = StyleSheet.create({
     },
     ctaLabel: {fontSize: 15, fontFamily: FontFamily.bold},
 
+    heroSkeletonFill: {position: "absolute", top: 0, left: 0, right: 0, bottom: 0},
+    heroSkeletonContent: {
+        position: 'absolute',
+        left: Spacing.xl,
+        right: Spacing.xl,
+        bottom: Spacing.xxl + Spacing.sm,
+        gap: Spacing.md,
+    },
+    heroSkeletonTagline: {width: 140, height: 14, borderRadius: 4},
+    heroSkeletonTitle: {width: '75%', height: 34, borderRadius: 6},
+    heroSkeletonMeta: {width: '60%', height: 14, borderRadius: 4},
+    heroSkeletonCtaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6},
+    heroSkeletonCta: {flex: 1, height: 48, borderRadius: Radius.pill},
+    heroSkeletonCircle: {width: 48, height: 48, borderRadius: 24},
+
     skeletonRail: {marginBottom: Spacing.xl},
     skeletonTitle: {width: 160, height: 20, borderRadius: 6, marginBottom: Spacing.md},
-    shelfSkeletonTitle: {fontSize: 21, lineHeight: 26, marginBottom: Spacing.md},
+    shelfSkeletonTitle: {marginBottom: Spacing.md},
     skeletonRow: {flexDirection: 'row', overflow: 'hidden'},
 });

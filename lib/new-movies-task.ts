@@ -55,6 +55,11 @@ async function notifyNewMovies(newMovies: Movie[]): Promise<void> {
     await Notifications.scheduleNotificationAsync({content, trigger: null});
 }
 
+export async function hasNotificationPermission(): Promise<boolean> {
+    const {status} = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
     const {status, canAskAgain} = await Notifications.getPermissionsAsync();
     if (status === 'granted') return true;

@@ -1,6 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {router} from 'expo-router';
 import {useEffect, useState} from 'react';
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -12,6 +11,8 @@ import {LiquidGlassView} from '../components/liquid-glass-view';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
+import {Genre} from './constants/movieFilterOptions';
+import {useGoTo} from './constants/destinations';
 import {YoutubePlayer} from './components/YoutubePlayer';
 import {MovieRail} from './components/MovieRail';
 import {ScreenshotLightbox} from './components/ScreenshotLightbox';
@@ -46,6 +47,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const [noticeTorrent, setNoticeTorrent] = useState<Torrent | null>(null);
     const [backdropAttempt, setBackdropAttempt] = useState(0);
     const saved = useIsInWatchlist(details?.id ?? -1);
+    const goTo = useGoTo();
 
     useEffect(() => {
         if (error) Analytics.loadError('details');
@@ -60,9 +62,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const torrentCols = Math.max(2, Math.floor(bodyWidth / 250));
     const torrentCardWidth = Math.floor((bodyWidth - TORRENT_GAP * (torrentCols - 1)) / torrentCols);
 
-  const BackButton = (
-    <TopNav onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}/>
-  );
+  const BackButton = <TopNav/>;
 
   if (loading) {
     return (
@@ -102,7 +102,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
 
   const meta = [
     details.year ? String(details.year) : null,
-    details.runtimeMinutes ? `${details.runtimeMinutes} min` : null,
+    formatRuntime(details.runtimeMinutes),
     details.language ? details.language.toUpperCase() : null,
     details.mpaRating || null,
   ].filter(Boolean) as string[];
@@ -197,7 +197,7 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       <ThemedText type="title" style={styles.title}>
                           {details.title}
                       </ThemedText>
-                      {details.titleLong && details.titleLong !== details.title ? (
+                      {isDistinctLongTitle(details.title, details.titleLong, details.year) ? (
                           <ThemedText style={[styles.subtitle, {color: colors.textMuted}]} numberOfLines={2}>
                               {details.titleLong}
                           </ThemedText>
@@ -205,11 +205,11 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                       <View style={styles.metaRow}>
                           {details.rating ? (
                               <View style={[styles.ratingPill, {
-                                  backgroundColor: colors.gold + '22',
-                                  borderColor: colors.gold + '55'
+                                  backgroundColor: ratingColor(details.rating, colors) + '22',
+                                  borderColor: ratingColor(details.rating, colors) + '55'
                               }]}>
-                                  <Ionicons name="star" size={13} color={colors.gold}/>
-                                  <ThemedText style={[styles.ratingText, {color: colors.gold}]}>
+                                  <Ionicons name="star" size={13} color={ratingColor(details.rating, colors)}/>
+                                  <ThemedText style={[styles.ratingText, {color: ratingColor(details.rating, colors)}]}>
                                       {details.rating.toFixed(1)}
                                   </ThemedText>
                               </View>
@@ -300,16 +300,38 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                   </View>
 
                   {details.genres.length > 0 ? (
-                      <View style={styles.chipRow}>
-                          {details.genres.map((g) => (
-                              <View key={g} style={[styles.chip, {
-                                  backgroundColor: colors.accentSoft,
-                                  borderColor: colors.accent + '40'
-                              }]}>
-                                  <ThemedText style={[styles.chipText, {color: colors.accent}]}>{g}</ThemedText>
-                              </View>
-                          ))}
-                      </View>
+                      <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          contentContainerStyle={styles.chipRow}
+                      >
+                          {details.genres.map((g) => {
+                              const href = genreHref(g);
+                              const chip = (
+                                  <View style={[styles.chip, {
+                                      backgroundColor: colors.accentSoft,
+                                      borderColor: colors.accent + '40'
+                                  }]}>
+                                      <ThemedText style={[styles.chipText, {color: colors.accent}]}>{g}</ThemedText>
+                                  </View>
+                              );
+                              if (!href) return <View key={g}>{chip}</View>;
+                              return (
+                                  <Pressable
+                                      key={g}
+                                      onPress={() => {
+                                          Analytics.genreOpen(g);
+                                          goTo(href);
+                                      }}
+                                      accessibilityRole="link"
+                                      accessibilityLabel={`Browse ${g} movies`}
+                                      style={({pressed}) => ({opacity: pressed ? 0.7 : 1})}
+                                  >
+                                      {chip}
+                                  </Pressable>
+                              );
+                          })}
+                      </ScrollView>
                   ) : null}
 
                   {description ? (
@@ -417,7 +439,7 @@ function Section({
   return (
     <View style={[styles.section, flush && styles.sectionFlush]}>
         <View style={[styles.sectionTitleRow, flush && {marginLeft: Spacing.lg}]}>
-            <ThemedText type="heading" style={styles.sectionTitle}>{title}</ThemedText>
+            <ThemedText type="heading">{title}</ThemedText>
         </View>
       {children}
     </View>
@@ -495,6 +517,33 @@ function TorrentRow({
       </View>
     </Pressable>
   );
+}
+
+const GENRE_VALUES = new Set<string>(Object.values(Genre));
+
+function genreHref(genre: string): string | null {
+  const value = genre.trim().toLowerCase();
+  return GENRE_VALUES.has(value) && value !== Genre.All ? `/browse?genre=${value}` : null;
+}
+
+function isDistinctLongTitle(title: string, titleLong: string | undefined, year: number): boolean {
+  if (!titleLong) return false;
+  const noise = new Set([title.trim(), `${title.trim()} (${year})`]);
+  return !noise.has(titleLong.trim());
+}
+
+function ratingColor(rating: number, colors: Colors): string {
+  if (rating >= 7) return colors.seed;
+  if (rating >= 5) return colors.gold;
+  return colors.peer;
+}
+
+function formatRuntime(minutes: number): string | null {
+  if (!minutes || minutes <= 0) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 function formatCount(n: number): string {
@@ -597,7 +646,7 @@ const styles = StyleSheet.create({
     metaText: {fontSize: 13, fontWeight: '500'},
 
     body: {paddingHorizontal: Spacing.lg, marginTop: Spacing.xl},
-    chipRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
+    chipRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
     chip: {borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 6},
     chipText: {fontSize: 13, fontWeight: '600', textTransform: 'capitalize'},
 
@@ -606,7 +655,6 @@ const styles = StyleSheet.create({
     section: {marginTop: Spacing.xxl},
     sectionFlush: {marginHorizontal: -Spacing.lg},
     sectionTitleRow: {flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md},
-    sectionTitle: {fontSize: 21, lineHeight: 26},
     paragraph: {fontSize: 15, lineHeight: 23},
 
     hScroll: {paddingHorizontal: Spacing.lg, gap: 12},

@@ -8,12 +8,13 @@ import {
     type NativeSyntheticEvent,
     Platform,
     Pressable,
-    ScrollView,
     StyleSheet,
     View,
     useWindowDimensions,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Gesture, GestureDetector, GestureHandlerRootView} from 'react-native-gesture-handler';
+import Animated, {runOnJS, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
 import {ThemedText} from '../../components/themed-text';
 
 interface ScreenshotLightboxProps {
@@ -127,6 +128,7 @@ export function ScreenshotLightbox({images, initialIndex, onClose}: ScreenshotLi
 
     return (
         <Modal visible transparent statusBarTranslucent animationType="fade" onRequestClose={onClose}>
+            <GestureHandlerRootView style={styles.flex}>
             <View style={[styles.root, {width, height}]}>
                 <View style={[StyleSheet.absoluteFill, styles.backdrop]} pointerEvents="none"/>
                 <FlatList
@@ -199,9 +201,13 @@ export function ScreenshotLightbox({images, initialIndex, onClose}: ScreenshotLi
                     </>
                 ) : null}
             </View>
+            </GestureHandlerRootView>
         </Modal>
     );
 }
+
+const MAX_SCALE = 4;
+const DOUBLE_TAP_SCALE = 2.5;
 
 function ZoomableImage({
     uri,
@@ -217,70 +223,139 @@ function ZoomableImage({
     onZoomChange: (zoomed: boolean) => void;
 }) {
     const [aspect, setAspect] = useState(16 / 9);
-    const [zoomed, setZoomed] = useState(false);
-    const scrollRef = useRef<ScrollView>(null);
 
     const fit = useMemo(() => {
         const vAr = width / height;
         return aspect > vAr
-            ? {w: Math.round(width), h: Math.round(width / aspect)}
-            : {w: Math.round(height * aspect), h: Math.round(height)};
+            ? {w: width, h: width / aspect}
+            : {w: height * aspect, h: height};
     }, [aspect, width, height]);
 
-    const fillW = Math.max(width, Math.round(height * aspect));
-    const imgW = zoomed ? fillW : fit.w;
-    const imgH = zoomed ? height : fit.h;
-    const contentW = zoomed ? fillW : width;
+    const scale = useSharedValue(1);
+    const savedScale = useSharedValue(1);
+    const tx = useSharedValue(0);
+    const ty = useSharedValue(0);
+    const savedTx = useSharedValue(0);
+    const savedTy = useSharedValue(0);
 
-    const toggleZoom = useCallback(() => {
-        setZoomed((z) => {
-            onZoomChange(!z);
-            return !z;
-        });
-    }, [onZoomChange]);
+    const notifyZoom = useCallback((z: boolean) => onZoomChange(z), [onZoomChange]);
 
-    useEffect(() => {
-        if (!zoomed) return;
-        const x = Math.max(0, (contentW - width) / 2);
-        const id = setTimeout(() => scrollRef.current?.scrollTo({x, y: 0, animated: false}), 0);
-        return () => clearTimeout(id);
-    }, [zoomed, contentW, width]);
+    const fitW = fit.w;
+    const fitH = fit.h;
+
+    const gesture = useMemo(() => {
+        const clamp = (v: number, min: number, max: number) => {
+            'worklet';
+            return Math.min(Math.max(v, min), max);
+        };
+        const boundX = () => {
+            'worklet';
+            return Math.max(0, (fitW * scale.value - width) / 2);
+        };
+        const boundY = () => {
+            'worklet';
+            return Math.max(0, (fitH * scale.value - height) / 2);
+        };
+        const settle = () => {
+            'worklet';
+            savedScale.value = scale.value;
+            tx.value = clamp(tx.value, -boundX(), boundX());
+            ty.value = clamp(ty.value, -boundY(), boundY());
+            savedTx.value = tx.value;
+            savedTy.value = ty.value;
+        };
+        const reset = () => {
+            'worklet';
+            scale.value = withTiming(1);
+            savedScale.value = 1;
+            tx.value = withTiming(0);
+            ty.value = withTiming(0);
+            savedTx.value = 0;
+            savedTy.value = 0;
+            runOnJS(notifyZoom)(false);
+        };
+
+        const pinch = Gesture.Pinch()
+            .onUpdate((e) => {
+                scale.value = clamp(savedScale.value * e.scale, 1, MAX_SCALE);
+            })
+            .onEnd(() => {
+                if (scale.value <= 1.01) {
+                    reset();
+                    return;
+                }
+                settle();
+                runOnJS(notifyZoom)(true);
+            });
+
+        const pan = Gesture.Pan()
+            .averageTouches(true)
+            .onUpdate((e) => {
+                if (scale.value <= 1) return;
+                tx.value = clamp(savedTx.value + e.translationX, -boundX(), boundX());
+                ty.value = clamp(savedTy.value + e.translationY, -boundY(), boundY());
+            })
+            .onEnd(() => {
+                savedTx.value = tx.value;
+                savedTy.value = ty.value;
+            });
+
+        const doubleTap = Gesture.Tap()
+            .numberOfTaps(2)
+            .maxDuration(260)
+            .onEnd(() => {
+                if (scale.value > 1) {
+                    reset();
+                    return;
+                }
+                scale.value = withTiming(DOUBLE_TAP_SCALE);
+                savedScale.value = DOUBLE_TAP_SCALE;
+                runOnJS(notifyZoom)(true);
+            });
+
+        const singleTap = Gesture.Tap()
+            .numberOfTaps(1)
+            .onEnd(() => {
+                if (scale.value > 1) {
+                    reset();
+                    return;
+                }
+                runOnJS(onClose)();
+            });
+
+        return Gesture.Race(
+            Gesture.Simultaneous(pinch, pan),
+            Gesture.Exclusive(doubleTap, singleTap)
+        );
+    }, [fitW, fitH, width, height, notifyZoom, onClose, scale, savedScale, tx, ty, savedTx, savedTy]);
+
+    const imageStyle = useAnimatedStyle(() => ({
+        transform: [{translateX: tx.value}, {translateY: ty.value}, {scale: scale.value}],
+    }));
 
     return (
-        <View style={{width, height}}>
-            <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close"/>
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                scrollEnabled={zoomed}
-                bounces={false}
-                showsHorizontalScrollIndicator={false}
-                style={[StyleSheet.absoluteFill, {pointerEvents: zoomed ? 'auto' : 'box-none'}]}
-                contentContainerStyle={{
-                    width: contentW,
-                    height,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
-                <Pressable onPress={toggleZoom} style={{width: imgW, height: imgH}}>
+        <GestureDetector gesture={gesture}>
+            <View style={[styles.page, {width, height}]}>
+                <Animated.View style={imageStyle}>
                     <Image
                         source={{uri}}
-                        style={{width: imgW, height: imgH}}
+                        style={{width: fitW, height: fitH}}
                         contentFit="contain"
                         cachePolicy="memory-disk"
                         onLoad={(e) => {
                             if (e.source?.height) setAspect(e.source.width / e.source.height);
                         }}
                     />
-                </Pressable>
-            </ScrollView>
-        </View>
+                </Animated.View>
+            </View>
+        </GestureDetector>
     );
 }
 
 const styles = StyleSheet.create({
+    flex: {flex: 1},
     root: {overflow: 'hidden'},
+    page: {justifyContent: 'center', alignItems: 'center', overflow: 'hidden'},
     backdrop: {backgroundColor: '#000'},
     circle: {
         width: 46,

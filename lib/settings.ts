@@ -8,7 +8,7 @@ const NOTIFICATIONS_KEY = 'notifications';
 const LANDING_KEY = 'landing';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type LandingPage = 'home' | 'movies' | 'new' | 'my-list';
+export type LandingPage = 'home' | 'movies' | 'new';
 
 export interface Settings {
     theme: ThemePreference;
@@ -16,7 +16,7 @@ export interface Settings {
     landingPage: LandingPage;
 }
 
-const DEFAULTS: Settings = {theme: 'system', notifications: true, landingPage: 'home'};
+const DEFAULTS: Settings = {theme: 'dark', notifications: true, landingPage: 'home'};
 
 let store: KeyValueStore | null = null;
 function getStore(): KeyValueStore {
@@ -32,7 +32,7 @@ function isThemePreference(value: string | undefined): value is ThemePreference 
 }
 
 function isLandingPage(value: string | undefined): value is LandingPage {
-    return value === 'home' || value === 'movies' || value === 'new' || value === 'my-list';
+    return value === 'home' || value === 'movies' || value === 'new';
 }
 
 function read(): Settings {

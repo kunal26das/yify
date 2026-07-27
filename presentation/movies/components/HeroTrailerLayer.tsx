@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {YoutubePlayer} from './YoutubePlayer';
 
@@ -7,19 +8,30 @@ export function HeroTrailerLayer({
     height,
     muted,
     controls = false,
+    onStarted,
 }: {
     videoId: string;
     width: number;
     height: number;
     muted: boolean;
     controls?: boolean;
+    onStarted?: () => void;
 }) {
+    const [started, setStarted] = useState(false);
+
+    useEffect(() => {
+        setStarted(false);
+    }, [videoId]);
+
     const widthLed = width * 9 / 16 >= height;
     const videoWidth = widthLed ? width : Math.ceil((height * 16) / 9);
     const videoHeight = widthLed ? Math.ceil((width * 9) / 16) : height;
 
     return (
-        <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="box-none">
+        <View
+            style={[StyleSheet.absoluteFill, styles.clip, started ? null : styles.hidden]}
+            pointerEvents="box-none"
+        >
             <View
                 style={{
                     position: 'absolute',
@@ -37,6 +49,10 @@ export function HeroTrailerLayer({
                     muted={muted}
                     loop={!controls}
                     controls={controls}
+                    onPlaybackStarted={() => {
+                        setStarted(true);
+                        onStarted?.();
+                    }}
                 />
             </View>
 
@@ -47,4 +63,5 @@ export function HeroTrailerLayer({
 
 const styles = StyleSheet.create({
     clip: {overflow: 'hidden'},
+    hidden: {opacity: 0},
 });

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Movie, MovieRepository } from '@/domain';
-import {
+import type {
+  Genre,
+  OrderBy,
   Quality,
-  type Genre,
-  type OrderBy,
-  type SortBy,
+  SortBy,
 } from './constants/movieFilterOptions';
 
 const PAGE_SIZE = 50;
@@ -18,7 +18,7 @@ export interface MovieFilters {
   order_by?: OrderBy;
 }
 
-export const DEFAULT_FILTERS: MovieFilters = { quality: Quality.P2160 };
+export const DEFAULT_FILTERS: MovieFilters = {};
 
 export interface UseMoviesOptions {
   initialFilters?: MovieFilters;

@@ -3,7 +3,6 @@ import Head from 'expo-router/head';
 import {useEffect, useMemo, useRef} from 'react';
 import {MovieRepositoryImpl, YtsApiDataSource} from '@/data';
 import {
-  DEFAULT_FILTERS,
   Genre,
   MoviesScreen,
   OrderBy,
@@ -32,7 +31,7 @@ export default function BrowseRoute() {
   const api = useMemo(() => new YtsApiDataSource(getApiBaseUrl), []);
   const repository = useMemo(() => new MovieRepositoryImpl(api), [api]);
 
-  const initialFilters = useMemo<MovieFilters | undefined>(() => {
+  const initialFilters = useMemo<MovieFilters>(() => {
     const f: MovieFilters = {};
     const genre = asEnum(params.genre, Object.values(Genre));
     if (genre) f.genre = genre;
@@ -44,7 +43,7 @@ export default function BrowseRoute() {
     if (sortBy) f.sort_by = sortBy;
     const orderBy = asEnum(params.order_by, Object.values(OrderBy));
     if (orderBy) f.order_by = orderBy;
-    return Object.keys(f).length > 0 ? f : undefined;
+    return f;
   }, [params.genre, params.quality, params.minimum_rating, params.sort_by, params.order_by]);
 
   const viewModel = useMoviesViewModel(repository, {
@@ -53,7 +52,7 @@ export default function BrowseRoute() {
   });
 
   const {appliedQuery, appliedFilters, applyFilters, setSearchQuery} = viewModel;
-  const incoming = JSON.stringify({filters: initialFilters ?? null, query: params.query ?? ''});
+  const incoming = JSON.stringify({filters: initialFilters, query: params.query ?? ''});
   const lastIncomingRef = useRef<string | null>(null);
   useEffect(() => {
     if (lastIncomingRef.current === null) {
@@ -62,9 +61,9 @@ export default function BrowseRoute() {
     }
     if (lastIncomingRef.current === incoming) return;
     lastIncomingRef.current = incoming;
-    const {filters, query} = JSON.parse(incoming) as {filters: MovieFilters | null; query: string};
+    const {filters, query} = JSON.parse(incoming) as {filters: MovieFilters; query: string};
     setSearchQuery(query);
-    applyFilters(filters ?? DEFAULT_FILTERS);
+    applyFilters(filters);
   }, [incoming, setSearchQuery, applyFilters]);
 
   const lastSyncedRef = useRef<string | null>(null);
@@ -85,15 +84,6 @@ export default function BrowseRoute() {
     router.setParams(next);
   }, [appliedQuery, appliedFilters]);
 
-  const navActive =
-    appliedFilters.sort_by === SortBy.DateAdded &&
-    appliedFilters.order_by === OrderBy.Desc &&
-    !appliedFilters.genre &&
-    !appliedFilters.quality &&
-    !appliedQuery.trim()
-      ? 'new'
-      : 'movies';
-
   return (
     <>
       <Head>
@@ -103,7 +93,7 @@ export default function BrowseRoute() {
           content="Search and filter thousands of movies by genre, rating and quality on Yify."
         />
       </Head>
-      <MoviesScreen viewModel={viewModel} showBack autoFocus={params.focus === '1'} navActive={navActive} />
+      <MoviesScreen viewModel={viewModel} autoFocus={params.focus === '1'} />
     </>
   );
 }

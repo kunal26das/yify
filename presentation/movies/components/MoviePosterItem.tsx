@@ -16,6 +16,17 @@ import {useTopTenRank} from './TopTenContext';
 const POSTER_RADIUS = Radius.lg;
 const IS_WEB = Platform.OS === 'web';
 
+function posterAccessibilityLabel(movie: Movie, rank: number | null): string {
+  return [
+    movie.title,
+    movie.year ? String(movie.year) : null,
+    movie.rating > 0 ? `rated ${movie.rating.toFixed(1)} out of 10` : null,
+    rank ? `number ${rank} in the top 10` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
 export function MoviePosterItem({
   movie,
   width,
@@ -54,6 +65,8 @@ export function MoviePosterItem({
     <View ref={nodeRef} style={getPosterContainerStyle(width)} collapsable={false}>
     <Link href={`/movie/${movie.id}`} asChild>
       <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={posterAccessibilityLabel(movie, rank)}
         onPress={() => Analytics.movieOpen(movie, source)}
         onPressIn={() => animate(0.96, 0)}
         onPressOut={() => animate(1, 0)}
@@ -80,6 +93,15 @@ export function MoviePosterItem({
               },
             ]}
         >
+          <View style={[StyleSheet.absoluteFill, styles.fallback]}>
+            <ThemedText
+                numberOfLines={4}
+                style={[styles.fallbackTitle, {color: colors.textMuted}]}
+            >
+              {movie.title}
+            </ThemedText>
+          </View>
+
           <Image
               style={StyleSheet.absoluteFill}
               source={sourceUrl ? {uri: sourceUrl} : undefined}
@@ -94,7 +116,7 @@ export function MoviePosterItem({
 
           {hasRating ? (
               <View style={styles.ratingBadge}>
-                <Ionicons name="star" size={11} color={colors.gold}/>
+                <Ionicons name="star" size={9} color={colors.gold}/>
                 <ThemedText style={styles.ratingText} lightColor="#fff" darkColor="#fff">
                   {movie.rating.toFixed(1)}
                 </ThemedText>
@@ -127,21 +149,23 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+  fallback: {alignItems: 'center', justifyContent: 'center', padding: Spacing.sm},
+  fallbackTitle: {fontSize: 12, lineHeight: 16, textAlign: 'center', fontFamily: FontFamily.semibold},
   ratingBadge: {
     position: 'absolute',
     zIndex: 10,
-    top: Spacing.sm,
-    left: Spacing.sm,
+    top: Spacing.xs,
+    left: Spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    gap: 2,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: Radius.pill,
-    backgroundColor: 'rgba(8,8,12,0.66)',
+    backgroundColor: 'rgba(8,8,12,0.6)',
   },
   ratingText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
   },
   newBadge: {position: 'absolute', zIndex: 10, top: Spacing.sm, right: Spacing.sm},

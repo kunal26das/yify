@@ -10,6 +10,7 @@ export function YoutubePlayer({
   muted = false,
   loop = false,
   controls = true,
+  onPlaybackStarted,
 }: {
   videoId: string;
   width: number;
@@ -18,6 +19,7 @@ export function YoutubePlayer({
   muted?: boolean;
   loop?: boolean;
   controls?: boolean;
+  onPlaybackStarted?: () => void;
 }) {
   const resolvedHeight = height ?? Math.round((width * 9) / 16);
   const [playing, setPlaying] = useState(autoplay);
@@ -38,7 +40,10 @@ export function YoutubePlayer({
         onChangeState={(state: string) => {
           if (state === 'ended') setPlaying(loop);
           else if (state === 'paused') setPlaying(false);
-          else if (state === 'playing') setPlaying(true);
+          else if (state === 'playing') {
+            setPlaying(true);
+            onPlaybackStarted?.();
+          }
         }}
         initialPlayerParams={{ controls, modestbranding: true, rel: false, loop }}
         webViewProps={{
