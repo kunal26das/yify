@@ -425,9 +425,10 @@ function Section({
 }) {
   return (
     <View style={[styles.section, flush && styles.sectionFlush]}>
+        {/* Same treatment as the "More like this" rail heading below, so every section on the
+            screen reads as one hierarchy rather than the rail looking like a different component. */}
         <View style={[styles.sectionTitleRow, flush && {marginLeft: Spacing.lg}]}>
-            <View style={[styles.sectionAccent, {backgroundColor: colors.accent}]}/>
-            <ThemedText type="subtitle">{title}</ThemedText>
+            <ThemedText type="heading" style={styles.sectionTitle}>{title}</ThemedText>
         </View>
       {children}
     </View>
@@ -615,8 +616,9 @@ const styles = StyleSheet.create({
 
     section: {marginTop: Spacing.xxl},
     sectionFlush: {marginHorizontal: -Spacing.lg},
-    sectionTitleRow: {flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.md},
-    sectionAccent: {width: 4, height: 18, borderRadius: 2},
+    sectionTitleRow: {flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md},
+    // Matches MovieRail's header type ramp exactly.
+    sectionTitle: {fontSize: 21, lineHeight: 26},
     paragraph: {fontSize: 15, lineHeight: 23},
 
     hScroll: {paddingHorizontal: Spacing.lg, gap: 12},

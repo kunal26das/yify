@@ -1,22 +1,19 @@
 import {Ionicons} from '@expo/vector-icons';
-import Constants from 'expo-constants';
 import {router} from 'expo-router';
-import {useState} from 'react';
 import {Platform, Pressable, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Analytics} from '@/lib/analytics-events';
-import {requestNotificationPermission} from '@/lib/new-movies-task';
-import {setNotificationsEnabled, setThemePreference, type ThemePreference} from '@/lib/settings';
-import {clearWatchlist} from '@/lib/watchlist';
+import type {LandingPage, ThemePreference} from '@/lib/settings';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {useSettings} from '../hooks/use-settings';
+import {DESTINATIONS} from './constants/destinations';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {TopNav, useTopNavHeight} from './components/TopNav';
-import {useWatchlist} from './useWatchlist';
+import {useSettingsViewModel, type SettingsViewModel} from './useSettingsViewModel';
+
+type Colors = ReturnType<typeof usePalette>['colors'];
 
 const THEME_OPTIONS: {value: ThemePreference; label: string; icon: keyof typeof Ionicons.glyphMap}[] = [
     {value: 'system', label: 'System', icon: 'phone-portrait-outline'},
@@ -24,33 +21,14 @@ const THEME_OPTIONS: {value: ThemePreference; label: string; icon: keyof typeof 
     {value: 'dark', label: 'Dark', icon: 'moon-outline'},
 ];
 
-export function SettingsScreen() {
+export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}) {
+    const fallback = useSettingsViewModel();
+    const vm = viewModel ?? fallback;
+
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
     const {gutter, contentMaxWidth} = useResponsive();
     const navHeight = useTopNavHeight();
-    const settings = useSettings();
-    const watchlist = useWatchlist();
-    const [cleared, setCleared] = useState(false);
-
-    const version = Constants.expoConfig?.version ?? '—';
-    const buildNumber =
-        Platform.OS === 'android'
-            ? Constants.expoConfig?.android?.versionCode
-            : Constants.expoConfig?.ios?.buildNumber;
-
-    const onToggleNotifications = async (next: boolean) => {
-        Analytics.settingChanged('notifications', String(next));
-        if (!next) {
-            setNotificationsEnabled(false);
-            return;
-        }
-        // Turning it on is only meaningful if the OS will actually let us post — ask first and
-        // leave the switch off if permission is refused, rather than promising alerts that
-        // will never arrive.
-        const granted = await requestNotificationPermission();
-        setNotificationsEnabled(granted);
-    };
 
     return (
         <ThemedView style={styles.container}>
@@ -72,42 +50,33 @@ export function SettingsScreen() {
                         Match the device, or pin the app to one theme.
                     </ThemedText>
                     <View style={styles.segmented}>
-                        {THEME_OPTIONS.map((option) => {
-                            const selected = settings.theme === option.value;
-                            return (
-                                <Pressable
-                                    key={option.value}
-                                    onPress={() => {
-                                        Analytics.settingChanged('theme', option.value);
-                                        setThemePreference(option.value);
-                                    }}
-                                    accessibilityRole="button"
-                                    accessibilityState={{selected}}
-                                    style={({pressed}) => [
-                                        styles.segment,
-                                        {
-                                            backgroundColor: selected ? colors.accent : colors.surfaceSunken,
-                                            borderColor: selected ? colors.accent : colors.border,
-                                            opacity: pressed ? 0.85 : 1,
-                                        },
-                                    ]}
-                                >
-                                    <Ionicons
-                                        name={option.icon}
-                                        size={17}
-                                        color={selected ? colors.onAccent : colors.text}
-                                    />
-                                    <ThemedText
-                                        style={[
-                                            styles.segmentLabel,
-                                            {color: selected ? colors.onAccent : colors.text},
-                                        ]}
-                                    >
-                                        {option.label}
-                                    </ThemedText>
-                                </Pressable>
-                            );
-                        })}
+                        {THEME_OPTIONS.map((option) => (
+                            <Segment
+                                key={option.value}
+                                label={option.label}
+                                icon={option.icon}
+                                selected={vm.theme === option.value}
+                                onPress={() => vm.selectTheme(option.value)}
+                                colors={colors}
+                            />
+                        ))}
+                    </View>
+                </Section>
+
+                <Section title="Landing page" colors={colors}>
+                    <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>
+                        Where the app opens. Home by default.
+                    </ThemedText>
+                    <View style={styles.choices}>
+                        {DESTINATIONS.map((destination) => (
+                            <Choice
+                                key={destination.key}
+                                label={destination.label}
+                                selected={vm.landingPage === destination.key}
+                                onPress={() => vm.selectLandingPage(destination.key as LandingPage)}
+                                colors={colors}
+                            />
+                        ))}
                     </View>
                 </Section>
 
@@ -122,60 +91,60 @@ export function SettingsScreen() {
                             </ThemedText>
                         </View>
                         <Switch
-                            value={settings.notifications}
-                            onValueChange={(v) => void onToggleNotifications(v)}
+                            value={vm.notifications}
+                            onValueChange={(v) => void vm.toggleNotifications(v)}
                             trackColor={{true: colors.accent, false: colors.surfaceSunken}}
                         />
                     </View>
+                    {vm.notifications && vm.permissionBlocked ? (
+                        <View style={styles.notice}>
+                            <Ionicons name="warning-outline" size={15} color={colors.gold}/>
+                            <ThemedText style={[styles.rowHint, styles.noticeText, {color: colors.textMuted}]}>
+                                {Platform.OS === 'web'
+                                    ? 'Your browser is blocking notifications for this site. Allow them in its site settings and this will start working.'
+                                    : 'Notifications are turned off for Yify in your device settings. Allow them there and this will start working.'}
+                            </ThemedText>
+                        </View>
+                    ) : null}
                 </Section>
 
                 <Section title="My List" colors={colors}>
                     <View style={styles.row}>
                         <View style={styles.rowText}>
                             <ThemedText style={[styles.rowTitle, {color: colors.text}]}>
-                                {watchlist.length} {watchlist.length === 1 ? 'title' : 'titles'} saved
+                                {vm.watchlistCount} {vm.watchlistCount === 1 ? 'title' : 'titles'} saved
                             </ThemedText>
                             <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>
                                 Your list is kept on this device only.
                             </ThemedText>
                         </View>
                         <Pressable
-                            disabled={watchlist.length === 0}
-                            onPress={() => {
-                                Analytics.settingChanged('watchlist', 'cleared');
-                                clearWatchlist();
-                                setCleared(true);
-                            }}
+                            disabled={vm.watchlistCount === 0}
+                            onPress={vm.clearList}
                             accessibilityRole="button"
                             accessibilityLabel="Clear My List"
                             style={({pressed}) => [
                                 styles.dangerButton,
                                 {
                                     borderColor: colors.border,
-                                    opacity: watchlist.length === 0 ? 0.4 : pressed ? 0.7 : 1,
+                                    opacity: vm.watchlistCount === 0 ? 0.4 : pressed ? 0.7 : 1,
                                 },
                             ]}
                         >
                             <ThemedText style={[styles.dangerLabel, {color: colors.peer}]}>Clear</ThemedText>
                         </Pressable>
                     </View>
-                    {cleared && watchlist.length === 0 ? (
-                        <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>
-                            Cleared.
-                        </ThemedText>
+                    {vm.listCleared && vm.watchlistCount === 0 ? (
+                        <ThemedText style={[styles.rowHint, {color: colors.textMuted}]}>Cleared.</ThemedText>
                     ) : null}
                 </Section>
 
                 <Section title="About" colors={colors}>
-                    <InfoRow label="Version" value={version} colors={colors}/>
-                    {buildNumber != null ? (
-                        <InfoRow label="Build" value={String(buildNumber)} colors={colors}/>
+                    <InfoRow label="Version" value={vm.appInfo.version} colors={colors}/>
+                    {vm.appInfo.build ? (
+                        <InfoRow label="Build" value={vm.appInfo.build} colors={colors}/>
                     ) : null}
-                    <InfoRow
-                        label="Platform"
-                        value={Platform.OS === 'web' ? 'Web' : Platform.OS === 'ios' ? 'iOS' : 'Android'}
-                        colors={colors}
-                    />
+                    <InfoRow label="Platform" value={vm.appInfo.platform} colors={colors}/>
                     <InfoRow label="Catalogue" value="YTS API" colors={colors}/>
 
                     {Platform.OS === 'android' ? (
@@ -209,13 +178,83 @@ export function SettingsScreen() {
     );
 }
 
+function Segment({
+                     label,
+                     icon,
+                     selected,
+                     onPress,
+                     colors,
+                 }: {
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    selected: boolean;
+    onPress: () => void;
+    colors: Colors;
+}) {
+    return (
+        <Pressable
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityState={{selected}}
+            style={({pressed}) => [
+                styles.segment,
+                {
+                    backgroundColor: selected ? colors.accent : colors.surfaceSunken,
+                    borderColor: selected ? colors.accent : colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                },
+            ]}
+        >
+            <Ionicons name={icon} size={17} color={selected ? colors.onAccent : colors.text}/>
+            <ThemedText style={[styles.segmentLabel, {color: selected ? colors.onAccent : colors.text}]}>
+                {label}
+            </ThemedText>
+        </Pressable>
+    );
+}
+
+function Choice({
+                    label,
+                    selected,
+                    onPress,
+                    colors,
+                }: {
+    label: string;
+    selected: boolean;
+    onPress: () => void;
+    colors: Colors;
+}) {
+    return (
+        <Pressable
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityState={{selected}}
+            style={({pressed}) => [
+                styles.choice,
+                {
+                    backgroundColor: selected ? colors.accentSoft : 'transparent',
+                    borderColor: selected ? colors.accent : colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                },
+            ]}
+        >
+            <Ionicons
+                name={selected ? 'radio-button-on' : 'radio-button-off'}
+                size={16}
+                color={selected ? colors.accent : colors.textMuted}
+            />
+            <ThemedText style={[styles.choiceLabel, {color: colors.text}]}>{label}</ThemedText>
+        </Pressable>
+    );
+}
+
 function Section({
                      title,
                      colors,
                      children,
                  }: {
     title: string;
-    colors: ReturnType<typeof usePalette>['colors'];
+    colors: Colors;
     children: React.ReactNode;
 }) {
     return (
@@ -230,15 +269,7 @@ function Section({
     );
 }
 
-function InfoRow({
-                     label,
-                     value,
-                     colors,
-                 }: {
-    label: string;
-    value: string;
-    colors: ReturnType<typeof usePalette>['colors'];
-}) {
+function InfoRow({label, value, colors}: {label: string; value: string; colors: Colors}) {
     return (
         <View style={styles.infoRow}>
             <ThemedText style={[styles.rowTitle, {color: colors.text}]}>{label}</ThemedText>
@@ -264,6 +295,8 @@ const styles = StyleSheet.create({
     rowText: {flexShrink: 1, gap: 2},
     rowTitle: {fontSize: 15, fontFamily: FontFamily.semibold},
     rowHint: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.regular},
+    notice: {flexDirection: 'row', alignItems: 'flex-start', gap: 7},
+    noticeText: {flexShrink: 1},
 
     segmented: {flexDirection: 'row', gap: Spacing.sm},
     segment: {
@@ -277,6 +310,18 @@ const styles = StyleSheet.create({
         borderWidth: StyleSheet.hairlineWidth,
     },
     segmentLabel: {fontSize: 14, fontFamily: FontFamily.semibold},
+
+    choices: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    choice: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 7,
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: Radius.pill,
+        borderWidth: StyleSheet.hairlineWidth,
+    },
+    choiceLabel: {fontSize: 14, fontFamily: FontFamily.semibold},
 
     dangerButton: {
         paddingHorizontal: 16,

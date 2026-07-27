@@ -41,12 +41,24 @@ export async function openPlayStore(source: string): Promise<void> {
 // the arrangement of its elements may not be altered, and a self-made lookalike is not permitted.
 const BADGE = require('../../../assets/images/google-play-badge.png');
 
-// Native size of the supplied asset. Kept as a ratio so the badge can be scaled without the
-// elements inside it being rescaled relative to one another.
-const BADGE_ASPECT = 646 / 250;
-const BADGE_HEIGHT = 48;
-// "The clear space surrounding the badge must be equal to one-quarter of the height of the badge."
-const CLEAR_SPACE = BADGE_HEIGHT / 4;
+// The asset is a 646x250 canvas holding 564x168 of artwork, i.e. a 41px transparent margin on every
+// side. The guideline asks for clear space of one quarter of the badge height — 168/4 = 42 — so the
+// file already carries it. Adding padding here would double it, which is what made the badge look
+// adrift in its own box.
+const CANVAS = {width: 646, height: 250};
+const ARTWORK_HEIGHT = 168;
+
+// Sized by the visible artwork rather than the canvas, so this is the height the badge actually
+// reads at; the transparent margin then scales with it and stays exactly the mandated clear space.
+const ARTWORK_TARGET_HEIGHT = 40;
+const IMAGE_HEIGHT = Math.round(ARTWORK_TARGET_HEIGHT * (CANVAS.height / ARTWORK_HEIGHT));
+const IMAGE_WIDTH = Math.round(IMAGE_HEIGHT * (CANVAS.width / CANVAS.height));
+
+// The asset's transparent margin is baked into the file, so it otherwise shows up as dead space in
+// the layout and the badge reads as adrift. Pulling the image in by that margin makes the layout box
+// hug the artwork; the clear space is then supplied by real spacing from the neighbouring elements,
+// which is what the rule is actually about.
+const BLEED = Math.round(IMAGE_HEIGHT * (41 / CANVAS.height));
 
 export function PlayStoreButton({source}: {source: string}) {
     // Pointless on an Android device — they already have it installed.
@@ -61,7 +73,7 @@ export function PlayStoreButton({source}: {source: string}) {
         >
             <Image
                 source={BADGE}
-                style={{height: BADGE_HEIGHT, width: Math.round(BADGE_HEIGHT * BADGE_ASPECT)}}
+                style={styles.image}
                 contentFit="contain"
                 // The badge carries its own wording; the link's label is on the Pressable above.
                 accessibilityElementsHidden
@@ -71,5 +83,6 @@ export function PlayStoreButton({source}: {source: string}) {
 }
 
 const styles = StyleSheet.create({
-    hit: {alignSelf: 'flex-start', padding: CLEAR_SPACE},
+    hit: {alignSelf: 'flex-start', overflow: 'hidden'},
+    image: {height: IMAGE_HEIGHT, width: IMAGE_WIDTH, margin: -BLEED},
 });
