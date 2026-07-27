@@ -353,6 +353,7 @@ function HeroSlide({
 }) {
     const backdrop = movie.backgroundImageUrl ?? movie.posterUrls[movie.posterUrls.length - 1];
     const rank = useTopTenRank(movie.id);
+    const {isPhone} = useResponsive();
     const {gradients} = usePalette();
     const saved = useIsInWatchlist(movie.id);
     const meta = [
@@ -453,7 +454,7 @@ function HeroSlide({
                     ) : null}
                 </Pressable>
 
-                <View style={styles.ctaRow}>
+                <View style={[styles.ctaRow, isPhone ? null : styles.ctaRowWide]}>
                     <Pressable
                         onPress={onPlay}
                         accessibilityRole="button"
@@ -547,6 +548,7 @@ const styles = StyleSheet.create({
 
     ctaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18},
     ctaFlex: {flex: 1},
+    ctaRowWide: {maxWidth: '42%'},
     playButton: {
         flexDirection: 'row',
         alignItems: 'center',
