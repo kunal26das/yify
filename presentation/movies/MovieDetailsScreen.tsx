@@ -23,6 +23,23 @@ import {Analytics} from '@/lib/analytics-events';
 
 const COLUMN_MAX = 920;
 
+// A missing maxresdefault answers 404 with a real 120x90 grey "unavailable" JPEG rather than a
+// transport error, so the image decodes fine and onError never fires. Anything this small is that
+// placeholder — every genuine maxresdefault is 1280x720.
+const YT_PLACEHOLDER_MAX_WIDTH = 500;
+
+// The hero doubles as the trailer's play surface, so it leads with the trailer's own poster frame
+// rather than an arbitrary screenshot. `maxresdefault` is the only 16:9 size YouTube serves large
+// enough for a full-bleed backdrop, but it 404s on trailers that were never uploaded in HD — hence
+// the fallbacks. (hqdefault/sddefault always exist but are 4:3 letterboxed, so they'd show bars.)
+function backdropCandidates(ytTrailerCode: string | undefined, screenshot: string | undefined, background: string | undefined): string[] {
+    return [
+        ytTrailerCode ? `https://img.youtube.com/vi/${ytTrailerCode}/maxresdefault.jpg` : undefined,
+        screenshot,
+        background,
+    ].filter(Boolean) as string[];
+}
+
 export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewModel }) {
   const { details, suggestions, loading, error, reload } = viewModel;
   const insets = useSafeAreaInsets();
@@ -32,11 +49,16 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
     const [showTrailer, setShowTrailer] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [noticeTorrent, setNoticeTorrent] = useState<Torrent | null>(null);
+    const [backdropAttempt, setBackdropAttempt] = useState(0);
     const saved = useIsInWatchlist(details?.id ?? -1);
 
     useEffect(() => {
         if (error) Analytics.loadError('details');
     }, [error]);
+
+    useEffect(() => {
+        setBackdropAttempt(0);
+    }, [details?.id]);
 
     const TORRENT_GAP = 10;
     const bodyWidth = columnWidth - Spacing.lg * 2;
@@ -107,7 +129,14 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
   const description = details.descriptionFull || details.descriptionIntro || details.summary;
     const posterUrl = details.posterUrls[details.posterUrls.length - 1] ?? details.posterUrls[0];
     const hasTrailer = !!details.ytTrailerCode;
-    const backdropUrl = details.screenshotUrls[0] ?? details.backgroundImageUrl;
+    const backdrops = backdropCandidates(
+        details.ytTrailerCode,
+        details.screenshotUrls[0],
+        details.backgroundImageUrl
+    );
+    const backdropIndex = Math.min(backdropAttempt, backdrops.length - 1);
+    const backdropUrl = backdrops[backdropIndex];
+    const backdropIsYoutube = backdropIndex === 0 && backdropUrl?.includes('img.youtube.com');
 
   return (
     <ThemedView style={styles.container}>
@@ -125,6 +154,13 @@ export function MovieDetailsScreen({ viewModel }: { viewModel: MovieDetailsViewM
                               contentFit="cover"
                               transition={220}
                               cachePolicy="memory-disk"
+                              onError={() => setBackdropAttempt((i) => i + 1)}
+                              onLoad={(e) => {
+                                  const w = e.source?.width ?? 0;
+                                  if (backdropIsYoutube && w > 0 && w < YT_PLACEHOLDER_MAX_WIDTH) {
+                                      setBackdropAttempt((i) => i + 1);
+                                  }
+                              }}
                           />
                       ) : (
                           <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceElevated}]}/>
