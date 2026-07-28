@@ -2287,7 +2287,7 @@
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.47.2.tgz#419b1a069611a1f8113dca07da1faee15fb4b65a"
   integrity sha512-ihFKthXnKJjStDBJ6KkmyiJ+E/OjJ8vdq4G8hcvMEvyjz4T31NKdMMgcDeEzVbV4zPpFtTWNXdcPpdPbG6q6fw==
 
-"@revenuecat/purchases-js@^1.49.0":
+"@revenuecat/purchases-js@1.49.0":
   version "1.49.0"
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.49.0.tgz#f58743c16d4f737c6676aafa73ac2e461d7e2f4e"
   integrity sha512-zhdtem+O9MP0WCvKS97ALgzeaY0Uw9X6Vplr37kQzpMTw3jJDb3B53RYmweoaJfsa3Y8o/MheLH31Vtw4o1jrQ==
