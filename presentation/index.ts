@@ -13,6 +13,7 @@ export type { Destination, DestinationKey } from './movies/constants/destination
 export { HomeFooter } from './movies/components/HomeFooter';
 export { PlayStoreButton, PLAY_STORE_URL } from './movies/components/PlayStoreButton';
 export { useSettings } from './hooks/use-settings';
+export { usePurchases, useAdsRemoved } from './hooks/use-purchases';
 export { TopNav, useTopNavHeight } from './movies/components/TopNav';
 export type { NavKey } from './movies/components/TopNav';
 export { HoverCardHost, useHoverCard } from './movies/components/HoverCard';

@@ -22,6 +22,7 @@ import {initRemoteConfig} from '@/lib/remote-config';
 import {hasNotificationPermission, registerNewMoviesTask} from '@/lib/new-movies-task';
 import {Analytics} from '@/lib/analytics-events';
 import {startPlayServices} from '@/lib/play-services';
+import {initPurchases} from '@/lib/purchases';
 
 void initRemoteConfig();
 void hasNotificationPermission().then((granted) => {
@@ -54,6 +55,7 @@ function RootLayout() {
     const navReady = fontsLoaded || !!fontError;
     useEffect(() => {
         void startPlayServices();
+        void initPurchases();
     }, []);
 
     useEffect(() => {
