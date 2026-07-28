@@ -45,6 +45,10 @@
         }
       ],
       "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      "./plugins/withAndroidRelease",
+      "./plugins/withGradleJvmArgs",
+      "./plugins/withoutAdId",
       [
         "@revopush/expo-code-push-plugin",
         {
@@ -84,6 +88,11 @@
         {
           "ios": {
             "useFrameworks": "static"
+          },
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.worklets.** { *; }\n-keep class com.margelo.nitro.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-keep class com.microsoft.codepush.react.** { *; }\n-keepattributes SourceFile,LineNumberTable\n-keepattributes *Annotation*\n"
           }
         }
       ]
