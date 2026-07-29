@@ -912,11 +912,6 @@
   dependencies:
     chalk "^4.1.2"
 
-"@expo/dom-webview@^56.0.5":
-  version "56.0.6"
-  resolved "https://registry.yarnpkg.com/@expo/dom-webview/-/dom-webview-56.0.6.tgz#0ad1b7ca2070a273c16dd751a0071c0678a22df9"
-  integrity sha512-DQY3Tj5nrPbpIfEQiD9xbyEFTu25yEORa02Eyzl5rXszDzxDT4VkZDHkyErNQOyE1qjublJHNFhE5bDm4tRfqA==
-
 "@expo/dom-webview@^57.0.1", "@expo/dom-webview@~57.0.1":
   version "57.0.1"
   resolved "https://registry.yarnpkg.com/@expo/dom-webview/-/dom-webview-57.0.1.tgz#e41e9ab9b691046c944ef2d0cd874cf316894097"
@@ -989,19 +984,10 @@
     "@expo/config" "~57.0.5"
     chalk "^4.1.2"
 
-"@expo/log-box@56.0.13":
-  version "56.0.13"
-  resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-56.0.13.tgz#a4176fe4509a8d9849fea026857b91656d2a59a7"
-  integrity sha512-QWRZSpWPyjkDLVQio4R7oAzg/Av2MOt/DciFkfjr8qQ3qxGVn1Rt1oHP/80hvcWDcHFV7N6PqpyxRXw6nbxzKQ==
-  dependencies:
-    "@expo/dom-webview" "^56.0.5"
-    anser "^1.4.9"
-    stacktrace-parser "^0.1.10"
-
-"@expo/log-box@^57.0.1":
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-57.0.1.tgz#a6e97ac588a550bced80697c51adb58031018c92"
-  integrity sha512-fuVNHhOerdRWtpq27gD6JTSVYESsfRu+SMdrNCWxW+gFnusS6dGKfx3lKGBZ4ZkMNiLWn8maBHo39YKzJNXFYQ==
+"@expo/log-box@57.0.2", "@expo/log-box@^57.0.1":
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-57.0.2.tgz#2185dc3484ee81c63c3e7be5dc280d6300a15872"
+  integrity sha512-ZsFyfIR7YCbQAdVLzuTUmMHofZC7ZS9ywYCJNPlLc78x59cI8GwXFEIVbRjjC0uJERpNtXx/tsNNnkhexXlzMw==
   dependencies:
     "@expo/dom-webview" "^57.0.1"
     anser "^1.4.9"
