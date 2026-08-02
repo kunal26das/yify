@@ -30,6 +30,8 @@ import {useWatchlist} from './useWatchlist';
 import type {ShelfQuery, ShelfVariant} from './constants/homeShelves';
 import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import type {FeedViewModel} from './useFeedViewModel';
+import type {ShowsViewModel} from './useShowsViewModel';
+import {ShowStrip} from './components/ShowStrip';
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
 
@@ -47,6 +49,7 @@ type Palette = ReturnType<typeof usePalette>['colors'];
 type HomeRow =
     | {kind: 'shelf'; key: string; shelf: ShelfState}
     | {kind: 'my-list'; key: string; movies: Movie[]}
+    | {kind: 'shows'; key: string}
     | {kind: 'heading'; key: string}
     | {kind: 'chips'; key: string}
     | {kind: 'cards'; key: string; movies: Movie[]; endIndex: number};
@@ -69,7 +72,15 @@ function skeletonCount(width: number, posterWidth: number, gutter: number): numb
     return Math.max(3, Math.ceil(available / (posterWidth + POSTER_GAP)) + 1);
 }
 
-export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedViewModel}) {
+export function HomeScreen({
+    shelves,
+    feed,
+    shows,
+}: {
+    shelves: HomeViewModel;
+    feed: FeedViewModel;
+    shows?: ShowsViewModel;
+}) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
     const {width, height, contentMaxWidth, isPhone, isTablet, gutter} = useResponsive();
@@ -176,6 +187,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
             key: `shelf-${shelf.key}`,
             shelf,
         }));
+        if ((shows?.shows.length ?? 0) > 0) next.splice(1, 0, {kind: 'shows', key: 'shows-strip'});
         if (myList.length > 0) next.push({kind: 'my-list', key: 'my-list', movies: myList});
         next.push({kind: 'heading', key: 'browse-heading'});
         next.push({kind: 'chips', key: 'browse-chips'});
@@ -189,7 +201,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
             });
         }
         return next;
-    }, [shelfStates, myList, feedMovies, numColumns]);
+    }, [shelfStates, myList, feedMovies, numColumns, shows?.shows.length]);
 
 
     const selectChip = useCallback(
@@ -276,6 +288,10 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                         }}
                     />
                 );
+            }
+
+            if (item.kind === 'shows') {
+                return <ShowStrip shows={shows?.shows ?? []} gutter={gutter} posterWidth={posterWidth}/>;
             }
 
             if (item.kind === 'heading') {

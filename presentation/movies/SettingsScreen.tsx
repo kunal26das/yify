@@ -292,13 +292,6 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
 
                 <Group colors={colors} index={4}>
                     <Row
-                        icon="film-outline"
-                        title="Data sources"
-                        subtitle="Movies from YTS. Series from EZTV. Artwork and streaming availability from TMDB and JustWatch. This product uses the TMDB API but is not endorsed or certified by TMDB."
-                        colors={colors}
-                        gutter={gutter}
-                    />
-                    <Row
                         icon="information-circle-outline"
                         title="Version"
                         colors={colors}

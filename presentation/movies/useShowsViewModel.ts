@@ -5,7 +5,7 @@ import {Analytics} from '@/lib/analytics-events';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
-const MAX_EMPTY_PAGES = 4;
+const MAX_EMPTY_PAGES = 12;
 
 export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepository) {
     const [shows, setShows] = useState<Show[]>([]);
@@ -54,10 +54,13 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
                 setShows((prev) => (page === 1 ? fresh : [...prev, ...fresh]));
                 if (artwork) void decorate(fresh);
 
-                if (fresh.length === 0 && result.hasMore && attempt < MAX_EMPTY_PAGES) {
-                    loadingRef.current = false;
-                    void load(page + 1, attempt + 1);
-                    return;
+                if (fresh.length === 0 && result.hasMore) {
+                    if (attempt < MAX_EMPTY_PAGES) {
+                        loadingRef.current = false;
+                        void load(page + 1, attempt + 1);
+                        return;
+                    }
+                    setHasMore(false);
                 }
                 setHasMore(result.hasMore);
                 if (page === 1 && result.shows.length > 0) {
