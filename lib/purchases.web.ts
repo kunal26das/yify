@@ -7,6 +7,12 @@ export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
 export type PurchasesPackage = Package;
 
+export interface AccountUser {
+    uid: string;
+    email: string | null;
+    name: string | null;
+}
+
 export type PurchasesState = {
     ready: boolean;
     adsRemoved: boolean;
@@ -21,6 +27,8 @@ const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_WEB_KEY;
 let state: PurchasesState = {ready: false, adsRemoved: false, packages: []};
 const listeners = new Set<() => void>();
 let initialized = false;
+let configured = false;
+let pendingUser: AccountUser | null | undefined;
 let store: KeyValueStore | null = null;
 
 function getStore(): KeyValueStore {
@@ -50,10 +58,16 @@ export async function initPurchases(): Promise<void> {
     initialized = true;
     try {
         const purchases = Purchases.configure({apiKey, appUserId: getAppUserId()});
+        configured = true;
         const info = await purchases.getCustomerInfo();
         setState({ready: true, adsRemoved: hasRemoveAds(info)});
         const offerings = await purchases.getOfferings();
         setState({packages: offerings.current?.availablePackages ?? []});
+        if (pendingUser !== undefined) {
+            const user = pendingUser;
+            pendingUser = undefined;
+            await identifyPurchasesUser(user);
+        }
     } catch {
         setState({ready: true});
     }
@@ -76,6 +90,22 @@ export async function purchaseRemoveAds(pkg: PurchasesPackage): Promise<boolean>
         return purchased;
     } catch {
         return false;
+    }
+}
+
+export async function identifyPurchasesUser(user: AccountUser | null): Promise<void> {
+    if (!apiKey) return;
+    if (!configured) {
+        pendingUser = user;
+        return;
+    }
+    try {
+        const purchases = Purchases.getSharedInstance();
+        const info = await purchases.changeUser(user ? user.uid : getAppUserId());
+        setState({adsRemoved: hasRemoveAds(info)});
+        const offerings = await purchases.getOfferings();
+        setState({packages: offerings.current?.availablePackages ?? []});
+    } catch {
     }
 }
 

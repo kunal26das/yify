@@ -82,6 +82,11 @@ export const Analytics = {
     showsImpression: (count: number) => trackEvent('shows_impression', {show_count: count}),
     showsUnavailable: () => trackEvent('shows_unavailable'),
 
+    signIn: (method: string) => trackEvent('login', {method}),
+    signInFailed: (method: string, reason: string) =>
+        trackEvent('login_failed', {method, reason}),
+    signOut: () => trackEvent('logout'),
+
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>
         trackEvent('retry', {source}),
