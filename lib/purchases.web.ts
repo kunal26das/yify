@@ -1,5 +1,6 @@
-import {Purchases, type Package} from '@revenuecat/purchases-js';
+import {ErrorCode, Purchases, PurchasesError, type Package} from '@revenuecat/purchases-js';
 
+import {Analytics} from './analytics-events';
 import {createKeyValueStore} from './storage/create-key-value-store';
 import type {KeyValueStore} from './storage/key-value-store';
 
@@ -29,6 +30,7 @@ const listeners = new Set<() => void>();
 let initialized = false;
 let configured = false;
 let pendingUser: AccountUser | null | undefined;
+let reportedAdsRemoved: boolean | undefined;
 let store: KeyValueStore | null = null;
 
 function getStore(): KeyValueStore {
@@ -46,11 +48,20 @@ function getAppUserId(): string {
 
 function setState(next: Partial<PurchasesState>) {
     state = {...state, ...next};
+    if (state.ready && reportedAdsRemoved !== state.adsRemoved) {
+        reportedAdsRemoved = state.adsRemoved;
+        Analytics.entitlement(state.adsRemoved);
+    }
     listeners.forEach((listener) => listener());
 }
 
 function hasRemoveAds(info: {entitlements: {active: Record<string, unknown>}}): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
+}
+
+function purchaseFailureReason(error: unknown): string {
+    if (!(error instanceof PurchasesError)) return 'unknown';
+    return error.errorCode === ErrorCode.UserCancelledError ? 'cancelled' : String(error.errorCode);
 }
 
 export async function initPurchases(): Promise<void> {
@@ -83,12 +94,15 @@ export function getPurchasesState(): PurchasesState {
 }
 
 export async function purchaseRemoveAds(pkg: PurchasesPackage): Promise<boolean> {
+    Analytics.removeAdsPurchaseStart(pkg.identifier);
     try {
         const {customerInfo} = await Purchases.getSharedInstance().purchase({rcPackage: pkg});
         const purchased = hasRemoveAds(customerInfo);
         setState({adsRemoved: purchased});
+        Analytics.removeAdsPurchaseDone(pkg.identifier, purchased);
         return purchased;
-    } catch {
+    } catch (error) {
+        Analytics.removeAdsPurchaseFailed(pkg.identifier, purchaseFailureReason(error));
         return false;
     }
 }
@@ -114,8 +128,10 @@ export async function restorePurchases(): Promise<boolean> {
         const info = await Purchases.getSharedInstance().getCustomerInfo();
         const restored = hasRemoveAds(info);
         setState({adsRemoved: restored});
+        Analytics.removeAdsRestore(restored ? 'restored' : 'none');
         return restored;
     } catch {
+        Analytics.removeAdsRestore('error');
         return false;
     }
 }
