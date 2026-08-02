@@ -1,9 +1,6 @@
 internal import Expo
 import FirebaseCore
 import React
-// @generated begin revopush-updates-header - expo prebuild (DO NOT MODIFY) sync-1ba9c8bf0aed4942895f95d6664fec89eb587603
-import CodePush
-// @generated end revopush-updates-header
 import ReactAppDependencyProvider
 
 @main
@@ -44,6 +41,12 @@ FirebaseApp.configure()
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+// @generated begin @react-native-firebase/auth-openURL - expo prebuild (DO NOT MODIFY)
+    if url.host?.lowercased() == "firebaseauth" {
+      // invocations for Firebase Auth are handled elsewhere and should not be forwarded to Expo Router
+      return false
+    }
+// @generated end @react-native-firebase/auth-openURL
     return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 
@@ -70,7 +73,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #if DEBUG
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else
-    return CodePush.bundleURL()
+    return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
 }

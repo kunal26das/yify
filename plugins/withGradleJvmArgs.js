@@ -1,18 +1,25 @@
 const {withGradleProperties} = require('@expo/config-plugins');
 
-const DEFAULT_JVM_ARGS = '-Xmx6144m -XX:MaxMetaspaceSize=2g -XX:+HeapDumpOnOutOfMemoryError';
+const DEFAULT_PROPERTIES = {
+    'org.gradle.jvmargs': '-Xmx6144m -XX:MaxMetaspaceSize=2g -XX:+HeapDumpOnOutOfMemoryError',
+    'org.gradle.tooling.parallel': 'true',
+};
 
 module.exports = (config, options = {}) => {
-    const jvmArgs = options.jvmArgs ?? DEFAULT_JVM_ARGS;
+    const properties = {
+        ...DEFAULT_PROPERTIES,
+        ...(options.jvmArgs ? {'org.gradle.jvmargs': options.jvmArgs} : {}),
+        ...(options.properties ?? {}),
+    };
+    const keys = new Set(Object.keys(properties));
+
     return withGradleProperties(config, (cfg) => {
         cfg.modResults = cfg.modResults.filter(
-            (item) => !(item.type === 'property' && item.key === 'org.gradle.jvmargs')
+            (item) => !(item.type === 'property' && keys.has(item.key))
         );
-        cfg.modResults.push({
-            type: 'property',
-            key: 'org.gradle.jvmargs',
-            value: jvmArgs,
-        });
+        for (const [key, value] of Object.entries(properties)) {
+            cfg.modResults.push({type: 'property', key, value});
+        }
         return cfg;
     });
 };
