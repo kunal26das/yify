@@ -124,11 +124,21 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     }, [applyPlaying, applyVideo]);
 
     const minimize = useCallback(() => {
-        setMode((current) => (current === 'inline' ? 'mini' : current));
+        setMode((current) => {
+            if (current !== 'inline') return current;
+            const video = videoRef.current;
+            if (video) Analytics.playerMinimize({id: video.movieId, title: video.title});
+            return 'mini';
+        });
     }, []);
 
     const maximize = useCallback(() => {
-        setMode((current) => (current === 'mini' ? 'inline' : current));
+        setMode((current) => {
+            if (current !== 'mini') return current;
+            const video = videoRef.current;
+            if (video) Analytics.playerMaximize({id: video.movieId, title: video.title});
+            return 'inline';
+        });
     }, []);
 
     const setInlineRect = useCallback((rect: PlayerRect | null) => {
