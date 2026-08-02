@@ -1,15 +1,6 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {
-    type LayoutChangeEvent,
-    type NativeScrollEvent,
-    type NativeSyntheticEvent,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    View,
-} from 'react-native';
+import {useCallback, useEffect, useRef} from 'react';
+import {type LayoutChangeEvent, ScrollView, StyleSheet, View} from 'react-native';
 import {Duration, PressableScale} from '../../components/motion';
-import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {Radius, Spacing} from '../../constants/theme';
@@ -26,16 +17,11 @@ interface ChipMetrics {
     width: number;
 }
 
-const EDGE_FADE_WIDTH = 32;
-
 export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: ChipBarProps) {
     const {colors} = usePalette();
     const scrollRef = useRef<ScrollView | null>(null);
     const metrics = useRef<Record<string, ChipMetrics>>({});
     const viewportWidth = useRef(0);
-    const [scrollX, setScrollX] = useState(0);
-    const [viewport, setViewport] = useState(0);
-    const [contentWidth, setContentWidth] = useState(0);
 
     const revealActive = useCallback(
         (animated: boolean) => {
@@ -55,20 +41,13 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
     const onViewportLayout = useCallback(
         (event: LayoutChangeEvent) => {
             viewportWidth.current = event.nativeEvent.layout.width;
-            setViewport(event.nativeEvent.layout.width);
             revealActive(false);
         },
         [revealActive]
     );
 
-    const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        setScrollX(event.nativeEvent.contentOffset.x);
-    }, []);
 
-    const onContentSizeChange = useCallback((width: number) => setContentWidth(width), []);
 
-    const canScrollStart = scrollX > 1;
-    const canScrollEnd = scrollX < contentWidth - viewport - 1;
 
     return (
         <View style={styles.container}>
@@ -77,9 +56,6 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 onLayout={onViewportLayout}
-                onScroll={onScroll}
-                onContentSizeChange={onContentSizeChange}
-                scrollEventThrottle={16}
                 contentContainerStyle={[styles.content, {paddingHorizontal: contentPadding}]}
             >
                 {chips.map((chip) => {
@@ -121,22 +97,6 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                     );
                 })}
             </ScrollView>
-            {Platform.OS === 'web' && canScrollStart ? (
-                <LinearGradient
-                    colors={[colors.background, 'transparent']}
-                    direction="horizontal"
-                    pointerEvents="none"
-                    style={[styles.edgeFade, styles.edgeFadeStart]}
-                />
-            ) : null}
-            {Platform.OS === 'web' && canScrollEnd ? (
-                <LinearGradient
-                    colors={['transparent', colors.background]}
-                    direction="horizontal"
-                    pointerEvents="none"
-                    style={[styles.edgeFade, styles.edgeFadeEnd]}
-                />
-            ) : null}
         </View>
     );
 }
@@ -158,7 +118,4 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     chipLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500'},
-    edgeFade: {position: 'absolute', top: 0, bottom: 0, width: EDGE_FADE_WIDTH},
-    edgeFadeStart: {left: 0},
-    edgeFadeEnd: {right: 0},
 });
