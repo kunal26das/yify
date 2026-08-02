@@ -109,6 +109,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         clearFiltersAndReload,
         loadInitial,
         loadMore,
+        appliedQuery,
     } = viewModel;
 
     const topBarHeight = useTopBarHeight();
@@ -118,6 +119,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
     const [pickedChip, setPickedChip] = useState<string | null>(null);
+    const lastQueryRef = useRef(appliedQuery);
     const prevMoviesLengthRef = useRef(0);
 
     const gridWidth = Math.min(width, contentMaxWidth);
@@ -269,6 +271,13 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         scrollToTop();
     }, [clearFiltersAndReload, scrollToTop]);
 
+    useEffect(() => {
+        if (lastQueryRef.current === appliedQuery) return;
+        lastQueryRef.current = appliedQuery;
+        setLastVisibleIndex(0);
+        listRef.current?.scrollToOffset({offset: 0, animated: true});
+    }, [appliedQuery]);
+
     const openFilters = useCallback(() => {
         Analytics.filtersOpen();
         setFilterModalVisible(true);
@@ -316,7 +325,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                 <View style={styles.chipBarArea}>
                     <ChipBar chips={FEED_CHIPS} active={activeChip} onSelect={handleChipSelect} contentPadding={gutter}/>
                 </View>
-                <View style={[styles.filtersArea, {paddingRight: gutter}]}>
+                <View style={[styles.filtersArea, {paddingRight: atDefaults ? 0 : gutter}]}>
                     {atDefaults ? null : (
                         <PressableScale
                             onPress={resetToDefaults}
@@ -333,31 +342,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             <ThemedText style={[styles.filtersLabel, {color: colors.textMuted}]}>Clear</ThemedText>
                         </PressableScale>
                     )}
-                    <PressableScale
-                        onPress={openFilters}
-                        accessibilityRole="button"
-                        accessibilityLabel="Filters"
-                        pressedScale={0.94}
-                        pressedOpacity={0.85}
-                        contentStyle={[
-                            styles.filtersPill,
-                            {backgroundColor: colors.surfaceSunken, borderColor: colors.border},
-                        ]}
-                    >
-                        <Ionicons name="options" size={16} color={colors.text}/>
-                        <ThemedText style={[styles.filtersLabel, {color: colors.text}]}>Filters</ThemedText>
-                        {activeFilterCount > 0 ? (
-                            <Animated.View
-                                entering={enterPop()}
-                                exiting={exitPop}
-                                style={[styles.filterBadge, {backgroundColor: colors.accent}]}
-                            >
-                                <ThemedText style={[styles.filterBadgeText, {color: colors.onAccent}]}>
-                                    {activeFilterCount}
-                                </ThemedText>
-                            </Animated.View>
-                        ) : null}
-                    </PressableScale>
                 </View>
             </View>
         </View>

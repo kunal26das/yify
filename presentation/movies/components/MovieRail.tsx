@@ -240,8 +240,9 @@ export function MovieRail({
                 paddingHorizontal: gutter - POSTER_GAP / 2,
                 paddingRight: ranked ? gutter : gutter - POSTER_GAP / 2,
             }}
-            initialNumToRender={8}
-            windowSize={9}
+            initialNumToRender={6}
+            windowSize={5}
+            removeClippedSubviews
             decelerationRate="fast"
             getItemLayout={getItemLayout}
             onScroll={trackEvents ? onScroll : undefined}

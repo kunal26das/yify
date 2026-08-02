@@ -60,6 +60,7 @@ const RELATED_POSTER_LARGE = 132;
 const GENRE_VALUES = new Set<string>(Object.values(Genre));
 
 function genreHref(genre: string): string | null {
+    if (typeof genre !== 'string') return null;
     const value = genre.trim().toLowerCase();
     return GENRE_VALUES.has(value) && value !== Genre.All ? `/browse?genre=${value}` : null;
 }
