@@ -21,7 +21,8 @@
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
     "postinstall": "patch-package",
-    "revopush": "cd revopush && yarn gui"
+    "revopush": "cd revopush && yarn gui",
+    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts'"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",

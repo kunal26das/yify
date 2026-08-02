@@ -247,29 +247,30 @@ sequenceDiagram
 
 ## 🔖 Watchlist
 
-Saving a movie is a single source of truth with zero prop-drilling. `lib/watchlist.ts` is a tiny
-observable store persisted to disk; the UI subscribes through React's `useSyncExternalStore`, so a
+Saving a movie is a single source of truth with zero prop-drilling. `WatchlistRepositoryImpl` is a
+tiny observable store persisted to disk; the UI subscribes through React's `useSyncExternalStore`, so a
 save on the detail page instantly updates the **Watchlist** rail on home and the save button
 everywhere else.
 
 ```mermaid
 flowchart LR
     Btn["🎬 Detail: toggleWatchlist()"] --> Store
-    Store["lib/watchlist.ts<br/>in-memory snapshot + listeners"] --> MMKV[("💾 MMKV / localStorage")]
+    Store["WatchlistRepositoryImpl<br/>in-memory snapshot + listeners"] --> MMKV[("💾 PersistentCache<br/>MMKV / localStorage")]
     Store -->|notify| Hook["useWatchlist()<br/>useSyncExternalStore"]
     Hook --> Rail["🏠 Home: Watchlist rail"]
     Hook --> Save["🎬 Detail: Saved / Watchlist button"]
 ```
 
-Persistence goes through the same `lib/storage` abstraction as everything else: **MMKV** on native,
-**localStorage** on web, behind one `KeyValueStore` interface picked at build time via a `.web` split.
+Persistence goes through the same `PersistentCache` as everything else: **MMKV** on native,
+**localStorage** on web, behind the `KeyValueStore` port picked at build time via a `.web` split.
+`SessionCache` is the in-memory sibling used by tests.
 
 ---
 
 ## 🔔 New-release notifications
 
 On launch the app requests notification permission and registers a background task. The task
-fetches the latest titles, **diffs** them against a cached fingerprint (`lib/new-movies-diff.ts`,
+fetches the latest titles, **diffs** them against a cached fingerprint (`domain/policies/newMoviesNotification.ts`,
 covered by unit tests), and raises a local notification for anything new. Tapping it deep-links
 straight to `/movie/[id]`.
 
@@ -301,31 +302,33 @@ guardrails.
 
 ```
 yify/
-├─ app/                      # 📱 expo-router routes (composition root)
-│  ├─ _layout.tsx            #    Stack, theming, fonts, Firebase + notifications init, CodePush
-│  ├─ index.tsx              #    Home — wires data → HomeScreen
-│  ├─ browse.tsx             #    Deep-linkable browse grid (reads filters from the URL)
+├─ app/                      # 📱 expo-router routes — thin adapters only
+│  ├─ _layout.tsx            #    Stack, theming, fonts, createDependencies() + bootstrap(), CodePush
+│  ├─ index.tsx              #    Home route
+│  ├─ movies.tsx             #    Deep-linkable browse grid (reads filters from the URL)
 │  └─ movie/[id].tsx         #    Watch route
-├─ domain/                   # 🧠 pure interfaces & entities (zero deps)
-│  ├─ entities/              #    Movie · MovieDetails · Torrent · CastMember · ParentalGuide
-│  └─ repositories/          #    MovieRepository (interface)
-├─ data/                     # 💾 YTS API + DTO → entity mapping
-│  ├─ datasources/           #    YtsApiDataSource, YtsEndpoint enum
+├─ domain/                   # 🧠 pure abstractions (zero deps)
+│  ├─ entities/              #    Movie · MovieQuery · Account · Preferences · Entitlement · …
+│  ├─ repositories/          #    data-access ports — MovieRepository · WatchlistRepository · …
+│  ├─ services/              #    behaviour ports — AnalyticsSink · AppConfig · AccountSync · …
+│  ├─ policies/              #    pure business rules (+ unit tests)
+│  └─ Dependencies.ts        #    the port bag the composition root satisfies
+├─ data/                     # 💾 every implementation detail & platform SDK
+│  ├─ di/                    #    ⚙️ composition root — the ONLY module naming *Impl
+│  ├─ datasources/           #    YTS · EZTV · TMDB · Firebase · analytics · storage · sync
 │  ├─ models/                #    one DTO per file
-│  └─ repositories/          #    MovieRepositoryImpl
+│  ├─ repositories/          #    *Impl (+ .web.ts twins)
+│  └─ services/              #    RemoteAppConfig · AccountSyncImpl · PlayStoreServices · …
 ├─ presentation/             # 🎨 screens, view models, shared UI
+│  ├─ di/                    #    DependenciesProvider + per-port hooks
+│  ├─ analytics/             #    the event catalog (UI vocabulary)
 │  ├─ movies/                #    Home / Movies / Details screens + view models
 │  │  ├─ components/         #    HeroBillboard · MovieRail · cards · chips · sheets
 │  │  ├─ player/             #    persistent player · miniplayer · shortcuts
-│  │  └─ constants/          #    homeShelves, filter options
+│  │  └─ constants/          #    homeShelves, filter labels
 │  ├─ components/            #    LiquidGlassView · ThemedText/View · icons
 │  ├─ hooks/                 #    color scheme, theme color, corner radius, responsive
 │  └─ constants/             #    theme (Fraunces + Hanken type system, palette)
-├─ lib/                      # 🔌 cross-cutting concerns (native + .web splits)
-│  ├─ storage/              #    KeyValueStore: MMKV (native) / localStorage (web)
-│  ├─ watchlist.ts          #    Watchlist observable store
-│  ├─ remote-config.ts      #    Firebase Remote Config
-│  └─ new-movies-*.ts       #    diff / cache / background task (+ unit tests)
 ├─ config/                   # 🔥 google-services.json / GoogleService-Info.plist
 ├─ desktop/                  # 🖥️ Electron shell + tray notifier (wraps the web export)
 ├─ revopush/                 # 🚀 clean-arch OTA release console (TUI + GUI)
@@ -429,10 +432,10 @@ Firebase degrades gracefully: with no `.env` keys, the app simply uses the defau
 Google is the only sign-in method. Web uses the Firebase JS SDK (`signInWithPopup`, falling back to
 a redirect when the popup is blocked); native pairs `@react-native-google-signin/google-signin` with
 `@react-native-firebase/auth`, exchanging the Google id token for a Firebase credential. Both sides
-expose the identical surface from `lib/auth` — `initAuth`, `subscribeAuth`, `getAuthState`,
-`signInWithGoogle`, `signOutOfAccount` — so the UI never branches on platform.
+implement the identical `AuthRepository` port — `init`, `subscribe`, `getSession`, `signIn`,
+`signOut`, `getIdToken` — so the UI never branches on platform.
 
-Signing in exists to carry entitlements between devices. `lib/account-link.ts` watches auth state and
+Signing in exists to carry entitlements between devices. `AccountLink` watches auth state and
 hands the Firebase uid to RevenueCat: `logIn(uid)` on the way in, `logOut()` on the way out, with the
 web SDK using `changeUser`. Purchases made on the phone therefore show up on the web, and an
 anonymous shopper keeps their purchases when they later sign in. Because RevenueCat finishes

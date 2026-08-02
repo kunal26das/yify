@@ -5,7 +5,7 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/*', '**/*.test.ts'],
   },
   {
     files: ['**/*.{ts,tsx,mts,cts}'],
@@ -38,6 +38,13 @@ module.exports = defineConfig([
               target: './presentation',
               from: ['./data', './app'],
               message: 'presentation may depend only on domain — not data or app.',
+            },
+            {
+              target: './app',
+              from: './data',
+              except: ['./di'],
+              message:
+                'app may import only the composition root (data/di) — everything else comes from presentation or domain.',
             },
           ],
         },
