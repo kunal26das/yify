@@ -195,6 +195,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
     const selectChip = useCallback(
         (key: string) => {
             if (key === chip) return;
+            Analytics.feedChipSelect(key, 'home');
             Analytics.filtersApplied({...chipFor(key).query});
             setChip(key);
         },

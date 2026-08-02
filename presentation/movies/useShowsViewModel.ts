@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {Show, ShowRepository} from '@/domain';
 import {EZTV_MAX_LIMIT} from '@/data';
+import {Analytics} from '@/lib/analytics-events';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
@@ -30,12 +31,17 @@ export function useShowsViewModel(repository: ShowRepository) {
 
                 setShows((prev) => (page === 1 ? fresh : [...prev, ...fresh]));
                 setHasMore(result.hasMore);
+                if (page === 1 && result.shows.length > 0) {
+                    Analytics.showsImpression(result.shows.length);
+                }
                 setStatus((prev) => {
                     if (page > 1) return prev === 'unavailable' ? 'ready' : prev;
                     return result.shows.length > 0 ? 'ready' : 'empty';
                 });
             } catch {
                 if (page === 1) {
+                    Analytics.showsUnavailable();
+                    Analytics.loadError('shows');
                     setShows([]);
                     setStatus('unavailable');
                 }

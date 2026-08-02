@@ -56,13 +56,15 @@ round-trip.
 ## ✨ Features
 
 - 🎞️ **Curated home** — a rotating full-bleed `HeroBillboard` over a stack of editorial rails: a ranked **Top 10 This Week** with oversized numerals, **My List**, **Critically Acclaimed**, **Just Added**, **Loved by Viewers**, **4K Ultra HD**, and genre rows. Each rail is a different query against the same API, fanned out in parallel.
-- 🔎 **Deep-linkable browse** — the classic infinite poster grid lives at `/browse`, seedable from any hero CTA or rail "See all" with genre / quality / rating / sort / search pre-applied.
-- 🎥 **Cinematic detail pages** — full-bleed backdrop with the title set *over* the art, a prominent **Play Trailer** CTA (embedded YouTube), cast, screenshots with a pinch-to-zoom lightbox, parental guides, and a **More like this** rail powered by `movie_suggestions`.
+- 🔎 **Deep-linkable movies** — the infinite poster grid lives at `/movies`, seedable from any hero CTA or rail "See all" with genre / quality / rating / sort / search pre-applied, and topped by a YouTube-style chip rail.
+- 🎥 **YouTube-style watch page** — the trailer plays at the top of `/movie/[id]` with the title, an action pill row, a collapsible description, cast, screenshots with a pinch-to-zoom lightbox, and a **More like this** rail powered by `movie_suggestions`.
+- 📺 **A player that follows you** — one embed is mounted once at the router root and never unmounts, animating between the watch page and a docked miniplayer so a trailer keeps playing while you browse. Web adds keyboard shortcuts and Document Picture-in-Picture.
+- 📡 **Shows (early)** — `/shows` groups EZTV episode releases into series by IMDb id. The index is blocked on many networks, so the screen falls back to a coming-soon panel rather than an error.
 - 🔖 **My List** — save any title with one tap; it persists locally (MMKV) and shows up as its own rail on the home screen, wired through React's `useSyncExternalStore`.
 - 🧊 **Liquid glass everywhere** — native `expo-glass-effect` on iOS 26 with a graceful `BlurView` fallback on older iOS and Android.
 - 🎚️ **Native filter sheet** — quality / rating / genre / sort in a device-corner-radius bottom sheet that looks identical on iOS and Android.
 - 🔔 **New-release notifications** — a background task diffs the catalog and pings you when fresh titles land; tapping the notification deep-links straight into the movie.
-- ☁️ **Firebase Remote Config** — the API base URL is resolved at runtime, so the backend can move without shipping an update.
+- ☁️ **Firebase Remote Config** — the API base URL and the TMDB key are resolved at runtime, so the backend can move and keys can rotate without shipping an update.
 - 🚀 **Over-the-air updates** — JS/asset updates roll out through RevoPush (CodePush) without an app-store review.
 - 🖥️ **True desktop app** — the same UI runs as a native macOS / Windows / Linux binary via Electron, with its own new-movie tray notifier.
 
@@ -70,23 +72,26 @@ round-trip.
 
 ## 🧭 Screens & navigation
 
-A three-route `expo-router` stack — no tab bar; the home *is* the product.
+An `expo-router` stack with a single persistent top bar — no tab bar; the home *is* the product.
 
 ```
-/  (index)      → HomeScreen         curated hero + rails (the landing surface)
-/browse         → MoviesScreen       search + filters grid (deep-linkable)
-/movie/[id]     → MovieDetailsScreen  cinematic hero + trailer + More like this
+/  (index)      → HomeScreen     hero + rails, then chips over an endless grid
+/movies         → MoviesScreen   search + filters grid (deep-linkable)
+/shows          → ShowsScreen    series grouped from EZTV, or coming-soon
+/my-list        → MyListScreen   saved titles as a playlist
+/settings       → SettingsScreen theme, movie defaults, notifications
+/movie/[id]     → WatchScreen    player + actions + description + More like this
 ```
 
-Everything stays connected: the home search pill and every rail's **See all** deep-link into
-`/browse` with the right filters pre-applied, and a tapped **new-release notification** routes
-directly to `/movie/[id]`.
+Everything stays connected: the search pill and every rail's **See all** deep-link into
+`/movies` with the right filters pre-applied, and a tapped **new-release notification** routes
+directly to `/movie/[id]`. The player outlives every one of these transitions.
 
 ```mermaid
 flowchart LR
     Home["🏠 /  HomeScreen<br/>hero · rails · Top 10 · My List"]
-    Browse["🔎 /browse<br/>grid · search · filters"]
-    Detail["🎬 /movie/[id]<br/>trailer · save · suggestions"]
+    Browse["🔎 /movies<br/>grid · search · filters"]
+    Detail["🎬 /movie/[id]<br/>player · save · suggestions"]
     Notif(["🔔 new-release<br/>notification"])
 
     Home -->|tap poster| Detail
@@ -139,7 +144,7 @@ flowchart TD
 
     subgraph presentation["🎨 presentation"]
         VM["useHomeViewModel · useMoviesViewModel · useMovieDetailsViewModel"]
-        UI["HomeScreen · MoviesScreen · MovieDetailsScreen · HeroBillboard · MovieRail"]
+        UI["HomeScreen · MoviesScreen · WatchScreen · ShowsScreen · PlayerHost"]
     end
 
     subgraph domain["🧠 domain"]
@@ -299,7 +304,7 @@ yify/
 │  ├─ _layout.tsx            #    Stack, theming, fonts, Firebase + notifications init, CodePush
 │  ├─ index.tsx              #    Home — wires data → HomeScreen
 │  ├─ browse.tsx             #    Deep-linkable browse grid (reads filters from the URL)
-│  └─ movie/[id].tsx         #    Movie details route
+│  └─ movie/[id].tsx         #    Watch route
 ├─ domain/                   # 🧠 pure interfaces & entities (zero deps)
 │  ├─ entities/              #    Movie · MovieDetails · Torrent · CastMember · ParentalGuide
 │  └─ repositories/          #    MovieRepository (interface)
@@ -309,7 +314,8 @@ yify/
 │  └─ repositories/          #    MovieRepositoryImpl
 ├─ presentation/             # 🎨 screens, view models, shared UI
 │  ├─ movies/                #    Home / Movies / Details screens + view models
-│  │  ├─ components/         #    HeroBillboard · MovieRail · poster · lightbox · trailer
+│  │  ├─ components/         #    HeroBillboard · MovieRail · cards · chips · sheets
+│  │  ├─ player/             #    persistent player · miniplayer · shortcuts
 │  │  └─ constants/          #    homeShelves, filter options
 │  ├─ components/            #    LiquidGlassView · ThemedText/View · icons
 │  ├─ hooks/                 #    color scheme, theme color, corner radius, responsive

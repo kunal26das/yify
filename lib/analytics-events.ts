@@ -63,7 +63,25 @@ export const Analytics = {
         }),
     torrentNoticeDismissed: (movieId: number) => trackEvent('torrent_notice_dismissed', {movie_id: movieId}),
 
+    shareOpen: (movieId: number) => trackEvent('share_open', {movie_id: movieId}),
+
+    playerMinimize: (movie: Pick<Movie, 'id' | 'title'>) =>
+        trackEvent('player_minimize', movieParams(movie)),
+    playerMaximize: (movie: Pick<Movie, 'id' | 'title'>) =>
+        trackEvent('player_maximize', movieParams(movie)),
+    playerQueueAdvance: (movie: Pick<Movie, 'id' | 'title'>) =>
+        trackEvent('player_queue_advance', movieParams(movie)),
+    playerPip: (movie: Pick<Movie, 'id' | 'title'>, active: boolean) =>
+        trackEvent('player_pip', {...movieParams(movie), active}),
+
+    feedChipSelect: (chipKey: string, surface: string) =>
+        trackEvent('feed_chip_select', {chip_key: chipKey, surface}),
+
+    showsImpression: (count: number) => trackEvent('shows_impression', {show_count: count}),
+    showsUnavailable: () => trackEvent('shows_unavailable'),
+
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
-    retry: (source: 'home' | 'browse' | 'browse_more' | 'details') => trackEvent('retry', {source}),
-    loadError: (source: 'home' | 'browse' | 'details') => trackEvent('load_error', {source}),
+    retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>
+        trackEvent('retry', {source}),
+    loadError: (source: 'home' | 'browse' | 'details' | 'shows') => trackEvent('load_error', {source}),
 };
