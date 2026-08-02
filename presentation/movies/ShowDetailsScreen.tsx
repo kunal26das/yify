@@ -57,15 +57,13 @@ export function ShowDetailsScreen({
 
         void (async () => {
             try {
-                const result = await shows.listShows({page: 1, imdbId});
+                const [result, list] = await Promise.all([
+                    shows.listShows({page: 1, imdbId}),
+                    shows.listEpisodes(imdbId),
+                ]);
                 if (!active) return;
-                const first = result.shows[0] ?? null;
-                setShow(first);
-                setEpisodes(
-                    result.shows
-                        .flatMap((entry) => [entry.latestEpisode])
-                        .sort((a, b) => b.releasedAt.getTime() - a.releasedAt.getTime())
-                );
+                setShow(result.shows[0] ?? null);
+                setEpisodes(list);
             } catch {
                 if (active) setShow(null);
             } finally {
@@ -145,9 +143,8 @@ export function ShowDetailsScreen({
                     </ThemedText>
                 ) : (
                     episodes.map((episode) => (
-                        <Animated.View
+                        <View
                             key={episode.id}
-                            entering={enterFade()}
                             style={[styles.episode, {borderBottomColor: colors.border}]}
                         >
                             <View style={[styles.codePill, {backgroundColor: colors.accentSoft}]}>
@@ -177,7 +174,7 @@ export function ShowDetailsScreen({
                                     </View>
                                 </View>
                             </View>
-                        </Animated.View>
+                        </View>
                     ))
                 )}
             </ScrollView>

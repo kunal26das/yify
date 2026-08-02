@@ -18,17 +18,39 @@ const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     buy: 'Buy',
 };
 
+const ZONE_REGION: Record<string, string> = {
+    Kolkata: 'IN', Calcutta: 'IN', Colombo: 'LK', Karachi: 'PK', Dhaka: 'BD', Kathmandu: 'NP',
+    London: 'GB', Dublin: 'IE', Paris: 'FR', Berlin: 'DE', Madrid: 'ES', Rome: 'IT',
+    Amsterdam: 'NL', Brussels: 'BE', Lisbon: 'PT', Zurich: 'CH', Vienna: 'AT', Stockholm: 'SE',
+    Oslo: 'NO', Copenhagen: 'DK', Helsinki: 'FI', Warsaw: 'PL', Prague: 'CZ', Moscow: 'RU',
+    Istanbul: 'TR', Athens: 'GR', Dubai: 'AE', Riyadh: 'SA', Doha: 'QA', Jerusalem: 'IL',
+    Tokyo: 'JP', Seoul: 'KR', Shanghai: 'CN', Hong_Kong: 'HK', Taipei: 'TW', Singapore: 'SG',
+    Bangkok: 'TH', Jakarta: 'ID', Manila: 'PH', Kuala_Lumpur: 'MY', Ho_Chi_Minh: 'VN',
+    Sydney: 'AU', Melbourne: 'AU', Brisbane: 'AU', Perth: 'AU', Auckland: 'NZ',
+    Toronto: 'CA', Vancouver: 'CA', Montreal: 'CA', Mexico_City: 'MX',
+    Sao_Paulo: 'BR', Buenos_Aires: 'AR', Santiago: 'CL', Bogota: 'CO', Lima: 'PE',
+    Johannesburg: 'ZA', Lagos: 'NG', Nairobi: 'KE', Cairo: 'EG', Casablanca: 'MA',
+};
+
 export function deviceRegion(): string {
+    try {
+        const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const city = zone?.split('/').pop();
+        if (city && ZONE_REGION[city]) return ZONE_REGION[city];
+        if (zone?.startsWith('America/')) return 'US';
+        if (zone?.startsWith('Europe/')) return 'GB';
+    } catch {
+    }
     try {
         const locale =
             Platform.OS === 'web' && typeof navigator !== 'undefined'
                 ? navigator.language
                 : new Intl.DateTimeFormat().resolvedOptions().locale;
         const region = locale?.split('-')[1];
-        return region ? region.toUpperCase() : 'US';
+        if (region) return region.toUpperCase();
     } catch {
-        return 'US';
     }
+    return 'US';
 }
 
 export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?: number}) {

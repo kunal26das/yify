@@ -5,6 +5,8 @@ import {Analytics} from '@/lib/analytics-events';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
+const MAX_EMPTY_PAGES = 4;
+
 export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepository) {
     const [shows, setShows] = useState<Show[]>([]);
     const [status, setStatus] = useState<ShowsStatus>('loading');
@@ -36,7 +38,7 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
     );
 
     const load = useCallback(
-        async (page: number) => {
+        async (page: number, attempt = 0) => {
             if (loadingRef.current) return;
             loadingRef.current = true;
             if (page === 1) setRefreshing(true);
@@ -51,6 +53,12 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
 
                 setShows((prev) => (page === 1 ? fresh : [...prev, ...fresh]));
                 if (artwork) void decorate(fresh);
+
+                if (fresh.length === 0 && result.hasMore && attempt < MAX_EMPTY_PAGES) {
+                    loadingRef.current = false;
+                    void load(page + 1, attempt + 1);
+                    return;
+                }
                 setHasMore(result.hasMore);
                 if (page === 1 && result.shows.length > 0) {
                     Analytics.showsImpression(result.shows.length);

@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {useCallback, useMemo} from 'react';
+import {useCallback, useMemo, useRef, useState} from 'react';
 import {FlatList, RefreshControl, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -12,6 +12,8 @@ import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
+import {ScrollProgress} from './components/ScrollProgress';
+import {SkeletonBlock} from './components/PosterSkeleton';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {useGoTo} from './constants/destinations';
 import type {ShowsViewModel} from './useShowsViewModel';
@@ -21,13 +23,13 @@ const SINGLE_COLUMN_MAX_WIDTH = 480;
 const COLUMN_GAP = 16;
 const ROW_GAP = 24;
 const THUMB_ASPECT = 16 / 9;
+const SKELETON_ROWS = 3;
 
 function episodeLabel(show: Show): string {
     const {season, episode} = show.latestEpisode;
-    const releases = `${show.episodeCount} ${show.episodeCount === 1 ? 'release' : 'releases'}`;
-    if (!season && !episode) return releases;
+    if (!season && !episode) return 'New releases';
     const padded = `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
-    return `${padded} · ${releases}`;
+    return `Latest ${padded}`;
 }
 
 export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
@@ -36,7 +38,18 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     const {width, contentMaxWidth, gutter} = useResponsive();
     const topBarHeight = useTopBarHeight();
     const goTo = useGoTo();
-    const {shows, status, refreshing, loadMore, reload} = viewModel;
+    const {shows: allShows, status, refreshing, loadMore, reload} = viewModel;
+
+    const [query, setQuery] = useState('');
+    const [lastVisible, setLastVisible] = useState(0);
+    const [atTop, setAtTop] = useState(true);
+    const listRef = useRef<FlatList<Show[]>>(null);
+
+    const shows = useMemo(() => {
+        const term = query.trim().toLowerCase();
+        if (!term) return allShows;
+        return allShows.filter((show) => show.title.toLowerCase().includes(term));
+    }, [allShows, query]);
 
     const gridWidth = Math.min(width, contentMaxWidth);
     const columnsWidth = Math.max(0, gridWidth - gutter * 2);
@@ -59,6 +72,18 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
         return chunks;
     }, [numColumns, shows]);
 
+    const onViewableItemsChanged = useRef(
+        ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+            const max = viewableItems.reduce(
+                (acc, token) => (token.index != null && token.index > acc ? token.index : acc),
+                -1
+            );
+            if (max >= 0) setLastVisible(max);
+        }
+    ).current;
+
+    const viewabilityConfig = useRef({itemVisiblePercentThreshold: 10, minimumViewTime: 50}).current;
+
     const renderRow = useCallback(
         ({item}: {item: Show[]}) => (
             <View style={[styles.row, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
@@ -69,6 +94,37 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
         ),
         [cardWidth, contentMaxWidth, gutter]
     );
+
+    if (status === 'loading') {
+        const cardHeight = Math.round(cardWidth / THUMB_ASPECT);
+        return (
+            <ThemedView style={styles.container}>
+                <View style={{paddingTop: topBarHeight + Spacing.lg, rowGap: ROW_GAP}}>
+                    {Array.from({length: SKELETON_ROWS}).map((_, row) => (
+                        <View
+                            key={row}
+                            style={[styles.row, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}
+                        >
+                            {Array.from({length: numColumns}).map((__, column) => (
+                                <View key={column} style={{width: cardWidth}}>
+                                    <SkeletonBlock
+                                        style={{height: cardHeight, borderRadius: Radius.card}}
+                                    />
+                                    <SkeletonBlock
+                                        style={{height: 15, borderRadius: 4, marginTop: Spacing.md, width: '72%'}}
+                                    />
+                                    <SkeletonBlock
+                                        style={{height: 12, borderRadius: 4, marginTop: 6, width: '44%'}}
+                                    />
+                                </View>
+                            ))}
+                        </View>
+                    ))}
+                </View>
+                <TopBar active="shows"/>
+            </ThemedView>
+        );
+    }
 
     if (status !== 'ready') {
         return (
@@ -85,9 +141,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                     </View>
                     <ThemedText type="heading" style={styles.title}>Shows are on the way</ThemedText>
                     <ThemedText style={[styles.body, {color: colors.textMuted}]}>
-                        {status === 'loading'
-                            ? 'Looking for the latest episodes…'
-                            : 'Series browsing is not available right now. Movies are all yours in the meantime.'}
+                        Series browsing is not available right now. Movies are all yours in the meantime.
                     </ThemedText>
                     <PressableScale
                         onPress={() => {
@@ -115,12 +169,17 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     return (
         <ThemedView style={styles.container}>
             <FlatList
+                ref={listRef}
                 data={rows}
                 keyExtractor={(item, index) => item[0]?.imdbId ?? `row-${index}`}
                 renderItem={renderRow}
                 showsVerticalScrollIndicator={false}
                 onEndReached={loadMore}
-                onEndReachedThreshold={2}
+                onEndReachedThreshold={3}
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                onScroll={(event) => setAtTop(event.nativeEvent.contentOffset.y <= 8)}
+                scrollEventThrottle={16}
                 initialNumToRender={4}
                 maxToRenderPerBatch={4}
                 windowSize={9}
@@ -141,7 +200,19 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                     rowGap: ROW_GAP,
                 }}
             />
-            <TopBar active="shows"/>
+            <ScrollProgress
+                current={Math.min((lastVisible + 1) * numColumns, shows.length)}
+                total={shows.length}
+                atTop={atTop}
+                onScrollToTop={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                bottomInset={insets.bottom}
+                visible={shows.length > 0}
+            />
+            <TopBar
+                active="shows"
+                searchValue={query}
+                onSearchSubmit={setQuery}
+            />
         </ThemedView>
     );
 }
@@ -149,6 +220,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
 function ShowCard({show, width}: {show: Show; width: number}) {
     const {colors} = usePalette();
     const goTo = useGoTo();
+    const [artFailed, setArtFailed] = useState(false);
     const thumbHeight = Math.round(width / THUMB_ASPECT);
 
     const open = () => {
@@ -166,13 +238,14 @@ function ShowCard({show, width}: {show: Show; width: number}) {
             pressedOpacity={0.85}
           >
             <View style={[styles.thumb, {height: thumbHeight, backgroundColor: colors.surfaceSunken}]}>
-                {show.thumbnailUrl ? (
+                {show.thumbnailUrl && !artFailed ? (
                     <Image
                         source={{uri: show.thumbnailUrl}}
                         style={StyleSheet.absoluteFill}
                         contentFit="cover"
                         transition={180}
                         cachePolicy="memory-disk"
+                        onError={() => setArtFailed(true)}
                     />
                 ) : (
                     <View style={styles.thumbFallback}>
