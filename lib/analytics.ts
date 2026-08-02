@@ -1,4 +1,10 @@
-import {getAnalytics, logEvent, logScreenView} from '@react-native-firebase/analytics';
+import {
+    getAnalytics,
+    getAppInstanceId,
+    logEvent,
+    logScreenView,
+    setUserProperty as setFirebaseUserProperty,
+} from '@react-native-firebase/analytics';
 import {getCrashlytics, log} from '@react-native-firebase/crashlytics';
 
 function breadcrumb(name: string, params?: Record<string, string | number | boolean>): void {
@@ -22,4 +28,19 @@ export function trackScreenView(screenName: string): void {
     } catch {
     }
     breadcrumb('screen_view', {screen_name: screenName});
+}
+
+export function setUserProperty(name: string, value: string | null): void {
+    try {
+        void setFirebaseUserProperty(getAnalytics(), name, value);
+    } catch {
+    }
+}
+
+export async function getAnalyticsInstanceId(): Promise<string | null> {
+    try {
+        return await getAppInstanceId(getAnalytics());
+    } catch {
+        return null;
+    }
 }

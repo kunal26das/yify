@@ -5,6 +5,9 @@ import Purchases, {
     type PurchasesPackage,
 } from 'react-native-purchases';
 
+import {getAnalyticsInstanceId} from './analytics';
+import {Analytics} from './analytics-events';
+
 export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
 export interface AccountUser {
@@ -29,14 +32,33 @@ const listeners = new Set<() => void>();
 let initialized = false;
 let configured = false;
 let pendingUser: AccountUser | null | undefined;
+let reportedAdsRemoved: boolean | undefined;
 
 function setState(next: Partial<PurchasesState>) {
     state = {...state, ...next};
+    if (state.ready && reportedAdsRemoved !== state.adsRemoved) {
+        reportedAdsRemoved = state.adsRemoved;
+        Analytics.entitlement(state.adsRemoved);
+    }
     listeners.forEach((listener) => listener());
 }
 
 function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
+}
+
+async function linkFirebaseAnalytics(): Promise<void> {
+    try {
+        const instanceId = await getAnalyticsInstanceId();
+        if (instanceId) await Purchases.setFirebaseAppInstanceID(instanceId);
+    } catch {
+    }
+}
+
+function purchaseFailureReason(error: unknown): string {
+    const {userCancelled, code} = (error ?? {}) as {userCancelled?: boolean | null; code?: string};
+    if (userCancelled) return 'cancelled';
+    return code ?? 'unknown';
 }
 
 async function loadOfferings(): Promise<void> {
@@ -53,6 +75,7 @@ export async function initPurchases(): Promise<void> {
     try {
         if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG);
         await Purchases.configure({apiKey});
+        await linkFirebaseAnalytics();
         Purchases.addCustomerInfoUpdateListener((info) => {
             setState({adsRemoved: hasRemoveAds(info)});
         });
@@ -80,12 +103,15 @@ export function getPurchasesState(): PurchasesState {
 }
 
 export async function purchaseRemoveAds(pkg: PurchasesPackage): Promise<boolean> {
+    Analytics.removeAdsPurchaseStart(pkg.identifier);
     try {
         const {customerInfo} = await Purchases.purchasePackage(pkg);
         const purchased = hasRemoveAds(customerInfo);
         setState({adsRemoved: purchased});
+        Analytics.removeAdsPurchaseDone(pkg.identifier, purchased);
         return purchased;
-    } catch {
+    } catch (error) {
+        Analytics.removeAdsPurchaseFailed(pkg.identifier, purchaseFailureReason(error));
         return false;
     }
 }
@@ -101,6 +127,7 @@ export async function identifyPurchasesUser(user: AccountUser | null): Promise<v
             ? (await Purchases.logIn(user.uid)).customerInfo
             : await Purchases.logOut();
         setState({adsRemoved: hasRemoveAds(info)});
+        await linkFirebaseAnalytics();
         if (user) {
             await Purchases.setEmail(user.email);
             await Purchases.setDisplayName(user.name);
@@ -115,8 +142,10 @@ export async function restorePurchases(): Promise<boolean> {
         const info = await Purchases.restorePurchases();
         const restored = hasRemoveAds(info);
         setState({adsRemoved: restored});
+        Analytics.removeAdsRestore(restored ? 'restored' : 'none');
         return restored;
     } catch {
+        Analytics.removeAdsRestore('error');
         return false;
     }
 }

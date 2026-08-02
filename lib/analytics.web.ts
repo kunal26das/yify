@@ -1,10 +1,11 @@
-import {getAnalytics, isSupported, logEvent, type Analytics} from 'firebase/analytics';
+import {getAnalytics, isSupported, logEvent, setUserProperties, type Analytics} from 'firebase/analytics';
 
 import {getFirebaseApp} from './firebase';
 
 let analytics: Analytics | null = null;
 let initStarted = false;
 const queue: { name: string; params?: Record<string, string | number | boolean> }[] = [];
+const propertyQueue: Record<string, string | null> = {};
 
 function isElectron(): boolean {
     return typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron');
@@ -36,6 +37,11 @@ function init(): void {
             if (!supported || app == null) return;
             analytics = getAnalytics(app);
             queue.splice(0).forEach(({name, params}) => logEvent(analytics!, name, params));
+            const properties = Object.entries(propertyQueue);
+            if (properties.length > 0) {
+                properties.forEach(([key]) => delete propertyQueue[key]);
+                setUserProperties(analytics, Object.fromEntries(properties));
+            }
         })
         .catch(() => {
         });
@@ -56,4 +62,17 @@ export function trackEvent(name: string, params?: Record<string, string | number
 
 export function trackScreenView(screenName: string): void {
     trackEvent('screen_view', {screen_name: screenName, screen_class: screenName});
+}
+
+export function setUserProperty(name: string, value: string | null): void {
+    try {
+        if (isBot()) return;
+        init();
+        if (analytics) {
+            setUserProperties(analytics, {[name]: value});
+        } else {
+            propertyQueue[name] = value;
+        }
+    } catch {
+    }
 }
