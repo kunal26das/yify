@@ -1,9 +1,16 @@
 import {useMemo} from 'react';
 import Head from 'expo-router/head';
 import {router} from 'expo-router';
-import {MovieRepositoryImpl, YtsApiDataSource} from '@/data';
-import {HomeScreen, useFeedViewModel, useHomeViewModel} from '@/presentation';
-import {getApiBaseUrl} from '@/lib/remote-config';
+import {
+  EztvApiDataSource,
+  MovieRepositoryImpl,
+  ShowRepositoryImpl,
+  TmdbApiDataSource,
+  TmdbRepositoryImpl,
+  YtsApiDataSource,
+} from '@/data';
+import {HomeScreen, useFeedViewModel, useHomeViewModel, useShowsViewModel} from '@/presentation';
+import {getApiBaseUrl, getTmdbApiKey, remoteConfigReady} from '@/lib/remote-config';
 
 
 export default function HomeRoute() {
@@ -11,6 +18,18 @@ export default function HomeRoute() {
   const repository = useMemo(() => new MovieRepositoryImpl(api), [api]);
   const shelves = useHomeViewModel(repository);
   const feed = useFeedViewModel(repository, {skipHero: true});
+  const showRepository = useMemo(() => new ShowRepositoryImpl(new EztvApiDataSource()), []);
+  const showArtwork = useMemo(
+    () =>
+      new TmdbRepositoryImpl(
+        new TmdbApiDataSource(async () => {
+          await remoteConfigReady();
+          return getTmdbApiKey();
+        })
+      ),
+    []
+  );
+  const shows = useShowsViewModel(showRepository, showArtwork);
   return (
     <>
       <Head>
@@ -20,7 +39,7 @@ export default function HomeRoute() {
           content="Browse a curated, Netflix-style home of movies — trailers, ratings and a personal list. Free on iPhone, Android and the web."
         />
       </Head>
-      <HomeScreen shelves={shelves} feed={feed} />
+      <HomeScreen shelves={shelves} feed={feed} shows={shows} />
     </>
   );
 }

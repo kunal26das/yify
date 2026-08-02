@@ -1,6 +1,8 @@
 import type {ListShowsParams, ListShowsResult, Show, ShowEpisode, ShowRepository} from '@/domain';
 import type {EztvApi, EztvTorrentDto} from '@/data';
 
+const EPISODE_PAGES = 6;
+
 const EPISODE_TAG = /\bS\d{1,2}\s?E\d{1,3}\b/i;
 const TRAILING_NOISE = /[\s._-]+$/;
 
@@ -53,14 +55,18 @@ export class ShowRepositoryImpl implements ShowRepository {
     }
 
     async listEpisodes(imdbId: string): Promise<ShowEpisode[]> {
-        const response = await this.api.getTorrents({page: 1, imdb_id: imdbId});
         const best = new Map<string, ShowEpisode>();
 
-        for (const dto of response.torrents ?? []) {
-            const episode = toEpisode(dto);
-            const key = `${episode.season}:${episode.episode}`;
-            const current = best.get(key);
-            if (!current || episode.seeds > current.seeds) best.set(key, episode);
+        for (let page = 1; page <= EPISODE_PAGES; page++) {
+            const response = await this.api.getTorrents({page, imdb_id: imdbId});
+            const torrents = response.torrents ?? [];
+            for (const dto of torrents) {
+                const episode = toEpisode(dto);
+                const key = `${episode.season}:${episode.episode}`;
+                const current = best.get(key);
+                if (!current || episode.seeds > current.seeds) best.set(key, episode);
+            }
+            if (torrents.length === 0) break;
         }
 
         return [...best.values()].sort((a, b) => {
