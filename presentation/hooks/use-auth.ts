@@ -1,7 +1,12 @@
 import {useSyncExternalStore} from 'react';
-import {getAuthState, subscribeAuth} from '@/lib/auth';
-import {INITIAL_AUTH_STATE, type AuthState} from '@/lib/auth-state';
+import {INITIAL_AUTH_SESSION, type AuthSession} from '@/domain';
+import {useAuthRepository} from '../di/DependenciesContext';
 
-export function useAuth(): AuthState {
-    return useSyncExternalStore(subscribeAuth, getAuthState, () => INITIAL_AUTH_STATE);
+export function useAuth(): AuthSession {
+    const auth = useAuthRepository();
+    return useSyncExternalStore(
+        (listener) => auth.subscribe(listener),
+        () => auth.getSession(),
+        () => INITIAL_AUTH_SESSION
+    );
 }

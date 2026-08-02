@@ -10,7 +10,7 @@ import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
 import {Duration, PressableScale, enterFade, enterPop} from '../../components/motion';
 import {getPosterContainerStyle} from './moviePosterLayout';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {useHoverCard} from './HoverCard';
 import {NewBadge} from './NewBadge';
 import {useTopTenRank} from './TopTenContext';

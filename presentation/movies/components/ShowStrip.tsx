@@ -3,7 +3,7 @@ import {Image} from 'expo-image';
 import {useState} from 'react';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import type {Show} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';

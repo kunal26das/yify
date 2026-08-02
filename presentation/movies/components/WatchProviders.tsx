@@ -1,11 +1,10 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {Image} from 'expo-image';
 import Animated from 'react-native-reanimated';
 import type {MovieDetails, WatchAvailability, WatchProvider} from '@/domain';
-import {TmdbApiDataSource, TmdbRepositoryImpl} from '@/data';
-import {getTmdbApiKey, remoteConfigReady} from '@/lib/remote-config';
-import {Analytics} from '@/lib/analytics-events';
+import {useTmdbRepository} from '../../di/DependenciesContext';
+import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';
@@ -57,16 +56,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
     const {colors} = usePalette();
     const [availability, setAvailability] = useState<WatchAvailability | null>(null);
 
-    const repository = useMemo(
-        () =>
-            new TmdbRepositoryImpl(
-                new TmdbApiDataSource(async () => {
-                    await remoteConfigReady();
-                    return getTmdbApiKey();
-                })
-            ),
-        []
-    );
+    const repository = useTmdbRepository();
 
     useEffect(() => {
         let active = true;

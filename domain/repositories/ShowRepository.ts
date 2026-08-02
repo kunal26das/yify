@@ -1,4 +1,4 @@
-import type {Show, ShowEpisode} from '@/domain';
+import type {Show, ShowEpisode} from '../entities/Show';
 
 export interface ListShowsParams {
     page: number;

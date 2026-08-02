@@ -19,8 +19,8 @@ import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
-import {Analytics} from '@/lib/analytics-events';
-import {toggleWatchlist} from '@/lib/watchlist';
+import {Analytics} from '@/presentation/analytics/events';
+import {useToggleWatchlist} from '../useWatchlist';
 import {useIsInWatchlist} from '../useWatchlist';
 import {HeroTrailerLayer} from './HeroTrailerLayer';
 import {useTopTenRank} from './TopTenContext';
@@ -426,6 +426,7 @@ function HeroSlide({
     const {isDesktop} = useResponsive();
     const {gradients} = usePalette();
     const saved = useIsInWatchlist(movie.id);
+    const toggleWatchlist = useToggleWatchlist();
     const meta = [
         movie.year ? String(movie.year) : null,
         formatRuntime(movie.runtimeMinutes),

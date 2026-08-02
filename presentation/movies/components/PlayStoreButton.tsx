@@ -3,7 +3,7 @@ import {Image} from 'expo-image';
 import * as Linking from 'expo-linking';
 import {Platform, StyleSheet} from 'react-native';
 import {PressableScale} from '../../components/motion';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 
 const PACKAGE_NAME = Constants.expoConfig?.android?.package ?? 'io.github.kunal26das.yify';
 

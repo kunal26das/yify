@@ -1,14 +1,17 @@
-import type {Movie, MovieDetails, ParentalGuide} from '@/domain';
+import type {Genre, OrderBy, Quality, SortBy} from '../entities/MovieQuery';
+import type {Movie} from '../entities/Movie';
+import type {MovieDetails} from '../entities/MovieDetails';
+import type {ParentalGuide} from '../entities/ParentalGuide';
 
 export interface ListMoviesParams {
   page: number;
   limit?: number;
   query?: string;
-  quality?: string;
+  quality?: Quality;
   minimum_rating?: number;
-  genre?: string;
-  sort_by?: string;
-  order_by?: 'asc' | 'desc';
+  genre?: Genre;
+  sort_by?: SortBy;
+  order_by?: OrderBy;
 }
 
 export interface ListMoviesResult {

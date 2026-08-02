@@ -1,3 +1,4 @@
+export { Quality, SortBy, OrderBy, Genre } from './entities/MovieQuery';
 export type { Movie } from './entities/Movie';
 export type {Show, ShowEpisode} from './entities/Show';
 export type {WatchProvider, WatchAvailability, WatchOffer} from './entities/WatchProvider';
@@ -5,6 +6,21 @@ export type {Torrent} from './entities/Torrent';
 export type {CastMember} from './entities/CastMember';
 export type {MovieDetails} from './entities/MovieDetails';
 export type {ParentalGuide} from './entities/ParentalGuide';
+
+export type {Account, AuthSession} from './entities/Account';
+export {INITIAL_AUTH_SESSION} from './entities/Account';
+export type {
+  ThemePreference,
+  BrowseDefaults,
+  Preferences,
+  SyncedPreferences,
+} from './entities/Preferences';
+export {DEFAULT_BROWSE_DEFAULTS, DEFAULT_PREFERENCES} from './entities/Preferences';
+export type {PurchaseOffer, PurchaseState} from './entities/Entitlement';
+export {REMOVE_ADS_ENTITLEMENT, INITIAL_PURCHASE_STATE} from './entities/Entitlement';
+export type {UpdateState, UpdateStatus} from './entities/UpdateStatus';
+export {IDLE_UPDATE_STATUS} from './entities/UpdateStatus';
+
 export type {
   MovieRepository,
   ListMoviesParams,
@@ -20,3 +36,30 @@ export type {
   TitleArtwork,
   TitleMedia,
 } from './repositories/TmdbRepository';
+export type {KeyValueStore} from './repositories/KeyValueStore';
+export type {AuthRepository} from './repositories/AuthRepository';
+export type {PreferencesRepository} from './repositories/PreferencesRepository';
+export type {WatchlistRepository} from './repositories/WatchlistRepository';
+export type {PurchaseRepository} from './repositories/PurchaseRepository';
+export type {SeenMoviesRepository} from './repositories/SeenMoviesRepository';
+export type {SearchHistoryRepository} from './repositories/SearchHistoryRepository';
+
+export {selectNewMovies, buildNotificationContent} from './policies/newMoviesNotification';
+export type {NewMoviesNotification} from './policies/newMoviesNotification';
+export {
+  chooseSyncMode,
+  resolveSection,
+  parseWatchlist,
+  unionWatchlist,
+  payloadWithinBudget,
+} from './policies/syncMerge';
+export type {SyncMode, SectionResolution, WatchlistEntry} from './policies/syncMerge';
+
+export type {AnalyticsSink, AnalyticsParams} from './services/AnalyticsSink';
+export type {AppConfig} from './services/AppConfig';
+export type {AppUpdates} from './services/AppUpdates';
+export type {StoreServices} from './services/StoreServices';
+export type {NewMoviesNotifier} from './services/NewMoviesNotifier';
+export type {AccountSync} from './services/AccountSync';
+
+export type {Dependencies} from './Dependencies';

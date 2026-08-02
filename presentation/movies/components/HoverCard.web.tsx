@@ -13,8 +13,8 @@ import {
 } from 'react';
 import {Animated, Pressable, StyleSheet, View} from 'react-native';
 import type {Movie} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
-import {toggleWatchlist} from '@/lib/watchlist';
+import {Analytics} from '@/presentation/analytics/events';
+import {useToggleWatchlist} from '../useWatchlist';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
@@ -239,6 +239,7 @@ function ExpandedCard({
     const {colors, scheme} = usePalette();
     const rank = useTopTenRank(movie.id);
     const saved = useIsInWatchlist(movie.id);
+    const toggleWatchlist = useToggleWatchlist();
     const grow = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {

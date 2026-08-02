@@ -1,18 +1,14 @@
 import {router, useLocalSearchParams} from 'expo-router';
 import Head from 'expo-router/head';
 import {useEffect, useMemo, useRef} from 'react';
-import {MovieRepositoryImpl, YtsApiDataSource} from '@/data';
+import {Genre, OrderBy, Quality, SortBy} from '@/domain';
 import {
-  Genre,
   MoviesScreen,
-  OrderBy,
-  Quality,
-  SortBy,
+  useMovieRepository,
+  usePreferencesRepository,
   useMoviesViewModel,
   type MovieFilters,
 } from '@/presentation';
-import {getApiBaseUrl} from '@/lib/remote-config';
-import {getBrowseDefaults} from '@/lib/preferences';
 
 function asEnum<T extends string>(value: string | undefined, allowed: readonly T[]): T | undefined {
   return value != null && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
@@ -29,8 +25,8 @@ export default function BrowseRoute() {
     focus?: string;
   }>();
 
-  const api = useMemo(() => new YtsApiDataSource(getApiBaseUrl), []);
-  const repository = useMemo(() => new MovieRepositoryImpl(api), [api]);
+  const repository = useMovieRepository();
+  const preferences = usePreferencesRepository();
 
   const initialFilters = useMemo<MovieFilters>(() => {
     const hasParams =
@@ -40,7 +36,7 @@ export default function BrowseRoute() {
       params.sort_by != null ||
       params.order_by != null;
     if (!hasParams) {
-      const defaults = getBrowseDefaults();
+      const defaults = preferences.getBrowseDefaults();
       const seeded: MovieFilters = {};
       const genre = asEnum(defaults.genre, Object.values(Genre));
       if (genre) seeded.genre = genre;
@@ -65,7 +61,14 @@ export default function BrowseRoute() {
     const orderBy = asEnum(params.order_by, Object.values(OrderBy));
     if (orderBy) f.order_by = orderBy;
     return f;
-  }, [params.genre, params.quality, params.minimum_rating, params.sort_by, params.order_by]);
+  }, [
+    params.genre,
+    params.quality,
+    params.minimum_rating,
+    params.sort_by,
+    params.order_by,
+    preferences,
+  ]);
 
   const viewModel = useMoviesViewModel(repository, {
     initialFilters,

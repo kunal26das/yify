@@ -1,3 +1,18 @@
+export {
+  DependenciesProvider,
+  useMovieRepository,
+  useShowRepository,
+  useTmdbRepository,
+  useAppConfig,
+  useSearchHistory,
+  useAuthRepository,
+  usePreferencesRepository,
+  useWatchlistRepository,
+  useAppUpdates,
+  usePurchaseRepository,
+  useNewMoviesNotifier,
+} from './di/DependenciesContext';
+
 export { MoviesScreen } from './movies/MoviesScreen';
 export { useMoviesViewModel, DEFAULT_FILTERS } from './movies/useMoviesViewModel';
 export type { MoviesViewModel, MovieFilters, UseMoviesOptions } from './movies/useMoviesViewModel';
@@ -37,7 +52,6 @@ export { WatchScreen } from './movies/WatchScreen';
 export { useMovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export type { MovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export { useWatchlist, useIsInWatchlist } from './movies/useWatchlist';
-export { Quality, Genre, SortBy, OrderBy } from './movies/constants/movieFilterOptions';
 
 export { PlayerProvider, usePlayer, PlayerHost } from './player';
 export type { PlayerApi, PlayerMode, PlayerRect, PlayerVideo } from './player';

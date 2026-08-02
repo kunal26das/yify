@@ -7,57 +7,11 @@ import {ThemedText} from '../../components/themed-text';
 import {PressableScale, enterFade, exitFade, shiftLayout} from '../../components/motion';
 import {usePalette} from '../../hooks/use-palette';
 import {Spacing, Typography} from '../../constants/theme';
-import {Analytics} from '@/lib/analytics-events';
-import {createKeyValueStore} from '@/lib/storage/create-key-value-store';
-import type {KeyValueStore} from '@/lib/storage/key-value-store';
+import {Analytics} from '@/presentation/analytics/events';
+import {useSearchHistory} from '../../di/DependenciesContext';
 
-const STORE_ID = 'search';
-const RECENTS_KEY = 'search.recents';
-const RECENTS_LIMIT = 8;
 const SEARCH_ROW_HEIGHT = 56;
 const RECENT_ROW_HEIGHT = 48;
-
-let store: KeyValueStore | null = null;
-
-function getStore(): KeyValueStore {
-    if (!store) store = createKeyValueStore(STORE_ID);
-    return store;
-}
-
-function parseRecents(raw: string | undefined): string[] {
-    if (!raw) return [];
-    try {
-        const parsed: unknown = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed.filter((item): item is string => typeof item === 'string').slice(0, RECENTS_LIMIT);
-    } catch {
-        return [];
-    }
-}
-
-function writeRecents(next: string[]): string[] {
-    getStore().set(RECENTS_KEY, JSON.stringify(next));
-    return next;
-}
-
-export function getRecentSearches(): string[] {
-    return parseRecents(getStore().getString(RECENTS_KEY));
-}
-
-export function rememberRecentSearch(term: string): string[] {
-    const trimmed = term.trim();
-    if (!trimmed) return getRecentSearches();
-    const rest = getRecentSearches().filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
-    return writeRecents([trimmed, ...rest].slice(0, RECENTS_LIMIT));
-}
-
-export function clearRecentSearches(): void {
-    writeRecents([]);
-}
-
-export function forgetRecentSearch(term: string): string[] {
-    return writeRecents(getRecentSearches().filter((item) => item !== term));
-}
 
 export function SearchOverlay({
                                   visible,
@@ -75,28 +29,32 @@ export function SearchOverlay({
     const inputRef = useRef<TextInput>(null);
     const [query, setQuery] = useState(initialQuery ?? '');
     const [recents, setRecents] = useState<string[]>([]);
+    const searchHistory = useSearchHistory();
 
     useEffect(() => {
         if (!visible) return;
         setQuery(initialQuery ?? '');
-        setRecents(getRecentSearches());
-    }, [visible, initialQuery]);
+        setRecents(searchHistory.getRecent());
+    }, [visible, initialQuery, searchHistory]);
 
     const submit = useCallback(
         (term: string) => {
             const trimmed = term.trim();
             if (!trimmed) return;
-            rememberRecentSearch(trimmed);
+            searchHistory.remember(trimmed);
             Analytics.search(trimmed);
             onSubmit(trimmed);
             onClose();
         },
-        [onSubmit, onClose]
+        [onSubmit, onClose, searchHistory]
     );
 
-    const remove = useCallback((term: string) => {
-        setRecents(forgetRecentSearch(term));
-    }, []);
+    const remove = useCallback(
+        (term: string) => {
+            setRecents(searchHistory.forget(term));
+        },
+        [searchHistory]
+    );
 
     return (
         <Modal

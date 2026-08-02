@@ -16,17 +16,14 @@ import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {Radius, Spacing} from '../../constants/theme';
 import {FEED_CHIPS} from '../constants/feedChips';
+import {Genre, OrderBy, Quality, SortBy} from '@/domain';
 import {
-    Genre,
     GENRE_OPTIONS,
     ORDER_OPTIONS,
-    OrderBy,
-    Quality,
     QUALITY_OPTIONS,
     RATING_OPTIONS,
     SORT_BY_OPTIONS,
-    SortBy,
-} from '../constants/movieFilterOptions';
+} from '../constants/movieFilterLabels';
 import type {MovieFilters} from '../useMoviesViewModel';
 
 interface MovieFilterModalProps {

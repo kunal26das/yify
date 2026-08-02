@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {Show, ShowRepository, TmdbRepository} from '@/domain';
-import {EZTV_MAX_LIMIT} from '@/data';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
@@ -44,7 +43,7 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
             if (page === 1) setRefreshing(true);
 
             try {
-                const result = await repository.listShows({page, limit: EZTV_MAX_LIMIT});
+                const result = await repository.listShows({page});
                 pageRef.current = page;
 
                 if (page === 1) seenRef.current = new Set();
