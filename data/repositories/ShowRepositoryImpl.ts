@@ -52,6 +52,23 @@ export class ShowRepositoryImpl implements ShowRepository {
     constructor(private readonly api: EztvApi) {
     }
 
+    async listEpisodes(imdbId: string): Promise<ShowEpisode[]> {
+        const response = await this.api.getTorrents({page: 1, imdb_id: imdbId});
+        const best = new Map<string, ShowEpisode>();
+
+        for (const dto of response.torrents ?? []) {
+            const episode = toEpisode(dto);
+            const key = `${episode.season}:${episode.episode}`;
+            const current = best.get(key);
+            if (!current || episode.seeds > current.seeds) best.set(key, episode);
+        }
+
+        return [...best.values()].sort((a, b) => {
+            if (a.season !== b.season) return b.season - a.season;
+            return b.episode - a.episode;
+        });
+    }
+
     async listShows(params: ListShowsParams): Promise<ListShowsResult> {
         const response = await this.api.getTorrents({
             page: params.page,
@@ -64,7 +81,7 @@ export class ShowRepositoryImpl implements ShowRepository {
 
         for (const dto of torrents) {
             const key = dto.imdb_id?.trim();
-            if (!key) continue;
+            if (!key || Number(key) === 0) continue;
             const episode = toEpisode(dto);
             const existing = grouped.get(key);
 

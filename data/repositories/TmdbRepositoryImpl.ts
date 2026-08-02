@@ -59,7 +59,7 @@ export class TmdbRepositoryImpl implements TmdbRepository {
         try {
             const response = await this.api.getWatchProviders(tmdbId, media);
             const results = response.results ?? {};
-            const entry = results[region] ?? results.US;
+            const entry = results[region];
             if (!entry) return null;
 
             const providers = [
@@ -79,7 +79,7 @@ export class TmdbRepositoryImpl implements TmdbRepository {
 
             if (unique.length === 0) return null;
             return {
-                region: results[region] ? region : 'US',
+                region,
                 link: entry.link,
                 providers: unique,
             };

@@ -1,4 +1,4 @@
-import type {Show} from '@/domain';
+import type {Show, ShowEpisode} from '@/domain';
 
 export interface ListShowsParams {
     page: number;
@@ -14,4 +14,6 @@ export interface ListShowsResult {
 
 export interface ShowRepository {
     listShows(params: ListShowsParams): Promise<ListShowsResult>;
+
+    listEpisodes(imdbId: string): Promise<ShowEpisode[]>;
 }
