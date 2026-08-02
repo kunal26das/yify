@@ -110,9 +110,6 @@ export function TopBar({
                 >
                     {link.label}
                 </ThemedText>
-                {link.upcoming ? (
-                    <View style={[styles.upcomingDot, {backgroundColor: colors.accent}]}/>
-                ) : null}
                 <View
                     style={[
                         styles.underline,
@@ -302,7 +299,6 @@ const styles = StyleSheet.create({
     },
     links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
     phoneLinks: {flexGrow: 0, flexShrink: 1},
-    upcomingDot: {position: 'absolute', top: 2, right: -7, width: 5, height: 5, borderRadius: 3},
     link: {alignItems: 'center', justifyContent: 'center', paddingVertical: 6},
     linkLabel: {fontSize: 14.5, lineHeight: 20},
     underline: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 1},
