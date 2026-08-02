@@ -25,6 +25,7 @@ export { SearchOverlay } from './movies/components/SearchOverlay';
 export { ChipBar } from './movies/components/ChipBar';
 export { FEED_CHIPS, chipFor } from './movies/constants/feedChips';
 export type { FeedChip } from './movies/constants/feedChips';
+export { WatchProviders, deviceRegion } from './movies/components/WatchProviders';
 export { VideoCard } from './movies/components/VideoCard';
 export { VideoRow } from './movies/components/VideoRow';
 export { SearchResultRow } from './movies/components/SearchResultRow';

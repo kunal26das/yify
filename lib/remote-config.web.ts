@@ -8,8 +8,18 @@ export const API_BASE_URL_KEY = 'base_url_yify';
 export const TMDB_API_KEY = 'tmdb_api_key';
 
 let remoteConfig: RemoteConfig | null = null;
+let readyPromise: Promise<void> | null = null;
+
+export function remoteConfigReady(): Promise<void> {
+    return readyPromise ?? Promise.resolve();
+}
 
 export async function initRemoteConfig(): Promise<void> {
+    readyPromise = readyPromise ?? doInit();
+    return readyPromise;
+}
+
+async function doInit(): Promise<void> {
     if (remoteConfig != null) return;
     try {
         const app = getFirebaseApp();

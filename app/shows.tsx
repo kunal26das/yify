@@ -1,12 +1,25 @@
 import Head from 'expo-router/head';
 import {useMemo} from 'react';
-import {EztvApiDataSource, ShowRepositoryImpl} from '@/data';
+import {
+  EztvApiDataSource,
+  ShowRepositoryImpl,
+  TmdbApiDataSource,
+  TmdbRepositoryImpl,
+} from '@/data';
+import {getTmdbApiKey, remoteConfigReady} from '@/lib/remote-config';
 import {ShowsScreen, useShowsViewModel} from '@/presentation';
 
 export default function ShowsRoute() {
   const api = useMemo(() => new EztvApiDataSource(), []);
   const repository = useMemo(() => new ShowRepositoryImpl(api), [api]);
-  const viewModel = useShowsViewModel(repository);
+  const artwork = useMemo(
+    () => new TmdbRepositoryImpl(new TmdbApiDataSource(async () => {
+        await remoteConfigReady();
+        return getTmdbApiKey();
+      })),
+    []
+  );
+  const viewModel = useShowsViewModel(repository, artwork);
   return (
     <>
       <Head>
