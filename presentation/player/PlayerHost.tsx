@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useSyncExternalStore, type ReactElement} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type ReactElement} from 'react';
 import {Ionicons} from '@expo/vector-icons';
 import {router, usePathname} from 'expo-router';
 import {Platform, Pressable, StyleSheet, View, type ViewStyle} from 'react-native';
@@ -7,6 +7,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Radius} from '../constants/theme';
 import {useResponsive} from '../hooks/use-responsive';
+import {useTopBarHeight} from '../movies/components/TopBar';
 import {MiniBar} from './MiniBar';
 import {PlayerSurface} from './PlayerSurface';
 import {usePlayer, usePlayerInternal, type PlayerRect} from './PlayerContext';
@@ -32,6 +33,7 @@ export function PlayerHost(): ReactElement | null {
     const {width: windowWidth, height: windowHeight, isPhone} = useResponsive();
     const inlineRect = useSyncExternalStore(subscribeInlineRect, getInlineRect, getInlineRect);
     const pathname = usePathname();
+    const topBarHeight = useTopBarHeight();
 
     useKeyboardShortcuts();
     const pip = useDocumentPip();
@@ -60,7 +62,12 @@ export function PlayerHost(): ReactElement | null {
         if (mode === 'inline' && !pathname.startsWith('/movie/')) minimize();
     }, [minimize, mode, pathname]);
 
-    const target = mode === 'mini' ? miniTarget : inlineTarget;
+    const shift = useCallback(
+        (rect: PlayerRect): PlayerRect => ({...rect, y: rect.y - topBarHeight}),
+        [topBarHeight]
+    );
+
+    const target = shift(mode === 'mini' ? miniTarget : inlineTarget);
 
     const left = useSharedValue(target.x);
     const top = useSharedValue(target.y);
@@ -127,10 +134,10 @@ export function PlayerHost(): ReactElement | null {
 
     const mini = mode === 'mini';
     const radius = mini || !isPhone ? Radius.card : 0;
-    const bar = mini ? <MiniBar video={video} rect={miniTarget} wide={!isPhone}/> : null;
+    const bar = mini ? <MiniBar video={video} rect={shift(miniTarget)} wide={!isPhone}/> : null;
 
     return (
-        <View style={styles.host} pointerEvents="box-none">
+        <View style={[styles.host, {top: topBarHeight}]} pointerEvents="box-none">
             {isPhone ? bar : null}
 
             <Animated.View
@@ -194,7 +201,7 @@ export function PlayerHost(): ReactElement | null {
 }
 
 const styles = StyleSheet.create({
-    host: {position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 100},
+    host: {position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden', zIndex: 100},
     box: {position: 'absolute', overflow: 'hidden', backgroundColor: '#000000'},
     surface: {position: 'absolute', left: 0, top: 0},
     pip: {
