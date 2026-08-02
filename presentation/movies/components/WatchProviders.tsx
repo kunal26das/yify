@@ -10,6 +10,7 @@ import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
+import {providerUrl} from './providerLinks';
 
 const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     stream: 'Stream',
@@ -68,10 +69,11 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
 
     if (!availability || availability.providers.length === 0) return null;
 
-    const open = () => {
-        if (!availability.link) return;
+    const open = (provider: WatchProvider) => {
+        const url = providerUrl(provider.id, details.title, availability.link);
+        if (!url) return;
         Analytics.watchProviderOpen(details.id, availability.region);
-        void Linking.openURL(availability.link);
+        void Linking.openURL(url);
     };
 
     return (
@@ -88,8 +90,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                 {availability.providers.map((provider) => (
                     <PressableScale
                         key={`${provider.offer}-${provider.id}`}
-                        onPress={open}
-                        disabled={!availability.link}
+                        onPress={() => open(provider)}
                         accessibilityRole="link"
                         accessibilityLabel={`${OFFER_LABEL[provider.offer]} on ${provider.name}`}
                         pressedScale={0.96}
@@ -120,7 +121,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                 ))}
             </ScrollView>
             <ThemedText style={[styles.credit, {color: colors.textFaint}]}>
-                Availability in {availability.region} from JustWatch via TMDB
+                Availability in {availability.region} from JustWatch
             </ThemedText>
         </Animated.View>
     );

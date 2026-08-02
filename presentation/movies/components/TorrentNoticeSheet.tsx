@@ -66,8 +66,13 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
     }, [onClose]);
 
     const handleGotIt = useCallback(() => {
+        if (isLarge) {
+            openRef.current = false;
+            onClose();
+            return;
+        }
         sheetRef.current?.dismiss();
-    }, []);
+    }, [isLarge, onClose]);
 
     const handleContentLayout = useCallback((event: LayoutChangeEvent) => {
         setWebHeight(Math.ceil(event.nativeEvent.layout.height) + HANDLE_HEIGHT);
