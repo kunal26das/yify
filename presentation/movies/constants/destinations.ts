@@ -14,7 +14,7 @@ export interface Destination {
 export const DESTINATIONS: readonly Destination[] = [
     {key: 'home', label: 'Home', href: '/'},
     {key: 'movies', label: 'Movies', href: '/movies'},
-    {key: 'shows', label: 'Shows', href: '/shows', upcoming: true},
+    {key: 'shows', label: 'Shows', href: '/shows'},
     {key: 'my-list', label: 'My List', href: '/my-list'},
 ];
 

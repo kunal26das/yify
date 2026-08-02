@@ -189,12 +189,12 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             scrollYRef.current = scrollY;
             setInlineRect({
                 x: playerX,
-                y: wide ? playerY - scrollY : playerY,
+                y: isPhone ? playerY : playerY - scrollY,
                 width: playerWidth,
                 height: playerHeight,
             });
         },
-        [playerHeight, playerWidth, playerX, playerY, setInlineRect, wide]
+        [isPhone, playerHeight, playerWidth, playerX, playerY, setInlineRect]
     );
 
     useEffect(() => {
