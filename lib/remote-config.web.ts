@@ -8,6 +8,8 @@ export const API_BASE_URL_KEY = 'base_url_yify';
 export const TMDB_API_KEY = 'tmdb_api_key';
 const TMDB_FALLBACK_KEY = '27348b00a69a63a9825b9ec3532f2246';
 
+const INIT_TIMEOUT_MS = 4000;
+
 let remoteConfig: RemoteConfig | null = null;
 let readyPromise: Promise<void> | null = null;
 let lastError: string | null = null;
@@ -31,8 +33,17 @@ async function doInit(): Promise<void> {
         }
         const rc = getRemoteConfig(app);
         rc.defaultConfig = {[API_BASE_URL_KEY]: DEFAULT_BASE_URL, [TMDB_API_KEY]: ''};
-        await fetchAndActivate(rc);
-        remoteConfig = rc;
+        await Promise.race([
+            fetchAndActivate(rc).then(() => {
+                remoteConfig = rc;
+            }),
+            new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    lastError = lastError ?? 'remote config timed out';
+                    resolve();
+                }, INIT_TIMEOUT_MS);
+            }),
+        ]);
     } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
     }
