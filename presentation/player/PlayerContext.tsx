@@ -10,6 +10,7 @@ import {
     type RefObject,
 } from 'react';
 
+import {Platform} from 'react-native';
 import {Analytics} from '@/lib/analytics-events';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
 
@@ -67,6 +68,7 @@ const PlayerInternalContext = createContext<PlayerInternalApi | null>(null);
 export function PlayerProvider({children}: {children: ReactNode}): ReactElement {
     const [video, setVideo] = useState<PlayerVideo | null>(null);
     const [mode, setMode] = useState<PlayerMode>('closed');
+    const pendingUnmuteRef = useRef(false);
     const [playing, setPlaying] = useState(false);
     const [muted, setMuted] = useState(false);
 
@@ -103,7 +105,9 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             }
             applyVideo(next);
             applyPlaying(true);
-            applyMuted(false);
+            const deferUnmute = Platform.OS === 'android';
+            pendingUnmuteRef.current = deferUnmute;
+            applyMuted(deferUnmute);
             setMode('inline');
             Analytics.trailerPlay({id: next.movieId, title: next.title});
         },
@@ -218,10 +222,16 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             surfaceRef,
             subscribeInlineRect,
             getInlineRect,
-            reportPlaying: applyPlaying,
+            reportPlaying: (playing: boolean) => {
+                applyPlaying(playing);
+                if (playing && pendingUnmuteRef.current) {
+                    pendingUnmuteRef.current = false;
+                    applyMuted(false);
+                }
+            },
             reportEnded: playNext,
         }),
-        [applyPlaying, getInlineRect, playNext, subscribeInlineRect],
+        [applyMuted, applyPlaying, getInlineRect, playNext, subscribeInlineRect],
     );
 
     return (
