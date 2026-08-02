@@ -23,7 +23,7 @@ const GENRE_LINKS: readonly FooterLink[] = [
     {label: '4K Ultra HD', href: '/movies?quality=2160p'},
 ];
 
-const APP_LINKS: readonly FooterLink[] = [{label: 'Settings', href: '/settings'}];
+const APP_LINKS: readonly FooterLink[] = [{label: 'Preferences', href: '/preferences'}];
 
 export function HomeFooter() {
     const {colors} = usePalette();

@@ -125,7 +125,7 @@ function RootLayout() {
                     <Stack.Screen name="my-list" options={{headerShown: false}}/>
                     <Stack.Screen name="shows" options={{headerShown: false}}/>
                     <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
-                    <Stack.Screen name="settings" options={{headerShown: false}}/>
+                    <Stack.Screen name="preferences" options={{headerShown: false}}/>
                     <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
                 </Stack>
                 <PlayerHost/>

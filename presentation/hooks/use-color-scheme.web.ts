@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { Appearance } from 'react-native';
-import {useSettings} from './use-settings';
+import {usePreferences} from './use-preferences';
 
 function subscribe(callback: () => void) {
   const subscription = Appearance.addChangeListener(callback);
@@ -13,6 +13,6 @@ export function useColorScheme() {
     () => Appearance.getColorScheme() ?? 'light',
     () => 'light'
   );
-  const {theme} = useSettings();
+  const {theme} = usePreferences();
   return theme === 'system' ? system : theme;
 }

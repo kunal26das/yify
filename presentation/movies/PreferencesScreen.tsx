@@ -5,7 +5,7 @@ import {Analytics} from '@/lib/analytics-events';
 import {ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {BrowseDefaults, ThemePreference} from '@/lib/settings';
+import type {BrowseDefaults, ThemePreference} from '@/lib/preferences';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
@@ -23,7 +23,7 @@ import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
 import {TopBar, useTopBarHeight} from './components/TopBar';
-import {useSettingsViewModel, type SettingsViewModel} from './useSettingsViewModel';
+import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
 import {signInWithGoogle, signOutOfAccount} from '@/lib/auth';
 
@@ -63,8 +63,8 @@ const THEME_OPTIONS: {value: ThemePreference; label: string; icon: Glyph}[] = [
 
 
 
-export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}) {
-    const fallback = useSettingsViewModel();
+export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel} = {}) {
+    const fallback = usePreferencesViewModel();
     const vm = viewModel ?? fallback;
 
     const insets = useSafeAreaInsets();
@@ -120,7 +120,6 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     <Row
                         icon={theme.icon}
                         title="Theme"
-                        subtitle="Match the device, or pin one theme."
                         colors={colors}
                         gutter={gutter}
                         onPress={() => toggleGroup('theme')}
@@ -353,7 +352,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     </Group>
                 ) : null}
             </ScrollView>
-            <TopBar active="settings"/>
+            <TopBar active="preferences"/>
         </ThemedView>
     );
 }
@@ -407,7 +406,6 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="logo-google"
                         title="Sign in with Google"
-                        subtitle="Carries your purchases across your devices."
                         colors={colors}
                         gutter={gutter}
                         onPress={signingIn ? undefined : () => void signInWithGoogle()}

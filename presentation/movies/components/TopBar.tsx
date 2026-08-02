@@ -12,14 +12,14 @@ import {Analytics} from '@/lib/analytics-events';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
 import {SearchOverlay, rememberRecentSearch} from './SearchOverlay';
 
-export type NavKey = 'home' | 'movies' | 'shows' | 'my-list' | 'settings';
+export type NavKey = 'home' | 'movies' | 'shows' | 'my-list' | 'preferences';
 
 export const TOP_BAR_ROW_HEIGHT = 56;
 
 const SEARCH_PILL_HEIGHT = 40;
 const SEARCH_PILL_MAX_WIDTH = 560;
 const SEARCH_BUTTON_WIDTH = 62;
-const SETTINGS_HREF = '/settings';
+const PREFERENCES_HREF = '/preferences';
 
 interface NavLink {
     key: NavKey;
@@ -120,22 +120,22 @@ export function TopBar({
         );
     };
 
-    const settingsButton = (
+    const preferencesButton = (
         <PressableScale
-            onPress={() => navigate('settings', SETTINGS_HREF)}
+            onPress={() => navigate('preferences', PREFERENCES_HREF)}
             hitSlop={6}
             accessibilityRole="link"
-            accessibilityLabel="Settings"
-            accessibilityState={{selected: active === 'settings'}}
+            accessibilityLabel="Preferences"
+            accessibilityState={{selected: active === 'preferences'}}
             pressedScale={0.86}
             pressedOpacity={0.6}
             hoveredScale={1.08}
             contentStyle={styles.iconButton}
         >
             <Ionicons
-                name="settings-outline"
+                name="person-circle-outline"
                 size={22}
-                color={active === 'settings' ? colors.accent : colors.textMuted}
+                color={active === 'preferences' ? colors.accent : colors.textMuted}
             />
         </PressableScale>
     );
@@ -246,14 +246,14 @@ export function TopBar({
                                     <Ionicons name="search" size={22} color={colors.textMuted}/>
                                 </PressableScale>
                             ) : null}
-                            {settingsButton}
+                            {preferencesButton}
                         </View>
                     </>
                 ) : (
                     <>
                         <View style={styles.links}>{NAV_LINKS.map(renderLink)}</View>
                         <View style={styles.searchArea}>{showSearch ? searchPill : null}</View>
-                        {settingsButton}
+                        {preferencesButton}
                     </>
                 )}
             </View>

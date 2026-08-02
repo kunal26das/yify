@@ -80,7 +80,7 @@ An `expo-router` stack with a single persistent top bar — no tab bar; the home
 /movies         → MoviesScreen   search + filters grid (deep-linkable)
 /shows          → ShowsScreen    series grouped from EZTV, or coming-soon
 /my-list        → MyListScreen   saved titles as a playlist
-/settings       → SettingsScreen theme, movie defaults, notifications
+/preferences    → PreferencesScreen theme, movie defaults, notifications
 /movie/[id]     → WatchScreen    player + actions + description + More like this
 ```
 

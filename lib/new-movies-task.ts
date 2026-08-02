@@ -8,7 +8,7 @@ import {Quality} from '@/presentation/movies/constants/movieFilterOptions';
 import {getApiBaseUrl} from '@/lib/remote-config';
 import {buildNotificationContent, selectNewMovies} from '@/lib/new-movies-diff';
 import {NewMoviesCache} from '@/lib/new-movies-cache';
-import {areNotificationsEnabled} from '@/lib/settings';
+import {areNotificationsEnabled} from '@/lib/preferences';
 import {createMmkvStore} from '@/lib/storage/mmkv-key-value-store';
 
 export {buildNotificationContent, selectNewMovies} from '@/lib/new-movies-diff';

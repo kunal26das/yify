@@ -12,7 +12,7 @@ import {
   type MovieFilters,
 } from '@/presentation';
 import {getApiBaseUrl} from '@/lib/remote-config';
-import {getBrowseDefaults} from '@/lib/settings';
+import {getBrowseDefaults} from '@/lib/preferences';
 
 function asEnum<T extends string>(value: string | undefined, allowed: readonly T[]): T | undefined {
   return value != null && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
