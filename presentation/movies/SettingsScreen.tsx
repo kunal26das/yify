@@ -129,7 +129,10 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                             <ChipBar
                                 chips={THEME_OPTIONS.map((option) => ({key: option.value, label: option.label}))}
                                 active={vm.theme}
-                                onSelect={(key) => vm.selectTheme(key as ThemePreference)}
+                                onSelect={(key) => {
+                                    vm.selectTheme(key as ThemePreference);
+                                    setOpen(null);
+                                }}
                                 contentPadding={gutter}
                             />
                         </Animated.View>
@@ -171,6 +174,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                                                 (option) => String(option.value) === key
                                             );
                                             if (picked) vm.setBrowseDefault(row.key, picked.value);
+                                            setOpen(null);
                                         }}
                                         contentPadding={gutter}
                                     />
