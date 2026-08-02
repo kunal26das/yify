@@ -45,6 +45,14 @@ function handleNotificationData(data: unknown) {
 const DESKTOP_TOP_INSET = 44;
 
 function RootLayout() {
+    return (
+        <DependenciesProvider dependencies={dependencies}>
+            <AppShell/>
+        </DependenciesProvider>
+    );
+}
+
+function AppShell() {
     const [fontsLoaded, fontError] = useFonts({
         HankenGrotesk_400Regular,
         HankenGrotesk_500Medium,
@@ -97,7 +105,6 @@ function RootLayout() {
     const content = (
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
-            <DependenciesProvider dependencies={dependencies}>
             <PlayerProvider>
                 <Stack>
                     <Stack.Screen name="index" options={{headerShown: false}}/>
@@ -111,7 +118,6 @@ function RootLayout() {
                 <PlayerHost/>
             </PlayerProvider>
             <UpdateSnackbar/>
-            </DependenciesProvider>
             <StatusBar style="auto"/>
         </ThemeProvider>
     );
