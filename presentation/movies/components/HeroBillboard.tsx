@@ -577,7 +577,7 @@ function HeroSlide({
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={
-                            saved ? `Remove ${movie.title} from My List` : `Add ${movie.title} to My List`
+                            saved ? `Remove ${movie.title} from Watchlist` : `Add ${movie.title} to Watchlist`
                         }
                         pressedScale={0.88}
                         pressedOpacity={0.85}

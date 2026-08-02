@@ -28,7 +28,7 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 - [The curated home](#-the-curated-home)
 - [Architecture](#️-architecture)
 - [How a movie loads](#-how-a-movie-loads)
-- [My List](#-my-list)
+- [Watchlist](#-watchlist)
 - [New-release notifications](#-new-release-notifications)
 - [Over-the-air updates](#-over-the-air-updates)
 - [Project layout](#️-project-layout)
@@ -56,12 +56,12 @@ round-trip.
 
 ## ✨ Features
 
-- 🎞️ **Curated home** — a rotating full-bleed `HeroBillboard` over a stack of editorial rails: a ranked **Top 10 This Week** with oversized numerals, **My List**, **Critically Acclaimed**, **Just Added**, **Loved by Viewers**, **4K Ultra HD**, and genre rows. Each rail is a different query against the same API, fanned out in parallel.
+- 🎞️ **Curated home** — a rotating full-bleed `HeroBillboard` over a stack of editorial rails: a ranked **Top 10 This Week** with oversized numerals, **Watchlist**, **Critically Acclaimed**, **Just Added**, **Loved by Viewers**, **4K Ultra HD**, and genre rows. Each rail is a different query against the same API, fanned out in parallel.
 - 🔎 **Deep-linkable movies** — the infinite poster grid lives at `/movies`, seedable from any hero CTA or rail "See all" with genre / quality / rating / sort / search pre-applied, and topped by a YouTube-style chip rail.
 - 🎥 **YouTube-style watch page** — the trailer plays at the top of `/movie/[id]` with the title, an action pill row, a collapsible description, cast, screenshots with a pinch-to-zoom lightbox, and a **More like this** rail powered by `movie_suggestions`.
 - 📺 **A player that follows you** — one embed is mounted once at the router root and never unmounts, animating between the watch page and a docked miniplayer so a trailer keeps playing while you browse. Web adds keyboard shortcuts and Document Picture-in-Picture.
 - 📡 **Shows (early)** — `/shows` groups EZTV episode releases into series by IMDb id. The index is blocked on many networks, so the screen falls back to a coming-soon panel rather than an error.
-- 🔖 **My List** — save any title with one tap; it persists locally (MMKV) and shows up as its own rail on the home screen, wired through React's `useSyncExternalStore`.
+- 🔖 **Watchlist** — save any title with one tap; it persists locally (MMKV) and shows up as its own rail on the home screen, wired through React's `useSyncExternalStore`.
 - 🧊 **Liquid glass everywhere** — native `expo-glass-effect` on iOS 26 with a graceful `BlurView` fallback on older iOS and Android.
 - 🎚️ **Native filter sheet** — quality / rating / genre / sort in a device-corner-radius bottom sheet that looks identical on iOS and Android.
 - 🔔 **New-release notifications** — a background task diffs the catalog and pings you when fresh titles land; tapping the notification deep-links straight into the movie.
@@ -79,7 +79,7 @@ An `expo-router` stack with a single persistent top bar — no tab bar; the home
 /  (index)      → HomeScreen     hero + rails, then chips over an endless grid
 /movies         → MoviesScreen   search + filters grid (deep-linkable)
 /shows          → ShowsScreen    series grouped from EZTV, or coming-soon
-/my-list        → MyListScreen   saved titles as a playlist
+/watchlist        → WatchlistScreen   saved titles as a playlist
 /preferences    → PreferencesScreen theme, movie defaults, notifications
 /movie/[id]     → WatchScreen    player + actions + description + More like this
 ```
@@ -90,7 +90,7 @@ directly to `/movie/[id]`. The player outlives every one of these transitions.
 
 ```mermaid
 flowchart LR
-    Home["🏠 /  HomeScreen<br/>hero · rails · Top 10 · My List"]
+    Home["🏠 /  HomeScreen<br/>hero · rails · Top 10 · Watchlist"]
     Browse["🔎 /movies<br/>grid · search · filters"]
     Detail["🎬 /movie/[id]<br/>player · save · suggestions"]
     Notif(["🔔 new-release<br/>notification"])
@@ -116,7 +116,7 @@ landing screen hydrates in a single wave. Shelves are pure configuration
 | Shelf | Style | YTS query |
 | --- | --- | --- |
 | **Top 10 This Week** | ranked (outlined numerals) | `sort_by=download_count` |
-| **My List** | your saved titles | local (MMKV) |
+| **Watchlist** | your saved titles | local (MMKV) |
 | **Critically Acclaimed** | standard rail | `sort_by=rating`, `minimum_rating=7` |
 | **Just Added** | standard rail | `sort_by=date_added` |
 | **Loved by Viewers** | standard rail | `sort_by=like_count` |
@@ -245,11 +245,11 @@ sequenceDiagram
 
 ---
 
-## 🔖 My List
+## 🔖 Watchlist
 
 Saving a movie is a single source of truth with zero prop-drilling. `lib/watchlist.ts` is a tiny
 observable store persisted to disk; the UI subscribes through React's `useSyncExternalStore`, so a
-save on the detail page instantly updates the **My List** rail on home and the save button
+save on the detail page instantly updates the **Watchlist** rail on home and the save button
 everywhere else.
 
 ```mermaid
@@ -257,8 +257,8 @@ flowchart LR
     Btn["🎬 Detail: toggleWatchlist()"] --> Store
     Store["lib/watchlist.ts<br/>in-memory snapshot + listeners"] --> MMKV[("💾 MMKV / localStorage")]
     Store -->|notify| Hook["useWatchlist()<br/>useSyncExternalStore"]
-    Hook --> Rail["🏠 Home: My List rail"]
-    Hook --> Save["🎬 Detail: Saved / My List button"]
+    Hook --> Rail["🏠 Home: Watchlist rail"]
+    Hook --> Save["🎬 Detail: Saved / Watchlist button"]
 ```
 
 Persistence goes through the same `lib/storage` abstraction as everything else: **MMKV** on native,
@@ -323,7 +323,7 @@ yify/
 │  └─ constants/             #    theme (Fraunces + Hanken type system, palette)
 ├─ lib/                      # 🔌 cross-cutting concerns (native + .web splits)
 │  ├─ storage/              #    KeyValueStore: MMKV (native) / localStorage (web)
-│  ├─ watchlist.ts          #    My List observable store
+│  ├─ watchlist.ts          #    Watchlist observable store
 │  ├─ remote-config.ts      #    Firebase Remote Config
 │  └─ new-movies-*.ts       #    diff / cache / background task (+ unit tests)
 ├─ config/                   # 🔥 google-services.json / GoogleService-Info.plist

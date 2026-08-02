@@ -88,13 +88,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
 
     const confirmClear = () => {
         const count = vm.watchlistCount;
-        const message = `This removes ${count} ${count === 1 ? 'title' : 'titles'} from My List. This can't be undone.`;
+        const message = `This removes ${count} ${count === 1 ? 'title' : 'titles'} from Watchlist. This can't be undone.`;
         if (Platform.OS === 'web') {
             if (typeof window !== 'undefined' && !window.confirm(message)) return;
             vm.clearList();
             return;
         }
-        Alert.alert('Clear My List?', message, [
+        Alert.alert('Clear Watchlist?', message, [
             {text: 'Cancel', style: 'cancel'},
             {text: 'Clear', style: 'destructive', onPress: vm.clearList},
         ]);
@@ -251,7 +251,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </Group>
 
-                <SectionHeader title="My List" colors={colors} gutter={gutter} index={4}/>
+                <SectionHeader title="Watchlist" colors={colors} gutter={gutter} index={4}/>
 
                 <Group colors={colors} index={3}>
                     <Row
@@ -265,7 +265,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                                 disabled={vm.watchlistCount === 0}
                                 onPress={confirmClear}
                                 accessibilityRole="button"
-                                accessibilityLabel="Clear My List"
+                                accessibilityLabel="Clear Watchlist"
                                 pressedScale={0.93}
                                 pressedOpacity={0.7}
                                 hoveredScale={1.04}
@@ -386,7 +386,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                                 />
                             ) : (
                                 <Ionicons
-                                    name="person-circle-outline"
+                                    name="person-outline"
                                     size={GLYPH_SIZE}
                                     color={colors.textMuted}
                                 />

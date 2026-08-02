@@ -68,7 +68,7 @@ export function WatchActions({
                 }}
                 accessibilityRole="button"
                 accessibilityState={{selected: saved}}
-                accessibilityLabel={saved ? 'Remove from My List' : 'Save to My List'}
+                accessibilityLabel={saved ? 'Remove from Watchlist' : 'Save to Watchlist'}
                 pressedScale={0.95}
                 pressedOpacity={0.85}
             >

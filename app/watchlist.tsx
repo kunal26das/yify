@@ -1,14 +1,14 @@
 import Head from 'expo-router/head';
-import {MyListScreen} from '@/presentation';
+import {WatchlistScreen} from '@/presentation';
 
-export default function MyListRoute() {
+export default function WatchlistRoute() {
   return (
     <>
       <Head>
-        <title>My List — Yify</title>
+        <title>Watchlist — Yify</title>
         <meta name="description" content="The movies you saved to watch later on Yify." />
       </Head>
-      <MyListScreen />
+      <WatchlistScreen />
     </>
   );
 }

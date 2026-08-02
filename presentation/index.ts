@@ -6,7 +6,7 @@ export { useFeedViewModel } from './movies/useFeedViewModel';
 export type { FeedViewModel } from './movies/useFeedViewModel';
 export { useHomeViewModel } from './movies/useHomeViewModel';
 export type { HomeViewModel, ShelfState, ShelfStatus } from './movies/useHomeViewModel';
-export { MyListScreen } from './movies/MyListScreen';
+export { WatchlistScreen } from './movies/WatchlistScreen';
 export { ShowsScreen } from './movies/ShowsScreen';
 export { ShowDetailsScreen } from './movies/ShowDetailsScreen';
 export { useShowsViewModel } from './movies/useShowsViewModel';

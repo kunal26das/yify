@@ -66,7 +66,7 @@ function PlaylistHeader({
                 type="title"
                 style={isPhone ? styles.onCoverTitle : {color: colors.text}}
             >
-                My List
+                Watchlist
             </ThemedText>
             <ThemedText
                 style={[
@@ -140,7 +140,7 @@ function SavedPoster({movie, width}: {movie: Movie; width: number}) {
                     toggleWatchlist(movie);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Remove ${movie.title} from My List`}
+                accessibilityLabel={`Remove ${movie.title} from Watchlist`}
                 hitSlop={8}
                 pressedScale={0.86}
                 pressedOpacity={0.6}
@@ -154,7 +154,7 @@ function SavedPoster({movie, width}: {movie: Movie; width: number}) {
     );
 }
 
-export function MyListScreen() {
+export function WatchlistScreen() {
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
     const {width, contentMaxWidth, gutter} = useResponsive();
@@ -307,7 +307,7 @@ export function MyListScreen() {
                     bottomInset={bottomInset}
                     visible={movies.length > 0}
                 />
-                <TopBar active="my-list"/>
+                <TopBar active="watchlist"/>
             </ThemedView>
         </HoverCardHost>
     );

@@ -48,7 +48,7 @@ type Palette = ReturnType<typeof usePalette>['colors'];
 
 type HomeRow =
     | {kind: 'shelf'; key: string; shelf: ShelfState}
-    | {kind: 'my-list'; key: string; movies: Movie[]}
+    | {kind: 'watchlist'; key: string; movies: Movie[]}
     | {kind: 'shows'; key: string}
     | {kind: 'heading'; key: string}
     | {kind: 'chips'; key: string}
@@ -111,7 +111,7 @@ export function HomeScreen({
         reload: reloadFeed,
     } = feed;
 
-    const myList = useWatchlist();
+    const watchlist = useWatchlist();
     const goTo = useGoTo();
     const topBarHeight = useTopBarHeight();
 
@@ -189,7 +189,7 @@ export function HomeScreen({
             shelf,
         }));
         if ((shows?.shows.length ?? 0) > 0) next.splice(1, 0, {kind: 'shows', key: 'shows-strip'});
-        if (myList.length > 0) next.push({kind: 'my-list', key: 'my-list', movies: myList});
+        if (watchlist.length > 0) next.push({kind: 'watchlist', key: 'watchlist', movies: watchlist});
         next.push({kind: 'heading', key: 'browse-heading'});
         next.push({kind: 'chips', key: 'browse-chips'});
         for (let start = 0; start < feedMovies.length; start += numColumns) {
@@ -202,7 +202,7 @@ export function HomeScreen({
             });
         }
         return next;
-    }, [shelfStates, myList, feedMovies, numColumns, shows?.shows.length]);
+    }, [shelfStates, watchlist, feedMovies, numColumns, shows?.shows.length]);
 
 
     const selectChip = useCallback(
@@ -278,17 +278,17 @@ export function HomeScreen({
                 );
             }
 
-            if (item.kind === 'my-list') {
+            if (item.kind === 'watchlist') {
                 return (
                     <MovieRail
-                        title="My List"
+                        title="Watchlist"
                         movies={item.movies}
                         variant="landscape"
                         posterWidth={posterWidth}
                         gutter={gutter}
                         onSeeAll={() => {
                             Analytics.shelfSeeAll('My List');
-                            goTo('/my-list');
+                            goTo('/watchlist');
                         }}
                     />
                 );
