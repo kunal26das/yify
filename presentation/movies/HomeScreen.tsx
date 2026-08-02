@@ -122,6 +122,7 @@ export function HomeScreen({
     const [lastGridIndex, setLastGridIndex] = useState(0);
     const [chipsPinned, setChipsPinned] = useState(false);
     const prevFeedLengthRef = useRef(0);
+    const lastRequestedCountRef = useRef(-1);
 
     useEffect(() => {
         const id = scrollY.addListener(({value}) => {
@@ -216,9 +217,12 @@ export function HomeScreen({
 
     const handleEndReached = useCallback(() => {
         if (!hasMore || feedLoading || feedMovies.length === 0) return;
+        if (!gridVisible) return;
+        if (lastRequestedCountRef.current === feedMovies.length) return;
+        lastRequestedCountRef.current = feedMovies.length;
         Analytics.browseLoadMore(feedMovies.length);
         loadMore();
-    }, [hasMore, feedLoading, feedMovies.length, loadMore]);
+    }, [gridVisible, hasMore, feedLoading, feedMovies.length, loadMore]);
 
     const handleRefresh = useCallback(() => {
         reloadShelves();
@@ -489,7 +493,7 @@ export function HomeScreen({
                         onViewableItemsChanged={onViewableItemsChanged}
                         viewabilityConfig={viewabilityConfig}
                         onEndReached={handleEndReached}
-                        onEndReachedThreshold={2}
+                        onEndReachedThreshold={0.5}
                         contentContainerStyle={{
                             paddingTop: topBarHeight,
                             paddingBottom: insets.bottom + 96,
@@ -506,7 +510,7 @@ export function HomeScreen({
                         initialNumToRender={4}
                         maxToRenderPerBatch={4}
                         updateCellsBatchingPeriod={40}
-                        windowSize={9}
+                        windowSize={Platform.OS === 'web' ? 21 : 9}
                     />
                     {(
                         <ScrollProgress

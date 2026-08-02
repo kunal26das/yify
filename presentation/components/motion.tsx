@@ -1,5 +1,6 @@
 import {forwardRef, useState} from 'react';
 import {
+    Platform,
     Pressable,
     StyleSheet,
     View,
@@ -31,13 +32,23 @@ export function staggerDelay(index: number, step: number = STAGGER_STEP): number
     return Math.max(0, Math.min(index, STAGGER_CAP)) * step;
 }
 
-export const enterFade = (index = 0) => FadeIn.duration(Duration.base).delay(staggerDelay(index));
+const ANIMATE_ENTRY = Platform.OS !== 'web';
 
-export const enterRise = (index = 0) => FadeInDown.duration(Duration.base).delay(staggerDelay(index));
+function entry<T>(build: () => T): T | undefined {
+    return ANIMATE_ENTRY ? build() : undefined;
+}
 
-export const enterSlide = (index = 0) => FadeInLeft.duration(Duration.base).delay(staggerDelay(index));
+export const enterFade = (index = 0) =>
+    entry(() => FadeIn.duration(Duration.base).delay(staggerDelay(index)));
 
-export const enterPop = (index = 0) => ZoomIn.duration(Duration.fast).delay(staggerDelay(index));
+export const enterRise = (index = 0) =>
+    entry(() => FadeInDown.duration(Duration.base).delay(staggerDelay(index)));
+
+export const enterSlide = (index = 0) =>
+    entry(() => FadeInLeft.duration(Duration.base).delay(staggerDelay(index)));
+
+export const enterPop = (index = 0) =>
+    entry(() => ZoomIn.duration(Duration.fast).delay(staggerDelay(index)));
 
 export const exitFade = FadeOut.duration(Duration.fast);
 

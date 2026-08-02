@@ -10,7 +10,7 @@ import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
-import {providerUrl} from './providerLinks';
+import {providerLinkable, providerUrl} from './providerLinks';
 
 const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     stream: 'Stream',
@@ -89,10 +89,11 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
         };
     }, [details.imdbCode, repository]);
 
-    if (!availability || availability.providers.length === 0) return null;
+    const shown = (availability?.providers ?? []).filter((provider) => providerLinkable(provider.id));
+    if (!availability || shown.length === 0) return null;
 
     const open = (provider: WatchProvider) => {
-        const url = providerUrl(provider.id, details.title, availability.link);
+        const url = providerUrl(provider.id, details.title);
         if (!url) return;
         Analytics.watchProviderOpen(details.id, availability.region);
         void Linking.openURL(url);
@@ -109,7 +110,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                 style={{marginHorizontal: -pad}}
                 contentContainerStyle={[styles.row, {paddingHorizontal: pad}]}
             >
-                {availability.providers.map((provider) => (
+                {shown.map((provider) => (
                     <PressableScale
                         key={`${provider.offer}-${provider.id}`}
                         onPress={() => open(provider)}
