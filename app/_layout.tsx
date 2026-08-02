@@ -34,6 +34,7 @@ import {startPlayServices} from '@/lib/play-services';
 import {initPurchases} from '@/lib/purchases';
 import {initAuth} from '@/lib/auth';
 import {startAccountLink} from '@/lib/account-link';
+import {startAccountSync} from '@/lib/sync/account-sync';
 
 void initRemoteConfig();
 void hasNotificationPermission().then((granted) => {
@@ -67,6 +68,7 @@ function RootLayout() {
     useEffect(() => {
         void startPlayServices();
         void initPurchases();
+        startAccountSync();
         initAuth();
         startAccountLink();
     }, []);
@@ -122,7 +124,7 @@ function RootLayout() {
                 <Stack>
                     <Stack.Screen name="index" options={{headerShown: false}}/>
                     <Stack.Screen name="movies" options={{headerShown: false}}/>
-                    <Stack.Screen name="my-list" options={{headerShown: false}}/>
+                    <Stack.Screen name="watchlist" options={{headerShown: false}}/>
                     <Stack.Screen name="shows" options={{headerShown: false}}/>
                     <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
                     <Stack.Screen name="preferences" options={{headerShown: false}}/>

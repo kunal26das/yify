@@ -12,7 +12,7 @@ import {Analytics} from '@/lib/analytics-events';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
 import {SearchOverlay, rememberRecentSearch} from './SearchOverlay';
 
-export type NavKey = 'home' | 'movies' | 'shows' | 'my-list' | 'preferences';
+export type NavKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'preferences';
 
 export const TOP_BAR_ROW_HEIGHT = 56;
 
@@ -133,7 +133,7 @@ export function TopBar({
             contentStyle={styles.iconButton}
         >
             <Ionicons
-                name="person-circle-outline"
+                name="person-outline"
                 size={22}
                 color={active === 'preferences' ? colors.accent : colors.textMuted}
             />

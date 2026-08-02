@@ -323,7 +323,7 @@ function ExpandedCard({
                         hitSlop={6}
                         accessibilityRole="button"
                         accessibilityLabel={
-                            saved ? `Remove ${movie.title} from My List` : `Add ${movie.title} to My List`
+                            saved ? `Remove ${movie.title} from Watchlist` : `Add ${movie.title} to Watchlist`
                         }
                         style={({pressed}) => [
                             styles.addButton,
