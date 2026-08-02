@@ -111,6 +111,39 @@ export function areNotificationsEnabled(): boolean {
     return read().notifications;
 }
 
+export interface SyncedPreferences {
+    theme: ThemePreference;
+    browseDefaults: BrowseDefaults;
+}
+
+export function getSyncedPreferences(): SyncedPreferences {
+    const current = read();
+    return {theme: current.theme, browseDefaults: current.browseDefaults};
+}
+
+export function getDefaultSyncedPreferences(): SyncedPreferences {
+    return {theme: DEFAULTS.theme, browseDefaults: BROWSE_DEFAULTS};
+}
+
+export function applyRemotePreferences(next: SyncedPreferences): void {
+    write({...read(), theme: next.theme, browseDefaults: next.browseDefaults});
+}
+
+export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
+    try {
+        const parsed = JSON.parse(raw) as Partial<SyncedPreferences>;
+        if (typeof parsed !== 'object' || parsed == null) return null;
+        return {
+            theme: isThemePreference(parsed.theme) ? parsed.theme : DEFAULTS.theme,
+            browseDefaults: parseBrowseDefaults(
+                parsed.browseDefaults ? JSON.stringify(parsed.browseDefaults) : undefined,
+            ),
+        };
+    } catch {
+        return null;
+    }
+}
+
 export function subscribePreferences(listener: () => void): () => void {
     listeners.add(listener);
     return () => {
