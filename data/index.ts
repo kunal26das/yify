@@ -9,6 +9,14 @@ export type {
 } from './datasources/YtsApiDataSource';
 export {YtsApiDataSource, DEFAULT_BASE_URL} from './datasources/YtsApiDataSource';
 export { MovieRepositoryImpl } from './repositories/MovieRepositoryImpl';
+export type {EztvApi, ListTorrentsApiParams} from './datasources/EztvApiDataSource';
+export {
+  EztvApiDataSource,
+  EztvUnavailableError,
+  EZTV_BASE_URL,
+  EZTV_MAX_LIMIT,
+} from './datasources/EztvApiDataSource';
+export { ShowRepositoryImpl } from './repositories/ShowRepositoryImpl';
 
 export type {
   YtsMetaDto,
@@ -26,3 +34,4 @@ export type {
   YtsMovieParentalGuidesData,
   YtsMovieParentalGuidesResponse,
 } from './models';
+export type {EztvTorrentDto, EztvTorrentsResponse} from './models';
