@@ -13,9 +13,10 @@ export const TMDB_API_KEY = 'tmdb_api_key';
 
 let initialized = false;
 let readyPromise: Promise<void> | null = null;
+let lastError: string | null = null;
 
 export function remoteConfigReady(): Promise<void> {
-    return readyPromise ?? Promise.resolve();
+    return initRemoteConfig();
 }
 
 export async function initRemoteConfig(): Promise<void> {
@@ -33,8 +34,13 @@ async function doInit(): Promise<void> {
         await setDefaults(rc, {[API_BASE_URL_KEY]: DEFAULT_BASE_URL, [TMDB_API_KEY]: ''});
         await fetchAndActivate(rc);
         initialized = true;
-    } catch {
+    } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
     }
+}
+
+export function remoteConfigError(): string | null {
+    return lastError;
 }
 
 export function getApiBaseUrl(): string {

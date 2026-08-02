@@ -1,4 +1,4 @@
-import {fetchAndActivate, getRemoteConfig, getString, isSupported, type RemoteConfig,} from 'firebase/remote-config';
+import {fetchAndActivate, getRemoteConfig, getString, type RemoteConfig} from 'firebase/remote-config';
 
 import {DEFAULT_BASE_URL} from '@/data';
 
@@ -9,9 +9,10 @@ export const TMDB_API_KEY = 'tmdb_api_key';
 
 let remoteConfig: RemoteConfig | null = null;
 let readyPromise: Promise<void> | null = null;
+let lastError: string | null = null;
 
 export function remoteConfigReady(): Promise<void> {
-    return readyPromise ?? Promise.resolve();
+    return initRemoteConfig();
 }
 
 export async function initRemoteConfig(): Promise<void> {
@@ -23,13 +24,21 @@ async function doInit(): Promise<void> {
     if (remoteConfig != null) return;
     try {
         const app = getFirebaseApp();
-        if (app == null || !(await isSupported())) return;
+        if (app == null) {
+            lastError = 'firebase app unavailable';
+            return;
+        }
         const rc = getRemoteConfig(app);
         rc.defaultConfig = {[API_BASE_URL_KEY]: DEFAULT_BASE_URL, [TMDB_API_KEY]: ''};
         await fetchAndActivate(rc);
         remoteConfig = rc;
-    } catch {
+    } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
     }
+}
+
+export function remoteConfigError(): string | null {
+    return lastError;
 }
 
 export function getApiBaseUrl(): string {
