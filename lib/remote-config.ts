@@ -13,6 +13,8 @@ export const TMDB_API_KEY = 'tmdb_api_key';
 const TMDB_FALLBACK_KEY = '27348b00a69a63a9825b9ec3532f2246';
 
 let initialized = false;
+const INIT_TIMEOUT_MS = 4000;
+
 let readyPromise: Promise<void> | null = null;
 let lastError: string | null = null;
 
@@ -33,7 +35,10 @@ async function doInit(): Promise<void> {
             minimumFetchIntervalMillis: __DEV__ ? 0 : 60 * 60 * 1000,
         });
         await setDefaults(rc, {[API_BASE_URL_KEY]: DEFAULT_BASE_URL, [TMDB_API_KEY]: ''});
-        await fetchAndActivate(rc);
+        await Promise.race([
+            fetchAndActivate(rc),
+            new Promise<void>((resolve) => setTimeout(resolve, INIT_TIMEOUT_MS)),
+        ]);
         initialized = true;
     } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
