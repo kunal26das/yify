@@ -2175,6 +2175,13 @@
   dependencies:
     firebase "12.14.0"
 
+"@react-native-firebase/auth@24.1.1":
+  version "24.1.1"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/auth/-/auth-24.1.1.tgz#2140b4d3b96dafb4c1332cf07de5216bb6514382"
+  integrity sha512-7sYshSmLOcaHnEO3zT5OBA6/zLgO+SXQTwlvSDAWpzWq+FBKC9gLjd8zX/Z6AysqhdvjLNBQyRuEESdwCbtDuA==
+  dependencies:
+    plist "^3.1.0"
+
 "@react-native-firebase/crashlytics@24.1.1":
   version "24.1.1"
   resolved "https://registry.yarnpkg.com/@react-native-firebase/crashlytics/-/crashlytics-24.1.1.tgz#bd0f90a583e47c9936c498f045a827b84fe26ad9"
@@ -2190,6 +2197,11 @@
     react-native-fetch-api "^3.0.0"
     text-encoding "^0.7.0"
     web-streams-polyfill "^4.2.0"
+
+"@react-native-google-signin/google-signin@16.1.4":
+  version "16.1.4"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.4.tgz#64838d2c39d0f001081a900a008817841f42eeea"
+  integrity sha512-Lt4vjihJ+Nk9I4HjScWHzch3ebtIlP3QIea0XEHVN0PJumwUwiK/J2tU8qs7H9DIqNblC0qlXkR0Ts4ELvq7yA==
 
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"

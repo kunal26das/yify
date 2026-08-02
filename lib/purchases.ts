@@ -7,6 +7,12 @@ import Purchases, {
 
 export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
+export interface AccountUser {
+    uid: string;
+    email: string | null;
+    name: string | null;
+}
+
 export type PurchasesState = {
     ready: boolean;
     adsRemoved: boolean;
@@ -21,6 +27,8 @@ const apiKey =
 let state: PurchasesState = {ready: false, adsRemoved: false, packages: []};
 const listeners = new Set<() => void>();
 let initialized = false;
+let configured = false;
+let pendingUser: AccountUser | null | undefined;
 
 function setState(next: Partial<PurchasesState>) {
     state = {...state, ...next};
@@ -48,9 +56,15 @@ export async function initPurchases(): Promise<void> {
         Purchases.addCustomerInfoUpdateListener((info) => {
             setState({adsRemoved: hasRemoveAds(info)});
         });
+        configured = true;
         const info = await Purchases.getCustomerInfo();
         setState({ready: true, adsRemoved: hasRemoveAds(info)});
         await loadOfferings();
+        if (pendingUser !== undefined) {
+            const user = pendingUser;
+            pendingUser = undefined;
+            await identifyPurchasesUser(user);
+        }
     } catch {
         setState({ready: true});
     }
@@ -73,6 +87,26 @@ export async function purchaseRemoveAds(pkg: PurchasesPackage): Promise<boolean>
         return purchased;
     } catch {
         return false;
+    }
+}
+
+export async function identifyPurchasesUser(user: AccountUser | null): Promise<void> {
+    if (!apiKey) return;
+    if (!configured) {
+        pendingUser = user;
+        return;
+    }
+    try {
+        const info = user
+            ? (await Purchases.logIn(user.uid)).customerInfo
+            : await Purchases.logOut();
+        setState({adsRemoved: hasRemoveAds(info)});
+        if (user) {
+            await Purchases.setEmail(user.email);
+            await Purchases.setDisplayName(user.name);
+        }
+        await loadOfferings();
+    } catch {
     }
 }
 

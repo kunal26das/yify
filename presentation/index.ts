@@ -20,6 +20,7 @@ export { HomeFooter } from './movies/components/HomeFooter';
 export { PlayStoreButton, PLAY_STORE_URL } from './movies/components/PlayStoreButton';
 export { useSettings } from './hooks/use-settings';
 export { usePurchases, useAdsRemoved } from './hooks/use-purchases';
+export { useAuth } from './hooks/use-auth';
 export { TopBar, useTopBarHeight, TOP_BAR_ROW_HEIGHT } from './movies/components/TopBar';
 export type { NavKey } from './movies/components/TopBar';
 export { SearchOverlay } from './movies/components/SearchOverlay';

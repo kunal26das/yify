@@ -1,7 +1,8 @@
 import {Ionicons} from '@expo/vector-icons';
+import {Image} from 'expo-image';
 import {useState} from 'react';
 import {Analytics} from '@/lib/analytics-events';
-import {Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
+import {ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {BrowseDefaults, ThemePreference} from '@/lib/settings';
@@ -23,6 +24,8 @@ import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {useSettingsViewModel, type SettingsViewModel} from './useSettingsViewModel';
+import {useAuth} from '../hooks/use-auth';
+import {signInWithGoogle, signOutOfAccount} from '@/lib/auth';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -109,6 +112,7 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                 }}
                 showsVerticalScrollIndicator={false}
             >
+                <AccountSection colors={colors} gutter={gutter}/>
 
                 <SectionHeader title="General" colors={colors} gutter={gutter} index={0}/>
 
@@ -354,6 +358,74 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
     );
 }
 
+const AVATAR_SIZE = 30;
+
+function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
+    const {ready, available, signingIn, user} = useAuth();
+
+    if (!available && ready) return null;
+
+    const signOut = () => {
+        Analytics.signOut();
+        void signOutOfAccount();
+    };
+
+    return (
+        <>
+            <SectionHeader title="Account" colors={colors} gutter={gutter} index={0}/>
+            <Group colors={colors} index={0}>
+                {user ? (
+                    <Row
+                        leading={
+                            user.photoUrl ? (
+                                <Image
+                                    source={{uri: user.photoUrl}}
+                                    style={[styles.avatar, {backgroundColor: colors.surfaceSunken}]}
+                                    contentFit="cover"
+                                    transition={160}
+                                    cachePolicy="memory-disk"
+                                />
+                            ) : (
+                                <Ionicons
+                                    name="person-circle-outline"
+                                    size={GLYPH_SIZE}
+                                    color={colors.textMuted}
+                                />
+                            )
+                        }
+                        title={user.name ?? 'Signed in'}
+                        subtitle={user.email ?? undefined}
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={signOut}
+                        accessibilityLabel="Sign out"
+                        trailing={
+                            <ThemedText style={[styles.value, {color: colors.accent}]}>Sign out</ThemedText>
+                        }
+                    />
+                ) : (
+                    <Row
+                        icon="logo-google"
+                        title="Sign in with Google"
+                        subtitle="Carries your purchases across your devices."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={signingIn ? undefined : () => void signInWithGoogle()}
+                        accessibilityLabel="Sign in with Google"
+                        trailing={
+                            signingIn ? (
+                                <ActivityIndicator color={colors.accent}/>
+                            ) : (
+                                <Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>
+                            )
+                        }
+                    />
+                )}
+            </Group>
+        </>
+    );
+}
+
 function SectionHeader({
                            title,
                            colors,
@@ -396,6 +468,7 @@ function Group({
 
 function Row({
                  icon,
+                 leading,
                  title,
                  subtitle,
                  trailing,
@@ -406,7 +479,8 @@ function Row({
                  accessibilityLabel,
                  accessibilityState,
              }: {
-    icon: Glyph;
+    icon?: Glyph;
+    leading?: React.ReactNode;
     title: string;
     subtitle?: string;
     trailing?: React.ReactNode;
@@ -419,7 +493,7 @@ function Row({
 }) {
     const content = (
         <>
-            <Ionicons name={icon} size={GLYPH_SIZE} color={colors.textMuted}/>
+            {leading ?? <Ionicons name={icon ?? 'ellipse-outline'} size={GLYPH_SIZE} color={colors.textMuted}/>}
             <View style={styles.rowText}>
                 <ThemedText style={[styles.rowTitle, {color: colors.text}]}>{title}</ThemedText>
                 {subtitle ? (
@@ -487,6 +561,7 @@ const styles = StyleSheet.create({
     trailing: {flexShrink: 0, alignItems: 'flex-end', justifyContent: 'center'},
     value: {fontSize: 14, lineHeight: 19, fontFamily: FontFamily.medium},
     disclosure: {flexDirection: 'row', alignItems: 'center', gap: 4},
+    avatar: {width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2},
 
     options: {paddingBottom: Spacing.sm},
     option: {flexDirection: 'row', alignItems: 'center', gap: GLYPH_GAP, minHeight: 44},

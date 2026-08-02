@@ -35,6 +35,7 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 - [Get started](#-get-started)
 - [Tech stack](#-tech-stack)
 - [Firebase Remote Config](#-firebase-remote-config)
+- [Signing in](#-signing-in)
 - [Contributing](#-contributing)
 
 ---
@@ -420,6 +421,31 @@ The YTS API base URL is **not hardcoded** — it's resolved at runtime from Remo
 provider from the composition root.
 
 Firebase degrades gracefully: with no `.env` keys, the app simply uses the default URL.
+
+---
+
+## 🔐 Signing in
+
+Google is the only sign-in method. Web uses the Firebase JS SDK (`signInWithPopup`, falling back to
+a redirect when the popup is blocked); native pairs `@react-native-google-signin/google-signin` with
+`@react-native-firebase/auth`, exchanging the Google id token for a Firebase credential. Both sides
+expose the identical surface from `lib/auth` — `initAuth`, `subscribeAuth`, `getAuthState`,
+`signInWithGoogle`, `signOutOfAccount` — so the UI never branches on platform.
+
+Signing in exists to carry entitlements between devices. `lib/account-link.ts` watches auth state and
+hands the Firebase uid to RevenueCat: `logIn(uid)` on the way in, `logOut()` on the way out, with the
+web SDK using `changeUser`. Purchases made on the phone therefore show up on the web, and an
+anonymous shopper keeps their purchases when they later sign in. Because RevenueCat finishes
+configuring asynchronously, an identity that arrives first is queued and applied once it is ready.
+
+Sign-in is optional and degrades quietly. The account row hides itself when the platform has nothing
+to sign in with — no Firebase config on web, no `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` on native — so a
+build without credentials simply has no account section.
+
+Turning it on takes three things in the Firebase console: enable Google under Authentication →
+Sign-in method, add the site's domain to the authorized list, and for Android register the signing
+SHA-1 fingerprints and re-download `google-services.json`, which then carries the OAuth client this
+build reads as its web client id.
 
 ---
 

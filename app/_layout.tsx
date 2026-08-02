@@ -32,6 +32,8 @@ import {hasNotificationPermission, registerNewMoviesTask} from '@/lib/new-movies
 import {Analytics} from '@/lib/analytics-events';
 import {startPlayServices} from '@/lib/play-services';
 import {initPurchases} from '@/lib/purchases';
+import {initAuth} from '@/lib/auth';
+import {startAccountLink} from '@/lib/account-link';
 
 void initRemoteConfig();
 void hasNotificationPermission().then((granted) => {
@@ -65,6 +67,8 @@ function RootLayout() {
     useEffect(() => {
         void startPlayServices();
         void initPurchases();
+        initAuth();
+        startAccountLink();
     }, []);
 
     useEffect(() => {
