@@ -60,14 +60,22 @@ export function PlayerHost(): ReactElement | null {
 
     useEffect(() => {
         if (mode !== 'inline') return;
+        if (!inlineRect) {
+            minimize();
+            return;
+        }
         if (!pathname.startsWith('/movie/')) {
             minimize();
             return;
         }
+        if (!video) return;
+        const advanced = lastVideoIdRef.current !== null && lastVideoIdRef.current !== video.videoId;
+        lastVideoIdRef.current = video.videoId;
+        if (!advanced) return;
         const routeId = Number(pathname.slice('/movie/'.length));
-        if (!video || !Number.isFinite(routeId) || routeId === video.movieId) return;
+        if (!Number.isFinite(routeId) || routeId === video.movieId) return;
         router.replace(`/movie/${video.movieId}`);
-    }, [minimize, mode, pathname, video]);
+    }, [inlineRect, minimize, mode, pathname, video]);
 
     const shift = useCallback(
         (rect: PlayerRect): PlayerRect => ({...rect, y: rect.y - topBarHeight}),
@@ -82,6 +90,7 @@ export function PlayerHost(): ReactElement | null {
     const boxHeight = useSharedValue(target.height);
     const placedRef = useRef(false);
     const prevModeRef = useRef(mode);
+    const lastVideoIdRef = useRef(video?.videoId ?? null);
 
     useEffect(() => {
         const modeChanged = prevModeRef.current !== mode;

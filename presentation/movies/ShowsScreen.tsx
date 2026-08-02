@@ -1,4 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
+import {Linking} from 'react-native';
 import {Image} from 'expo-image';
 import {useCallback, useMemo} from 'react';
 import {FlatList, RefreshControl, StyleSheet, View} from 'react-native';
@@ -150,8 +151,21 @@ function ShowCard({show, width}: {show: Show; width: number}) {
     const {colors} = usePalette();
     const thumbHeight = Math.round(width / THUMB_ASPECT);
 
+    const openImdb = () => {
+        if (!show.imdbCode) return;
+        Analytics.movieOpen({id: show.latestEpisode.id, title: show.title}, 'shows_grid');
+        void Linking.openURL(`https://www.imdb.com/title/${show.imdbCode}/`);
+    };
+
     return (
         <Animated.View entering={enterFade()} style={{width}}>
+          <PressableScale
+            onPress={openImdb}
+            accessibilityRole="link"
+            accessibilityLabel={`${show.title}, ${episodeLabel(show)}`}
+            pressedScale={0.98}
+            pressedOpacity={0.85}
+          >
             <View style={[styles.thumb, {height: thumbHeight, backgroundColor: colors.surfaceSunken}]}>
                 {show.thumbnailUrl ? (
                     <Image
@@ -161,7 +175,11 @@ function ShowCard({show, width}: {show: Show; width: number}) {
                         transition={180}
                         cachePolicy="memory-disk"
                     />
-                ) : null}
+                ) : (
+                    <View style={styles.thumbFallback}>
+                        <Ionicons name="tv-outline" size={28} color={colors.textFaint}/>
+                    </View>
+                )}
             </View>
             <View style={styles.info}>
                 <ThemedText
@@ -174,6 +192,7 @@ function ShowCard({show, width}: {show: Show; width: number}) {
                     {episodeLabel(show)}
                 </ThemedText>
             </View>
+          </PressableScale>
         </Animated.View>
     );
 }
@@ -182,6 +201,15 @@ const styles = StyleSheet.create({
     container: {flex: 1},
     row: {flexDirection: 'row', gap: COLUMN_GAP, alignSelf: 'center', width: '100%'},
     thumb: {width: '100%', borderRadius: Radius.card, overflow: 'hidden'},
+    thumbFallback: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     info: {paddingTop: Spacing.md, gap: 3},
     cardTitle: {fontWeight: '600'},
 
