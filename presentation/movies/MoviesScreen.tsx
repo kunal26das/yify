@@ -265,7 +265,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                 {
                     top: topBarHeight,
                     height: CHIP_ROW_HEIGHT,
-                    borderBottomColor: colors.border,
                 },
             ]}
         >
@@ -566,14 +565,18 @@ const styles = StyleSheet.create({
     list: {flex: 1},
     listContent: {flexGrow: 1},
     row: {flexDirection: 'row'},
-    countLine: {fontWeight: '500', paddingHorizontal: POSTER_GAP / 2, paddingBottom: Spacing.sm},
+    countLine: {
+        fontWeight: '500',
+        paddingHorizontal: POSTER_GAP / 2,
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.sm,
+    },
 
     chipRow: {
         position: 'absolute',
         left: 0,
         right: 0,
         zIndex: 20,
-        borderBottomWidth: StyleSheet.hairlineWidth,
     },
     chipRowInner: {
         flex: 1,

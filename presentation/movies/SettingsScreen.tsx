@@ -20,6 +20,7 @@ import {
 } from './constants/movieFilterOptions';
 import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
+import {ChipBar} from './components/ChipBar';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {useSettingsViewModel, type SettingsViewModel} from './useSettingsViewModel';
 
@@ -125,16 +126,12 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                     />
                     {open === 'theme' ? (
                         <Animated.View entering={enterFade()} exiting={exitFade} style={styles.options}>
-                            {THEME_OPTIONS.map((option) => (
-                                <Option
-                                    key={option.value}
-                                    label={option.label}
-                                    selected={vm.theme === option.value}
-                                    onPress={() => vm.selectTheme(option.value)}
-                                    colors={colors}
-                                    gutter={gutter}
-                                />
-                            ))}
+                            <ChipBar
+                                chips={THEME_OPTIONS.map((option) => ({key: option.value, label: option.label}))}
+                                active={vm.theme}
+                                onSelect={(key) => vm.selectTheme(key as ThemePreference)}
+                                contentPadding={gutter}
+                            />
                         </Animated.View>
                     ) : null}
                 </Group>
@@ -163,16 +160,20 @@ export function SettingsScreen({viewModel}: {viewModel?: SettingsViewModel} = {}
                             />
                             {open === row.key ? (
                                 <Animated.View entering={enterFade()} exiting={exitFade} style={styles.options}>
-                                    {row.options.map((option) => (
-                                        <Option
-                                            key={String(option.value)}
-                                            label={option.label}
-                                            selected={vm.browseDefaults[row.key] === option.value}
-                                            onPress={() => vm.setBrowseDefault(row.key, option.value)}
-                                            colors={colors}
-                                            gutter={gutter}
-                                        />
-                                    ))}
+                                    <ChipBar
+                                        chips={row.options.map((option) => ({
+                                            key: String(option.value),
+                                            label: option.label,
+                                        }))}
+                                        active={String(vm.browseDefaults[row.key])}
+                                        onSelect={(key) => {
+                                            const picked = row.options.find(
+                                                (option) => String(option.value) === key
+                                            );
+                                            if (picked) vm.setBrowseDefault(row.key, picked.value);
+                                        }}
+                                        contentPadding={gutter}
+                                    />
                                 </Animated.View>
                             ) : null}
                         </Group>
@@ -460,46 +461,6 @@ function Disclosure({value, expanded, colors}: {value: string; expanded: boolean
     );
 }
 
-function Option({
-                    label,
-                    selected,
-                    onPress,
-                    colors,
-                    gutter,
-                }: {
-    label: string;
-    selected: boolean;
-    onPress: () => void;
-    colors: Colors;
-    gutter: number;
-}) {
-    return (
-        <PressableScale
-            onPress={onPress}
-            accessibilityRole="radio"
-            accessibilityState={{selected}}
-            accessibilityLabel={label}
-            pressedScale={0.99}
-            pressedOpacity={0.6}
-            lift={1}
-            contentStyle={[
-                styles.option,
-                {paddingLeft: gutter + GLYPH_SIZE + GLYPH_GAP, paddingRight: gutter},
-            ]}
-        >
-            <Animated.View key={selected ? 'on' : 'off'} entering={enterPop()}>
-                <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={18}
-                    color={selected ? colors.accent : colors.textMuted}
-                />
-            </Animated.View>
-            <ThemedText style={[styles.optionLabel, {color: selected ? colors.accent : colors.text}]}>
-                {label}
-            </ThemedText>
-        </PressableScale>
-    );
-}
 
 const styles = StyleSheet.create({
     container: {flex: 1},
@@ -523,7 +484,7 @@ const styles = StyleSheet.create({
     value: {fontSize: 14, lineHeight: 19, fontFamily: FontFamily.medium},
     disclosure: {flexDirection: 'row', alignItems: 'center', gap: 4},
 
-    options: {paddingBottom: Spacing.xs},
+    options: {paddingBottom: Spacing.sm},
     option: {flexDirection: 'row', alignItems: 'center', gap: GLYPH_GAP, minHeight: 44},
     optionLabel: {fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium},
 

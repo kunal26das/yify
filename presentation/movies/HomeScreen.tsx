@@ -1,5 +1,4 @@
 import {Ionicons} from '@expo/vector-icons';
-import {StatusBar} from 'expo-status-bar';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -33,7 +32,6 @@ import type {ShelfQuery, ShelfVariant} from './constants/homeShelves';
 import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import type {FeedViewModel} from './useFeedViewModel';
 
-const HERO_STATUS_BAR_THRESHOLD = 90;
 const SCROLL_AT_TOP_THRESHOLD = 8;
 
 const CARD_MIN_WIDTH = 300;
@@ -109,7 +107,6 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
 
     const listRef = useRef<FlatList<HomeRow>>(null);
     const scrollY = useRef(new Animated.Value(0)).current;
-    const [overHero, setOverHero] = useState(true);
     const [atTop, setAtTop] = useState(true);
     const [gridVisible, setGridVisible] = useState(false);
     const [lastGridIndex, setLastGridIndex] = useState(0);
@@ -118,7 +115,6 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
 
     useEffect(() => {
         const id = scrollY.addListener(({value}) => {
-            setOverHero(value < HERO_STATUS_BAR_THRESHOLD);
             setAtTop(value <= SCROLL_AT_TOP_THRESHOLD);
         });
         return () => scrollY.removeListener(id);
@@ -300,7 +296,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                     <View
                         style={[
                             styles.chipRow,
-                            {backgroundColor: colors.background, borderBottomColor: colors.border},
+                            {backgroundColor: colors.background},
                         ]}
                     >
                         <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
@@ -436,9 +432,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                                         onRequestTrailer={requestHeroTrailer}
                                     />
                                 </Animated.View>
-                            ) : (
-                                <View style={{height: topBarHeight}}/>
-                            )
+                            ) : null
                         }
                         ListFooterComponent={
                             <>
@@ -481,6 +475,7 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                         onEndReached={handleEndReached}
                         onEndReachedThreshold={2}
                         contentContainerStyle={{
+                            paddingTop: topBarHeight,
                             paddingBottom: insets.bottom + 96,
                         }}
                         refreshControl={
@@ -513,7 +508,6 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                                 styles.chipRowPinned,
                                 {
                                     top: topBarHeight,
-                                    borderBottomColor: colors.border,
                                 },
                             ]}
                         >
@@ -530,7 +524,6 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                         </View>
                     ) : null}
                     <TopBar active="home"/>
-                    {heroMovies.length > 0 && overHero ? <StatusBar style="light"/> : null}
                 </ThemedView>
             </HoverCardHost>
         </TopTenProvider>
@@ -732,14 +725,13 @@ const styles = StyleSheet.create({
         marginTop: Spacing.lg,
         marginBottom: Spacing.sm,
     },
-    chipRow: {borderBottomWidth: StyleSheet.hairlineWidth},
+    chipRow: {},
     chipRowPinned: {
         position: 'absolute',
         left: 0,
         right: 0,
         zIndex: 20,
         alignItems: 'center',
-        borderBottomWidth: StyleSheet.hairlineWidth,
     },
     chipRowInner: {width: '100%', alignSelf: 'center'},
     cardRow: {

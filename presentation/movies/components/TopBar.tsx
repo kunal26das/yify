@@ -165,6 +165,24 @@ export function TopBar({
                 clearButtonMode="never"
                 accessibilityLabel="Search movies"
             />
+            {query.length > 0 ? (
+                <PressableScale
+                    onPress={() => {
+                        setQuery('');
+                        Analytics.searchCleared();
+                        onSearchSubmit?.('');
+                    }}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
+                    pressedScale={0.85}
+                    pressedOpacity={0.6}
+                    hoveredScale={1.12}
+                    contentStyle={styles.clearButton}
+                >
+                    <Ionicons name="close" size={18} color={colors.textMuted}/>
+                </PressableScale>
+            ) : null}
             <PressableScale
                 onPress={() => submitQuery(query)}
                 accessibilityRole="button"
@@ -182,7 +200,7 @@ export function TopBar({
     );
 
     return (
-        <View style={[styles.bar, {borderBottomColor: colors.border, paddingTop: insets.top}]}>
+        <View style={[styles.bar, {paddingTop: insets.top}]}>
             <LiquidGlassView
                 tint={scheme === 'dark' ? 'dark' : 'light'}
                 fallbackBackgroundColor={
@@ -265,7 +283,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 30,
-        borderBottomWidth: StyleSheet.hairlineWidth,
     },
     row: {
         height: TOP_BAR_ROW_HEIGHT,
@@ -306,6 +323,7 @@ const styles = StyleSheet.create({
         paddingLeft: Spacing.lg,
         paddingRight: Spacing.sm,
     },
+    clearButton: {width: 32, height: 32, alignItems: 'center', justifyContent: 'center'},
     searchButton: {
         width: SEARCH_BUTTON_WIDTH,
         alignSelf: 'stretch',

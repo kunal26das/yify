@@ -2,7 +2,16 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {ActivityIndicator, Platform, ScrollView, Share, StyleSheet, View} from 'react-native';
+import {
+    ActivityIndicator,
+    Platform,
+    ScrollView,
+    Share,
+    StyleSheet,
+    View,
+    type NativeScrollEvent,
+    type NativeSyntheticEvent,
+} from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -132,6 +141,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
         ? Math.round(RIGHT_COLUMN_WIDTH * UP_NEXT_THUMB_RATIO)
         : Math.min(UP_NEXT_THUMB_MAX, Math.round(bodyWidth * UP_NEXT_THUMB_RATIO));
 
+    const scrollYRef = useRef(0);
     const ownedIdRef = useRef<number | null>(null);
     const videoRef = useRef(video);
 
@@ -172,10 +182,31 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
         setQueue(toPlayerQueue(suggestions));
     }, [owns, setQueue, suggestions, trailerCode]);
 
+    const publishRect = useCallback(
+        (scrollY: number) => {
+            scrollYRef.current = scrollY;
+            setInlineRect({
+                x: playerX,
+                y: playerY - scrollY,
+                width: playerWidth,
+                height: playerHeight,
+            });
+        },
+        [playerHeight, playerWidth, playerX, playerY, setInlineRect]
+    );
+
     useEffect(() => {
         if (!trailerCode) return;
-        setInlineRect({x: playerX, y: playerY, width: playerWidth, height: playerHeight});
-    }, [playerHeight, playerWidth, playerX, playerY, setInlineRect, trailerCode]);
+        publishRect(scrollYRef.current);
+    }, [publishRect, trailerCode]);
+
+    const handleScroll = useCallback(
+        (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+            if (!trailerCode) return;
+            publishRect(event.nativeEvent.contentOffset.y);
+        },
+        [publishRect, trailerCode]
+    );
 
     useEffect(
         () => () => {
@@ -392,6 +423,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                     <ScrollView
                         style={styles.fill}
                         showsVerticalScrollIndicator={false}
+                        onScroll={handleScroll}
+                        scrollEventThrottle={16}
                         contentContainerStyle={[
                             styles.stack,
                             {
@@ -419,24 +452,24 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             <View style={[styles.root, {backgroundColor: colors.background}]}>
                 <View style={[styles.row, {paddingLeft: columnX, paddingTop: playerY}]}>
                     <View style={{width: columnWidth}}>
-                        {trailerCode ? (
-                            <View style={{height: playerHeight}}/>
-                        ) : (
-                            <View style={{height: playerHeight}}>
-                                <NoTrailerBackdrop details={details} radius={Radius.card}/>
-                            </View>
-                        )}
                         <ScrollView
                             style={styles.fill}
                             showsVerticalScrollIndicator={false}
+                            onScroll={handleScroll}
+                            scrollEventThrottle={16}
                             contentContainerStyle={[
                                 styles.stack,
-                                {
-                                    paddingTop: Math.max(Spacing.lg, belowPlayerGap),
-                                    paddingBottom: insets.bottom + Spacing.xxl,
-                                },
+                                {paddingBottom: insets.bottom + Spacing.xxl},
                             ]}
                         >
+                            {trailerCode ? (
+                                <View style={{height: playerHeight}}/>
+                            ) : (
+                                <View style={{height: playerHeight}}>
+                                    <NoTrailerBackdrop details={details} radius={Radius.card}/>
+                                </View>
+                            )}
+                            <View style={{height: Math.max(Spacing.lg, belowPlayerGap)}}/>
                             {primary}
                             {secondary}
                         </ScrollView>

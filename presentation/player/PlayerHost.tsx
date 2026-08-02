@@ -67,13 +67,16 @@ export function PlayerHost(): ReactElement | null {
     const boxWidth = useSharedValue(target.width);
     const boxHeight = useSharedValue(target.height);
     const placedRef = useRef(false);
+    const prevModeRef = useRef(mode);
 
     useEffect(() => {
+        const modeChanged = prevModeRef.current !== mode;
+        prevModeRef.current = mode;
         if (mode === 'closed') {
             placedRef.current = false;
             return;
         }
-        if (!placedRef.current) {
+        if (!placedRef.current || !modeChanged) {
             placedRef.current = true;
             left.value = target.x;
             top.value = target.y;
