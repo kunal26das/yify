@@ -8,6 +8,7 @@ export { useHomeViewModel } from './movies/useHomeViewModel';
 export type { HomeViewModel, ShelfState, ShelfStatus } from './movies/useHomeViewModel';
 export { MyListScreen } from './movies/MyListScreen';
 export { ShowsScreen } from './movies/ShowsScreen';
+export { ShowDetailsScreen } from './movies/ShowDetailsScreen';
 export { useShowsViewModel } from './movies/useShowsViewModel';
 export type { ShowsViewModel, ShowsStatus } from './movies/useShowsViewModel';
 export { SettingsScreen } from './movies/SettingsScreen';
