@@ -36,7 +36,7 @@ export function ShowsScreen() {
                 <PressableScale
                     onPress={() => {
                         Analytics.browseAllOpen('shows_placeholder');
-                        goTo('/browse');
+                        goTo('/movies');
                     }}
                     accessibilityRole="link"
                     pressedScale={0.94}

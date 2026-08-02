@@ -60,7 +60,7 @@ export function TopBar({
                 onSearchSubmit(term);
                 return;
             }
-            goTo(`/browse?query=${encodeURIComponent(term)}`);
+            goTo(`/movies?query=${encodeURIComponent(term)}`);
         },
         [onSearchSubmit, goTo]
     );

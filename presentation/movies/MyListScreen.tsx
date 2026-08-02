@@ -250,7 +250,7 @@ export function MyListScreen() {
                         <PressableScale
                             onPress={() => {
                                 Analytics.browseAllOpen('my_list_empty');
-                                goTo('/browse');
+                                goTo('/movies');
                             }}
                             accessibilityRole="button"
                             accessibilityLabel="Find something to watch"

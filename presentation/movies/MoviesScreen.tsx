@@ -250,6 +250,15 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         listRef.current?.scrollToOffset({offset: 0, animated: true});
     }, [appliedQuery]);
 
+    const handleSearchSubmit = useCallback(
+        (term: string) => {
+            setPickedChip(null);
+            applyFilters({});
+            setSearchQuery(term);
+        },
+        [applyFilters, setSearchQuery]
+    );
+
     const openFilters = useCallback(() => {
         Analytics.filtersOpen();
         setFilterModalVisible(true);
@@ -284,7 +293,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         <TopBar
             active={activeNav}
             searchValue={searchQuery}
-            onSearchSubmit={setSearchQuery}
+            onSearchSubmit={handleSearchSubmit}
             showSearch
             below={chipRow}
         />
@@ -295,7 +304,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             visible={searchOverlayVisible}
             initialQuery={searchQuery}
             onClose={() => setSearchOverlayVisible(false)}
-            onSubmit={setSearchQuery}
+            onSubmit={handleSearchSubmit}
         />
     );
 

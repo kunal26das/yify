@@ -17,10 +17,10 @@ interface FooterLink {
 const BROWSE_LINKS: readonly FooterLink[] = DESTINATIONS.map(({label, href}) => ({label, href}));
 
 const GENRE_LINKS: readonly FooterLink[] = [
-    {label: 'Action', href: '/browse?genre=action'},
-    {label: 'Comedy', href: '/browse?genre=comedy'},
-    {label: 'Drama', href: '/browse?genre=drama'},
-    {label: '4K Ultra HD', href: '/browse?quality=2160p'},
+    {label: 'Action', href: '/movies?genre=action'},
+    {label: 'Comedy', href: '/movies?genre=comedy'},
+    {label: 'Drama', href: '/movies?genre=drama'},
+    {label: '4K Ultra HD', href: '/movies?quality=2160p'},
 ];
 
 const APP_LINKS: readonly FooterLink[] = [{label: 'Settings', href: '/settings'}];

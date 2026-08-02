@@ -34,10 +34,12 @@ export function WatchActions({
     details,
     onShare,
     onDownload,
+    pad = 0,
 }: {
     details: MovieDetails;
     onShare: () => void;
     onDownload: () => void;
+    pad?: number;
 }) {
     const {colors} = usePalette();
     const saved = useIsInWatchlist(details.id);
@@ -46,7 +48,8 @@ export function WatchActions({
         <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.row}
+            style={{marginHorizontal: -pad}}
+            contentContainerStyle={[styles.row, {paddingHorizontal: pad}]}
         >
             <View accessibilityRole="text" accessibilityLabel={`${details.likeCount ?? 0} likes`}>
                 <Pill
