@@ -136,9 +136,9 @@ export function TopBar({
             contentStyle={styles.iconButton}
         >
             <Ionicons
-                name={active === 'settings' ? 'settings' : 'settings-outline'}
+                name="settings-outline"
                 size={22}
-                color={active === 'settings' ? colors.text : colors.textMuted}
+                color={active === 'settings' ? colors.accent : colors.textMuted}
             />
         </PressableScale>
     );
