@@ -86,6 +86,10 @@ export function toggleWatchlist(movie: Movie): boolean {
     return true;
 }
 
+export function applyRemoteWatchlist(items: Movie[]): void {
+    write(items.map(toWatchlistMovie));
+}
+
 export function subscribeWatchlist(listener: () => void): () => void {
     listeners.add(listener);
     return () => {
