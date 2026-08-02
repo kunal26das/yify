@@ -12,7 +12,28 @@
           "package_name": "io.github.kunal26das.yify"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "325235052319-adb5fgtmmtncdu2dhh7pft5rr041jouf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.kunal26das.yify",
+            "certificate_hash": "3069f9927504f02121027820a5d1b80c7a5c7a6e"
+          }
+        },
+        {
+          "client_id": "325235052319-qigsn70fndq2v0nuel5c6gcrer2u3okk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.kunal26das.yify",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "325235052319-09fsjb9phn2s764ja02qgmbdcg88b0in.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCainD4vwEL_NeRzLZ_0MnQraUXh9hL3Mk"
@@ -20,7 +41,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "325235052319-09fsjb9phn2s764ja02qgmbdcg88b0in.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "325235052319-sn3nbcr83oqpbkvv6qltnmamblrhok9q.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "io.github.kunal26das.yify"
+              }
+            }
+          ]
         }
       }
     }
