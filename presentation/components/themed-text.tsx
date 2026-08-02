@@ -12,6 +12,7 @@ export type ThemedTextType =
     | 'defaultSemiBold'
     | 'caption'
     | 'micro'
+    | 'section'
     | 'link';
 
 export type ThemedTextProps = TextProps & {
@@ -28,6 +29,7 @@ const PRESET_FAMILY: Record<ThemedTextType, string> = {
     heading: FontFamily.displayBold,
     subtitle: FontFamily.displayBold,
     caption: FontFamily.medium,
+    section: FontFamily.bold,
     micro: FontFamily.bold,
     default: FontFamily.regular,
     defaultSemiBold: FontFamily.semibold,
@@ -63,7 +65,9 @@ export function ThemedText({style, lightColor, darkColor, type = 'default', ...r
                         ? styles.subtitle
                         : type === 'defaultSemiBold'
                             ? styles.defaultSemiBold
-                            : type === 'caption'
+                            : type === 'section'
+                                ? styles.section
+                                : type === 'caption'
                                 ? styles.caption
                                 : type === 'micro'
                                     ? styles.micro
@@ -97,6 +101,7 @@ const styles = StyleSheet.create({
     heading: Typography.heading,
     subtitle: Typography.subheading,
     caption: Typography.caption,
+    section: Typography.sectionTitle,
     micro: Typography.micro,
   link: {
     lineHeight: 30,

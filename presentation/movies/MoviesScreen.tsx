@@ -1,47 +1,76 @@
-import type {Movie} from '@/domain';
-import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
-import {LiquidGlassGroup, LiquidGlassView} from '../components/liquid-glass-view';
-import {LinearGradient} from '../components/linear-gradient';
-import {ThemedText} from '../components/themed-text';
-import {ThemedView} from '../components/themed-view';
-import {usePalette} from '../hooks/use-palette';
-import {useResponsive} from '../hooks/use-responsive';
-import {FontFamily, Radius} from '../constants/theme';
 import {Ionicons} from '@expo/vector-icons';
 import {Image as ExpoImage} from 'expo-image';
-import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, InteractionManager, Platform, RefreshControl, StyleSheet, TextInput, View,} from 'react-native';
+import {
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    View,
+    type NativeScrollEvent,
+    type NativeSyntheticEvent,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Duration, PressableScale, enterPop, enterRise, exitPop} from '../components/motion';
-import {checkForNewMovies} from '@/lib/new-movies-task';
-import {MovieFilterModal} from './components/MovieFilterModal';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+
+import type {Movie} from '@/domain';
 import {Analytics} from '@/lib/analytics-events';
+import {checkForNewMovies} from '@/lib/new-movies-task';
+import {PressableScale, enterFade, enterPop, enterRise, exitPop} from '../components/motion';
+import {ThemedText} from '../components/themed-text';
+import {ThemedView} from '../components/themed-view';
+import {Radius, Spacing, Typography} from '../constants/theme';
+import {usePalette} from '../hooks/use-palette';
+import {useResponsive} from '../hooks/use-responsive';
+import {LiquidGlassView} from '../components/liquid-glass-view';
+import {ChipBar} from './components/ChipBar';
+import {HoverCardHost} from './components/HoverCard';
+import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
+import {ScrollProgress} from './components/ScrollProgress';
+import {SearchOverlay} from './components/SearchOverlay';
+import {TopBar, useTopBarHeight, type NavKey} from './components/TopBar';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
-import {INLINE_SEARCH_HEIGHT, SEARCH_ROW_HEIGHT, TopNav, useTopNavHeight, type NavKey} from './components/TopNav';
+import {FEED_CHIPS, chipFor} from './constants/feedChips';
 import {OrderBy, SortBy} from './constants/movieFilterOptions';
+import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
     autoFocus?: boolean;
 }
 
-const SCROLL_AT_TOP_THRESHOLD = 8;
-
-const INLINE_SEARCH_MIN_WIDTH = 720;
-
 type SkeletonItem = {__skeleton: true; id: string};
 type GridItem = Movie | SkeletonItem;
-const isSkeleton = (item: GridItem): item is SkeletonItem =>
-    (item as SkeletonItem).__skeleton === true;
+
+const CHIP_ROW_HEIGHT = 56;
+const SCROLL_AT_TOP_THRESHOLD = 8;
+
+function isSkeleton(item: GridItem): item is SkeletonItem {
+    return (item as SkeletonItem).__skeleton === true;
+}
+
+function hasSelector(filters: MovieFilters): boolean {
+    return filters.genre != null || filters.quality != null || filters.minimum_rating != null;
+}
+
+function chipMatches(query: MovieFilters, applied: MovieFilters): boolean {
+    if (query.genre !== applied.genre) return false;
+    if (query.quality !== applied.quality) return false;
+    if (query.minimum_rating !== applied.minimum_rating) return false;
+    if (hasSelector(query)) return true;
+    return query.sort_by === applied.sort_by && query.order_by === applied.order_by;
+}
+
+function activeChipKey(applied: MovieFilters): string {
+    if (Object.values(applied).every((value) => value == null)) return 'all';
+    return FEED_CHIPS.find((chip) => chipMatches(chip.query, applied))?.key ?? '';
+}
 
 export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const insets = useSafeAreaInsets();
-    const {colors, gradients, scheme} = usePalette();
-    const {width, contentMaxWidth, isLarge, gutter} = useResponsive();
+    const {colors, scheme} = usePalette();
+    const {width, contentMaxWidth, isLarge, isPhone, gutter} = useResponsive();
     const {
         movies,
         totalMovieCount,
@@ -58,87 +87,40 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         clearFiltersAndReload,
         loadInitial,
         loadMore,
-        appliedQuery,
     } = viewModel;
 
-    const loggedQueryRef = useRef<string | null>(null);
-    useEffect(() => {
-        const q = appliedQuery.trim();
-        if (loggedQueryRef.current === null) {
-            loggedQueryRef.current = q;
-            return;
-        }
-        if (q && q !== loggedQueryRef.current) Analytics.search(q);
-        loggedQueryRef.current = q;
-    }, [appliedQuery]);
-
+    const topBarHeight = useTopBarHeight();
+    const listRef = useRef<FlatList<GridItem>>(null);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
+    const [searchOverlayVisible, setSearchOverlayVisible] = useState(false);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
+    const [pickedChip, setPickedChip] = useState<string | null>(null);
     const prevMoviesLengthRef = useRef(0);
-    const listRef = useRef<FlatList>(null);
-    const searchInputRef = useRef<TextInput>(null);
 
-    const glassTint = scheme === 'dark' ? 'dark' : 'light';
     const gridWidth = Math.min(width, contentMaxWidth);
-    const navHeight = useTopNavHeight();
-    const inlineSearch = width >= INLINE_SEARCH_MIN_WIDTH;
-    const searchRowHeight = inlineSearch ? 0 : SEARCH_ROW_HEIGHT;
-    const listTopPadding = navHeight + searchRowHeight + POSTER_GAP / 2;
-    const activeNav: NavKey =
-        appliedFilters.sort_by === SortBy.DateAdded && appliedFilters.order_by === OrderBy.Desc
-            ? 'new'
-            : 'movies';
-
+    const contentPad = Math.max(0, gutter - POSTER_GAP / 2);
+    const gridInner = Math.max(0, gridWidth - contentPad * 2);
     const numColumns = useMemo(
-        () => Math.max(2, Math.floor(gridWidth / (POSTER_MIN_WIDTH + POSTER_GAP))),
-        [gridWidth]
+        () => Math.max(2, Math.floor(gridInner / (POSTER_MIN_WIDTH + POSTER_GAP))),
+        [gridInner]
+    );
+    const itemWidth = useMemo(
+        () => Math.floor(gridInner / numColumns) - POSTER_GAP,
+        [gridInner, numColumns]
     );
 
-    const itemWidth = useMemo(() => {
-        const available = gridWidth - POSTER_GAP;
-        return Math.floor(available / numColumns) - POSTER_GAP;
-    }, [gridWidth, numColumns]);
-
-    const loadingMore = loading && !refreshing && hasMore && movies.length > 0;
-
-    const gridData = useMemo<GridItem[]>(() => {
-        if (!loadingMore) return movies;
-        const remainder = movies.length % numColumns;
-        const fillLastRow = remainder === 0 ? 0 : numColumns - remainder;
-        const count = fillLastRow + numColumns;
-        const skeletons: GridItem[] = Array.from({length: count}, (_, i) => ({
-            __skeleton: true,
-            id: `sk-${i}`,
-        }));
-        return [...movies, ...skeletons];
-    }, [movies, loadingMore, numColumns]);
-
-    const prefetchedRef = useRef(0);
-    useEffect(() => {
-        if (movies.length <= prefetchedRef.current) {
-            prefetchedRef.current = movies.length;
-            return;
-        }
-        const fresh = movies.slice(prefetchedRef.current);
-        prefetchedRef.current = movies.length;
-        const urls = fresh
-            .map((m) => m.posterUrls[Math.min(1, m.posterUrls.length - 1)])
-            .filter(Boolean) as string[];
-        if (urls.length) ExpoImage.prefetch(urls, {cachePolicy: 'memory-disk'});
-    }, [movies]);
-
-    const onScroll = useCallback(
-        ({nativeEvent}: { nativeEvent: { contentOffset: { y: number } } }) => {
-            setIsAtTop(nativeEvent.contentOffset.y <= SCROLL_AT_TOP_THRESHOLD);
-        },
-        []
-    );
-
-    useEffect(() => {
-        if (movies.length < prevMoviesLengthRef.current) setLastVisibleIndex(0);
-        prevMoviesLengthRef.current = movies.length;
-    }, [movies.length]);
+    const listTopPadding = topBarHeight + CHIP_ROW_HEIGHT + POSTER_GAP / 2;
+    const listBottomPadding = insets.bottom + 96;
+    const derivedChip = activeChipKey(appliedFilters);
+    const activeChip =
+        pickedChip && chipMatches(chipFor(pickedChip).query, appliedFilters) ? pickedChip : derivedChip;
+    const activeFilterCount = [
+        appliedFilters.quality,
+        appliedFilters.genre,
+        appliedFilters.minimum_rating,
+    ].filter((value) => value != null).length;
+    const activeNav: NavKey = 'movies';
 
     useEffect(() => {
         loadInitial();
@@ -149,12 +131,69 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     }, [error]);
 
     useEffect(() => {
-        if (!autoFocus) return;
-        const task = InteractionManager.runAfterInteractions(() => {
-            searchInputRef.current?.focus();
-        });
-        return () => task.cancel();
-    }, [autoFocus]);
+        if (autoFocus && isPhone) setSearchOverlayVisible(true);
+    }, [autoFocus, isPhone]);
+
+    useEffect(() => {
+        if (movies.length < prevMoviesLengthRef.current) setLastVisibleIndex(0);
+        prevMoviesLengthRef.current = movies.length;
+    }, [movies.length]);
+
+    const prefetchedRef = useRef(0);
+    useEffect(() => {
+        if (movies.length <= prefetchedRef.current) {
+            prefetchedRef.current = movies.length;
+            return;
+        }
+        const fresh = movies.slice(prefetchedRef.current);
+        prefetchedRef.current = movies.length;
+        const urls = fresh
+            .map((movie) => movie.posterUrls[Math.min(1, movie.posterUrls.length - 1)])
+            .filter((url): url is string => !!url);
+        if (urls.length) ExpoImage.prefetch(urls, {cachePolicy: 'memory-disk'});
+    }, [movies]);
+
+    const loadingMore = loading && !refreshing && hasMore && movies.length > 0;
+
+    const gridData = useMemo<GridItem[]>(() => {
+        if (!loadingMore) return movies;
+        const remainder = movies.length % numColumns;
+        const fillLastRow = remainder === 0 ? 0 : numColumns - remainder;
+        const count = fillLastRow + numColumns;
+        return [
+            ...movies,
+            ...Array.from({length: count}, (_, index) => ({__skeleton: true as const, id: `sk-${index}`})),
+        ];
+    }, [movies, loadingMore, numColumns]);
+
+    const scrollToTop = useCallback(() => {
+        listRef.current?.scrollToOffset({offset: 0, animated: true});
+    }, []);
+
+    const handleScrollToTop = useCallback(() => {
+        Analytics.scrollToTop();
+        scrollToTop();
+    }, [scrollToTop]);
+
+    const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        setIsAtTop(event.nativeEvent.contentOffset.y <= SCROLL_AT_TOP_THRESHOLD);
+    }, []);
+
+    const viewabilityConfig = useMemo(
+        () => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}),
+        []
+    );
+
+    const onViewableItemsChanged = useCallback(
+        ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+            const maxIndex = viewableItems.reduce(
+                (acc, item) => (item.index != null && item.index > acc ? item.index : acc),
+                -1
+            );
+            if (maxIndex >= 0) setLastVisibleIndex(maxIndex);
+        },
+        []
+    );
 
     const handleEndReached = useCallback(() => {
         if (hasMore && !loading) {
@@ -168,8 +207,44 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         void checkForNewMovies(true);
     }, [loadInitial]);
 
+    const handleChipSelect = useCallback(
+        (key: string) => {
+            const chip = FEED_CHIPS.find((candidate) => candidate.key === key);
+            if (!chip) return;
+            setPickedChip(key);
+            const next: MovieFilters = {
+                genre: chip.query.genre,
+                quality: chip.query.quality || undefined,
+                minimum_rating: chip.query.minimum_rating,
+                sort_by: chip.query.sort_by,
+                order_by: chip.query.order_by,
+            };
+            Analytics.filtersApplied({
+                genre: next.genre,
+                quality: next.quality,
+                minimum_rating: next.minimum_rating,
+                sort_by: next.sort_by,
+                order_by: next.order_by,
+            });
+            applyFilters(next);
+            scrollToTop();
+        },
+        [appliedFilters, applyFilters, scrollToTop]
+    );
+
+    const handleClearFilters = useCallback(() => {
+        Analytics.filtersReset();
+        clearFiltersAndReload();
+        scrollToTop();
+    }, [clearFiltersAndReload, scrollToTop]);
+
+    const openFilters = useCallback(() => {
+        Analytics.filtersOpen();
+        setFilterModalVisible(true);
+    }, []);
+
     const renderItem = useCallback(
-        ({item}: { item: GridItem }) =>
+        ({item}: {item: GridItem}) =>
             isSkeleton(item) ? (
                 <PosterSkeleton width={itemWidth}/>
             ) : (
@@ -177,111 +252,139 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             ),
         [itemWidth]
     );
+
     const keyExtractor = useCallback(
         (item: GridItem) => (isSkeleton(item) ? item.id : `m-${item.id}`),
         []
     );
 
-    const viewabilityConfig = useMemo(
-        () => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}),
-        []
-    );
-
-    const onViewableItemsChanged = useCallback(
-        ({viewableItems}: { viewableItems: { index: number | null }[] }) => {
-            const maxIndex = viewableItems.reduce(
-                (acc, item) => (item.index != null && item.index > acc ? item.index : acc),
-                -1
-            );
-            if (maxIndex >= 0) setLastVisibleIndex(maxIndex);
-        },
-        []
-    );
-
-    const searchField = (
-        <View style={inlineSearch ? styles.searchFieldWrapperInline : styles.searchFieldWrapper}>
-            <Ionicons name="search" size={inlineSearch ? 16 : 18} color={colors.textMuted} style={styles.searchIcon}/>
-            <TextInput
-                ref={searchInputRef}
-                style={[
-                    inlineSearch ? styles.searchInputInline : styles.searchInput,
-                    {color: colors.text},
-                    Platform.OS === 'web' ? ({outlineStyle: 'none'} as object) : null,
-                ]}
-                placeholder={inlineSearch ? 'Search movies…' : 'Search movies, genres, years…'}
-                placeholderTextColor={colors.textFaint}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="search"
-                clearButtonMode="never"
+    const chipRow = (
+        <View
+            style={[
+                styles.chipRow,
+                {
+                    top: topBarHeight,
+                    height: CHIP_ROW_HEIGHT,
+                    borderBottomColor: colors.border,
+                },
+            ]}
+        >
+            <LiquidGlassView
+                tint={scheme === 'dark' ? 'dark' : 'light'}
+                fallbackBackgroundColor={
+                    scheme === 'dark' ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.86)'
+                }
+                style={StyleSheet.absoluteFill}
             />
-            {searchQuery.length > 0 ? (
-                <Animated.View entering={enterPop()} exiting={exitPop}>
-                    <PressableScale
-                        onPress={() => {
-                            Analytics.searchCleared();
-                            setSearchQuery('');
-                        }}
-                        pressedScale={0.85}
-                        pressedOpacity={0.6}
-                        hoveredScale={1.12}
-                        contentStyle={styles.clearButton}
-                        hitSlop={8}
-                    >
-                        <Ionicons name="close-circle" size={18} color={colors.textMuted}/>
-                    </PressableScale>
-                </Animated.View>
-            ) : null}
-        </View>
-    );
-
-    const InlineSearch = (
-        <View style={[styles.inlineSearchPill, {backgroundColor: colors.surfaceSunken, borderColor: colors.border}]}>
-            {searchField}
-        </View>
-    );
-
-    const SearchField = (
-        <View style={[styles.searchBarFixed, {paddingHorizontal: gutter}]} pointerEvents="box-none">
             <View
                 style={[
-                    isLarge && {maxWidth: contentMaxWidth, alignSelf: 'center', width: '100%'},
+                    styles.chipRowInner,
+                    
+                    isLarge && {maxWidth: contentMaxWidth},
                 ]}
             >
-                <View style={styles.searchRow}>
-                    <View style={styles.searchPill}>{searchField}</View>
+                <View style={styles.chipBarArea}>
+                    <ChipBar chips={FEED_CHIPS} active={activeChip} onSelect={handleChipSelect} contentPadding={gutter}/>
+                </View>
+                <View style={[styles.filtersArea, {paddingRight: gutter}]}>
+                    <PressableScale
+                        onPress={openFilters}
+                        accessibilityRole="button"
+                        accessibilityLabel="Filters"
+                        pressedScale={0.94}
+                        pressedOpacity={0.85}
+                        contentStyle={[
+                            styles.filtersPill,
+                            {backgroundColor: colors.surfaceSunken, borderColor: colors.border},
+                        ]}
+                    >
+                        <Ionicons name="options" size={16} color={colors.text}/>
+                        <ThemedText style={[styles.filtersLabel, {color: colors.text}]}>Filters</ThemedText>
+                        {activeFilterCount > 0 ? (
+                            <Animated.View
+                                entering={enterPop()}
+                                exiting={exitPop}
+                                style={[styles.filterBadge, {backgroundColor: colors.accent}]}
+                            >
+                                <ThemedText style={[styles.filterBadgeText, {color: colors.onAccent}]}>
+                                    {activeFilterCount}
+                                </ThemedText>
+                            </Animated.View>
+                        ) : null}
+                    </PressableScale>
                 </View>
             </View>
         </View>
     );
 
-    const Nav = (
-        <TopNav
+    const topBar = (
+        <TopBar
             active={activeNav}
-            below={inlineSearch ? undefined : SearchField}
-            inline={inlineSearch ? InlineSearch : undefined}
+            searchValue={searchQuery}
+            onSearchSubmit={setSearchQuery}
+            showSearch
         />
+    );
+
+    const searchOverlay = (
+        <SearchOverlay
+            visible={searchOverlayVisible}
+            initialQuery={searchQuery}
+            onClose={() => setSearchOverlayVisible(false)}
+            onSubmit={setSearchQuery}
+        />
+    );
+
+    const filtersControl = (
+        <PressableScale
+            onPress={openFilters}
+            accessibilityRole="button"
+            accessibilityLabel="Filters"
+            pressedScale={0.88}
+            pressedOpacity={0.85}
+            hoveredScale={1.08}
+            hitSlop={8}
+        >
+            <View style={[styles.filtersCircle, {backgroundColor: colors.accent}]}>
+                <Ionicons name="options" size={20} color={colors.onAccent}/>
+                {activeFilterCount > 0 ? (
+                    <Animated.View
+                        entering={enterPop()}
+                        exiting={exitPop}
+                        style={[
+                            styles.floatingBadge,
+                            {backgroundColor: colors.onAccent, borderColor: colors.accent},
+                        ]}
+                    >
+                        <ThemedText style={[styles.floatingBadgeText, {color: colors.accent}]}>
+                            {activeFilterCount}
+                        </ThemedText>
+                    </Animated.View>
+                ) : null}
+            </View>
+        </PressableScale>
     );
 
     if (loading && movies.length === 0 && !error) {
         return (
             <ThemedView style={styles.container}>
-                <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
-                <SafeAreaView style={styles.container} edges={[]}>
-                    <View style={[styles.centeredContent, {
-                        maxWidth: contentMaxWidth,
-                        paddingTop: listTopPadding,
-                    }]}>
-                        <View style={styles.skeletonGrid}>
-                            {Array.from({length: numColumns * 4}).map((_, i) => (
-                                <PosterSkeleton key={i} width={itemWidth}/>
-                            ))}
-                        </View>
+                <View
+                    style={[
+                        styles.skeletonScreen,
+                        {paddingHorizontal: contentPad},
+                        {paddingTop: listTopPadding},
+                        isLarge && {maxWidth: contentMaxWidth},
+                    ]}
+                >
+                    <View style={styles.skeletonGrid}>
+                        {Array.from({length: numColumns * 4}).map((_, index) => (
+                            <PosterSkeleton key={index} width={itemWidth}/>
+                        ))}
                     </View>
-                </SafeAreaView>
-                {Nav}
+                </View>
+                {chipRow}
+                {topBar}
+                {searchOverlay}
             </ThemedView>
         );
     }
@@ -289,48 +392,44 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     if (error && movies.length === 0) {
         return (
             <ThemedView style={styles.container}>
-                <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
-                <SafeAreaView style={styles.centered} edges={['top']}>
+                <View style={[styles.errorScreen, {paddingTop: listTopPadding + Spacing.xxxl}]}>
                     <Animated.View entering={enterRise()} style={styles.stateBox}>
-                        <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
-                        <ThemedText type="heading" style={styles.stateTitle}>
+                        <Ionicons name="cloud-offline-outline" size={48} color={colors.textFaint}/>
+                        <ThemedText style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
                             Something went wrong
                         </ThemedText>
-                        <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
+                        <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>
+                            {error}
+                        </ThemedText>
                         <PressableScale
                             onPress={() => {
                                 Analytics.retry('browse');
                                 loadInitial();
                             }}
-                            pressedScale={0.94}
+                            accessibilityRole="button"
+                            pressedScale={0.95}
                             pressedOpacity={0.85}
-                            hoveredScale={1.03}
+                            contentStyle={[styles.stateAction, {backgroundColor: colors.accent}]}
                         >
-                            <View style={[styles.cta, {backgroundColor: colors.accent}]}>
-                                <Ionicons name="refresh" size={18} color={colors.onAccent}/>
-                                <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
-                            </View>
+                            <Ionicons name="refresh" size={16} color={colors.onAccent}/>
+                            <ThemedText style={[styles.stateActionLabel, {color: colors.onAccent}]}>
+                                Try again
+                            </ThemedText>
                         </PressableScale>
                     </Animated.View>
-                </SafeAreaView>
-                {Nav}
+                </View>
+                {chipRow}
+                {topBar}
+                {searchOverlay}
             </ThemedView>
         );
     }
 
-    const activeFilterCount = [
-        appliedFilters.quality,
-        appliedFilters.genre,
-        appliedFilters.minimum_rating,
-    ].filter((v) => v != null).length;
-
     const currentIndex = Math.min(lastVisibleIndex + 1, movies.length);
-    const isEmpty = movies.length === 0;
 
     return (
-        <ThemedView style={styles.container}>
-            <AuroraGlow colors={gradients.accentSubtle} top={insets.top}/>
-            <SafeAreaView style={styles.container} edges={[]}>
+        <HoverCardHost>
+            <ThemedView style={styles.container}>
                 <FlatList
                     ref={listRef}
                     key={`grid-${numColumns}`}
@@ -340,22 +439,42 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     keyExtractor={keyExtractor}
                     numColumns={numColumns}
                     columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
+                    ListHeaderComponent={
+                        totalMovieCount != null && movies.length > 0 ? (
+                            <Animated.View entering={enterFade()}>
+                                <ThemedText style={[Typography.videoMeta, styles.countLine, {color: colors.textMuted}]}>
+                                    About {totalMovieCount.toLocaleString()} results
+                                </ThemedText>
+                            </Animated.View>
+                        ) : null
+                    }
                     ListEmptyComponent={
                         <Animated.View entering={enterRise()} style={styles.stateBox}>
-                            <Ionicons name="search-outline" size={52} color={colors.textMuted}/>
-                            <ThemedText type="heading" style={styles.stateTitle}>
-                                Nothing matches yet
+                            <Ionicons name="search-outline" size={48} color={colors.textFaint}/>
+                            <ThemedText style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
+                                No results found
                             </ThemedText>
-                            <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
-                                Try another search, or reset the filters to see everything.
+                            <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>
+                                Try different keywords, or clear the filters to see everything.
                             </ThemedText>
+                            <PressableScale
+                                onPress={handleClearFilters}
+                                accessibilityRole="button"
+                                pressedScale={0.95}
+                                pressedOpacity={0.85}
+                                contentStyle={[styles.stateOutlineAction, {borderColor: colors.border}]}
+                            >
+                                <ThemedText style={[styles.stateActionLabel, {color: colors.accent}]}>
+                                    Clear filters
+                                </ThemedText>
+                            </PressableScale>
                         </Animated.View>
                     }
                     ListFooterComponent={
-                        error ? (
-                            <Animated.View entering={enterRise()} style={styles.footerError}>
-                                <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
-                                    Couldn&apos;t load more movies.
+                        error && movies.length > 0 ? (
+                            <Animated.View entering={enterFade()} style={styles.footer}>
+                                <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>
+                                    Couldn&apos;t load more results.
                                 </ThemedText>
                                 <PressableScale
                                     onPress={() => {
@@ -363,16 +482,13 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                         loadMore();
                                     }}
                                     accessibilityRole="button"
-                                    pressedScale={0.94}
+                                    pressedScale={0.95}
                                     pressedOpacity={0.85}
-                                    hoveredScale={1.03}
+                                    contentStyle={[styles.stateOutlineAction, {borderColor: colors.border}]}
                                 >
-                                    <View style={[styles.footerRetry, {borderColor: colors.border}]}>
-                                        <Ionicons name="refresh" size={16} color={colors.accent}/>
-                                        <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>
-                                            Try again
-                                        </ThemedText>
-                                    </View>
+                                    <ThemedText style={[styles.stateActionLabel, {color: colors.accent}]}>
+                                        Try again
+                                    </ThemedText>
                                 </PressableScale>
                             </Animated.View>
                         ) : null
@@ -391,95 +507,32 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             onRefresh={handleRefresh}
                             tintColor={colors.accent}
                             colors={[colors.accent]}
-                            progressViewOffset={navHeight + searchRowHeight}
+                            progressViewOffset={topBarHeight + CHIP_ROW_HEIGHT}
                         />
                     }
                     contentContainerStyle={[
                         styles.listContent,
-                        {paddingTop: listTopPadding, paddingBottom: insets.bottom + 96},
+                        {paddingHorizontal: contentPad},
+                        {paddingTop: listTopPadding, paddingBottom: listBottomPadding},
                     ]}
                     showsVerticalScrollIndicator={false}
                     onScroll={onScroll}
                     scrollEventThrottle={16}
                 />
 
-                {totalMovieCount != null && !isEmpty && (
-                    <View style={[styles.countOverlay, {paddingBottom: insets.bottom + 16}]} pointerEvents="box-none">
-                        <LiquidGlassGroup spacing={16} style={styles.countRow}>
-                            <Animated.View
-                                style={[
-                                    styles.scrollToTopButton,
-                                    {
-                                        transform: [{scale: isAtTop ? 0 : 1}, {translateY: isAtTop ? 12 : 0}],
-                                        opacity: isAtTop ? 0 : 1,
-                                        transitionProperty: ['transform', 'opacity'],
-                                        transitionDuration: Duration.base,
-                                        transitionTimingFunction: 'ease-out',
-                                    },
-                                ]}
-                                pointerEvents={isAtTop ? 'none' : 'auto'}
-                            >
-                                <PressableScale
-                                    onPress={() => {
-                                        Analytics.scrollToTop();
-                                        listRef.current?.scrollToOffset({offset: 0, animated: true});
-                                    }}
-                                    pressedScale={0.88}
-                                    pressedOpacity={0.6}
-                                    hoveredScale={1.08}
-                                    hitSlop={8}
-                                >
-                                    <LiquidGlassView
-                                        tint={glassTint}
-                                        fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.9)' : 'rgba(255,255,255,0.9)'}
-                                        style={[styles.circleGlass, {borderColor: colors.border}]}
-                                    >
-                                        <Ionicons name="arrow-up" size={20} color={colors.text}/>
-                                    </LiquidGlassView>
-                                </PressableScale>
-                            </Animated.View>
+                {chipRow}
+                {topBar}
+                {searchOverlay}
 
-                            <LiquidGlassView
-                                tint={glassTint}
-                                fallbackBackgroundColor={scheme === 'dark' ? 'rgba(48,48,46,0.9)' : 'rgba(255,255,255,0.9)'}
-                                style={[styles.countGlass, {borderColor: colors.border}]}
-                            >
-                                <ThemedText style={[styles.countText, {color: colors.text}]}>
-                                    {currentIndex.toLocaleString()}
-                                    <ThemedText style={[styles.countTotal, {color: colors.textMuted}]}>
-                                        {'  /  '}
-                                        {totalMovieCount.toLocaleString()}
-                                    </ThemedText>
-                                </ThemedText>
-                            </LiquidGlassView>
-
-                            <PressableScale
-                                onPress={() => {
-                                    Analytics.filtersOpen();
-                                    setFilterModalVisible(true);
-                                }}
-                                pressedScale={0.88}
-                                pressedOpacity={0.85}
-                                hoveredScale={1.08}
-                                hitSlop={8}
-                            >
-                                <View style={[styles.circleSolid, {backgroundColor: colors.accent}]}>
-                                    <Ionicons name="options" size={20} color={colors.onAccent}/>
-                                    {activeFilterCount > 0 ? (
-                                        <Animated.View entering={enterPop()} exiting={exitPop} style={[styles.filterBadge, {
-                                            backgroundColor: colors.onAccent,
-                                            borderColor: colors.accent
-                                        }]}>
-                                            <ThemedText style={[styles.filterBadgeText, {color: colors.accent}]}>
-                                                {activeFilterCount}
-                                            </ThemedText>
-                                        </Animated.View>
-                                    ) : null}
-                                </View>
-                            </PressableScale>
-                        </LiquidGlassGroup>
-                    </View>
-                )}
+                <ScrollProgress
+                    current={currentIndex}
+                    total={totalMovieCount}
+                    atTop={isAtTop}
+                    onScrollToTop={handleScrollToTop}
+                    trailing={filtersControl}
+                    bottomInset={insets.bottom}
+                    visible={movies.length > 0}
+                />
 
                 <MovieFilterModal
                     visible={filterModalVisible}
@@ -490,132 +543,68 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     }}
                     filters={filters}
                     onFiltersChange={setFilters}
-                    onApply={(f: MovieFilters) => {
+                    onApply={(applied: MovieFilters) => {
                         Analytics.filtersApplied({
-                            genre: f.genre,
-                            quality: f.quality,
-                            minimum_rating: f.minimum_rating,
-                            sort_by: f.sort_by,
-                            order_by: f.order_by,
+                            genre: applied.genre,
+                            quality: applied.quality,
+                            minimum_rating: applied.minimum_rating,
+                            sort_by: applied.sort_by,
+                            order_by: applied.order_by,
                         });
-                        applyFilters(f);
-                        listRef.current?.scrollToOffset({offset: 0, animated: true});
+                        applyFilters(applied);
+                        scrollToTop();
                     }}
-                    onClear={() => {
-                        Analytics.filtersReset();
-                        clearFiltersAndReload();
-                        listRef.current?.scrollToOffset({offset: 0, animated: true});
-                    }}
+                    onClear={handleClearFilters}
                 />
-            </SafeAreaView>
-            {Nav}
-        </ThemedView>
-    );
-}
-
-function AuroraGlow({colors, top}: { colors: readonly string[]; top: number }) {
-    return (
-        <LinearGradient
-            colors={[colors[0], colors[1], 'rgba(0,0,0,0)']}
-            bands={16}
-            style={[styles.aurora, {height: 320 + top}]}
-            pointerEvents="none"
-        />
+            </ThemedView>
+        </HoverCardHost>
     );
 }
 
 const styles = StyleSheet.create({
     container: {flex: 1},
     list: {flex: 1},
-    listContent: {paddingHorizontal: POSTER_GAP / 2},
-    centeredContent: {flex: 1, width: '100%', alignSelf: 'center', paddingHorizontal: POSTER_GAP / 2},
-    aurora: {position: 'absolute', top: 0, left: 0, right: 0, opacity: 0.5},
-
-    searchBarFixed: {paddingBottom: 8},
-    searchRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
-    searchPill: {flex: 1},
-
-    searchBackGlass: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        overflow: 'hidden',
-        borderWidth: StyleSheet.hairlineWidth,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    searchFieldWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: 44,
-    },
-    searchFieldWrapperInline: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: INLINE_SEARCH_HEIGHT,
-    },
-    inlineSearchPill: {
-        flex: 1,
-        maxWidth: 340,
-        height: INLINE_SEARCH_HEIGHT,
-        borderRadius: Radius.pill,
-        borderWidth: StyleSheet.hairlineWidth,
-        paddingHorizontal: 12,
-        justifyContent: 'center',
-    },
-    searchInputInline: {
-        flex: 1,
-        height: INLINE_SEARCH_HEIGHT,
-        fontSize: 14,
-        padding: 0,
-        fontFamily: FontFamily.regular,
-    },
-    searchIcon: {marginRight: 8},
-    searchInput: {flex: 1, height: 44, fontSize: 16, padding: 0, fontFamily: FontFamily.regular},
-    clearButton: {paddingLeft: 8, justifyContent: 'center', minWidth: 32, minHeight: 32, alignItems: 'center'},
-
+    listContent: {flexGrow: 1},
     row: {flexDirection: 'row'},
-    centered: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+    countLine: {fontWeight: '500', paddingHorizontal: POSTER_GAP / 2, paddingBottom: Spacing.sm},
 
-    skeletonGrid: {flexDirection: 'row', flexWrap: 'wrap'},
-
-    stateBox: {alignItems: 'center', paddingHorizontal: 40, paddingTop: 80, gap: 6},
-    stateTitle: {marginTop: 12},
-    stateMessage: {fontSize: 14, lineHeight: 20, textAlign: 'center'},
-    cta: {
+    chipRow: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        zIndex: 20,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    chipRowInner: {
+        flex: 1,
+        width: '100%',
+        alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        borderRadius: Radius.pill,
-        paddingHorizontal: 22,
-        paddingVertical: 12,
-        marginTop: 20,
     },
-    ctaLabel: {fontSize: 15, fontWeight: '700'},
-    footerError: {alignItems: 'center', paddingVertical: 24, gap: 12, width: '100%'},
-    footerRetry: {
+    chipBarArea: {flex: 1},
+    filtersArea: {paddingLeft: Spacing.sm},
+    filtersPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: Spacing.xs + 2,
+        height: 32,
         borderRadius: Radius.pill,
         borderWidth: StyleSheet.hairlineWidth,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingHorizontal: Spacing.md,
     },
-
-    countOverlay: {position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', zIndex: 1},
-    countRow: {flexDirection: 'row', alignItems: 'center', gap: 12},
-    scrollToTopButton: {justifyContent: 'center', alignItems: 'center'},
-    circleGlass: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        overflow: 'hidden',
-        borderWidth: StyleSheet.hairlineWidth,
+    filtersLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500'},
+    filterBadge: {
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'center',
+        paddingHorizontal: 4,
     },
-    circleSolid: {
+    filterBadgeText: {fontSize: 11, lineHeight: 14, fontWeight: '700'},
+
+    filtersCircle: {
         width: 46,
         height: 46,
         borderRadius: 23,
@@ -627,15 +616,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 3,
     },
-    countGlass: {
-        borderRadius: Radius.pill,
-        overflow: 'hidden',
-        borderWidth: StyleSheet.hairlineWidth,
-        paddingHorizontal: 18,
-        height: 46,
-        justifyContent: 'center',
-    },
-    filterBadge: {
+    floatingBadge: {
         position: 'absolute',
         top: -2,
         right: -2,
@@ -647,7 +628,34 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: 3,
     },
-    filterBadgeText: {fontSize: 11, lineHeight: 14, fontWeight: '800'},
-    countText: {fontSize: 14, fontWeight: '800'},
-    countTotal: {fontSize: 13, fontWeight: '600'},
+    floatingBadgeText: {fontSize: 11, lineHeight: 14, fontWeight: '800'},
+
+    skeletonScreen: {flex: 1, width: '100%', alignSelf: 'center'},
+    skeletonGrid: {flexDirection: 'row', flexWrap: 'wrap'},
+
+    errorScreen: {flex: 1, alignItems: 'center'},
+    stateBox: {alignItems: 'center', paddingHorizontal: Spacing.xl, paddingTop: Spacing.xxl, gap: Spacing.sm},
+    stateTitle: {fontWeight: '700', marginTop: Spacing.sm},
+    stateMessage: {textAlign: 'center', maxWidth: 360},
+    stateAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        borderRadius: Radius.pill,
+        paddingHorizontal: Spacing.xl,
+        paddingVertical: Spacing.md,
+        marginTop: Spacing.md,
+    },
+    stateOutlineAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        borderRadius: Radius.pill,
+        borderWidth: StyleSheet.hairlineWidth,
+        paddingHorizontal: Spacing.xl,
+        paddingVertical: Spacing.md,
+        marginTop: Spacing.md,
+    },
+    stateActionLabel: {fontSize: 14, lineHeight: 18, fontWeight: '700'},
+    footer: {alignItems: 'center', paddingVertical: Spacing.xl, gap: Spacing.xs},
 });

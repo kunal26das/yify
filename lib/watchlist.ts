@@ -51,6 +51,8 @@ function toWatchlistMovie(m: Movie): Movie {
         mpaRating: m.mpaRating,
         posterUrls: m.posterUrls,
         backgroundImageUrl: m.backgroundImageUrl,
+        ytTrailerCode: m.ytTrailerCode,
+        thumbnailUrls: m.thumbnailUrls,
     };
 }
 

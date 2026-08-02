@@ -46,6 +46,7 @@ function initialShelves(): ShelfState[] {
 export function useHomeViewModel(repository: MovieRepository) {
     const [heroMovies, setHeroMovies] = useState<Movie[]>([]);
     const [heroTrailers, setHeroTrailers] = useState<Record<number, string | null>>({});
+    const [heroBackdrops, setHeroBackdrops] = useState<Record<number, string | null>>({});
     const [shelves, setShelves] = useState<ShelfState[]>(initialShelves);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -83,9 +84,13 @@ export function useHomeViewModel(repository: MovieRepository) {
             trailerAskedRef.current.add(movieId);
             repository
                 .getMovieDetails(movieId)
-                .then((details) =>
-                    setHeroTrailers((prev) => ({...prev, [movieId]: details.ytTrailerCode || null}))
-                )
+                .then((details) => {
+                    setHeroTrailers((prev) => ({...prev, [movieId]: details.ytTrailerCode || null}));
+                    setHeroBackdrops((prev) => ({
+                        ...prev,
+                        [movieId]: details.screenshotUrls[0] ?? null,
+                    }));
+                })
                 .catch(() => {
                     setHeroTrailers((prev) => ({...prev, [movieId]: null}));
                 });
@@ -215,6 +220,7 @@ export function useHomeViewModel(repository: MovieRepository) {
     return {
         heroMovies,
         heroTrailers,
+        heroBackdrops,
         requestHeroTrailer,
         shelves: dedupedShelves,
         loading,

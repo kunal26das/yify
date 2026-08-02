@@ -2,22 +2,19 @@ import {useCallback} from 'react';
 import {router, useNavigation, usePathname} from 'expo-router';
 import {OrderBy, SortBy} from './movieFilterOptions';
 
-export type DestinationKey = 'home' | 'movies' | 'new' | 'my-list';
+export type DestinationKey = 'home' | 'movies' | 'shows' | 'my-list';
 
 export interface Destination {
     key: DestinationKey;
     label: string;
     href: string;
+    upcoming?: boolean;
 }
 
 export const DESTINATIONS: readonly Destination[] = [
     {key: 'home', label: 'Home', href: '/'},
     {key: 'movies', label: 'Movies', href: '/browse'},
-    {
-        key: 'new',
-        label: 'Latest',
-        href: `/browse?sort_by=${SortBy.DateAdded}&order_by=${OrderBy.Desc}`,
-    },
+    {key: 'shows', label: 'Shows', href: '/shows', upcoming: true},
     {key: 'my-list', label: 'My List', href: '/my-list'},
 ];
 

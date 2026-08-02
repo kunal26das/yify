@@ -98,17 +98,28 @@ export class MovieRepositoryImpl implements MovieRepository {
         .filter((url): url is string => url != null);
   }
 
+  private toThumbnailUrls(dto: YtsMovieDto): string[] {
+    const trailerCode = dto.yt_trailer_code?.trim();
+    const backdrop = dto.background_image_original ?? dto.background_image;
+    return [
+      trailerCode ? `https://img.youtube.com/vi/${trailerCode}/maxresdefault.jpg` : null,
+      trailerCode ? `https://img.youtube.com/vi/${trailerCode}/hq720.jpg` : null,
+      this.toDisplayImageUrl(backdrop, 896, {quality: 92, noEnlarge: true}),
+    ].filter((url): url is string => url != null);
+  }
+
   private toScreenshotUrls(dto: YtsMovieDto): string[] {
     return [
       dto.large_screenshot_image1 ?? dto.medium_screenshot_image1,
       dto.large_screenshot_image2 ?? dto.medium_screenshot_image2,
       dto.large_screenshot_image3 ?? dto.medium_screenshot_image3,
     ]
-        .map((url) => this.toDisplayImageUrl(url, 1280))
+        .map((url) => this.toDisplayImageUrl(url, 1920, {quality: 88}))
         .filter((url): url is string => url != null);
   }
 
   private toMovie(dto: YtsMovieDto): Movie {
+    const thumbnailUrls = this.toThumbnailUrls(dto);
     return {
       id: dto.id,
       imdbCode: dto.imdb_code,
@@ -127,6 +138,8 @@ export class MovieRepositoryImpl implements MovieRepository {
             quality: 90,
             noEnlarge: true,
           }) ?? undefined,
+      ytTrailerCode: dto.yt_trailer_code || undefined,
+      thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
     };
   }
 

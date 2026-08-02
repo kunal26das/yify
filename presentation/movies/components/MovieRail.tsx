@@ -6,7 +6,7 @@ import type {Movie} from '@/domain';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
-import {ThemedText} from '../../components/themed-text';
+import {ThemedText, type ThemedTextType} from '../../components/themed-text';
 import {Duration, PressableScale, enterFade, enterRise, exitFade} from '../../components/motion';
 import {MoviePosterItem} from './MoviePosterItem';
 import {MovieLandscapeItem, landscapeCellHeight, landscapeWidth} from './MovieLandscapeItem';
@@ -24,6 +24,7 @@ interface MovieRailProps {
     gutter: number;
     onSeeAll?: () => void;
     markNew?: boolean;
+    titleType?: ThemedTextType;
 }
 
 const IS_WEB = Platform.OS === 'web';
@@ -63,6 +64,7 @@ export function MovieRail({
                               gutter,
                               onSeeAll,
                               markNew,
+                              titleType = 'heading',
                           }: MovieRailProps) {
     const {colors} = usePalette();
     const ranked = variant === 'ranked';
@@ -253,7 +255,7 @@ export function MovieRail({
         <View style={styles.rail}>
             <Animated.View entering={enterRise()} style={[styles.header, {paddingHorizontal: gutter}]}>
                 <View style={styles.headerText}>
-                    <ThemedText type="heading">{title}</ThemedText>
+                    <ThemedText type={titleType}>{title}</ThemedText>
                     {subtitle ? (
                         <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>
                             {subtitle}
