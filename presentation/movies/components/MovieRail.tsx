@@ -42,7 +42,7 @@ function rankedOverlap(posterWidth: number) {
 
 function rankedNumeralArea(rank: number, posterWidth: number) {
     const size = rankedNumeralSize(posterWidth);
-    return Math.round(size * (String(rank).length >= 2 ? 1.12 : 0.66));
+    return Math.round(size * (String(rank).length >= 2 ? 1.42 : 0.66));
 }
 
 function rankedItemWidth(rank: number, posterWidth: number) {
@@ -357,6 +357,7 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
             >
                 <ThemedText
                     type="display"
+                    numberOfLines={1}
                     style={[styles.numeral, {fontSize: numeralSize, lineHeight: numeralSize, color: colors.rankNumeral}]}
                 >
                     {rank}
