@@ -9,20 +9,20 @@ import {
     setNotificationsEnabled,
     setThemePreference,
     type BrowseDefaults,
-    type Settings,
+    type Preferences,
     type ThemePreference,
-} from '@/lib/settings';
+} from '@/lib/preferences';
 import {clearWatchlist} from '@/lib/watchlist';
 import {clearRecentSearches, getRecentSearches} from './components/SearchOverlay';
-import {useSettings} from '../hooks/use-settings';
+import {usePreferences} from '../hooks/use-preferences';
 import {useWatchlist} from './useWatchlist';
 
 export interface AppInfo {
     version: string;
 }
 
-export function useSettingsViewModel() {
-    const settings: Settings = useSettings();
+export function usePreferencesViewModel() {
+    const preferences: Preferences = usePreferences();
     const watchlist = useWatchlist();
 
     const [permissionBlocked, setPermissionBlocked] = useState(false);
@@ -73,9 +73,9 @@ export function useSettingsViewModel() {
     }, []);
 
     return {
-        theme: settings.theme,
-        browseDefaults: settings.browseDefaults,
-        notifications: settings.notifications,
+        theme: preferences.theme,
+        browseDefaults: preferences.browseDefaults,
+        notifications: preferences.notifications,
         permissionBlocked,
         watchlistCount: watchlist.length,
         searchHistoryCount: searchCount,
@@ -89,4 +89,4 @@ export function useSettingsViewModel() {
     };
 }
 
-export type SettingsViewModel = ReturnType<typeof useSettingsViewModel>;
+export type PreferencesViewModel = ReturnType<typeof usePreferencesViewModel>;

@@ -6,7 +6,7 @@ import {Quality} from '@/presentation/movies/constants/movieFilterOptions';
 import {getApiBaseUrl} from '@/lib/remote-config';
 import {buildNotificationContent, selectNewMovies, type NewMoviesNotification} from '@/lib/new-movies-diff';
 import {NewMoviesCache} from '@/lib/new-movies-cache';
-import {areNotificationsEnabled} from '@/lib/settings';
+import {areNotificationsEnabled} from '@/lib/preferences';
 import {createLocalStorageStore} from '@/lib/storage/local-storage-key-value-store';
 
 

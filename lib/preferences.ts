@@ -17,7 +17,7 @@ export interface BrowseDefaults {
     minimum_rating: number;
 }
 
-export interface Settings {
+export interface Preferences {
     theme: ThemePreference;
     notifications: boolean;
     browseDefaults: BrowseDefaults;
@@ -31,7 +31,7 @@ export const BROWSE_DEFAULTS: BrowseDefaults = {
     minimum_rating: 0,
 };
 
-const DEFAULTS: Settings = {theme: 'dark', notifications: true, browseDefaults: BROWSE_DEFAULTS};
+const DEFAULTS: Preferences = {theme: 'dark', notifications: true, browseDefaults: BROWSE_DEFAULTS};
 
 let store: KeyValueStore | null = null;
 function getStore(): KeyValueStore {
@@ -39,7 +39,7 @@ function getStore(): KeyValueStore {
     return store;
 }
 
-let snapshot: Settings | null = null;
+let snapshot: Preferences | null = null;
 const listeners = new Set<() => void>();
 
 function isThemePreference(value: string | undefined): value is ThemePreference {
@@ -63,7 +63,7 @@ function parseBrowseDefaults(raw: string | undefined): BrowseDefaults {
     }
 }
 
-function read(): Settings {
+function read(): Preferences {
     if (snapshot) return snapshot;
     const s = getStore();
     const theme = s.getString(THEME_KEY);
@@ -76,7 +76,7 @@ function read(): Settings {
     return snapshot;
 }
 
-function write(next: Settings): void {
+function write(next: Preferences): void {
     snapshot = next;
     const s = getStore();
     s.set(THEME_KEY, next.theme);
@@ -85,7 +85,7 @@ function write(next: Settings): void {
     listeners.forEach((listener) => listener());
 }
 
-export function getSettings(): Settings {
+export function getPreferences(): Preferences {
     return read();
 }
 
@@ -111,7 +111,7 @@ export function areNotificationsEnabled(): boolean {
     return read().notifications;
 }
 
-export function subscribeSettings(listener: () => void): () => void {
+export function subscribePreferences(listener: () => void): () => void {
     listeners.add(listener);
     return () => {
         listeners.delete(listener);
