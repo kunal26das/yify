@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.4.2",
-  "versionCode": 49,
+  "version": "1.4.3",
+  "versionCode": 50,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -22,7 +22,7 @@
     "prebuild": "expo prebuild",
     "postinstall": "patch-package",
     "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts'",
-    "revopush": "cd revopush && yarn gui"
+    "release": "cd release && yarn gui"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",
@@ -39,8 +39,6 @@
     "@react-native-firebase/remote-config": "24.1.1",
     "@react-native-google-signin/google-signin": "16.1.4",
     "@revenuecat/purchases-js": "1.49.0",
-    "@revopush/expo-code-push-plugin": "1.1.0",
-    "@revopush/react-native-code-push": "2.6.0",
     "expo": "57.0.8",
     "expo-background-task": "57.0.6",
     "expo-blur": "57.0.2",
@@ -60,6 +58,7 @@
     "expo-symbols": "57.0.1",
     "expo-system-ui": "57.0.2",
     "expo-task-manager": "57.0.6",
+    "expo-updates": "57.0.11",
     "expo-web-browser": "57.0.2",
     "firebase": "12.16.0",
     "react": "19.2.8",

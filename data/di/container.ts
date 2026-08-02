@@ -13,7 +13,7 @@ import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
 import {SearchHistoryRepositoryImpl} from '../repositories/SearchHistoryRepositoryImpl';
 import {RevenueCatPurchaseRepositoryImpl} from '../repositories/RevenueCatPurchaseRepositoryImpl';
 import {RemoteAppConfig} from '../services/RemoteAppConfig';
-import {CodePushAppUpdates} from '../services/CodePushAppUpdates';
+import {ExpoAppUpdates} from '../services/ExpoAppUpdates';
 import {PlayStoreServices} from '../services/PlayStoreServices';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
@@ -54,7 +54,7 @@ export function createDependencies(): Dependencies {
     instance = {
         analytics,
         appConfig,
-        appUpdates: new CodePushAppUpdates(),
+        appUpdates: new ExpoAppUpdates(),
         auth,
         movies: new MovieRepositoryImpl(ytsApi),
         shows: new ShowRepositoryImpl(eztvApi),

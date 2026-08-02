@@ -9,11 +9,11 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 "More like this" — all wrapped in iOS 26 liquid-glass UI and a strict clean-architecture core.
 
 [![Expo SDK](https://img.shields.io/badge/Expo-SDK%2057-000020?logo=expo&logoColor=white)](https://docs.expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.85.3-61DAFB?logo=react&logoColor=white)](https://reactnative.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.86.2-61DAFB?logo=react&logoColor=white)](https://reactnative.dev/)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Architecture](https://img.shields.io/badge/architecture-clean-success)](#️-architecture)
-[![OTA](https://img.shields.io/badge/OTA-RevoPush%20CodePush-6C4AB6)](#-over-the-air-updates)
+[![OTA](https://img.shields.io/badge/OTA-EAS%20Update-000020?logo=expo&logoColor=white)](#-over-the-air-updates)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-lightgrey)](#-get-started)
 
 </div>
@@ -66,7 +66,7 @@ round-trip.
 - 🎚️ **Native filter sheet** — quality / rating / genre / sort in a device-corner-radius bottom sheet that looks identical on iOS and Android.
 - 🔔 **New-release notifications** — a background task diffs the catalog and pings you when fresh titles land; tapping the notification deep-links straight into the movie.
 - ☁️ **Firebase Remote Config** — the API base URL and the TMDB key are resolved at runtime, so the backend can move and keys can rotate without shipping an update.
-- 🚀 **Over-the-air updates** — JS/asset updates roll out through RevoPush (CodePush) without an app-store review.
+- 🚀 **Over-the-air updates** — JS/asset updates roll out through EAS Update without an app-store review.
 - 🖥️ **True desktop app** — the same UI runs as a native macOS / Windows / Linux binary via Electron, with its own new-movie tray notifier.
 
 ---
@@ -287,14 +287,22 @@ The diff logic is shared; only the delivery differs per platform:
 ## 🚀 Over-the-air updates
 
 Native builds ship JS and asset updates **over the air** through
-[RevoPush](https://revopush.org/) (a CodePush server), so most changes reach users without an
-app-store review. `RootLayout` is wrapped with CodePush (`checkFrequency: ON_APP_RESUME`) on
-native only — the web/desktop bundle never imports it, keeping `yarn export:web` clean. Separate
-staging and production deployment keys exist per platform.
+[EAS Update](https://docs.expo.dev/eas-update/introduction/), so most changes reach users without
+an app-store review. `ExpoAppUpdates` checks on launch and on every foreground, then surfaces a
+restart prompt through `UpdateSnackbar`. The web/desktop bundle resolves the `.web.ts` no-op twin,
+keeping `yarn export:web` clean.
 
-The repo also ships **`revopush/`** — a standalone, clean-architecture TUI/GUI release console
-(`yarn revopush`) that drives RevoPush logins, base releases, and CodePush rollouts with
-guardrails.
+Updates are keyed by **`runtimeVersion`** (`fingerprint` policy), not by app version — change a
+native dependency and the fingerprint changes, so old binaries stop receiving updates instead of
+crashing on mismatched native code. `Staging` and `Production` are EAS **channels**.
+
+Because binaries are built locally rather than on EAS Build, EAS has no record of what actually
+shipped. `release/releases.json` is that record: the store-release flow writes the runtime version
+of every binary it ships, and the update flow refuses to publish for a runtime version that has no
+store release — an update nobody could receive.
+
+The repo also ships **`release/`** — a standalone, clean-architecture TUI/GUI release console
+(`yarn release`) that drives Expo logins, store releases, and EAS Update rollouts with guardrails.
 
 ---
 
@@ -303,7 +311,7 @@ guardrails.
 ```
 yify/
 ├─ app/                      # 📱 expo-router routes — thin adapters only
-│  ├─ _layout.tsx            #    Stack, theming, fonts, createDependencies() + bootstrap(), CodePush
+│  ├─ _layout.tsx            #    Stack, theming, fonts, createDependencies() + bootstrap()
 │  ├─ index.tsx              #    Home route
 │  ├─ movies.tsx             #    Deep-linkable browse grid (reads filters from the URL)
 │  └─ movie/[id].tsx         #    Watch route
@@ -331,8 +339,8 @@ yify/
 │  └─ constants/             #    theme (Fraunces + Hanken type system, palette)
 ├─ config/                   # 🔥 google-services.json / GoogleService-Info.plist
 ├─ desktop/                  # 🖥️ Electron shell + tray notifier (wraps the web export)
-├─ revopush/                 # 🚀 clean-arch OTA release console (TUI + GUI)
-├─ plugins/                  # 🧩 config plugin — injects CodePush deployment keys
+├─ release/                  # 🚀 clean-arch release console (TUI + GUI) + releases.json ledger
+├─ plugins/                  # 🧩 config plugins — Android release, R8 heap, GWP-ASan, ad-id opt-out
 └─ scripts/                  # 🛠️ android debug/release build helpers
 ```
 
@@ -363,7 +371,7 @@ npm start
 | `npm run export:web` | Static web export (deployed to GitHub Pages) |
 | `npm run desktop` | Build the web export and launch the **Electron** desktop app |
 | `npm run desktop:build` | Package a macOS desktop binary (`:build:all` for mac/win/linux) |
-| `npm run revopush` | Launch the RevoPush release console |
+| `npm run release` | Launch the release console (store releases + EAS Update) |
 | `npm run lint` | ESLint **+ module-boundary enforcement** |
 | `npm run prebuild` | Regenerate native `ios/` & `android/` |
 
@@ -378,7 +386,7 @@ mindmap
   root((Yify))
     Runtime
       Expo SDK 57
-      React Native 0.85.3
+      React Native 0.86.2
       React 19.2
       TypeScript strict
       React Compiler
@@ -406,12 +414,13 @@ mindmap
       Firebase Remote Config
       expo-notifications
       expo-background-task
-      RevoPush CodePush (OTA)
+      EAS Update (OTA)
 ```
 
-> ⚠️ **Version ceiling:** React Native is pinned to **0.85.3**. RN 0.86 breaks Expo SDK 56/57 native
-> modules (the JSI `Runtime` → `IRuntime` ABI change) and crashes at launch. A `patch-package` patch
-> keeps `expo-modules-core` building against the pinned runtime.
+> 📌 **Exact pins, no ranges.** Every dependency is pinned to an exact version — no `^`, no `~` —
+> so `expo install` / `yarn add` ranges get stripped after every upgrade. The repo carries **no
+> `patch-package` patches**; the old `expo-modules-core` JSI patch went away with RN 0.86, which
+> ships `tryGetMutableBuffer` upstream.
 
 ---
 
