@@ -117,7 +117,7 @@ function RootLayout() {
             <PlayerProvider>
                 <Stack>
                     <Stack.Screen name="index" options={{headerShown: false}}/>
-                    <Stack.Screen name="browse" options={{headerShown: false}}/>
+                    <Stack.Screen name="movies" options={{headerShown: false}}/>
                     <Stack.Screen name="my-list" options={{headerShown: false}}/>
                     <Stack.Screen name="shows" options={{headerShown: false}}/>
                     <Stack.Screen name="settings" options={{headerShown: false}}/>

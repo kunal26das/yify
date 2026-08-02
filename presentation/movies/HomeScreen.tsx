@@ -61,7 +61,7 @@ function buildBrowseHref(query: ShelfQuery): string {
     if (query.sort_by) params.set('sort_by', query.sort_by);
     if (query.order_by) params.set('order_by', query.order_by);
     const qs = params.toString();
-    return qs ? `/browse?${qs}` : '/browse';
+    return qs ? `/movies?${qs}` : '/movies';
 }
 
 function skeletonCount(width: number, posterWidth: number, gutter: number): number {

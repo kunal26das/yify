@@ -62,7 +62,7 @@ const GENRE_VALUES = new Set<string>(Object.values(Genre));
 function genreHref(genre: string): string | null {
     if (typeof genre !== 'string') return null;
     const value = genre.trim().toLowerCase();
-    return GENRE_VALUES.has(value) && value !== Genre.All ? `/browse?genre=${value}` : null;
+    return GENRE_VALUES.has(value) && value !== Genre.All ? `/movies?genre=${value}` : null;
 }
 
 function headlineParts(details: MovieDetails): string[] {
@@ -339,7 +339,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                 expanded={titleExpanded}
                 onToggle={() => setTitleExpanded((value) => !value)}
             />
-            <WatchActions details={details} onShare={handleShare} onDownload={handleDownload}/>
+            <WatchActions details={details} onShare={handleShare} onDownload={handleDownload} pad={pad}/>
             <DescriptionCard details={details} onGenrePress={handleGenre}/>
         </>
     );
