@@ -145,12 +145,4 @@ const styles = StyleSheet.create({
     flex: { flex: 1 },
 });
 
-function withCodePush(component: typeof RootLayout) {
-    if (Platform.OS === 'web') {
-        return component;
-    }
-    const codePush = require('@revopush/react-native-code-push');
-    return codePush({checkFrequency: codePush.CheckFrequency.MANUAL})(component);
-}
-
-export default withCodePush(RootLayout);
+export default RootLayout;

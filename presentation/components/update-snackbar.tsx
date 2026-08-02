@@ -31,7 +31,9 @@ export function UpdateSnackbar() {
             ? 'Update ready — restart to apply'
             : state === 'installing'
                 ? 'Installing update…'
-                : `Downloading update… ${Math.round(progress * 100)}%`;
+                : progress > 0
+                    ? `Downloading update… ${Math.round(progress * 100)}%`
+                    : 'Downloading update…';
 
     return (
         <View style={[styles.wrap, {bottom: insets.bottom + Spacing.lg}]} pointerEvents="box-none">
@@ -56,7 +58,7 @@ export function UpdateSnackbar() {
                     <ThemedText style={styles.message} numberOfLines={1}>
                         {message}
                     </ThemedText>
-                    {state === 'downloading' ? (
+                    {state === 'downloading' && progress > 0 ? (
                         <View style={styles.track}>
                             <Animated.View
                                 style={[

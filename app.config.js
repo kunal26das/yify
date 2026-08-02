@@ -8,11 +8,14 @@ const buildNumber = String(pkg.versionCode);
 
 const baseUrl = process.env.EXPO_WEB_BASE_URL ?? '';
 
+const projectId = base.expo.extra?.eas?.projectId ?? '';
+
 module.exports = {
     ...base,
     expo: {
         ...base.expo,
         version,
+        ...(projectId ? {updates: {url: `https://u.expo.dev/${projectId}`}} : {}),
         experiments: {
             ...base.expo.experiments,
             baseUrl,
