@@ -80,7 +80,6 @@ export class TmdbRepositoryImpl implements TmdbRepository {
             if (unique.length === 0) return null;
             return {
                 region,
-                link: entry.link,
                 providers: unique,
             };
         } catch {

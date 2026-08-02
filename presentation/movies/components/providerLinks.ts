@@ -1,3 +1,9 @@
+const REFERRAL = {
+    utm_source: 'yify',
+    utm_medium: 'referral',
+    utm_campaign: 'watch_on',
+};
+
 const PROVIDER_SEARCH: Record<number, (query: string) => string> = {
     8: (q) => `https://www.netflix.com/search?q=${q}`,
     9: (q) => `https://www.primevideo.com/search?phrase=${q}`,
@@ -16,12 +22,21 @@ const PROVIDER_SEARCH: Record<number, (query: string) => string> = {
     3: (q) => `https://play.google.com/store/search?q=${q}&c=movies`,
 };
 
-export function providerUrl(providerId: number, title: string, fallback?: string): string | undefined {
-    const build = PROVIDER_SEARCH[providerId];
-    if (build) return build(encodeURIComponent(title));
-    return fallback;
+function withReferral(url: string): string {
+    const params = Object.entries(REFERRAL)
+        .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+        .join('&');
+    const [base, hash] = url.split('#');
+    const joined = `${base}${base.includes('?') ? '&' : '?'}${params}`;
+    return hash ? `${joined}#${hash}` : joined;
 }
 
-export function opensNativeApp(providerId: number): boolean {
+export function providerLinkable(providerId: number): boolean {
     return PROVIDER_SEARCH[providerId] != null;
+}
+
+export function providerUrl(providerId: number, title: string): string | undefined {
+    const build = PROVIDER_SEARCH[providerId];
+    if (!build) return undefined;
+    return withReferral(build(encodeURIComponent(title)));
 }

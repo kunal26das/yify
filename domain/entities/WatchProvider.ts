@@ -9,6 +9,5 @@ export interface WatchProvider {
 
 export interface WatchAvailability {
     region: string;
-    link?: string;
     providers: WatchProvider[];
 }
