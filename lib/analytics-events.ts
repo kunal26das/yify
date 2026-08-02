@@ -64,6 +64,8 @@ export const Analytics = {
     torrentNoticeDismissed: (movieId: number) => trackEvent('torrent_notice_dismissed', {movie_id: movieId}),
 
     shareOpen: (movieId: number) => trackEvent('share_open', {movie_id: movieId}),
+    watchProviderOpen: (movieId: number, region: string) =>
+        trackEvent('watch_provider_open', {movie_id: movieId, region}),
 
     playerMinimize: (movie: Pick<Movie, 'id' | 'title'>) =>
         trackEvent('player_minimize', movieParams(movie)),

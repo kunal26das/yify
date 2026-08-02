@@ -1,11 +1,11 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import type {Show, ShowRepository} from '@/domain';
+import type {Show, ShowRepository, TmdbRepository} from '@/domain';
 import {EZTV_MAX_LIMIT} from '@/data';
 import {Analytics} from '@/lib/analytics-events';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
-export function useShowsViewModel(repository: ShowRepository) {
+export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepository) {
     const [shows, setShows] = useState<Show[]>([]);
     const [status, setStatus] = useState<ShowsStatus>('loading');
     const [refreshing, setRefreshing] = useState(false);
@@ -14,6 +14,26 @@ export function useShowsViewModel(repository: ShowRepository) {
     const pageRef = useRef(0);
     const loadingRef = useRef(false);
     const seenRef = useRef<Set<string>>(new Set());
+
+    const decorate = useCallback(
+        async (batch: Show[]) => {
+            if (!artwork) return;
+            for (const show of batch) {
+                if (!show.imdbCode) continue;
+                const found = await artwork.findByImdbCode(show.imdbCode);
+                const poster = found?.posterUrl ?? found?.backdropUrl;
+                if (!poster) continue;
+                setShows((prev) =>
+                    prev.map((item) =>
+                        item.imdbId === show.imdbId
+                            ? {...item, thumbnailUrl: poster, title: found?.title || item.title}
+                            : item
+                    )
+                );
+            }
+        },
+        [artwork]
+    );
 
     const load = useCallback(
         async (page: number) => {
@@ -30,6 +50,7 @@ export function useShowsViewModel(repository: ShowRepository) {
                 for (const show of fresh) seenRef.current.add(show.imdbId);
 
                 setShows((prev) => (page === 1 ? fresh : [...prev, ...fresh]));
+                if (artwork) void decorate(fresh);
                 setHasMore(result.hasMore);
                 if (page === 1 && result.shows.length > 0) {
                     Analytics.showsImpression(result.shows.length);
@@ -51,7 +72,7 @@ export function useShowsViewModel(repository: ShowRepository) {
                 setRefreshing(false);
             }
         },
-        [repository]
+        [artwork, decorate, repository]
     );
 
     useEffect(() => {

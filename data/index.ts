@@ -17,6 +17,22 @@ export {
   EZTV_MAX_LIMIT,
 } from './datasources/EztvApiDataSource';
 export { ShowRepositoryImpl } from './repositories/ShowRepositoryImpl';
+export type {
+  TmdbApi,
+  TmdbMediaType,
+  TmdbTitleDto,
+  TmdbFindResponse,
+  TmdbProviderDto,
+  TmdbProviderRegionDto,
+  TmdbWatchProvidersResponse,
+} from './datasources/TmdbApiDataSource';
+export {
+  TmdbApiDataSource,
+  tmdbImageUrl,
+  TMDB_BASE_URL,
+  TMDB_IMAGE_BASE_URL,
+} from './datasources/TmdbApiDataSource';
+export { TmdbRepositoryImpl } from './repositories/TmdbRepositoryImpl';
 
 export type {
   YtsMetaDto,

@@ -32,6 +32,7 @@ import {TopBar, useTopBarHeight} from './components/TopBar';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {VideoRow} from './components/VideoRow';
 import {WatchActions} from './components/WatchActions';
+import {WatchProviders} from './components/WatchProviders';
 import {metaParts, thumbFor} from './components/format';
 import {useGoTo} from './constants/destinations';
 import {Genre} from './constants/movieFilterOptions';
@@ -341,6 +342,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             />
             <WatchActions details={details} onShare={handleShare} onDownload={handleDownload} pad={pad}/>
             <DescriptionCard details={details} onGenrePress={handleGenre}/>
+            <WatchProviders details={details} pad={pad}/>
         </>
     );
 
