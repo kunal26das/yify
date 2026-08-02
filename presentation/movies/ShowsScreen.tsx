@@ -1,5 +1,4 @@
 import {Ionicons} from '@expo/vector-icons';
-import {Linking} from 'react-native';
 import {Image} from 'expo-image';
 import {useCallback, useMemo} from 'react';
 import {FlatList, RefreshControl, StyleSheet, View} from 'react-native';
@@ -149,18 +148,18 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
 
 function ShowCard({show, width}: {show: Show; width: number}) {
     const {colors} = usePalette();
+    const goTo = useGoTo();
     const thumbHeight = Math.round(width / THUMB_ASPECT);
 
-    const openImdb = () => {
-        if (!show.imdbCode) return;
+    const open = () => {
         Analytics.movieOpen({id: show.latestEpisode.id, title: show.title}, 'shows_grid');
-        void Linking.openURL(`https://www.imdb.com/title/${show.imdbCode}/`);
+        goTo(`/show/${show.imdbId}`);
     };
 
     return (
         <Animated.View entering={enterFade()} style={{width}}>
           <PressableScale
-            onPress={openImdb}
+            onPress={open}
             accessibilityRole="link"
             accessibilityLabel={`${show.title}, ${episodeLabel(show)}`}
             pressedScale={0.98}

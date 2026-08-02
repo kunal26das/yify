@@ -10,6 +10,7 @@ import {DEFAULT_BASE_URL} from '@/data';
 
 export const API_BASE_URL_KEY = 'base_url_yify';
 export const TMDB_API_KEY = 'tmdb_api_key';
+const TMDB_FALLBACK_KEY = '27348b00a69a63a9825b9ec3532f2246';
 
 let initialized = false;
 let readyPromise: Promise<void> | null = null;
@@ -53,8 +54,8 @@ export function getApiBaseUrl(): string {
 
 export function getTmdbApiKey(): string {
     try {
-        return getString(getRemoteConfig(), TMDB_API_KEY);
+        return getString(getRemoteConfig(), TMDB_API_KEY) || TMDB_FALLBACK_KEY;
     } catch {
-        return '';
+        return TMDB_FALLBACK_KEY;
     }
 }
