@@ -14,3 +14,4 @@ export type {
     YtsMovieParentalGuidesData,
     YtsMovieParentalGuidesResponse,
 } from './YtsMovieParentalGuidesResponse';
+export type {EztvTorrentDto, EztvTorrentsResponse} from './EztvTorrentDto';
