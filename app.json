@@ -49,6 +49,7 @@
       "./plugins/withAndroidRelease",
       "./plugins/withGradleJvmArgs",
       "./plugins/withoutAdId",
+      "./plugins/withGwpAsan",
       [
         "@revopush/expo-code-push-plugin",
         {

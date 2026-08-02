@@ -30,6 +30,7 @@
     "@expo/metro-runtime": "57.0.7",
     "@expo/ui": "57.0.7",
     "@expo/vector-icons": "15.0.2",
+    "@gorhom/bottom-sheet": "5.2.14",
     "@react-native-firebase/analytics": "24.1.1",
     "@react-native-firebase/app": "24.1.1",
     "@react-native-firebase/crashlytics": "24.1.1",

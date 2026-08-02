@@ -4,55 +4,55 @@ const accentLight = '#BD5D3A';
 const accentDark = '#D97757';
 
 export const Colors = {
-  light: {
-      text: '#1F1D1A',
-      background: '#FAF9F5',
-      tint: accentLight,
-      icon: '#73706B',
-      tabIconDefault: '#73706B',
-      tabIconSelected: accentLight,
+    light: {
+        text: '#0F0F0F',
+        background: '#FFFFFF',
+        tint: accentLight,
+        icon: '#606060',
+        tabIconDefault: '#606060',
+        tabIconSelected: accentLight,
 
-      textMuted: '#73706B',
-      textFaint: '#A39E95',
-      surface: '#FFFFFF',
-      surfaceElevated: '#FFFFFF',
-      surfaceSunken: '#EFEDE6',
-      border: 'rgba(31, 29, 26, 0.10)',
-      borderStrong: 'rgba(31, 29, 26, 0.16)',
-      accent: accentLight,
-      accentSecondary: '#C8895A',
-      accentSoft: 'rgba(189, 93, 58, 0.11)',
-      onAccent: '#FFFFFF',
-      rankNumeral: '#DCD5C4',
-      gold: '#C2891C',
-      seed: '#3E8E4F',
-      peer: '#C0492F',
-      scrim: 'rgba(31, 29, 26, 0.55)',
-  },
+        textMuted: '#606060',
+        textFaint: '#909090',
+        surface: '#F9F9F9',
+        surfaceElevated: '#FFFFFF',
+        surfaceSunken: '#F2F2F2',
+        border: 'rgba(0, 0, 0, 0.10)',
+        borderStrong: 'rgba(0, 0, 0, 0.16)',
+        accent: accentLight,
+        accentSecondary: '#C8895A',
+        accentSoft: 'rgba(189, 93, 58, 0.11)',
+        onAccent: '#FFFFFF',
+        rankNumeral: '#E5E5E5',
+        gold: '#C2891C',
+        seed: '#2E7D32',
+        peer: '#C0492F',
+        scrim: 'rgba(0, 0, 0, 0.55)',
+    },
     dark: {
-        text: '#F5F4EE',
-        background: '#262624',
+        text: '#F1F1F1',
+        background: '#0F0F0F',
         tint: accentDark,
-        icon: '#9A958C',
-        tabIconDefault: '#9A958C',
+        icon: '#AAAAAA',
+        tabIconDefault: '#AAAAAA',
         tabIconSelected: accentDark,
 
-        textMuted: '#B4AFA6',
-        textFaint: '#827D74',
-        surface: '#30302E',
-        surfaceElevated: '#3A3A37',
-        surfaceSunken: '#1E1E1C',
-        border: 'rgba(245, 244, 238, 0.11)',
-        borderStrong: 'rgba(245, 244, 238, 0.18)',
+        textMuted: '#AAAAAA',
+        textFaint: '#717171',
+        surface: '#212121',
+        surfaceElevated: '#272727',
+        surfaceSunken: '#181818',
+        border: 'rgba(255, 255, 255, 0.10)',
+        borderStrong: 'rgba(255, 255, 255, 0.18)',
         accent: accentDark,
         accentSecondary: '#E0A06B',
         accentSoft: 'rgba(217, 119, 87, 0.18)',
         onAccent: '#FFFFFF',
-        rankNumeral: '#4A4A45',
+        rankNumeral: '#3F3F3F',
         gold: '#E6B450',
-        seed: '#62B36C',
+        seed: '#4CAF50',
         peer: '#E07A63',
-        scrim: 'rgba(0, 0, 0, 0.55)',
+        scrim: 'rgba(0, 0, 0, 0.60)',
     },
 } as const;
 
@@ -62,11 +62,11 @@ export const Gradients = {
     light: {
         accent: ['#D97757', '#BD5D3A'] as const,
         accentSubtle: ['rgba(217,119,87,0.14)', 'rgba(200,137,90,0.14)'] as const,
-  },
-  dark: {
-      accent: ['#E0A06B', '#D97757'] as const,
-      accentSubtle: ['rgba(224,160,107,0.20)', 'rgba(217,119,87,0.20)'] as const,
-  },
+    },
+    dark: {
+        accent: ['#E0A06B', '#D97757'] as const,
+        accentSubtle: ['rgba(217,119,87,0.13)', 'rgba(217,119,87,0.04)'] as const,
+    },
 } as const;
 
 export const Spacing = {
@@ -84,6 +84,7 @@ export const Radius = {
     md: 12,
     lg: 16,
     xl: 22,
+    card: 12,
     pill: 999,
 } as const;
 
@@ -99,33 +100,37 @@ export const FontFamily = {
 } as const;
 
 export const Typography = {
-    display: {fontSize: 34, lineHeight: 40, fontFamily: FontFamily.displayExtra, letterSpacing: -0.5},
-    title: {fontSize: 26, lineHeight: 32, fontFamily: FontFamily.displayExtra, letterSpacing: -0.3},
-    heading: {fontSize: 21, lineHeight: 26, fontFamily: FontFamily.displayBold, letterSpacing: -0.2},
-    subheading: {fontSize: 17, lineHeight: 23, fontFamily: FontFamily.displayBold},
+    display: {fontSize: 30, lineHeight: 36, fontFamily: FontFamily.displayExtra, letterSpacing: -0.5},
+    title: {fontSize: 22, lineHeight: 28, fontFamily: FontFamily.displayExtra, letterSpacing: -0.3},
+    heading: {fontSize: 18, lineHeight: 24, fontFamily: FontFamily.displayBold, letterSpacing: -0.2},
+    subheading: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.displayBold},
     body: {fontSize: 15, lineHeight: 22, fontFamily: FontFamily.regular},
     bodyStrong: {fontSize: 15, lineHeight: 22, fontFamily: FontFamily.semibold},
     caption: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium},
     micro: {fontSize: 11, lineHeight: 14, fontFamily: FontFamily.bold, letterSpacing: 0.4},
+    videoTitle: {fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold},
+    videoMeta: {fontSize: 12.5, lineHeight: 17, fontFamily: FontFamily.regular},
+    watchTitle: {fontSize: 20, lineHeight: 27, fontFamily: FontFamily.bold},
+    sectionTitle: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold},
 } as const;
 
 export const Fonts = Platform.select({
-  ios: {
-    sans: 'system-ui',
-    serif: 'ui-serif',
-    rounded: 'ui-rounded',
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
+    ios: {
+        sans: 'system-ui',
+        serif: 'ui-serif',
+        rounded: 'ui-rounded',
+        mono: 'ui-monospace',
+    },
+    default: {
+        sans: 'normal',
+        serif: 'serif',
+        rounded: 'normal',
+        mono: 'monospace',
+    },
+    web: {
+        sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+        serif: "Georgia, 'Times New Roman', serif",
+        rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+        mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    },
 });

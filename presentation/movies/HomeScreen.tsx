@@ -1,44 +1,60 @@
 import {Ionicons} from '@expo/vector-icons';
 import {StatusBar} from 'expo-status-bar';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {
-    Animated,
-    FlatList,
-    Platform,
-    RefreshControl,
-    StyleSheet,
-    View,
-    useWindowDimensions,
-} from 'react-native';
+import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Reanimated from 'react-native-reanimated';
+import type {Movie} from '@/domain';
+import {Analytics} from '@/lib/analytics-events';
 import {LinearGradient} from '../components/linear-gradient';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
+import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {FontFamily, Radius, Spacing} from '../constants/theme';
+import {LiquidGlassView} from '../components/liquid-glass-view';
+import {ChipBar} from './components/ChipBar';
 import {HeroBillboard} from './components/HeroBillboard';
 import {HomeFooter} from './components/HomeFooter';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
-import {LandscapeSkeleton, PosterSkeleton, SkeletonBlock} from './components/PosterSkeleton';
-import {TopNav, useTopNavHeight} from './components/TopNav';
-import {TopTenProvider} from './components/TopTenContext';
-import {POSTER_GAP} from './components/moviePosterLayout';
-import {useWatchlist} from './useWatchlist';
-import {useGoTo} from './constants/destinations';
 import {landscapeWidth} from './components/MovieLandscapeItem';
+import {LandscapeSkeleton, PosterSkeleton, SkeletonBlock} from './components/PosterSkeleton';
+import {ScrollProgress} from './components/ScrollProgress';
+import {TopBar, useTopBarHeight} from './components/TopBar';
+import {TopTenProvider} from './components/TopTenContext';
+import {VideoCard} from './components/VideoCard';
+import {POSTER_GAP} from './components/moviePosterLayout';
+import {FEED_CHIPS, chipFor} from './constants/feedChips';
+import {useGoTo} from './constants/destinations';
+import {useWatchlist} from './useWatchlist';
 import type {ShelfQuery, ShelfVariant} from './constants/homeShelves';
 import type {HomeViewModel, ShelfState} from './useHomeViewModel';
-import {Analytics} from '@/lib/analytics-events';
-
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<ShelfState>);
+import type {FeedViewModel} from './useFeedViewModel';
 
 const HERO_STATUS_BAR_THRESHOLD = 90;
+const SCROLL_AT_TOP_THRESHOLD = 8;
+
+const CARD_MIN_WIDTH = 300;
+const SINGLE_COLUMN_MAX_WIDTH = 480;
+const COLUMN_GAP = 16;
+const ROW_GAP = 24;
+const THUMB_ASPECT = 16 / 9;
+const INITIAL_SKELETON_ROWS = 4;
+const PAGING_SKELETON_ROWS = 2;
+const FEED_SOURCE = 'home_feed';
 
 type Palette = ReturnType<typeof usePalette>['colors'];
+
+type HomeRow =
+    | {kind: 'shelf'; key: string; shelf: ShelfState}
+    | {kind: 'my-list'; key: string; movies: Movie[]}
+    | {kind: 'heading'; key: string}
+    | {kind: 'chips'; key: string}
+    | {kind: 'cards'; key: string; movies: Movie[]; endIndex: number};
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<HomeRow>);
 
 function buildBrowseHref(query: ShelfQuery): string {
     const params = new URLSearchParams();
@@ -56,35 +72,58 @@ function skeletonCount(width: number, posterWidth: number, gutter: number): numb
     return Math.max(3, Math.ceil(available / (posterWidth + POSTER_GAP)) + 1);
 }
 
-export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
+export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedViewModel}) {
     const insets = useSafeAreaInsets();
-    const {colors} = usePalette();
-    const {width, isPhone, isTablet, gutter} = useResponsive();
-    const {height} = useWindowDimensions();
+    const {colors, scheme} = usePalette();
+    const {width, height, contentMaxWidth, isPhone, isTablet, gutter} = useResponsive();
     const {
         heroMovies,
         heroTrailers,
+        heroBackdrops,
         requestHeroTrailer,
-        shelves,
-        loading,
-        refreshing,
-        error,
-        loadInitial,
+        shelves: shelfStates,
+        loading: shelvesLoading,
+        refreshing: shelvesRefreshing,
+        error: shelvesError,
+        loadInitial: loadShelvesInitial,
         loadShelf,
-        reload,
-    } = viewModel;
-    const myList = useWatchlist();
-    const navHeight = useTopNavHeight();
-    const goTo = useGoTo();
+        reload: reloadShelves,
+    } = shelves;
+    const {
+        chip,
+        setChip,
+        movies: feedMovies,
+        totalCount,
+        loading: feedLoading,
+        refreshing: feedRefreshing,
+        error: feedError,
+        hasMore,
+        loadInitial: loadFeedInitial,
+        loadMore,
+        reload: reloadFeed,
+    } = feed;
 
+    const myList = useWatchlist();
+    const goTo = useGoTo();
+    const topBarHeight = useTopBarHeight();
+
+    const listRef = useRef<FlatList<HomeRow>>(null);
     const scrollY = useRef(new Animated.Value(0)).current;
     const [overHero, setOverHero] = useState(true);
+    const [atTop, setAtTop] = useState(true);
+    const [gridVisible, setGridVisible] = useState(false);
+    const [lastGridIndex, setLastGridIndex] = useState(0);
+    const [chipsPinned, setChipsPinned] = useState(false);
+    const prevFeedLengthRef = useRef(0);
+
     useEffect(() => {
         const id = scrollY.addListener(({value}) => {
             setOverHero(value < HERO_STATUS_BAR_THRESHOLD);
+            setAtTop(value <= SCROLL_AT_TOP_THRESHOLD);
         });
         return () => scrollY.removeListener(id);
     }, [scrollY]);
+
     const onScroll = useMemo(
         () =>
             Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {
@@ -93,60 +132,234 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
         [scrollY]
     );
 
+    useEffect(() => {
+        loadShelvesInitial();
+    }, [loadShelvesInitial]);
+
+    useEffect(() => {
+        loadFeedInitial();
+    }, [loadFeedInitial]);
+
+    const errorMessage = shelvesError ?? feedError;
+
+    useEffect(() => {
+        if (errorMessage) Analytics.loadError('home');
+    }, [errorMessage]);
+
+    useEffect(() => {
+        if (feedMovies.length < prevFeedLengthRef.current) setLastGridIndex(0);
+        prevFeedLengthRef.current = feedMovies.length;
+    }, [feedMovies.length]);
+
     const topTenMovies = useMemo(
-        () => shelves.find((s) => s.key === 'top-10')?.movies ?? [],
-        [shelves]
+        () => shelfStates.find((shelf) => shelf.key === 'top-10')?.movies ?? [],
+        [shelfStates]
     );
-
-    useEffect(() => {
-        loadInitial();
-    }, [loadInitial]);
-
-    useEffect(() => {
-        if (error) Analytics.loadError('home');
-    }, [error]);
 
     const posterWidth = isPhone ? 126 : isTablet ? 146 : 158;
-    const heroHeight = isPhone ? Math.round(Math.min(height * 0.62, 560)) : Math.round(Math.min(height * 0.78, 620));
+    const heroHeight = isPhone
+        ? Math.round(Math.min(height * 0.62, 560))
+        : Math.round(Math.min(height * 0.78, 620));
     const skeletons = skeletonCount(width, posterWidth, gutter);
 
-    const renderShelf = useCallback(
-        ({item}: {item: ShelfState}) => (
-            <ShelfRow
-                shelf={item}
-                posterWidth={posterWidth}
-                gutter={gutter}
-                colors={colors}
-                skeletons={skeletons}
-                onLoad={loadShelf}
-                onNavigate={goTo}
-            />
-        ),
-        [posterWidth, gutter, colors, skeletons, loadShelf, goTo]
+    const gridWidth = Math.min(width, contentMaxWidth);
+    const columnsWidth = Math.max(0, gridWidth - gutter * 2);
+
+    const numColumns = useMemo(() => {
+        if (width < SINGLE_COLUMN_MAX_WIDTH) return 1;
+        return Math.max(2, Math.floor((columnsWidth + COLUMN_GAP) / (CARD_MIN_WIDTH + COLUMN_GAP)));
+    }, [width, columnsWidth]);
+
+    const cardWidth = Math.max(
+        1,
+        Math.floor((columnsWidth - COLUMN_GAP * (numColumns - 1)) / numColumns)
     );
 
-    if (loading && heroMovies.length === 0 && !error) {
+    const rows = useMemo<HomeRow[]>(() => {
+        const next: HomeRow[] = shelfStates.map((shelf) => ({
+            kind: 'shelf',
+            key: `shelf-${shelf.key}`,
+            shelf,
+        }));
+        if (myList.length > 0) next.push({kind: 'my-list', key: 'my-list', movies: myList});
+        next.push({kind: 'heading', key: 'browse-heading'});
+        next.push({kind: 'chips', key: 'browse-chips'});
+        for (let start = 0; start < feedMovies.length; start += numColumns) {
+            const slice = feedMovies.slice(start, start + numColumns);
+            next.push({
+                kind: 'cards',
+                key: `row-${slice[0].id}`,
+                movies: slice,
+                endIndex: start + slice.length,
+            });
+        }
+        return next;
+    }, [shelfStates, myList, feedMovies, numColumns]);
+
+
+    const selectChip = useCallback(
+        (key: string) => {
+            if (key === chip) return;
+            Analytics.filtersApplied({...chipFor(key).query});
+            setChip(key);
+        },
+        [chip, setChip]
+    );
+
+    const handleEndReached = useCallback(() => {
+        if (!hasMore || feedLoading || feedMovies.length === 0) return;
+        Analytics.browseLoadMore(feedMovies.length);
+        loadMore();
+    }, [hasMore, feedLoading, feedMovies.length, loadMore]);
+
+    const handleRefresh = useCallback(() => {
+        reloadShelves();
+        reloadFeed();
+    }, [reloadShelves, reloadFeed]);
+
+    const handleRetry = useCallback(() => {
+        Analytics.retry('home');
+        reloadShelves();
+        reloadFeed();
+    }, [reloadShelves, reloadFeed]);
+
+    const handleScrollToTop = useCallback(() => {
+        Analytics.scrollToTop();
+        listRef.current?.scrollToOffset({offset: 0, animated: true});
+    }, []);
+
+    const viewabilityConfig = useMemo(
+        () => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}),
+        []
+    );
+
+    const onViewableItemsChanged = useCallback(
+        ({viewableItems}: {viewableItems: {item: HomeRow}[]}) => {
+            let end = -1;
+            let chipsVisible = false;
+            for (const token of viewableItems) {
+                const row = token.item;
+                if (!row) continue;
+                if (row.kind === 'chips') chipsVisible = true;
+                if (row.kind === 'cards' && row.endIndex > end) end = row.endIndex;
+            }
+            setGridVisible(end >= 0);
+            setChipsPinned(end >= 0 && !chipsVisible);
+            if (end >= 0) setLastGridIndex(end);
+        },
+        []
+    );
+
+    const renderRow = useCallback(
+        ({item}: {item: HomeRow}) => {
+            if (item.kind === 'shelf') {
+                return (
+                    <ShelfRow
+                        shelf={item.shelf}
+                        posterWidth={posterWidth}
+                        gutter={gutter}
+                        colors={colors}
+                        skeletons={skeletons}
+                        onLoad={loadShelf}
+                        onNavigate={goTo}
+                    />
+                );
+            }
+
+            if (item.kind === 'my-list') {
+                return (
+                    <MovieRail
+                        title="My List"
+                        movies={item.movies}
+                        variant="landscape"
+                        posterWidth={posterWidth}
+                        gutter={gutter}
+                        onSeeAll={() => {
+                            Analytics.shelfSeeAll('My List');
+                            goTo('/my-list');
+                        }}
+                    />
+                );
+            }
+
+            if (item.kind === 'heading') {
+                return (
+                    <View style={[styles.headingRow, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                        <ThemedText type="heading" style={{color: colors.text}}>
+                            Browse all
+                        </ThemedText>
+                        <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                            Every title in the catalog, filtered your way
+                        </ThemedText>
+                    </View>
+                );
+            }
+
+            if (item.kind === 'chips') {
+                return (
+                    <View
+                        style={[
+                            styles.chipRow,
+                            {backgroundColor: colors.background, borderBottomColor: colors.border},
+                        ]}
+                    >
+                        <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                            <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
+                        </View>
+                    </View>
+                );
+            }
+
+            return (
+                <View style={[styles.cardRow, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                    {item.movies.map((movie) => (
+                        <VideoCard key={movie.id} movie={movie} width={cardWidth} source={FEED_SOURCE}/>
+                    ))}
+                </View>
+            );
+        },
+        [
+            posterWidth,
+            gutter,
+            colors,
+            skeletons,
+            loadShelf,
+            goTo,
+            contentMaxWidth,
+            chip,
+            selectChip,
+            cardWidth,
+        ]
+    );
+
+    if (shelvesLoading && heroMovies.length === 0 && !shelvesError) {
         return (
             <ThemedView style={styles.container}>
-                <HomeSkeleton heroHeight={heroHeight} posterWidth={posterWidth} gutter={gutter} colors={colors}
-                              skeletons={skeletons}/>
-                <TopNav active="home"/>
+                <HomeSkeleton
+                    heroHeight={heroHeight}
+                    posterWidth={posterWidth}
+                    gutter={gutter}
+                    colors={colors}
+                    skeletons={skeletons}
+                />
+                <TopBar active="home"/>
             </ThemedView>
         );
     }
 
-    if (error && heroMovies.length === 0) {
+    if (shelvesError && heroMovies.length === 0) {
         return (
             <ThemedView style={styles.container}>
-                <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: navHeight}]}>
+                <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
-                    <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>{error}</ThemedText>
+                    <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
+                        {shelvesError}
+                    </ThemedText>
                     <PressableScale
-                        onPress={() => {
-                            Analytics.retry('home');
-                            reload();
-                        }}
+                        onPress={handleRetry}
+                        accessibilityRole="button"
+                        accessibilityLabel="Try again"
                         pressedScale={0.94}
                         pressedOpacity={0.85}
                         hoveredScale={1.03}
@@ -157,102 +370,169 @@ export function HomeScreen({viewModel}: {viewModel: HomeViewModel}) {
                         </View>
                     </PressableScale>
                 </Reanimated.View>
-                <TopNav active="home"/>
+                <TopBar active="home"/>
             </ThemedView>
         );
     }
 
+    const skeletonRows = feedLoading
+        ? feedMovies.length === 0
+            ? INITIAL_SKELETON_ROWS
+            : feedRefreshing
+                ? 0
+                : PAGING_SKELETON_ROWS
+        : 0;
+    const showEmptyFeed = !feedLoading && !feedError && feedMovies.length === 0;
+    const showProgress = gridVisible && feedMovies.length > 0;
+
     return (
         <TopTenProvider movies={topTenMovies}>
-        <HoverCardHost>
-        <ThemedView style={styles.container}>
-            <AnimatedFlatList
-                data={shelves}
-                onScroll={onScroll}
-                scrollEventThrottle={16}
-                keyExtractor={(item) => item.key}
-                renderItem={renderShelf}
-                showsVerticalScrollIndicator={false}
-                ListHeaderComponent={
-                    <>
-                        {heroMovies.length > 0 ? (
-                            <Animated.View
-                                style={[
-                                    styles.heroWrap,
-                                    {
-                                        opacity: scrollY.interpolate({
-                                            inputRange: [0, heroHeight * 0.75],
-                                            outputRange: [1, 0],
-                                            extrapolate: 'clamp',
-                                        }),
-                                        transform: [
-                                            {
-                                                scale: scrollY.interpolate({
-                                                    inputRange: [-heroHeight, 0, heroHeight],
-                                                    outputRange: [1.15, 1, 0.92],
-                                                    extrapolate: 'clamp',
-                                                }),
-                                            },
-                                            {
-                                                translateY: scrollY.interpolate({
-                                                    inputRange: [0, heroHeight],
-                                                    outputRange: [0, heroHeight * 0.22],
-                                                    extrapolate: 'clamp',
-                                                }),
-                                            },
-                                        ],
-                                    },
-                                ]}
-                            >
-                                <HeroBillboard
-                                    movies={heroMovies}
-                                    width={width}
-                                    height={heroHeight}
-                                    trailers={heroTrailers}
-                                    onRequestTrailer={requestHeroTrailer}
-                                />
-                            </Animated.View>
-                        ) : (
-                            <View style={{height: navHeight}}/>
-                        )}
-                    </>
-                }
-                ListFooterComponent={
-                    <>
-                        {myList.length > 0 ? (
-                            <MovieRail
-                                title="My List"
-                                movies={myList}
-                                variant="landscape"
-                                posterWidth={posterWidth}
-                                gutter={gutter}
-                                onSeeAll={() => {
-                                    Analytics.shelfSeeAll('My List');
-                                    goTo('/my-list');
-                                }}
+            <HoverCardHost>
+                <ThemedView style={styles.container}>
+                    <AnimatedFlatList
+                        ref={listRef}
+                        data={rows}
+                        keyExtractor={(item) => item.key}
+                        renderItem={renderRow}
+                        onScroll={onScroll}
+                        scrollEventThrottle={16}
+                        showsVerticalScrollIndicator={false}
+                        ListHeaderComponent={
+                            heroMovies.length > 0 ? (
+                                <Animated.View
+                                    style={[
+                                        styles.heroWrap,
+                                        {
+                                            opacity: scrollY.interpolate({
+                                                inputRange: [0, heroHeight * 0.75],
+                                                outputRange: [1, 0],
+                                                extrapolate: 'clamp',
+                                            }),
+                                            transform: [
+                                                {
+                                                    scale: scrollY.interpolate({
+                                                        inputRange: [-heroHeight, 0, heroHeight],
+                                                        outputRange: [1.15, 1, 0.92],
+                                                        extrapolate: 'clamp',
+                                                    }),
+                                                },
+                                                {
+                                                    translateY: scrollY.interpolate({
+                                                        inputRange: [0, heroHeight],
+                                                        outputRange: [0, heroHeight * 0.22],
+                                                        extrapolate: 'clamp',
+                                                    }),
+                                                },
+                                            ],
+                                        },
+                                    ]}
+                                >
+                                    <HeroBillboard
+                                        movies={heroMovies}
+                                        width={width}
+                                        height={heroHeight}
+                                        trailers={heroTrailers}
+                                    backdrops={heroBackdrops}
+                                        onRequestTrailer={requestHeroTrailer}
+                                    />
+                                </Animated.View>
+                            ) : (
+                                <View style={{height: topBarHeight}}/>
+                            )
+                        }
+                        ListFooterComponent={
+                            <>
+                                <View style={[styles.feedFooter, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                                    {Array.from({length: skeletonRows}).map((_, row) => (
+                                        <FeedSkeletonRow key={row} cardWidth={cardWidth} columns={numColumns}/>
+                                    ))}
+                                    {showEmptyFeed ? (
+                                        <Reanimated.View entering={enterFade()} style={styles.stateBox}>
+                                            <Ionicons name="film-outline" size={48} color={colors.textMuted}/>
+                                            <ThemedText style={[Typography.sectionTitle, {color: colors.text}]}>
+                                                Nothing to watch here
+                                            </ThemedText>
+                                            <ThemedText
+                                                style={[
+                                                    Typography.videoMeta,
+                                                    styles.stateMessage,
+                                                    {color: colors.textMuted},
+                                                ]}
+                                            >
+                                                Pick another category to keep browsing.
+                                            </ThemedText>
+                                        </Reanimated.View>
+                                    ) : null}
+                                    {feedError && feedMovies.length > 0 ? (
+                                        <FeedRetryRow
+                                            colors={colors}
+                                            onRetry={() => {
+                                                Analytics.retry('browse_more');
+                                                loadMore();
+                                            }}
+                                        />
+                                    ) : null}
+                                </View>
+                                <HomeFooter/>
+                            </>
+                        }
+                        onViewableItemsChanged={onViewableItemsChanged}
+                        viewabilityConfig={viewabilityConfig}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={2}
+                        contentContainerStyle={{
+                            paddingBottom: insets.bottom + 96,
+                        }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={shelvesRefreshing || feedRefreshing}
+                                onRefresh={handleRefresh}
+                                tintColor={colors.accent}
+                                colors={[colors.accent]}
+                                progressViewOffset={topBarHeight}
                             />
-                        ) : null}
-                        <HomeFooter/>
-                    </>
-                }
-                contentContainerStyle={{paddingBottom: insets.bottom + 40}}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={reload}
-                        tintColor={colors.accent}
-                        colors={[colors.accent]}
-                        progressViewOffset={navHeight}
+                        }
+                        initialNumToRender={4}
+                        maxToRenderPerBatch={4}
+                        updateCellsBatchingPeriod={40}
+                        windowSize={9}
                     />
-                }
-                initialNumToRender={3}
-                maxToRenderPerBatch={3}
-                windowSize={5}
-            />
-            <TopNav active="home" scrollY={scrollY}/>
-            {heroMovies.length > 0 && overHero ? <StatusBar style="light"/> : null}
-        </ThemedView>
-        </HoverCardHost>
+                    {(
+                        <ScrollProgress
+                            current={Math.min(lastGridIndex, feedMovies.length)}
+                            total={totalCount}
+                            atTop={atTop}
+                            onScrollToTop={handleScrollToTop}
+                            bottomInset={insets.bottom}
+                            visible={showProgress}
+                        />
+                    )}
+                    {chipsPinned ? (
+                        <View
+                            style={[
+                                styles.chipRowPinned,
+                                {
+                                    top: topBarHeight,
+                                    borderBottomColor: colors.border,
+                                },
+                            ]}
+                        >
+                            <LiquidGlassView
+                                tint={scheme === 'dark' ? 'dark' : 'light'}
+                                fallbackBackgroundColor={
+                                    scheme === 'dark' ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.86)'
+                                }
+                                style={StyleSheet.absoluteFill}
+                            />
+                            <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                                <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
+                            </View>
+                        </View>
+                    ) : null}
+                    <TopBar active="home"/>
+                    {heroMovies.length > 0 && overHero ? <StatusBar style="light"/> : null}
+                </ThemedView>
+            </HoverCardHost>
         </TopTenProvider>
     );
 }
@@ -302,8 +582,16 @@ function ShelfRow({
         );
     }
 
-    return <ShelfSkeleton title={shelf.title} variant={shelf.variant} posterWidth={posterWidth} gutter={gutter}
-                          colors={colors} skeletons={skeletons}/>;
+    return (
+        <ShelfSkeleton
+            title={shelf.title}
+            variant={shelf.variant}
+            posterWidth={posterWidth}
+            gutter={gutter}
+            colors={colors}
+            skeletons={skeletons}
+        />
+    );
 }
 
 function ShelfSkeleton({
@@ -354,7 +642,7 @@ function HomeSkeleton({
     heroHeight: number;
     posterWidth: number;
     gutter: number;
-    colors: ReturnType<typeof usePalette>['colors'];
+    colors: Palette;
     skeletons: number;
 }) {
     return (
@@ -381,7 +669,7 @@ function HomeSkeleton({
             {[0, 1, 2].map((row) => (
                 <View key={row} style={styles.skeletonRail}>
                     <View style={[styles.skeletonTitle, {backgroundColor: colors.surfaceSunken, marginLeft: gutter}]}/>
-                    <View style={[styles.skeletonRow, {paddingHorizontal: gutter - 6}]}>
+                    <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
                         {Array.from({length: skeletons}).map((_, i) => (
                             <PosterSkeleton key={i} width={posterWidth}/>
                         ))}
@@ -392,15 +680,90 @@ function HomeSkeleton({
     );
 }
 
+function FeedSkeletonRow({cardWidth, columns}: {cardWidth: number; columns: number}) {
+    const thumbHeight = Math.round(cardWidth / THUMB_ASPECT);
+
+    return (
+        <View style={styles.skeletonCardRow}>
+            {Array.from({length: columns}).map((_, column) => (
+                <View key={column} style={{width: cardWidth}}>
+                    <SkeletonBlock style={{height: thumbHeight, borderRadius: Radius.card}}/>
+                    <SkeletonBlock style={styles.skeletonCardTitle}/>
+                    <SkeletonBlock style={styles.skeletonCardMeta}/>
+                </View>
+            ))}
+        </View>
+    );
+}
+
+function FeedRetryRow({colors, onRetry}: {colors: Palette; onRetry: () => void}) {
+    return (
+        <Reanimated.View entering={enterFade()} style={styles.retryRow}>
+            <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                Couldn&apos;t load more movies.
+            </ThemedText>
+            <PressableScale
+                onPress={onRetry}
+                accessibilityRole="button"
+                accessibilityLabel="Try again"
+                pressedScale={0.94}
+                pressedOpacity={0.85}
+                hoveredScale={1.03}
+            >
+                <View style={[styles.retryButton, {borderColor: colors.border}]}>
+                    <Ionicons name="refresh" size={16} color={colors.accent}/>
+                    <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>Try again</ThemedText>
+                </View>
+            </PressableScale>
+        </Reanimated.View>
+    );
+}
+
 const styles = StyleSheet.create({
     container: {flex: 1},
 
     heroWrap: {marginBottom: Spacing.xl},
     meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
 
+    headingRow: {
+        width: '100%',
+        alignSelf: 'center',
+        gap: Spacing.xs,
+        marginTop: Spacing.lg,
+        marginBottom: Spacing.sm,
+    },
+    chipRow: {borderBottomWidth: StyleSheet.hairlineWidth},
+    chipRowPinned: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        zIndex: 20,
+        alignItems: 'center',
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    chipRowInner: {width: '100%', alignSelf: 'center'},
+    cardRow: {
+        width: '100%',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: COLUMN_GAP,
+        marginTop: ROW_GAP,
+    },
+    feedFooter: {width: '100%', alignSelf: 'center'},
+    skeletonCardRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: COLUMN_GAP,
+        marginTop: ROW_GAP,
+    },
+    skeletonCardTitle: {height: 14, width: '72%', borderRadius: 4, marginTop: Spacing.md},
+    skeletonCardMeta: {height: 11, width: '48%', borderRadius: 4, marginTop: Spacing.sm},
+
     centered: {flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, gap: 6},
+    stateBox: {alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxxl},
     stateTitle: {marginTop: 12},
-    stateMessage: {fontSize: 14, lineHeight: 20, textAlign: 'center'},
+    stateMessage: {fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 320},
     cta: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -412,7 +775,18 @@ const styles = StyleSheet.create({
     },
     ctaLabel: {fontSize: 15, fontFamily: FontFamily.bold},
 
-    heroSkeletonFill: {position: "absolute", top: 0, left: 0, right: 0, bottom: 0},
+    retryRow: {alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.xl},
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderRadius: Radius.pill,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+    },
+
+    heroSkeletonFill: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
     heroSkeletonContent: {
         position: 'absolute',
         left: Spacing.xl,

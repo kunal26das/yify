@@ -4,14 +4,16 @@ import {Platform} from 'react-native';
 import {Analytics} from '@/lib/analytics-events';
 import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
 import {
-    setLandingPage,
+    getBrowseDefaults,
+    setBrowseDefaults,
     setNotificationsEnabled,
     setThemePreference,
-    type LandingPage,
+    type BrowseDefaults,
     type Settings,
     type ThemePreference,
 } from '@/lib/settings';
 import {clearWatchlist} from '@/lib/watchlist';
+import {clearRecentSearches, getRecentSearches} from './components/SearchOverlay';
 import {useSettings} from '../hooks/use-settings';
 import {useWatchlist} from './useWatchlist';
 
@@ -25,6 +27,7 @@ export function useSettingsViewModel() {
 
     const [permissionBlocked, setPermissionBlocked] = useState(false);
     const [listCleared, setListCleared] = useState(false);
+    const [searchCount, setSearchCount] = useState(() => getRecentSearches().length);
 
     const appInfo = useMemo<AppInfo>(() => {
         const build =
@@ -40,9 +43,9 @@ export function useSettingsViewModel() {
         setThemePreference(theme);
     }, []);
 
-    const selectLandingPage = useCallback((landingPage: LandingPage) => {
-        Analytics.settingChanged('landing_page', landingPage);
-        setLandingPage(landingPage);
+    const setBrowseDefault = useCallback((key: keyof BrowseDefaults, value: string | number) => {
+        Analytics.settingChanged(`browse_${key}`, String(value));
+        setBrowseDefaults({...getBrowseDefaults(), [key]: value} as BrowseDefaults);
     }, []);
 
     const toggleNotifications = useCallback(async (next: boolean) => {
@@ -57,6 +60,12 @@ export function useSettingsViewModel() {
         if (granted) void registerNewMoviesTask();
     }, []);
 
+    const clearSearchHistory = useCallback(() => {
+        Analytics.settingChanged('search_history', 'cleared');
+        clearRecentSearches();
+        setSearchCount(0);
+    }, []);
+
     const clearList = useCallback(() => {
         Analytics.settingChanged('watchlist', 'cleared');
         clearWatchlist();
@@ -65,16 +74,18 @@ export function useSettingsViewModel() {
 
     return {
         theme: settings.theme,
-        landingPage: settings.landingPage,
+        browseDefaults: settings.browseDefaults,
         notifications: settings.notifications,
         permissionBlocked,
         watchlistCount: watchlist.length,
+        searchHistoryCount: searchCount,
         listCleared,
         appInfo,
         selectTheme,
-        selectLandingPage,
+        setBrowseDefault,
         toggleNotifications,
         clearList,
+        clearSearchHistory,
     };
 }
 

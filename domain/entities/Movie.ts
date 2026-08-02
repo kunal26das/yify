@@ -12,4 +12,6 @@ export interface Movie {
   mpaRating: string;
   posterUrls: string[];
   backgroundImageUrl?: string;
+  ytTrailerCode?: string;
+  thumbnailUrls?: string[];
 }

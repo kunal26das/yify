@@ -1,5 +1,13 @@
-import {useEffect, useRef, useState} from 'react';
-import {Animated, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View} from 'react-native';
+import {useCallback, useEffect, useMemo, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {
+    BottomSheetBackdrop,
+    BottomSheetFooter,
+    BottomSheetModal,
+    BottomSheetScrollView,
+    type BottomSheetBackdropProps,
+    type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet';
 import Reanimated from 'react-native-reanimated';
 import {Duration, PressableScale, enterPop, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
@@ -7,6 +15,7 @@ import {LinearGradient} from '../../components/linear-gradient';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {Radius, Spacing} from '../../constants/theme';
+import {FEED_CHIPS} from '../constants/feedChips';
 import {
     Genre,
     GENRE_OPTIONS,
@@ -91,6 +100,23 @@ function FilterChipGroup<T extends string | number>({
     );
 }
 
+const COLLECTION_OPTIONS = FEED_CHIPS.filter((chip) => !chip.key.startsWith('genre-')).map(
+    (chip) => ({value: chip.key, label: chip.label})
+);
+
+const SNAP_POINTS = ['60%', '90%'];
+
+function collectionValue(filters: {quality?: string; minimum_rating?: number; sort_by?: string; order_by?: string}): string {
+    const match = FEED_CHIPS.filter((chip) => !chip.key.startsWith('genre-')).find(
+        (chip) =>
+            chip.query.sort_by === filters.sort_by &&
+            chip.query.order_by === filters.order_by &&
+            (chip.query.quality || undefined) === (filters.quality || undefined) &&
+            (chip.query.minimum_rating ?? undefined) === (filters.minimum_rating ?? undefined)
+    );
+    return match?.key ?? '';
+}
+
 export function MovieFilterModal({
                                      visible,
                                      onClose,
@@ -100,171 +126,207 @@ export function MovieFilterModal({
                                      onClear,
                                      bottomInset,
                                  }: MovieFilterModalProps) {
-    const {height: windowHeight} = useWindowDimensions();
     const {isLarge} = useResponsive();
     const {colors} = usePalette();
 
-    const [mounted, setMounted] = useState(visible);
-    const progress = useRef(new Animated.Value(0)).current;
+    const sheetRef = useRef<BottomSheetModal>(null);
+    const presentedRef = useRef(false);
 
     useEffect(() => {
-        if (visible) {
-            setMounted(true);
-            Animated.timing(progress, {toValue: 1, duration: 260, useNativeDriver: true}).start();
-        } else {
-            Animated.timing(progress, {toValue: 0, duration: 200, useNativeDriver: true}).start(({finished}) => {
-                if (finished) setMounted(false);
-            });
-        }
-    }, [visible, progress]);
+        if (visible === presentedRef.current) return;
+        presentedRef.current = visible;
+        if (visible) sheetRef.current?.present();
+        else sheetRef.current?.dismiss();
+    }, [visible]);
 
-    const handleApply = () => {
+    const handleDismiss = useCallback(() => {
+        presentedRef.current = false;
+        onClose();
+    }, [onClose]);
+
+    const handleApply = useCallback(() => {
         onApply(filters);
         onClose();
-    };
+    }, [filters, onApply, onClose]);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         onClear();
         onClose();
-    };
+    }, [onClear, onClose]);
 
-    if (!mounted) return null;
+    const renderFooter = useCallback(
+        (props: BottomSheetFooterProps) => (
+            <BottomSheetFooter {...props}>
+                <LinearGradient
+                    colors={[colors.surfaceElevated + '00', colors.surfaceElevated]}
+                    bands={10}
+                    style={styles.scrollFade}
+                    pointerEvents="none"
+                />
+                <View style={[styles.footer, {
+                    backgroundColor: colors.surfaceElevated,
+                    paddingBottom: (isLarge ? Spacing.lg : bottomInset + Spacing.lg),
+                    borderTopColor: colors.border
+                }]}>
+                    <PressableScale onPress={handleApply} accessibilityRole="button"
+                                    pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
+                        <View style={[styles.applyButton, {backgroundColor: colors.accent}]}>
+                            <ThemedText style={[styles.applyButtonLabel, {color: colors.onAccent}]}>Apply
+                                filters</ThemedText>
+                        </View>
+                    </PressableScale>
+                </View>
+            </BottomSheetFooter>
+        ),
+        [bottomInset, colors.accent, colors.border, colors.onAccent, colors.surfaceElevated, handleApply, isLarge]
+    );
 
-    const translateY = progress.interpolate({inputRange: [0, 1], outputRange: [windowHeight * 0.5, 0]});
-    const sheetScale = progress.interpolate({inputRange: [0, 1], outputRange: [0.96, 1]});
-    const sheetTransform = isLarge ? [{scale: sheetScale}] : [{translateY}];
+    const renderBackdrop = useCallback(
+        (props: BottomSheetBackdropProps) => (
+            <BottomSheetBackdrop
+                {...props}
+                appearsOnIndex={0}
+                disappearsOnIndex={-1}
+                opacity={1}
+                pressBehavior="close"
+                accessibilityLabel="Close filters"
+                style={[props.style, {backgroundColor: colors.scrim}]}
+            />
+        ),
+        [colors.scrim]
+    );
+
+    const backgroundStyle = useMemo(
+        () => [styles.sheetBackground, {backgroundColor: colors.surfaceElevated}],
+        [colors.surfaceElevated]
+    );
+
+    const handleIndicatorStyle = useMemo(
+        () => [styles.handleIndicator, {backgroundColor: colors.borderStrong}],
+        [colors.borderStrong]
+    );
 
     return (
-        <Modal visible transparent animationType="none" onRequestClose={onClose} statusBarTranslucent>
-            <View style={[styles.root, isLarge && styles.rootCentered]}>
-                <Animated.View style={[StyleSheet.absoluteFill, styles.scrim, {opacity: progress}]}
-                               pointerEvents="none"/>
-                <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close filters"/>
-                <Animated.View
-                    style={[
-                        styles.sheet,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                            maxHeight: windowHeight * 0.88,
-                            opacity: isLarge ? progress : 1,
-                            transform: sheetTransform,
-                        },
-                        isLarge ? styles.sheetCentered : styles.sheetBottom,
-                    ]}
+        <BottomSheetModal
+            ref={sheetRef}
+            snapPoints={SNAP_POINTS}
+            index={0}
+            enablePanDownToClose
+            enableDynamicSizing={false}
+            onDismiss={handleDismiss}
+            backdropComponent={renderBackdrop}
+            footerComponent={renderFooter}
+            backgroundStyle={backgroundStyle}
+            handleIndicatorStyle={handleIndicatorStyle}
+            accessibilityLabel="Filters"
+        >
+            <View style={styles.content}>
+                <View style={styles.header}>
+                    <ThemedText type="heading">Filters</ThemedText>
+                    <PressableScale onPress={handleReset} hitSlop={8} accessibilityRole="button"
+                                    pressedScale={0.92} pressedOpacity={0.6} hoveredScale={1.05}>
+                        <ThemedText style={[styles.resetLabel, {color: colors.accent}]}>Reset</ThemedText>
+                    </PressableScale>
+                </View>
+
+                <BottomSheetScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    enableFooterMarginAdjustment
                 >
-                    {!isLarge ?
-                        <View style={[styles.dragIndicator, {backgroundColor: colors.textMuted + '55'}]}/> : null}
-                    <View style={styles.header}>
-                        <ThemedText type="heading">Filters</ThemedText>
-                        <PressableScale onPress={handleReset} hitSlop={8} accessibilityRole="button"
-                                        pressedScale={0.92} pressedOpacity={0.6} hoveredScale={1.05}>
-                            <ThemedText style={[styles.resetLabel, {color: colors.accent}]}>Reset</ThemedText>
-                        </PressableScale>
-                    </View>
-
-                    <View style={styles.scrollWrap}>
-                        <ScrollView
-                            style={styles.scrollView}
-                            contentContainerStyle={styles.scrollContent}
-                            showsVerticalScrollIndicator={false}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <FilterChipGroup
-                                title="Quality"
-                                index={0}
-                                options={QUALITY_OPTIONS}
-                                selectedValue={filters.quality ?? Quality.All}
-                                onSelect={(value) =>
-                                    onFiltersChange({
-                                        ...filters,
-                                        quality: value === Quality.All ? undefined : (value as Quality)
-                                    })
-                                }
-                            />
-                            <FilterChipGroup
-                                title="Minimum rating"
-                                index={1}
-                                options={RATING_OPTIONS}
-                                selectedValue={filters.minimum_rating ?? 0}
-                                onSelect={(value) =>
-                                    onFiltersChange({
-                                        ...filters,
-                                        minimum_rating: value === 0 ? undefined : Number(value)
-                                    })
-                                }
-                            />
-                            <FilterChipGroup
-                                title="Genre"
-                                index={2}
-                                options={GENRE_OPTIONS}
-                                selectedValue={filters.genre ?? Genre.All}
-                                onSelect={(value) =>
-                                    onFiltersChange({
-                                        ...filters,
-                                        genre: value === Genre.All ? undefined : (value as Genre)
-                                    })
-                                }
-                            />
-                            <FilterChipGroup
-                                title="Sort by"
-                                index={3}
-                                options={SORT_BY_OPTIONS}
-                                selectedValue={filters.sort_by ?? SortBy.DateAdded}
-                                onSelect={(value) => onFiltersChange({...filters, sort_by: value as SortBy})}
-                            />
-                            <FilterChipGroup
-                                title="Order"
-                                index={4}
-                                options={ORDER_OPTIONS}
-                                selectedValue={filters.order_by ?? OrderBy.Desc}
-                                onSelect={(value) => onFiltersChange({...filters, order_by: value as OrderBy})}
-                            />
-                        </ScrollView>
-                        <LinearGradient
-                            colors={[colors.surface + '00', colors.surface]}
-                            bands={10}
-                            style={styles.scrollFade}
-                            pointerEvents="none"
-                        />
-                    </View>
-
-                    <View style={[styles.footer, {
-                        paddingBottom: (isLarge ? 16 : bottomInset + 16),
-                        borderTopColor: colors.border
-                    }]}>
-                        <PressableScale onPress={handleApply} accessibilityRole="button"
-                                        pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
-                            <View style={[styles.applyButton, {backgroundColor: colors.accent}]}>
-                                <ThemedText style={[styles.applyButtonLabel, {color: colors.onAccent}]}>Apply
-                                    filters</ThemedText>
-                            </View>
-                        </PressableScale>
-                    </View>
-                </Animated.View>
+                    <FilterChipGroup
+                        title="Collections"
+                        index={0}
+                        options={COLLECTION_OPTIONS}
+                        selectedValue={collectionValue(filters)}
+                        onSelect={(value) => {
+                            const chip = FEED_CHIPS.find((c) => c.key === value);
+                            if (!chip) return;
+                            onFiltersChange({
+                                ...filters,
+                                sort_by: chip.query.sort_by,
+                                order_by: chip.query.order_by,
+                                quality: chip.query.quality || undefined,
+                                minimum_rating: chip.query.minimum_rating,
+                            });
+                        }}
+                    />
+                    <FilterChipGroup
+                        title="Quality"
+                        index={1}
+                        options={QUALITY_OPTIONS}
+                        selectedValue={filters.quality ?? Quality.All}
+                        onSelect={(value) =>
+                            onFiltersChange({
+                                ...filters,
+                                quality: value === Quality.All ? undefined : (value as Quality)
+                            })
+                        }
+                    />
+                    <FilterChipGroup
+                        title="Minimum rating"
+                        index={2}
+                        options={RATING_OPTIONS}
+                        selectedValue={filters.minimum_rating ?? 0}
+                        onSelect={(value) =>
+                            onFiltersChange({
+                                ...filters,
+                                minimum_rating: value === 0 ? undefined : Number(value)
+                            })
+                        }
+                    />
+                    <FilterChipGroup
+                        title="Genre"
+                        index={3}
+                        options={GENRE_OPTIONS}
+                        selectedValue={filters.genre ?? Genre.All}
+                        onSelect={(value) =>
+                            onFiltersChange({
+                                ...filters,
+                                genre: value === Genre.All ? undefined : (value as Genre)
+                            })
+                        }
+                    />
+                    <FilterChipGroup
+                        title="Sort by"
+                        index={4}
+                        options={SORT_BY_OPTIONS}
+                        selectedValue={filters.sort_by ?? SortBy.DateAdded}
+                        onSelect={(value) => onFiltersChange({...filters, sort_by: value as SortBy})}
+                    />
+                    <FilterChipGroup
+                        title="Order"
+                        index={5}
+                        options={ORDER_OPTIONS}
+                        selectedValue={filters.order_by ?? OrderBy.Desc}
+                        onSelect={(value) => onFiltersChange({...filters, order_by: value as OrderBy})}
+                    />
+                </BottomSheetScrollView>
             </View>
-        </Modal>
+        </BottomSheetModal>
     );
 }
 
 const styles = StyleSheet.create({
-    root: {flex: 1, justifyContent: 'flex-end'},
-    rootCentered: {justifyContent: 'center', alignItems: 'center', padding: 24},
-    scrim: {backgroundColor: 'rgba(0, 0, 0, 0.55)'},
-    sheet: {overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth},
-    sheetBottom: {borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl},
-    sheetCentered: {borderRadius: Radius.xl, width: '100%', maxWidth: 480},
-    dragIndicator: {alignSelf: 'center', width: 38, height: 5, borderRadius: 3, marginTop: 10, marginBottom: 2},
-    scrollWrap: {flexShrink: 1},
-    scrollView: {flexShrink: 1},
+    sheetBackground: {
+        borderTopLeftRadius: Radius.xl,
+        borderTopRightRadius: Radius.xl,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+    },
+    handleIndicator: {width: 38, height: 5, borderRadius: 3},
+    content: {flex: 1},
+    scrollView: {flex: 1},
     scrollContent: {paddingHorizontal: Spacing.xl, paddingTop: 4, paddingBottom: Spacing.xl},
-    scrollFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 36},
+    scrollFade: {position: 'absolute', left: 0, right: 0, top: -36, height: 36},
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.lg,
+        paddingTop: Spacing.sm,
         paddingBottom: Spacing.sm,
     },
     resetLabel: {fontSize: 16, fontWeight: '700'},

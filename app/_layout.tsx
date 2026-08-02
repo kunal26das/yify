@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {AppState, Platform, StyleSheet} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
@@ -16,7 +17,15 @@ import {
 } from '@expo-google-fonts/hanken-grotesk';
 import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-google-fonts/fraunces';
 
-import {Colors, UpdateSnackbar, useColorScheme, useIsFrostedDesktop, useIsMacDesktop} from '@/presentation';
+import {
+    Colors,
+    PlayerHost,
+    PlayerProvider,
+    UpdateSnackbar,
+    useColorScheme,
+    useIsFrostedDesktop,
+    useIsMacDesktop,
+} from '@/presentation';
 import {syncOta} from '@/lib/ota-update';
 import {initRemoteConfig} from '@/lib/remote-config';
 import {hasNotificationPermission, registerNewMoviesTask} from '@/lib/new-movies-task';
@@ -105,13 +114,17 @@ function RootLayout() {
     const content = (
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
-            <Stack>
-                <Stack.Screen name="index" options={{headerShown: false}}/>
-                <Stack.Screen name="browse" options={{headerShown: false}}/>
-                <Stack.Screen name="my-list" options={{headerShown: false}}/>
-                <Stack.Screen name="settings" options={{headerShown: false}}/>
-                <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
-            </Stack>
+            <PlayerProvider>
+                <Stack>
+                    <Stack.Screen name="index" options={{headerShown: false}}/>
+                    <Stack.Screen name="browse" options={{headerShown: false}}/>
+                    <Stack.Screen name="my-list" options={{headerShown: false}}/>
+                    <Stack.Screen name="shows" options={{headerShown: false}}/>
+                    <Stack.Screen name="settings" options={{headerShown: false}}/>
+                    <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
+                </Stack>
+                <PlayerHost/>
+            </PlayerProvider>
             <UpdateSnackbar/>
             <StatusBar style="auto"/>
         </ThemeProvider>
@@ -120,6 +133,7 @@ function RootLayout() {
     return (
         <GestureHandlerRootView style={styles.flex}>
             <SafeAreaProvider>
+                <BottomSheetModalProvider>
                 {isMacDesktop ? (
                     <SafeAreaInsetsContext.Provider
                         value={{top: DESKTOP_TOP_INSET, left: 0, right: 0, bottom: 0}}
@@ -129,6 +143,7 @@ function RootLayout() {
                 ) : (
                     content
                 )}
+                </BottomSheetModalProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>
     );

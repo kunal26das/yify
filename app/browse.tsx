@@ -12,6 +12,7 @@ import {
   type MovieFilters,
 } from '@/presentation';
 import {getApiBaseUrl} from '@/lib/remote-config';
+import {getBrowseDefaults} from '@/lib/settings';
 
 function asEnum<T extends string>(value: string | undefined, allowed: readonly T[]): T | undefined {
   return value != null && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
@@ -32,6 +33,26 @@ export default function BrowseRoute() {
   const repository = useMemo(() => new MovieRepositoryImpl(api), [api]);
 
   const initialFilters = useMemo<MovieFilters>(() => {
+    const hasParams =
+      params.genre != null ||
+      params.quality != null ||
+      params.minimum_rating != null ||
+      params.sort_by != null ||
+      params.order_by != null;
+    if (!hasParams) {
+      const defaults = getBrowseDefaults();
+      const seeded: MovieFilters = {};
+      const genre = asEnum(defaults.genre, Object.values(Genre));
+      if (genre) seeded.genre = genre;
+      const quality = asEnum(defaults.quality, Object.values(Quality));
+      if (quality) seeded.quality = quality;
+      if (defaults.minimum_rating > 0) seeded.minimum_rating = defaults.minimum_rating;
+      const sortBy = asEnum(defaults.sort_by, Object.values(SortBy));
+      if (sortBy) seeded.sort_by = sortBy;
+      const orderBy = asEnum(defaults.order_by, Object.values(OrderBy));
+      if (orderBy) seeded.order_by = orderBy;
+      return seeded;
+    }
     const f: MovieFilters = {};
     const genre = asEnum(params.genre, Object.values(Genre));
     if (genre) f.genre = genre;

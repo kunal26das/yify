@@ -52,19 +52,19 @@ export const HOME_SHELVES: readonly HomeShelf[] = [
         markNew: true,
     },
     {
+        key: 'top-10',
+        title: 'Top 10 of All Time',
+        variant: 'ranked',
+        limit: 10,
+        query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
+    },
+    {
         key: 'uhd',
         title: '4K Ultra HD',
         subtitle: 'Pristine 2160p transfers',
         variant: 'standard',
         limit: RAIL_LIMIT,
         query: {quality: Quality.P2160, sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
-    },
-    {
-        key: 'top-10',
-        title: 'Top 10 of All Time',
-        variant: 'ranked',
-        limit: 10,
-        query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
     },
     {
         key: 'top-rated',

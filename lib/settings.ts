@@ -5,18 +5,33 @@ import type {KeyValueStore} from './storage/key-value-store';
 const STORE_ID = 'settings';
 const THEME_KEY = 'theme';
 const NOTIFICATIONS_KEY = 'notifications';
-const LANDING_KEY = 'landing';
+const BROWSE_DEFAULTS_KEY = 'browseDefaults';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type LandingPage = 'home' | 'movies' | 'new';
+
+export interface BrowseDefaults {
+    sort_by: string;
+    order_by: string;
+    quality: string;
+    genre: string;
+    minimum_rating: number;
+}
 
 export interface Settings {
     theme: ThemePreference;
     notifications: boolean;
-    landingPage: LandingPage;
+    browseDefaults: BrowseDefaults;
 }
 
-const DEFAULTS: Settings = {theme: 'dark', notifications: true, landingPage: 'home'};
+export const BROWSE_DEFAULTS: BrowseDefaults = {
+    sort_by: 'date_added',
+    order_by: 'desc',
+    quality: '',
+    genre: '',
+    minimum_rating: 0,
+};
+
+const DEFAULTS: Settings = {theme: 'dark', notifications: true, browseDefaults: BROWSE_DEFAULTS};
 
 let store: KeyValueStore | null = null;
 function getStore(): KeyValueStore {
@@ -31,18 +46,31 @@ function isThemePreference(value: string | undefined): value is ThemePreference 
     return value === 'system' || value === 'light' || value === 'dark';
 }
 
-function isLandingPage(value: string | undefined): value is LandingPage {
-    return value === 'home' || value === 'movies' || value === 'new';
+function parseBrowseDefaults(raw: string | undefined): BrowseDefaults {
+    if (!raw) return BROWSE_DEFAULTS;
+    try {
+        const parsed = JSON.parse(raw) as Partial<BrowseDefaults>;
+        const rating = Number(parsed.minimum_rating);
+        return {
+            sort_by: typeof parsed.sort_by === 'string' ? parsed.sort_by : BROWSE_DEFAULTS.sort_by,
+            order_by: typeof parsed.order_by === 'string' ? parsed.order_by : BROWSE_DEFAULTS.order_by,
+            quality: typeof parsed.quality === 'string' ? parsed.quality : BROWSE_DEFAULTS.quality,
+            genre: typeof parsed.genre === 'string' ? parsed.genre : BROWSE_DEFAULTS.genre,
+            minimum_rating: Number.isFinite(rating) ? rating : BROWSE_DEFAULTS.minimum_rating,
+        };
+    } catch {
+        return BROWSE_DEFAULTS;
+    }
 }
 
 function read(): Settings {
     if (snapshot) return snapshot;
     const s = getStore();
     const theme = s.getString(THEME_KEY);
-    const landing = s.getString(LANDING_KEY);
+    const browse = s.getString(BROWSE_DEFAULTS_KEY);
     snapshot = {
         theme: isThemePreference(theme) ? theme : DEFAULTS.theme,
-        landingPage: isLandingPage(landing) ? landing : DEFAULTS.landingPage,
+        browseDefaults: parseBrowseDefaults(browse),
         notifications: s.getString(NOTIFICATIONS_KEY) !== 'false',
     };
     return snapshot;
@@ -53,7 +81,7 @@ function write(next: Settings): void {
     const s = getStore();
     s.set(THEME_KEY, next.theme);
     s.set(NOTIFICATIONS_KEY, next.notifications ? 'true' : 'false');
-    s.set(LANDING_KEY, next.landingPage);
+    s.set(BROWSE_DEFAULTS_KEY, JSON.stringify(next.browseDefaults));
     listeners.forEach((listener) => listener());
 }
 
@@ -71,13 +99,12 @@ export function setNotificationsEnabled(notifications: boolean): void {
     write({...read(), notifications});
 }
 
-export function setLandingPage(landingPage: LandingPage): void {
-    if (read().landingPage === landingPage) return;
-    write({...read(), landingPage});
+export function setBrowseDefaults(browseDefaults: BrowseDefaults): void {
+    write({...read(), browseDefaults});
 }
 
-export function getLandingPage(): LandingPage {
-    return read().landingPage;
+export function getBrowseDefaults(): BrowseDefaults {
+    return read().browseDefaults;
 }
 
 export function areNotificationsEnabled(): boolean {
