@@ -4,7 +4,7 @@ import {useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, ScrollView, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {Show, ShowEpisode, ShowRepository, TitleArtwork, TmdbRepository} from '@/domain';
+import type {Show, ShowEpisode, ShowRepository, TitleArtwork, Torrent, TmdbRepository} from '@/domain';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
@@ -12,6 +12,7 @@ import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {TopBar, useTopBarHeight} from './components/TopBar';
+import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 
 const POSTER_WIDTH = 132;
 
@@ -45,6 +46,8 @@ export function ShowDetailsScreen({
     const [episodes, setEpisodes] = useState<ShowEpisode[]>([]);
     const [meta, setMeta] = useState<TitleArtwork | null>(null);
     const [loading, setLoading] = useState(true);
+    const [openSeasons, setOpenSeasons] = useState<Record<number, boolean>>({});
+    const [notice, setNotice] = useState<Torrent | null>(null);
 
     const imdbCode = useMemo(() => {
         const digits = imdbId.replace(/\D/g, '');
@@ -80,6 +83,41 @@ export function ShowDetailsScreen({
             active = false;
         };
     }, [artwork, imdbCode, imdbId, shows]);
+
+    const seasons = useMemo(() => {
+        const grouped = new Map<number, ShowEpisode[]>();
+        for (const episode of episodes) {
+            const list = grouped.get(episode.season) ?? [];
+            list.push(episode);
+            grouped.set(episode.season, list);
+        }
+        return [...grouped.entries()]
+            .map(([season, list]) => ({
+                season,
+                episodes: list.sort((a, b) => b.episode - a.episode),
+            }))
+            .sort((a, b) => b.season - a.season);
+    }, [episodes]);
+
+    useEffect(() => {
+        if (seasons.length === 0) return;
+        setOpenSeasons((prev) => (Object.keys(prev).length > 0 ? prev : {[seasons[0].season]: true}));
+    }, [seasons]);
+
+    const toEpisodeTorrent = (episode: ShowEpisode): Torrent => ({
+        url: episode.magnetUrl,
+        hash: '',
+        quality: episodeCode(episode),
+        type: 'episode',
+        videoCodec: '',
+        bitDepth: '',
+        audioChannels: '',
+        seeds: episode.seeds,
+        peers: episode.peers,
+        size: formatSize(episode.sizeBytes),
+        sizeBytes: episode.sizeBytes,
+        uploadedAt: episode.releasedAt,
+    });
 
     const title = meta?.title || show?.title || 'Series';
 
@@ -142,43 +180,102 @@ export function ShowDetailsScreen({
                         No releases found for this series.
                     </ThemedText>
                 ) : (
-                    episodes.map((episode) => (
-                        <View
-                            key={episode.id}
-                            style={[styles.episode, {borderBottomColor: colors.border}]}
-                        >
-                            <View style={[styles.codePill, {backgroundColor: colors.accentSoft}]}>
-                                <ThemedText style={[styles.code, {color: colors.accent}]}>
-                                    {episodeCode(episode)}
-                                </ThemedText>
-                            </View>
-                            <View style={styles.episodeText}>
-                                <ThemedText numberOfLines={2} style={[styles.episodeTitle, {color: colors.text}]}>
-                                    {episode.title}
-                                </ThemedText>
-                                <View style={styles.episodeMeta}>
-                                    <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
-                                        {formatSize(episode.sizeBytes)}
+                    seasons.map((group) => {
+                        const expanded = openSeasons[group.season] ?? false;
+                        return (
+                            <View key={group.season}>
+                                <PressableScale
+                                    onPress={() =>
+                                        setOpenSeasons((prev) => ({
+                                            ...prev,
+                                            [group.season]: !expanded,
+                                        }))
+                                    }
+                                    accessibilityRole="button"
+                                    accessibilityState={{expanded}}
+                                    pressedScale={0.99}
+                                    pressedOpacity={0.7}
+                                    contentStyle={[styles.seasonRow, {borderBottomColor: colors.border}]}
+                                >
+                                    <ThemedText style={[styles.seasonTitle, {color: colors.text}]}>
+                                        {group.season > 0 ? `Season ${group.season}` : 'Other releases'}
                                     </ThemedText>
-                                    <View style={styles.seedPeer}>
-                                        <Ionicons name="arrow-up" size={11} color={colors.seed}/>
-                                        <ThemedText style={[Typography.videoMeta, {color: colors.seed}]}>
-                                            {episode.seeds}
+                                    <View style={styles.seasonRight}>
+                                        <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                                            {group.episodes.length}
                                         </ThemedText>
+                                        <Ionicons
+                                            name={expanded ? 'chevron-up' : 'chevron-down'}
+                                            size={18}
+                                            color={colors.textMuted}
+                                        />
                                     </View>
-                                    <View style={styles.seedPeer}>
-                                        <Ionicons name="arrow-down" size={11} color={colors.peer}/>
-                                        <ThemedText style={[Typography.videoMeta, {color: colors.peer}]}>
-                                            {episode.peers}
-                                        </ThemedText>
-                                    </View>
-                                </View>
+                                </PressableScale>
+
+                                {expanded
+                                    ? group.episodes.map((episode) => (
+                                          <PressableScale
+                                              key={episode.id}
+                                              onPress={() => setNotice(toEpisodeTorrent(episode))}
+                                              accessibilityRole="button"
+                                              accessibilityLabel={`${episodeCode(episode)} ${episode.title}`}
+                                              pressedScale={0.99}
+                                              pressedOpacity={0.7}
+                                              contentStyle={[
+                                                  styles.episode,
+                                                  {borderBottomColor: colors.border},
+                                              ]}
+                                          >
+                                              <View style={[styles.codePill, {backgroundColor: colors.accentSoft}]}>
+                                                  <ThemedText style={[styles.code, {color: colors.accent}]}>
+                                                      {episodeCode(episode)}
+                                                  </ThemedText>
+                                              </View>
+                                              <View style={styles.episodeText}>
+                                                  <ThemedText
+                                                      numberOfLines={2}
+                                                      style={[styles.episodeTitle, {color: colors.text}]}
+                                                  >
+                                                      {episode.title}
+                                                  </ThemedText>
+                                                  <View style={styles.episodeMeta}>
+                                                      <ThemedText
+                                                          style={[Typography.videoMeta, {color: colors.textMuted}]}
+                                                      >
+                                                          {formatSize(episode.sizeBytes)}
+                                                      </ThemedText>
+                                                      <View style={styles.seedPeer}>
+                                                          <Ionicons name="arrow-up" size={11} color={colors.seed}/>
+                                                          <ThemedText
+                                                              style={[Typography.videoMeta, {color: colors.seed}]}
+                                                          >
+                                                              {episode.seeds}
+                                                          </ThemedText>
+                                                      </View>
+                                                      <View style={styles.seedPeer}>
+                                                          <Ionicons name="arrow-down" size={11} color={colors.peer}/>
+                                                          <ThemedText
+                                                              style={[Typography.videoMeta, {color: colors.peer}]}
+                                                          >
+                                                              {episode.peers}
+                                                          </ThemedText>
+                                                      </View>
+                                                  </View>
+                                              </View>
+                                          </PressableScale>
+                                      ))
+                                    : null}
                             </View>
-                        </View>
-                    ))
+                        );
+                    })
                 )}
             </ScrollView>
             <TopBar active="shows"/>
+            <TorrentNoticeSheet
+                torrent={notice}
+                onClose={() => setNotice(null)}
+                bottomInset={insets.bottom}
+            />
         </ThemedView>
     );
 }
@@ -205,6 +302,15 @@ const styles = StyleSheet.create({
     overviewBox: {marginTop: Spacing.lg},
     overview: {fontSize: 14, lineHeight: 21},
     sectionHeading: {marginTop: Spacing.xl, marginBottom: Spacing.sm},
+    seasonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: Spacing.md,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    seasonTitle: {fontSize: 15, fontWeight: '700'},
+    seasonRight: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     loader: {marginTop: Spacing.lg},
     episode: {
         flexDirection: 'row',
