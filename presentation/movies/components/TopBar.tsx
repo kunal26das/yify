@@ -8,9 +8,10 @@ import {PressableScale} from '../../components/motion';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {Radius, Spacing} from '../../constants/theme';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
-import {SearchOverlay, rememberRecentSearch} from './SearchOverlay';
+import {SearchOverlay} from './SearchOverlay';
+import {useSearchHistory} from '../../di/DependenciesContext';
 
 export type NavKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'preferences';
 
@@ -65,15 +66,17 @@ export function TopBar({
         [onSearchSubmit, goTo]
     );
 
+    const searchHistory = useSearchHistory();
+
     const submitQuery = useCallback(
         (term: string) => {
             const trimmed = term.trim();
             if (!trimmed) return;
-            rememberRecentSearch(trimmed);
+            searchHistory.remember(trimmed);
             Analytics.search(trimmed);
             routeQuery(trimmed);
         },
-        [routeQuery]
+        [routeQuery, searchHistory]
     );
 
     const navigate = useCallback(

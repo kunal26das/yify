@@ -1,10 +1,14 @@
 import {useSyncExternalStore} from 'react';
-import {getPurchasesState, subscribePurchases, type PurchasesState} from '@/lib/purchases';
+import {INITIAL_PURCHASE_STATE, type PurchaseState} from '@/domain';
+import {usePurchaseRepository} from '../di/DependenciesContext';
 
-const SERVER_SNAPSHOT: PurchasesState = {ready: false, adsRemoved: false, packages: []};
-
-export function usePurchases(): PurchasesState {
-    return useSyncExternalStore(subscribePurchases, getPurchasesState, () => SERVER_SNAPSHOT);
+export function usePurchases(): PurchaseState {
+    const purchases = usePurchaseRepository();
+    return useSyncExternalStore(
+        (listener) => purchases.subscribe(listener),
+        () => purchases.getState(),
+        () => INITIAL_PURCHASE_STATE
+    );
 }
 
 export function useAdsRemoved(): boolean {

@@ -17,7 +17,7 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Radius, Spacing, Typography} from '../constants/theme';
@@ -35,7 +35,7 @@ import {WatchActions} from './components/WatchActions';
 import {WatchProviders} from './components/WatchProviders';
 import {metaParts, thumbFor} from './components/format';
 import {useGoTo} from './constants/destinations';
-import {Genre} from './constants/movieFilterOptions';
+import {Genre} from '@/domain';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
 
 const IS_WEB = Platform.OS === 'web';

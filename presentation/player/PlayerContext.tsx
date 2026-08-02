@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import {Platform} from 'react-native';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
 
 export interface PlayerVideo {

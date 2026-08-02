@@ -10,7 +10,7 @@ import {ThemedText, type ThemedTextType} from '../../components/themed-text';
 import {Duration, PressableScale, enterFade, enterRise, exitFade} from '../../components/motion';
 import {MoviePosterItem} from './MoviePosterItem';
 import {MovieLandscapeItem, landscapeCellHeight, landscapeWidth} from './MovieLandscapeItem';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {POSTER_GAP} from './moviePosterLayout';
 
 export type RailVariant = 'standard' | 'ranked' | 'landscape';

@@ -13,8 +13,8 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {Movie} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
-import {checkForNewMovies} from '@/lib/new-movies-task';
+import {Analytics} from '@/presentation/analytics/events';
+import {useNewMoviesNotifier} from '../di/DependenciesContext';
 import {PressableScale, enterFade, enterPop, enterRise, exitPop} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
@@ -31,7 +31,7 @@ import {SearchOverlay} from './components/SearchOverlay';
 import {TopBar, useTopBarHeight, type NavKey} from './components/TopBar';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
-import {OrderBy, SortBy} from './constants/movieFilterOptions';
+import {OrderBy, SortBy} from '@/domain';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
 
 interface MoviesScreenProps {
@@ -69,6 +69,7 @@ function activeChipKey(applied: MovieFilters): string {
 }
 
 export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
+    const newMovies = useNewMoviesNotifier();
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
     const {width, contentMaxWidth, isLarge, isPhone, gutter} = useResponsive();
@@ -209,8 +210,8 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const handleRefresh = useCallback(() => {
         loadInitial();
-        void checkForNewMovies(true);
-    }, [loadInitial]);
+        void newMovies.check(true);
+    }, [loadInitial, newMovies]);
 
     const handleChipSelect = useCallback(
         (key: string) => {

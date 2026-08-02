@@ -1,8 +1,8 @@
 import {Ionicons} from '@expo/vector-icons';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import type {MovieDetails} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
-import {toggleWatchlist} from '@/lib/watchlist';
+import {Analytics} from '@/presentation/analytics/events';
+import {useToggleWatchlist} from '../useWatchlist';
 import {PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing} from '../../constants/theme';
@@ -43,6 +43,7 @@ export function WatchActions({
 }) {
     const {colors} = usePalette();
     const saved = useIsInWatchlist(details.id);
+    const toggleWatchlist = useToggleWatchlist();
 
     return (
         <ScrollView

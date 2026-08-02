@@ -1,4 +1,5 @@
-import {Genre, GENRE_OPTIONS, OrderBy, Quality, SortBy} from './movieFilterOptions';
+import {Genre, OrderBy, Quality, SortBy} from '@/domain';
+import {GENRE_OPTIONS} from './movieFilterLabels';
 
 export type ShelfVariant = 'standard' | 'ranked' | 'landscape';
 

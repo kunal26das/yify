@@ -4,7 +4,7 @@ import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 're
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Reanimated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {LinearGradient} from '../components/linear-gradient';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';

@@ -5,7 +5,7 @@ import {Platform, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type {Movie} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {Duration, PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';

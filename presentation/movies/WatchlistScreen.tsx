@@ -6,8 +6,8 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {Movie} from '@/domain';
-import {Analytics} from '@/lib/analytics-events';
-import {toggleWatchlist} from '@/lib/watchlist';
+import {Analytics} from '@/presentation/analytics/events';
+import {useToggleWatchlist} from './useWatchlist';
 import {LinearGradient} from '../components/linear-gradient';
 import {PressableScale, enterRise, shiftLayout} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
@@ -130,6 +130,7 @@ function PlaylistHeader({
 
 function SavedPoster({movie, width}: {movie: Movie; width: number}) {
     const {colors} = usePalette();
+    const toggleWatchlist = useToggleWatchlist();
 
     return (
         <Animated.View layout={shiftLayout} style={styles.cell}>

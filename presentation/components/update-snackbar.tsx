@@ -3,22 +3,22 @@ import {useSyncExternalStore} from 'react';
 import {StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {dismissOta, getOtaStatus, restartApp, subscribeOta, type OtaStatus} from '@/lib/ota-update';
+import {IDLE_UPDATE_STATUS, type UpdateStatus} from '@/domain';
+import {useAppUpdates} from '../di/DependenciesContext';
 import {Duration, PressableScale, enterPop, enterRise} from './motion';
 import {ThemedText} from './themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 
-const IDLE: OtaStatus = {state: 'idle', progress: 0};
-
-function useOtaStatus(): OtaStatus {
-    return useSyncExternalStore(subscribeOta, getOtaStatus, () => IDLE);
-}
-
 export function UpdateSnackbar() {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
-    const {state, progress} = useOtaStatus();
+    const appUpdates = useAppUpdates();
+    const {state, progress}: UpdateStatus = useSyncExternalStore(
+        (listener) => appUpdates.subscribe(listener),
+        () => appUpdates.getStatus(),
+        () => IDLE_UPDATE_STATUS
+    );
 
     if (state === 'idle' || state === 'checking') return null;
 
@@ -76,7 +76,7 @@ export function UpdateSnackbar() {
 
                 {ready ? (
                     <PressableScale
-                        onPress={restartApp}
+                        onPress={() => appUpdates.restart()}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel="Restart to apply the update"
@@ -92,7 +92,7 @@ export function UpdateSnackbar() {
 
                 {ready || failed ? (
                     <PressableScale
-                        onPress={dismissOta}
+                        onPress={() => appUpdates.dismiss()}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel="Dismiss"

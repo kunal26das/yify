@@ -1,5 +1,6 @@
 import type {ListShowsParams, ListShowsResult, Show, ShowEpisode, ShowRepository} from '@/domain';
-import type {EztvApi, EztvTorrentDto} from '@/data';
+import type {EztvApi} from '../datasources/EztvApiDataSource';
+import type {EztvTorrentDto} from '../models';
 
 const EPISODE_PAGES = 6;
 

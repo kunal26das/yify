@@ -1,19 +1,15 @@
 import Constants from 'expo-constants';
 import {useCallback, useMemo, useState} from 'react';
 import {Platform} from 'react-native';
-import {Analytics} from '@/lib/analytics-events';
-import {registerNewMoviesTask, requestNotificationPermission} from '@/lib/new-movies-task';
+import {Analytics} from '@/presentation/analytics/events';
+
+import type {BrowseDefaults, Preferences, ThemePreference} from '@/domain';
 import {
-    getBrowseDefaults,
-    setBrowseDefaults,
-    setNotificationsEnabled,
-    setThemePreference,
-    type BrowseDefaults,
-    type Preferences,
-    type ThemePreference,
-} from '@/lib/preferences';
-import {clearWatchlist} from '@/lib/watchlist';
-import {clearRecentSearches, getRecentSearches} from './components/SearchOverlay';
+    useNewMoviesNotifier,
+    usePreferencesRepository,
+    useSearchHistory,
+    useWatchlistRepository,
+} from '../di/DependenciesContext';
 import {usePreferences} from '../hooks/use-preferences';
 import {useWatchlist} from './useWatchlist';
 
@@ -27,7 +23,11 @@ export function usePreferencesViewModel() {
 
     const [permissionBlocked, setPermissionBlocked] = useState(false);
     const [listCleared, setListCleared] = useState(false);
-    const [searchCount, setSearchCount] = useState(() => getRecentSearches().length);
+    const searchHistory = useSearchHistory();
+    const newMovies = useNewMoviesNotifier();
+    const preferencesRepository = usePreferencesRepository();
+    const watchlistRepository = useWatchlistRepository();
+    const [searchCount, setSearchCount] = useState(() => searchHistory.getRecent().length);
 
     const appInfo = useMemo<AppInfo>(() => {
         const build =
@@ -40,37 +40,40 @@ export function usePreferencesViewModel() {
 
     const selectTheme = useCallback((theme: ThemePreference) => {
         Analytics.settingChanged('theme', theme);
-        setThemePreference(theme);
-    }, []);
+        preferencesRepository.setTheme(theme);
+    }, [preferencesRepository]);
 
     const setBrowseDefault = useCallback((key: keyof BrowseDefaults, value: string | number) => {
         Analytics.settingChanged(`browse_${key}`, String(value));
-        setBrowseDefaults({...getBrowseDefaults(), [key]: value} as BrowseDefaults);
-    }, []);
+        preferencesRepository.setBrowseDefaults({
+            ...preferencesRepository.getBrowseDefaults(),
+            [key]: value,
+        } as BrowseDefaults);
+    }, [preferencesRepository]);
 
     const toggleNotifications = useCallback(async (next: boolean) => {
         Analytics.settingChanged('notifications', String(next));
-        setNotificationsEnabled(next);
+        preferencesRepository.setNotificationsEnabled(next);
         if (!next) {
             setPermissionBlocked(false);
             return;
         }
-        const granted = await requestNotificationPermission();
+        const granted = await newMovies.requestPermission();
         setPermissionBlocked(!granted);
-        if (granted) void registerNewMoviesTask();
-    }, []);
+        if (granted) void newMovies.register();
+    }, [preferencesRepository, newMovies]);
 
     const clearSearchHistory = useCallback(() => {
         Analytics.settingChanged('search_history', 'cleared');
-        clearRecentSearches();
+        searchHistory.clear();
         setSearchCount(0);
-    }, []);
+    }, [searchHistory]);
 
     const clearList = useCallback(() => {
         Analytics.settingChanged('watchlist', 'cleared');
-        clearWatchlist();
+        watchlistRepository.clear();
         setListCleared(true);
-    }, []);
+    }, [watchlistRepository]);
 
     return {
         theme: preferences.theme,

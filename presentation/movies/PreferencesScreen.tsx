@@ -1,11 +1,11 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {useState} from 'react';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {BrowseDefaults, ThemePreference} from '@/lib/preferences';
+import type {BrowseDefaults, ThemePreference} from '@/domain';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
@@ -18,14 +18,14 @@ import {
     QUALITY_OPTIONS,
     RATING_OPTIONS,
     SORT_BY_OPTIONS,
-} from './constants/movieFilterOptions';
+} from './constants/movieFilterLabels';
 import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
-import {signInWithGoogle, signOutOfAccount} from '@/lib/auth';
+import {useAuthRepository} from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -360,25 +360,26 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
 const AVATAR_SIZE = 30;
 
 function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
-    const {ready, available, signingIn, user} = useAuth();
+    const {ready, available, signingIn, account} = useAuth();
+    const auth = useAuthRepository();
 
     if (!available && ready) return null;
 
     const signOut = () => {
         Analytics.signOut();
-        void signOutOfAccount();
+        void auth.signOut();
     };
 
     return (
         <>
             <SectionHeader title="Account" colors={colors} gutter={gutter} index={0}/>
             <Group colors={colors} index={0}>
-                {user ? (
+                {account ? (
                     <Row
                         leading={
-                            user.photoUrl ? (
+                            account.photoUrl ? (
                                 <Image
-                                    source={{uri: user.photoUrl}}
+                                    source={{uri: account.photoUrl}}
                                     style={[styles.avatar, {backgroundColor: colors.surfaceSunken}]}
                                     contentFit="cover"
                                     transition={160}
@@ -392,8 +393,8 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                                 />
                             )
                         }
-                        title={user.name ?? 'Signed in'}
-                        subtitle={user.email ?? undefined}
+                        title={account.name ?? 'Signed in'}
+                        subtitle={account.email ?? undefined}
                         colors={colors}
                         gutter={gutter}
                         onPress={signOut}
@@ -408,7 +409,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         title="Sign in with Google"
                         colors={colors}
                         gutter={gutter}
-                        onPress={signingIn ? undefined : () => void signInWithGoogle()}
+                        onPress={signingIn ? undefined : () => void auth.signIn()}
                         accessibilityLabel="Sign in with Google"
                         trailing={
                             signingIn ? (

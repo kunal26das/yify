@@ -1,6 +1,6 @@
 import {useCallback} from 'react';
 import {router, useNavigation, usePathname} from 'expo-router';
-import {OrderBy, SortBy} from './movieFilterOptions';
+import {OrderBy, SortBy} from '@/domain';
 
 export type DestinationKey = 'home' | 'movies' | 'shows' | 'watchlist';
 

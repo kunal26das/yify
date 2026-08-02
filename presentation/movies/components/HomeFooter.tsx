@@ -1,6 +1,6 @@
 import {StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
-import {Analytics} from '@/lib/analytics-events';
+import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';

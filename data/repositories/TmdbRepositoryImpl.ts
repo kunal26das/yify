@@ -1,4 +1,9 @@
-import type {TmdbApi, TmdbMediaType, TmdbProviderDto, TmdbTitleDto} from '@/data';
+import type {
+    TmdbApi,
+    TmdbMediaType,
+    TmdbProviderDto,
+    TmdbTitleDto,
+} from '../datasources/TmdbApiDataSource';
 import {tmdbImageUrl} from '../datasources/TmdbApiDataSource';
 import type {
     TitleArtwork,

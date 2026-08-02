@@ -5,7 +5,7 @@ import {StatusBar} from 'expo-status-bar';
 import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {AppState, Platform, StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
     HankenGrotesk_400Regular,
@@ -19,6 +19,7 @@ import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-g
 
 import {
     Colors,
+    DependenciesProvider,
     PlayerHost,
     PlayerProvider,
     UpdateSnackbar,
@@ -26,20 +27,12 @@ import {
     useIsFrostedDesktop,
     useIsMacDesktop,
 } from '@/presentation';
-import {syncOta} from '@/lib/ota-update';
-import {initRemoteConfig} from '@/lib/remote-config';
-import {hasNotificationPermission, registerNewMoviesTask} from '@/lib/new-movies-task';
-import {Analytics} from '@/lib/analytics-events';
-import {startPlayServices} from '@/lib/play-services';
-import {initPurchases} from '@/lib/purchases';
-import {initAuth} from '@/lib/auth';
-import {startAccountLink} from '@/lib/account-link';
-import {startAccountSync} from '@/lib/sync/account-sync';
+import {bootstrap, createDependencies} from '@/data';
+import {Analytics, installAnalyticsSink} from '@/presentation/analytics/events';
 
-void initRemoteConfig();
-void hasNotificationPermission().then((granted) => {
-    if (granted) void registerNewMoviesTask();
-});
+const dependencies = createDependencies();
+installAnalyticsSink(dependencies.analytics);
+bootstrap(dependencies);
 
 function handleNotificationData(data: unknown) {
     const movieId = (data as { movieId?: number } | null)?.movieId;
@@ -65,22 +58,6 @@ function RootLayout() {
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = fontsLoaded || !!fontError;
-    useEffect(() => {
-        void startPlayServices();
-        void initPurchases();
-        startAccountSync();
-        initAuth();
-        startAccountLink();
-    }, []);
-
-    useEffect(() => {
-        if (Platform.OS === 'web') return;
-        void syncOta();
-        const sub = AppState.addEventListener('change', (next) => {
-            if (next === 'active') void syncOta();
-        });
-        return () => sub.remove();
-    }, []);
     useEffect(() => {
         if (!lastResponse || !navReady) return;
         handleNotificationData(lastResponse.notification.request.content.data);
@@ -120,6 +97,7 @@ function RootLayout() {
     const content = (
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
+            <DependenciesProvider dependencies={dependencies}>
             <PlayerProvider>
                 <Stack>
                     <Stack.Screen name="index" options={{headerShown: false}}/>
@@ -133,6 +111,7 @@ function RootLayout() {
                 <PlayerHost/>
             </PlayerProvider>
             <UpdateSnackbar/>
+            </DependenciesProvider>
             <StatusBar style="auto"/>
         </ThemeProvider>
     );

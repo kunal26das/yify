@@ -1,4 +1,4 @@
-import type {WatchAvailability} from '@/domain';
+import type {WatchAvailability} from '../entities/WatchProvider';
 
 export type TitleMedia = 'movie' | 'tv';
 

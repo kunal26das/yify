@@ -8,7 +8,8 @@ import type {
   ParentalGuide,
   Torrent,
 } from '@/domain';
-import type {YtsApi, YtsCastMemberDto, YtsMovieDto, YtsTorrentDto} from '@/data';
+import type {YtsApi} from '../datasources/YtsApiDataSource';
+import type {YtsCastMemberDto, YtsMovieDto, YtsTorrentDto} from '../models';
 
 export class MovieRepositoryImpl implements MovieRepository {
   constructor(private readonly api: YtsApi) {

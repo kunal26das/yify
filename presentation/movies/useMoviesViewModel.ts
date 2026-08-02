@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Movie, MovieRepository } from '@/domain';
-import type {
-  Genre,
-  OrderBy,
-  Quality,
-  SortBy,
-} from './constants/movieFilterOptions';
+import type { Genre, Movie, MovieRepository, OrderBy, Quality, SortBy } from '@/domain';
 
 const PAGE_SIZE = 50;
 const SEARCH_DEBOUNCE_MS = 400;
