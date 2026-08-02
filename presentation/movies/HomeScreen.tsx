@@ -12,7 +12,6 @@ import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {LiquidGlassView} from '../components/liquid-glass-view';
 import {ChipBar} from './components/ChipBar';
 import {HeroBillboard} from './components/HeroBillboard';
 import {HomeFooter} from './components/HomeFooter';
@@ -502,28 +501,21 @@ export function HomeScreen({shelves, feed}: {shelves: HomeViewModel; feed: FeedV
                             visible={showProgress}
                         />
                     )}
-                    {chipsPinned ? (
-                        <View
-                            style={[
-                                styles.chipRowPinned,
-                                {
-                                    top: topBarHeight,
-                                },
-                            ]}
-                        >
-                            <LiquidGlassView
-                                tint={scheme === 'dark' ? 'dark' : 'light'}
-                                fallbackBackgroundColor={
-                                    scheme === 'dark' ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.86)'
-                                }
-                                style={StyleSheet.absoluteFill}
-                            />
-                            <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
-                                <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
-                            </View>
-                        </View>
-                    ) : null}
-                    <TopBar active="home"/>
+                    <TopBar
+                        active="home"
+                        below={
+                            chipsPinned ? (
+                                <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                                    <ChipBar
+                                        chips={FEED_CHIPS}
+                                        active={chip}
+                                        onSelect={selectChip}
+                                        contentPadding={gutter}
+                                    />
+                                </View>
+                            ) : null
+                        }
+                    />
                 </ThemedView>
             </HoverCardHost>
         </TopTenProvider>
@@ -726,13 +718,6 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.sm,
     },
     chipRow: {},
-    chipRowPinned: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 20,
-        alignItems: 'center',
-    },
     chipRowInner: {width: '100%', alignSelf: 'center'},
     cardRow: {
         width: '100%',

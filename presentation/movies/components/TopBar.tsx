@@ -35,11 +35,13 @@ export function TopBar({
                            onSearchSubmit,
                            searchValue,
                            showSearch = true,
+                           below,
                        }: {
     active?: NavKey;
     onSearchSubmit?: (q: string) => void;
     searchValue?: string;
     showSearch?: boolean;
+    below?: React.ReactNode;
 }) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
@@ -258,6 +260,8 @@ export function TopBar({
                     </>
                 )}
             </View>
+
+            {below}
 
             {showSearch ? (
                 <SearchOverlay

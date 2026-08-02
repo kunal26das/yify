@@ -14,7 +14,6 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {Movie} from '@/domain';
 import {Analytics} from '@/lib/analytics-events';
-import {getBrowseDefaults} from '@/lib/settings';
 import {checkForNewMovies} from '@/lib/new-movies-task';
 import {PressableScale, enterFade, enterPop, enterRise, exitPop} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
@@ -22,7 +21,6 @@ import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {LiquidGlassView} from '../components/liquid-glass-view';
 import {ChipBar} from './components/ChipBar';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieFilterModal} from './components/MovieFilterModal';
@@ -33,7 +31,7 @@ import {SearchOverlay} from './components/SearchOverlay';
 import {TopBar, useTopBarHeight, type NavKey} from './components/TopBar';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
-import {Genre, OrderBy, Quality, SortBy} from './constants/movieFilterOptions';
+import {OrderBy, SortBy} from './constants/movieFilterOptions';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
 
 interface MoviesScreenProps {
@@ -63,26 +61,7 @@ function chipMatches(query: MovieFilters, applied: MovieFilters): boolean {
     return query.sort_by === applied.sort_by && query.order_by === applied.order_by;
 }
 
-function defaultFilters(): MovieFilters {
-    const defaults = getBrowseDefaults();
-    const next: MovieFilters = {};
-    if (defaults.genre) next.genre = defaults.genre as Genre;
-    if (defaults.quality) next.quality = defaults.quality as Quality;
-    if (defaults.minimum_rating > 0) next.minimum_rating = defaults.minimum_rating;
-    if (defaults.sort_by) next.sort_by = defaults.sort_by as SortBy;
-    if (defaults.order_by) next.order_by = defaults.order_by as OrderBy;
-    return next;
-}
 
-function sameFilters(a: MovieFilters, b: MovieFilters): boolean {
-    return (
-        (a.genre ?? null) === (b.genre ?? null) &&
-        (a.quality ?? null) === (b.quality ?? null) &&
-        (a.minimum_rating ?? null) === (b.minimum_rating ?? null) &&
-        (a.sort_by ?? null) === (b.sort_by ?? null) &&
-        (a.order_by ?? null) === (b.order_by ?? null)
-    );
-}
 
 function activeChipKey(applied: MovieFilters): string {
     if (Object.values(applied).every((value) => value == null)) return 'all';
@@ -91,7 +70,7 @@ function activeChipKey(applied: MovieFilters): string {
 
 export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const insets = useSafeAreaInsets();
-    const {colors, scheme} = usePalette();
+    const {colors} = usePalette();
     const {width, contentMaxWidth, isLarge, isPhone, gutter} = useResponsive();
     const {
         movies,
@@ -139,14 +118,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const derivedChip = activeChipKey(appliedFilters);
     const activeChip =
         pickedChip && chipMatches(chipFor(pickedChip).query, appliedFilters) ? pickedChip : derivedChip;
-    const atDefaults = sameFilters(appliedFilters, defaultFilters());
 
-    const resetToDefaults = useCallback(() => {
-        Analytics.filtersReset();
-        setPickedChip(null);
-        applyFilters(defaultFilters());
-        listRef.current?.scrollToOffset({offset: 0, animated: true});
-    }, [applyFilters]);
 
     const activeFilterCount = [
         appliedFilters.quality,
@@ -299,49 +271,10 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     );
 
     const chipRow = (
-        <View
-            style={[
-                styles.chipRow,
-                {
-                    top: topBarHeight,
-                    height: CHIP_ROW_HEIGHT,
-                },
-            ]}
-        >
-            <LiquidGlassView
-                tint={scheme === 'dark' ? 'dark' : 'light'}
-                fallbackBackgroundColor={
-                    scheme === 'dark' ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.86)'
-                }
-                style={StyleSheet.absoluteFill}
-            />
-            <View
-                style={[
-                    styles.chipRowInner,
-                    
-                    isLarge && {maxWidth: contentMaxWidth},
-                ]}
-            >
+        <View style={[styles.chipRow, {height: CHIP_ROW_HEIGHT}]}>
+            <View style={[styles.chipRowInner, isLarge && {maxWidth: contentMaxWidth}]}>
                 <View style={styles.chipBarArea}>
                     <ChipBar chips={FEED_CHIPS} active={activeChip} onSelect={handleChipSelect} contentPadding={gutter}/>
-                </View>
-                <View style={[styles.filtersArea, {paddingRight: atDefaults ? 0 : gutter}]}>
-                    {atDefaults ? null : (
-                        <PressableScale
-                            onPress={resetToDefaults}
-                            accessibilityRole="button"
-                            accessibilityLabel="Clear filters"
-                            pressedScale={0.94}
-                            pressedOpacity={0.85}
-                            contentStyle={[
-                                styles.filtersPill,
-                                {backgroundColor: colors.surfaceSunken, borderColor: colors.border},
-                            ]}
-                        >
-                            <Ionicons name="close" size={16} color={colors.textMuted}/>
-                            <ThemedText style={[styles.filtersLabel, {color: colors.textMuted}]}>Clear</ThemedText>
-                        </PressableScale>
-                    )}
                 </View>
             </View>
         </View>
@@ -353,6 +286,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             searchValue={searchQuery}
             onSearchSubmit={setSearchQuery}
             showSearch
+            below={chipRow}
         />
     );
 
@@ -412,7 +346,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         ))}
                     </View>
                 </View>
-                {chipRow}
                 {topBar}
                 {searchOverlay}
             </ThemedView>
@@ -448,7 +381,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         </PressableScale>
                     </Animated.View>
                 </View>
-                {chipRow}
                 {topBar}
                 {searchOverlay}
             </ThemedView>
@@ -550,7 +482,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     scrollEventThrottle={16}
                 />
 
-                {chipRow}
                 {topBar}
                 {searchOverlay}
 
@@ -603,12 +534,7 @@ const styles = StyleSheet.create({
         paddingBottom: Spacing.sm,
     },
 
-    chipRow: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        zIndex: 20,
-    },
+    chipRow: {},
     chipRowInner: {
         flex: 1,
         width: '100%',
@@ -617,17 +543,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     chipBarArea: {flex: 1},
-    filtersArea: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingLeft: Spacing.sm},
-    filtersPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs + 2,
-        height: 32,
-        borderRadius: Radius.pill,
-        borderWidth: StyleSheet.hairlineWidth,
-        paddingHorizontal: Spacing.md,
-    },
-    filtersLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500'},
     filterBadge: {
         minWidth: 18,
         height: 18,
