@@ -93,6 +93,7 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
         <BottomSheetModal
             ref={sheetRef}
             snapPoints={snapPoints}
+            containerStyle={styles.sheetContainer}
             enableDynamicSizing={!IS_WEB}
             enablePanDownToClose
             onDismiss={handleDismiss}
@@ -183,7 +184,10 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
     );
 }
 
+const SHEET_Z_INDEX = 200;
+
 const styles = StyleSheet.create({
+    sheetContainer: {zIndex: SHEET_Z_INDEX, elevation: SHEET_Z_INDEX},
     sheetBackground: {borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl},
     handleIndicator: {width: 38, height: 5, borderRadius: 3},
     sheetView: {width: '100%'},

@@ -338,6 +338,7 @@ export function MovieFilterModal({
         <BottomSheetModal
             ref={sheetRef}
             snapPoints={SNAP_POINTS}
+            containerStyle={styles.sheetContainer}
             index={0}
             enablePanDownToClose
             enableDynamicSizing={false}
@@ -365,7 +366,10 @@ export function MovieFilterModal({
     );
 }
 
+const SHEET_Z_INDEX = 200;
+
 const styles = StyleSheet.create({
+    sheetContainer: {zIndex: SHEET_Z_INDEX, elevation: SHEET_Z_INDEX},
     sheetBackground: {
         borderTopLeftRadius: Radius.xl,
         borderTopRightRadius: Radius.xl,
@@ -384,8 +388,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.sm,
-        paddingBottom: Spacing.sm,
+        paddingTop: Spacing.lg,
+        paddingBottom: Spacing.lg,
     },
     resetLabel: {fontSize: 16, fontWeight: '700'},
     section: {paddingVertical: Spacing.md},
