@@ -29,7 +29,7 @@ export const HERO_LIMIT = 10;
 
 export const API_MAX_LIMIT = 50;
 
-const RAIL_LIMIT = API_MAX_LIMIT;
+const RAIL_LIMIT = 20;
 
 const GENRE_SHELVES: readonly HomeShelf[] = GENRE_OPTIONS.filter(
     (option) => option.value !== Genre.All

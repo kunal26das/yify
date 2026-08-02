@@ -128,7 +128,9 @@ export class MovieRepositoryImpl implements MovieRepository {
       year: dto.year,
       rating: dto.rating,
       runtimeMinutes: dto.runtime,
-      genres: dto.genres ?? [],
+      genres: (dto.genres ?? []).filter(
+          (genre): genre is string => typeof genre === 'string' && genre.trim().length > 0
+      ),
       summary: dto.summary,
       language: dto.language,
       mpaRating: dto.mpa_rating,

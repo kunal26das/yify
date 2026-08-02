@@ -4,6 +4,7 @@ import {
   GlassView,
   isLiquidGlassAvailable,
 } from 'expo-glass-effect';
+import { Component, type ReactNode } from 'react';
 import { Platform, StyleProp, View, ViewStyle } from 'react-native';
 
 type Tint = 'light' | 'dark';
@@ -20,6 +21,23 @@ interface LiquidGlassViewProps {
 
 const supportsLiquidGlass =
   Platform.OS === 'ios' && isLiquidGlassAvailable();
+
+interface GlassFallbackProps {
+  children: ReactNode;
+  fallback: ReactNode;
+}
+
+class NativeEffectBoundary extends Component<GlassFallbackProps, {failed: boolean}> {
+  state = {failed: false};
+
+  static getDerivedStateFromError() {
+    return {failed: true};
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
 
 export function LiquidGlassView({
   children,
@@ -51,10 +69,18 @@ export function LiquidGlassView({
     );
   }
 
-  return (
-    <BlurView intensity={intensity} tint={tint} style={style}>
+  const solid = (
+    <View style={[style, fallbackBackgroundColor ? {backgroundColor: fallbackBackgroundColor} : undefined]}>
       {children}
-    </BlurView>
+    </View>
+  );
+
+  return (
+    <NativeEffectBoundary fallback={solid}>
+      <BlurView intensity={intensity} tint={tint} style={style}>
+        {children}
+      </BlurView>
+    </NativeEffectBoundary>
   );
 }
 
