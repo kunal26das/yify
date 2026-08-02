@@ -13,12 +13,14 @@ function breadcrumb(message: string): void {
 export async function startPlayServices(): Promise<void> {
     if (Platform.OS !== 'android') return;
     try {
-        const {updateAvailable, updateInProgress, storeVersion, immediateAllowed} =
+        const {updateAvailable, updateInProgress, storeVersion, immediateAllowed, flexibleAllowed} =
             await InAppUpdates.checkForUpdate();
 
         if (updateAvailable || updateInProgress) {
             breadcrumb(`in_app_update available store=${storeVersion} inProgress=${!!updateInProgress}`);
-            const started = await InAppUpdates.startUpdate(immediateAllowed !== false);
+            const immediate =
+                immediateAllowed === true ? true : flexibleAllowed === true ? false : undefined;
+            const started = await InAppUpdates.startUpdate(immediate);
             breadcrumb(`in_app_update started=${started}`);
             return;
         }
