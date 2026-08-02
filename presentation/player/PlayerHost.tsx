@@ -59,8 +59,15 @@ export function PlayerHost(): ReactElement | null {
     }, [insets.bottom, isPhone, windowHeight, windowWidth]);
 
     useEffect(() => {
-        if (mode === 'inline' && !pathname.startsWith('/movie/')) minimize();
-    }, [minimize, mode, pathname]);
+        if (mode !== 'inline') return;
+        if (!pathname.startsWith('/movie/')) {
+            minimize();
+            return;
+        }
+        const routeId = Number(pathname.slice('/movie/'.length));
+        if (!video || !Number.isFinite(routeId) || routeId === video.movieId) return;
+        router.replace(`/movie/${video.movieId}`);
+    }, [minimize, mode, pathname, video]);
 
     const shift = useCallback(
         (rect: PlayerRect): PlayerRect => ({...rect, y: rect.y - topBarHeight}),

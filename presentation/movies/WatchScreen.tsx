@@ -546,7 +546,7 @@ function UpNextSection({movies, thumbWidth}: {movies: Movie[]; thumbWidth: numbe
     if (movies.length === 0) return null;
     return (
         <View style={styles.upNextSection}>
-            <SectionHeading title="Up next"/>
+            <SectionHeading title={RELATED_TITLE}/>
             <View style={styles.upNextList}>
                 {movies.map((movie) => (
                     <VideoRow

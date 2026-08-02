@@ -30,6 +30,7 @@ import {thumbPlaceholder} from './format';
 const ROTATE_MS = 6500;
 const ROTATE_WITH_TRAILER_MS = 30000;
 const TRAILER_START_DELAY_MS = 2400;
+const SETTLE_MS = 520;
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -69,6 +70,8 @@ export function HeroBillboard({
     const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trailerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pendingTargetRef = useRef<number | null>(null);
     const scheduleNextRef = useRef<() => void>(() => {});
 
     const page = measuredPage > 0 ? measuredPage : Math.round(width);
@@ -85,7 +88,21 @@ export function HeroBillboard({
     );
 
     const scrollToData = useCallback(
-        (d: number, animated: boolean) => scrollRef.current?.scrollTo({x: d * page, animated}),
+        (d: number, animated: boolean) => {
+            scrollRef.current?.scrollTo({x: d * page, animated});
+            if (!animated || page <= 0) return;
+            pendingTargetRef.current = d;
+            if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+            settleTimerRef.current = setTimeout(() => {
+                const target = pendingTargetRef.current;
+                pendingTargetRef.current = null;
+                if (target == null) return;
+                const settled = target * page;
+                if (Math.abs(scrollXRef.current - settled) <= 1) return;
+                scrollRef.current?.scrollTo({x: settled, animated: false});
+                scrollXRef.current = settled;
+            }, SETTLE_MS);
+        },
         [page]
     );
 
@@ -140,6 +157,11 @@ export function HeroBillboard({
         [page, setActive, realForData, scheduleNext, scheduleReposition]
     );
 
+    const onBeginDrag = useCallback(() => {
+        pendingTargetRef.current = null;
+        if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    }, []);
+
     const onMomentumEnd = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
             if (page <= 0) return;
@@ -164,6 +186,7 @@ export function HeroBillboard({
         return () => {
             clearAuto();
             if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+            if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
         };
     }, [page, scrollToData, scheduleNext, clearAuto]);
 
@@ -229,6 +252,7 @@ export function HeroBillboard({
                 scrollEventThrottle={16}
                 onScroll={onScroll}
                 onMomentumScrollEnd={onMomentumEnd}
+                onScrollBeginDrag={onBeginDrag}
                 onLayout={(e) => setMeasuredPage(Math.round(e.nativeEvent.layout.width))}
                 decelerationRate="fast"
                 scrollEnabled={mode !== 'feature'}
