@@ -109,6 +109,7 @@ export function TopBar({
                 contentStyle={styles.link}
             >
                 <ThemedText
+                    numberOfLines={1}
                     style={[
                         styles.linkLabel,
                         selected ? {color: colors.text, fontWeight: '700'} : {color: colors.textMuted},
@@ -320,9 +321,9 @@ const styles = StyleSheet.create({
         letterSpacing: 0.6,
         ...Platform.select({web: {cursor: 'pointer'}, default: {}}),
     },
-    links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
+    links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
     phoneLinks: {flexGrow: 0, flexShrink: 1},
-    link: {alignItems: 'center', justifyContent: 'center', paddingVertical: 6},
+    link: {alignItems: 'center', justifyContent: 'center', paddingVertical: 6, flexShrink: 0},
     linkLabel: {fontSize: 14.5, lineHeight: 20},
     underline: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 1},
     searchArea: {flex: 1, alignItems: 'center', paddingHorizontal: Spacing.md},

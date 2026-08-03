@@ -74,7 +74,7 @@ export function HeroBillboard({
     const pendingTargetRef = useRef<number | null>(null);
     const scheduleNextRef = useRef<() => void>(() => {});
 
-    const page = measuredPage > 0 ? measuredPage : Math.round(width);
+    const page = measuredPage > 0 ? measuredPage : width;
 
     const activeMovie = movies[index];
     const activeTrailer = activeMovie ? trailers?.[activeMovie.id] : undefined;
@@ -253,7 +253,7 @@ export function HeroBillboard({
                 onScroll={onScroll}
                 onMomentumScrollEnd={onMomentumEnd}
                 onScrollBeginDrag={onBeginDrag}
-                onLayout={(e) => setMeasuredPage(Math.round(e.nativeEvent.layout.width))}
+                onLayout={(e) => setMeasuredPage(e.nativeEvent.layout.width)}
                 decelerationRate="fast"
                 scrollEnabled={mode !== 'feature'}
             >
@@ -261,7 +261,7 @@ export function HeroBillboard({
                     <HeroSlide
                         key={`${movie.id}:${i}`}
                         movie={movie}
-                        width={width}
+                        width={page}
                         height={height}
                         colors={colors}
                         trailerId={i === index && mode !== 'idle' ? activeTrailer ?? null : null}
