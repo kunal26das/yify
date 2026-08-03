@@ -17,17 +17,25 @@ interface ChipMetrics {
     width: number;
 }
 
+const REVEAL_RETRY_MS = 160;
+
 export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: ChipBarProps) {
     const {colors} = usePalette();
     const scrollRef = useRef<ScrollView | null>(null);
     const metrics = useRef<Record<string, ChipMetrics>>({});
     const viewportWidth = useRef(0);
 
+    const pending = useRef<string | null>(null);
+
     const revealActive = useCallback(
         (animated: boolean) => {
             const chip = metrics.current[active];
             const viewport = viewportWidth.current;
-            if (!chip || !scrollRef.current || viewport <= 0) return;
+            if (!chip || !scrollRef.current || viewport <= 0) {
+                pending.current = active;
+                return;
+            }
+            pending.current = null;
             const centered = chip.x - (viewport - chip.width) / 2;
             scrollRef.current.scrollTo({x: Math.max(0, centered), y: 0, animated});
         },
@@ -35,13 +43,25 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
     );
 
     useEffect(() => {
-        revealActive(true);
-    }, [revealActive]);
+        pending.current = active;
+        revealActive(false);
+        const retry = setTimeout(() => revealActive(true), REVEAL_RETRY_MS);
+        return () => clearTimeout(retry);
+    }, [active, revealActive]);
 
     const onViewportLayout = useCallback(
         (event: LayoutChangeEvent) => {
             viewportWidth.current = event.nativeEvent.layout.width;
             revealActive(false);
+        },
+        [revealActive]
+    );
+
+    const onChipLayout = useCallback(
+        (key: string, event: LayoutChangeEvent) => {
+            const {x, width} = event.nativeEvent.layout;
+            metrics.current[key] = {x, width};
+            if (pending.current === key) revealActive(false);
         },
         [revealActive]
     );
@@ -67,11 +87,7 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                             accessibilityState={{selected}}
                             accessibilityLabel={chip.label}
                             onPress={() => onSelect(chip.key)}
-                            onLayout={(event) => {
-                                const {x, width} = event.nativeEvent.layout;
-                                metrics.current[chip.key] = {x, width};
-                                if (selected) revealActive(false);
-                            }}
+                            onLayout={(event) => onChipLayout(chip.key, event)}
                             pressedScale={0.94}
                             pressedOpacity={0.85}
                             contentStyle={[
