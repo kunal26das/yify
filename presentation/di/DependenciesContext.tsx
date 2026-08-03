@@ -1,5 +1,6 @@
 import {createContext, useContext, type ReactNode} from 'react';
 import type {
+    AccountSync,
     AppConfig,
     AppUpdates,
     AuthRepository,
@@ -79,4 +80,8 @@ export function useNewMoviesNotifier(): NewMoviesNotifier {
 
 export function useSearchHistory(): SearchHistoryRepository {
     return useDependencies().searchHistory;
+}
+
+export function useAccountSync(): AccountSync {
+    return useDependencies().accountSync;
 }

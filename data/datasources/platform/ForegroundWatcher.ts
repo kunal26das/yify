@@ -6,3 +6,7 @@ export function watchForeground(onForeground: () => void): () => void {
     });
     return () => subscription.remove();
 }
+
+export function isForeground(): boolean {
+    return AppState.currentState === 'active';
+}

@@ -6,3 +6,8 @@ export function watchForeground(onForeground: () => void): () => void {
     document.addEventListener('visibilitychange', handler);
     return () => document.removeEventListener('visibilitychange', handler);
 }
+
+export function isForeground(): boolean {
+    if (typeof document === 'undefined') return false;
+    return document.visibilityState === 'visible';
+}

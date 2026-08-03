@@ -5,7 +5,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {BrowseDefaults, ThemePreference} from '@/domain';
+import type {BrowseDefaults, SyncStatus, ThemePreference} from '@/domain';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
@@ -25,7 +25,8 @@ import {ChipBar} from './components/ChipBar';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
-import {useAuthRepository} from '../di/DependenciesContext';
+import {useSyncStatus} from '../hooks/use-sync-status';
+import {useAccountSync, useAuthRepository} from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -359,6 +360,52 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
 
 const AVATAR_SIZE = 30;
 
+function syncedAgo(at: number, now: number): string {
+    const seconds = Math.max(0, Math.round((now - at) / 1000));
+    if (seconds < 60) return 'just now';
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.round(hours / 24)}d ago`;
+}
+
+function syncLabel(status: SyncStatus): {title: string; subtitle?: string} {
+    if (status.state === 'syncing') return {title: 'Syncing'};
+    if (status.state === 'error') {
+        return {title: 'Sync failed', subtitle: status.detail ?? undefined};
+    }
+    if (status.pendingChanges) return {title: 'Waiting to sync'};
+    if (status.lastSyncedAt == null) return {title: 'Not synced yet'};
+    return {title: 'Synced', subtitle: syncedAgo(status.lastSyncedAt, Date.now())};
+}
+
+function SyncRow({colors, gutter}: {colors: Colors; gutter: number}) {
+    const status = useSyncStatus();
+    const accountSync = useAccountSync();
+    const failed = status.state === 'error';
+    const {title, subtitle} = syncLabel(status);
+
+    return (
+        <Row
+            icon={failed ? 'cloud-offline-outline' : 'cloud-done-outline'}
+            title={title}
+            subtitle={subtitle}
+            colors={colors}
+            gutter={gutter}
+            onPress={failed ? () => accountSync.syncNow() : undefined}
+            accessibilityLabel={failed ? 'Retry sync' : title}
+            trailing={
+                status.state === 'syncing' ? (
+                    <ActivityIndicator color={colors.accent}/>
+                ) : failed ? (
+                    <ThemedText style={[styles.value, {color: colors.accent}]}>Retry</ThemedText>
+                ) : undefined
+            }
+        />
+    );
+}
+
 function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const {ready, available, signingIn, account} = useAuth();
     const auth = useAuthRepository();
@@ -375,6 +422,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
             <SectionHeader title="Account" colors={colors} gutter={gutter} index={0}/>
             <Group colors={colors} index={0}>
                 {account ? (
+                    <>
                     <Row
                         leading={
                             account.photoUrl ? (
@@ -403,6 +451,8 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                             <ThemedText style={[styles.value, {color: colors.accent}]}>Sign out</ThemedText>
                         }
                     />
+                    <SyncRow colors={colors} gutter={gutter}/>
+                    </>
                 ) : (
                     <Row
                         icon="logo-google"
