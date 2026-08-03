@@ -141,20 +141,13 @@ export function mergeWatchlistState<T extends WatchlistEntry>(
         }
         marks[id] = mine.at > theirs.at ? mine : theirs;
     });
-    const ordered = [
-        ...local.items,
-        ...remote.items.filter((item) => !localItems.has(String(item.id))),
-    ];
-    const seen = new Set<string>();
-    const items: T[] = [];
-    ordered.forEach((item) => {
-        const id = String(item.id);
-        if (seen.has(id)) return;
-        const mark = marks[id];
-        if (mark == null || mark.deleted) return;
-        seen.add(id);
-        items.push(item);
-    });
+    const byId = new Map<string, T>();
+    remote.items.forEach((item) => byId.set(String(item.id), item));
+    local.items.forEach((item) => byId.set(String(item.id), item));
+    const items = [...byId.entries()]
+        .filter(([id]) => marks[id] != null && !marks[id].deleted)
+        .sort(([a], [b]) => marks[b].at - marks[a].at || Number(b) - Number(a))
+        .map(([, item]) => item);
     return {items, marks};
 }
 

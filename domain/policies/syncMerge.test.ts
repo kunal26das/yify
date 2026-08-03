@@ -160,10 +160,36 @@ test('merging is idempotent once both sides agree', () => {
     assert.ok(sameWatchlistState(once, twice));
 });
 
-test('merge keeps local ordering first and appends only unseen remote entries', () => {
+test('merge orders by most recently added, newest first', () => {
+    const local = state([{id: 3}], {'3': {at: 300, deleted: false}});
+    const remote = state([{id: 1}, {id: 2}], {
+        '1': {at: 100, deleted: false},
+        '2': {at: 200, deleted: false},
+    });
+    assert.deepEqual(ids(mergeWatchlistState(local, remote)), [3, 2, 1]);
+});
+
+test('merge falls back to descending id when stamps tie', () => {
     const local = state([{id: 3}, {id: 1}]);
     const remote = state([{id: 1}, {id: 4}, {id: 2}]);
-    assert.deepEqual(ids(mergeWatchlistState(local, remote)), [3, 1, 4, 2]);
+    assert.deepEqual(ids(mergeWatchlistState(local, remote)), [4, 3, 2, 1]);
+});
+
+test('both devices derive the same order, so neither pushes the other back', () => {
+    const marks: WatchlistMarks = {
+        '2934': {at: 500, deleted: false},
+        '5212': {at: 0, deleted: false},
+        '470': {at: 0, deleted: false},
+    };
+    const browser = state([{id: 2934}, {id: 5212}, {id: 470}], marks);
+    const phone = state([{id: 5212}, {id: 470}, {id: 2934}], marks);
+
+    const onBrowser = mergeWatchlistState(browser, phone);
+    const onPhone = mergeWatchlistState(phone, browser);
+
+    assert.deepEqual(ids(onBrowser), ids(onPhone));
+    assert.ok(sameWatchlistState(onBrowser, onPhone));
+    assert.ok(sameWatchlistState(mergeWatchlistState(onBrowser, onPhone), onBrowser));
 });
 
 test('merge with an empty side returns the other side unchanged', () => {
