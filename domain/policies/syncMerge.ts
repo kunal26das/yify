@@ -72,8 +72,9 @@ export function parseWatchlistState<T extends WatchlistEntry>(
     } catch {
         return {items: [], marks: {}};
     }
-    if (Array.isArray(parsed)) return {items: validItems<T>(parsed), marks: {}};
-    if (parsed == null || typeof parsed !== 'object') return {items: [], marks: {}};
+    if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return {items: [], marks: {}};
+    }
     const record = parsed as {items?: unknown; marks?: unknown};
     return {
         items: Array.isArray(record.items) ? validItems<T>(record.items) : [],
