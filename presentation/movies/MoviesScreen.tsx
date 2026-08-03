@@ -283,7 +283,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const chipRow = (
         <View style={[styles.chipRow, {height: CHIP_ROW_HEIGHT}]}>
-            <View style={[styles.chipRowInner, isLarge && {maxWidth: contentMaxWidth}]}>
+            <View style={styles.chipRowInner}>
                 <View style={styles.chipBarArea}>
                     <ChipBar chips={FEED_CHIPS} active={activeChip} onSelect={handleChipSelect} contentPadding={gutter}/>
                 </View>

@@ -301,7 +301,7 @@ export function HomeScreen({
 
             if (item.kind === 'heading') {
                 return (
-                    <View style={[styles.headingRow, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                    <View style={[styles.headingRow, {paddingHorizontal: gutter}]}>
                         <ThemedText type="heading" style={{color: colors.text}}>
                             Browse all
                         </ThemedText>
@@ -320,7 +320,7 @@ export function HomeScreen({
                             {backgroundColor: colors.background},
                         ]}
                     >
-                        <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                        <View style={styles.chipRowInner}>
                             <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
                         </View>
                     </View>
@@ -328,7 +328,7 @@ export function HomeScreen({
             }
 
             return (
-                <View style={[styles.cardRow, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                <View style={[styles.cardRow, {paddingHorizontal: gutter}]}>
                     {item.movies.map((movie) => (
                         <VideoCard key={movie.id} movie={movie} width={cardWidth} source={FEED_SOURCE}/>
                     ))}
@@ -420,7 +420,7 @@ export function HomeScreen({
                                 active="home"
                                 below={
                                     chipsPinned ? (
-                                        <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                                        <View style={styles.chipRowInner}>
                                             <ChipBar
                                                 chips={FEED_CHIPS}
                                                 active={chip}
@@ -485,7 +485,7 @@ export function HomeScreen({
                         }
                         ListFooterComponent={
                             <>
-                                <View style={[styles.feedFooter, {paddingHorizontal: gutter, maxWidth: contentMaxWidth}]}>
+                                <View style={[styles.feedFooter, {paddingHorizontal: gutter}]}>
                                     {Array.from({length: skeletonRows}).map((_, row) => (
                                         <FeedSkeletonRow key={row} cardWidth={cardWidth} columns={numColumns}/>
                                     ))}
