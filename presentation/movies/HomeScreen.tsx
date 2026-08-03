@@ -8,6 +8,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {LinearGradient} from '../components/linear-gradient';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
+import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -350,7 +351,7 @@ export function HomeScreen({
 
     if (shelvesLoading && heroMovies.length === 0 && !shelvesError) {
         return (
-            <ThemedView style={styles.container}>
+            <Screen overlays={<TopBar active="home"/>}>
                 <HomeSkeleton
                     heroHeight={heroHeight}
                     posterWidth={posterWidth}
@@ -358,14 +359,13 @@ export function HomeScreen({
                     colors={colors}
                     skeletons={skeletons}
                 />
-                <TopBar active="home"/>
-            </ThemedView>
+            </Screen>
         );
     }
 
     if (shelvesError && heroMovies.length === 0) {
         return (
-            <ThemedView style={styles.container}>
+            <Screen overlays={<TopBar active="home"/>}>
                 <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
@@ -386,8 +386,7 @@ export function HomeScreen({
                         </View>
                     </PressableScale>
                 </Reanimated.View>
-                <TopBar active="home"/>
-            </ThemedView>
+            </Screen>
         );
     }
 
@@ -404,7 +403,37 @@ export function HomeScreen({
     return (
         <TopTenProvider movies={topTenMovies}>
             <HoverCardHost>
-                <ThemedView style={styles.container}>
+                <Screen
+                    overlays={
+                        <>
+                            {(
+                                <ScrollProgress
+                                    current={Math.min(lastGridIndex, feedMovies.length)}
+                                    total={totalCount}
+                                    atTop={atTop}
+                                    onScrollToTop={handleScrollToTop}
+                                    bottomInset={insets.bottom}
+                                    visible={showProgress}
+                                />
+                            )}
+                            <TopBar
+                                active="home"
+                                below={
+                                    chipsPinned ? (
+                                        <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
+                                            <ChipBar
+                                                chips={FEED_CHIPS}
+                                                active={chip}
+                                                onSelect={selectChip}
+                                                contentPadding={gutter}
+                                            />
+                                        </View>
+                                    ) : null
+                                }
+                            />
+                        </>
+                    }
+                >
                     <AnimatedFlatList
                         ref={listRef}
                         data={rows}
@@ -512,32 +541,7 @@ export function HomeScreen({
                         updateCellsBatchingPeriod={40}
                         windowSize={Platform.OS === 'web' ? 21 : 9}
                     />
-                    {(
-                        <ScrollProgress
-                            current={Math.min(lastGridIndex, feedMovies.length)}
-                            total={totalCount}
-                            atTop={atTop}
-                            onScrollToTop={handleScrollToTop}
-                            bottomInset={insets.bottom}
-                            visible={showProgress}
-                        />
-                    )}
-                    <TopBar
-                        active="home"
-                        below={
-                            chipsPinned ? (
-                                <View style={[styles.chipRowInner, {maxWidth: contentMaxWidth}]}>
-                                    <ChipBar
-                                        chips={FEED_CHIPS}
-                                        active={chip}
-                                        onSelect={selectChip}
-                                        contentPadding={gutter}
-                                    />
-                                </View>
-                            ) : null
-                        }
-                    />
-                </ThemedView>
+                </Screen>
             </HoverCardHost>
         </TopTenProvider>
     );

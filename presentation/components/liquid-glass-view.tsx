@@ -6,6 +6,7 @@ import {
 } from 'expo-glass-effect';
 import { Component, type ReactNode } from 'react';
 import { Platform, StyleProp, View, ViewStyle } from 'react-native';
+import { useBlurTarget } from './blur-target';
 
 type Tint = 'light' | 'dark';
 
@@ -48,6 +49,8 @@ export function LiquidGlassView({
   interactive = false,
   glassEffectStyle = 'regular',
 }: LiquidGlassViewProps) {
+  const blurTarget = useBlurTarget();
+
   if (supportsLiquidGlass) {
     return (
       <GlassView
@@ -61,23 +64,24 @@ export function LiquidGlassView({
     );
   }
 
-  if (Platform.OS === 'android') {
-    return (
-      <View style={[style, fallbackBackgroundColor ? {backgroundColor: fallbackBackgroundColor} : undefined]}>
-        {children}
-      </View>
-    );
-  }
-
   const solid = (
     <View style={[style, fallbackBackgroundColor ? {backgroundColor: fallbackBackgroundColor} : undefined]}>
       {children}
     </View>
   );
 
+  if (Platform.OS === 'android' && blurTarget == null) return solid;
+
   return (
     <NativeEffectBoundary fallback={solid}>
-      <BlurView intensity={intensity} tint={tint} style={style}>
+      <BlurView
+        intensity={intensity}
+        tint={tint}
+        style={style}
+        {...(blurTarget
+          ? {blurTarget, blurMethod: 'dimezisBlurViewSdk31Plus' as const}
+          : null)}
+      >
         {children}
       </BlurView>
     </NativeEffectBoundary>

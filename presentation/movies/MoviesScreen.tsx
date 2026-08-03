@@ -17,6 +17,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {useNewMoviesNotifier} from '../di/DependenciesContext';
 import {PressableScale, enterFade, enterPop, enterRise, exitPop} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
+import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -341,7 +342,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     if (loading && movies.length === 0 && !error) {
         return (
-            <ThemedView style={styles.container}>
+            <Screen overlays={<>{topBar}{searchOverlay}</>}>
                 <View
                     style={[
                         styles.skeletonScreen,
@@ -356,15 +357,13 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         ))}
                     </View>
                 </View>
-                {topBar}
-                {searchOverlay}
-            </ThemedView>
+            </Screen>
         );
     }
 
     if (error && movies.length === 0) {
         return (
-            <ThemedView style={styles.container}>
+            <Screen overlays={<>{topBar}{searchOverlay}</>}>
                 <View style={[styles.errorScreen, {paddingTop: listTopPadding + Spacing.xxxl}]}>
                     <Animated.View entering={enterRise()} style={styles.stateBox}>
                         <Ionicons name="cloud-offline-outline" size={48} color={colors.textFaint}/>
@@ -391,9 +390,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         </PressableScale>
                     </Animated.View>
                 </View>
-                {topBar}
-                {searchOverlay}
-            </ThemedView>
+            </Screen>
         );
     }
 
@@ -401,7 +398,47 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     return (
         <HoverCardHost>
-            <ThemedView style={styles.container}>
+            <Screen
+                overlays={
+                    <>
+                        {topBar}
+                        {searchOverlay}
+
+                        <ScrollProgress
+                            current={currentIndex}
+                            total={totalMovieCount}
+                            atTop={isAtTop}
+                            onScrollToTop={handleScrollToTop}
+                            trailing={filtersControl}
+                            bottomInset={insets.bottom}
+                            visible={movies.length > 0}
+                        />
+
+                        <MovieFilterModal
+                            visible={filterModalVisible}
+                            bottomInset={insets.bottom}
+                            onClose={() => {
+                                setFilters(appliedFilters);
+                                setFilterModalVisible(false);
+                            }}
+                            filters={filters}
+                            onFiltersChange={setFilters}
+                            onApply={(applied: MovieFilters) => {
+                                Analytics.filtersApplied({
+                                    genre: applied.genre,
+                                    quality: applied.quality,
+                                    minimum_rating: applied.minimum_rating,
+                                    sort_by: applied.sort_by,
+                                    order_by: applied.order_by,
+                                });
+                                applyFilters(applied);
+                                scrollToTop();
+                            }}
+                            onClear={handleClearFilters}
+                        />
+                    </>
+                }
+            >
                 <FlatList
                     ref={listRef}
                     key={`grid-${numColumns}`}
@@ -492,42 +529,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     scrollEventThrottle={16}
                 />
 
-                {topBar}
-                {searchOverlay}
-
-                <ScrollProgress
-                    current={currentIndex}
-                    total={totalMovieCount}
-                    atTop={isAtTop}
-                    onScrollToTop={handleScrollToTop}
-                    trailing={filtersControl}
-                    bottomInset={insets.bottom}
-                    visible={movies.length > 0}
-                />
-
-                <MovieFilterModal
-                    visible={filterModalVisible}
-                    bottomInset={insets.bottom}
-                    onClose={() => {
-                        setFilters(appliedFilters);
-                        setFilterModalVisible(false);
-                    }}
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                    onApply={(applied: MovieFilters) => {
-                        Analytics.filtersApplied({
-                            genre: applied.genre,
-                            quality: applied.quality,
-                            minimum_rating: applied.minimum_rating,
-                            sort_by: applied.sort_by,
-                            order_by: applied.order_by,
-                        });
-                        applyFilters(applied);
-                        scrollToTop();
-                    }}
-                    onClear={handleClearFilters}
-                />
-            </ThemedView>
+            </Screen>
         </HoverCardHost>
     );
 }
