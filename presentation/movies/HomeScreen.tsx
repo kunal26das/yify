@@ -84,7 +84,7 @@ export function HomeScreen({
 }) {
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
-    const {width, height, contentMaxWidth, isPhone, isTablet, gutter} = useResponsive();
+    const {width, height, isPhone, isTablet, gutter} = useResponsive();
     const {
         heroMovies,
         heroTrailers,
@@ -170,8 +170,7 @@ export function HomeScreen({
         : Math.round(Math.min(height * 0.78, 620));
     const skeletons = skeletonCount(width, posterWidth, gutter);
 
-    const gridWidth = Math.min(width, contentMaxWidth);
-    const columnsWidth = Math.max(0, gridWidth - gutter * 2);
+    const columnsWidth = Math.max(0, width - gutter * 2);
 
     const numColumns = useMemo(() => {
         if (width < SINGLE_COLUMN_MAX_WIDTH) return 1;
@@ -342,7 +341,6 @@ export function HomeScreen({
             skeletons,
             loadShelf,
             goTo,
-            contentMaxWidth,
             chip,
             selectChip,
             cardWidth,
