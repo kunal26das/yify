@@ -1,3 +1,5 @@
+import type {SyncFailure} from '@/domain';
+
 const PROJECT_ID = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'yify-2da67';
 
 const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
@@ -16,6 +18,12 @@ export interface SyncDocument {
     preferences?: string;
     preferencesUpdatedAt?: number;
 }
+
+export type SyncFetchResult =
+    | {ok: true; document: SyncDocument}
+    | {ok: false; failure: SyncFailure; detail: string};
+
+export type SyncWriteResult = {ok: true} | {ok: false; failure: SyncFailure; detail: string};
 
 type FirestoreValue = {stringValue: string} | {integerValue: string};
 
@@ -57,32 +65,72 @@ function documentUrl(uid: string): string {
     return `${BASE}/users/${encodeURIComponent(uid)}`;
 }
 
-export async function fetchSyncDocument(uid: string, token: string): Promise<SyncDocument | null> {
-    const response = await fetch(documentUrl(uid), {
-        headers: {Authorization: `Bearer ${token}`},
-    });
-    if (response.status === 404) return {};
-    if (!response.ok) return null;
-    const body = (await response.json()) as {fields?: Record<string, FirestoreValue>};
-    return fromFields(body.fields);
+function failureFor(status: number): SyncFailure {
+    if (status === 401 || status === 403) return 'denied';
+    if (status === 400 || status === 413) return 'oversized';
+    return 'server';
+}
+
+async function detailFor(response: Response, fallback: string): Promise<string> {
+    try {
+        const body = (await response.json()) as {error?: {message?: string}};
+        return body.error?.message || fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+export async function fetchSyncDocument(uid: string, token: string): Promise<SyncFetchResult> {
+    let response: Response;
+    try {
+        response = await fetch(documentUrl(uid), {
+            headers: {Authorization: `Bearer ${token}`},
+        });
+    } catch (error) {
+        return {ok: false, failure: 'network', detail: String(error)};
+    }
+    if (response.status === 404) return {ok: true, document: {}};
+    if (!response.ok) {
+        return {
+            ok: false,
+            failure: failureFor(response.status),
+            detail: await detailFor(response, `read failed with ${response.status}`),
+        };
+    }
+    try {
+        const body = (await response.json()) as {fields?: Record<string, FirestoreValue>};
+        return {ok: true, document: fromFields(body.fields)};
+    } catch (error) {
+        return {ok: false, failure: 'server', detail: String(error)};
+    }
 }
 
 export async function writeSyncDocument(
     uid: string,
     token: string,
-    patch: SyncDocument,
-): Promise<boolean> {
+    patch: SyncDocument
+): Promise<SyncWriteResult> {
     const fields = toFields(patch);
     const paths = Object.keys(fields);
-    if (paths.length === 0) return true;
+    if (paths.length === 0) return {ok: true};
     const mask = paths.map((path) => `updateMask.fieldPaths=${path}`).join('&');
-    const response = await fetch(`${documentUrl(uid)}?${mask}`, {
-        method: 'PATCH',
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({fields}),
-    });
-    return response.ok;
+    let response: Response;
+    try {
+        response = await fetch(`${documentUrl(uid)}?${mask}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({fields}),
+        });
+    } catch (error) {
+        return {ok: false, failure: 'network', detail: String(error)};
+    }
+    if (response.ok) return {ok: true};
+    return {
+        ok: false,
+        failure: failureFor(response.status),
+        detail: await detailFor(response, `write failed with ${response.status}`),
+    };
 }

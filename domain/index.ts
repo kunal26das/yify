@@ -20,6 +20,8 @@ export type {PurchaseOffer, PurchaseState} from './entities/Entitlement';
 export {REMOVE_ADS_ENTITLEMENT, INITIAL_PURCHASE_STATE} from './entities/Entitlement';
 export type {UpdateState, UpdateStatus} from './entities/UpdateStatus';
 export {IDLE_UPDATE_STATUS} from './entities/UpdateStatus';
+export type {SyncState, SyncFailure, SyncStatus} from './entities/SyncStatus';
+export {IDLE_SYNC_STATUS} from './entities/SyncStatus';
 
 export type {
   MovieRepository,
@@ -49,11 +51,26 @@ export type {NewMoviesNotification} from './policies/newMoviesNotification';
 export {
   chooseSyncMode,
   resolveSection,
-  parseWatchlist,
-  unionWatchlist,
+  parseWatchlistState,
+  mergeWatchlistState,
+  sameWatchlistState,
+  markChanges,
+  pruneMarks,
+  encodeWatchlistState,
+  fitWatchlistPayload,
   payloadWithinBudget,
+  WATCHLIST_PAYLOAD_VERSION,
+  TOMBSTONE_HORIZON_MS,
 } from './policies/syncMerge';
-export type {SyncMode, SectionResolution, WatchlistEntry} from './policies/syncMerge';
+export type {
+  SyncMode,
+  SectionResolution,
+  WatchlistEntry,
+  WatchlistMark,
+  WatchlistMarks,
+  WatchlistState,
+  FittedPayload,
+} from './policies/syncMerge';
 
 export type {AnalyticsSink, AnalyticsParams} from './services/AnalyticsSink';
 export type {AppConfig} from './services/AppConfig';

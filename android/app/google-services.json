@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "325235052319-t6s080sej2g7ciekj4khmvod4uh3u3qo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.kunal26das.yify",
+            "certificate_hash": "92c7ccccc98e786acdfbdbb62ebdec0495fe7b68"
+          }
+        },
+        {
           "client_id": "325235052319-09fsjb9phn2s764ja02qgmbdcg88b0in.apps.googleusercontent.com",
           "client_type": 3
         }
