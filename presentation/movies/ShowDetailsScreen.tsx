@@ -15,7 +15,7 @@ import {useResponsive} from '../hooks/use-responsive';
 import {TopBar, useTopBarHeight} from './components/TopBar';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 
-const POSTER_WIDTH = 132;
+const POSTER_WIDTH = 128;
 
 function formatSize(bytes: number): string {
     if (!bytes) return '';

@@ -36,7 +36,7 @@ import {ShowStrip} from './components/ShowStrip';
 
 const SCROLL_AT_TOP_THRESHOLD = 8;
 
-const CARD_MIN_WIDTH = 300;
+const CARD_MIN_WIDTH = 304;
 const SINGLE_COLUMN_MAX_WIDTH = 480;
 const COLUMN_GAP = 16;
 const ROW_GAP = 24;
@@ -164,10 +164,10 @@ export function HomeScreen({
         [shelfStates]
     );
 
-    const posterWidth = isPhone ? 126 : isTablet ? 146 : 158;
+    const posterWidth = isPhone ? 128 : isTablet ? 144 : 160;
     const heroHeight = isPhone
         ? Math.round(Math.min(height * 0.62, 560))
-        : Math.round(Math.min(height * 0.78, 620));
+        : Math.round(Math.min(height * 0.78, 624));
     const skeletons = skeletonCount(width, posterWidth, gutter);
 
     const columnsWidth = Math.max(0, width - gutter * 2);

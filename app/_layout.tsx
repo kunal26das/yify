@@ -42,7 +42,7 @@ function handleNotificationData(data: unknown) {
     }
 }
 
-const DESKTOP_TOP_INSET = 44;
+const DESKTOP_TOP_INSET = 48;
 
 function RootLayout() {
     return (

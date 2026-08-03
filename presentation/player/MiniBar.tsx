@@ -8,7 +8,7 @@ import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {usePlayer, type PlayerRect, type PlayerVideo} from './PlayerContext';
 
-const STRIP_HEIGHT = 34;
+const STRIP_HEIGHT = 32;
 
 function IconButton({
     name,

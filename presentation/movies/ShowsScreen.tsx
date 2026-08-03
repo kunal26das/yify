@@ -19,7 +19,7 @@ import {TopBar, useTopBarHeight} from './components/TopBar';
 import {useGoTo} from './constants/destinations';
 import type {ShowsViewModel} from './useShowsViewModel';
 
-const CARD_MIN_WIDTH = 300;
+const CARD_MIN_WIDTH = 304;
 const SINGLE_COLUMN_MAX_WIDTH = 480;
 const COLUMN_GAP = 16;
 const ROW_GAP = 24;

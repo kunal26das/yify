@@ -39,9 +39,9 @@ import {Genre} from '@/domain';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
 
 const IS_WEB = Platform.OS === 'web';
-const WIDE_MIN_WIDTH = 900;
-const RIGHT_COLUMN_WIDTH = 402;
-const LEFT_COLUMN_MAX = 1100;
+const WIDE_MIN_WIDTH = 896;
+const RIGHT_COLUMN_WIDTH = 400;
+const LEFT_COLUMN_MAX = 1104;
 const LEFT_COLUMN_MIN = 360;
 const COLUMN_GAP = 24;
 const PLAYER_ASPECT = 16 / 9;
@@ -49,14 +49,14 @@ const DRAG_STRIP_HEIGHT = 24;
 const DRAG_ACTIVATE_OFFSET = 12;
 const MINIMIZE_DISTANCE = 40;
 const MINIMIZE_VELOCITY = 520;
-const TORRENT_GAP = 10;
+const TORRENT_GAP = 8;
 const TORRENT_MIN_WIDTH = 232;
 const UP_NEXT_THUMB_MAX = 176;
 const UP_NEXT_THUMB_RATIO = 0.44;
 const SUGGESTION_SOURCE = 'watch_up_next';
 const RELATED_TITLE = 'More like this';
-const RELATED_POSTER_PHONE = 118;
-const RELATED_POSTER_LARGE = 132;
+const RELATED_POSTER_PHONE = 120;
+const RELATED_POSTER_LARGE = 128;
 
 const GENRE_VALUES = new Set<string>(Object.values(Genre));
 
