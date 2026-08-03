@@ -1,4 +1,5 @@
 import {useCallback} from 'react';
+import {Platform} from 'react-native';
 import {router, useNavigation, usePathname} from 'expo-router';
 import {OrderBy, SortBy} from '@/domain';
 
@@ -61,7 +62,7 @@ export function useGoTo(): (href: string) => void {
 
             const routes = navigation.getState()?.routes ?? [];
             const name = routeNameForPath(target);
-            if (routes.some((route) => route.name === name)) {
+            if (Platform.OS !== 'web' && routes.some((route) => route.name === name)) {
                 router.dismissTo(href as never);
                 return;
             }
