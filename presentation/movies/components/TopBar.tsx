@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {Ionicons} from '@expo/vector-icons';
+import {Image} from 'expo-image';
 import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {LiquidGlassView} from '../../components/liquid-glass-view';
@@ -12,6 +13,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
 import {SearchOverlay} from './SearchOverlay';
 import {useSearchHistory} from '../../di/DependenciesContext';
+import {useAuth} from '../../hooks/use-auth';
 
 export type NavKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'preferences';
 
@@ -67,6 +69,7 @@ export function TopBar({
     );
 
     const searchHistory = useSearchHistory();
+    const {account} = useAuth();
 
     const submitQuery = useCallback(
         (term: string) => {
@@ -135,11 +138,28 @@ export function TopBar({
             hoveredScale={1.08}
             contentStyle={styles.iconButton}
         >
-            <Ionicons
-                name="person-outline"
-                size={22}
-                color={active === 'preferences' ? colors.accent : colors.textMuted}
-            />
+            {account?.photoUrl ? (
+                <Image
+                    source={{uri: account.photoUrl}}
+                    style={[
+                        styles.avatar,
+                        {
+                            borderColor:
+                                active === 'preferences' ? colors.accent : 'transparent',
+                            backgroundColor: colors.surfaceSunken,
+                        },
+                    ]}
+                    contentFit="cover"
+                    transition={160}
+                    cachePolicy="memory-disk"
+                />
+            ) : (
+                <Ionicons
+                    name="person-circle-outline"
+                    size={24}
+                    color={active === 'preferences' ? colors.accent : colors.textMuted}
+                />
+            )}
         </PressableScale>
     );
 
@@ -309,6 +329,7 @@ const styles = StyleSheet.create({
     spacer: {flex: 1},
     actions: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs},
     iconButton: {width: 40, height: 40, alignItems: 'center', justifyContent: 'center'},
+    avatar: {width: 26, height: 26, borderRadius: 13, borderWidth: 1.5},
     searchPill: {
         width: '100%',
         maxWidth: SEARCH_PILL_MAX_WIDTH,
