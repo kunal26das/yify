@@ -354,7 +354,7 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
     const overlap = rankedOverlap(posterWidth);
 
     return (
-        <View style={[styles.rankedCell, {height: posterHeight}]}>
+        <View style={[styles.rankedCell, {height: posterHeight + POSTER_GAP}]}>
             <Animated.View
                 entering={enterFade()}
                 style={[styles.numeralArea, {marginRight: -overlap}]}
@@ -402,7 +402,12 @@ const styles = StyleSheet.create({
     handleHit: {flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'},
 
     rankedCell: {flexDirection: 'row', alignItems: 'flex-end'},
-    numeralArea: {height: '100%', justifyContent: 'flex-end', alignItems: 'flex-end'},
+    numeralArea: {
+        height: '100%',
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
+        paddingBottom: POSTER_GAP / 2,
+    },
     numeral: {
         fontFamily: FontFamily.displayExtra,
         textAlign: 'right',
