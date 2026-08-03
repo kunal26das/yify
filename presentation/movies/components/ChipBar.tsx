@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef} from 'react';
-import {type LayoutChangeEvent, ScrollView, StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {Duration, PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
@@ -19,24 +19,24 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
     const scrollRef = useRef<ScrollView | null>(null);
     const contentRef = useRef<View | null>(null);
     const chipRefs = useRef<Record<string, View | null>>({});
-    const viewportWidth = useRef(0);
+    const {width} = useWindowDimensions();
 
     const revealActive = useCallback(
         (animated: boolean) => {
             const node = chipRefs.current[active];
             const content = contentRef.current;
-            const viewport = viewportWidth.current;
-            if (!node || !content || !scrollRef.current || viewport <= 0) return;
+            const scroller = scrollRef.current;
+            if (!node || !content || !scroller || width <= 0) return;
             node.measureLayout(
                 content as never,
-                (x: number, _y: number, width: number) => {
-                    const centered = x - (viewport - width) / 2;
-                    scrollRef.current?.scrollTo({x: Math.max(0, centered), y: 0, animated});
+                (x: number, _y: number, chipWidth: number) => {
+                    const centered = x - (width - chipWidth) / 2;
+                    scroller.scrollTo({x: Math.max(0, centered), y: 0, animated});
                 },
                 () => undefined
             );
         },
-        [active]
+        [active, width]
     );
 
     useEffect(() => {
@@ -46,21 +46,12 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
         return () => timers.forEach(clearTimeout);
     }, [revealActive]);
 
-    const onViewportLayout = useCallback(
-        (event: LayoutChangeEvent) => {
-            viewportWidth.current = event.nativeEvent.layout.width;
-            revealActive(false);
-        },
-        [revealActive]
-    );
-
     return (
         <View style={styles.container}>
             <ScrollView
                 ref={scrollRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                onLayout={onViewportLayout}
                 onContentSizeChange={() => revealActive(false)}
             >
                 <View
@@ -70,11 +61,13 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                     {chips.map((chip) => {
                         const selected = chip.key === active;
                         return (
-                            <PressableScale
+                            <View
                                 key={chip.key}
-                                ref={(node: View | null) => {
+                                ref={(node) => {
                                     chipRefs.current[chip.key] = node;
                                 }}
+                            >
+                            <PressableScale
                                 accessibilityRole="button"
                                 accessibilityState={{selected}}
                                 accessibilityLabel={chip.label}
@@ -103,6 +96,7 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                                     {chip.label}
                                 </ThemedText>
                             </PressableScale>
+                            </View>
                         );
                     })}
                 </View>
