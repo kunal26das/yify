@@ -12,42 +12,39 @@ interface ChipBarProps {
     contentPadding?: number;
 }
 
-interface ChipMetrics {
-    x: number;
-    width: number;
-}
-
-const REVEAL_RETRY_MS = 160;
+const REVEAL_RETRIES = [0, 120, 400];
 
 export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: ChipBarProps) {
     const {colors} = usePalette();
     const scrollRef = useRef<ScrollView | null>(null);
-    const metrics = useRef<Record<string, ChipMetrics>>({});
+    const contentRef = useRef<View | null>(null);
+    const chipRefs = useRef<Record<string, View | null>>({});
     const viewportWidth = useRef(0);
-
-    const pending = useRef<string | null>(null);
 
     const revealActive = useCallback(
         (animated: boolean) => {
-            const chip = metrics.current[active];
+            const node = chipRefs.current[active];
+            const content = contentRef.current;
             const viewport = viewportWidth.current;
-            if (!chip || !scrollRef.current || viewport <= 0) {
-                pending.current = active;
-                return;
-            }
-            pending.current = null;
-            const centered = chip.x - (viewport - chip.width) / 2;
-            scrollRef.current.scrollTo({x: Math.max(0, centered), y: 0, animated});
+            if (!node || !content || !scrollRef.current || viewport <= 0) return;
+            node.measureLayout(
+                content as never,
+                (x: number, _y: number, width: number) => {
+                    const centered = x - (viewport - width) / 2;
+                    scrollRef.current?.scrollTo({x: Math.max(0, centered), y: 0, animated});
+                },
+                () => undefined
+            );
         },
         [active]
     );
 
     useEffect(() => {
-        pending.current = active;
-        revealActive(false);
-        const retry = setTimeout(() => revealActive(true), REVEAL_RETRY_MS);
-        return () => clearTimeout(retry);
-    }, [active, revealActive]);
+        const timers = REVEAL_RETRIES.map((delay) =>
+            setTimeout(() => revealActive(delay > 0), delay)
+        );
+        return () => timers.forEach(clearTimeout);
+    }, [revealActive]);
 
     const onViewportLayout = useCallback(
         (event: LayoutChangeEvent) => {
@@ -57,18 +54,6 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
         [revealActive]
     );
 
-    const onChipLayout = useCallback(
-        (key: string, event: LayoutChangeEvent) => {
-            const {x, width} = event.nativeEvent.layout;
-            metrics.current[key] = {x, width};
-            if (pending.current === key) revealActive(false);
-        },
-        [revealActive]
-    );
-
-
-
-
     return (
         <View style={styles.container}>
             <ScrollView
@@ -76,42 +61,51 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 onLayout={onViewportLayout}
-                contentContainerStyle={[styles.content, {paddingHorizontal: contentPadding}]}
+                onContentSizeChange={() => revealActive(false)}
             >
-                {chips.map((chip) => {
-                    const selected = chip.key === active;
-                    return (
-                        <PressableScale
-                            key={chip.key}
-                            accessibilityRole="button"
-                            accessibilityState={{selected}}
-                            accessibilityLabel={chip.label}
-                            onPress={() => onSelect(chip.key)}
-                            onLayout={(event) => onChipLayout(chip.key, event)}
-                            pressedScale={0.94}
-                            pressedOpacity={0.85}
-                            contentStyle={[
-                                styles.chip,
-                                {
-                                    backgroundColor: selected ? colors.accent : colors.surfaceSunken,
-                                    borderColor: selected ? 'transparent' : colors.border,
-                                    transitionProperty: ['backgroundColor', 'borderColor'],
-                                    transitionDuration: Duration.fast,
-                                },
-                            ]}
-                        >
-                            <ThemedText
-                                numberOfLines={1}
-                                style={[
-                                    styles.chipLabel,
-                                    {color: selected ? colors.onAccent : colors.text},
+                <View
+                    ref={contentRef}
+                    style={[styles.content, {paddingHorizontal: contentPadding}]}
+                >
+                    {chips.map((chip) => {
+                        const selected = chip.key === active;
+                        return (
+                            <PressableScale
+                                key={chip.key}
+                                ref={(node: View | null) => {
+                                    chipRefs.current[chip.key] = node;
+                                }}
+                                accessibilityRole="button"
+                                accessibilityState={{selected}}
+                                accessibilityLabel={chip.label}
+                                onPress={() => onSelect(chip.key)}
+                                pressedScale={0.94}
+                                pressedOpacity={0.85}
+                                contentStyle={[
+                                    styles.chip,
+                                    {
+                                        backgroundColor: selected
+                                            ? colors.accent
+                                            : colors.surfaceSunken,
+                                        borderColor: selected ? 'transparent' : colors.border,
+                                        transitionProperty: ['backgroundColor', 'borderColor'],
+                                        transitionDuration: Duration.fast,
+                                    },
                                 ]}
                             >
-                                {chip.label}
-                            </ThemedText>
-                        </PressableScale>
-                    );
-                })}
+                                <ThemedText
+                                    numberOfLines={1}
+                                    style={[
+                                        styles.chipLabel,
+                                        {color: selected ? colors.onAccent : colors.text},
+                                    ]}
+                                >
+                                    {chip.label}
+                                </ThemedText>
+                            </PressableScale>
+                        );
+                    })}
+                </View>
             </ScrollView>
         </View>
     );
