@@ -14,7 +14,7 @@ import {usePlayer, usePlayerInternal, type PlayerRect} from './PlayerContext';
 import {useDocumentPip} from './useDocumentPip';
 import {useKeyboardShortcuts} from './useKeyboardShortcuts';
 
-const MINI_PHONE_WIDTH = 132;
+const MINI_PHONE_WIDTH = 128;
 const MINI_WIDE_WIDTH = 400;
 const MINI_PHONE_MARGIN = 8;
 const MINI_WIDE_MARGIN = 16;
