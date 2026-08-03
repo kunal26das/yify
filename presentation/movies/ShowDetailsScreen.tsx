@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Show, ShowEpisode, ShowRepository, TitleArtwork, Torrent, TmdbRepository} from '@/domain';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
+import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
@@ -122,7 +123,18 @@ export function ShowDetailsScreen({
     const title = meta?.title || show?.title || 'Series';
 
     return (
-        <ThemedView style={styles.container}>
+        <Screen
+            overlays={
+                <>
+                    <TopBar active="shows"/>
+                    <TorrentNoticeSheet
+                        torrent={notice}
+                        onClose={() => setNotice(null)}
+                        bottomInset={insets.bottom}
+                    />
+                </>
+            }
+        >
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
@@ -270,13 +282,7 @@ export function ShowDetailsScreen({
                     })
                 )}
             </ScrollView>
-            <TopBar active="shows"/>
-            <TorrentNoticeSheet
-                torrent={notice}
-                onClose={() => setNotice(null)}
-                bottomInset={insets.bottom}
-            />
-        </ThemedView>
+        </Screen>
     );
 }
 

@@ -8,6 +8,7 @@ import type {Show} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
+import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -180,7 +181,25 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     }
 
     return (
-        <ThemedView style={styles.container}>
+        <Screen
+            overlays={
+                <>
+                    <ScrollProgress
+                        current={Math.min((lastVisible + 1) * numColumns, shows.length)}
+                        total={shows.length}
+                        atTop={atTop}
+                        onScrollToTop={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
+                        bottomInset={insets.bottom}
+                        visible={shows.length > 0}
+                    />
+                    <TopBar
+                        active="shows"
+                        searchValue={query}
+                        onSearchSubmit={setQuery}
+                    />
+                </>
+            }
+        >
             <FlatList
                 ref={listRef}
                 data={rows}
@@ -242,20 +261,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                     rowGap: ROW_GAP,
                 }}
             />
-            <ScrollProgress
-                current={Math.min((lastVisible + 1) * numColumns, shows.length)}
-                total={shows.length}
-                atTop={atTop}
-                onScrollToTop={() => listRef.current?.scrollToOffset({offset: 0, animated: true})}
-                bottomInset={insets.bottom}
-                visible={shows.length > 0}
-            />
-            <TopBar
-                active="shows"
-                searchValue={query}
-                onSearchSubmit={setQuery}
-            />
-        </ThemedView>
+        </Screen>
     );
 }
 

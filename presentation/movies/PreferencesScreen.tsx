@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {BrowseDefaults, ThemePreference} from '@/domain';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
+import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
@@ -102,10 +103,10 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     };
 
     return (
-        <ThemedView style={styles.container}>
+        <Screen overlays={<TopBar active="preferences"/>}>
             <ScrollView
                 contentContainerStyle={{
-                    paddingTop: navHeight + Spacing.lg,
+                    paddingTop: navHeight,
                     paddingBottom: insets.bottom + 48,
                     maxWidth: contentMaxWidth,
                     alignSelf: 'center',
@@ -353,8 +354,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     </Group>
                 ) : null}
             </ScrollView>
-            <TopBar active="preferences"/>
-        </ThemedView>
+        </Screen>
     );
 }
 

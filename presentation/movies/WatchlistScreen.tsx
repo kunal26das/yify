@@ -11,6 +11,7 @@ import {useToggleWatchlist} from './useWatchlist';
 import {LinearGradient} from '../components/linear-gradient';
 import {PressableScale, enterRise, shiftLayout} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
+import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -235,7 +236,21 @@ export function WatchlistScreen() {
 
     return (
         <HoverCardHost>
-            <ThemedView style={styles.container}>
+            <Screen
+                overlays={
+                    <>
+                        <ScrollProgress
+                            current={Math.min(lastVisibleIndex + 1, movies.length)}
+                            total={movies.length}
+                            atTop={isAtTop}
+                            onScrollToTop={scrollToTop}
+                            bottomInset={bottomInset}
+                            visible={movies.length > 0}
+                        />
+                        <TopBar active="watchlist"/>
+                    </>
+                }
+            >
                 {movies.length === 0 ? (
                     <Animated.View
                         entering={enterRise()}
@@ -300,16 +315,7 @@ export function WatchlistScreen() {
                         }}
                     />
                 )}
-                <ScrollProgress
-                    current={Math.min(lastVisibleIndex + 1, movies.length)}
-                    total={movies.length}
-                    atTop={isAtTop}
-                    onScrollToTop={scrollToTop}
-                    bottomInset={bottomInset}
-                    visible={movies.length > 0}
-                />
-                <TopBar active="watchlist"/>
-            </ThemedView>
+            </Screen>
         </HoverCardHost>
     );
 }
