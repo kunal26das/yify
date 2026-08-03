@@ -59,9 +59,18 @@ test('parseWatchlistState survives absent, malformed and non-object payloads', (
     assert.deepEqual(parseWatchlistState('42'), {items: [], marks: {}});
 });
 
-test('parseWatchlistState reads a bare array as a legacy unmarked payload', () => {
-    const raw = JSON.stringify([{id: 1}, {id: '2'}, null, {title: 'x'}, {id: 3}]);
-    assert.deepEqual(parseWatchlistState<Entry>(raw), {items: [{id: 1}, {id: 3}], marks: {}});
+test('parseWatchlistState rejects a bare array', () => {
+    const raw = JSON.stringify([{id: 1}, {id: 3}]);
+    assert.deepEqual(parseWatchlistState<Entry>(raw), {items: [], marks: {}});
+});
+
+test('parseWatchlistState drops entries without a numeric id', () => {
+    const raw = JSON.stringify({
+        version: 2,
+        items: [{id: 1}, {id: '2'}, null, {title: 'x'}, {id: 3}],
+        marks: {},
+    });
+    assert.deepEqual(parseWatchlistState<Entry>(raw).items, [{id: 1}, {id: 3}]);
 });
 
 test('parseWatchlistState round-trips an encoded state', () => {
@@ -106,13 +115,13 @@ test('a local removal survives a stale remote copy of the same movie', () => {
     assert.deepEqual(ids(mergeWatchlistState(local, remote)), []);
 });
 
-test('an unmarked legacy remote entry is kept rather than dropped', () => {
+test('an unmarked remote entry is kept rather than dropped', () => {
     const local = state([]);
     const remote = state([{id: 9}]);
     assert.deepEqual(ids(mergeWatchlistState(local, remote)), [9]);
 });
 
-test('a local delete beats an unmarked legacy remote entry', () => {
+test('a local delete beats an unmarked remote entry', () => {
     const local = state([], {'9': {at: 1, deleted: true}});
     const remote = state([{id: 9}]);
     assert.deepEqual(ids(mergeWatchlistState(local, remote)), []);
