@@ -69,7 +69,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         if (this.initialized || !apiKey) return;
         this.initialized = true;
         try {
-            if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+            Purchases.setLogLevel(LOG_LEVEL.WARN);
             await Purchases.configure({apiKey});
             await this.linkFirebaseAnalytics();
             Purchases.addCustomerInfoUpdateListener((info) => {
