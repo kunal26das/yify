@@ -40,9 +40,15 @@ function rankedOverlap(posterWidth: number) {
     return Math.round(posterWidth * RANKED_OVERLAP_RATIO);
 }
 
+const RANKED_DIGIT_RATIO = 0.54;
+const RANKED_ONE_RATIO = 0.4;
+
 function rankedNumeralArea(rank: number, posterWidth: number) {
     const size = rankedNumeralSize(posterWidth);
-    return Math.round(size * (String(rank).length >= 2 ? 1.42 : 0.66));
+    const ratio = String(rank)
+        .split('')
+        .reduce((sum, digit) => sum + (digit === '1' ? RANKED_ONE_RATIO : RANKED_DIGIT_RATIO), 0);
+    return Math.round(size * ratio);
 }
 
 function rankedItemWidth(rank: number, posterWidth: number) {
@@ -244,7 +250,7 @@ export function MovieRail({
             windowSize={5}
             removeClippedSubviews
             decelerationRate="fast"
-            getItemLayout={getItemLayout}
+            getItemLayout={ranked ? undefined : getItemLayout}
             onScroll={trackEvents ? onScroll : undefined}
             onLayout={trackEvents ? onLayout : undefined}
             onContentSizeChange={trackEvents ? onContentSizeChange : undefined}
@@ -345,14 +351,13 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
     const {colors} = usePalette();
     const posterHeight = posterWidth * 1.5;
     const numeralSize = rankedNumeralSize(posterWidth);
-    const numeralArea = rankedNumeralArea(rank, posterWidth);
     const overlap = rankedOverlap(posterWidth);
 
     return (
         <View style={[styles.rankedCell, {height: posterHeight}]}>
             <Animated.View
                 entering={enterFade()}
-                style={[styles.numeralArea, {width: numeralArea, marginRight: -overlap}]}
+                style={[styles.numeralArea, {marginRight: -overlap}]}
                 pointerEvents="none"
             >
                 <ThemedText
