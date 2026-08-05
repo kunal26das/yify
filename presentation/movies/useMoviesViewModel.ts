@@ -145,11 +145,11 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   );
 
   const submitSearch = useCallback(
-    (term: string) => {
+    (term: string, next: MovieFilters = DEFAULT_FILTERS) => {
       cancelDebounce();
       setSearchQueryState(term);
-      setFiltersState(DEFAULT_FILTERS);
-      loadMovies(1, term, DEFAULT_FILTERS);
+      setFiltersState(next);
+      loadMovies(1, term, next);
     },
     [cancelDebounce, loadMovies]
   );

@@ -101,7 +101,7 @@ export default function BrowseRoute() {
     lastIncomingRef.current = incoming;
     const {filters, query} = JSON.parse(incoming) as {filters: MovieFilters; query: string};
     if (query !== appliedQuery) {
-      submitSearch(query);
+      submitSearch(query, filters);
       return;
     }
     applyFilters(filters);
