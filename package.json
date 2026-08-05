@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.4.6",
-  "versionCode": 53,
+  "version": "1.4.7",
+  "versionCode": 54,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -24,7 +24,6 @@
     "prebuild": "expo prebuild",
     "postinstall": "patch-package",
     "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts'",
-    "release": "cd release && yarn gui",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
     "build:dev:ios": "bash scripts/eas.sh build --platform ios --profile development",
@@ -34,7 +33,8 @@
     "submit:android": "bash scripts/eas.sh submit --platform android --profile production",
     "submit:android:play": "bash scripts/eas.sh submit --platform android --profile play-production",
     "deploy:hosting": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
-    "deploy:hosting:prod": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod"
+    "deploy:hosting:prod": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
+    "release": "cd release && yarn gui"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",
