@@ -27,6 +27,20 @@
       "version": "1.4.5",
       "runtimeVersion": "788769df417a28239925780c107157fb4f6b60d6",
       "releasedAt": "2026-08-03T02:49:02.410Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Staging",
+      "version": "1.4.6",
+      "runtimeVersion": "2b1012583971e50be0ae6232e7e8594a37b833d9",
+      "releasedAt": "2026-08-05T01:34:13.917Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.4.6",
+      "runtimeVersion": "6f439ee29ba8344f4f167bf1ec816b05f2b74e13",
+      "releasedAt": "2026-08-05T01:36:51.788Z"
     }
   ]
 }
