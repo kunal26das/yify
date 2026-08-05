@@ -95,17 +95,19 @@ export default function BrowseRoute() {
 
   const incoming = serialize(paramFilters ?? {}, params.query ?? '');
   const lastIncomingRef = useRef<string>(incoming);
+  const appliedQueryRef = useRef(appliedQuery);
+  appliedQueryRef.current = appliedQuery;
 
   useEffect(() => {
     if (lastIncomingRef.current === incoming) return;
     lastIncomingRef.current = incoming;
     const {filters, query} = JSON.parse(incoming) as {filters: MovieFilters; query: string};
-    if (query !== appliedQuery) {
+    if (query !== appliedQueryRef.current) {
       submitSearch(query, filters);
       return;
     }
     applyFilters(filters);
-  }, [incoming, appliedQuery, submitSearch, applyFilters]);
+  }, [incoming, submitSearch, applyFilters]);
 
   useEffect(() => {
     const rating = appliedFilters.minimum_rating;
