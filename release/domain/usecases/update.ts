@@ -1,11 +1,4 @@
-import type {
-    Channel,
-    OnLine,
-    Platform,
-    UpdateResult,
-    UpdateStep,
-    UpdateSummary,
-} from '../entities/index.js';
+import type {Channel, OnLine, Platform, UpdateResult, UpdateStep, UpdateSummary,} from '../entities/index.js';
 import type {
     Cancellation,
     Installer,
@@ -96,7 +89,7 @@ export function createUpdateUseCases(deps: {
                 stream: 'system',
                 text: 'Clean install before publishing (rm -rf node_modules && install)…',
             });
-            const inst = await installer.cleanInstall(onLine);
+            const inst = await installer.cleanInstall(onLine, undefined, 'frozen');
             if (!inst.ok) {
                 onLine({
                     stream: 'system',
