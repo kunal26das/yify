@@ -1,7 +1,7 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, RefreshControl, StyleSheet, View} from 'react-native';
+import {useCallback, useMemo, useRef, useState} from 'react';
+import {ActivityIndicator, FlatList, RefreshControl, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Show} from '@/domain';
@@ -9,13 +9,13 @@ import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Screen} from '../components/screen';
-import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {ScrollProgress} from './components/ScrollProgress';
 import {SkeletonBlock} from './components/PosterSkeleton';
-import {TopBar, useTopBarHeight} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
+import {TopBarSlot} from './components/TopBarSlot';
 import {useGoTo} from './constants/destinations';
 import type {ShowsViewModel} from './useShowsViewModel';
 
@@ -25,7 +25,6 @@ const COLUMN_GAP = 16;
 const ROW_GAP = 24;
 const THUMB_ASPECT = 16 / 9;
 const SKELETON_ROWS = 3;
-const MAX_SEARCH_PAGES = 6;
 
 function episodeLabel(show: Show): string {
     const {season, episode} = show.latestEpisode;
@@ -40,18 +39,11 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     const {width, contentMaxWidth, gutter} = useResponsive();
     const topBarHeight = useTopBarHeight();
     const goTo = useGoTo();
-    const {shows: allShows, status, refreshing, hasMore, loadMore, reload} = viewModel;
+    const {shows, status, refreshing, loadingMore, loadMore, reload} = viewModel;
 
-    const [query, setQuery] = useState('');
     const [lastVisible, setLastVisible] = useState(0);
     const [atTop, setAtTop] = useState(true);
     const listRef = useRef<FlatList<Show[]>>(null);
-
-    const shows = useMemo(() => {
-        const term = query.trim().toLowerCase();
-        if (!term) return allShows;
-        return allShows.filter((show) => show.title.toLowerCase().includes(term));
-    }, [allShows, query]);
 
     const gridWidth = Math.min(width, contentMaxWidth);
     const columnsWidth = Math.max(0, gridWidth - gutter * 2);
@@ -73,18 +65,6 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
         }
         return chunks;
     }, [numColumns, shows]);
-
-    const deepenRef = useRef(0);
-
-    useEffect(() => {
-        if (!query.trim()) {
-            deepenRef.current = 0;
-            return;
-        }
-        if (shows.length > 0 || !hasMore || deepenRef.current >= MAX_SEARCH_PAGES) return;
-        deepenRef.current += 1;
-        loadMore();
-    }, [hasMore, loadMore, query, shows.length]);
 
     const onViewableItemsChanged = useRef(
         ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
@@ -112,7 +92,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     if (status === 'loading') {
         const cardHeight = Math.round(cardWidth / THUMB_ASPECT);
         return (
-            <ThemedView style={styles.container}>
+            <Screen>
                 <View style={{paddingTop: topBarHeight + Spacing.lg, rowGap: ROW_GAP}}>
                     {Array.from({length: SKELETON_ROWS}).map((_, row) => (
                         <View
@@ -135,14 +115,13 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         </View>
                     ))}
                 </View>
-                <TopBar active="shows"/>
-            </ThemedView>
+            </Screen>
         );
     }
 
     if (status !== 'ready') {
         return (
-            <ThemedView style={styles.container}>
+            <Screen>
                 <Animated.View
                     entering={enterRise()}
                     style={[styles.centered, {paddingTop: topBarHeight, paddingBottom: insets.bottom}]}
@@ -175,8 +154,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         </View>
                     </PressableScale>
                 </Animated.View>
-                <TopBar active="shows"/>
-            </ThemedView>
+            </Screen>
         );
     }
 
@@ -192,11 +170,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         bottomInset={insets.bottom}
                         visible={shows.length > 0}
                     />
-                    <TopBar
-                        active="shows"
-                        searchValue={query}
-                        onSearchSubmit={setQuery}
-                    />
+                    <TopBarSlot showSearch={false}/>
                 </>
             }
         >
@@ -224,32 +198,13 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         progressViewOffset={topBarHeight}
                     />
                 }
-                ListEmptyComponent={
-                    query.trim() ? (
-                        <View style={[styles.emptyState, {paddingHorizontal: gutter}]}>
-                            <Ionicons name="search-outline" size={44} color={colors.textMuted}/>
-                            <ThemedText type="heading" style={styles.emptyTitle}>
-                                No series found
+                ListFooterComponent={
+                    loadingMore ? (
+                        <View style={[styles.footer, {paddingBottom: Spacing.lg}]}>
+                            <ActivityIndicator color={colors.accent}/>
+                            <ThemedText style={[styles.footerLabel, {color: colors.textMuted}]}>
+                                Loading more series…
                             </ThemedText>
-                            <ThemedText style={[styles.body, {color: colors.textMuted}]}>
-                                {hasMore && deepenRef.current < MAX_SEARCH_PAGES
-                                    ? `Still looking for “${query.trim()}” in the latest releases…`
-                                    : `Nothing matching “${query.trim()}” in the releases loaded so far. EZTV only lists recent episodes, so older series may not appear.`}
-                            </ThemedText>
-                            <PressableScale
-                                onPress={() => setQuery('')}
-                                accessibilityRole="button"
-                                pressedScale={0.94}
-                                pressedOpacity={0.85}
-                                hoveredScale={1.03}
-                            >
-                                <View style={[styles.cta, {backgroundColor: colors.accent}]}>
-                                    <Ionicons name="close" size={17} color={colors.onAccent}/>
-                                    <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>
-                                        Clear search
-                                    </ThemedText>
-                                </View>
-                            </PressableScale>
                         </View>
                     ) : null
                 }
@@ -318,7 +273,6 @@ function ShowCard({show, width}: {show: Show; width: number}) {
 }
 
 const styles = StyleSheet.create({
-    container: {flex: 1},
     row: {flexDirection: 'row', gap: COLUMN_GAP, alignSelf: 'center', width: '100%'},
     thumb: {width: '100%', borderRadius: Radius.card, overflow: 'hidden'},
     thumbFallback: {
@@ -334,8 +288,8 @@ const styles = StyleSheet.create({
     cardTitle: {fontWeight: '600'},
 
     centered: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: Spacing.sm},
-    emptyState: {alignItems: 'center', paddingTop: Spacing.xxl, gap: Spacing.sm},
-    emptyTitle: {marginTop: Spacing.xs},
+    footer: {alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingTop: Spacing.md},
+    footerLabel: {fontSize: 13},
     glyph: {
         width: 76,
         height: 76,

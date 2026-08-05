@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Genre, Movie, MovieRepository, OrderBy, Quality, SortBy } from '@/domain';
 
 const PAGE_SIZE = 50;
+const PAGES_PER_BATCH = 2;
 const SEARCH_DEBOUNCE_MS = 400;
 
 export interface MovieFilters {
@@ -31,75 +32,92 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   const [filters, setFiltersState] = useState<MovieFilters>(options?.initialFilters ?? DEFAULT_FILTERS);
   const [appliedQuery, setAppliedQuery] = useState(options?.initialQuery ?? '');
   const [appliedFilters, setAppliedFilters] = useState<MovieFilters>(options?.initialFilters ?? DEFAULT_FILTERS);
+
   const loadingRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchQueryRef = useRef(searchQuery);
-  const filtersRef = useRef(filters);
   const pageRef = useRef(page);
   const hasMoreRef = useRef(hasMore);
+  const appliedQueryRef = useRef(appliedQuery);
   const appliedFiltersRef = useRef(appliedFilters);
-  const pendingReloadRef = useRef<{ query?: string; filterOverrides?: MovieFilters } | null>(null);
+  const pendingReloadRef = useRef<{ query: string; filters: MovieFilters } | null>(null);
   const loadMoviesRef = useRef<
-    ((pageToLoad: number, query?: string, filterOverrides?: MovieFilters) => void) | null
+    ((batch: number, query: string, activeFilters: MovieFilters) => void) | null
   >(null);
 
   useEffect(() => {
-    searchQueryRef.current = searchQuery;
-    filtersRef.current = filters;
     pageRef.current = page;
     hasMoreRef.current = hasMore;
-    appliedFiltersRef.current = appliedFilters;
   });
 
+  const cancelDebounce = useCallback(() => {
+    if (!debounceRef.current) return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = null;
+  }, []);
+
   const loadMovies = useCallback(
-    async (
-      pageToLoad: number,
-      query?: string,
-      filterOverrides?: MovieFilters
-    ) => {
+    async (batch: number, query: string, activeFilters: MovieFilters) => {
       if (loadingRef.current) {
-        if (pageToLoad === 1) pendingReloadRef.current = { query, filterOverrides };
+        if (batch === 1) pendingReloadRef.current = { query, filters: activeFilters };
         return;
       }
       loadingRef.current = true;
       setLoading(true);
-      if (pageToLoad === 1) setRefreshing(true);
+      if (batch === 1) setRefreshing(true);
       setError(null);
 
-      const activeFilters = filterOverrides ?? filtersRef.current;
-      if (pageToLoad === 1) {
-        setAppliedQuery(query?.trim() ?? '');
+      const trimmed = query.trim();
+      if (batch === 1) {
+        appliedQueryRef.current = trimmed;
+        appliedFiltersRef.current = activeFilters;
+        setAppliedQuery(trimmed);
         setAppliedFilters(activeFilters);
       }
 
       try {
-        const result = await repository.listMovies({
-          page: pageToLoad,
-          limit: PAGE_SIZE,
-          query: query?.trim() || undefined,
-          quality: activeFilters.quality,
-          minimum_rating: activeFilters.minimum_rating,
-          genre: activeFilters.genre,
-          sort_by: activeFilters.sort_by,
-          order_by: activeFilters.order_by,
-        });
-
-        setMovies((prev) =>
-          pageToLoad === 1 ? result.movies : [...prev, ...result.movies]
+        const firstPage = (batch - 1) * PAGES_PER_BATCH + 1;
+        const results = await Promise.all(
+          Array.from({ length: PAGES_PER_BATCH }, (_, offset) =>
+            repository.listMovies({
+              page: firstPage + offset,
+              limit: PAGE_SIZE,
+              query: trimmed || undefined,
+              quality: activeFilters.quality,
+              minimum_rating: activeFilters.minimum_rating,
+              genre: activeFilters.genre,
+              sort_by: activeFilters.sort_by,
+              order_by: activeFilters.order_by,
+            })
+          )
         );
-        setPage(pageToLoad);
-        setHasMore(result.hasMore);
-        setTotalMovieCount(result.movieCount);
+
+        const seen = new Set<number>();
+        const fetched: Movie[] = [];
+        for (const result of results) {
+          for (const movie of result.movies) {
+            if (seen.has(movie.id)) continue;
+            seen.add(movie.id);
+            fetched.push(movie);
+          }
+        }
+
+        const last = results[results.length - 1];
+        const complete = results.every((result) => result.movies.length > 0);
+
+        setMovies((prev) => (batch === 1 ? fetched : [...prev, ...fetched]));
+        setPage(batch);
+        setHasMore(complete && last.hasMore);
+        setTotalMovieCount(results[0].movieCount);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load movies');
       } finally {
         loadingRef.current = false;
         setLoading(false);
-        if (pageToLoad === 1) setRefreshing(false);
+        if (batch === 1) setRefreshing(false);
         const pending = pendingReloadRef.current;
         if (pending) {
           pendingReloadRef.current = null;
-          loadMoviesRef.current?.(1, pending.query, pending.filterOverrides);
+          loadMoviesRef.current?.(1, pending.query, pending.filters);
         }
       }
     },
@@ -111,56 +129,59 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   }, [loadMovies]);
 
   const loadInitial = useCallback(() => {
-    loadMovies(1, searchQueryRef.current);
+    loadMovies(1, appliedQueryRef.current, appliedFiltersRef.current);
   }, [loadMovies]);
 
-  const setSearchQuery = useCallback((value: string) => {
-    setSearchQueryState(value);
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      loadMovies(1, value);
-    }, SEARCH_DEBOUNCE_MS);
-  }, [loadMovies]);
+  const setSearchQuery = useCallback(
+    (value: string) => {
+      setSearchQueryState(value);
+      cancelDebounce();
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null;
+        loadMovies(1, value, appliedFiltersRef.current);
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [cancelDebounce, loadMovies]
+  );
+
+  const submitSearch = useCallback(
+    (term: string) => {
+      cancelDebounce();
+      setSearchQueryState(term);
+      setFiltersState(DEFAULT_FILTERS);
+      loadMovies(1, term, DEFAULT_FILTERS);
+    },
+    [cancelDebounce, loadMovies]
+  );
 
   const setFilters = useCallback((next: MovieFilters | ((prev: MovieFilters) => MovieFilters)) => {
     setFiltersState(next);
   }, []);
 
-  const applyFilters = useCallback((override?: MovieFilters) => {
-    const active = override ?? filtersRef.current;
-    if (override != null) {
-      setFiltersState(active);
-      filtersRef.current = active;
-    }
-    loadMovies(1, searchQueryRef.current, active);
-  }, [loadMovies]);
+  const resetDraft = useCallback(() => {
+    setFiltersState(appliedFiltersRef.current);
+  }, []);
+
+  const applyFilters = useCallback(
+    (next: MovieFilters) => {
+      setFiltersState(next);
+      loadMovies(1, appliedQueryRef.current, next);
+    },
+    [loadMovies]
+  );
 
   const clearFiltersAndReload = useCallback(() => {
+    cancelDebounce();
     setFiltersState(DEFAULT_FILTERS);
-    filtersRef.current = DEFAULT_FILTERS;
-      if (debounceRef.current) {
-          clearTimeout(debounceRef.current);
-          debounceRef.current = null;
-      }
-      setSearchQueryState('');
-      searchQueryRef.current = '';
-      loadMovies(1, '', DEFAULT_FILTERS);
-  }, [loadMovies]);
+    setSearchQueryState('');
+    loadMovies(1, '', DEFAULT_FILTERS);
+  }, [cancelDebounce, loadMovies]);
 
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
+  useEffect(() => cancelDebounce, [cancelDebounce]);
 
   const loadMore = useCallback(() => {
     if (!hasMoreRef.current || loadingRef.current) return;
-    const nextPage = pageRef.current + 1;
-    loadMovies(nextPage, searchQueryRef.current, appliedFiltersRef.current);
+    loadMovies(pageRef.current + 1, appliedQueryRef.current, appliedFiltersRef.current);
   }, [loadMovies]);
 
   return {
@@ -172,8 +193,10 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
     hasMore,
     searchQuery,
     setSearchQuery,
+    submitSearch,
     filters,
     setFilters,
+    resetDraft,
     appliedQuery,
     appliedFilters,
     applyFilters,

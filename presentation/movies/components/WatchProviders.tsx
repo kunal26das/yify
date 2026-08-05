@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {Image} from 'expo-image';
+import * as WebBrowser from 'expo-web-browser';
 import Animated from 'react-native-reanimated';
 import type {MovieDetails, WatchAvailability, WatchProvider} from '@/domain';
 import {useTmdbRepository} from '../../di/DependenciesContext';
@@ -86,7 +87,11 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
         const url = providerUrl(provider.id, details.title);
         if (!url) return;
         Analytics.watchProviderOpen(details.id, availability.region);
-        void Linking.openURL(url);
+        if (Platform.OS === 'web') {
+            void Linking.openURL(url);
+            return;
+        }
+        void WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));
     };
 
     return (
@@ -117,7 +122,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                             <Image
                                 source={{uri: provider.logoUrl}}
                                 style={styles.logo}
-                                contentFit="cover"
+                                contentFit="contain"
                                 transition={140}
                                 cachePolicy="memory-disk"
                             />
@@ -133,9 +138,6 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                     </PressableScale>
                 ))}
             </ScrollView>
-            <ThemedText style={[styles.credit, {color: colors.textFaint}]}>
-                Availability in {availability.region} from JustWatch
-            </ThemedText>
         </Animated.View>
     );
 }
@@ -155,5 +157,4 @@ const styles = StyleSheet.create({
     logo: {width: 40, height: 40},
     providerText: {gap: 1},
     name: {fontSize: 14, fontWeight: '600'},
-    credit: {fontSize: 11.5, lineHeight: 16},
 });

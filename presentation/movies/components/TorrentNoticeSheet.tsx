@@ -20,6 +20,7 @@ import {PressableScale, enterPop, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
+import {useAndroidBackHandler} from '../../hooks/use-android-back';
 import {Radius, Spacing} from '../../constants/theme';
 import type {Torrent} from '@/domain';
 
@@ -73,6 +74,8 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
         }
         sheetRef.current?.dismiss();
     }, [isLarge, onClose]);
+
+    useAndroidBackHandler(torrent != null && !isLarge, handleGotIt);
 
     const handleContentLayout = useCallback((event: LayoutChangeEvent) => {
         setWebHeight(Math.ceil(event.nativeEvent.layout.height) + HANDLE_HEIGHT);

@@ -25,7 +25,7 @@ import {useIsInWatchlist} from '../useWatchlist';
 import {HeroTrailerLayer} from './HeroTrailerLayer';
 import {useTopTenRank} from './TopTenContext';
 import {Thumbnail} from './Thumbnail';
-import {thumbPlaceholder} from './format';
+import {thumbFor, thumbPlaceholder} from './format';
 
 const ROTATE_MS = 6500;
 const ROTATE_WITH_TRAILER_MS = 30000;
@@ -77,7 +77,9 @@ export function HeroBillboard({
     const page = measuredPage > 0 ? measuredPage : width;
 
     const activeMovie = movies[index];
-    const activeTrailer = activeMovie ? trailers?.[activeMovie.id] : undefined;
+    const activeTrailer = activeMovie
+        ? trailers?.[activeMovie.id] ?? activeMovie.ytTrailerCode ?? null
+        : undefined;
 
     const data = useMemo(() => (looped ? [...movies, movies[0]] : movies), [looped, movies]);
 
@@ -433,6 +435,11 @@ function HeroSlide({
         movie.mpaRating || null,
     ].filter(Boolean) as string[];
 
+    const bestArtRef = useRef<string | null>(null);
+    if (backdropUrl) bestArtRef.current = backdropUrl;
+    else if (!bestArtRef.current) bestArtRef.current = thumbFor(movie) ?? null;
+    const heroArt = bestArtRef.current;
+
     const openDetails = (source: string) => {
         Analytics.movieOpen(movie, source);
         router.push(`/movie/${movie.id}`);
@@ -440,11 +447,9 @@ function HeroSlide({
 
     return (
         <View style={[styles.slide, {width, height}]}>
-            {backdropUrl ? (
+            {heroArt ? (
                 <Image
-                    source={{uri: backdropUrl}}
-                    placeholder={thumbPlaceholder(movie) ? {uri: thumbPlaceholder(movie)} : undefined}
-                    placeholderContentFit="cover"
+                    source={{uri: heroArt}}
                     style={StyleSheet.absoluteFill}
                     contentFit="cover"
                     transition={260}
@@ -537,20 +542,22 @@ function HeroSlide({
                 </Pressable>
 
                 <Animated.View entering={enterFade(4)} style={[styles.ctaRow, isDesktop ? styles.ctaRowWide : null]}>
-                    <PressableScale
-                        onPress={onPlay}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Watch ${movie.title}`}
-                        pressedScale={0.95}
-                        pressedOpacity={0.85}
-                        hoveredScale={1.03}
-                        style={styles.ctaFlex}
-                    >
-                        <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
-                            <Ionicons name="play" size={20} color="#fff"/>
-                            <ThemedText style={styles.playLabel} numberOfLines={1}>Watch Now</ThemedText>
-                        </LinearGradient>
-                    </PressableScale>
+                    {movie.ytTrailerCode ? (
+                        <PressableScale
+                            onPress={onPlay}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Play the ${movie.title} trailer`}
+                            pressedScale={0.95}
+                            pressedOpacity={0.85}
+                            hoveredScale={1.03}
+                            style={styles.ctaFlex}
+                        >
+                            <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
+                                <Ionicons name="play" size={20} color="#fff"/>
+                                <ThemedText style={styles.playLabel} numberOfLines={1}>Play Trailer</ThemedText>
+                            </LinearGradient>
+                        </PressableScale>
+                    ) : null}
 
                     <PressableScale
                         onPress={() => {

@@ -5,6 +5,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
     Platform,
+    RefreshControl,
     ScrollView,
     Share,
     StyleSheet,
@@ -19,6 +20,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
+import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
@@ -28,7 +30,7 @@ import {DescriptionCard} from './components/DescriptionCard';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
 import {ScreenshotLightbox} from './components/ScreenshotLightbox';
-import {TopBar, useTopBarHeight} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {VideoRow} from './components/VideoRow';
 import {WatchActions} from './components/WatchActions';
@@ -91,7 +93,7 @@ function toPlayerQueue(movies: Movie[]): PlayerVideo[] {
 }
 
 export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
-    const {details, suggestions, loading, error, reload} = viewModel;
+    const {details, suggestions, loading, refreshing, error, reload, refresh} = viewModel;
     const {colors} = usePalette();
     const {width, contentMaxWidth, gutter, isPhone} = useResponsive();
     const insets = useSafeAreaInsets();
@@ -288,18 +290,17 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
 
     if (loading) {
         return (
-            <View style={[styles.root, {backgroundColor: colors.background}]}>
+            <Screen>
                 <View style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <ActivityIndicator size="large" color={colors.accent}/>
                 </View>
-                <TopBar/>
-            </View>
+            </Screen>
         );
     }
 
     if (error || !details) {
         return (
-            <View style={[styles.root, {backgroundColor: colors.background}]}>
+            <Screen>
                 <View style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Animated.View entering={enterRise()} style={styles.errorBox}>
                         <Ionicons name="cloud-offline-outline" size={52} color={colors.textFaint}/>
@@ -328,8 +329,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                         </PressableScale>
                     </Animated.View>
                 </View>
-                <TopBar/>
-            </View>
+            </Screen>
         );
     }
 
@@ -400,7 +400,6 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
         <>
             {reserved}
             {dragStrip}
-            <TopBar/>
             {lightboxIndex != null ? (
                 <ScreenshotLightbox
                     images={details.screenshotUrls}
@@ -422,12 +421,21 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     if (!wide) {
         return (
             <HoverCardHost>
-                <View style={[styles.root, {backgroundColor: colors.background}]}>
+                <Screen overlays={overlays}>
                     <ScrollView
                         style={styles.fill}
                         showsVerticalScrollIndicator={false}
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={refresh}
+                                tintColor={colors.accent}
+                                colors={[colors.accent]}
+                                progressViewOffset={trailerCode ? topBarHeight + playerHeight : topBarHeight}
+                            />
+                        }
                         contentContainerStyle={[
                             styles.stack,
                             {
@@ -444,15 +452,14 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                         {relatedRail}
                         {secondary}
                     </ScrollView>
-                    {overlays}
-                </View>
+                </Screen>
             </HoverCardHost>
         );
     }
 
     return (
         <HoverCardHost>
-            <View style={[styles.root, {backgroundColor: colors.background}]}>
+            <Screen overlays={overlays}>
                 <View style={[styles.row, {paddingLeft: columnX, paddingTop: playerY}]}>
                     <View style={{width: columnWidth}}>
                         <ScrollView
@@ -460,6 +467,14 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                             showsVerticalScrollIndicator={false}
                             onScroll={handleScroll}
                             scrollEventThrottle={16}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={refresh}
+                                    tintColor={colors.accent}
+                                    colors={[colors.accent]}
+                                />
+                            }
                             contentContainerStyle={[
                                 styles.stack,
                                 {paddingBottom: insets.bottom + Spacing.xxl},
@@ -488,8 +503,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                         </ScrollView>
                     </View>
                 </View>
-                {overlays}
-            </View>
+            </Screen>
         </HoverCardHost>
     );
 }
@@ -816,7 +830,6 @@ function NoTrailerBackdrop({details, radius}: {details: MovieDetails; radius: nu
 }
 
 const styles = StyleSheet.create({
-    root: {flex: 1},
     fill: {flex: 1},
     row: {flex: 1, flexDirection: 'row'},
     columnGap: {width: COLUMN_GAP},

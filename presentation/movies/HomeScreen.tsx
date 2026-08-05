@@ -21,7 +21,8 @@ import {MovieRail} from './components/MovieRail';
 import {landscapeWidth} from './components/MovieLandscapeItem';
 import {LandscapeSkeleton, PosterSkeleton, SkeletonBlock} from './components/PosterSkeleton';
 import {ScrollProgress} from './components/ScrollProgress';
-import {TopBar, useTopBarHeight} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
+import {TopBarSlot} from './components/TopBarSlot';
 import {TopTenProvider} from './components/TopTenContext';
 import {VideoCard} from './components/VideoCard';
 import {POSTER_GAP} from './components/moviePosterLayout';
@@ -349,7 +350,7 @@ export function HomeScreen({
 
     if (shelvesLoading && heroMovies.length === 0 && !shelvesError) {
         return (
-            <Screen overlays={<TopBar active="home"/>}>
+            <Screen>
                 <HomeSkeleton
                     heroHeight={heroHeight}
                     posterWidth={posterWidth}
@@ -363,7 +364,7 @@ export function HomeScreen({
 
     if (shelvesError && heroMovies.length === 0) {
         return (
-            <Screen overlays={<TopBar active="home"/>}>
+            <Screen>
                 <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
@@ -414,8 +415,7 @@ export function HomeScreen({
                                     visible={showProgress}
                                 />
                             )}
-                            <TopBar
-                                active="home"
+                            <TopBarSlot
                                 below={
                                     chipsPinned ? (
                                         <View style={styles.chipRowInner}>

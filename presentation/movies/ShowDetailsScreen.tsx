@@ -6,16 +6,17 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Show, ShowEpisode, ShowRepository, TitleArtwork, Torrent, TmdbRepository} from '@/domain';
 import {PressableScale, enterFade, enterRise} from '../components/motion';
+import {LinearGradient} from '../components/linear-gradient';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
-import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
-import {TopBar, useTopBarHeight} from './components/TopBar';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 
 const POSTER_WIDTH = 128;
+const POSTER_OVERLAP = 56;
+const BACKDROP_ASPECT = 16 / 9;
 
 function formatSize(bytes: number): string {
     if (!bytes) return '';
@@ -40,8 +41,7 @@ export function ShowDetailsScreen({
 }) {
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
-    const {gutter, contentMaxWidth} = useResponsive();
-    const topBarHeight = useTopBarHeight();
+    const {width, gutter, contentMaxWidth} = useResponsive();
 
     const [show, setShow] = useState<Show | null>(null);
     const [episodes, setEpisodes] = useState<ShowEpisode[]>([]);
@@ -121,12 +121,20 @@ export function ShowDetailsScreen({
     });
 
     const title = meta?.title || show?.title || 'Series';
+    const backdropUrl = meta?.backdropUrl || meta?.posterUrl || show?.thumbnailUrl;
+    const backdropHeight = Math.round(Math.min(width, contentMaxWidth) / BACKDROP_ASPECT);
+    const seasonCount = seasons.filter((group) => group.season > 0).length;
+    const metaLine = [
+        seasonCount > 0 ? `${seasonCount} ${seasonCount === 1 ? 'season' : 'seasons'}` : null,
+        `${episodes.length} ${episodes.length === 1 ? 'release' : 'releases'}`,
+    ]
+        .filter(Boolean)
+        .join(' · ');
 
     return (
         <Screen
             overlays={
                 <>
-                    <TopBar active="shows"/>
                     <TorrentNoticeSheet
                         torrent={notice}
                         onClose={() => setNotice(null)}
@@ -138,52 +146,85 @@ export function ShowDetailsScreen({
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
-                    paddingTop: topBarHeight + Spacing.lg,
                     paddingBottom: insets.bottom + Spacing.xxl,
-                    paddingHorizontal: gutter,
                     maxWidth: contentMaxWidth,
                     alignSelf: 'center',
                     width: '100%',
                 }}
             >
-                <Animated.View entering={enterRise()} style={styles.header}>
-                    <View style={[styles.poster, {backgroundColor: colors.surfaceSunken}]}>
-                        {meta?.posterUrl ? (
-                            <Image
-                                source={{uri: meta.posterUrl}}
-                                style={StyleSheet.absoluteFill}
-                                contentFit="cover"
-                                transition={200}
-                                cachePolicy="memory-disk"
-                            />
-                        ) : (
-                            <View style={styles.posterFallback}>
-                                <Ionicons name="tv-outline" size={30} color={colors.textFaint}/>
-                            </View>
-                        )}
-                    </View>
-                    <View style={styles.headerText}>
-                        <ThemedText style={[Typography.watchTitle, {color: colors.text}]} numberOfLines={3}>
-                            {title}
-                        </ThemedText>
-                        <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
-                            {episodes.length} {episodes.length === 1 ? 'release' : 'releases'}
-                            {meta?.rating ? ` · ${meta.rating.toFixed(1)}★` : ''}
-                        </ThemedText>
-                    </View>
-                </Animated.View>
+                <View style={[styles.backdrop, {height: backdropHeight}]}>
+                    {backdropUrl ? (
+                        <Image
+                            source={{uri: backdropUrl}}
+                            style={StyleSheet.absoluteFill}
+                            contentFit="cover"
+                            transition={240}
+                            priority="high"
+                            cachePolicy="memory-disk"
+                        />
+                    ) : (
+                        <View style={[StyleSheet.absoluteFill, {backgroundColor: colors.surfaceSunken}]}/>
+                    )}
+                    <LinearGradient
+                        colors={['rgba(6,6,8,0.15)', 'rgba(6,6,8,0.55)', colors.background]}
+                        bands={14}
+                        style={StyleSheet.absoluteFill}
+                        pointerEvents="none"
+                    />
+                </View>
 
-                {meta?.overview ? (
-                    <Animated.View entering={enterFade()} style={styles.overviewBox}>
-                        <ThemedText style={[styles.overview, {color: colors.textMuted}]}>
-                            {meta.overview}
-                        </ThemedText>
+                <View style={{paddingHorizontal: gutter}}>
+                    <Animated.View
+                        entering={enterRise()}
+                        style={[styles.header, {marginTop: -POSTER_OVERLAP}]}
+                    >
+                        <View style={[styles.poster, {backgroundColor: colors.surfaceSunken, borderColor: colors.border}]}>
+                            {meta?.posterUrl ? (
+                                <Image
+                                    source={{uri: meta.posterUrl}}
+                                    style={StyleSheet.absoluteFill}
+                                    contentFit="cover"
+                                    transition={200}
+                                    cachePolicy="memory-disk"
+                                />
+                            ) : (
+                                <View style={styles.posterFallback}>
+                                    <Ionicons name="tv-outline" size={30} color={colors.textFaint}/>
+                                </View>
+                            )}
+                        </View>
+                        <View style={styles.headerText}>
+                            <ThemedText style={[Typography.watchTitle, {color: colors.text}]} numberOfLines={3}>
+                                {title}
+                            </ThemedText>
+                            <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                                {metaLine}
+                            </ThemedText>
+                            {meta?.rating ? (
+                                <View style={[styles.ratingPill, {backgroundColor: colors.accentSoft}]}>
+                                    <Ionicons name="star" size={12} color={colors.accent}/>
+                                    <ThemedText style={[styles.ratingLabel, {color: colors.accent}]}>
+                                        {meta.rating.toFixed(1)}
+                                    </ThemedText>
+                                </View>
+                            ) : null}
+                        </View>
                     </Animated.View>
-                ) : null}
 
-                <ThemedText type="section" style={[styles.sectionHeading, {color: colors.text}]}>
-                    Episodes
-                </ThemedText>
+                    {meta?.overview ? (
+                        <Animated.View
+                            entering={enterFade()}
+                            style={[styles.overviewBox, {backgroundColor: colors.surfaceSunken}]}
+                        >
+                            <ThemedText style={[styles.overview, {color: colors.textMuted}]}>
+                                {meta.overview}
+                            </ThemedText>
+                        </Animated.View>
+                    ) : null}
+
+                    <ThemedText type="section" style={[styles.sectionHeading, {color: colors.text}]}>
+                        Episodes
+                    </ThemedText>
 
                 {loading ? (
                     <ActivityIndicator color={colors.accent} style={styles.loader}/>
@@ -281,6 +322,7 @@ export function ShowDetailsScreen({
                         );
                     })
                 )}
+                </View>
             </ScrollView>
         </Screen>
     );
@@ -288,13 +330,26 @@ export function ShowDetailsScreen({
 
 const styles = StyleSheet.create({
     container: {flex: 1},
-    header: {flexDirection: 'row', gap: Spacing.lg, alignItems: 'flex-start'},
+    backdrop: {width: '100%', overflow: 'hidden'},
+    header: {flexDirection: 'row', gap: Spacing.lg, alignItems: 'flex-end'},
     poster: {
         width: POSTER_WIDTH,
         height: Math.round(POSTER_WIDTH * 1.5),
         borderRadius: Radius.card,
+        borderWidth: StyleSheet.hairlineWidth,
         overflow: 'hidden',
     },
+    ratingPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        alignSelf: 'flex-start',
+        borderRadius: Radius.pill,
+        paddingHorizontal: 9,
+        paddingVertical: 4,
+        marginTop: Spacing.xs,
+    },
+    ratingLabel: {fontSize: 12.5, fontFamily: FontFamily.bold},
     posterFallback: {
         position: 'absolute',
         top: 0,
@@ -304,8 +359,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerText: {flex: 1, gap: Spacing.xs, paddingTop: Spacing.xs},
-    overviewBox: {marginTop: Spacing.lg},
+    headerText: {flex: 1, gap: Spacing.xs, paddingBottom: Spacing.xs},
+    overviewBox: {marginTop: Spacing.lg, padding: Spacing.lg, borderRadius: Radius.card},
     overview: {fontSize: 14, lineHeight: 21},
     sectionHeading: {marginTop: Spacing.xl, marginBottom: Spacing.sm},
     seasonRow: {

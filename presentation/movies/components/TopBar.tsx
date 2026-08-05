@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useState} from 'react';
+import {usePathname} from 'expo-router';
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
@@ -10,12 +11,11 @@ import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {Radius, Spacing} from '../../constants/theme';
 import {Analytics} from '@/presentation/analytics/events';
-import {DESTINATIONS, useGoTo} from '../constants/destinations';
+import {DESTINATIONS, navKeyForPath, useGoTo, type NavKey} from '../constants/destinations';
 import {SearchOverlay} from './SearchOverlay';
+import {useTopBarSlot} from './TopBarSlot';
 import {useSearchHistory} from '../../di/DependenciesContext';
 import {useAuth} from '../../hooks/use-auth';
-
-export type NavKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'preferences';
 
 export const TOP_BAR_ROW_HEIGHT = 56;
 
@@ -33,19 +33,9 @@ interface NavLink {
 
 const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter((destination) => destination.key !== 'home');
 
-export function TopBar({
-                           active,
-                           onSearchSubmit,
-                           searchValue,
-                           showSearch = true,
-                           below,
-                       }: {
-    active?: NavKey;
-    onSearchSubmit?: (q: string) => void;
-    searchValue?: string;
-    showSearch?: boolean;
-    below?: React.ReactNode;
-}) {
+export function TopBar() {
+    const {below, searchValue, onSearchSubmit, showSearch = true} = useTopBarSlot();
+    const active = navKeyForPath(usePathname());
     const insets = useSafeAreaInsets();
     const {colors, scheme} = usePalette();
     const {isPhone, gutter} = useResponsive();
