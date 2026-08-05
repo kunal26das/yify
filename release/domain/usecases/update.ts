@@ -91,11 +91,25 @@ export function createUpdateUseCases(deps: {
     ): Promise<UpdateResult> {
         const wrapped = await operation.withOperation('update', async () => {
             const jobs = buildJobs(platforms, channels);
+
+            onLine({
+                stream: 'system',
+                text: 'Clean install before publishing (rm -rf node_modules && install)…',
+            });
+            const inst = await installer.cleanInstall(onLine);
+            if (!inst.ok) {
+                onLine({
+                    stream: 'system',
+                    text: 'Aborting update: clean install failed.',
+                });
+                return {ok: false, steps: []};
+            }
+
             const runtimeVersionFor = resolver();
 
             onLine({
                 stream: 'system',
-                text: 'Resolving runtime versions before publishing…',
+                text: 'Resolving runtime versions against the installed tree…',
             });
 
             const embedded = await runtimeVersions.embeddedChannel();
@@ -173,29 +187,9 @@ export function createUpdateUseCases(deps: {
             if (!checked.some((c) => c.allowed)) {
                 onLine({
                     stream: 'system',
-                    text: 'Nothing to publish — no selected target has a matching store release. Skipping clean install.',
+                    text: 'Nothing to publish — no selected target has a matching store release.',
                 });
                 return {ok: false, steps: checked.map(blockedStep)};
-            }
-
-            onLine({
-                stream: 'system',
-                text: 'Clean install before publishing (rm -rf node_modules && install)…',
-            });
-            const inst = await installer.cleanInstall(onLine);
-            if (!inst.ok) {
-                onLine({
-                    stream: 'system',
-                    text: 'Aborting update: clean install failed.',
-                });
-                return {
-                    ok: false,
-                    steps: checked.map((c) =>
-                        c.allowed
-                            ? {platform: c.platform, channel: c.channel, ok: false}
-                            : blockedStep(c),
-                    ),
-                };
             }
 
             const steps: UpdateStep[] = [];

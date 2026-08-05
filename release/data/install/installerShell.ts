@@ -13,7 +13,8 @@ export function createInstaller(deps: {
     const repoRoot = workspace.repoRoot;
 
     function installCommand(): string {
-        if (fs.existsSync(path.join(repoRoot, 'yarn.lock'))) return 'yarn install';
+        if (fs.existsSync(path.join(repoRoot, 'yarn.lock')))
+            return 'yarn install --frozen-lockfile';
         if (fs.existsSync(path.join(repoRoot, 'pnpm-lock.yaml')))
             return 'pnpm install --frozen-lockfile';
         if (fs.existsSync(path.join(repoRoot, 'package-lock.json')))
@@ -28,7 +29,7 @@ export function createInstaller(deps: {
                 return;
             }
             const cmd = installCommand();
-            const full = `rm -rf node_modules yarn.lock && ${cmd}`;
+            const full = `rm -rf node_modules && ${cmd}`;
             onLine({
                 stream: 'system',
                 text: `$ ${full}  (cwd: ${repoRoot})`,
