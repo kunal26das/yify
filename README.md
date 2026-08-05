@@ -33,6 +33,7 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 - [Over-the-air updates](#-over-the-air-updates)
 - [Project layout](#️-project-layout)
 - [Get started](#-get-started)
+- [EAS](#️-eas)
 - [Tech stack](#-tech-stack)
 - [Firebase Remote Config](#-firebase-remote-config)
 - [Signing in](#-signing-in)
@@ -292,14 +293,18 @@ an app-store review. `ExpoAppUpdates` checks on launch and on every foreground, 
 restart prompt through `UpdateSnackbar`. The web/desktop bundle resolves the `.web.ts` no-op twin,
 keeping `yarn export:web` clean.
 
-Updates are keyed by **`runtimeVersion`** (`fingerprint` policy), not by app version — change a
-native dependency and the fingerprint changes, so old binaries stop receiving updates instead of
-crashing on mismatched native code. `Staging` and `Production` are EAS **channels**.
+Updates are keyed by **`runtimeVersion`**, which is declared as the `package.json` version rather
+than derived from a fingerprint. Fingerprints proved unreliable here — the console, gradle and
+`eas update` each hashed their own view of the tree and produced three different values for one
+build. Declaring it means every tool reads the same string by construction, at the cost of one
+rule: **bump the version whenever native code changes**, or old binaries will accept an update
+they cannot run. `Staging` and `Production` are EAS **channels**, baked into the binary at
+prebuild time from `EXPO_UPDATE_CHANNEL`.
 
-Because binaries are built locally rather than on EAS Build, EAS has no record of what actually
-shipped. `release/releases.json` is that record: the store-release flow writes the runtime version
-of every binary it ships, and the update flow refuses to publish for a runtime version that has no
-store release — an update nobody could receive.
+`release/releases.json` records what actually shipped: the store-release flow writes the runtime
+version of every binary it ships, and the update flow refuses to publish for a runtime version that
+has no store release — an update nobody could receive. It stays authoritative for locally built
+binaries, which EAS has no record of.
 
 The repo also ships **`release/`** — a standalone, clean-architecture TUI/GUI release console
 (`yarn release`) that drives Expo logins, store releases, and EAS Update rollouts with guardrails.
@@ -376,6 +381,61 @@ npm start
 | `npm run prebuild` | Regenerate native `ios/` & `android/` |
 
 > 💡 Release builds embed the JS bundle — no Metro required. Unplug and go.
+
+---
+
+## ☁️ EAS
+
+Local gradle builds and the release console remain the primary path. EAS sits **alongside** them
+for the things a local Mac cannot do: cloud iOS builds, shareable internal builds, and hosted web.
+Every command routes through `scripts/eas.sh`, which reuses the release console's `EXPO_TOKEN`, so
+there is no separate login.
+
+### Development builds
+
+A [development build](https://docs.expo.dev/develop/development-builds/introduction/) is your own
+app with the dev launcher inside it — the same native code as a release build, but able to load JS
+from Metro. It is the only way to exercise the native modules this app depends on (Firebase, Google
+Sign-In, RevenueCat, MMKV) against a live bundle.
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Metro for an installed dev build (`expo start --dev-client`) |
+| `npm run android` | Build and install a dev build locally |
+| `npm run build:dev:android` | Dev build APK on EAS |
+| `npm run build:dev:ios` | Dev build for the iOS **simulator** (no Apple account needed) |
+| `npm run build:dev:ios:device` | Dev build for a physical iPhone (needs an Apple account) |
+
+### Cloud builds & submission
+
+| Command | What it does |
+| --- | --- |
+| `npm run build:preview:android` | Internal-distribution APK on the `Staging` channel |
+| `npm run build:production:android` | Store AAB on the `Production` channel |
+| `npm run submit:android` | Upload an AAB to Play — **`internal` track, `draft`** |
+| `npm run submit:android:play` | Upload an AAB to Play — `production` track, live |
+
+`submit:android` is deliberately the harmless one, because the release console already publishes to
+the production track through the Play API. Pass `--path` to submit a locally built artifact:
+
+```bash
+npm run submit:android -- --path android/app/build/outputs/bundle/release/app-release.aab
+```
+
+Signing is not duplicated. `scripts/setup-eas-credentials.sh` generates a gitignored
+`credentials.json` from the same `~/.config/yify/signing.env` that
+`scripts/setup-android-signing.sh` reads, and verifies the keystore SHA-1 before writing it — so a
+cloud build cannot silently sign with a key Play would reject.
+
+### Hosting
+
+`npm run deploy:hosting` exports the web bundle with a **root** `baseUrl` into `dist-hosting/` and
+pushes it to [EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/); `:prod` promotes it to
+the production alias. This is entirely separate from the GitHub Pages deploy, which needs
+`baseUrl=/yify` and keeps building from `dist/` on every push to `main`.
+
+> ⚠️ Any new web origin must be added to Firebase Auth authorized domains and the Google OAuth
+> client, or sign-in will fail there.
 
 ---
 

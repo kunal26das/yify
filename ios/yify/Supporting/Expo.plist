@@ -10,8 +10,13 @@
     <true/>
     <key>EXUpdatesLaunchWaitMs</key>
     <integer>0</integer>
+    <key>EXUpdatesRequestHeaders</key>
+    <dict>
+      <key>expo-channel-name</key>
+      <string>Production</string>
+    </dict>
     <key>EXUpdatesRuntimeVersion</key>
-    <string>file:fingerprint</string>
+    <string>1.4.6</string>
     <key>EXUpdatesURL</key>
     <string>https://u.expo.dev/130cfded-cef0-49b3-94a4-82d3a3852ef5</string>
   </dict>

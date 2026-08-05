@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
+    "dev": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --dev-client",
     "android": "NODE_OPTIONS=--max-old-space-size=8192 expo run:android",
     "android:debug": "bash scripts/run-android-debug.sh",
     "android:release": "bash scripts/run-android-release.sh",
@@ -14,6 +15,7 @@
     "web": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --web",
     "export:web": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL=/yify expo export --platform web",
     "export:desktop": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL='' expo export --platform web",
+    "export:hosting": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL='' expo export --platform web --clear --output-dir dist-hosting",
     "desktop": "yarn export:desktop && electron desktop/main.js",
     "desktop:dev": "electron desktop/main.js",
     "desktop:build": "yarn export:desktop && electron-builder --mac",
@@ -22,7 +24,17 @@
     "prebuild": "expo prebuild",
     "postinstall": "patch-package",
     "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts'",
-    "release": "cd release && yarn gui"
+    "release": "cd release && yarn gui",
+    "eas": "bash scripts/eas.sh",
+    "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
+    "build:dev:ios": "bash scripts/eas.sh build --platform ios --profile development",
+    "build:dev:ios:device": "bash scripts/eas.sh build --platform ios --profile development-device",
+    "build:preview:android": "bash scripts/eas.sh build --platform android --profile preview",
+    "build:production:android": "bash scripts/eas.sh build --platform android --profile production",
+    "submit:android": "bash scripts/eas.sh submit --platform android --profile production",
+    "submit:android:play": "bash scripts/eas.sh submit --platform android --profile play-production",
+    "deploy:hosting": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
+    "deploy:hosting:prod": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",
@@ -44,6 +56,7 @@
     "expo-blur": "57.0.2",
     "expo-build-properties": "57.0.7",
     "expo-constants": "57.0.7",
+    "expo-dev-client": "57.0.10",
     "expo-device-corner-radius": "0.1.1",
     "expo-font": "57.0.1",
     "expo-glass-effect": "57.0.1",
