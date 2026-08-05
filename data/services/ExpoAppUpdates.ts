@@ -29,7 +29,12 @@ export class ExpoAppUpdates implements AppUpdates {
         this.started = true;
         void this.sync();
         AppState.addEventListener('change', (next) => {
-            if (next === 'active') void this.sync();
+            if (next !== 'active') return;
+            if (this.status.state === 'ready') {
+                this.restart();
+                return;
+            }
+            void this.sync();
         });
     }
 

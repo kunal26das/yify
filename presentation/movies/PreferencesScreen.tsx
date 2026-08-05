@@ -383,10 +383,10 @@ function SyncRow({colors, gutter}: {colors: Colors; gutter: number}) {
 }
 
 function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
-    const {ready, available, signingIn, account} = useAuth();
+    const {ready, available, signingIn, account, error} = useAuth();
     const auth = useAuthRepository();
 
-    if (!available && ready) return null;
+    const unavailable = ready && !available;
 
     const signOut = () => {
         Analytics.signOut();
@@ -433,14 +433,20 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="logo-google"
                         title="Sign in with Google"
+                        subtitle={
+                            unavailable
+                                ? (error ?? 'Sign-in is unavailable in this build.')
+                                : undefined
+                        }
                         colors={colors}
                         gutter={gutter}
-                        onPress={signingIn ? undefined : () => void auth.signIn()}
+                        onPress={signingIn || unavailable ? undefined : () => void auth.signIn()}
                         accessibilityLabel="Sign in with Google"
+                        accessibilityState={{disabled: unavailable}}
                         trailing={
                             signingIn ? (
                                 <ActivityIndicator color={colors.accent}/>
-                            ) : (
+                            ) : unavailable ? null : (
                                 <Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>
                             )
                         }
@@ -514,7 +520,7 @@ function Row({
     onPress?: () => void;
     accessibilityRole?: 'button' | 'link';
     accessibilityLabel?: string;
-    accessibilityState?: {expanded?: boolean; selected?: boolean};
+    accessibilityState?: {expanded?: boolean; selected?: boolean; disabled?: boolean};
 }) {
     const content = (
         <>
