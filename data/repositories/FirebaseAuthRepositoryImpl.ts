@@ -12,7 +12,10 @@ import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-sign
 import {INITIAL_AUTH_SESSION, type Account, type AuthRepository, type AuthSession} from '@/domain';
 import {createObservable} from './support/observable';
 
-const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+const FALLBACK_WEB_CLIENT_ID =
+    '325235052319-09fsjb9phn2s764ja02qgmbdcg88b0in.apps.googleusercontent.com';
+
+const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || FALLBACK_WEB_CLIENT_ID;
 
 const SILENT = new Set<string>([statusCodes.SIGN_IN_CANCELLED, statusCodes.IN_PROGRESS]);
 

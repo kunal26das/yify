@@ -26,6 +26,7 @@ export function nodeBinaryPath(): string {
 
 export function easEnv(session: Session | null): NodeJS.ProcessEnv {
     const env = {...process.env};
+    env.EAS_UPDATE_SKIP_ENVIRONMENT_CHECK = '1';
     if (session?.token) env.EXPO_TOKEN = session.token;
     else delete env.EXPO_TOKEN;
     return env;
