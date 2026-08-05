@@ -17,6 +17,7 @@ module.exports = {
     expo: {
         ...base.expo,
         version,
+        runtimeVersion: version,
         ...(projectId
             ? {
                 updates: {
