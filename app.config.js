@@ -10,7 +10,7 @@ const baseUrl = process.env.EXPO_WEB_BASE_URL ?? '';
 
 const projectId = base.expo.extra?.eas?.projectId ?? '';
 
-const updateChannel = process.env.APP_VARIANT === 'debug' ? 'Staging' : 'Production';
+const updateChannel = process.env.EXPO_UPDATE_CHANNEL || 'Production';
 
 module.exports = {
     ...base,
