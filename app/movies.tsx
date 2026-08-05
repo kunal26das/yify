@@ -1,6 +1,6 @@
 import {router, useLocalSearchParams} from 'expo-router';
 import Head from 'expo-router/head';
-import {useEffect, useMemo, useRef} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {Genre, OrderBy, Quality, SortBy} from '@/domain';
 import {
   MoviesScreen,
@@ -12,6 +12,20 @@ import {
 
 function asEnum<T extends string>(value: string | undefined, allowed: readonly T[]): T | undefined {
   return value != null && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
+}
+
+function serialize(filters: MovieFilters, query: string): string {
+  const rating = filters.minimum_rating;
+  return JSON.stringify({
+    filters: {
+      ...(filters.genre ? {genre: filters.genre} : {}),
+      ...(filters.quality ? {quality: filters.quality} : {}),
+      ...(rating != null && Number.isFinite(rating) ? {minimum_rating: rating} : {}),
+      ...(filters.sort_by ? {sort_by: filters.sort_by} : {}),
+      ...(filters.order_by ? {order_by: filters.order_by} : {}),
+    },
+    query,
+  });
 }
 
 export default function BrowseRoute() {
@@ -28,27 +42,14 @@ export default function BrowseRoute() {
   const repository = useMovieRepository();
   const preferences = usePreferencesRepository();
 
-  const initialFilters = useMemo<MovieFilters>(() => {
+  const paramFilters = useMemo<MovieFilters | null>(() => {
     const hasParams =
       params.genre != null ||
       params.quality != null ||
       params.minimum_rating != null ||
       params.sort_by != null ||
       params.order_by != null;
-    if (!hasParams) {
-      const defaults = preferences.getBrowseDefaults();
-      const seeded: MovieFilters = {};
-      const genre = asEnum(defaults.genre, Object.values(Genre));
-      if (genre) seeded.genre = genre;
-      const quality = asEnum(defaults.quality, Object.values(Quality));
-      if (quality) seeded.quality = quality;
-      if (defaults.minimum_rating > 0) seeded.minimum_rating = defaults.minimum_rating;
-      const sortBy = asEnum(defaults.sort_by, Object.values(SortBy));
-      if (sortBy) seeded.sort_by = sortBy;
-      const orderBy = asEnum(defaults.order_by, Object.values(OrderBy));
-      if (orderBy) seeded.order_by = orderBy;
-      return seeded;
-    }
+    if (!hasParams) return null;
     const f: MovieFilters = {};
     const genre = asEnum(params.genre, Object.values(Genre));
     if (genre) f.genre = genre;
@@ -67,45 +68,60 @@ export default function BrowseRoute() {
     params.minimum_rating,
     params.sort_by,
     params.order_by,
-    preferences,
   ]);
+
+  const [initialFilters] = useState<MovieFilters>(() => {
+    if (paramFilters) return paramFilters;
+    const defaults = preferences.getBrowseDefaults();
+    const seeded: MovieFilters = {};
+    const genre = asEnum(defaults.genre, Object.values(Genre));
+    if (genre) seeded.genre = genre;
+    const quality = asEnum(defaults.quality, Object.values(Quality));
+    if (quality) seeded.quality = quality;
+    if (defaults.minimum_rating > 0) seeded.minimum_rating = defaults.minimum_rating;
+    const sortBy = asEnum(defaults.sort_by, Object.values(SortBy));
+    if (sortBy) seeded.sort_by = sortBy;
+    const orderBy = asEnum(defaults.order_by, Object.values(OrderBy));
+    if (orderBy) seeded.order_by = orderBy;
+    return seeded;
+  });
 
   const viewModel = useMoviesViewModel(repository, {
     initialFilters,
     initialQuery: params.query ?? '',
   });
 
-  const {appliedQuery, appliedFilters, applyFilters, setSearchQuery} = viewModel;
-  const incoming = JSON.stringify({filters: initialFilters, query: params.query ?? ''});
-  const lastIncomingRef = useRef<string | null>(null);
+  const {appliedQuery, appliedFilters, submitSearch, applyFilters} = viewModel;
+
+  const incoming = serialize(paramFilters ?? {}, params.query ?? '');
+  const lastIncomingRef = useRef<string>(serialize(initialFilters, params.query ?? ''));
+
   useEffect(() => {
-    if (lastIncomingRef.current === null) {
-      lastIncomingRef.current = incoming;
-      return;
-    }
     if (lastIncomingRef.current === incoming) return;
     lastIncomingRef.current = incoming;
     const {filters, query} = JSON.parse(incoming) as {filters: MovieFilters; query: string};
-    setSearchQuery(query);
+    if (query !== appliedQuery) {
+      submitSearch(query);
+      return;
+    }
     applyFilters(filters);
-  }, [incoming, setSearchQuery, applyFilters]);
+  }, [incoming, appliedQuery, submitSearch, applyFilters]);
 
-  const lastSyncedRef = useRef<string | null>(null);
   useEffect(() => {
     const rating = appliedFilters.minimum_rating;
-    const next: Record<string, string | undefined> = {
-      query: appliedQuery.trim() || undefined,
+    const query = appliedQuery.trim();
+    const echoed = serialize(appliedFilters, query);
+    if (lastIncomingRef.current === echoed) return;
+    lastIncomingRef.current = echoed;
+    router.setParams({
+      query: query || undefined,
       genre: appliedFilters.genre,
       quality: appliedFilters.quality || undefined,
       minimum_rating: rating != null && Number.isFinite(rating) ? String(rating) : undefined,
       sort_by: appliedFilters.sort_by,
       order_by: appliedFilters.order_by,
       focus: undefined,
-    };
-    const serialized = JSON.stringify(next);
-    if (lastSyncedRef.current === serialized) return;
-    lastSyncedRef.current = serialized;
-    router.setParams(next);
+    });
   }, [appliedQuery, appliedFilters]);
 
   return (

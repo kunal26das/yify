@@ -10,6 +10,7 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
     const [shows, setShows] = useState<Show[]>([]);
     const [status, setStatus] = useState<ShowsStatus>('loading');
     const [refreshing, setRefreshing] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
 
     const pageRef = useRef(0);
@@ -37,37 +38,46 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
     );
 
     const load = useCallback(
-        async (page: number, attempt = 0) => {
+        async (page: number) => {
             if (loadingRef.current) return;
             loadingRef.current = true;
             if (page === 1) setRefreshing(true);
+            else setLoadingMore(true);
 
             try {
-                const result = await repository.listShows({page});
-                pageRef.current = page;
+                let current = page;
+                let received = 0;
 
-                if (page === 1) seenRef.current = new Set();
-                const fresh = result.shows.filter((show) => !seenRef.current.has(show.imdbId));
-                for (const show of fresh) seenRef.current.add(show.imdbId);
+                for (let attempt = 0; attempt <= MAX_EMPTY_PAGES; attempt += 1) {
+                    const result = await repository.listShows({page: current});
+                    pageRef.current = current;
+                    received = result.shows.length;
 
-                setShows((prev) => (page === 1 ? fresh : [...prev, ...fresh]));
-                if (artwork) void decorate(fresh);
+                    if (current === page && page === 1) seenRef.current = new Set();
+                    const fresh = result.shows.filter((show) => !seenRef.current.has(show.imdbId));
+                    for (const show of fresh) seenRef.current.add(show.imdbId);
 
-                if (fresh.length === 0 && result.hasMore) {
-                    if (attempt < MAX_EMPTY_PAGES) {
-                        loadingRef.current = false;
-                        void load(page + 1, attempt + 1);
-                        return;
+                    setShows((prev) =>
+                        current === page && page === 1 ? fresh : [...prev, ...fresh]
+                    );
+                    if (artwork) void decorate(fresh);
+                    setHasMore(result.hasMore);
+
+                    if (current === page && page === 1 && received > 0) {
+                        Analytics.showsImpression(received);
                     }
-                    setHasMore(false);
+
+                    if (fresh.length > 0 || !result.hasMore) break;
+                    if (attempt === MAX_EMPTY_PAGES) {
+                        setHasMore(false);
+                        break;
+                    }
+                    current += 1;
                 }
-                setHasMore(result.hasMore);
-                if (page === 1 && result.shows.length > 0) {
-                    Analytics.showsImpression(result.shows.length);
-                }
+
                 setStatus((prev) => {
                     if (page > 1) return prev === 'unavailable' ? 'ready' : prev;
-                    return result.shows.length > 0 ? 'ready' : 'empty';
+                    return received > 0 ? 'ready' : 'empty';
                 });
             } catch {
                 if (page === 1) {
@@ -79,7 +89,8 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
                 setHasMore(false);
             } finally {
                 loadingRef.current = false;
-                setRefreshing(false);
+                if (page === 1) setRefreshing(false);
+                else setLoadingMore(false);
             }
         },
         [artwork, decorate, repository]
@@ -95,11 +106,11 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
     }, [hasMore, load]);
 
     const reload = useCallback(() => {
-        setStatus('loading');
+        setHasMore(true);
         void load(1);
     }, [load]);
 
-    return {shows, status, refreshing, hasMore, loadMore, reload};
+    return {shows, status, refreshing, loadingMore, hasMore, loadMore, reload};
 }
 
 export type ShowsViewModel = ReturnType<typeof useShowsViewModel>;

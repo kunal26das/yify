@@ -8,6 +8,7 @@ export function YoutubePlayer({
     muted = false,
     loop = false,
     controls = true,
+    onPlaybackStarted,
 }: {
     videoId: string;
     width: number;
@@ -16,6 +17,7 @@ export function YoutubePlayer({
     muted?: boolean;
     loop?: boolean;
     controls?: boolean;
+    onPlaybackStarted?: () => void;
 }) {
     const resolvedHeight = height ?? Math.round((width * 9) / 16);
     const params = new URLSearchParams({
@@ -37,6 +39,7 @@ export function YoutubePlayer({
                 style={{width: '100%', height: '100%', border: 0, display: 'block'}}
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                 allowFullScreen
+                onLoad={onPlaybackStarted}
             />
         </View>
     );

@@ -9,11 +9,13 @@ import {
     type BottomSheetFooterProps,
 } from '@gorhom/bottom-sheet';
 import Reanimated from 'react-native-reanimated';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Duration, PressableScale, enterPop, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {LinearGradient} from '../../components/linear-gradient';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
+import {useAndroidBackHandler} from '../../hooks/use-android-back';
 import {Radius, Spacing} from '../../constants/theme';
 import {FEED_CHIPS} from '../constants/feedChips';
 import {Genre, OrderBy, Quality, SortBy} from '@/domain';
@@ -101,15 +103,22 @@ const COLLECTION_OPTIONS = FEED_CHIPS.filter((chip) => !chip.key.startsWith('gen
     (chip) => ({value: chip.key, label: chip.label})
 );
 
-const SNAP_POINTS = ['60%', '90%'];
 
-function collectionValue(filters: {quality?: string; minimum_rating?: number; sort_by?: string; order_by?: string}): string {
-    const match = FEED_CHIPS.filter((chip) => !chip.key.startsWith('genre-')).find(
+const SNAP_POINTS = ['100%'];
+
+const COLLECTION_CHIPS = FEED_CHIPS.filter((chip) => !chip.key.startsWith('genre-'));
+
+function collectionValue(filters: MovieFilters): string {
+    const sortBy = filters.sort_by ?? SortBy.DateAdded;
+    const orderBy = filters.order_by ?? OrderBy.Desc;
+    const quality = filters.quality || undefined;
+    const rating = filters.minimum_rating ?? undefined;
+    const match = COLLECTION_CHIPS.find(
         (chip) =>
-            chip.query.sort_by === filters.sort_by &&
-            chip.query.order_by === filters.order_by &&
-            (chip.query.quality || undefined) === (filters.quality || undefined) &&
-            (chip.query.minimum_rating ?? undefined) === (filters.minimum_rating ?? undefined)
+            (chip.query.sort_by ?? SortBy.DateAdded) === sortBy &&
+            (chip.query.order_by ?? OrderBy.Desc) === orderBy &&
+            (chip.query.quality || undefined) === quality &&
+            (chip.query.minimum_rating ?? undefined) === rating
     );
     return match?.key ?? '';
 }
@@ -125,31 +134,43 @@ export function MovieFilterModal({
                                  }: MovieFilterModalProps) {
     const {isLarge} = useResponsive();
     const {colors} = usePalette();
+    const insets = useSafeAreaInsets();
 
     const sheetRef = useRef<BottomSheetModal>(null);
     const presentedRef = useRef(false);
+    const appliedRef = useRef(false);
 
     useEffect(() => {
         if (visible === presentedRef.current) return;
         presentedRef.current = visible;
-        if (visible) sheetRef.current?.present();
-        else sheetRef.current?.dismiss();
+        if (visible) {
+            appliedRef.current = false;
+            sheetRef.current?.present();
+        } else {
+            sheetRef.current?.dismiss();
+        }
     }, [visible]);
 
     const handleDismiss = useCallback(() => {
         presentedRef.current = false;
+        if (appliedRef.current) {
+            appliedRef.current = false;
+            return;
+        }
         onClose();
     }, [onClose]);
 
     const handleApply = useCallback(() => {
+        appliedRef.current = true;
         onApply(filters);
-        onClose();
-    }, [filters, onApply, onClose]);
+    }, [filters, onApply]);
 
     const handleReset = useCallback(() => {
+        appliedRef.current = true;
         onClear();
-        onClose();
-    }, [onClear, onClose]);
+    }, [onClear]);
+
+    useAndroidBackHandler(visible && !isLarge, onClose);
 
     const renderFooter = useCallback(
         (props: BottomSheetFooterProps) => (
@@ -335,6 +356,7 @@ export function MovieFilterModal({
         <BottomSheetModal
             ref={sheetRef}
             snapPoints={SNAP_POINTS}
+            topInset={insets.top}
             containerStyle={styles.sheetContainer}
             index={0}
             enablePanDownToClose

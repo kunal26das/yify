@@ -29,7 +29,8 @@ import {MoviePosterItem} from './components/MoviePosterItem';
 import {PosterSkeleton} from './components/PosterSkeleton';
 import {ScrollProgress} from './components/ScrollProgress';
 import {SearchOverlay} from './components/SearchOverlay';
-import {TopBar, useTopBarHeight, type NavKey} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
+import {TopBarSlot} from './components/TopBarSlot';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
 import {OrderBy, SortBy} from '@/domain';
@@ -82,9 +83,10 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         error,
         hasMore,
         searchQuery,
-        setSearchQuery,
         filters,
         setFilters,
+        resetDraft,
+        submitSearch,
         appliedFilters,
         applyFilters,
         clearFiltersAndReload,
@@ -127,7 +129,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         appliedFilters.genre,
         appliedFilters.minimum_rating,
     ].filter((value) => value != null).length;
-    const activeNav: NavKey = 'movies';
 
     useEffect(() => {
         loadInitial();
@@ -241,7 +242,9 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const handleClearFilters = useCallback(() => {
         Analytics.filtersReset();
+        setPickedChip(null);
         clearFiltersAndReload();
+        setFilterModalVisible(false);
         scrollToTop();
     }, [clearFiltersAndReload, scrollToTop]);
 
@@ -255,10 +258,9 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const handleSearchSubmit = useCallback(
         (term: string) => {
             setPickedChip(null);
-            applyFilters({});
-            setSearchQuery(term);
+            submitSearch(term);
         },
-        [applyFilters, setSearchQuery]
+        [submitSearch]
     );
 
     const openFilters = useCallback(() => {
@@ -292,8 +294,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     );
 
     const topBar = (
-        <TopBar
-            active={activeNav}
+        <TopBarSlot
             searchValue={searchQuery}
             onSearchSubmit={handleSearchSubmit}
             showSearch
@@ -418,7 +419,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             visible={filterModalVisible}
                             bottomInset={insets.bottom}
                             onClose={() => {
-                                setFilters(appliedFilters);
+                                resetDraft();
                                 setFilterModalVisible(false);
                             }}
                             filters={filters}
@@ -431,7 +432,9 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                     sort_by: applied.sort_by,
                                     order_by: applied.order_by,
                                 });
+                                setPickedChip(null);
                                 applyFilters(applied);
+                                setFilterModalVisible(false);
                                 scrollToTop();
                             }}
                             onClear={handleClearFilters}

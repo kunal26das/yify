@@ -20,7 +20,7 @@ import {usePlayer, type PlayerVideo} from '../player/PlayerContext';
 import {HoverCardHost} from './components/HoverCard';
 import {MoviePosterItem} from './components/MoviePosterItem';
 import {ScrollProgress} from './components/ScrollProgress';
-import {TopBar, useTopBarHeight} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
 import {metaParts, thumbFor} from './components/format';
 import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {useGoTo} from './constants/destinations';
@@ -247,7 +247,6 @@ export function WatchlistScreen() {
                             bottomInset={bottomInset}
                             visible={movies.length > 0}
                         />
-                        <TopBar active="watchlist"/>
                     </>
                 }
             >

@@ -1,6 +1,7 @@
 import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import YoutubeIframe, {type YoutubeIframeRef} from 'react-native-youtube-iframe';
+import {YOUTUBE_WEB_VIEW_PROPS} from './youtubeWebView';
 
 export interface PlayerSurfaceHandle {
     play(): void;
@@ -83,11 +84,7 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
                 forceAndroidAutoplay
                 onChangeState={handleState}
                 initialPlayerParams={{controls: true, modestbranding: true, rel: false}}
-                webViewProps={{
-                    allowsInlineMediaPlayback: true,
-                    mediaPlaybackRequiresUserAction: false,
-                    allowsFullscreenVideo: true,
-                }}
+                webViewProps={YOUTUBE_WEB_VIEW_PROPS}
             />
         </View>
     );

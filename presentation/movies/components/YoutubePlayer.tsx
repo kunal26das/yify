@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import YoutubeIframe from 'react-native-youtube-iframe';
+import {YOUTUBE_WEB_VIEW_PROPS} from '../../player/youtubeWebView';
 
 export function YoutubePlayer({
   videoId,
@@ -46,11 +47,7 @@ export function YoutubePlayer({
           }
         }}
         initialPlayerParams={{ controls, modestbranding: true, rel: false, loop }}
-        webViewProps={{
-          allowsInlineMediaPlayback: true,
-          mediaPlaybackRequiresUserAction: false,
-          allowsFullscreenVideo: true,
-        }}
+        webViewProps={YOUTUBE_WEB_VIEW_PROPS}
       />
     </View>
   );

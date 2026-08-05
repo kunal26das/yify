@@ -23,6 +23,14 @@ export function destinationHref(key: DestinationKey): string {
     return DESTINATIONS.find((d) => d.key === key)?.href ?? '/';
 }
 
+export type NavKey = DestinationKey | 'preferences';
+
+export function navKeyForPath(pathname: string): NavKey | undefined {
+    if (pathname === '/preferences') return 'preferences';
+    if (pathname === '/shows' || pathname.startsWith('/show/')) return 'shows';
+    return DESTINATIONS.find((destination) => destination.href === pathname)?.key;
+}
+
 const BROWSE_PARAM_KEYS = [
     'query',
     'genre',

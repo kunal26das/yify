@@ -23,7 +23,7 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
-import {TopBar, useTopBarHeight} from './components/TopBar';
+import {useTopBarHeight} from './components/TopBar';
 import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
 import {useSyncStatus} from '../hooks/use-sync-status';
@@ -103,7 +103,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     };
 
     return (
-        <Screen overlays={<TopBar active="preferences"/>}>
+        <Screen>
             <ScrollView
                 contentContainerStyle={{
                     paddingTop: navHeight,

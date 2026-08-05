@@ -5,7 +5,7 @@ import {StatusBar} from 'expo-status-bar';
 import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {Platform, StyleSheet} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {
     HankenGrotesk_400Regular,
@@ -18,10 +18,13 @@ import {
 import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-google-fonts/fraunces';
 
 import {
+    BlurTargetProvider,
+    BlurTargetSurface,
     Colors,
     DependenciesProvider,
     PlayerHost,
     PlayerProvider,
+    TopBar,
     UpdateSnackbar,
     useColorScheme,
     useIsFrostedDesktop,
@@ -106,15 +109,22 @@ function AppShell() {
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
             <PlayerProvider>
-                <Stack>
-                    <Stack.Screen name="index" options={{headerShown: false}}/>
-                    <Stack.Screen name="movies" options={{headerShown: false}}/>
-                    <Stack.Screen name="watchlist" options={{headerShown: false}}/>
-                    <Stack.Screen name="shows" options={{headerShown: false}}/>
-                    <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
-                    <Stack.Screen name="preferences" options={{headerShown: false}}/>
-                    <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
-                </Stack>
+                <BlurTargetProvider>
+                    <View style={styles.flex}>
+                        <BlurTargetSurface>
+                            <Stack>
+                                <Stack.Screen name="index" options={{headerShown: false}}/>
+                                <Stack.Screen name="movies" options={{headerShown: false}}/>
+                                <Stack.Screen name="watchlist" options={{headerShown: false}}/>
+                                <Stack.Screen name="shows" options={{headerShown: false}}/>
+                                <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
+                                <Stack.Screen name="preferences" options={{headerShown: false}}/>
+                                <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
+                            </Stack>
+                        </BlurTargetSurface>
+                        <TopBar/>
+                    </View>
+                </BlurTargetProvider>
                 <PlayerHost/>
             </PlayerProvider>
             <UpdateSnackbar/>
