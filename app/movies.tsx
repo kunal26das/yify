@@ -94,7 +94,7 @@ export default function BrowseRoute() {
   const {appliedQuery, appliedFilters, submitSearch, applyFilters} = viewModel;
 
   const incoming = serialize(paramFilters ?? {}, params.query ?? '');
-  const lastIncomingRef = useRef<string>(serialize(initialFilters, params.query ?? ''));
+  const lastIncomingRef = useRef<string>(incoming);
 
   useEffect(() => {
     if (lastIncomingRef.current === incoming) return;
