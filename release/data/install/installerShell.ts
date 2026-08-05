@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import type {Installer, OnLine, RunResult, Workspace,} from '../../domain/index.js';
+import type {Installer, InstallMode, OnLine, RunResult, Workspace,} from '../../domain/index.js';
 import {pumpLines} from '../process/linePump.js';
 import type {CancellationRegistry} from '../process/cancellationRegistry.js';
 
@@ -12,24 +12,30 @@ export function createInstaller(deps: {
     const {workspace, cancellation} = deps;
     const repoRoot = workspace.repoRoot;
 
-    function installCommand(): string {
+    function installCommand(mode: InstallMode = 'resolve'): string {
+        const frozen = mode === 'frozen';
         if (fs.existsSync(path.join(repoRoot, 'yarn.lock')))
-            return 'yarn install --frozen-lockfile';
+            return frozen ? 'yarn install --frozen-lockfile' : 'yarn install';
         if (fs.existsSync(path.join(repoRoot, 'pnpm-lock.yaml')))
-            return 'pnpm install --frozen-lockfile';
+            return frozen ? 'pnpm install --frozen-lockfile' : 'pnpm install';
         if (fs.existsSync(path.join(repoRoot, 'package-lock.json')))
-            return 'npm ci';
+            return frozen ? 'npm ci' : 'npm install';
         return 'yarn install';
     }
 
-    function cleanInstall(onLine: OnLine, label?: string): Promise<RunResult> {
+    function cleanInstall(
+        onLine: OnLine,
+        label?: string,
+        mode: InstallMode = 'resolve',
+    ): Promise<RunResult> {
         return new Promise((resolve) => {
             if (cancellation.isCancelling()) {
                 resolve({code: 130, ok: false});
                 return;
             }
-            const cmd = installCommand();
-            const full = `rm -rf node_modules && ${cmd}`;
+            const cmd = installCommand(mode);
+            const targets = mode === 'frozen' ? 'node_modules' : 'node_modules yarn.lock';
+            const full = `rm -rf ${targets} && ${cmd}`;
             onLine({
                 stream: 'system',
                 text: `$ ${full}  (cwd: ${repoRoot})`,

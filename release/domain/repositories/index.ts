@@ -85,10 +85,12 @@ export interface AndroidPublisher {
     ): Promise<{ ok: boolean; release?: string }>;
 }
 
-export interface Installer {
-    installCommand(): string;
+export type InstallMode = 'resolve' | 'frozen';
 
-    cleanInstall(onLine: OnLine, label?: string): Promise<RunResult>;
+export interface Installer {
+    installCommand(mode?: InstallMode): string;
+
+    cleanInstall(onLine: OnLine, label?: string, mode?: InstallMode): Promise<RunResult>;
 }
 
 export interface BinaryInspector {
