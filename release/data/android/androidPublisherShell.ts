@@ -206,7 +206,7 @@ export function createAndroidPublisher(deps: {
         return true;
     }
 
-    function build(onLine: OnLine, label?: string): Promise<{
+    function build(onLine: OnLine, label?: string, channel?: string): Promise<{
         ok: boolean;
         artifacts?: AndroidArtifacts;
     }> {
@@ -231,16 +231,23 @@ export function createAndroidPublisher(deps: {
                 return;
             }
 
+            const buildEnv = {
+                ...process.env,
+                ...(channel ? {EXPO_UPDATE_CHANNEL: channel} : {}),
+            };
+
             onLine({
                 stream: 'system',
-                text: `$ ./gradlew assembleRelease bundleRelease  (cwd: ${androidDir})`,
+                text: `$ ./gradlew assembleRelease bundleRelease  (cwd: ${androidDir}${
+                    channel ? `, EXPO_UPDATE_CHANNEL=${channel}` : ''
+                })`,
                 label,
             });
 
             const child = spawn(
                 gradlew,
                 ['assembleRelease', 'bundleRelease'],
-                {cwd: androidDir, env: process.env},
+                {cwd: androidDir, env: buildEnv},
             );
             cancellation.track(child);
 

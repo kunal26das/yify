@@ -72,13 +72,15 @@ export function createStoreReleaseUseCases(deps: {
     } = deps;
     const apps = workspace.apps;
 
-    function resolver(): (platform: Platform) => Promise<string> {
-        const cache = new Map<Platform, Promise<string>>();
-        return (platform) => {
-            const hit = cache.get(platform);
+    function resolver(): (platform: Platform, channel: Channel) => Promise<string> {
+        const cache = new Map<string, Promise<string>>();
+        return (platform, channel) => {
+            const name = workspace.channelName(channel);
+            const key = `${platform}:${name}`;
+            const hit = cache.get(key);
             if (hit) return hit;
-            const pending = runtimeVersions.resolve(platform);
-            cache.set(platform, pending);
+            const pending = runtimeVersions.resolve(platform, name);
+            cache.set(key, pending);
             return pending;
         };
     }
@@ -169,7 +171,7 @@ export function createStoreReleaseUseCases(deps: {
         const existing: Array<{ platform: Platform; channel: Channel }> = [];
         for (const channel of channels) {
             for (const platform of platforms) {
-                const runtimeVersion = await runtimeVersionFor(platform);
+                const runtimeVersion = await runtimeVersionFor(platform, channel);
                 if (ledger.find(platform, channel, runtimeVersion)) {
                     existing.push({platform, channel});
                 }
@@ -211,25 +213,31 @@ export function createStoreReleaseUseCases(deps: {
             const jobs = buildJobs(platforms, channels);
             const runtimeVersionFor = resolver();
 
-            let androidBuild:
-                | { ok: boolean; artifacts?: AndroidArtifacts }
-                | undefined;
+            const androidBuilds = new Map<
+                string,
+                { ok: boolean; artifacts?: AndroidArtifacts }
+            >();
 
             async function ensureAndroidArtifacts(
                 label: string,
+                channel: Channel,
             ): Promise<{ ok: boolean; artifacts?: AndroidArtifacts }> {
-                if (androidBuild) return androidBuild;
+                const name = workspace.channelName(channel);
+                const hit = androidBuilds.get(name);
+                if (hit) return hit;
                 if (apkPath) {
-                    androidBuild = {ok: true, artifacts: {apkPath, aabPath: ''}};
-                    return androidBuild;
+                    const supplied = {ok: true, artifacts: {apkPath, aabPath: ''}};
+                    androidBuilds.set(name, supplied);
+                    return supplied;
                 }
                 onLine({
                     stream: 'system',
-                    text: 'Android: building signed APK + AAB (shared across channels)…',
+                    text: `Android: building signed APK + AAB for channel ${name}…`,
                     label,
                 });
-                androidBuild = await androidPublisher.build(onLine, label);
-                return androidBuild;
+                const built = await androidPublisher.build(onLine, label, name);
+                androidBuilds.set(name, built);
+                return built;
             }
 
             const steps: StoreReleaseStep[] = [];
@@ -240,7 +248,7 @@ export function createStoreReleaseUseCases(deps: {
 
                 let runtimeVersion: string;
                 try {
-                    runtimeVersion = await runtimeVersionFor(job.platform);
+                    runtimeVersion = await runtimeVersionFor(job.platform, job.channel);
                 } catch (err) {
                     onLine({
                         stream: 'stderr',
@@ -273,7 +281,7 @@ export function createStoreReleaseUseCases(deps: {
                 }
 
                 if (job.platform === 'android') {
-                    const built = await ensureAndroidArtifacts(label);
+                    const built = await ensureAndroidArtifacts(label, job.channel);
                     if (!built.ok || !built.artifacts) {
                         onLine({
                             stream: 'system',

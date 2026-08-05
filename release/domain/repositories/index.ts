@@ -37,7 +37,9 @@ export interface EasApi {
 }
 
 export interface RuntimeVersions {
-    resolve(platform: Platform): Promise<string>;
+    resolve(platform: Platform, channel?: string): Promise<string>;
+
+    embeddedChannel(channel?: string): Promise<string | null>;
 }
 
 export interface ReleaseLedger {
@@ -67,6 +69,7 @@ export interface AndroidPublisher {
     build(
         onLine: OnLine,
         label?: string,
+        channel?: string,
     ): Promise<{ ok: boolean; artifacts?: AndroidArtifacts }>;
 
     publishProduction(

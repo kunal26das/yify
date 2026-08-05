@@ -59,13 +59,15 @@ export function createUpdateUseCases(deps: {
     } = deps;
     const apps = workspace.apps;
 
-    function resolver(): (platform: Platform) => Promise<string> {
-        const cache = new Map<Platform, Promise<string>>();
-        return (platform) => {
-            const hit = cache.get(platform);
+    function resolver(): (platform: Platform, channel: Channel) => Promise<string> {
+        const cache = new Map<string, Promise<string>>();
+        return (platform, channel) => {
+            const name = workspace.channelName(channel);
+            const key = `${platform}:${name}`;
+            const hit = cache.get(key);
             if (hit) return hit;
-            const pending = runtimeVersions.resolve(platform);
-            cache.set(platform, pending);
+            const pending = runtimeVersions.resolve(platform, name);
+            cache.set(key, pending);
             return pending;
         };
     }
@@ -74,7 +76,10 @@ export function createUpdateUseCases(deps: {
         platform: Platform,
         channel: Channel,
     ): Promise<boolean> {
-        const runtimeVersion = await runtimeVersions.resolve(platform);
+        const name = workspace.channelName(channel);
+        const embedded = await runtimeVersions.embeddedChannel(name);
+        if (embedded !== null && name !== embedded) return false;
+        const runtimeVersion = await runtimeVersions.resolve(platform, name);
         return ledger.find(platform, channel, runtimeVersion) !== null;
     }
 
@@ -93,6 +98,20 @@ export function createUpdateUseCases(deps: {
                 text: 'Resolving runtime versions before publishing…',
             });
 
+            const embedded = await runtimeVersions.embeddedChannel();
+
+            if (embedded === null) {
+                onLine({
+                    stream: 'system',
+                    text: 'Warning: could not read expo-channel-name from the app config. Builds without that header cannot receive any update.',
+                });
+            } else {
+                onLine({
+                    stream: 'system',
+                    text: `Builds of this config listen on channel "${embedded}".`,
+                });
+            }
+
             const checked: Array<{
                 platform: Platform;
                 channel: Channel;
@@ -105,7 +124,17 @@ export function createUpdateUseCases(deps: {
 
                 let allowed = false;
                 try {
-                    const runtimeVersion = await runtimeVersionFor(job.platform);
+                    const target = workspace.channelName(job.channel);
+                    if (embedded !== null && target !== embedded) {
+                        onLine({
+                            stream: 'system',
+                            text: `Blocked: shipped builds ask for channel "${embedded}", so an update published to "${target}" would reach nobody. Build and ship with EXPO_UPDATE_CHANNEL=${target} first, or publish to ${embedded} instead.`,
+                            label,
+                        });
+                        checked.push({platform: job.platform, channel: job.channel, allowed: false});
+                        continue;
+                    }
+                    const runtimeVersion = await runtimeVersionFor(job.platform, job.channel);
                     allowed = ledger.find(job.platform, job.channel, runtimeVersion) !== null;
                     if (!allowed) {
                         onLine({
@@ -179,7 +208,7 @@ export function createUpdateUseCases(deps: {
 
                 const app = apps[c.platform].name;
                 const label = jobLabel(apps, c.platform, c.channel);
-                const runtimeVersion = await runtimeVersionFor(c.platform);
+                const runtimeVersion = await runtimeVersionFor(c.platform, c.channel);
 
                 onLine({
                     stream: 'system',
