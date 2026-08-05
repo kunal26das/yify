@@ -1,37 +1,71 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 21.4.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
+      "autoIncrement": false,
+      "env": {
+        "EXPO_UPDATE_CHANNEL": "Production"
+      },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "withoutCredentials": true
+      },
+      "ios": {
+        "simulator": true
+      }
+    },
+    "development-device": {
+      "extends": "development",
+      "ios": {
+        "simulator": false
       }
     },
     "preview": {
       "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      },
+      "environment": "preview",
+      "autoIncrement": false,
       "env": {
-        "APP_VARIANT": "debug"
+        "EXPO_UPDATE_CHANNEL": "Staging"
+      },
+      "android": {
+        "buildType": "apk",
+        "withoutCredentials": true
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "production": {
-      "android": {
-        "buildType": "app-bundle"
-      },
+      "environment": "production",
+      "autoIncrement": false,
       "env": {
-        "APP_VARIANT": "release"
+        "EXPO_UPDATE_CHANNEL": "Production"
+      },
+      "android": {
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
       }
     }
   },
   "submit": {
     "production": {
       "android": {
-        "serviceAccountKeyPath": "./path-to-service-account.json"
+        "serviceAccountKeyPath": "${YIFY_RELEASE_PLAY_SERVICE_ACCOUNT:-$HOME/.config/play-publisher/yify-service-account.json}",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
+    "play-production": {
+      "extends": "production",
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed"
       }
     }
   }

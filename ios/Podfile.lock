@@ -47,6 +47,155 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - expo-dev-client (57.0.10):
+    - EXManifests
+    - expo-dev-launcher
+    - expo-dev-menu
+    - expo-dev-menu-interface
+    - EXUpdatesInterface
+  - expo-dev-launcher (57.0.10):
+    - EXManifests
+    - expo-dev-launcher/Main (= 57.0.10)
+    - expo-dev-menu
+    - expo-dev-menu-interface
+    - ExpoModulesCore
+    - EXUpdatesInterface
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-jsinspector
+    - React-NativeModulesApple
+    - React-RCTAppDelegate
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactAppDependencyProvider
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - expo-dev-launcher/Main (57.0.10):
+    - EXManifests
+    - expo-dev-launcher/Unsafe
+    - expo-dev-menu
+    - expo-dev-menu-interface
+    - ExpoModulesCore
+    - EXUpdatesInterface
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-jsinspector
+    - React-NativeModulesApple
+    - React-RCTAppDelegate
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactAppDependencyProvider
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - expo-dev-launcher/Unsafe (57.0.10):
+    - EXManifests
+    - expo-dev-menu
+    - expo-dev-menu-interface
+    - ExpoModulesCore
+    - EXUpdatesInterface
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-jsinspector
+    - React-NativeModulesApple
+    - React-RCTAppDelegate
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactAppDependencyProvider
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - expo-dev-menu (57.0.10):
+    - expo-dev-menu/Main (= 57.0.10)
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - expo-dev-menu-interface (57.0.0)
+  - expo-dev-menu/Main (57.0.10):
+    - EXManifests
+    - expo-dev-menu-interface
+    - ExpoModulesCore
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-jsinspector
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererconsistency
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - ExpoAdapterGoogleSignIn (16.1.4):
     - ExpoModulesCore
     - GoogleSignIn (~> 9.0)
@@ -56,7 +205,7 @@ PODS:
     - RecaptchaInterop
   - ExpoAsset (57.0.8):
     - ExpoModulesCore
-  - ExpoBackgroundTask (57.0.6):
+  - ExpoBackgroundTask (57.0.7):
     - ExpoModulesCore
     - ExpoTaskManager
   - ExpoBlur (57.0.2):
@@ -76,13 +225,37 @@ PODS:
     - ExpoModulesCore
   - ExpoInAppUpdates (0.12.0):
     - ExpoModulesCore
+  - ExpoInsights (57.0.7):
+    - EASClient
+    - ExpoModulesCore
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - ExpoKeepAwake (57.0.1):
     - ExpoModulesCore
   - ExpoLinking (57.0.4):
     - ExpoModulesCore
   - ExpoLogBox (57.0.2):
     - React-Core
-  - ExpoModulesCore (57.0.8):
+  - ExpoModulesCore (57.0.9):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -109,10 +282,10 @@ PODS:
   - ExpoModulesJSI (57.0.4):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (57.0.8):
+  - ExpoModulesWorklets (57.0.9):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (57.0.8):
+  - ExpoModulesWorkletsAdapter (57.0.9):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
@@ -2701,6 +2874,10 @@ DEPENDENCIES:
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
+  - expo-dev-client (from `../node_modules/expo-dev-client/ios`)
+  - expo-dev-launcher (from `../node_modules/expo-dev-launcher`)
+  - expo-dev-menu (from `../node_modules/expo-dev-menu`)
+  - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - "ExpoAdapterGoogleSignIn (from `../node_modules/@react-native-google-signin/google-signin/expo/ios`)"
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBackgroundTask (from `../node_modules/expo-background-task/ios`)
@@ -2712,6 +2889,7 @@ DEPENDENCIES:
   - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoImage (from `../node_modules/expo-image/ios/ExpoImage.podspec`)
   - ExpoInAppUpdates (from `../node_modules/expo-in-app-updates/ios`)
+  - ExpoInsights (from `../node_modules/expo-insights/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - "ExpoLogBox (from `../node_modules/@expo/log-box`)"
@@ -2873,6 +3051,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-manifests/ios"
   Expo:
     :path: "../node_modules/expo"
+  expo-dev-client:
+    :path: "../node_modules/expo-dev-client/ios"
+  expo-dev-launcher:
+    :path: "../node_modules/expo-dev-launcher"
+  expo-dev-menu:
+    :path: "../node_modules/expo-dev-menu"
+  expo-dev-menu-interface:
+    :path: "../node_modules/expo-dev-menu-interface/ios"
   ExpoAdapterGoogleSignIn:
     :path: "../node_modules/@react-native-google-signin/google-signin/expo/ios"
   ExpoAsset:
@@ -2895,6 +3081,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/expo-image/ios/ExpoImage.podspec"
   ExpoInAppUpdates:
     :path: "../node_modules/expo-in-app-updates/ios"
+  ExpoInsights:
+    :path: "../node_modules/expo-insights/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
   ExpoLinking:
@@ -3129,9 +3317,13 @@ SPEC CHECKSUMS:
   EXJSONUtils: 7a1683cfa2cbe6d11fca97097d51a496755b0287
   EXManifests: f9888c0bf5aaa6ddb7e3d4b224d6d54ac4ca84a4
   Expo: ce613ebd8e7f9dcd68bae3ec53038db24d3a6ec4
+  expo-dev-client: 678dd58df0bd6d3486b8b358e37c79ca67d32af5
+  expo-dev-launcher: 0adb6325315fe549599a9589c04d8e2091b1a9cd
+  expo-dev-menu: 857fab48431f1b82b6ea2399c6d97e7f1e89d52e
+  expo-dev-menu-interface: 7a59e803916fbfd1b96c75ff91ea8dddac7e722f
   ExpoAdapterGoogleSignIn: cfc75819d7d2490488250ce5634f57f92c60a2b8
   ExpoAsset: a76534cf7b762978861dd31708308496c676166f
-  ExpoBackgroundTask: 71d60c205b05753d0ece4b282b2124e3ae9005c1
+  ExpoBackgroundTask: cdaca24aceef0bdc3b21769c4a79a97da662d789
   ExpoBlur: 69e67b4fbfed6f7325377af2aefa8aa4f00cd2af
   ExpoDeviceCornerRadius: 377b9d5945ff38bb86de9e0831c615dd2dca3b0e
   ExpoDomWebView: beaec034e51bd028428b98bb1f2633ab79c6d095
@@ -3140,13 +3332,14 @@ SPEC CHECKSUMS:
   ExpoGlassEffect: 4b62afb489e6b84357701737ce002137c9d5fdbc
   ExpoImage: 4c1e7634db6033185a98959fb028d8d4b1c89695
   ExpoInAppUpdates: ed49d4718876f390e402540958272239f0278e31
+  ExpoInsights: c7b7de693d2e81734a650086884016708e9d57ab
   ExpoKeepAwake: c26f14275017370cc8a4b7b43a0e23361f2053a5
   ExpoLinking: 5a796f9284535c0349537a844dd40680229b7fcb
   ExpoLogBox: 6bb73c341aca22e699bd4da6cc61afc844e1a648
-  ExpoModulesCore: 8e7174036e861adfc0b7ef7a7f08abe3ca390a46
+  ExpoModulesCore: 96155f196ab0827ccf61248a881be15f4b7788f4
   ExpoModulesJSI: 3accd404d715d63e7b04015d20c857e903e3bc73
-  ExpoModulesWorklets: 6b240031daa3de4df791588fc78236637ff602f6
-  ExpoModulesWorkletsAdapter: 7a7b58fb35a09f073cb310d7c63af696700a4858
+  ExpoModulesWorklets: a8986b0872d09df168f5d4e092625e9fbb6b38bb
+  ExpoModulesWorkletsAdapter: 45af1d3b1605384f7350ffbaf99575e4ae2dd2e4
   ExpoNotifications: a2f19a01dad3ee8631ec283561882ff9f302f3e4
   ExpoRouter: c086c97b2229152334ab68200ade40b64f75515b
   ExpoSplashScreen: 247464c0fe484f766892db0d66c3fe54f92a624e
