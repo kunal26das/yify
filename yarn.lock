@@ -4717,10 +4717,10 @@ expo-glass-effect@57.0.1, expo-glass-effect@^57.0.1:
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.1.tgz#8829b8f3f801589266bd1c75fdfed4a6d73cf9d8"
   integrity sha512-m/n8maxqNcHk6ZDhuqXBfD5Kt1Iz3M8xykVgdB0iSCIXvF70IqWXmQhX8Psswhrp8eZ+3r0mAD0Jh/2gFA3QaA==
 
-expo-image@57.0.1:
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.1.tgz#22071afe3194e049d0dd14cf8f2da90a0504b7e3"
-  integrity sha512-EP0lisd2bUqtErry4weRcMW9bLMxtKsht/MLLK3/3do5u4ZMiJbWkY5zfYV+WYmeGab7x9G0sjbeFeEagYGjMw==
+expo-image@57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.2.tgz#b4884777ba427a6f328bd2d828d9b3b9df22f874"
+  integrity sha512-SAHDJiQ/Sf8JJ6NJ5/RbSewo8HtQtIGn4bDEgcvipwIw5lPURP0vXPzIOIrZ/ZroZ0abPgwTaWmkspoEO8Sxcw==
   dependencies:
     sf-symbols-typescript "^2.2.0"
 
