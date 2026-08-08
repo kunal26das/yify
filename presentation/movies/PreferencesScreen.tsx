@@ -6,7 +6,7 @@ import {ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, View} from 
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {BrowseDefaults, ThemePreference} from '@/domain';
-import {confirmDestructive} from '../components/confirm';
+import {useConfirm} from '../components/confirm-dialog';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
@@ -75,6 +75,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const {gutter, contentMaxWidth} = useResponsive();
     const navHeight = useTopBarHeight();
     const {account} = useAuth();
+    const confirm = useConfirm();
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
 
@@ -93,10 +94,11 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const confirmClear = () => {
         const count = vm.watchlistCount;
         const where = account ? ' on this device and in your account' : '';
-        confirmDestructive({
+        confirm({
             title: 'Clear Watchlist?',
             message: `This removes ${count} ${count === 1 ? 'title' : 'titles'} from Watchlist${where}. This can't be undone.`,
             confirmLabel: 'Clear',
+            icon: 'trash-outline',
             onConfirm: vm.clearList,
         });
     };
