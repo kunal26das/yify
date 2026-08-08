@@ -7,14 +7,16 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {useToggleWatchlist} from './useWatchlist';
+import {useRemoveFromWatchlist} from './useWatchlist';
 import {LinearGradient} from '../components/linear-gradient';
+import {confirmDestructive} from '../components/confirm';
 import {PressableScale, enterRise, shiftLayout} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
+import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
 import {usePlayer, type PlayerVideo} from '../player/PlayerContext';
 import {HoverCardHost} from './components/HoverCard';
@@ -131,16 +133,32 @@ function PlaylistHeader({
 
 function SavedPoster({movie, width}: {movie: Movie; width: number}) {
     const {colors} = usePalette();
-    const toggleWatchlist = useToggleWatchlist();
+    const removeFromWatchlist = useRemoveFromWatchlist();
+    const {confirmWatchlistRemoval} = usePreferences();
+
+    const remove = useCallback(() => {
+        Analytics.watchlistRemove(movie);
+        removeFromWatchlist(movie);
+    }, [movie, removeFromWatchlist]);
+
+    const onRemovePress = useCallback(() => {
+        if (!confirmWatchlistRemoval) {
+            remove();
+            return;
+        }
+        confirmDestructive({
+            title: 'Remove from Watchlist?',
+            message: `${movie.title} will be removed from your Watchlist.`,
+            confirmLabel: 'Remove',
+            onConfirm: remove,
+        });
+    }, [confirmWatchlistRemoval, movie.title, remove]);
 
     return (
         <Animated.View layout={shiftLayout} style={styles.cell}>
             <MoviePosterItem movie={movie} width={width} source="my_list" hideRankFlag/>
             <PressableScale
-                onPress={() => {
-                    Analytics.watchlistRemove(movie);
-                    toggleWatchlist(movie);
-                }}
+                onPress={onRemovePress}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${movie.title} from Watchlist`}
                 hitSlop={8}

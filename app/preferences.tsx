@@ -7,7 +7,7 @@ export default function PreferencesRoute() {
     <>
       <Head>
         <title>Preferences — Yify</title>
-        <meta name="description" content="Theme, landing page, notifications and app information for Yify." />
+        <meta name="description" content="Sign in to sync, pick a theme, set browse defaults, manage notifications, and clear your watchlist and searches." />
       </Head>
       <PreferencesScreen viewModel={viewModel} />
     </>

@@ -13,12 +13,14 @@ export interface BrowseDefaults {
 export interface Preferences {
     theme: ThemePreference;
     notifications: boolean;
+    confirmWatchlistRemoval: boolean;
     browseDefaults: BrowseDefaults;
 }
 
 export interface SyncedPreferences {
     theme: ThemePreference;
     notifications: boolean;
+    confirmWatchlistRemoval?: boolean;
     browseDefaults: BrowseDefaults;
 }
 
@@ -33,5 +35,6 @@ export const DEFAULT_BROWSE_DEFAULTS: BrowseDefaults = {
 export const DEFAULT_PREFERENCES: Preferences = {
     theme: 'dark',
     notifications: true,
+    confirmWatchlistRemoval: true,
     browseDefaults: DEFAULT_BROWSE_DEFAULTS,
 };

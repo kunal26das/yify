@@ -2,10 +2,11 @@ import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
 import {useState} from 'react';
 import {Analytics} from '@/presentation/analytics/events';
-import {ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
+import {ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {BrowseDefaults, ThemePreference} from '@/domain';
+import {confirmDestructive} from '../components/confirm';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
@@ -73,6 +74,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const {colors} = usePalette();
     const {gutter, contentMaxWidth} = useResponsive();
     const navHeight = useTopBarHeight();
+    const {account} = useAuth();
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
 
@@ -90,16 +92,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
 
     const confirmClear = () => {
         const count = vm.watchlistCount;
-        const message = `This removes ${count} ${count === 1 ? 'title' : 'titles'} from Watchlist. This can't be undone.`;
-        if (Platform.OS === 'web') {
-            if (typeof window !== 'undefined' && !window.confirm(message)) return;
-            vm.clearList();
-            return;
-        }
-        Alert.alert('Clear Watchlist?', message, [
-            {text: 'Cancel', style: 'cancel'},
-            {text: 'Clear', style: 'destructive', onPress: vm.clearList},
-        ]);
+        const where = account ? ' on this device and in your account' : '';
+        confirmDestructive({
+            title: 'Clear Watchlist?',
+            message: `This removes ${count} ${count === 1 ? 'title' : 'titles'} from Watchlist${where}. This can't be undone.`,
+            confirmLabel: 'Clear',
+            onConfirm: vm.clearList,
+        });
     };
 
     return (
@@ -227,7 +226,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     <Row
                         icon="time-outline"
                         title={`${vm.searchHistoryCount} recent ${vm.searchHistoryCount === 1 ? 'search' : 'searches'}`}
-                        subtitle="Recent searches are kept on this device only."
+                        subtitle="Kept on this device. Never synced to your account."
                         colors={colors}
                         gutter={gutter}
                         trailing={
@@ -259,7 +258,11 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     <Row
                         icon="bookmark-outline"
                         title={`${vm.watchlistCount} ${vm.watchlistCount === 1 ? 'title' : 'titles'} saved`}
-                        subtitle="Your list is kept on this device only."
+                        subtitle={
+                            account
+                                ? 'Kept on this device and synced to your account.'
+                                : 'Kept on this device. Sign in to sync it to your account.'
+                        }
                         colors={colors}
                         gutter={gutter}
                         trailing={
@@ -291,6 +294,21 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>Cleared.</ThemedText>
                         </Animated.View>
                     ) : null}
+                    <Row
+                        icon="help-circle-outline"
+                        title="Confirm removals"
+                        subtitle="Ask before the ✕ on a poster removes a title."
+                        colors={colors}
+                        gutter={gutter}
+                        trailing={
+                            <Switch
+                                value={vm.confirmWatchlistRemoval}
+                                onValueChange={vm.toggleConfirmWatchlistRemoval}
+                                accessibilityLabel="Confirm removals"
+                                {...switchColors(colors, vm.confirmWatchlistRemoval)}
+                            />
+                        }
+                    />
                 </Group>
 
                 <SectionHeader title="About" colors={colors} gutter={gutter} index={4}/>
@@ -436,7 +454,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitle={
                             unavailable
                                 ? (error ?? 'Sign-in is unavailable in this build.')
-                                : undefined
+                                : 'Syncs your watchlist and settings across your devices.'
                         }
                         colors={colors}
                         gutter={gutter}
