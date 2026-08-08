@@ -63,6 +63,8 @@ export { thumbFor, formatRuntime, formatCompact, metaParts, ytThumb } from './mo
 export { LiquidGlassView, LiquidGlassGroup, isNativeLiquidGlass } from './components/liquid-glass-view';
 export {LinearGradient} from './components/linear-gradient';
 export { UpdateSnackbar } from './components/update-snackbar';
+export { ConfirmProvider, useConfirm } from './components/confirm-dialog';
+export type { ConfirmRequest } from './components/confirm-dialog';
 export { ThemedText } from './components/themed-text';
 export type { ThemedTextProps } from './components/themed-text';
 export { ThemedView } from './components/themed-view';

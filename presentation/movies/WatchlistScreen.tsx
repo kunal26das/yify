@@ -9,7 +9,7 @@ import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
 import {useRemoveFromWatchlist} from './useWatchlist';
 import {LinearGradient} from '../components/linear-gradient';
-import {confirmDestructive} from '../components/confirm';
+import {useConfirm} from '../components/confirm-dialog';
 import {PressableScale, enterRise, shiftLayout} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Screen} from '../components/screen';
@@ -135,6 +135,7 @@ function SavedPoster({movie, width}: {movie: Movie; width: number}) {
     const {colors} = usePalette();
     const removeFromWatchlist = useRemoveFromWatchlist();
     const {confirmWatchlistRemoval} = usePreferences();
+    const confirm = useConfirm();
 
     const remove = useCallback(() => {
         Analytics.watchlistRemove(movie);
@@ -146,13 +147,14 @@ function SavedPoster({movie, width}: {movie: Movie; width: number}) {
             remove();
             return;
         }
-        confirmDestructive({
+        confirm({
             title: 'Remove from Watchlist?',
             message: `${movie.title} will be removed from your Watchlist.`,
             confirmLabel: 'Remove',
+            icon: 'bookmark-outline',
             onConfirm: remove,
         });
-    }, [confirmWatchlistRemoval, movie.title, remove]);
+    }, [confirm, confirmWatchlistRemoval, movie.title, remove]);
 
     return (
         <Animated.View layout={shiftLayout} style={styles.cell}>

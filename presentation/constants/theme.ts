@@ -27,6 +27,9 @@ export const Colors = {
         gold: '#C2891C',
         seed: '#2E7D32',
         peer: '#C0492F',
+        danger: '#C0392B',
+        dangerSoft: 'rgba(192, 57, 43, 0.11)',
+        onDanger: '#FFFFFF',
         scrim: 'rgba(0, 0, 0, 0.55)',
     },
     dark: {
@@ -52,6 +55,9 @@ export const Colors = {
         gold: '#E6B450',
         seed: '#4CAF50',
         peer: '#E07A63',
+        danger: '#E5675A',
+        dangerSoft: 'rgba(229, 103, 90, 0.18)',
+        onDanger: '#FFFFFF',
         scrim: 'rgba(0, 0, 0, 0.60)',
     },
 } as const;

@@ -21,6 +21,7 @@ import {
     BlurTargetProvider,
     BlurTargetSurface,
     Colors,
+    ConfirmProvider,
     DependenciesProvider,
     PlayerHost,
     PlayerProvider,
@@ -108,25 +109,27 @@ function AppShell() {
     const content = (
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
-            <PlayerProvider>
-                <BlurTargetProvider>
-                    <View style={styles.flex}>
-                        <BlurTargetSurface>
-                            <Stack>
-                                <Stack.Screen name="index" options={{headerShown: false}}/>
-                                <Stack.Screen name="movies" options={{headerShown: false}}/>
-                                <Stack.Screen name="watchlist" options={{headerShown: false}}/>
-                                <Stack.Screen name="shows" options={{headerShown: false}}/>
-                                <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
-                                <Stack.Screen name="preferences" options={{headerShown: false}}/>
-                                <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
-                            </Stack>
-                        </BlurTargetSurface>
-                        <TopBar/>
-                    </View>
-                </BlurTargetProvider>
-                <PlayerHost/>
-            </PlayerProvider>
+            <ConfirmProvider>
+                <PlayerProvider>
+                    <BlurTargetProvider>
+                        <View style={styles.flex}>
+                            <BlurTargetSurface>
+                                <Stack>
+                                    <Stack.Screen name="index" options={{headerShown: false}}/>
+                                    <Stack.Screen name="movies" options={{headerShown: false}}/>
+                                    <Stack.Screen name="watchlist" options={{headerShown: false}}/>
+                                    <Stack.Screen name="shows" options={{headerShown: false}}/>
+                                    <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
+                                    <Stack.Screen name="preferences" options={{headerShown: false}}/>
+                                    <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
+                                </Stack>
+                            </BlurTargetSurface>
+                            <TopBar/>
+                        </View>
+                    </BlurTargetProvider>
+                    <PlayerHost/>
+                </PlayerProvider>
+            </ConfirmProvider>
             <UpdateSnackbar/>
             <StatusBar style="auto"/>
         </ThemeProvider>
