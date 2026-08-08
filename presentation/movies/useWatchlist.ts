@@ -18,6 +18,11 @@ export function useToggleWatchlist(): (movie: Movie) => boolean {
     return (movie: Movie) => watchlist.toggle(movie);
 }
 
+export function useRemoveFromWatchlist(): (movie: Movie) => void {
+    const watchlist = useWatchlistRepository();
+    return (movie: Movie) => watchlist.remove(movie.id);
+}
+
 export function useIsInWatchlist(id: number): boolean {
     const watchlist = useWatchlistRepository();
     return useSyncExternalStore(

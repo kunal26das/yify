@@ -15,6 +15,7 @@ import {
 
 const THEME_KEY = 'theme';
 const NOTIFICATIONS_KEY = 'notifications';
+const CONFIRM_WATCHLIST_REMOVAL_KEY = 'confirmWatchlistRemoval';
 const BROWSE_DEFAULTS_KEY = 'browseDefaults';
 
 function isThemePreference(value: unknown): value is ThemePreference {
@@ -57,6 +58,9 @@ export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
         return {
             theme: isThemePreference(parsed.theme) ? parsed.theme : DEFAULT_PREFERENCES.theme,
             notifications: DEFAULT_PREFERENCES.notifications,
+            ...(typeof parsed.confirmWatchlistRemoval === 'boolean'
+                ? {confirmWatchlistRemoval: parsed.confirmWatchlistRemoval}
+                : {}),
             browseDefaults: parseBrowseDefaults(
                 parsed.browseDefaults ? JSON.stringify(parsed.browseDefaults) : undefined
             ),
@@ -97,6 +101,11 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         this.write({...this.read(), notifications});
     }
 
+    setConfirmWatchlistRemoval(confirmWatchlistRemoval: boolean): void {
+        if (this.read().confirmWatchlistRemoval === confirmWatchlistRemoval) return;
+        this.write({...this.read(), confirmWatchlistRemoval});
+    }
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void {
         this.write({...this.read(), browseDefaults});
     }
@@ -106,6 +115,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         return {
             theme: current.theme,
             notifications: current.notifications,
+            confirmWatchlistRemoval: current.confirmWatchlistRemoval,
             browseDefaults: current.browseDefaults,
         };
     }
@@ -114,12 +124,20 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         return {
             theme: DEFAULT_PREFERENCES.theme,
             notifications: DEFAULT_PREFERENCES.notifications,
+            confirmWatchlistRemoval: DEFAULT_PREFERENCES.confirmWatchlistRemoval,
             browseDefaults: DEFAULT_BROWSE_DEFAULTS,
         };
     }
 
     applyRemote(next: SyncedPreferences): void {
-        this.write({...this.read(), theme: next.theme, browseDefaults: next.browseDefaults});
+        const current = this.read();
+        this.write({
+            ...current,
+            theme: next.theme,
+            confirmWatchlistRemoval:
+                next.confirmWatchlistRemoval ?? current.confirmWatchlistRemoval,
+            browseDefaults: next.browseDefaults,
+        });
     }
 
     subscribe(listener: () => void): () => void {
@@ -136,6 +154,8 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             theme: isThemePreference(theme) ? theme : DEFAULT_PREFERENCES.theme,
             browseDefaults: parseBrowseDefaults(this.store.getString(BROWSE_DEFAULTS_KEY)),
             notifications: this.store.getString(NOTIFICATIONS_KEY) !== 'false',
+            confirmWatchlistRemoval:
+                this.store.getString(CONFIRM_WATCHLIST_REMOVAL_KEY) !== 'false',
         };
         return this.snapshot;
     }
@@ -144,6 +164,10 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         this.snapshot = next;
         this.store.set(THEME_KEY, next.theme);
         this.store.set(NOTIFICATIONS_KEY, next.notifications ? 'true' : 'false');
+        this.store.set(
+            CONFIRM_WATCHLIST_REMOVAL_KEY,
+            next.confirmWatchlistRemoval ? 'true' : 'false'
+        );
         this.store.set(BROWSE_DEFAULTS_KEY, JSON.stringify(next.browseDefaults));
         this.listeners.forEach((listener) => listener());
     }

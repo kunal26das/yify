@@ -63,6 +63,11 @@ export function usePreferencesViewModel() {
         if (granted) void newMovies.register();
     }, [preferencesRepository, newMovies]);
 
+    const toggleConfirmWatchlistRemoval = useCallback((next: boolean) => {
+        Analytics.settingChanged('confirm_watchlist_removal', String(next));
+        preferencesRepository.setConfirmWatchlistRemoval(next);
+    }, [preferencesRepository]);
+
     const clearSearchHistory = useCallback(() => {
         Analytics.settingChanged('search_history', 'cleared');
         searchHistory.clear();
@@ -79,6 +84,7 @@ export function usePreferencesViewModel() {
         theme: preferences.theme,
         browseDefaults: preferences.browseDefaults,
         notifications: preferences.notifications,
+        confirmWatchlistRemoval: preferences.confirmWatchlistRemoval,
         permissionBlocked,
         watchlistCount: watchlist.length,
         searchHistoryCount: searchCount,
@@ -87,6 +93,7 @@ export function usePreferencesViewModel() {
         selectTheme,
         setBrowseDefault,
         toggleNotifications,
+        toggleConfirmWatchlistRemoval,
         clearList,
         clearSearchHistory,
     };

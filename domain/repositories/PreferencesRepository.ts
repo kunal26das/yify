@@ -16,6 +16,8 @@ export interface PreferencesRepository {
 
     setNotificationsEnabled(enabled: boolean): void;
 
+    setConfirmWatchlistRemoval(enabled: boolean): void;
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void;
 
     getSynced(): SyncedPreferences;

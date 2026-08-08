@@ -5,6 +5,7 @@ import {usePreferencesRepository} from '../di/DependenciesContext';
 const SERVER_SNAPSHOT: Preferences = {
     theme: 'system',
     notifications: true,
+    confirmWatchlistRemoval: true,
     browseDefaults: DEFAULT_BROWSE_DEFAULTS,
 };
 
