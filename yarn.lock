@@ -2459,10 +2459,10 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@revenuecat/purchases-js-hybrid-mappings@18.28.0":
-  version "18.28.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-18.28.0.tgz#50d9f8b8964145f5374bac40e8b86a75d8e3e0a5"
-  integrity sha512-H3fN3RILX4KmJx0v25IQUOTihfALun+v9GR0TqrGHphGihzI6ypQivNXOPR76dofUUiKRFq8rwD6DwUcyLIrJA==
+"@revenuecat/purchases-js-hybrid-mappings@18.29.0":
+  version "18.29.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-18.29.0.tgz#5de7189c78921ea624e00e8517b713b2e61de928"
+  integrity sha512-ABSreDd+SL17GFVkuMydh6EP8AaIqitLYfMeA3k7qfRDLKgvINzW9TH1wt7lCdtMQa6+T/fk1egb6olPK51YCA==
   dependencies:
     "@revenuecat/purchases-js" "1.49.1"
 
@@ -2476,10 +2476,10 @@
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.51.0.tgz#3f9630e5cc97f1c9fbfa9b8ff17f3b8a9c35e1f4"
   integrity sha512-JD/T+7nERHvpz3lI9UjchtUcInKXHsOLHjemyVEKpiELALcfeT1k4s5Nzm83md1HzqQrzsX0bmAYl7FbEXiMZA==
 
-"@revenuecat/purchases-typescript-internal@18.28.0":
-  version "18.28.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-18.28.0.tgz#250145677641e0c788579cd5dcc15f87b138faec"
-  integrity sha512-VPbRlXsPuJaG99EcoJlE1fZNxJqj2yE9+ywX24JEUNAfA+Y1CHCsGu4DlEK/ngl5a2wwXkEY18tE9sdSxnvm5Q==
+"@revenuecat/purchases-typescript-internal@18.29.0":
+  version "18.29.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-18.29.0.tgz#3642bb88f9ea102b644812d571a49600edb2448f"
+  integrity sha512-A+gYvNhSi+Z5r1GdwiyuWq9b3kJYAeAHISGK3R5Ec3tKaF7hwI5LM49paw7YGcyYQalngimjpiVYpBeC/IekBg==
 
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
@@ -7323,13 +7323,13 @@ react-native-nitro-modules@0.36.5:
   resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.36.5.tgz#438c77e4f1e77bd1d3e901eb5b4953762e68a078"
   integrity sha512-SJby84+hovD70JmQ1fq+56tw3oapJeChehUqXA4Gqjm+ktJhMAcj8LGwoAjStSOUwRaK7czbzBPB0Widj+EDoQ==
 
-react-native-purchases@10.6.0:
-  version "10.6.0"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-10.6.0.tgz#af0658dd55bb3df1df37ab3abb8632474b3f14d4"
-  integrity sha512-JzwQEklktpN0IRycR0IBpdXxVW4uI/04dgkSkQXa+9OP9JNLfV4zWjNPH++JDRmGbtj1ZnX/r2kQVoZ/ne2xoA==
+react-native-purchases@10.7.0:
+  version "10.7.0"
+  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-10.7.0.tgz#41217319d1c900d430fa49cf2815c842269f8ffa"
+  integrity sha512-+ow00d8foBDeLiJniXW94P+nUhmyzK91LxKnigwQ2YxAbaBugr/LWpWaSQTDnZ+dL9iJQODvldmIXUiRm9KrXw==
   dependencies:
-    "@revenuecat/purchases-js-hybrid-mappings" "18.28.0"
-    "@revenuecat/purchases-typescript-internal" "18.28.0"
+    "@revenuecat/purchases-js-hybrid-mappings" "18.29.0"
+    "@revenuecat/purchases-typescript-internal" "18.29.0"
 
 react-native-reanimated@4.5.3:
   version "4.5.3"
