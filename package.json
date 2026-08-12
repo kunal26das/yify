@@ -96,7 +96,7 @@
     "electron": "43.3.0",
     "electron-builder": "26.15.3",
     "eslint": "9.39.3",
-    "eslint-config-expo": "57.0.0",
+    "eslint-config-expo": "57.0.1",
     "eslint-import-resolver-typescript": "3.10.1",
     "patch-package": "8.0.1",
     "postinstall-postinstall": "2.1.0",
