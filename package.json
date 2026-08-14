@@ -93,7 +93,7 @@
   },
   "devDependencies": {
     "@types/react": "19.2.18",
-    "electron": "43.3.0",
+    "electron": "43.4.0",
     "electron-builder": "26.15.3",
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.1",
