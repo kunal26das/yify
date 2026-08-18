@@ -51,7 +51,7 @@
     "@react-native-firebase/remote-config": "24.1.1",
     "@react-native-google-signin/google-signin": "16.1.4",
     "@revenuecat/purchases-js": "1.52.0",
-    "expo": "57.0.12",
+    "expo": "57.0.13",
     "expo-background-task": "57.0.8",
     "expo-blur": "57.0.2",
     "expo-build-properties": "57.0.10",
