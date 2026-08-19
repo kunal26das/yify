@@ -64,7 +64,7 @@
     "expo-in-app-updates": "0.12.0",
     "expo-insights": "57.0.10",
     "expo-linking": "57.0.5",
-    "expo-notifications": "57.0.10",
+    "expo-notifications": "57.0.11",
     "expo-router": "57.0.11",
     "expo-splash-screen": "57.0.6",
     "expo-status-bar": "57.0.1",
