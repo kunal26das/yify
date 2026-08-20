@@ -4889,10 +4889,10 @@ expo-system-ui@57.0.2:
     "@react-native/normalize-colors" "0.86.2"
     debug "^4.3.2"
 
-expo-task-manager@57.0.9:
-  version "57.0.9"
-  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.9.tgz#10d49d7bc6628801bd8fb4caf7495ba46a549c74"
-  integrity sha512-98L0EIexQkAxJ1GKPAev9rJcEJvZDfZOF8vmanvXisvfpC/Z0Rsel4vzV1bVldzXwQ4rMBu3V5C9evFJQMh1PA==
+expo-task-manager@57.0.10:
+  version "57.0.10"
+  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.10.tgz#27dc1958de11da62d7dc1cd6d41aa8797a47bdbb"
+  integrity sha512-K43+CdKXOvFteatTFzP9lOtpLq0Rzm7VWxIGTPe2Eue61Q/IBHdBuyK7ElKdsXAt0zUFeZDEuIVoLhJLMSwGYQ==
   dependencies:
     unimodules-app-loader "~57.0.1"
 
