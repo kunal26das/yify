@@ -111,6 +111,20 @@
       "version": "1.4.11",
       "runtimeVersion": "1.4.11",
       "releasedAt": "2026-08-20T22:10:38.473Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Staging",
+      "version": "1.4.12",
+      "runtimeVersion": "1.4.12",
+      "releasedAt": "2026-08-21T13:06:53.170Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.4.12",
+      "runtimeVersion": "1.4.12",
+      "releasedAt": "2026-08-21T13:09:15.289Z"
     }
   ]
 }
