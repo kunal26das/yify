@@ -1,21 +1,20 @@
-import {Platform} from 'react-native';
-
-const ANDROID_MESSAGE_BRIDGE = `(function(){
+const MESSAGE_BRIDGE = `(function(){
   if (window.__yifyMessageBridge) return;
   window.__yifyMessageBridge = true;
-  document.addEventListener('message', function (event) {
-    var payload = event.data;
-    try {
-      var parsed = JSON.parse(payload);
-      if (parsed && parsed.eventName) payload = parsed.eventName;
-    } catch (error) {}
-    window.dispatchEvent(new MessageEvent('message', {data: payload}));
-  });
+  var forward = function (payload) {
+    if (typeof payload !== 'string') return;
+    var parsed;
+    try { parsed = JSON.parse(payload); } catch (error) { return; }
+    if (!parsed || typeof parsed.eventName !== 'string') return;
+    window.dispatchEvent(new MessageEvent('message', {data: parsed.eventName}));
+  };
+  document.addEventListener('message', function (event) { forward(event.data); });
+  window.addEventListener('message', function (event) { forward(event.data); });
 })(); true;`;
 
 export const YOUTUBE_WEB_VIEW_PROPS = {
     allowsInlineMediaPlayback: true,
     mediaPlaybackRequiresUserAction: false,
     allowsFullscreenVideo: true,
-    ...(Platform.OS === 'android' ? {injectedJavaScript: ANDROID_MESSAGE_BRIDGE} : null),
+    injectedJavaScript: MESSAGE_BRIDGE,
 };

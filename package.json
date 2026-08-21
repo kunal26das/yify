@@ -23,7 +23,7 @@
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
     "postinstall": "patch-package",
-    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts'",
+    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts'",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
     "build:dev:ios": "bash scripts/eas.sh build --platform ios --profile development",
