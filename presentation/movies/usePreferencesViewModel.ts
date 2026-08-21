@@ -3,7 +3,13 @@ import {useCallback, useMemo, useState} from 'react';
 import {Platform} from 'react-native';
 import {Analytics} from '@/presentation/analytics/events';
 
-import type {BrowseDefaults, Preferences, ThemePreference} from '@/domain';
+import type {
+    BrowseDefaults,
+    NotificationPreferences,
+    PlaybackPreferences,
+    Preferences,
+    ThemePreference,
+} from '@/domain';
 import {
     useNewMoviesNotifier,
     usePreferencesRepository,
@@ -16,6 +22,23 @@ import {useWatchlist} from './useWatchlist';
 export interface AppInfo {
     version: string;
 }
+
+const PLAYBACK_EVENTS: Record<keyof PlaybackPreferences, string> = {
+    autoplayTrailers: 'playback_autoplay_trailers',
+    trailerCaptions: 'playback_trailer_captions',
+    autoplayNext: 'playback_autoplay_next',
+    miniPlayer: 'playback_mini_player',
+};
+
+const NOTIFY_EVENTS: Record<keyof NotificationPreferences, string> = {
+    quality: 'notifications_quality',
+    minimumRating: 'notifications_minimum_rating',
+    genre: 'notifications_genre',
+    quietHours: 'notifications_quiet_hours',
+    quietStartHour: 'notifications_quiet_start',
+    quietEndHour: 'notifications_quiet_end',
+    perTitle: 'notifications_per_title',
+};
 
 export function usePreferencesViewModel() {
     const preferences: Preferences = usePreferences();
@@ -51,6 +74,28 @@ export function usePreferencesViewModel() {
         } as BrowseDefaults);
     }, [preferencesRepository]);
 
+    const setPlaybackPreference = useCallback(
+        <K extends keyof PlaybackPreferences>(key: K, value: PlaybackPreferences[K]) => {
+            Analytics.settingChanged(PLAYBACK_EVENTS[key], String(value));
+            preferencesRepository.setPlaybackPreferences({
+                ...preferencesRepository.getPlaybackPreferences(),
+                [key]: value,
+            });
+        },
+        [preferencesRepository]
+    );
+
+    const setNotificationPreference = useCallback(
+        <K extends keyof NotificationPreferences>(key: K, value: NotificationPreferences[K]) => {
+            Analytics.settingChanged(NOTIFY_EVENTS[key], String(value));
+            preferencesRepository.setNotificationPreferences({
+                ...preferencesRepository.getNotificationPreferences(),
+                [key]: value,
+            });
+        },
+        [preferencesRepository]
+    );
+
     const toggleNotifications = useCallback(async (next: boolean) => {
         Analytics.settingChanged('notifications', String(next));
         preferencesRepository.setNotificationsEnabled(next);
@@ -84,6 +129,8 @@ export function usePreferencesViewModel() {
         theme: preferences.theme,
         browseDefaults: preferences.browseDefaults,
         notifications: preferences.notifications,
+        playback: preferences.playback,
+        notify: preferences.notify,
         confirmWatchlistRemoval: preferences.confirmWatchlistRemoval,
         permissionBlocked,
         watchlistCount: watchlist.length,
@@ -92,6 +139,8 @@ export function usePreferencesViewModel() {
         appInfo,
         selectTheme,
         setBrowseDefault,
+        setPlaybackPreference,
+        setNotificationPreference,
         toggleNotifications,
         toggleConfirmWatchlistRemoval,
         clearList,

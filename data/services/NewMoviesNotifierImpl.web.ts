@@ -1,8 +1,17 @@
 import {router} from 'expo-router';
 
 
-import type {Movie, NewMoviesNotifier} from '@/domain';
-import {Quality, buildNotificationContent, selectNewMovies} from '@/domain';
+import type {Movie, NewMoviesNotifier, Preferences} from '@/domain';
+import {
+    DEFAULT_NOTIFICATION_PREFERENCES,
+    NOTIFICATION_BURST_LIMIT,
+    Quality,
+    buildNotificationBatch,
+    filterNotifiableMovies,
+    isWithinQuietHours,
+    notificationQuerySignature,
+    selectNewMovies,
+} from '@/domain';
 import type {NewMoviesNotification} from '@/domain';
 
 import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
@@ -17,11 +26,26 @@ export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 
 
 const PAGE_SIZE = 50;
-const DEFAULT_QUALITY = Quality.P2160;
 
 const cache = new SeenMoviesRepositoryImpl(new PersistentCache('new-movies'));
 const appConfig = new RemoteAppConfig();
-const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
+const settingsStore = new PersistentCache('settings');
+
+interface DesktopBridge {
+    setNotificationSettings?: (value: string) => void;
+}
+
+function currentPreferences(): Preferences {
+    return new PreferencesRepositoryImpl(settingsStore).getPreferences();
+}
+
+export function publishNotificationSettings(preferences: Preferences): void {
+    if (typeof window === 'undefined') return;
+    const bridge = (window as unknown as {yifyDesktop?: DesktopBridge}).yifyDesktop;
+    bridge?.setNotificationSettings?.(
+        JSON.stringify({enabled: preferences.notifications, ...preferences.notify})
+    );
+}
 
 function hasNotificationApi(): boolean {
     return typeof window !== 'undefined' && 'Notification' in window;
@@ -34,7 +58,7 @@ function localDateKey(date: Date): string {
     return `${y}-${m}-${d}`;
 }
 
-async function fetchFirstPage(): Promise<Movie[]> {
+async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
     await appConfig.ready();
     const repository = new MovieRepositoryImpl(
         new YtsApiDataSource(() => appConfig.getApiBaseUrl())
@@ -42,7 +66,7 @@ async function fetchFirstPage(): Promise<Movie[]> {
     const result = await repository.listMovies({
         page: 1,
         limit: PAGE_SIZE,
-        quality: DEFAULT_QUALITY,
+        quality,
     });
     return result.movies;
 }
@@ -79,15 +103,35 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
-    if (!preferences.areNotificationsEnabled()) return 0;
+    const preferences = currentPreferences();
+    publishNotificationSettings(preferences);
+    if (!preferences.notifications) return 0;
     if (!hasNotificationApi() || Notification.permission !== 'granted') return 0;
 
-    const today = localDateKey(new Date());
+    const notify = preferences.notify;
+    const now = new Date();
+    if (
+        notify.quietHours &&
+        isWithinQuietHours(now, notify.quietStartHour, notify.quietEndHour)
+    ) {
+        return 0;
+    }
+
+    const today = localDateKey(now);
     if (!force && cache.getLastRunDate() === today) {
         return 0;
     }
 
-    const movies = await fetchFirstPage();
+    const signature = notificationQuerySignature(notify.quality);
+    const knownSignature =
+        cache.getQuerySignature() ??
+        notificationQuerySignature(DEFAULT_NOTIFICATION_PREFERENCES.quality);
+    if (knownSignature !== signature) {
+        cache.setSeenIds([]);
+    }
+    cache.setQuerySignature(signature);
+
+    const movies = await fetchFirstPage(notify.quality);
     const cachedIds = cache.getSeenIds();
 
     cache.setLastRunDate(today);
@@ -97,13 +141,19 @@ export async function checkForNewMovies(force = false): Promise<number> {
         return 0;
     }
 
-    const newMovies = selectNewMovies(cachedIds, movies);
+    const fresh = selectNewMovies(cachedIds, movies);
     cache.setSeenIds(movies.map((m) => m.id));
 
-    if (newMovies.length > 0) {
-        showWebNotification(buildNotificationContent(newMovies));
-    }
-    return newMovies.length;
+    const matched = filterNotifiableMovies(fresh, {
+        minimumRating: notify.minimumRating,
+        genre: notify.genre,
+    });
+    if (matched.length === 0) return 0;
+
+    buildNotificationBatch(matched, notify.perTitle, NOTIFICATION_BURST_LIMIT).forEach(
+        showWebNotification
+    );
+    return matched.length;
 }
 
 let listenersBound = false;
@@ -111,6 +161,7 @@ let listenersBound = false;
 export async function registerNewMoviesTask(): Promise<void> {
     if (typeof document === 'undefined') return;
 
+    publishNotificationSettings(currentPreferences());
     void checkForNewMovies();
 
     if (listenersBound) return;

@@ -16,6 +16,10 @@ export type {
   SyncedPreferences,
 } from './entities/Preferences';
 export {DEFAULT_BROWSE_DEFAULTS, DEFAULT_PREFERENCES} from './entities/Preferences';
+export type {PlaybackPreferences} from './entities/PlaybackPreferences';
+export {DEFAULT_PLAYBACK_PREFERENCES} from './entities/PlaybackPreferences';
+export type {NotificationPreferences} from './entities/NotificationPreferences';
+export {DEFAULT_NOTIFICATION_PREFERENCES} from './entities/NotificationPreferences';
 export type {PurchaseOffer, PurchaseState} from './entities/Entitlement';
 export {REMOVE_ADS_ENTITLEMENT, INITIAL_PURCHASE_STATE} from './entities/Entitlement';
 export type {UpdateState, UpdateStatus} from './entities/UpdateStatus';
@@ -46,8 +50,19 @@ export type {PurchaseRepository} from './repositories/PurchaseRepository';
 export type {SeenMoviesRepository} from './repositories/SeenMoviesRepository';
 export type {SearchHistoryRepository} from './repositories/SearchHistoryRepository';
 
-export {selectNewMovies, buildNotificationContent} from './policies/newMoviesNotification';
-export type {NewMoviesNotification} from './policies/newMoviesNotification';
+export {
+  selectNewMovies,
+  buildNotificationContent,
+  buildNotificationBatch,
+  filterNotifiableMovies,
+  isWithinQuietHours,
+  quietHoursEndAt,
+  notificationQuerySignature,
+  NOTIFICATION_BURST_LIMIT,
+} from './policies/newMoviesNotification';
+export type {NewMoviesNotification, NewMoviesFilter} from './policies/newMoviesNotification';
+export {readSection, mergeSection} from './policies/preferencesMerge';
+export type {SectionGuards} from './policies/preferencesMerge';
 export {
   chooseSyncMode,
   resolveSection,

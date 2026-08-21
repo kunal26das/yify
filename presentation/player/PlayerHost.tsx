@@ -6,6 +6,7 @@ import Animated, {Easing, useAnimatedStyle, useSharedValue, withTiming} from 're
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {Radius} from '../constants/theme';
+import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
 import {useTopBarHeight} from '../movies/components/TopBar';
 import {MiniBar} from './MiniBar';
@@ -28,6 +29,7 @@ function heightFor(width: number): number {
 
 export function PlayerHost(): ReactElement | null {
     const {video, mode, playing, muted, maximize, minimize} = usePlayer();
+    const {playback} = usePreferences();
     const {surfaceRef, subscribeInlineRect, getInlineRect, reportPlaying, reportEnded} = usePlayerInternal();
     const insets = useSafeAreaInsets();
     const {width: windowWidth, height: windowHeight, isPhone} = useResponsive();
@@ -171,6 +173,7 @@ export function PlayerHost(): ReactElement | null {
                         height={baseHeight}
                         muted={muted}
                         playing={playing}
+                        captions={playback.trailerCaptions}
                         onStateChange={reportPlaying}
                         onEnded={reportEnded}
                     />
@@ -190,7 +193,9 @@ export function PlayerHost(): ReactElement | null {
                             onPress={collapse}
                             hitSlop={10}
                             accessibilityRole="button"
-                            accessibilityLabel="Collapse to miniplayer"
+                            accessibilityLabel={
+                                playback.miniPlayer ? 'Collapse to miniplayer' : 'Close trailer'
+                            }
                         >
                             <Ionicons name="chevron-down" size={22} color="#FFFFFF"/>
                         </Pressable>

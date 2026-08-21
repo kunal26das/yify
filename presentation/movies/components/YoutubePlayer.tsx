@@ -11,6 +11,7 @@ export function YoutubePlayer({
   muted = false,
   loop = false,
   controls = true,
+  captions = false,
   onPlaybackStarted,
 }: {
   videoId: string;
@@ -20,6 +21,7 @@ export function YoutubePlayer({
   muted?: boolean;
   loop?: boolean;
   controls?: boolean;
+  captions?: boolean;
   onPlaybackStarted?: () => void;
 }) {
   const resolvedHeight = height ?? Math.round((width * 9) / 16);
@@ -32,6 +34,7 @@ export function YoutubePlayer({
   return (
     <View style={[styles.container, { height: resolvedHeight }]}>
       <YoutubeIframe
+        key={captions ? 'cc-on' : 'cc-off'}
         height={resolvedHeight}
         width={width}
         videoId={videoId}
@@ -46,7 +49,7 @@ export function YoutubePlayer({
             onPlaybackStarted?.();
           }
         }}
-        initialPlayerParams={{ controls, modestbranding: true, rel: false, loop }}
+        initialPlayerParams={{ controls, modestbranding: true, rel: false, loop, showClosedCaptions: captions }}
         webViewProps={YOUTUBE_WEB_VIEW_PROPS}
       />
     </View>

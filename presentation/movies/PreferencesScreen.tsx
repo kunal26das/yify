@@ -5,7 +5,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {BrowseDefaults, ThemePreference} from '@/domain';
+import type {BrowseDefaults, NotificationPreferences, ThemePreference} from '@/domain';
 import {useConfirm} from '../components/confirm-dialog';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {Screen} from '../components/screen';
@@ -21,6 +21,7 @@ import {
     RATING_OPTIONS,
     SORT_BY_OPTIONS,
 } from './constants/movieFilterLabels';
+import {HOUR_OPTIONS} from './constants/quietHours';
 import * as WebBrowser from 'expo-web-browser';
 import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
@@ -44,14 +45,63 @@ function switchColors(colors: Colors, on: boolean): React.ComponentProps<typeof 
     } as React.ComponentProps<typeof Switch>;
 }
 type Glyph = keyof typeof Ionicons.glyphMap;
-type DisclosureKey = 'theme' | keyof BrowseDefaults;
+type NotifyDisclosureKey = 'quality' | 'minimumRating' | 'genre' | 'quietStartHour' | 'quietEndHour';
+type DisclosureKey = 'theme' | `browse.${keyof BrowseDefaults}` | `notify.${NotifyDisclosureKey}`;
 
-interface BrowseRow {
-    key: keyof BrowseDefaults;
+interface OptionRow<K> {
+    key: K;
     icon: Glyph;
     title: string;
     options: {value: string | number; label: string}[];
 }
+
+type BrowseRow = OptionRow<keyof BrowseDefaults>;
+type NotifyRow = OptionRow<NotifyDisclosureKey>;
+
+interface PlaybackRow {
+    key: 'autoplayTrailers' | 'trailerCaptions' | 'autoplayNext' | 'miniPlayer';
+    icon: Glyph;
+    title: string;
+    subtitle: string;
+}
+
+const PLAYBACK_ROWS: PlaybackRow[] = [
+    {
+        key: 'autoplayTrailers',
+        icon: 'film-outline',
+        title: 'Autoplay trailers',
+        subtitle: 'Roll the trailer behind the hero banner a moment after it settles.',
+    },
+    {
+        key: 'trailerCaptions',
+        icon: 'text-outline',
+        title: 'Trailer captions',
+        subtitle: 'Turn YouTube subtitles on whenever a trailer starts.',
+    },
+    {
+        key: 'autoplayNext',
+        icon: 'play-forward-outline',
+        title: 'Autoplay next',
+        subtitle: 'When a trailer ends, roll on to the next one in the list.',
+    },
+    {
+        key: 'miniPlayer',
+        icon: 'albums-outline',
+        title: 'Mini player',
+        subtitle: 'Keep a trailer playing in the corner after you leave its page.',
+    },
+];
+
+const NOTIFY_ROWS: NotifyRow[] = [
+    {key: 'quality', icon: 'tv-outline', title: 'Quality', options: QUALITY_OPTIONS},
+    {key: 'minimumRating', icon: 'star-outline', title: 'Minimum rating', options: RATING_OPTIONS},
+    {key: 'genre', icon: 'pricetags-outline', title: 'Genre', options: GENRE_OPTIONS},
+];
+
+const QUIET_ROWS: NotifyRow[] = [
+    {key: 'quietStartHour', icon: 'moon-outline', title: 'Quiet from', options: HOUR_OPTIONS},
+    {key: 'quietEndHour', icon: 'sunny-outline', title: 'Quiet until', options: HOUR_OPTIONS},
+];
 
 const WEBSITE_URL = 'https://kunal26das.github.io/yify';
 
@@ -103,6 +153,21 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
         });
     };
 
+    const closeIfOpen = (keys: DisclosureKey[]) =>
+        setOpen((current) => (current && keys.includes(current) ? null : current));
+
+    const onToggleNotifications = (next: boolean) => {
+        if (!next) setOpen(null);
+        void vm.toggleNotifications(next);
+    };
+
+    const onToggleQuietHours = (next: boolean) => {
+        if (!next) closeIfOpen(['notify.quietStartHour', 'notify.quietEndHour']);
+        vm.setNotificationPreference('quietHours', next);
+    };
+
+    let rank = 0;
+
     return (
         <Screen>
             <ScrollView
@@ -117,82 +182,72 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
             >
                 <AccountSection colors={colors} gutter={gutter}/>
 
-                <SectionHeader title="General" colors={colors} gutter={gutter} index={0}/>
+                <SectionHeader title="General" colors={colors} gutter={gutter} index={rank++}/>
 
-                <Group colors={colors} index={0}>
-                    <Row
+                <Group colors={colors} index={rank++}>
+                    <ChoiceRow
                         icon={theme.icon}
                         title="Theme"
+                        value={vm.theme}
+                        options={THEME_OPTIONS}
+                        expanded={open === 'theme'}
                         colors={colors}
                         gutter={gutter}
-                        onPress={() => toggleGroup('theme')}
-                        accessibilityLabel="Theme"
-                        accessibilityState={{expanded: open === 'theme'}}
-                        trailing={<Disclosure value={theme.label} expanded={open === 'theme'} colors={colors}/>}
+                        onToggle={() => toggleGroup('theme')}
+                        onSelect={(value) => {
+                            vm.selectTheme(value as ThemePreference);
+                            setOpen(null);
+                        }}
                     />
-                    {open === 'theme' ? (
-                        <Animated.View entering={enterFade()} exiting={exitFade} style={styles.options}>
-                            <ChipBar
-                                chips={THEME_OPTIONS.map((option) => ({key: option.value, label: option.label}))}
-                                active={vm.theme}
-                                onSelect={(key) => {
-                                    vm.selectTheme(key as ThemePreference);
-                                    setOpen(null);
-                                }}
-                                contentPadding={gutter}
-                            />
-                        </Animated.View>
-                    ) : null}
                 </Group>
 
-                {browseRows.map((row, position) => {
-                    const current =
-                        row.options.find((option) => option.value === vm.browseDefaults[row.key]) ??
-                        row.options[0];
-                    return (
-                        <Group colors={colors} index={position + 1} key={row.key}>
-                            <Row
-                                icon={row.icon}
-                                title={row.title}
-                                colors={colors}
-                                gutter={gutter}
-                                onPress={() => toggleGroup(row.key)}
-                                accessibilityLabel={row.title}
-                                accessibilityState={{expanded: open === row.key}}
-                                trailing={
-                                    <Disclosure
-                                        value={current.label}
-                                        expanded={open === row.key}
-                                        colors={colors}
-                                    />
-                                }
-                            />
-                            {open === row.key ? (
-                                <Animated.View entering={enterFade()} exiting={exitFade} style={styles.options}>
-                                    <ChipBar
-                                        chips={row.options.map((option) => ({
-                                            key: String(option.value),
-                                            label: option.label,
-                                        }))}
-                                        active={String(vm.browseDefaults[row.key])}
-                                        onSelect={(key) => {
-                                            const picked = row.options.find(
-                                                (option) => String(option.value) === key
-                                            );
-                                            if (picked) vm.setBrowseDefault(row.key, picked.value);
-                                            setOpen(null);
-                                        }}
-                                        contentPadding={gutter}
-                                    />
-                                </Animated.View>
-                            ) : null}
-                        </Group>
-                    );
-                })}
+                <SectionHeader title="Browse defaults" colors={colors} gutter={gutter} index={rank++}/>
 
-                <SectionHeader title="Notifications" colors={colors} gutter={gutter} index={2}/>
+                {browseRows.map((row) => (
+                    <Group colors={colors} index={rank++} key={row.key}>
+                        <ChoiceRow
+                            icon={row.icon}
+                            title={row.title}
+                            value={vm.browseDefaults[row.key]}
+                            options={row.options}
+                            expanded={open === `browse.${row.key}`}
+                            colors={colors}
+                            gutter={gutter}
+                            onToggle={() => toggleGroup(`browse.${row.key}`)}
+                            onSelect={(value) => {
+                                vm.setBrowseDefault(row.key, value);
+                                setOpen(null);
+                            }}
+                        />
+                    </Group>
+                ))}
 
-                <Group colors={colors} index={2}>
+                <SectionHeader title="Playback" colors={colors} gutter={gutter} index={rank++}/>
+
+                <Group colors={colors} index={rank++}>
+                    {PLAYBACK_ROWS.map((row) => (
+                        <Row
+                            key={row.key}
+                            icon={row.icon}
+                            title={row.title}
+                            subtitle={row.subtitle}
+                            colors={colors}
+                            gutter={gutter}
+                            trailing={
+                                <Switch
+                                    value={vm.playback[row.key]}
+                                    onValueChange={(value) => vm.setPlaybackPreference(row.key, value)}
+                                    accessibilityLabel={row.title}
+                                    {...switchColors(colors, vm.playback[row.key])}
+                                />
+                            }
+                        />
+                    ))}
+                </Group>
+
+                <SectionHeader title="Notifications" colors={colors} gutter={gutter} index={rank++}/>
+
+                <Group colors={colors} index={rank++}>
                     <Row
                         icon="notifications-outline"
                         title="New releases"
@@ -202,7 +257,8 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                         trailing={
                             <Switch
                                 value={vm.notifications}
-                                onValueChange={(v) => void vm.toggleNotifications(v)}
+                                onValueChange={onToggleNotifications}
+                                accessibilityLabel="New releases"
                                 {...switchColors(colors, vm.notifications)}
                             />
                         }
@@ -220,11 +276,96 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             </ThemedText>
                         </Animated.View>
                     ) : null}
+                    {vm.notifications ? (
+                        <Animated.View entering={enterRise()} exiting={exitFade}>
+                            {NOTIFY_ROWS.map((row) => (
+                                <ChoiceRow
+                                    key={row.key}
+                                    icon={row.icon}
+                                    title={row.title}
+                                    value={vm.notify[row.key]}
+                                    options={row.options}
+                                    expanded={open === `notify.${row.key}`}
+                                    colors={colors}
+                                    gutter={gutter}
+                                    accessibilityLabel={`Notification ${row.title.toLowerCase()}`}
+                                    onToggle={() => toggleGroup(`notify.${row.key}`)}
+                                    onSelect={(value) => {
+                                        vm.setNotificationPreference(
+                                            row.key,
+                                            value as NotificationPreferences[typeof row.key]
+                                        );
+                                        setOpen(null);
+                                    }}
+                                />
+                            ))}
+                            <Row
+                                icon="moon-outline"
+                                title="Quiet hours"
+                                subtitle={
+                                    Platform.OS === 'web'
+                                        ? 'Hold alerts overnight. They arrive the next time you open Yify after the window.'
+                                        : 'Hold alerts overnight and deliver them when the window ends.'
+                                }
+                                colors={colors}
+                                gutter={gutter}
+                                trailing={
+                                    <Switch
+                                        value={vm.notify.quietHours}
+                                        onValueChange={onToggleQuietHours}
+                                        accessibilityLabel="Quiet hours"
+                                        {...switchColors(colors, vm.notify.quietHours)}
+                                    />
+                                }
+                            />
+                            {vm.notify.quietHours ? (
+                                <Animated.View entering={enterRise()} exiting={exitFade}>
+                                    {QUIET_ROWS.map((row) => (
+                                        <ChoiceRow
+                                            key={row.key}
+                                            icon={row.icon}
+                                            title={row.title}
+                                            value={vm.notify[row.key]}
+                                            options={row.options}
+                                            expanded={open === `notify.${row.key}`}
+                                            colors={colors}
+                                            gutter={gutter}
+                                            onToggle={() => toggleGroup(`notify.${row.key}`)}
+                                            onSelect={(value) => {
+                                                vm.setNotificationPreference(
+                                                    row.key,
+                                                    value as NotificationPreferences[typeof row.key]
+                                                );
+                                                setOpen(null);
+                                            }}
+                                        />
+                                    ))}
+                                </Animated.View>
+                            ) : null}
+                            <Row
+                                icon="list-outline"
+                                title="One alert per title"
+                                subtitle="A separate notification for each new title instead of one summary."
+                                colors={colors}
+                                gutter={gutter}
+                                trailing={
+                                    <Switch
+                                        value={vm.notify.perTitle}
+                                        onValueChange={(value) =>
+                                            vm.setNotificationPreference('perTitle', value)
+                                        }
+                                        accessibilityLabel="One alert per title"
+                                        {...switchColors(colors, vm.notify.perTitle)}
+                                    />
+                                }
+                            />
+                        </Animated.View>
+                    ) : null}
                 </Group>
 
-                <SectionHeader title="Search" colors={colors} gutter={gutter} index={3}/>
+                <SectionHeader title="Search" colors={colors} gutter={gutter} index={rank++}/>
 
-                <Group colors={colors} index={3}>
+                <Group colors={colors} index={rank++}>
                     <Row
                         icon="time-outline"
                         title={`${vm.searchHistoryCount} recent ${vm.searchHistoryCount === 1 ? 'search' : 'searches'}`}
@@ -254,9 +395,9 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </Group>
 
-                <SectionHeader title="Watchlist" colors={colors} gutter={gutter} index={4}/>
+                <SectionHeader title="Watchlist" colors={colors} gutter={gutter} index={rank++}/>
 
-                <Group colors={colors} index={3}>
+                <Group colors={colors} index={rank++}>
                     <Row
                         icon="bookmark-outline"
                         title={`${vm.watchlistCount} ${vm.watchlistCount === 1 ? 'title' : 'titles'} saved`}
@@ -313,9 +454,9 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </Group>
 
-                <SectionHeader title="About" colors={colors} gutter={gutter} index={4}/>
+                <SectionHeader title="About" colors={colors} gutter={gutter} index={rank++}/>
 
-                <Group colors={colors} index={4}>
+                <Group colors={colors} index={rank++}>
                     <Row
                         icon="information-circle-outline"
                         title="Version"
@@ -330,7 +471,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 </Group>
 
                 {Platform.OS === 'android' ? (
-                    <Group colors={colors} index={5}>
+                    <Group colors={colors} index={rank++}>
                         <Row
                             icon="star-outline"
                             title="Rate on Google Play"
@@ -344,7 +485,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                         />
                     </Group>
                 ) : (
-                    <Group colors={colors} index={5}>
+                    <Group colors={colors} index={rank++}>
                         <Row
                             icon="logo-google-playstore"
                             title="Android app"
@@ -356,7 +497,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 )}
 
                 {Platform.OS !== 'web' ? (
-                    <Group colors={colors} index={6}>
+                    <Group colors={colors} index={rank++}>
                         <Row
                             icon="globe-outline"
                             title="Open Yify on the web"
@@ -572,6 +713,63 @@ function Row({
         >
             {content}
         </PressableScale>
+    );
+}
+
+function ChoiceRow({
+                       icon,
+                       title,
+                       value,
+                       options,
+                       expanded,
+                       colors,
+                       gutter,
+                       accessibilityLabel,
+                       onToggle,
+                       onSelect,
+                   }: {
+    icon: Glyph;
+    title: string;
+    value: string | number;
+    options: readonly {value: string | number; label: string}[];
+    expanded: boolean;
+    colors: Colors;
+    gutter: number;
+    accessibilityLabel?: string;
+    onToggle: () => void;
+    onSelect: (value: string | number) => void;
+}) {
+    const current = options.find((option) => option.value === value) ?? options[0];
+
+    return (
+        <>
+            <Row
+                icon={icon}
+                title={title}
+                colors={colors}
+                gutter={gutter}
+                onPress={onToggle}
+                accessibilityLabel={accessibilityLabel ?? title}
+                accessibilityState={{expanded}}
+                trailing={<Disclosure value={current.label} expanded={expanded} colors={colors}/>}
+            />
+            {expanded ? (
+                <Animated.View entering={enterFade()} exiting={exitFade} style={styles.options}>
+                    <ChipBar
+                        chips={options.map((option) => ({
+                            key: String(option.value),
+                            label: option.label,
+                        }))}
+                        active={String(value)}
+                        onSelect={(key) => {
+                            const picked = options.find((option) => String(option.value) === key);
+                            if (picked) onSelect(picked.value);
+                        }}
+                        contentPadding={gutter}
+                    />
+                </Animated.View>
+            ) : null}
+        </>
     );
 }
 

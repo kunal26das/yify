@@ -12,6 +12,7 @@ import {
 
 import {Platform} from 'react-native';
 import {Analytics} from '@/presentation/analytics/events';
+import {usePreferences} from '../hooks/use-preferences';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
 
 export interface PlayerVideo {
@@ -66,6 +67,10 @@ const PlayerContext = createContext<PlayerApi | null>(null);
 const PlayerInternalContext = createContext<PlayerInternalApi | null>(null);
 
 export function PlayerProvider({children}: {children: ReactNode}): ReactElement {
+    const {playback} = usePreferences();
+    const playbackRef = useRef(playback);
+    playbackRef.current = playback;
+
     const [video, setVideo] = useState<PlayerVideo | null>(null);
     const [mode, setMode] = useState<PlayerMode>('closed');
     const pendingUnmuteRef = useRef(false);
@@ -124,13 +129,17 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     }, [applyPlaying, applyVideo]);
 
     const minimize = useCallback(() => {
+        if (!playbackRef.current.miniPlayer) {
+            close();
+            return;
+        }
         setMode((current) => {
             if (current !== 'inline') return current;
             const video = videoRef.current;
             if (video) Analytics.playerMinimize({id: video.movieId, title: video.title});
             return 'mini';
         });
-    }, []);
+    }, [close]);
 
     const maximize = useCallback(() => {
         setMode((current) => {
@@ -192,6 +201,14 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
         Analytics.trailerPlay({id: next.movieId, title: next.title});
     }, [applyPlaying, applyVideo]);
 
+    const handleEnded = useCallback(() => {
+        if (playbackRef.current.autoplayNext) {
+            playNext();
+            return;
+        }
+        applyPlaying(false);
+    }, [applyPlaying, playNext]);
+
     const api = useMemo<PlayerApi>(
         () => ({
             video,
@@ -239,9 +256,9 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                     applyMuted(false);
                 }
             },
-            reportEnded: playNext,
+            reportEnded: handleEnded,
         }),
-        [applyMuted, applyPlaying, getInlineRect, playNext, subscribeInlineRect],
+        [applyMuted, applyPlaying, getInlineRect, handleEnded, subscribeInlineRect],
     );
 
     return (

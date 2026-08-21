@@ -1,4 +1,5 @@
 import type {Dependencies} from '@/domain';
+import {publishNotificationSettings} from '../services/NewMoviesNotifierImpl';
 import {getAccountLink} from './container';
 
 export function bootstrap(dependencies: Dependencies): void {
@@ -12,4 +13,8 @@ export function bootstrap(dependencies: Dependencies): void {
     void dependencies.newMovies.hasPermission().then((granted) => {
         if (granted) void dependencies.newMovies.register();
     });
+    publishNotificationSettings(dependencies.preferences.getPreferences());
+    dependencies.preferences.subscribe(() =>
+        publishNotificationSettings(dependencies.preferences.getPreferences())
+    );
 }

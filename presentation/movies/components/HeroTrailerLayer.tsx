@@ -8,6 +8,7 @@ export function HeroTrailerLayer({
     height,
     muted,
     controls = false,
+    captions = false,
     onStarted,
 }: {
     videoId: string;
@@ -15,6 +16,7 @@ export function HeroTrailerLayer({
     height: number;
     muted: boolean;
     controls?: boolean;
+    captions?: boolean;
     onStarted?: () => void;
 }) {
     const [started, setStarted] = useState(false);
@@ -49,6 +51,7 @@ export function HeroTrailerLayer({
                     muted={muted}
                     loop={!controls}
                     controls={controls}
+                    captions={captions}
                     onPlaybackStarted={() => {
                         setStarted(true);
                         onStarted?.();

@@ -14,6 +14,7 @@ export interface PlayerSurfaceProps {
     height: number;
     muted: boolean;
     playing: boolean;
+    captions: boolean;
     onEnded?: () => void;
     onStateChange?: (playing: boolean) => void;
 }
@@ -31,7 +32,7 @@ const STATE_ENDED = 0;
 const STATE_PLAYING = 1;
 const STATE_PAUSED = 2;
 
-function embedSource(videoId: string): string {
+function embedSource(videoId: string, captions: boolean): string {
     const params = new URLSearchParams({
         enablejsapi: '1',
         rel: '0',
@@ -39,13 +40,14 @@ function embedSource(videoId: string): string {
         playsinline: '1',
         controls: '1',
         autoplay: '1',
+        ...(captions ? {cc_load_policy: '1'} : {}),
     });
     if (typeof window !== 'undefined') params.set('origin', window.location.origin);
     return `${EMBED_ORIGIN}/embed/${videoId}?${params.toString()}`;
 }
 
 export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>(function PlayerSurface(
-    {videoId, width, height, muted, playing, onEnded, onStateChange},
+    {videoId, width, height, muted, playing, captions, onEnded, onStateChange},
     ref,
 ) {
     const frameRef = useRef<HTMLIFrameElement | null>(null);
@@ -164,7 +166,10 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
         [post],
     );
 
-    const source = useMemo(() => embedSource(videoId), [videoId]);
+    const captionsRef = useRef(captions);
+    captionsRef.current = captions;
+
+    const source = useMemo(() => embedSource(videoId, captionsRef.current), [videoId]);
 
     return (
         <View style={[styles.container, {width, height}]}>

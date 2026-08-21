@@ -1,13 +1,8 @@
 import {useSyncExternalStore} from 'react';
-import {DEFAULT_BROWSE_DEFAULTS, type Preferences} from '@/domain';
+import {DEFAULT_PREFERENCES, type Preferences} from '@/domain';
 import {usePreferencesRepository} from '../di/DependenciesContext';
 
-const SERVER_SNAPSHOT: Preferences = {
-    theme: 'system',
-    notifications: true,
-    confirmWatchlistRemoval: true,
-    browseDefaults: DEFAULT_BROWSE_DEFAULTS,
-};
+const SERVER_SNAPSHOT: Preferences = {...DEFAULT_PREFERENCES, theme: 'system'};
 
 export function usePreferences(): Preferences {
     const preferences = usePreferencesRepository();

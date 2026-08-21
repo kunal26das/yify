@@ -24,3 +24,12 @@ test('last-run date round-trips and starts undefined', () => {
     cache.setLastRunDate('2026-06-27');
     assert.equal(cache.getLastRunDate(), '2026-06-27');
 });
+
+test('query signature round-trips and starts undefined', () => {
+    const cache = newCache();
+    assert.equal(cache.getQuerySignature(), undefined);
+    cache.setQuerySignature('q:2160p');
+    assert.equal(cache.getQuerySignature(), 'q:2160p');
+    cache.setQuerySignature('q:all');
+    assert.equal(cache.getQuerySignature(), 'q:all');
+});

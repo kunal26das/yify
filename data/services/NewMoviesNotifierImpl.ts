@@ -2,8 +2,17 @@ import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 
-import type {Movie, NewMoviesNotifier} from '@/domain';
-import {Quality, buildNotificationContent, selectNewMovies} from '@/domain';
+import type {Movie, NewMoviesNotifier, NotificationPreferences, Preferences} from '@/domain';
+import {
+    DEFAULT_NOTIFICATION_PREFERENCES,
+    NOTIFICATION_BURST_LIMIT,
+    Quality,
+    buildNotificationBatch,
+    filterNotifiableMovies,
+    notificationQuerySignature,
+    quietHoursEndAt,
+    selectNewMovies,
+} from '@/domain';
 
 import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
@@ -13,7 +22,6 @@ import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
 import {RemoteAppConfig} from './RemoteAppConfig';
 
 const PAGE_SIZE = 50;
-const DEFAULT_QUALITY = Quality.P2160;
 
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 
@@ -38,9 +46,13 @@ function localDateKey(date: Date): string {
 }
 
 const appConfig = new RemoteAppConfig();
-const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
+const settingsStore = new PersistentCache('settings');
 
-async function fetchFirstPage(): Promise<Movie[]> {
+function currentPreferences(): Preferences {
+    return new PreferencesRepositoryImpl(settingsStore).getPreferences();
+}
+
+async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
     await appConfig.ready();
     const repository = new MovieRepositoryImpl(
         new YtsApiDataSource(() => appConfig.getApiBaseUrl())
@@ -48,15 +60,29 @@ async function fetchFirstPage(): Promise<Movie[]> {
     const result = await repository.listMovies({
         page: 1,
         limit: PAGE_SIZE,
-        quality: DEFAULT_QUALITY,
+        quality,
     });
     return result.movies;
 }
 
-async function notifyNewMovies(newMovies: Movie[]): Promise<void> {
-    const content = buildNotificationContent(newMovies);
-    await Notifications.scheduleNotificationAsync({content, trigger: null});
+async function notifyNewMovies(
+    newMovies: Movie[],
+    notify: NotificationPreferences,
+    now: Date
+): Promise<void> {
+    const deferUntil = notify.quietHours
+        ? quietHoursEndAt(now, notify.quietStartHour, notify.quietEndHour)
+        : null;
+    const trigger: Notifications.NotificationTriggerInput = deferUntil
+        ? {type: Notifications.SchedulableTriggerInputTypes.DATE, date: deferUntil}
+        : null;
+    const batch = buildNotificationBatch(newMovies, notify.perTitle, NOTIFICATION_BURST_LIMIT);
+    for (const content of batch) {
+        await Notifications.scheduleNotificationAsync({content, trigger});
+    }
 }
+
+export function publishNotificationSettings(_preferences: Preferences): void {}
 
 export async function hasNotificationPermission(): Promise<boolean> {
     const {status} = await Notifications.getPermissionsAsync();
@@ -72,14 +98,26 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
-    if (!preferences.areNotificationsEnabled()) return 0;
+    const preferences = currentPreferences();
+    if (!preferences.notifications) return 0;
+    const notify = preferences.notify;
 
-    const today = localDateKey(new Date());
+    const now = new Date();
+    const today = localDateKey(now);
     if (!force && cache.getLastRunDate() === today) {
         return 0;
     }
 
-    const movies = await fetchFirstPage();
+    const signature = notificationQuerySignature(notify.quality);
+    const knownSignature =
+        cache.getQuerySignature() ??
+        notificationQuerySignature(DEFAULT_NOTIFICATION_PREFERENCES.quality);
+    if (knownSignature !== signature) {
+        cache.setSeenIds([]);
+    }
+    cache.setQuerySignature(signature);
+
+    const movies = await fetchFirstPage(notify.quality);
     const cachedIds = cache.getSeenIds();
 
     cache.setLastRunDate(today);
@@ -89,13 +127,17 @@ export async function checkForNewMovies(force = false): Promise<number> {
         return 0;
     }
 
-    const newMovies = selectNewMovies(cachedIds, movies);
+    const fresh = selectNewMovies(cachedIds, movies);
     cache.setSeenIds(movies.map((m) => m.id));
 
-    if (newMovies.length > 0) {
-        await notifyNewMovies(newMovies);
-    }
-    return newMovies.length;
+    const matched = filterNotifiableMovies(fresh, {
+        minimumRating: notify.minimumRating,
+        genre: notify.genre,
+    });
+    if (matched.length === 0) return 0;
+
+    await notifyNewMovies(matched, notify, now);
+    return matched.length;
 }
 
 TaskManager.defineTask(NEW_MOVIES_TASK, async () => {

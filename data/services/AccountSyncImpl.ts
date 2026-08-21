@@ -334,7 +334,12 @@ export class AccountSyncImpl implements AccountSync {
         }
         const resolution = resolveSection(mode, remoteAt, localAt);
         if (resolution === 'apply-remote') {
-            this.applyRemote(() => this.preferences.applyRemote(remotePreferences));
+            this.applyRemote(() => {
+                if (mode === 'remote-wins') {
+                    this.preferences.applyRemote(this.preferences.getDefaultSynced());
+                }
+                this.preferences.applyRemote(remotePreferences);
+            });
             this.lastPreferencesPayload = JSON.stringify(this.preferences.getSynced());
             this.store.set(PREFERENCES_AT_KEY, String(remoteAt));
             this.preferencesDirty = false;

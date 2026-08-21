@@ -1,5 +1,6 @@
 import {useEffect, useRef} from 'react';
 
+import {usePreferences} from '../hooks/use-preferences';
 import {usePlayer, type PlayerApi} from './PlayerContext';
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -10,7 +11,10 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function useKeyboardShortcuts(): void {
     const player = usePlayer();
+    const {playback} = usePreferences();
     const playerRef = useRef<PlayerApi>(player);
+    const miniPlayerRef = useRef(playback.miniPlayer);
+    miniPlayerRef.current = playback.miniPlayer;
 
     useEffect(() => {
         playerRef.current = player;
@@ -54,7 +58,7 @@ export function useKeyboardShortcuts(): void {
                 case 'i':
                 case 'I':
                     if (api.mode === 'mini') api.maximize();
-                    else api.minimize();
+                    else if (miniPlayerRef.current) api.minimize();
                     return;
                 case 'Escape':
                     if (api.mode === 'mini') api.close();

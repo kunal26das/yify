@@ -16,6 +16,7 @@ import type {Movie} from '@/domain';
 import {Duration, PressableScale, enterFade, enterPop, enterRise} from '../../components/motion';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
+import {usePreferences} from '../../hooks/use-preferences';
 import {useResponsive} from '../../hooks/use-responsive';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
@@ -55,6 +56,7 @@ export function HeroBillboard({
                               }: HeroBillboardProps) {
     const {colors} = usePalette();
     const {isDesktop} = useResponsive();
+    const {playback} = usePreferences();
     const insets = useSafeAreaInsets();
     const count = movies.length;
     const looped = count > 1;
@@ -198,7 +200,7 @@ export function HeroBillboard({
         if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         if (!activeMovie) return;
         onRequestTrailer?.(activeMovie.id);
-        if (!activeTrailer) return;
+        if (!activeTrailer || !playback.autoplayTrailers) return;
         trailerTimerRef.current = setTimeout(() => {
             setMode('ambient');
             Analytics.heroTrailerAutoplay(activeMovie);
@@ -206,7 +208,7 @@ export function HeroBillboard({
         return () => {
             if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         };
-    }, [activeMovie, activeTrailer, onRequestTrailer]);
+    }, [activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers]);
 
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
@@ -270,6 +272,7 @@ export function HeroBillboard({
                         backdropUrl={backdrops?.[movie.id] ?? null}
                         feature={mode === 'feature'}
                         muted={muted}
+                        captions={playback.trailerCaptions}
                         onPlay={onPlay}
                         onTrailerStarted={() => setTrailerPlaying(true)}
                     />
@@ -410,6 +413,7 @@ function HeroSlide({
                        backdropUrl,
                        feature,
                        muted,
+                       captions,
                        onPlay,
                        onTrailerStarted,
                    }: {
@@ -421,6 +425,7 @@ function HeroSlide({
     backdropUrl: string | null;
     feature: boolean;
     muted: boolean;
+    captions: boolean;
     onPlay: () => void;
     onTrailerStarted: () => void;
 }) {
@@ -467,6 +472,7 @@ function HeroSlide({
                     height={height}
                     muted={muted}
                     controls={feature}
+                    captions={captions}
                     onStarted={onTrailerStarted}
                 />
             ) : null}

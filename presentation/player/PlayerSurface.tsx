@@ -16,12 +16,13 @@ export interface PlayerSurfaceProps {
     height: number;
     muted: boolean;
     playing: boolean;
+    captions: boolean;
     onEnded?: () => void;
     onStateChange?: (playing: boolean) => void;
 }
 
 export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>(function PlayerSurface(
-    {videoId, width, height, muted, playing, onEnded, onStateChange},
+    {videoId, width, height, muted, playing, captions, onEnded, onStateChange},
     ref,
 ) {
     const playerRef = useRef<YoutubeIframeRef | null>(null);
@@ -75,6 +76,7 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
     return (
         <View style={[styles.container, {width, height}]} collapsable={false}>
             <YoutubeIframe
+                key={captions ? 'cc-on' : 'cc-off'}
                 ref={playerRef}
                 videoId={videoId}
                 width={width}
@@ -83,7 +85,12 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
                 mute={silent}
                 forceAndroidAutoplay
                 onChangeState={handleState}
-                initialPlayerParams={{controls: true, modestbranding: true, rel: false}}
+                initialPlayerParams={{
+                    controls: true,
+                    modestbranding: true,
+                    rel: false,
+                    showClosedCaptions: captions,
+                }}
                 webViewProps={YOUTUBE_WEB_VIEW_PROPS}
             />
         </View>

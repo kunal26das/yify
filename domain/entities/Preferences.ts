@@ -1,4 +1,8 @@
 import {Genre, OrderBy, Quality, SortBy} from './MovieQuery';
+import {DEFAULT_NOTIFICATION_PREFERENCES} from './NotificationPreferences';
+import type {NotificationPreferences} from './NotificationPreferences';
+import {DEFAULT_PLAYBACK_PREFERENCES} from './PlaybackPreferences';
+import type {PlaybackPreferences} from './PlaybackPreferences';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -15,13 +19,16 @@ export interface Preferences {
     notifications: boolean;
     confirmWatchlistRemoval: boolean;
     browseDefaults: BrowseDefaults;
+    playback: PlaybackPreferences;
+    notify: NotificationPreferences;
 }
 
 export interface SyncedPreferences {
     theme: ThemePreference;
-    notifications: boolean;
     confirmWatchlistRemoval?: boolean;
     browseDefaults: BrowseDefaults;
+    playback?: Partial<PlaybackPreferences>;
+    notify?: Partial<NotificationPreferences>;
 }
 
 export const DEFAULT_BROWSE_DEFAULTS: BrowseDefaults = {
@@ -37,4 +44,6 @@ export const DEFAULT_PREFERENCES: Preferences = {
     notifications: true,
     confirmWatchlistRemoval: true,
     browseDefaults: DEFAULT_BROWSE_DEFAULTS,
+    playback: DEFAULT_PLAYBACK_PREFERENCES,
+    notify: DEFAULT_NOTIFICATION_PREFERENCES,
 };

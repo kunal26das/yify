@@ -2,6 +2,7 @@ import type {KeyValueStore, SeenMoviesRepository} from '@/domain';
 
 const CACHE_KEY = 'cached-ids';
 const LAST_RUN_KEY = 'last-run-date';
+const SIGNATURE_KEY = 'query-signature';
 
 export class SeenMoviesRepositoryImpl implements SeenMoviesRepository {
     private readonly store: KeyValueStore;
@@ -30,5 +31,13 @@ export class SeenMoviesRepositoryImpl implements SeenMoviesRepository {
 
     setLastRunDate(date: string): void {
         this.store.set(LAST_RUN_KEY, date);
+    }
+
+    getQuerySignature(): string | undefined {
+        return this.store.getString(SIGNATURE_KEY);
+    }
+
+    setQuerySignature(signature: string): void {
+        this.store.set(SIGNATURE_KEY, signature);
     }
 }

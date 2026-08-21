@@ -6,4 +6,8 @@ export interface SeenMoviesRepository {
     getLastRunDate(): string | undefined;
 
     setLastRunDate(date: string): void;
+
+    getQuerySignature(): string | undefined;
+
+    setQuerySignature(signature: string): void;
 }

@@ -1,7 +1,7 @@
-const {app, BrowserWindow, shell, Menu, Tray, nativeImage, nativeTheme} = require('electron');
+const {app, BrowserWindow, ipcMain, shell, Menu, Tray, nativeImage, nativeTheme} = require('electron');
 const path = require('path');
 const {startStaticServer} = require('./static-server');
-const {startNewMoviesNotifier, checkForNewMovies} = require('./new-movies-notifier');
+const {startNewMoviesNotifier, checkForNewMovies, writeSettings} = require('./new-movies-notifier');
 
 const isDev = !app.isPackaged;
 
@@ -144,6 +144,10 @@ function createTray() {
     );
     tray.on('click', () => showWindow());
 }
+
+ipcMain.on('yify:notification-settings', (_event, value) => {
+    writeSettings(value);
+});
 
 app.whenReady().then(() => {
     if (isMac && isDev && app.dock) {

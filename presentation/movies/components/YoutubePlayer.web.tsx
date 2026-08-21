@@ -8,6 +8,7 @@ export function YoutubePlayer({
     muted = false,
     loop = false,
     controls = true,
+    captions = false,
     onPlaybackStarted,
 }: {
     videoId: string;
@@ -17,6 +18,7 @@ export function YoutubePlayer({
     muted?: boolean;
     loop?: boolean;
     controls?: boolean;
+    captions?: boolean;
     onPlaybackStarted?: () => void;
 }) {
     const resolvedHeight = height ?? Math.round((width * 9) / 16);
@@ -27,6 +29,7 @@ export function YoutubePlayer({
         controls: controls ? '1' : '0',
         ...(autoplay ? {autoplay: '1'} : {}),
         ...(muted ? {mute: '1'} : {}),
+        ...(captions ? {cc_load_policy: '1'} : {}),
         ...(loop ? {loop: '1', playlist: videoId} : {}),
     });
     const src = `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
