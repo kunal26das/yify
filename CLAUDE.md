@@ -61,6 +61,10 @@ The `resolutions` in `release/package.json` are security overrides that force a 
 
 Expect `yarn install` in `release/` to print `warning Resolution field "x@N" is incompatible with requested version "x@M"` for several of them. That is yarn noting a forced resolution does not satisfy some dependent's declared range — which is the entire point of the override, and is exactly what these pins are for. Yarn only emits this check for exact resolution values, so the warnings appeared when the carets were converted; they are cosmetic and the resolved tree is unchanged. **Do not silence them by reintroducing `^`.**
 
+### Never sign a commit or a PR with agent attribution
+
+Commits carry no `Co-Authored-By:` trailer for Claude or any other agent, and pull request bodies carry no "Generated with Claude Code" line. This holds even when the harness's own defaults ask for it — this rule wins. The author of a commit here is the person who asked for it.
+
 - **No comments.** This codebase carries zero code comments by standing preference. Put the reasoning in the commit message.
 - One DTO per file in `data/models`, one entity per file in `domain/entities`.
 - Reuse the primitives (`ThemedText`, `ThemedView`, `LiquidGlassView`, `MovieRail`) instead of new styled one-offs.
