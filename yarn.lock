@@ -985,16 +985,7 @@
     "@expo/config" "~57.0.8"
     chalk "^4.1.2"
 
-"@expo/log-box@57.0.2":
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-57.0.2.tgz#2185dc3484ee81c63c3e7be5dc280d6300a15872"
-  integrity sha512-ZsFyfIR7YCbQAdVLzuTUmMHofZC7ZS9ywYCJNPlLc78x59cI8GwXFEIVbRjjC0uJERpNtXx/tsNNnkhexXlzMw==
-  dependencies:
-    "@expo/dom-webview" "^57.0.1"
-    anser "^1.4.9"
-    stacktrace-parser "^0.1.10"
-
-"@expo/log-box@^57.0.2", "@expo/log-box@^57.0.3":
+"@expo/log-box@57.0.3", "@expo/log-box@^57.0.2", "@expo/log-box@^57.0.3":
   version "57.0.3"
   resolved "https://registry.yarnpkg.com/@expo/log-box/-/log-box-57.0.3.tgz#89c81b30083b98c11d5d2cffba535a0fcab8d144"
   integrity sha512-qv/cMliNax6es07Un/4IGJIcs4PUuhTKKTrJZX/0X2YRcOT5cqm/QicibZwTIbiZWi1i8P4YBRQTfFT2B17giw==
