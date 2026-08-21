@@ -4640,12 +4640,12 @@ expo-asset@~57.0.11:
     "@expo/image-utils" "^0.11.4"
     expo-constants "~57.0.13"
 
-expo-background-task@57.0.8:
-  version "57.0.8"
-  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.8.tgz#1feed60b1ad8f915d25a08db175dbe7b5a11701f"
-  integrity sha512-W+bkvXm4uJ0HCvgrkHgIVU1C10sMHEkUblyN2Bx3YW7DXTbs3osnSQHMoC1cOq4OKDodjwp3zkqMatMwlUNZIQ==
+expo-background-task@57.0.11:
+  version "57.0.11"
+  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.11.tgz#83c14a068bd28feda6eb6dc524541f08baa4949c"
+  integrity sha512-bpIZN0at6hGfQiNkinTtxSn1PQTlz0Y904DrHNYMO2j/K3P+md/B4qPDzSCrsA/pcxPnYU3l2nIACdK7w/qCdw==
   dependencies:
-    expo-task-manager "~57.0.8"
+    expo-task-manager "~57.0.11"
 
 expo-blur@57.0.2:
   version "57.0.2"
@@ -4900,7 +4900,7 @@ expo-task-manager@57.0.11:
   dependencies:
     unimodules-app-loader "~57.0.1"
 
-expo-task-manager@~57.0.8:
+expo-task-manager@~57.0.11:
   version "57.0.12"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.12.tgz#3374ac4d002c6730c2ae7dc85f00255e1d026276"
   integrity sha512-Cs9JYqPle7TzPjfFxN7ym96arCB9/Izgaq22UuADF8dHZgsNM0yT0ucMj3/Wp2Yh6mXFruArtWgCd5b48AZWZw==
