@@ -125,6 +125,13 @@
       "version": "1.4.12",
       "runtimeVersion": "1.4.12",
       "releasedAt": "2026-08-21T13:09:15.289Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.6.0",
+      "runtimeVersion": "1.6.0",
+      "releasedAt": "2026-08-25T04:30:00.000Z"
     }
   ]
 }
