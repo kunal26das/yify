@@ -75,7 +75,7 @@ Commits carry no `Co-Authored-By:` trailer for Claude or any other agent, and pu
 
 `android/` and `ios/` sources are **tracked in git**, but `yarn prebuild` regenerates them from `app.json` + `app.config.js` + `plugins/`. Consequences:
 
-- Never hand-edit `android/` or `ios/` — the change belongs in a config plugin under `plugins/` (`withAndroidRelease`, `withGradleJvmArgs`, `withGwpAsan`) or in `app.json`.
+- Never hand-edit `android/` or `ios/` — the change belongs in a config plugin under `plugins/` (`withAndroidRelease`, `withGradleJvmArgs`, `withoutAdId`, `withGwpAsan`) or in `app.json`.
 - `expo prebuild` deletes the gitignored `android/keystore.properties`; it must be restored before a signed build.
 - Native builds need **JDK 17** — Android Studio's bundled JBR 25 fails with a misleading CMake error. The `scripts/run-android-*.sh` helpers resolve `JAVA_HOME` for you.
 

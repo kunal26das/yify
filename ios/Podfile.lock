@@ -427,7 +427,7 @@ PODS:
     - nanopb (~> 3.30910.0)
     - PromisesSwift (~> 2.1)
   - FirebaseSharedSwift (12.10.0)
-  - Google-Mobile-Ads-SDK (13.5.0):
+  - Google-Mobile-Ads-SDK (13.1.0):
     - GoogleUserMessagingPlatform (>= 1.1)
   - GoogleAppMeasurement/Core (12.10.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
@@ -2625,8 +2625,8 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets (>= 0.8.0)
     - Yoga
-  - RNGoogleMobileAds (16.5.0):
-    - Google-Mobile-Ads-SDK (= 13.5.0)
+  - RNGoogleMobileAds (16.3.4):
+    - Google-Mobile-Ads-SDK (= 13.1.0)
     - GoogleUserMessagingPlatform (= 3.1.0)
     - hermes-engine
     - RCTRequired
@@ -3401,7 +3401,7 @@ SPEC CHECKSUMS:
   FirebaseRemoteConfigInterop: a169873f4093b241eb5e27a4fbad91af36d64b8d
   FirebaseSessions: dba7635960740ad77cc2f3387d90ff22a7942f82
   FirebaseSharedSwift: 3d1e448b7202e36821a492941c84592d1308ea14
-  Google-Mobile-Ads-SDK: 2171620c6497804b57dc88b95644cc82e7dfb5b0
+  Google-Mobile-Ads-SDK: 8429bef6ee1a4e322b0a5571b64217ed8317a3d5
   GoogleAppMeasurement: 57270ccc2b77472d7e85c4cbe45972564eff78bb
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
   GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
@@ -3501,7 +3501,7 @@ SPEC CHECKSUMS:
   RNFBCrashlytics: 328e6466b1bf68e9813d1612e8ad043d169fc903
   RNFBRemoteConfig: feeadcd71f8e546ce483e807144ebe88feb9d668
   RNGestureHandler: 85a831012468d1b9af177debae2030d64b4bb610
-  RNGoogleMobileAds: bc162c787b68e2545b072b49295de46a97d29c97
+  RNGoogleMobileAds: 4db744a66f28c1c10392352208d7397ff9239a52
   RNGoogleSignin: 41b189ae99a41175130c55c88a2985a55f826a14
   RNPurchases: d756a69d648da879f7d6311a57cf7046a818c705
   RNReanimated: 41ad1a808a5860d14883872f68ed7cae2efc8635

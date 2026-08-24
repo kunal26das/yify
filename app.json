@@ -50,6 +50,7 @@
       "@react-native-google-signin/google-signin",
       "./plugins/withAndroidRelease",
       "./plugins/withGradleJvmArgs",
+      "./plugins/withoutAdId",
       [
         "react-native-google-mobile-ads",
         {
