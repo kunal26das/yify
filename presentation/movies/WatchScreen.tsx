@@ -26,6 +26,7 @@ import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {usePlayer, type PlayerVideo} from '../player/PlayerContext';
+import {useAdGateway} from '../di/DependenciesContext';
 import {DescriptionCard} from './components/DescriptionCard';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
@@ -99,6 +100,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const insets = useSafeAreaInsets();
     const topBarHeight = useTopBarHeight();
     const {video, open, minimize, setInlineRect, setQueue} = usePlayer();
+    const ads = useAdGateway();
     const goTo = useGoTo();
 
     const [titleExpanded, setTitleExpanded] = useState(false);
@@ -169,6 +171,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             ownedIdRef.current = null;
             setInlineRect(null);
             minimize();
+            void ads.show('movie_open');
             return;
         }
         ownedIdRef.current = details.id;
@@ -179,7 +182,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             subtitle: metaParts(details).join(' · '),
             thumbnailUrl: thumbFor(details),
         });
-    }, [details, minimize, open, setInlineRect, trailerCode]);
+    }, [ads, details, minimize, open, setInlineRect, trailerCode]);
 
     useEffect(() => {
         if (!trailerCode || !owns) return;

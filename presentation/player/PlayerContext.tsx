@@ -111,7 +111,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             const generation = ++generationRef.current;
             applyVideo(next);
             applyPlaying(false);
-            if (trigger === 'trailer_open') {
+            if (trigger === 'movie_open') {
                 const deferUnmute = Platform.OS === 'android';
                 pendingUnmuteRef.current = deferUnmute;
                 applyMuted(deferUnmute);
@@ -138,7 +138,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                 setMode('inline');
                 return;
             }
-            start(next, 'trailer_open');
+            start(next, 'movie_open');
             setMode('inline');
         },
         [start],

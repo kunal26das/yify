@@ -6,7 +6,7 @@ export const AD_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const AD_WINDOW_LIMIT = 4;
 
-export type AdTrigger = 'trailer_open' | 'queue_advance';
+export type AdTrigger = 'movie_open' | 'queue_advance';
 
 export type AdGateDecision =
     | 'show'
@@ -56,7 +56,7 @@ export function decideAd(
     windowMs: number = AD_WINDOW_MS,
     windowLimit: number = AD_WINDOW_LIMIT
 ): AdGateDecision {
-    if (input.trigger !== 'trailer_open') return 'wrong_trigger';
+    if (input.trigger !== 'movie_open') return 'wrong_trigger';
     if (!input.enabled) return 'disabled';
     if (!input.entitlementKnown) return 'unknown';
     if (input.adsRemoved) return 'entitled';

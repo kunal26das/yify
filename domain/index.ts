@@ -21,7 +21,7 @@ export {DEFAULT_PLAYBACK_PREFERENCES} from './entities/PlaybackPreferences';
 export type {NotificationPreferences} from './entities/NotificationPreferences';
 export {DEFAULT_NOTIFICATION_PREFERENCES} from './entities/NotificationPreferences';
 export type {PurchaseOffer, PurchaseState} from './entities/Entitlement';
-export {REMOVE_ADS_ENTITLEMENT, INITIAL_PURCHASE_STATE} from './entities/Entitlement';
+export {REMOVE_ADS_ENTITLEMENT, LIFETIME_PACKAGE, INITIAL_PURCHASE_STATE} from './entities/Entitlement';
 export type {UpdateState, UpdateStatus} from './entities/UpdateStatus';
 export {IDLE_UPDATE_STATUS} from './entities/UpdateStatus';
 export type {SyncState, SyncFailure, SyncStatus} from './entities/SyncStatus';

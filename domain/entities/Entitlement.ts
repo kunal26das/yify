@@ -1,5 +1,7 @@
 export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
+export const LIFETIME_PACKAGE = '$rc_lifetime';
+
 export interface PurchaseOffer {
     id: string;
     title: string;

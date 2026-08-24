@@ -2,6 +2,7 @@ import {ErrorCode, Purchases, PurchasesError, type Package} from '@revenuecat/pu
 
 import {
     INITIAL_PURCHASE_STATE,
+    LIFETIME_PACKAGE,
     REMOVE_ADS_ENTITLEMENT,
     type Account,
     type AnalyticsSink,
@@ -17,7 +18,6 @@ const APP_USER_ID_KEY = 'app_user_id';
 const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_WEB_KEY;
 
 const ADS_REMOVED_KEY = 'ads_removed';
-const LIFETIME_PACKAGE = '$rc_lifetime';
 
 function hasRemoveAds(info: {entitlements: {active: Record<string, unknown>}}): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;

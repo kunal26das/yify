@@ -5,7 +5,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {BrowseDefaults, NotificationPreferences, ThemePreference} from '@/domain';
+import {LIFETIME_PACKAGE, type BrowseDefaults, type NotificationPreferences, type ThemePreference} from '@/domain';
 import {useConfirm} from '../components/confirm-dialog';
 import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
 import {Screen} from '../components/screen';
@@ -630,12 +630,23 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const purchases = usePurchaseRepository();
     const ads = useAdGateway();
     const state = usePurchases();
+    const {account} = useAuth();
     const confirm = useConfirm();
     const [restoring, setRestoring] = useState(false);
 
     const offer = state.offers.length > 0 ? state.offers[0] : null;
+    const oneTime = offer?.id === LIFETIME_PACKAGE;
+    const sellable = offer != null && (ads.supported || account != null);
 
-    if (!state.available || !(ads.supported || state.adsRemoved)) return null;
+    if (!state.available) return null;
+    if (!state.adsRemoved && !sellable) return null;
+
+    const pitch = ads.supported
+        ? 'A short ad plays before a trailer. One payment removes it for good.'
+        : 'Removes the ad before trailers in the Yify app, on every device you sign in on.';
+    const terms = oneTime
+        ? 'one payment, nothing renews'
+        : 'billed until you cancel';
 
     const notice = (title: string, message: string, icon: Glyph) =>
         confirm({
@@ -652,7 +663,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
         Analytics.removeAdsPrompt('settings');
         confirm({
             title: 'Remove ads',
-            message: `A short ad plays before a trailer. ${offer.priceLabel} removes it for good \u2014 one payment, nothing renews. Ads inside YouTube trailers are YouTube's and stay.`,
+            message: `${pitch} ${offer.priceLabel}, ${terms}. Ads inside YouTube trailers are YouTube's and stay.`,
             confirmLabel: `Remove ads \u00b7 ${offer.priceLabel}`,
             cancelLabel: 'Not now',
             icon: 'sparkles-outline',
@@ -733,7 +744,11 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="checkmark-circle-outline"
                         title="Ads removed"
-                        subtitle="Thank you. Trailers start straight away."
+                        subtitle={
+                            ads.supported
+                                ? 'Thank you. Trailers start straight away.'
+                                : 'Thank you. This covers every device you sign in on.'
+                        }
                         colors={colors}
                         gutter={gutter}
                         trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
@@ -743,11 +758,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         <Row
                             icon="sparkles-outline"
                             title="Remove ads"
-                            subtitle={
-                                offer
-                                    ? 'A short ad plays before a trailer. One payment removes it for good.'
-                                    : 'Purchases are not available right now.'
-                            }
+                            subtitle={offer ? pitch : 'Purchases are not available right now.'}
                             colors={colors}
                             gutter={gutter}
                             onPress={offer && state.purchasing == null ? buy : undefined}

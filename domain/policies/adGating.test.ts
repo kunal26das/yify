@@ -23,7 +23,7 @@ function state(overrides: Partial<AdGateState> = {}): AdGateState {
 
 function input(overrides: Partial<AdGateInput> = {}): AdGateInput {
     return {
-        trigger: 'trailer_open',
+        trigger: 'movie_open',
         enabled: true,
         entitlementKnown: true,
         adsRemoved: false,

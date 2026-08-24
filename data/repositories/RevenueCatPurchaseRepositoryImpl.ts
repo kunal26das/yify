@@ -7,6 +7,7 @@ import Purchases, {
 
 import {
     INITIAL_PURCHASE_STATE,
+    LIFETIME_PACKAGE,
     REMOVE_ADS_ENTITLEMENT,
     type Account,
     type AnalyticsSink,
@@ -24,7 +25,6 @@ const apiKey =
         : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
 const ADS_REMOVED_KEY = 'ads_removed';
-const LIFETIME_PACKAGE = '$rc_lifetime';
 
 function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
