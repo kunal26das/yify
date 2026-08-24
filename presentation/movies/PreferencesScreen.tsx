@@ -630,23 +630,16 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const purchases = usePurchaseRepository();
     const ads = useAdGateway();
     const state = usePurchases();
-    const {account} = useAuth();
+    const {account, signingIn, available: canSignIn} = useAuth();
+    const auth = useAuthRepository();
     const confirm = useConfirm();
     const [restoring, setRestoring] = useState(false);
 
     const offer = state.offers.length > 0 ? state.offers[0] : null;
-    const oneTime = offer?.id === LIFETIME_PACKAGE;
-    const sellable = offer != null && (ads.supported || account != null);
+    const terms = offer?.id === LIFETIME_PACKAGE ? 'one payment, nothing renews' : 'billed until you cancel';
 
     if (!state.available) return null;
-    if (!state.adsRemoved && !sellable) return null;
-
-    const pitch = ads.supported
-        ? 'A short ad plays before a trailer. One payment removes it for good.'
-        : 'Removes the ad before trailers in the Yify app, on every device you sign in on.';
-    const terms = oneTime
-        ? 'one payment, nothing renews'
-        : 'billed until you cancel';
+    if (!state.adsRemoved && offer == null) return null;
 
     const notice = (title: string, message: string, icon: Glyph) =>
         confirm({
@@ -659,11 +652,11 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
         });
 
     const buy = () => {
-        if (offer == null || state.purchasing != null) return;
+        if (offer == null || account == null || state.purchasing != null) return;
         Analytics.removeAdsPrompt('settings');
         confirm({
             title: 'Remove ads',
-            message: `${pitch} ${offer.priceLabel}, ${terms}. Ads inside YouTube trailers are YouTube's and stay.`,
+            message: `Removes the ad before trailers on every device you sign in on. ${offer.priceLabel}, ${terms}. Ads inside YouTube trailers are YouTube's and stay.`,
             confirmLabel: `Remove ads \u00b7 ${offer.priceLabel}`,
             cancelLabel: 'Not now',
             icon: 'sparkles-outline',
@@ -730,7 +723,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
             }
             notice(
                 'Nothing to restore',
-                'We could not find a Remove ads purchase on this store account. If you bought it with a different account, sign in to that one and try again.',
+                'We could not find a Remove ads purchase on this account. If you bought it with a different account, sign in to that one and try again.',
                 'information-circle-outline'
             );
         });
@@ -744,28 +737,47 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="checkmark-circle-outline"
                         title="Ads removed"
-                        subtitle={
-                            ads.supported
-                                ? 'Thank you. Trailers start straight away.'
-                                : 'Thank you. This covers every device you sign in on.'
-                        }
+                        subtitle="Thank you. This covers every device you sign in on."
                         colors={colors}
                         gutter={gutter}
                         trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
+                    />
+                ) : account == null ? (
+                    <Row
+                        icon="sparkles-outline"
+                        title="Remove ads"
+                        subtitle={
+                            canSignIn
+                                ? 'Sign in first, then one purchase covers every device you use.'
+                                : 'Sign-in is unavailable in this build.'
+                        }
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={signingIn || !canSignIn ? undefined : () => void auth.signIn()}
+                        accessibilityLabel="Sign in to remove ads"
+                        accessibilityState={{disabled: !canSignIn}}
+                        trailing={
+                            signingIn ? (
+                                <ActivityIndicator color={colors.accent}/>
+                            ) : offer ? (
+                                <ThemedText style={[styles.value, {color: colors.accent}]}>
+                                    {offer.priceLabel}
+                                </ThemedText>
+                            ) : null
+                        }
                     />
                 ) : (
                     <>
                         <Row
                             icon="sparkles-outline"
                             title="Remove ads"
-                            subtitle={offer ? pitch : 'Purchases are not available right now.'}
+                            subtitle="Removes the ad before trailers on every device you sign in on."
                             colors={colors}
                             gutter={gutter}
-                            onPress={offer && state.purchasing == null ? buy : undefined}
+                            onPress={state.purchasing == null ? buy : undefined}
                             accessibilityLabel="Remove ads"
-                            accessibilityState={{disabled: offer == null}}
                             trailing={
-                                state.purchasing != null || (!state.ready && offer == null) ? (
+                                state.purchasing != null ? (
                                     <ActivityIndicator color={colors.accent}/>
                                 ) : offer ? (
                                     <ThemedText style={[styles.value, {color: colors.accent}]}>
