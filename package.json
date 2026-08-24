@@ -41,7 +41,7 @@
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
     "@expo/log-box": "57.0.3",
     "@expo/metro-runtime": "57.0.11",
-    "@expo/ui": "57.0.11",
+    "@expo/ui": "57.0.12",
     "@expo/vector-icons": "15.0.2",
     "@gorhom/bottom-sheet": "5.2.14",
     "@react-native-firebase/analytics": "24.1.1",
