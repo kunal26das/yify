@@ -2518,10 +2518,10 @@
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.52.0.tgz#ab06bb95800d054572c02dd936c59aa250fb9402"
   integrity sha512-DCxib99kv7+Dt+HlDnV9cOBgQz6BEUdsP1bi3hObhzGHGtBoVab9qMkEMLamVT33nipOtWZRlHcfNfk3iCbsdQ==
 
-"@revenuecat/purchases-js@1.53.0":
-  version "1.53.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.53.0.tgz#057c13bad0e3d17b2914d875c14f88da6765ad49"
-  integrity sha512-uvzXQzlhc2Ai/p/e8JUW7OU6GRYjfQdAekhsivGkx79xJuOVbu/DiL8DIAjyb2BkvBz61hd9g8K9PkWjeS0Zmw==
+"@revenuecat/purchases-js@1.53.1":
+  version "1.53.1"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.53.1.tgz#d4fc104f9b12c858ebace3a59f33daca446ce054"
+  integrity sha512-7RMz5AE6rVtGORALYmTyauQ7fJh+/HPGAmDSrqsb2UcQS8pf/JvPbKP0iITCKeXnksTeN3D8+SKVyYMOio6mJQ==
 
 "@revenuecat/purchases-typescript-internal@18.30.0":
   version "18.30.0"
