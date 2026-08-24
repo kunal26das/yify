@@ -4693,10 +4693,10 @@ expo-build-properties@57.0.12:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@57.0.12:
-  version "57.0.12"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.12.tgz#f9de7d1d89227cda2ff9b89a3e7aacdbaf83860c"
-  integrity sha512-js9qxZw4G9ulSc72GGpYGwtmk/IzFcf6/tTcEG6wB8HTlkunMS4W86R+4e6oHIrIkHA7W6s/79Se+E+DC3RAqA==
+expo-constants@57.0.13:
+  version "57.0.13"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.13.tgz#52490b613f9c87805a14431d7b11fccfdae3c638"
+  integrity sha512-eB5AHp7kKxsVIBjTetUgj5WQSw8joI2ekzgTlcUv+Hc0x2t0jZU6IiL4DpyOT2yZQ71n0WJZCkmOKLgxlajIzg==
   dependencies:
     "@expo/env" "~2.4.2"
 
