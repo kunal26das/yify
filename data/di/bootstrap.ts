@@ -6,6 +6,7 @@ export function bootstrap(dependencies: Dependencies): void {
     void dependencies.appConfig.init();
     dependencies.auth.init();
     void dependencies.purchases.init();
+    void dependencies.ads.init();
     dependencies.accountSync.start();
     getAccountLink()?.start();
     void dependencies.storeServices.start();

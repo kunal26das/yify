@@ -14,11 +14,6 @@ function trackScreenView(screenName: string): void {
     sink?.trackScreenView(screenName);
 }
 
-function setUserProperty(name: string, value: string | null): void {
-    sink?.setUserProperty(name, value);
-}
-
-
 function movieParams(movie: Pick<Movie, 'id' | 'title'>) {
     return {movie_id: movie.id, movie_title: movie.title};
 }
@@ -104,15 +99,7 @@ export const Analytics = {
         trackEvent('login_failed', {method, reason}),
     signOut: () => trackEvent('logout'),
 
-    entitlement: (removeAds: boolean) => setUserProperty('remove_ads', removeAds ? 'true' : 'false'),
-    removeAdsPurchaseStart: (packageId: string) =>
-        trackEvent('remove_ads_purchase_start', {package_id: packageId}),
-    removeAdsPurchaseDone: (packageId: string, granted: boolean) =>
-        trackEvent('remove_ads_purchase_done', {package_id: packageId, granted}),
-    removeAdsPurchaseFailed: (packageId: string, reason: string) =>
-        trackEvent('remove_ads_purchase_failed', {package_id: packageId, reason}),
-    removeAdsRestore: (result: 'restored' | 'none' | 'error') =>
-        trackEvent('remove_ads_restore', {result}),
+    removeAdsPrompt: (source: string) => trackEvent('remove_ads_prompt', {source}),
 
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>

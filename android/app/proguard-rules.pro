@@ -18,6 +18,7 @@
 -keep class com.swmansion.worklets.** { *; }
 -keep class com.margelo.nitro.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
+-keep class com.google.android.gms.internal.consent_sdk.** { *; }
 -keepattributes SourceFile,LineNumberTable
 -keepattributes *Annotation*
 

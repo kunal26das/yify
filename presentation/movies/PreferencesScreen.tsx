@@ -28,8 +28,14 @@ import {ChipBar} from './components/ChipBar';
 import {useTopBarHeight} from './components/TopBar';
 import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
+import {usePurchases} from '../hooks/use-purchases';
 import {useSyncStatus} from '../hooks/use-sync-status';
-import {useAccountSync, useAuthRepository} from '../di/DependenciesContext';
+import {
+    useAccountSync,
+    useAdGateway,
+    useAuthRepository,
+    usePurchaseRepository,
+} from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -181,6 +187,8 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 showsVerticalScrollIndicator={false}
             >
                 <AccountSection colors={colors} gutter={gutter}/>
+
+                <RemoveAdsSection colors={colors} gutter={gutter}/>
 
                 <SectionHeader title="General" colors={colors} gutter={gutter} index={rank++}/>
 
@@ -613,6 +621,178 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                 )}
+            </Group>
+        </>
+    );
+}
+
+function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
+    const purchases = usePurchaseRepository();
+    const ads = useAdGateway();
+    const state = usePurchases();
+    const confirm = useConfirm();
+    const [restoring, setRestoring] = useState(false);
+
+    const offer = state.offers.length > 0 ? state.offers[0] : null;
+
+    if (!state.available || !(ads.supported || state.adsRemoved)) return null;
+
+    const notice = (title: string, message: string, icon: Glyph) =>
+        confirm({
+            title,
+            message,
+            confirmLabel: 'OK',
+            icon,
+            destructive: false,
+            onConfirm: () => undefined,
+        });
+
+    const buy = () => {
+        if (offer == null || state.purchasing != null) return;
+        Analytics.removeAdsPrompt('settings');
+        confirm({
+            title: 'Remove ads',
+            message: `A short ad plays before a trailer. ${offer.priceLabel} removes it for good \u2014 one payment, nothing renews. Ads inside YouTube trailers are YouTube's and stay.`,
+            confirmLabel: `Remove ads \u00b7 ${offer.priceLabel}`,
+            cancelLabel: 'Not now',
+            icon: 'sparkles-outline',
+            destructive: false,
+            onConfirm: () => {
+                void purchases.purchase(offer.id).then((granted) => {
+                    if (granted) return;
+                    const reason = purchases.getState().failure;
+                    if (reason == null || reason === 'cancelled') return;
+                    if (reason === 'PRODUCT_ALREADY_PURCHASED') {
+                        notice(
+                            'Already purchased',
+                            'This account already owns Remove ads. Tap Restore purchase to bring it back on this device.',
+                            'information-circle-outline'
+                        );
+                        return;
+                    }
+                    if (reason === 'PAYMENT_PENDING') {
+                        notice(
+                            'Payment pending',
+                            'Your payment is still being processed. Ads will go once it clears \u2014 no need to pay again.',
+                            'time-outline'
+                        );
+                        return;
+                    }
+                    if (reason === 'not_granted') {
+                        notice(
+                            'Not applied yet',
+                            'The purchase went through but has not unlocked yet. Tap Restore purchase in a moment, or contact support if it persists.',
+                            'alert-circle-outline'
+                        );
+                        return;
+                    }
+                    notice(
+                        'Purchase failed',
+                        'We could not complete the purchase. If you were charged, tap Restore purchase.',
+                        'alert-circle-outline'
+                    );
+                });
+            },
+        });
+    };
+
+    const restore = () => {
+        if (restoring) return;
+        setRestoring(true);
+        void purchases.restore().then((restored) => {
+            setRestoring(false);
+            if (restored) {
+                notice(
+                    'Ads removed',
+                    'Your purchase is back on this device. Trailers now start straight away.',
+                    'checkmark-circle-outline'
+                );
+                return;
+            }
+            if (purchases.getState().failure === 'restore_failed') {
+                notice(
+                    'Restore failed',
+                    'We could not reach the store. Check your connection and try again.',
+                    'cloud-offline-outline'
+                );
+                return;
+            }
+            notice(
+                'Nothing to restore',
+                'We could not find a Remove ads purchase on this store account. If you bought it with a different account, sign in to that one and try again.',
+                'information-circle-outline'
+            );
+        });
+    };
+
+    return (
+        <>
+            <SectionHeader title="Yify" colors={colors} gutter={gutter} index={0}/>
+            <Group colors={colors} index={0}>
+                {state.adsRemoved ? (
+                    <Row
+                        icon="checkmark-circle-outline"
+                        title="Ads removed"
+                        subtitle="Thank you. Trailers start straight away."
+                        colors={colors}
+                        gutter={gutter}
+                        trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
+                    />
+                ) : (
+                    <>
+                        <Row
+                            icon="sparkles-outline"
+                            title="Remove ads"
+                            subtitle={
+                                offer
+                                    ? 'A short ad plays before a trailer. One payment removes it for good.'
+                                    : 'Purchases are not available right now.'
+                            }
+                            colors={colors}
+                            gutter={gutter}
+                            onPress={offer && state.purchasing == null ? buy : undefined}
+                            accessibilityLabel="Remove ads"
+                            accessibilityState={{disabled: offer == null}}
+                            trailing={
+                                state.purchasing != null || (!state.ready && offer == null) ? (
+                                    <ActivityIndicator color={colors.accent}/>
+                                ) : offer ? (
+                                    <ThemedText style={[styles.value, {color: colors.accent}]}>
+                                        {offer.priceLabel}
+                                    </ThemedText>
+                                ) : null
+                            }
+                        />
+                        <Row
+                            icon="refresh-outline"
+                            title="Restore purchase"
+                            subtitle="Already paid? Bring it back on this device."
+                            colors={colors}
+                            gutter={gutter}
+                            onPress={restoring ? undefined : restore}
+                            accessibilityLabel="Restore purchase"
+                            trailing={
+                                restoring ? (
+                                    <ActivityIndicator color={colors.accent}/>
+                                ) : (
+                                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>
+                                )
+                            }
+                        />
+                    </>
+                )}
+                {ads.privacyOptionsRequired() ? (
+                    <Row
+                        icon="shield-checkmark-outline"
+                        title="Ad privacy choices"
+                        subtitle="Change how ads are personalised for you."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={() => void ads.showPrivacyOptions()}
+                        accessibilityLabel="Ad privacy choices"
+                        trailing={<Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>}
+                    />
+                ) : null}
             </Group>
         </>
     );

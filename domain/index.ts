@@ -64,6 +64,18 @@ export type {NewMoviesNotification, NewMoviesFilter} from './policies/newMoviesN
 export {readSection, mergeSection} from './policies/preferencesMerge';
 export type {SectionGuards} from './policies/preferencesMerge';
 export {
+  decideAd,
+  commitAdShown,
+  parseAdGateState,
+  encodeAdGateState,
+  INITIAL_AD_GATE_STATE,
+  AD_GATE_STATE_VERSION,
+  AD_COOLDOWN_MS,
+  AD_WINDOW_MS,
+  AD_WINDOW_LIMIT,
+} from './policies/adGating';
+export type {AdTrigger, AdGateDecision, AdGateState, AdGateInput} from './policies/adGating';
+export {
   chooseSyncMode,
   resolveSection,
   parseWatchlistState,
@@ -91,6 +103,7 @@ export type {AnalyticsSink, AnalyticsParams} from './services/AnalyticsSink';
 export type {AppConfig} from './services/AppConfig';
 export type {AppUpdates} from './services/AppUpdates';
 export type {StoreServices} from './services/StoreServices';
+export type {AdGateway} from './services/AdGateway';
 export type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 export type {AccountSync} from './services/AccountSync';
 

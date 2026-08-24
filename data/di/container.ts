@@ -15,6 +15,7 @@ import {RevenueCatPurchaseRepositoryImpl} from '../repositories/RevenueCatPurcha
 import {RemoteAppConfig} from '../services/RemoteAppConfig';
 import {ExpoAppUpdates} from '../services/ExpoAppUpdates';
 import {PlayStoreServices} from '../services/PlayStoreServices';
+import {AdMobAdGateway} from '../services/AdMobAdGateway';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
@@ -51,6 +52,16 @@ export function createDependencies(): Dependencies {
 
     accountLink = new AccountLink({auth, purchases, accountSync, analytics});
 
+    const ads = new AdMobAdGateway({
+        analytics,
+        store: new PersistentCache('ads'),
+        ready: () => appConfig.ready(),
+        enabled: () => appConfig.getAdsEnabled(),
+        unitId: () => appConfig.getAdUnitId(),
+        cooldownMs: () => appConfig.getAdCooldownMs(),
+        entitlement: () => purchases.getState(),
+    });
+
     instance = {
         analytics,
         appConfig,
@@ -66,6 +77,7 @@ export function createDependencies(): Dependencies {
         accountSync,
         newMovies: new NewMoviesNotifierImpl(),
         storeServices: new PlayStoreServices(),
+        ads,
     };
 
     return instance;

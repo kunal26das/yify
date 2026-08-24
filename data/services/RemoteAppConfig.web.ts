@@ -5,7 +5,7 @@ import {
   type RemoteConfig,
 } from 'firebase/remote-config';
 
-import type {AppConfig} from '@/domain';
+import {AD_COOLDOWN_MS, type AppConfig} from '@/domain';
 import {DEFAULT_BASE_URL} from '../datasources/YtsApiDataSource';
 import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {
@@ -49,6 +49,18 @@ export class RemoteAppConfig implements AppConfig {
     } catch {
       return TMDB_FALLBACK_KEY;
     }
+  }
+
+  getAdsEnabled(): boolean {
+    return false;
+  }
+
+  getAdUnitId(): string {
+    return '';
+  }
+
+  getAdCooldownMs(): number {
+    return AD_COOLDOWN_MS;
   }
 
   private async doInit(): Promise<void> {

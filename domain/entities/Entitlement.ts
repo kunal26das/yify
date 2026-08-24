@@ -8,12 +8,18 @@ export interface PurchaseOffer {
 
 export interface PurchaseState {
     ready: boolean;
+    available: boolean;
     adsRemoved: boolean;
     offers: PurchaseOffer[];
+    purchasing: string | null;
+    failure: string | null;
 }
 
 export const INITIAL_PURCHASE_STATE: PurchaseState = {
     ready: false,
+    available: false,
     adsRemoved: false,
     offers: [],
+    purchasing: null,
+    failure: null,
 };

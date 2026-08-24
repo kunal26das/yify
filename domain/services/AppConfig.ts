@@ -8,4 +8,10 @@ export interface AppConfig {
     getApiBaseUrl(): string;
 
     getTmdbApiKey(): string;
+
+    getAdsEnabled(): boolean;
+
+    getAdUnitId(): string;
+
+    getAdCooldownMs(): number;
 }

@@ -23,6 +23,9 @@ const apiKey =
         ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
         : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
+const ADS_REMOVED_KEY = 'ads_removed';
+const LIFETIME_PACKAGE = '$rc_lifetime';
+
 function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
 }
@@ -51,10 +54,15 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private configured = false;
     private pendingAccount: Account | null | undefined;
     private reportedAdsRemoved: boolean | undefined;
+    private verified = false;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore) {
         this.analytics = analytics;
         this.cache = cache;
+        this.store.set({
+            available: Boolean(apiKey),
+            adsRemoved: cache.getString(ADS_REMOVED_KEY) === 'true',
+        });
     }
 
     getState(): PurchaseState {
@@ -73,10 +81,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             await Purchases.configure({apiKey});
             await this.linkFirebaseAnalytics();
             Purchases.addCustomerInfoUpdateListener((info) => {
+                this.verified = true;
                 this.setState({adsRemoved: hasRemoveAds(info)});
             });
-            this.configured = true;
             const info = await Purchases.getCustomerInfo();
+            this.configured = true;
+            this.verified = true;
             this.setState({ready: true, adsRemoved: hasRemoveAds(info)});
             await this.loadOfferings();
             if (this.pendingAccount !== undefined) {
@@ -92,26 +102,35 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     async purchase(offerId: string): Promise<boolean> {
         const pkg = this.packages.get(offerId);
         if (pkg == null) {
+            this.setState({failure: 'offer_unavailable'});
             this.analytics.trackEvent('remove_ads_purchase_failed', {
                 package_id: offerId,
                 reason: 'offer_unavailable',
             });
             return false;
         }
+        this.setState({purchasing: offerId, failure: null});
         this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
         try {
             const {customerInfo} = await Purchases.purchasePackage(pkg);
             const purchased = hasRemoveAds(customerInfo);
-            this.setState({adsRemoved: purchased});
+            this.verified = true;
+            this.setState({
+                adsRemoved: purchased,
+                purchasing: null,
+                failure: purchased ? null : 'not_granted',
+            });
             this.analytics.trackEvent('remove_ads_purchase_done', {
                 package_id: offerId,
                 granted: purchased,
             });
             return purchased;
         } catch (error) {
+            const reason = purchaseFailureReason(error);
+            this.setState({purchasing: null, failure: reason});
             this.analytics.trackEvent('remove_ads_purchase_failed', {
                 package_id: offerId,
-                reason: purchaseFailureReason(error),
+                reason,
             });
             return false;
         }
@@ -121,12 +140,14 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         try {
             const info = await Purchases.restorePurchases();
             const restored = hasRemoveAds(info);
-            this.setState({adsRemoved: restored});
+            this.verified = true;
+            this.setState({adsRemoved: restored, failure: null});
             this.analytics.trackEvent('remove_ads_restore', {
                 result: restored ? 'restored' : 'none',
             });
             return restored;
         } catch {
+            this.setState({failure: 'restore_failed'});
             this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
             return false;
         }
@@ -142,6 +163,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             const info = account
                 ? (await Purchases.logIn(account.uid)).customerInfo
                 : await Purchases.logOut();
+            this.verified = true;
             this.setState({adsRemoved: hasRemoveAds(info)});
             await this.linkFirebaseAnalytics();
             if (account) {
@@ -158,6 +180,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         const state = this.store.get();
         if (state.ready && this.reportedAdsRemoved !== state.adsRemoved) {
             this.reportedAdsRemoved = state.adsRemoved;
+            if (this.verified) this.cache.set(ADS_REMOVED_KEY, state.adsRemoved ? 'true' : 'false');
             this.analytics.setUserProperty('remove_ads', state.adsRemoved ? 'true' : 'false');
         }
     }
@@ -165,7 +188,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async loadOfferings(): Promise<void> {
         try {
             const offerings = await Purchases.getOfferings();
-            const available = offerings.current?.availablePackages ?? [];
+            const all = offerings.current?.availablePackages ?? [];
+            const available = [...all].sort(
+                (left, right) =>
+                    Number(right.identifier === LIFETIME_PACKAGE) -
+                    Number(left.identifier === LIFETIME_PACKAGE)
+            );
             this.packages.clear();
             available.forEach((pkg) => this.packages.set(pkg.identifier, pkg));
             this.setState({offers: available.map(toOffer)});

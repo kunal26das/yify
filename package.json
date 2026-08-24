@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.4.12",
-  "versionCode": 59,
+  "version": "1.6.0",
+  "versionCode": 60,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -79,6 +79,7 @@
     "react-dom": "19.2.8",
     "react-native": "0.86.2",
     "react-native-gesture-handler": "3.2.1",
+    "react-native-google-mobile-ads": "16.5.0",
     "react-native-mmkv": "4.3.2",
     "react-native-nitro-modules": "0.36.5",
     "react-native-purchases": "10.7.1",

@@ -31,7 +31,7 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
 
     useEffect(() => {
         setActive(playing);
-    }, [playing]);
+    }, [playing, videoId]);
 
     useEffect(() => {
         setSilent(muted);

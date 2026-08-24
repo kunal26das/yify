@@ -11,7 +11,9 @@ import {
 } from 'react';
 
 import {Platform} from 'react-native';
+import type {AdTrigger} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
+import {useAdGateway} from '../di/DependenciesContext';
 import {usePreferences} from '../hooks/use-preferences';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
 
@@ -70,6 +72,8 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const {playback} = usePreferences();
     const playbackRef = useRef(playback);
     playbackRef.current = playback;
+    const ads = useAdGateway();
+    const generationRef = useRef(0);
 
     const [video, setVideo] = useState<PlayerVideo | null>(null);
     const [mode, setMode] = useState<PlayerMode>('closed');
@@ -102,25 +106,47 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
         setMuted(next);
     }, []);
 
+    const start = useCallback(
+        (next: PlayerVideo, trigger: AdTrigger) => {
+            const generation = ++generationRef.current;
+            applyVideo(next);
+            applyPlaying(false);
+            if (trigger === 'trailer_open') {
+                const deferUnmute = Platform.OS === 'android';
+                pendingUnmuteRef.current = deferUnmute;
+                applyMuted(deferUnmute);
+            }
+            const begin = () => {
+                if (generationRef.current !== generation) return;
+                if (videoRef.current?.videoId !== next.videoId) return;
+                applyPlaying(true);
+                Analytics.trailerPlay({id: next.movieId, title: next.title});
+            };
+            const pending = ads.show(trigger);
+            if (pending == null) {
+                begin();
+                return;
+            }
+            void pending.then(begin, begin);
+        },
+        [ads, applyMuted, applyPlaying, applyVideo],
+    );
+
     const open = useCallback(
         (next: PlayerVideo) => {
             if (videoRef.current?.videoId === next.videoId) {
                 setMode('inline');
                 return;
             }
-            applyVideo(next);
-            applyPlaying(true);
-            const deferUnmute = Platform.OS === 'android';
-            pendingUnmuteRef.current = deferUnmute;
-            applyMuted(deferUnmute);
+            start(next, 'trailer_open');
             setMode('inline');
-            Analytics.trailerPlay({id: next.movieId, title: next.title});
         },
-        [applyMuted, applyPlaying, applyVideo],
+        [start],
     );
 
     const close = useCallback(() => {
         const current = videoRef.current;
+        generationRef.current += 1;
         queueRef.current = [];
         setMode('closed');
         applyVideo(null);
@@ -196,10 +222,9 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             applyPlaying(false);
             return;
         }
-        applyVideo(next);
-        applyPlaying(true);
-        Analytics.trailerPlay({id: next.movieId, title: next.title});
-    }, [applyPlaying, applyVideo]);
+        Analytics.playerQueueAdvance({id: next.movieId, title: next.title});
+        start(next, 'queue_advance');
+    }, [applyPlaying, start]);
 
     const handleEnded = useCallback(() => {
         if (playbackRef.current.autoplayNext) {

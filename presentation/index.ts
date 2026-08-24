@@ -10,6 +10,7 @@ export {
   useWatchlistRepository,
   useAppUpdates,
   usePurchaseRepository,
+  useAdGateway,
   useNewMoviesNotifier,
 } from './di/DependenciesContext';
 

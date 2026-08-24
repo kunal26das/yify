@@ -7,6 +7,7 @@ import type {ShowRepository} from './repositories/ShowRepository';
 import type {TmdbRepository} from './repositories/TmdbRepository';
 import type {WatchlistRepository} from './repositories/WatchlistRepository';
 import type {AccountSync} from './services/AccountSync';
+import type {AdGateway} from './services/AdGateway';
 import type {AnalyticsSink} from './services/AnalyticsSink';
 import type {AppConfig} from './services/AppConfig';
 import type {AppUpdates} from './services/AppUpdates';
@@ -28,4 +29,5 @@ export interface Dependencies {
     accountSync: AccountSync;
     newMovies: NewMoviesNotifier;
     storeServices: StoreServices;
+    ads: AdGateway;
 }

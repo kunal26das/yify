@@ -1,6 +1,7 @@
 import {createContext, useContext, type ReactNode} from 'react';
 import type {
     AccountSync,
+    AdGateway,
     AppConfig,
     AppUpdates,
     AuthRepository,
@@ -72,6 +73,10 @@ export function useAppUpdates(): AppUpdates {
 
 export function usePurchaseRepository(): PurchaseRepository {
     return useDependencies().purchases;
+}
+
+export function useAdGateway(): AdGateway {
+    return useDependencies().ads;
 }
 
 export function useNewMoviesNotifier(): NewMoviesNotifier {

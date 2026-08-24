@@ -345,7 +345,7 @@ yify/
 ├─ config/                   # 🔥 google-services.json / GoogleService-Info.plist
 ├─ desktop/                  # 🖥️ Electron shell + tray notifier (wraps the web export)
 ├─ release/                  # 🚀 clean-arch release console (TUI + GUI) + releases.json ledger
-├─ plugins/                  # 🧩 config plugins — Android release, R8 heap, GWP-ASan, ad-id opt-out
+├─ plugins/                  # 🧩 config plugins — Android release, R8 heap, GWP-ASan
 └─ scripts/                  # 🛠️ android debug/release build helpers
 ```
 
