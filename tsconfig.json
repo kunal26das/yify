@@ -13,6 +13,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "release"
   ]
 }

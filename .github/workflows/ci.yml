@@ -34,3 +34,23 @@ jobs:
 
       - name: Tests
         run: yarn test
+
+  release-console:
+    name: Typecheck release console
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: release
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: release
