@@ -142,6 +142,20 @@
     },
     {
       "platform": "android",
+      "channel": "Staging",
+      "version": "1.5.1",
+      "runtimeVersion": "1.5.1",
+      "releasedAt": "2026-08-25T01:54:31.594Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.5.1",
+      "runtimeVersion": "1.5.1",
+      "releasedAt": "2026-08-25T01:57:08.706Z"
+    },
+    {
+      "platform": "android",
       "channel": "Production",
       "version": "1.6.0",
       "runtimeVersion": "1.6.0",

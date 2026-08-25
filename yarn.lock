@@ -6782,9 +6782,9 @@ negotiator@~0.6.4:
   integrity sha512-myRT3DiWPHqho5PrJaIRyaMv2kgYf0mUVgBNOYMuCH5Ki1yEiQaf/ZJuQ62nvpc44wL5WDbTX7yGJi1Neevw8w==
 
 node-abi@^4.2.0:
-  version "4.33.0"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-4.33.0.tgz#cce9b7bce0cbfa1d5d5a9b6908bc5eed698969cc"
-  integrity sha512-vLBWCKb+7LWsX+TbfzWOkw0W81m377tyx3hOweBTjO43CXZnRGS1/JPWs20fr0PgZyDXk6ROYrylsEycK8raDA==
+  version "4.34.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-4.34.0.tgz#4ebb7adec1897f63831ed9f78701df6b54fd9994"
+  integrity sha512-4Oy5Q6/Ftna9sXyrkdnKypfvm9uWRpxUPvlw4oA192QNMN39aq8k4l36TUUUU/ONw7ivGVi402Ud+UBPVDYh6A==
   dependencies:
     semver "^7.6.3"
 
