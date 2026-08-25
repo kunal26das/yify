@@ -169,6 +169,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             if (account) {
                 await Purchases.setEmail(account.email);
                 await Purchases.setDisplayName(account.name);
+                if (!hasRemoveAds(info)) await this.restore();
             }
             await this.loadOfferings();
         } catch {

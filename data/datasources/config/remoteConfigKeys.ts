@@ -7,3 +7,5 @@ export const ADS_INTERSTITIAL_UNIT_KEY = 'ads_interstitial_unit_android';
 export const ADS_COOLDOWN_SECONDS_KEY = 'ads_cooldown_seconds';
 export const ADS_ENABLED_DEFAULT = 'false';
 export const ADS_COOLDOWN_SECONDS_DEFAULT = '1200';
+export const SUPPORT_URL_KEY = 'buy_me_a_coffee_url';
+export const SUPPORT_URL_DEFAULT = 'https://buymeacoffee.com/kunal26das';

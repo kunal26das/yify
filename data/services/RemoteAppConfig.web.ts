@@ -11,6 +11,8 @@ import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {
   API_BASE_URL_KEY,
   CONFIG_TIMEOUT_MS,
+  SUPPORT_URL_DEFAULT,
+  SUPPORT_URL_KEY,
   TMDB_API_KEY,
   TMDB_FALLBACK_KEY,
 } from '../datasources/config/remoteConfigKeys';
@@ -63,6 +65,15 @@ export class RemoteAppConfig implements AppConfig {
     return AD_COOLDOWN_MS;
   }
 
+  getSupportUrl(): string {
+    if (this.remoteConfig == null) return SUPPORT_URL_DEFAULT;
+    try {
+      return getString(this.remoteConfig, SUPPORT_URL_KEY) || SUPPORT_URL_DEFAULT;
+    } catch {
+      return SUPPORT_URL_DEFAULT;
+    }
+  }
+
   private async doInit(): Promise<void> {
     if (this.remoteConfig != null) return;
     try {
@@ -72,7 +83,11 @@ export class RemoteAppConfig implements AppConfig {
         return;
       }
       const rc = getRemoteConfig(app);
-      rc.defaultConfig = {[API_BASE_URL_KEY]: DEFAULT_BASE_URL, [TMDB_API_KEY]: ''};
+      rc.defaultConfig = {
+        [API_BASE_URL_KEY]: DEFAULT_BASE_URL,
+        [TMDB_API_KEY]: '',
+        [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
+      };
       await Promise.race([
         fetchAndActivate(rc).then(() => {
           this.remoteConfig = rc;

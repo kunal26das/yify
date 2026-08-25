@@ -1,16 +1,34 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {Analytics} from '@/presentation/analytics/events';
-import {ActivityIndicator, Platform, ScrollView, StyleSheet, Switch, View} from 'react-native';
-import Animated from 'react-native-reanimated';
+import {
+    ActivityIndicator,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    View,
+    type LayoutChangeEvent,
+    type NativeScrollEvent,
+    type NativeSyntheticEvent,
+    type StyleProp,
+    type TextStyle,
+} from 'react-native';
+import Animated, {LayoutAnimationConfig} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {LIFETIME_PACKAGE, type BrowseDefaults, type NotificationPreferences, type ThemePreference} from '@/domain';
+import {
+    DEFAULT_BROWSE_DEFAULTS,
+    LIFETIME_PACKAGE,
+    Quality,
+    type BrowseDefaults,
+    type NotificationPreferences,
+    type ThemePreference,
+} from '@/domain';
 import {useConfirm} from '../components/confirm-dialog';
-import {PressableScale, enterFade, enterPop, enterRise, exitFade} from '../components/motion';
+import {Duration, PressableScale, enterFade, enterRise, exitFade} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
-import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
@@ -33,6 +51,7 @@ import {useSyncStatus} from '../hooks/use-sync-status';
 import {
     useAccountSync,
     useAdGateway,
+    useAppConfig,
     useAuthRepository,
     usePurchaseRepository,
 } from '../di/DependenciesContext';
@@ -120,6 +139,20 @@ const THEME_OPTIONS: {value: ThemePreference; label: string; icon: Glyph}[] = [
     {value: 'dark', label: 'Dark', icon: 'moon-outline'},
 ];
 
+type SectionKey = 'browse' | 'playback' | 'notifications' | 'search' | 'watchlist' | 'about';
+
+const SECTION_ROWS: Partial<Record<SectionKey, string>> = {
+    browse: 'browse.',
+    notifications: 'notify.',
+};
+
+function labelOf(
+    options: readonly {value: string | number; label: string}[],
+    value: string | number
+): string {
+    return (options.find((option) => option.value === value) ?? options[0]).label;
+}
+
 
 
 export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel} = {}) {
@@ -134,6 +167,12 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const confirm = useConfirm();
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
+    const [sections, setSections] = useState<Partial<Record<SectionKey, boolean>>>({});
+
+    const scrollRef = useRef<ScrollView | null>(null);
+    const pending = useRef<SectionKey | null>(null);
+    const offsetY = useRef(0);
+    const viewport = useRef(0);
 
     const toggleGroup = (key: DisclosureKey) => setOpen((current) => (current === key ? null : key));
 
@@ -162,8 +201,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const closeIfOpen = (keys: DisclosureKey[]) =>
         setOpen((current) => (current && keys.includes(current) ? null : current));
 
+    const closeRows = (key: SectionKey) => {
+        const prefix = SECTION_ROWS[key];
+        if (prefix) setOpen((current) => (current?.startsWith(prefix) ? null : current));
+    };
+
     const onToggleNotifications = (next: boolean) => {
-        if (!next) setOpen(null);
+        if (!next) closeRows('notifications');
         void vm.toggleNotifications(next);
     };
 
@@ -172,11 +216,74 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
         vm.setNotificationPreference('quietHours', next);
     };
 
-    let rank = 0;
+    const toggleSection = (key: SectionKey) => {
+        const next = sections[key] !== true;
+        if (next) pending.current = key;
+        else closeRows(key);
+        setSections((current) => ({...current, [key]: next}));
+    };
+
+    const reveal = (key: SectionKey, y: number, height: number) => {
+        if (pending.current !== key) return;
+        pending.current = null;
+        const scroller = scrollRef.current;
+        if (!scroller || viewport.current <= 0) return;
+        if (y + height <= offsetY.current + viewport.current) return;
+        scroller.scrollTo({y: Math.max(0, y - navHeight - Spacing.sm), animated: true});
+    };
+
+    const sectionProps = (key: SectionKey, index: number, title: string) => ({
+        title,
+        index,
+        colors,
+        gutter,
+        expanded: sections[key] === true,
+        onToggle: () => toggleSection(key),
+        onLayout: (event: LayoutChangeEvent) => {
+            const {y, height} = event.nativeEvent.layout;
+            reveal(key, y, height);
+        },
+    });
+
+    const changedBrowse = browseRows.filter(
+        (row) => vm.browseDefaults[row.key] !== DEFAULT_BROWSE_DEFAULTS[row.key]
+    );
+    const browseSummary =
+        changedBrowse.length === 0
+            ? 'Default'
+            : changedBrowse.length === 1
+              ? labelOf(changedBrowse[0].options, vm.browseDefaults[changedBrowse[0].key])
+              : `${changedBrowse.length} changed`;
+
+    const playbackOn = PLAYBACK_ROWS.filter((row) => vm.playback[row.key]).length;
+    const playbackSummary =
+        playbackOn === 0
+            ? 'Off'
+            : playbackOn === PLAYBACK_ROWS.length
+              ? 'All on'
+              : `${playbackOn} of ${PLAYBACK_ROWS.length} on`;
+
+    const notifyBlocked = vm.notifications && vm.permissionBlocked;
+    const notifySummary = !vm.notifications
+        ? 'Off'
+        : notifyBlocked
+          ? 'Blocked'
+          : vm.notify.quality === Quality.All
+            ? 'On'
+            : `On \u00b7 ${labelOf(QUALITY_OPTIONS, vm.notify.quality)}`;
+
+    const searchSummary =
+        vm.searchHistoryCount === 0 ? 'None' : `${vm.searchHistoryCount} recent`;
+
+    const watchlistSummary =
+        vm.watchlistCount === 0
+            ? 'Empty'
+            : `${vm.watchlistCount} ${vm.watchlistCount === 1 ? 'title' : 'titles'}`;
 
     return (
         <Screen>
             <ScrollView
+                ref={scrollRef}
                 contentContainerStyle={{
                     paddingTop: navHeight,
                     paddingBottom: insets.bottom + 48,
@@ -185,14 +292,21 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     width: '100%',
                 }}
                 showsVerticalScrollIndicator={false}
+                scrollEventThrottle={16}
+                onLayout={(event) => {
+                    viewport.current = event.nativeEvent.layout.height;
+                }}
+                onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+                    offsetY.current = event.nativeEvent.contentOffset.y;
+                }}
             >
                 <AccountSection colors={colors} gutter={gutter}/>
 
                 <SupporterSection colors={colors} gutter={gutter}/>
 
-                <SectionHeader title="General" colors={colors} gutter={gutter} index={rank++}/>
+                <SectionHeader title="General" colors={colors} gutter={gutter} index={2}/>
 
-                <Group colors={colors} index={rank++}>
+                <Group colors={colors} index={2}>
                     <ChoiceRow
                         icon={theme.icon}
                         title="Theme"
@@ -209,11 +323,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </Group>
 
-                <SectionHeader title="Browse defaults" colors={colors} gutter={gutter} index={rank++}/>
-
-                {browseRows.map((row) => (
-                    <Group colors={colors} index={rank++} key={row.key}>
+                <SettingsSection
+                    {...sectionProps('browse', 3, 'Browse defaults')}
+                    summary={browseSummary}
+                >
+                    {browseRows.map((row) => (
                         <ChoiceRow
+                            key={row.key}
                             icon={row.icon}
                             title={row.title}
                             value={vm.browseDefaults[row.key]}
@@ -227,12 +343,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                                 setOpen(null);
                             }}
                         />
-                    </Group>
-                ))}
+                    ))}
+                </SettingsSection>
 
-                <SectionHeader title="Playback" colors={colors} gutter={gutter} index={rank++}/>
-
-                <Group colors={colors} index={rank++}>
+                <SettingsSection
+                    {...sectionProps('playback', 4, 'Playback')}
+                    summary={playbackSummary}
+                >
                     {PLAYBACK_ROWS.map((row) => (
                         <Row
                             key={row.key}
@@ -251,11 +368,13 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             }
                         />
                     ))}
-                </Group>
+                </SettingsSection>
 
-                <SectionHeader title="Notifications" colors={colors} gutter={gutter} index={rank++}/>
-
-                <Group colors={colors} index={rank++}>
+                <SettingsSection
+                    {...sectionProps('notifications', 5, 'Notifications')}
+                    summary={notifySummary}
+                    tone={notifyBlocked ? colors.gold : undefined}
+                >
                     <Row
                         icon="notifications-outline"
                         title="New releases"
@@ -369,11 +488,9 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             />
                         </Animated.View>
                     ) : null}
-                </Group>
+                </SettingsSection>
 
-                <SectionHeader title="Search" colors={colors} gutter={gutter} index={rank++}/>
-
-                <Group colors={colors} index={rank++}>
+                <SettingsSection {...sectionProps('search', 6, 'Search')} summary={searchSummary}>
                     <Row
                         icon="time-outline"
                         title={`${vm.searchHistoryCount} recent ${vm.searchHistoryCount === 1 ? 'search' : 'searches'}`}
@@ -401,11 +518,12 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             </PressableScale>
                         }
                     />
-                </Group>
+                </SettingsSection>
 
-                <SectionHeader title="Watchlist" colors={colors} gutter={gutter} index={rank++}/>
-
-                <Group colors={colors} index={rank++}>
+                <SettingsSection
+                    {...sectionProps('watchlist', 7, 'Watchlist')}
+                    summary={watchlistSummary}
+                >
                     <Row
                         icon="bookmark-outline"
                         title={`${vm.watchlistCount} ${vm.watchlistCount === 1 ? 'title' : 'titles'} saved`}
@@ -460,11 +578,9 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             />
                         }
                     />
-                </Group>
+                </SettingsSection>
 
-                <SectionHeader title="About" colors={colors} gutter={gutter} index={rank++}/>
-
-                <Group colors={colors} index={rank++}>
+                <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
                     <Row
                         icon="information-circle-outline"
                         title="Version"
@@ -476,10 +592,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             </ThemedText>
                         }
                     />
-                </Group>
-
-                {Platform.OS === 'android' ? (
-                    <Group colors={colors} index={rank++}>
+                    {Platform.OS === 'android' ? (
                         <Row
                             icon="star-outline"
                             title="Rate on Google Play"
@@ -491,9 +604,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             accessibilityLabel="Rate on Google Play"
                             trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}
                         />
-                    </Group>
-                ) : (
-                    <Group colors={colors} index={rank++}>
+                    ) : (
                         <Row
                             icon="logo-google-playstore"
                             title="Android app"
@@ -501,11 +612,8 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             gutter={gutter}
                             trailing={<PlayStoreButton source="settings"/>}
                         />
-                    </Group>
-                )}
-
-                {Platform.OS !== 'web' ? (
-                    <Group colors={colors} index={rank++}>
+                    )}
+                    {Platform.OS !== 'web' ? (
                         <Row
                             icon="globe-outline"
                             title="Open Yify on the web"
@@ -514,14 +622,14 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             gutter={gutter}
                             onPress={() => {
                                 Analytics.websiteOpen('settings');
-                                void WebBrowser.openBrowserAsync(WEBSITE_URL);
+                                void WebBrowser.openBrowserAsync(WEBSITE_URL, {enableBarCollapsing: true});
                             }}
                             accessibilityRole="link"
                             accessibilityLabel="Open Yify on the web"
                             trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}
                         />
-                    </Group>
-                ) : null}
+                    ) : null}
+                </SettingsSection>
             </ScrollView>
         </Screen>
     );
@@ -633,13 +741,13 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const {account, signingIn, available: canSignIn} = useAuth();
     const auth = useAuthRepository();
     const confirm = useConfirm();
-    const [restoring, setRestoring] = useState(false);
+    const config = useAppConfig();
 
     const offer = state.offers.length > 0 ? state.offers[0] : null;
     const terms = offer?.id === LIFETIME_PACKAGE ? 'one payment, nothing renews' : 'billed until you cancel';
-
-    if (!state.available) return null;
-    if (!state.adsRemoved && offer == null) return null;
+    const sellable = state.available && (state.adsRemoved || offer != null);
+    const coffeeUrl = config.getSupportUrl();
+    const showCoffee = coffeeUrl.startsWith('https://');
 
     const notice = (title: string, message: string, icon: Glyph) =>
         confirm({
@@ -669,7 +777,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason === 'PRODUCT_ALREADY_PURCHASED') {
                         notice(
                             'Already a supporter',
-                            'This account has already supported Yify. Tap Restore purchase to bring it back on this device.',
+                            'This account has already supported Yify. It will come back on this device on its own \u2014 give it a moment.',
                             'information-circle-outline'
                         );
                         return;
@@ -677,7 +785,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason === 'PAYMENT_PENDING') {
                         notice(
                             'Payment pending',
-                            'Your payment is still being processed. It will apply once it clears \u2014 no need to pay again.',
+                            'Your payment is still being processed. It will apply on its own once it clears \u2014 no need to pay again.',
                             'time-outline'
                         );
                         return;
@@ -685,14 +793,14 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason === 'not_granted') {
                         notice(
                             'Not applied yet',
-                            'The payment went through but has not applied yet. Tap Restore purchase in a moment, or contact support if it persists.',
+                            'The payment went through but has not applied yet. It should arrive shortly \u2014 reopen Yify if it does not.',
                             'alert-circle-outline'
                         );
                         return;
                     }
                     notice(
                         'Payment failed',
-                        'We could not complete the payment. If you were charged, tap Restore purchase.',
+                        'We could not complete the payment. If you were charged, it will apply on its own once the store confirms it.',
                         'alert-circle-outline'
                     );
                 });
@@ -700,40 +808,13 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
         });
     };
 
-    const restore = () => {
-        if (restoring) return;
-        setRestoring(true);
-        void purchases.restore().then((restored) => {
-            setRestoring(false);
-            if (restored) {
-                notice(
-                    'Welcome back',
-                    'Your support is back on this device. Thank you.',
-                    'heart-outline'
-                );
-                return;
-            }
-            if (purchases.getState().failure === 'restore_failed') {
-                notice(
-                    'Restore failed',
-                    'We could not reach the store. Check your connection and try again.',
-                    'cloud-offline-outline'
-                );
-                return;
-            }
-            notice(
-                'Nothing to restore',
-                'We could not find a purchase on this account. If you used a different account, sign in to that one and try again.',
-                'information-circle-outline'
-            );
-        });
-    };
+    if (!sellable && !showCoffee && !ads.privacyOptionsRequired()) return null;
 
     return (
         <>
-            <SectionHeader title="Yify" colors={colors} gutter={gutter} index={0}/>
-            <Group colors={colors} index={0}>
-                {state.adsRemoved ? (
+            <SectionHeader title="Yify" colors={colors} gutter={gutter} index={1}/>
+            <Group colors={colors} index={1}>
+                {!sellable ? null : state.adsRemoved ? (
                     <Row
                         icon="heart"
                         title="You support Yify"
@@ -767,43 +848,41 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                 ) : (
-                    <>
-                        <Row
-                            icon="heart-outline"
-                            title="Support Yify"
-                            subtitle="Built by one person, with no ads. One payment, on every device you sign in on."
-                            colors={colors}
-                            gutter={gutter}
-                            onPress={state.purchasing == null ? buy : undefined}
-                            accessibilityLabel="Support Yify"
-                            trailing={
-                                state.purchasing != null ? (
-                                    <ActivityIndicator color={colors.accent}/>
-                                ) : offer ? (
-                                    <ThemedText style={[styles.value, {color: colors.accent}]}>
-                                        {offer.priceLabel}
-                                    </ThemedText>
-                                ) : null
-                            }
-                        />
-                        <Row
-                            icon="refresh-outline"
-                            title="Restore purchase"
-                            subtitle="Already supported? Bring it back on this device."
-                            colors={colors}
-                            gutter={gutter}
-                            onPress={restoring ? undefined : restore}
-                            accessibilityLabel="Restore purchase"
-                            trailing={
-                                restoring ? (
-                                    <ActivityIndicator color={colors.accent}/>
-                                ) : (
-                                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>
-                                )
-                            }
-                        />
-                    </>
+                    <Row
+                        icon="heart-outline"
+                        title="Support Yify"
+                        subtitle="Built by one person, with no ads. One payment, on every device you sign in on."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={state.purchasing == null ? buy : undefined}
+                        accessibilityLabel="Support Yify"
+                        trailing={
+                            state.purchasing != null ? (
+                                <ActivityIndicator color={colors.accent}/>
+                            ) : offer ? (
+                                <ThemedText style={[styles.value, {color: colors.accent}]}>
+                                    {offer.priceLabel}
+                                </ThemedText>
+                            ) : null
+                        }
+                    />
                 )}
+                {showCoffee ? (
+                    <Row
+                        icon="cafe-outline"
+                        title="Buy me a coffee"
+                        subtitle="A one-off tip, outside the app. It unlocks nothing — it just says thanks."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={() => {
+                            Analytics.coffeeOpen('settings');
+                            void WebBrowser.openBrowserAsync(coffeeUrl, {enableBarCollapsing: true});
+                        }}
+                        accessibilityRole="link"
+                        accessibilityLabel="Buy me a coffee"
+                        trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}
+                    />
+                ) : null}
                 {ads.privacyOptionsRequired() ? (
                     <Row
                         icon="shield-checkmark-outline"
@@ -846,14 +925,17 @@ function Group({
                    colors,
                    children,
                    index = 0,
+                   onLayout,
                }: {
     colors: Colors;
     children: React.ReactNode;
     index?: number;
+    onLayout?: (event: LayoutChangeEvent) => void;
 }) {
     return (
         <Animated.View
             entering={enterRise(index)}
+            onLayout={onLayout}
             style={[styles.group, {borderBottomColor: colors.border}]}
         >
             {children}
@@ -865,6 +947,7 @@ function Row({
                  icon,
                  leading,
                  title,
+                 titleStyle,
                  subtitle,
                  trailing,
                  colors,
@@ -877,6 +960,7 @@ function Row({
     icon?: Glyph;
     leading?: React.ReactNode;
     title: string;
+    titleStyle?: StyleProp<TextStyle>;
     subtitle?: string;
     trailing?: React.ReactNode;
     colors: Colors;
@@ -888,9 +972,9 @@ function Row({
 }) {
     const content = (
         <>
-            {leading ?? <Ionicons name={icon ?? 'ellipse-outline'} size={GLYPH_SIZE} color={colors.textMuted}/>}
+            {leading ?? (icon ? <Ionicons name={icon} size={GLYPH_SIZE} color={colors.textMuted}/> : null)}
             <View style={styles.rowText}>
-                <ThemedText style={[styles.rowTitle, {color: colors.text}]}>{title}</ThemedText>
+                <ThemedText style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
                 {subtitle ? (
                     <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>{subtitle}</ThemedText>
                 ) : null}
@@ -909,6 +993,8 @@ function Row({
             accessibilityRole={accessibilityRole}
             accessibilityLabel={accessibilityLabel}
             accessibilityState={accessibilityState}
+            aria-expanded={accessibilityState?.expanded}
+            aria-disabled={accessibilityState?.disabled}
             pressedScale={0.99}
             pressedOpacity={0.6}
             lift={1}
@@ -976,27 +1062,85 @@ function ChoiceRow({
     );
 }
 
-function Disclosure({value, expanded, colors}: {value: string; expanded: boolean; colors: Colors}) {
+function Disclosure({
+                        value,
+                        expanded,
+                        colors,
+                        tone,
+                    }: {
+    value: string;
+    expanded: boolean;
+    colors: Colors;
+    tone?: string;
+}) {
     return (
         <View style={styles.disclosure}>
-            <ThemedText style={[styles.value, {color: colors.textMuted}]} numberOfLines={1}>
+            <ThemedText style={[styles.value, {color: tone ?? colors.textMuted}]} numberOfLines={1}>
                 {value}
             </ThemedText>
-            <Ionicons
-                name={expanded ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color={colors.textMuted}
-            />
+            <Animated.View
+                style={{
+                    transform: [{rotate: expanded ? '180deg' : '0deg'}],
+                    transitionProperty: ['transform'],
+                    transitionDuration: Duration.fast,
+                    transitionTimingFunction: 'ease-out',
+                }}
+            >
+                <Ionicons name="chevron-down" size={16} color={colors.textMuted}/>
+            </Animated.View>
         </View>
+    );
+}
+
+function SettingsSection({
+                             title,
+                             summary,
+                             tone,
+                             expanded,
+                             colors,
+                             gutter,
+                             index,
+                             onToggle,
+                             onLayout,
+                             children,
+                         }: {
+    title: string;
+    summary: string;
+    tone?: string;
+    expanded: boolean;
+    colors: Colors;
+    gutter: number;
+    index: number;
+    onToggle: () => void;
+    onLayout: (event: LayoutChangeEvent) => void;
+    children: React.ReactNode;
+}) {
+    return (
+        <Group colors={colors} index={index} onLayout={onLayout}>
+            <Row
+                title={title}
+                titleStyle={styles.sectionRowTitle}
+                colors={colors}
+                gutter={gutter}
+                onPress={onToggle}
+                accessibilityLabel={title}
+                accessibilityState={{expanded}}
+                trailing={<Disclosure value={summary} expanded={expanded} colors={colors} tone={tone}/>}
+            />
+            {expanded ? (
+                <LayoutAnimationConfig skipExiting>
+                    <Animated.View entering={enterFade()}>{children}</Animated.View>
+                </LayoutAnimationConfig>
+            ) : null}
+        </Group>
     );
 }
 
 
 const styles = StyleSheet.create({
-    container: {flex: 1},
-
     sectionHeader: {paddingTop: Spacing.xl, paddingBottom: Spacing.sm},
     sectionTitle: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.bold},
+    sectionRowTitle: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold},
 
     group: {borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: Spacing.xs},
 
@@ -1016,8 +1160,6 @@ const styles = StyleSheet.create({
     avatar: {width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2},
 
     options: {paddingBottom: Spacing.sm},
-    option: {flexDirection: 'row', alignItems: 'center', gap: GLYPH_GAP, minHeight: 44},
-    optionLabel: {fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium},
 
     notice: {flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingBottom: Spacing.sm},
     noticeText: {flex: 1},

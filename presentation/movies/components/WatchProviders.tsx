@@ -91,7 +91,7 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
             void Linking.openURL(url);
             return;
         }
-        void WebBrowser.openBrowserAsync(url).catch(() => Linking.openURL(url));
+        void WebBrowser.openBrowserAsync(url, {enableBarCollapsing: true}).catch(() => Linking.openURL(url));
     };
 
     return (

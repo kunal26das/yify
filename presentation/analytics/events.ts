@@ -100,6 +100,7 @@ export const Analytics = {
     signOut: () => trackEvent('logout'),
 
     supporterPrompt: (source: string) => trackEvent('supporter_prompt', {source}),
+    coffeeOpen: (source: string) => trackEvent('coffee_open', {source}),
 
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>

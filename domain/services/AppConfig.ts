@@ -14,4 +14,6 @@ export interface AppConfig {
     getAdUnitId(): string;
 
     getAdCooldownMs(): number;
+
+    getSupportUrl(): string;
 }

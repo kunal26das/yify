@@ -16,6 +16,8 @@ import {
   ADS_INTERSTITIAL_UNIT_KEY,
   API_BASE_URL_KEY,
   CONFIG_TIMEOUT_MS,
+  SUPPORT_URL_DEFAULT,
+  SUPPORT_URL_KEY,
   TMDB_API_KEY,
   TMDB_FALLBACK_KEY,
 } from '../datasources/config/remoteConfigKeys';
@@ -82,6 +84,14 @@ export class RemoteAppConfig implements AppConfig {
     }
   }
 
+  getSupportUrl(): string {
+    try {
+      return getString(getRemoteConfig(), SUPPORT_URL_KEY) || SUPPORT_URL_DEFAULT;
+    } catch {
+      return SUPPORT_URL_DEFAULT;
+    }
+  }
+
   private async doInit(): Promise<void> {
     if (this.initialized) return;
     try {
@@ -95,6 +105,7 @@ export class RemoteAppConfig implements AppConfig {
         [ADS_ENABLED_KEY]: ADS_ENABLED_DEFAULT,
         [ADS_INTERSTITIAL_UNIT_KEY]: '',
         [ADS_COOLDOWN_SECONDS_KEY]: ADS_COOLDOWN_SECONDS_DEFAULT,
+        [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
       });
       await Promise.race([
         fetchAndActivate(rc),
