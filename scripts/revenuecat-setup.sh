@@ -52,7 +52,7 @@ apps = call('GET', f'/projects/{PROJECT}/apps?limit=50').get('items', [])
 print('apps:')
 by_type = {}
 for a in apps:
-    print(f"  {a['id']:24} type={a.get('type'):16} name={a.get('name')}")
+    print(f"  {str(a.get('id')):24} type={str(a.get('type')):16} name={a.get('name')}")
     by_type.setdefault(a.get('type'), []).append(a)
 
 play = (by_type.get('play_store') or [None])[0]
@@ -62,7 +62,7 @@ print(f"\nplay app: {play and play['id']}\nweb  app: {web and web['id']}\n")
 products = call('GET', f'/projects/{PROJECT}/products?limit=100').get('items', [])
 print('existing products:')
 for p in products:
-    print(f"  {p['id']:24} store={p.get('store'):14} type={p.get('type'):14} sid={p.get('store_identifier')}")
+    print(f"  {str(p.get('id')):24} store={str(p.get('store')):14} type={str(p.get('type')):14} sid={p.get('store_identifier')}")
 have = {p.get('store_identifier'): p for p in products}
 
 if play and PLAY_PRODUCT not in have:
@@ -81,7 +81,7 @@ else:
 offerings = call('GET', f'/projects/{PROJECT}/offerings?limit=50').get('items', [])
 print('\nofferings:')
 for o in offerings:
-    print(f"  {o['id']:24} lookup={o.get('lookup_key'):14} current={o.get('is_current')}")
+    print(f"  {str(o.get('id')):24} lookup={str(o.get('lookup_key')):14} current={o.get('is_current')}")
 target = next((o for o in offerings if o.get('lookup_key') == OFFERING), None)
 if not target:
     raise SystemExit(f'offering "{OFFERING}" not found')
@@ -89,7 +89,7 @@ if not target:
 pkgs = call('GET', f'/projects/{PROJECT}/offerings/{target["id"]}/packages?limit=50').get('items', [])
 print('packages in offering:')
 for p in pkgs:
-    print(f"  {p['id']:24} lookup={p.get('lookup_key')}")
+    print(f"  {str(p.get('id')):24} lookup={p.get('lookup_key')}")
 lifetime = next((p for p in pkgs if p.get('lookup_key') == PACKAGE), None)
 if not lifetime:
     created = do('create $rc_lifetime package', 'POST',

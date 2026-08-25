@@ -128,6 +128,20 @@
     },
     {
       "platform": "android",
+      "channel": "Staging",
+      "version": "1.5.0",
+      "runtimeVersion": "1.5.0",
+      "releasedAt": "2026-08-25T00:36:01.357Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.5.0",
+      "runtimeVersion": "1.5.0",
+      "releasedAt": "2026-08-25T00:38:38.476Z"
+    },
+    {
+      "platform": "android",
       "channel": "Production",
       "version": "1.6.0",
       "runtimeVersion": "1.6.0",
