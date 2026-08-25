@@ -7439,10 +7439,10 @@ react-native-purchases@10.7.2:
     "@revenuecat/purchases-js-hybrid-mappings" "18.31.0"
     "@revenuecat/purchases-typescript-internal" "18.31.0"
 
-react-native-reanimated@4.5.3:
-  version "4.5.3"
-  resolved "https://registry.yarnpkg.com/react-native-reanimated/-/react-native-reanimated-4.5.3.tgz#10ec3f1b2c8d710033d707199cab591a0d410d70"
-  integrity sha512-+owIckpD4sA13XKHaLrr8V1RP4paqoxKvz/jy2wl/ULjMsfcRlfIJdKJxR1kcQr4McBZ6hAoPo01NyLnmy2ycQ==
+react-native-reanimated@4.5.4:
+  version "4.5.4"
+  resolved "https://registry.yarnpkg.com/react-native-reanimated/-/react-native-reanimated-4.5.4.tgz#39f27d07f16f4316cb3ee69c8090c486ace2b283"
+  integrity sha512-dPcOMFSO1DbO8nw5SipCkv/souHe4aunYby4GmaJykXTr/z0ZphP8oP3lWw+syIcmP5qvQ8xpc2EnZExF1hTOA==
   dependencies:
     react-native-is-edge-to-edge "^1.3.1"
     semver "^7.7.3"
