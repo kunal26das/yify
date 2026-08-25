@@ -99,7 +99,7 @@ export const Analytics = {
         trackEvent('login_failed', {method, reason}),
     signOut: () => trackEvent('logout'),
 
-    removeAdsPrompt: (source: string) => trackEvent('remove_ads_prompt', {source}),
+    supporterPrompt: (source: string) => trackEvent('supporter_prompt', {source}),
 
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>

@@ -188,7 +188,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
             >
                 <AccountSection colors={colors} gutter={gutter}/>
 
-                <RemoveAdsSection colors={colors} gutter={gutter}/>
+                <SupporterSection colors={colors} gutter={gutter}/>
 
                 <SectionHeader title="General" colors={colors} gutter={gutter} index={rank++}/>
 
@@ -626,7 +626,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     );
 }
 
-function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
+function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const purchases = usePurchaseRepository();
     const ads = useAdGateway();
     const state = usePurchases();
@@ -653,13 +653,13 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
 
     const buy = () => {
         if (offer == null || account == null || state.purchasing != null) return;
-        Analytics.removeAdsPrompt('settings');
+        Analytics.supporterPrompt('settings');
         confirm({
-            title: 'Remove ads',
-            message: `Removes the ad before trailers on every device you sign in on. ${offer.priceLabel}, ${terms}. Ads inside YouTube trailers are YouTube's and stay.`,
-            confirmLabel: `Remove ads \u00b7 ${offer.priceLabel}`,
+            title: 'Support Yify',
+            message: `Yify is built by one person and has no ads today. ${offer.priceLabel}, ${terms}. It carries across every device you sign in on, and if ads are ever switched on they will never apply to you.`,
+            confirmLabel: `Support \u00b7 ${offer.priceLabel}`,
             cancelLabel: 'Not now',
-            icon: 'sparkles-outline',
+            icon: 'heart-outline',
             destructive: false,
             onConfirm: () => {
                 void purchases.purchase(offer.id).then((granted) => {
@@ -668,8 +668,8 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason == null || reason === 'cancelled') return;
                     if (reason === 'PRODUCT_ALREADY_PURCHASED') {
                         notice(
-                            'Already purchased',
-                            'This account already owns Remove ads. Tap Restore purchase to bring it back on this device.',
+                            'Already a supporter',
+                            'This account has already supported Yify. Tap Restore purchase to bring it back on this device.',
                             'information-circle-outline'
                         );
                         return;
@@ -677,7 +677,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason === 'PAYMENT_PENDING') {
                         notice(
                             'Payment pending',
-                            'Your payment is still being processed. Ads will go once it clears \u2014 no need to pay again.',
+                            'Your payment is still being processed. It will apply once it clears \u2014 no need to pay again.',
                             'time-outline'
                         );
                         return;
@@ -685,14 +685,14 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (reason === 'not_granted') {
                         notice(
                             'Not applied yet',
-                            'The purchase went through but has not unlocked yet. Tap Restore purchase in a moment, or contact support if it persists.',
+                            'The payment went through but has not applied yet. Tap Restore purchase in a moment, or contact support if it persists.',
                             'alert-circle-outline'
                         );
                         return;
                     }
                     notice(
-                        'Purchase failed',
-                        'We could not complete the purchase. If you were charged, tap Restore purchase.',
+                        'Payment failed',
+                        'We could not complete the payment. If you were charged, tap Restore purchase.',
                         'alert-circle-outline'
                     );
                 });
@@ -707,9 +707,9 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
             setRestoring(false);
             if (restored) {
                 notice(
-                    'Ads removed',
-                    'Your purchase is back on this device. Trailers now start straight away.',
-                    'checkmark-circle-outline'
+                    'Welcome back',
+                    'Your support is back on this device. Thank you.',
+                    'heart-outline'
                 );
                 return;
             }
@@ -723,7 +723,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
             }
             notice(
                 'Nothing to restore',
-                'We could not find a Remove ads purchase on this account. If you bought it with a different account, sign in to that one and try again.',
+                'We could not find a purchase on this account. If you used a different account, sign in to that one and try again.',
                 'information-circle-outline'
             );
         });
@@ -735,26 +735,26 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
             <Group colors={colors} index={0}>
                 {state.adsRemoved ? (
                     <Row
-                        icon="checkmark-circle-outline"
-                        title="Ads removed"
-                        subtitle="Thank you. This covers every device you sign in on."
+                        icon="heart"
+                        title="You support Yify"
+                        subtitle="Thank you. This carries across every device you sign in on, and ads will never apply to you."
                         colors={colors}
                         gutter={gutter}
                         trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
                     />
                 ) : account == null ? (
                     <Row
-                        icon="sparkles-outline"
-                        title="Remove ads"
+                        icon="heart-outline"
+                        title="Support Yify"
                         subtitle={
                             canSignIn
-                                ? 'Sign in first, then one purchase covers every device you use.'
+                                ? 'Sign in first, then your support carries across every device you use.'
                                 : 'Sign-in is unavailable in this build.'
                         }
                         colors={colors}
                         gutter={gutter}
                         onPress={signingIn || !canSignIn ? undefined : () => void auth.signIn()}
-                        accessibilityLabel="Sign in to remove ads"
+                        accessibilityLabel="Sign in to support Yify"
                         accessibilityState={{disabled: !canSignIn}}
                         trailing={
                             signingIn ? (
@@ -769,13 +769,13 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                 ) : (
                     <>
                         <Row
-                            icon="sparkles-outline"
-                            title="Remove ads"
-                            subtitle="Removes the ad before trailers on every device you sign in on."
+                            icon="heart-outline"
+                            title="Support Yify"
+                            subtitle="Built by one person, with no ads. One payment, on every device you sign in on."
                             colors={colors}
                             gutter={gutter}
                             onPress={state.purchasing == null ? buy : undefined}
-                            accessibilityLabel="Remove ads"
+                            accessibilityLabel="Support Yify"
                             trailing={
                                 state.purchasing != null ? (
                                     <ActivityIndicator color={colors.accent}/>
@@ -789,7 +789,7 @@ function RemoveAdsSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         <Row
                             icon="refresh-outline"
                             title="Restore purchase"
-                            subtitle="Already paid? Bring it back on this device."
+                            subtitle="Already supported? Bring it back on this device."
                             colors={colors}
                             gutter={gutter}
                             onPress={restoring ? undefined : restore}
