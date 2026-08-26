@@ -167,6 +167,13 @@
       "version": "1.6.2",
       "runtimeVersion": "1.6.2",
       "releasedAt": "2026-08-26T21:15:38.004Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.6.3",
+      "runtimeVersion": "1.6.3",
+      "releasedAt": "2026-08-26T23:01:29.187Z"
     }
   ]
 }
