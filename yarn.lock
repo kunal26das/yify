@@ -7359,10 +7359,10 @@ react-native-gesture-handler@3.2.1:
     "@types/react-test-renderer" "^19.1.0"
     invariant "^2.2.4"
 
-react-native-google-mobile-ads@16.5.0:
-  version "16.5.0"
-  resolved "https://registry.yarnpkg.com/react-native-google-mobile-ads/-/react-native-google-mobile-ads-16.5.0.tgz#07278430d8b7c7048e049ae493d1515bf548146f"
-  integrity sha512-5x9qieagnvC3UuLbvxb3tUQbr5vSNuGrOvSj/R+UghkcflVz2UbeUcSl41KbAJQAoBkkxPJOqQ+kYxtEQwHgsA==
+react-native-google-mobile-ads@16.3.4:
+  version "16.3.4"
+  resolved "https://registry.yarnpkg.com/react-native-google-mobile-ads/-/react-native-google-mobile-ads-16.3.4.tgz#95156a159887ddddaa208fb519390df26275e7e0"
+  integrity sha512-UDwyymhXZ//AqQVTcnEGD6Nt2M14LNL332jwi9HEHBsGK+N6VKm+IOgsb/b26mtUHxHW+XrQBilbGtiENdrqTA==
   dependencies:
     "@iabtcf/core" "^1.5.6"
     use-deep-compare-effect "^1.8.1"

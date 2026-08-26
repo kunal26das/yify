@@ -19,7 +19,6 @@ import Animated, {LayoutAnimationConfig} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
     DEFAULT_BROWSE_DEFAULTS,
-    LIFETIME_PACKAGE,
     Quality,
     type BrowseDefaults,
     type NotificationPreferences,
@@ -744,10 +743,12 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const config = useAppConfig();
 
     const offer = state.offers.length > 0 ? state.offers[0] : null;
-    const terms = offer?.id === LIFETIME_PACKAGE ? 'one payment, nothing renews' : 'billed until you cancel';
+    const terms = offer?.recurring ? 'billed monthly until you cancel' : 'one payment, nothing renews';
     const sellable = state.available && (state.adsRemoved || offer != null);
     const coffeeUrl = config.getSupportUrl();
     const showCoffee = coffeeUrl.startsWith('https://');
+    const adsLive = ads.supported && config.getAdsEnabled();
+    const billing = offer?.recurring ? 'A monthly subscription' : 'One payment';
 
     const notice = (title: string, message: string, icon: Glyph) =>
         confirm({
@@ -764,7 +765,9 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
         Analytics.supporterPrompt('settings');
         confirm({
             title: 'Support Yify',
-            message: `Yify is built by one person and has no ads today. ${offer.priceLabel}, ${terms}. It carries across every device you sign in on, and if ads are ever switched on they will never apply to you.`,
+            message: adsLive
+                ? `Yify is built by one person. ${offer.priceLabel}, ${terms}. It turns off the ads in Yify on every device you sign in on. Trailers still play YouTube's own ads, which no app can remove.`
+                : `Yify is built by one person and has no ads today. ${offer.priceLabel}, ${terms}. It carries across every device you sign in on, and if ads are ever switched on they will never apply to you.`,
             confirmLabel: `Support \u00b7 ${offer.priceLabel}`,
             cancelLabel: 'Not now',
             icon: 'heart-outline',
@@ -774,7 +777,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     if (granted) return;
                     const reason = purchases.getState().failure;
                     if (reason == null || reason === 'cancelled') return;
-                    if (reason === 'PRODUCT_ALREADY_PURCHASED') {
+                    if (reason === 'already_purchased') {
                         notice(
                             'Already a supporter',
                             'This account has already supported Yify. It will come back on this device on its own \u2014 give it a moment.',
@@ -782,7 +785,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         );
                         return;
                     }
-                    if (reason === 'PAYMENT_PENDING') {
+                    if (reason === 'pending') {
                         notice(
                             'Payment pending',
                             'Your payment is still being processed. It will apply on its own once it clears \u2014 no need to pay again.',
@@ -818,7 +821,11 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="heart"
                         title="You support Yify"
-                        subtitle="Thank you. This carries across every device you sign in on, and ads will never apply to you."
+                        subtitle={
+                            adsLive
+                                ? 'Thank you. The ads in Yify are off for you, on every device you sign in on.'
+                                : 'Thank you. This carries across every device you sign in on.'
+                        }
                         colors={colors}
                         gutter={gutter}
                         trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
@@ -851,7 +858,11 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     <Row
                         icon="heart-outline"
                         title="Support Yify"
-                        subtitle="Built by one person, with no ads. One payment, on every device you sign in on."
+                        subtitle={
+                            adsLive
+                                ? `Built by one person. ${billing} to turn off the ads in Yify, on every device you sign in on.`
+                                : `Built by one person, with no ads. ${billing}, on every device you sign in on.`
+                        }
                         colors={colors}
                         gutter={gutter}
                         onPress={state.purchasing == null ? buy : undefined}

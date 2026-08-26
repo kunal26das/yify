@@ -1,17 +1,18 @@
 import {Platform} from 'react-native';
 import Purchases, {
     LOG_LEVEL,
+    PRODUCT_CATEGORY,
     type CustomerInfo,
     type PurchasesPackage,
 } from 'react-native-purchases';
 
 import {
     INITIAL_PURCHASE_STATE,
-    LIFETIME_PACKAGE,
     REMOVE_ADS_ENTITLEMENT,
     type Account,
     type AnalyticsSink,
     type KeyValueStore,
+    type PurchaseFailure,
     type PurchaseOffer,
     type PurchaseRepository,
     type PurchaseState,
@@ -30,10 +31,19 @@ function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
 }
 
-function purchaseFailureReason(error: unknown): string {
+function purchaseFailureReason(error: unknown): PurchaseFailure {
     const {userCancelled, code} = (error ?? {}) as {userCancelled?: boolean | null; code?: string};
     if (userCancelled) return 'cancelled';
-    return code ?? 'unknown';
+    switch (code) {
+        case Purchases.PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR:
+            return 'cancelled';
+        case Purchases.PURCHASES_ERROR_CODE.PRODUCT_ALREADY_PURCHASED_ERROR:
+            return 'already_purchased';
+        case Purchases.PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR:
+            return 'pending';
+        default:
+            return 'unknown';
+    }
 }
 
 function toOffer(pkg: PurchasesPackage): PurchaseOffer {
@@ -41,6 +51,7 @@ function toOffer(pkg: PurchasesPackage): PurchaseOffer {
         id: pkg.identifier,
         title: pkg.product.title,
         priceLabel: pkg.product.priceString,
+        recurring: pkg.product.productCategory === PRODUCT_CATEGORY.SUBSCRIPTION,
     };
 }
 
@@ -95,7 +106,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 await this.identify(account);
             }
         } catch {
-            this.setState({ready: true});
+            this.initialized = false;
         }
     }
 
@@ -157,6 +168,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         if (!apiKey) return;
         if (!this.configured) {
             this.pendingAccount = account;
+            void this.init();
             return;
         }
         try {
@@ -189,12 +201,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async loadOfferings(): Promise<void> {
         try {
             const offerings = await Purchases.getOfferings();
-            const all = offerings.current?.availablePackages ?? [];
-            const available = [...all].sort(
-                (left, right) =>
-                    Number(right.identifier === LIFETIME_PACKAGE) -
-                    Number(left.identifier === LIFETIME_PACKAGE)
-            );
+            const available = offerings.current?.availablePackages ?? [];
             this.packages.clear();
             available.forEach((pkg) => this.packages.set(pkg.identifier, pkg));
             this.setState({offers: available.map(toOffer)});
