@@ -3,7 +3,7 @@ import {showToast} from './toast.js';
 import {errMessage} from './errMessage.js';
 import {runState} from './runState.js';
 import type {StoreReleaseViewModel} from './storeReleaseViewModel.js';
-import type {Coverage, Channel, Platform} from './types.js';
+import type {Channel, Coverage, Platform} from './types.js';
 
 type DropFile = File & { path?: string };
 
@@ -171,7 +171,11 @@ export class StoreReleaseView {
 
         let coverage: Coverage | null = null;
         if (this.vm.validatedVersion && plats.length && chans.length) {
-            coverage = await this.vm.releaseCoverage(plats, chans);
+            try {
+                coverage = await this.vm.releaseCoverage(plats, chans);
+            } catch (e) {
+                showToast(errMessage(e), 'bad');
+            }
         }
 
         this.#baseReady = !!coverage && !coverage.covered;
@@ -279,7 +283,7 @@ export class StoreReleaseView {
             showToast(errMessage(e), 'bad');
         } finally {
             runState.end();
-            this.#evaluateCoverage();
+            void this.#evaluateCoverage();
         }
     }
 

@@ -160,6 +160,13 @@
       "version": "1.6.0",
       "runtimeVersion": "1.6.0",
       "releasedAt": "2026-08-25T04:30:00.000Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Staging",
+      "version": "1.6.2",
+      "runtimeVersion": "1.6.2",
+      "releasedAt": "2026-08-26T21:15:38.004Z"
     }
   ]
 }
