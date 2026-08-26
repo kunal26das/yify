@@ -145,8 +145,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu (57.0.14):
-    - expo-dev-menu/Main (= 57.0.14)
+  - expo-dev-menu (57.0.15):
+    - expo-dev-menu/Main (= 57.0.15)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -169,7 +169,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - expo-dev-menu-interface (57.0.0)
-  - expo-dev-menu/Main (57.0.14):
+  - expo-dev-menu/Main (57.0.15):
     - EXManifests
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -292,7 +292,7 @@ PODS:
     - RNWorklets
   - ExpoNotifications (57.0.13):
     - ExpoModulesCore
-  - ExpoRouter (57.0.11):
+  - ExpoRouter (57.0.15):
     - ExpoModulesCore
     - RNScreens
   - ExpoSplashScreen (57.0.7):
@@ -2675,7 +2675,7 @@ PODS:
   - RNPurchases (10.7.2):
     - PurchasesHybridCommon (= 18.31.0)
     - React-Core
-  - RNReanimated (4.5.3):
+  - RNReanimated (4.5.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2697,36 +2697,12 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/apple (= 4.5.3)
-    - RNReanimated/common (= 4.5.3)
-    - RNReanimated/view (= 4.5.3)
+    - RNReanimated/apple (= 4.5.4)
+    - RNReanimated/common (= 4.5.4)
+    - RNReanimated/view (= 4.5.4)
     - RNWorklets
     - Yoga
-  - RNReanimated/apple (4.5.3):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-hermes
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - RNWorklets
-    - Yoga
-  - RNReanimated/common (4.5.3):
+  - RNReanimated/apple (4.5.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2750,7 +2726,31 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - RNReanimated/view (4.5.3):
+  - RNReanimated/common (4.5.4):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNWorklets
+    - Yoga
+  - RNReanimated/view (4.5.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3352,7 +3352,7 @@ SPEC CHECKSUMS:
   Expo: b04be5ad09bed2df44dbaf515af0dc862c84e202
   expo-dev-client: 8a0f7761ad38dcf24055495be1be6ed4d7ce19f5
   expo-dev-launcher: 8d4b0c3848f089d33465743611ee346024aa2da8
-  expo-dev-menu: f1e698e4268b9e72a99970f928682581d89d346a
+  expo-dev-menu: b3e9ef21eb0a76ffe2a8dd39221b34ad261b535f
   expo-dev-menu-interface: 7a59e803916fbfd1b96c75ff91ea8dddac7e722f
   ExpoAdapterGoogleSignIn: cfc75819d7d2490488250ce5634f57f92c60a2b8
   ExpoAsset: b8c66d7e07922d39f280e1a79b5f70ef8e238bbc
@@ -3374,7 +3374,7 @@ SPEC CHECKSUMS:
   ExpoModulesWorklets: ba8252c1824dce38008bdbd1de28566c6591ab7b
   ExpoModulesWorkletsAdapter: d509544a1cfb3494bef239571d9374ede1d020cb
   ExpoNotifications: 25e39e13c6c6f4bd599d3cf7992ca9e3b098d3e0
-  ExpoRouter: 6a876a5008025dcced0867086f2640da67c7c59e
+  ExpoRouter: a1fb93f5a12e2da8c892ab3eb270243c4021a698
   ExpoSplashScreen: 9c11c0c7dd0c57853244d0ae640a63e42ede8ffd
   ExpoStoreReview: 4695f78a9ca1d33f0e0755801c10f7dc875c298d
   ExpoSymbols: 0efd93edf0f825bf3c762582b0769dd3b296235c
@@ -3504,7 +3504,7 @@ SPEC CHECKSUMS:
   RNGoogleMobileAds: 4db744a66f28c1c10392352208d7397ff9239a52
   RNGoogleSignin: 41b189ae99a41175130c55c88a2985a55f826a14
   RNPurchases: 98d91fe229002947b0e3cb9413641a1cf87447bc
-  RNReanimated: 41ad1a808a5860d14883872f68ed7cae2efc8635
+  RNReanimated: 1fe404dc4f2fa5857ab06307ad8ad85115a63466
   RNScreens: 5e27df72cc6a1f1024a51277a5c1cb68d9b77180
   RNWorklets: 0000755d812f23d0fc703319e2b1f65d9204c954
   UMAppLoader: 173cb90a3039aa9c1b84bace4487e1907a4a5a39

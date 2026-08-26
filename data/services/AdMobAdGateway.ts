@@ -4,6 +4,7 @@ import mobileAds, {
     AdsConsent,
     AdsConsentPrivacyOptionsRequirementStatus,
     InterstitialAd,
+    MaxAdContentRating,
     TestIds,
 } from 'react-native-google-mobile-ads';
 
@@ -24,7 +25,8 @@ import {isForeground, watchForeground} from '../datasources/platform/ForegroundW
 const AD_STATE_KEY = 'gate';
 const AD_SHOW_TIMEOUT_MS = 8000;
 const LOAD_BACKOFF_MS = [30000, 60000, 120000];
-const MAX_LOADS_PER_SESSION = 12;
+const LOAD_BUDGET = 12;
+const LOAD_BUDGET_WINDOW_MS = 60 * 60 * 1000;
 
 export interface AdMobAdGatewayOptions {
     analytics: AnalyticsSink;
@@ -53,6 +55,7 @@ export class AdMobAdGateway implements AdGateway {
     private showing = false;
     private failures = 0;
     private loads = 0;
+    private loadWindowStartedAt = 0;
     private privacyRequired = false;
     private canRequestAds = true;
     private testUnitReported = false;
@@ -126,6 +129,9 @@ export class AdMobAdGateway implements AdGateway {
                 this.readyPromise = null;
                 return;
             }
+            await mobileAds().setRequestConfiguration({
+                maxAdContentRating: MaxAdContentRating.T,
+            });
             await mobileAds().initialize();
             this.initialized = true;
             this.requestNext();
@@ -161,7 +167,7 @@ export class AdMobAdGateway implements AdGateway {
     private requestNext(): void {
         if (!this.initialized || !this.canRequestAds) return;
         if (this.loading || this.loaded || this.showing) return;
-        if (this.loads >= MAX_LOADS_PER_SESSION) return;
+        if (!this.hasLoadBudget()) return;
         const unitId = this.resolveUnitId();
         if (!unitId) return;
         this.clearRetry();
@@ -243,6 +249,17 @@ export class AdMobAdGateway implements AdGateway {
                 settle();
             });
         });
+    }
+
+    private hasLoadBudget(): boolean {
+        const now = Date.now();
+        if (now - this.loadWindowStartedAt >= LOAD_BUDGET_WINDOW_MS) {
+            this.loadWindowStartedAt = now;
+            this.loads = 0;
+        }
+        if (this.loads < LOAD_BUDGET) return true;
+        this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'budget'});
+        return false;
     }
 
     private scheduleRetry(): void {
