@@ -7,7 +7,7 @@ import {
 } from '@react-native-firebase/remote-config';
 
 import {AD_COOLDOWN_MS, type AppConfig} from '@/domain';
-import {DEFAULT_BASE_URL} from '../datasources/YtsApiDataSource';
+import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {
   ADS_COOLDOWN_SECONDS_DEFAULT,
   ADS_COOLDOWN_SECONDS_KEY,
@@ -42,7 +42,7 @@ export class RemoteAppConfig implements AppConfig {
 
   getApiBaseUrl(): string {
     try {
-      return getString(getRemoteConfig(), API_BASE_URL_KEY) || DEFAULT_BASE_URL;
+      return secureBaseUrl(getString(getRemoteConfig(), API_BASE_URL_KEY));
     } catch {
       return DEFAULT_BASE_URL;
     }

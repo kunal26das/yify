@@ -9,6 +9,10 @@ import {YtsEndpoint} from './YtsEndpoint';
 
 export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
+export function secureBaseUrl(value: string | null | undefined): string {
+  return typeof value === 'string' && value.startsWith('https://') ? value : DEFAULT_BASE_URL;
+}
+
 const REQUEST_TIMEOUT_MS = 15000;
 
 const LIST_TTL_MS = 60_000;

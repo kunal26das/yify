@@ -25,6 +25,7 @@ import {
 import {
     MAX_PREFERENCES_CHARS,
     MAX_WATCHLIST_CHARS,
+    deleteSyncDocument,
     fetchSyncDocument,
     writeSyncDocument,
     type SyncDocument,
@@ -117,6 +118,34 @@ export class AccountSyncImpl implements AccountSync {
         this.cancelRetry();
         this.backoff = RETRY_MS;
         void this.pull();
+    }
+
+    async deleteRemote(): Promise<boolean> {
+        const uid = this.currentUid;
+        if (!uid) return true;
+        const token = await this.auth.getIdToken();
+        if (!token) {
+            this.fail('denied', 'no id token available');
+            return false;
+        }
+        const result = await deleteSyncDocument(uid, token);
+        if (!result.ok) {
+            this.fail(result.failure, result.detail);
+            return false;
+        }
+        this.cancelPush();
+        this.cancelRetry();
+        this.backoff = RETRY_MS;
+        this.mergedUid = null;
+        this.watchlistDirty = false;
+        this.preferencesDirty = false;
+        this.marks = {};
+        this.store.delete(MARKS_KEY);
+        this.store.delete(LINKED_UID_KEY);
+        this.store.delete(PREFERENCES_AT_KEY);
+        this.store.delete(LAST_SYNCED_AT_KEY);
+        this.status.set({state: 'idle', failure: null, detail: null, pendingChanges: false, lastSyncedAt: null});
+        return true;
     }
 
     getStatus(): SyncStatus {

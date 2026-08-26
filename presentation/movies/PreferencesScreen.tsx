@@ -661,12 +661,42 @@ function SyncRow({colors, gutter}: {colors: Colors; gutter: number}) {
 function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const {ready, available, signingIn, account, error} = useAuth();
     const auth = useAuthRepository();
+    const accountSync = useAccountSync();
+    const confirm = useConfirm();
+    const [deleting, setDeleting] = useState(false);
 
     const unavailable = ready && !available;
 
     const signOut = () => {
         Analytics.signOut();
         void auth.signOut();
+    };
+
+    const runDelete = async () => {
+        setDeleting(true);
+        const cleared = await accountSync.deleteRemote();
+        if (!cleared) {
+            setDeleting(false);
+            Analytics.accountDeleteFailed('sync');
+            return;
+        }
+        const deleted = await auth.deleteAccount();
+        setDeleting(false);
+        if (deleted) Analytics.accountDeleted();
+        else Analytics.accountDeleteFailed('auth');
+    };
+
+    const confirmDelete = () => {
+        confirm({
+            title: 'Delete account?',
+            message:
+                'This permanently deletes your account and the watchlist and settings synced to it. Titles saved on this device stay until you clear them.',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+            icon: 'trash-outline',
+            destructive: true,
+            onConfirm: () => void runDelete(),
+        });
     };
 
     return (
@@ -704,6 +734,22 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                     <SyncRow colors={colors} gutter={gutter}/>
+                    <Row
+                        icon="trash-outline"
+                        title="Delete account"
+                        subtitle="Removes your account and everything synced to it."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={deleting ? undefined : confirmDelete}
+                        accessibilityLabel="Delete account"
+                        trailing={
+                            deleting ? (
+                                <ActivityIndicator color={colors.accent}/>
+                            ) : (
+                                <ThemedText style={[styles.value, {color: colors.peer}]}>Delete</ThemedText>
+                            )
+                        }
+                    />
                     </>
                 ) : (
                     <Row

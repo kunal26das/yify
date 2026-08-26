@@ -105,6 +105,24 @@ export async function fetchSyncDocument(uid: string, token: string): Promise<Syn
     }
 }
 
+export async function deleteSyncDocument(uid: string, token: string): Promise<SyncWriteResult> {
+    let response: Response;
+    try {
+        response = await fetch(documentUrl(uid), {
+            method: 'DELETE',
+            headers: {Authorization: `Bearer ${token}`},
+        });
+    } catch (error) {
+        return {ok: false, failure: 'network', detail: String(error)};
+    }
+    if (response.ok || response.status === 404) return {ok: true};
+    return {
+        ok: false,
+        failure: failureFor(response.status),
+        detail: await detailFor(response, `delete failed with ${response.status}`),
+    };
+}
+
 export async function writeSyncDocument(
     uid: string,
     token: string,

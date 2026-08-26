@@ -6,7 +6,7 @@ import {
 } from 'firebase/remote-config';
 
 import {AD_COOLDOWN_MS, type AppConfig} from '@/domain';
-import {DEFAULT_BASE_URL} from '../datasources/YtsApiDataSource';
+import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {
   API_BASE_URL_KEY,
@@ -38,7 +38,7 @@ export class RemoteAppConfig implements AppConfig {
   getApiBaseUrl(): string {
     if (this.remoteConfig == null) return DEFAULT_BASE_URL;
     try {
-      return getString(this.remoteConfig, API_BASE_URL_KEY) || DEFAULT_BASE_URL;
+      return secureBaseUrl(getString(this.remoteConfig, API_BASE_URL_KEY));
     } catch {
       return DEFAULT_BASE_URL;
     }

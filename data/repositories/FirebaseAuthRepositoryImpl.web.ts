@@ -1,10 +1,12 @@
 import {
     GoogleAuthProvider,
     browserLocalPersistence,
+    deleteUser,
     getAuth,
     getIdToken as firebaseGetIdToken,
     getRedirectResult,
     onAuthStateChanged,
+    reauthenticateWithPopup,
     setPersistence,
     signInWithPopup,
     signInWithRedirect,
@@ -113,6 +115,27 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
         } catch {
         }
         this.store.set({account: null});
+    }
+
+    async deleteAccount(): Promise<boolean> {
+        const auth = this.getAuthInstance();
+        const user = auth?.currentUser;
+        if (user == null) return false;
+        try {
+            await deleteUser(user);
+        } catch (error) {
+            if (errorCode(error) !== 'auth/requires-recent-login') return false;
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({prompt: 'select_account'});
+            try {
+                const reauthenticated = await reauthenticateWithPopup(user, provider);
+                await deleteUser(reauthenticated.user);
+            } catch {
+                return false;
+            }
+        }
+        this.store.set({account: null});
+        return true;
     }
 
     async getIdToken(): Promise<string | null> {

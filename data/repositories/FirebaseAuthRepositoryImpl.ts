@@ -1,5 +1,6 @@
 import {
     GoogleAuthProvider,
+    deleteUser,
     getAuth,
     getIdToken as firebaseGetIdToken,
     onAuthStateChanged,
@@ -99,6 +100,47 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
         } catch {
         }
         this.store.set({account: null});
+    }
+
+    async deleteAccount(): Promise<boolean> {
+        const user = getAuth().currentUser;
+        if (user == null) return false;
+        try {
+            await deleteUser(user);
+        } catch (error) {
+            if (errorCode(error) !== 'auth/requires-recent-login') return false;
+            const refreshed = await this.reauthenticate();
+            if (refreshed == null) return false;
+            try {
+                await deleteUser(refreshed);
+            } catch {
+                return false;
+            }
+        }
+        try {
+            if (this.configured) await GoogleSignin.revokeAccess();
+        } catch {
+        }
+        try {
+            if (this.configured) await GoogleSignin.signOut();
+        } catch {
+        }
+        this.store.set({account: null});
+        return true;
+    }
+
+    private async reauthenticate(): Promise<FirebaseAuthTypes.User | null> {
+        if (!this.ensureConfigured()) return null;
+        try {
+            await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+            const result = await GoogleSignin.signIn();
+            if (result.type !== 'success' || !result.data.idToken) return null;
+            const credential = GoogleAuthProvider.credential(result.data.idToken);
+            const signed = await signInWithCredential(getAuth(), credential);
+            return signed.user;
+        } catch {
+            return null;
+        }
     }
 
     async getIdToken(): Promise<string | null> {

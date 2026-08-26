@@ -7,6 +7,8 @@ export interface AccountSync {
 
     syncNow(): void;
 
+    deleteRemote(): Promise<boolean>;
+
     getStatus(): SyncStatus;
 
     subscribe(listener: () => void): () => void;

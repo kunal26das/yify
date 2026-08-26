@@ -98,6 +98,9 @@ export const Analytics = {
     signInFailed: (method: string, reason: string) =>
         trackEvent('login_failed', {method, reason}),
     signOut: () => trackEvent('logout'),
+    accountDeleted: () => trackEvent('account_deleted'),
+    accountDeleteFailed: (reason: 'sync' | 'auth') =>
+        trackEvent('account_delete_failed', {reason}),
 
     supporterPrompt: (source: string) => trackEvent('supporter_prompt', {source}),
     coffeeOpen: (source: string) => trackEvent('coffee_open', {source}),

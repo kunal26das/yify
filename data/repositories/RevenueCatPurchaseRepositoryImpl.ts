@@ -178,11 +178,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             this.verified = true;
             this.setState({adsRemoved: hasRemoveAds(info)});
             await this.linkFirebaseAnalytics();
-            if (account) {
-                await Purchases.setEmail(account.email);
-                await Purchases.setDisplayName(account.name);
-                if (!hasRemoveAds(info)) await this.restore();
-            }
+            if (account && !hasRemoveAds(info)) await this.restore();
             await this.loadOfferings();
         } catch {
         }

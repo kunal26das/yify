@@ -11,5 +11,7 @@ export interface AuthRepository {
 
     signOut(): Promise<void>;
 
+    deleteAccount(): Promise<boolean>;
+
     getIdToken(): Promise<string | null>;
 }
