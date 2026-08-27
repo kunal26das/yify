@@ -853,7 +853,7 @@
   dependencies:
     node-forge "^1.3.3"
 
-"@expo/config-plugins@~57.0.8", "@expo/config-plugins@~57.0.9":
+"@expo/config-plugins@~57.0.9":
   version "57.0.9"
   resolved "https://registry.yarnpkg.com/@expo/config-plugins/-/config-plugins-57.0.9.tgz#3fa42fb565f3662e518f0accc1653a9ac25f73f3"
   integrity sha512-hHgfL1avkCdEvDSw7IwlKwRYYNgcxzbNNMIk6W6lTkJpY0MajinAfeJUS0J+wPCsjUfGbVqOJM+XhPaO5ulUxg==
@@ -944,7 +944,7 @@
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-"@expo/image-utils@^0.11.4", "@expo/image-utils@^0.11.5":
+"@expo/image-utils@^0.11.5":
   version "0.11.5"
   resolved "https://registry.yarnpkg.com/@expo/image-utils/-/image-utils-0.11.5.tgz#47cd85c9d09ab2fb155823da62b71b9ae0f7ffa7"
   integrity sha512-KPQBTpmpAfy/Vu9y4wPW808/qtZxjYmyJg8cm2QCPAupp+qEWA3b5zmk0ulOwQ9OgeHxuCPgUqWgkwHFo7UsrQ==
@@ -4772,10 +4772,10 @@ expo-build-properties@57.0.14:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@57.0.13:
-  version "57.0.13"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.13.tgz#52490b613f9c87805a14431d7b11fccfdae3c638"
-  integrity sha512-eB5AHp7kKxsVIBjTetUgj5WQSw8joI2ekzgTlcUv+Hc0x2t0jZU6IiL4DpyOT2yZQ71n0WJZCkmOKLgxlajIzg==
+expo-constants@57.0.14:
+  version "57.0.14"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.14.tgz#f7ddde89923a88f3b53f192b9b282957c4d19e5b"
+  integrity sha512-c9WlP18GqXRm/Kaa7rALRbpFvWiuijrXu3C/38iYdHt9lscA8deJhfK7TURRApWLacdzre5mnNmHdEthNeCEjg==
   dependencies:
     "@expo/env" "~2.4.2"
 
