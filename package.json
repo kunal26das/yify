@@ -52,7 +52,7 @@
     "@react-native-google-signin/google-signin": "16.1.4",
     "@revenuecat/purchases-js": "1.53.1",
     "expo": "57.0.16",
-    "expo-background-task": "57.0.12",
+    "expo-background-task": "57.0.13",
     "expo-blur": "57.0.2",
     "expo-build-properties": "57.0.14",
     "expo-constants": "57.0.13",
