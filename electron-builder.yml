@@ -33,8 +33,22 @@ win:
     - nsis
   icon: desktop/assets/icon.png
 
+appx:
+  applicationId: Yify
+  displayName: Yify
+  backgroundColor: "#D97757"
+  showNameOnTiles: true
+  languages:
+    - en-US
+
 linux:
   target:
     - AppImage
   category: AudioVideo
   icon: desktop/assets/icon.png
+  synopsis: Browse the YTS movie catalogue with trailers and a watchlist
+
+snap:
+  confinement: strict
+  grade: stable
+  allowNativeWayland: true
