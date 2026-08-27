@@ -23,6 +23,7 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 ## 📖 Table of contents
 
 - [What it is](#-what-it-is)
+- [Download](#-download)
 - [Features](#-features)
 - [Screens & navigation](#-screens--navigation)
 - [The curated home](#-the-curated-home)
@@ -38,6 +39,26 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 - [Firebase Remote Config](#-firebase-remote-config)
 - [Signing in](#-signing-in)
 - [Contributing](#-contributing)
+
+---
+
+## 📥 Download
+
+| Platform | Where | |
+| --- | --- | --- |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=io.github.kunal26das.yify) | the store build, auto-updating |
+| Android | [GitHub releases](https://github.com/kunal26das/yify/releases/latest) | direct APK, arm64 + armeabi-v7a |
+| Android | [Obtainium](https://github.com/ImranR98/Obtainium) | add `https://github.com/kunal26das/yify` as a source to track releases |
+| Windows | [GitHub releases](https://github.com/kunal26das/yify/releases/latest) | `.appx` |
+| macOS | [GitHub releases](https://github.com/kunal26das/yify/releases/latest) | `.dmg`, Apple silicon |
+| Linux | [GitHub releases](https://github.com/kunal26das/yify/releases/latest) | `.snap` |
+| Web | [kunal26das.github.io/yify](https://kunal26das.github.io/yify/) | no install |
+
+A Play install and a direct-APK install are signed by different certificates and cannot
+upgrade over each other — pick one channel per device.
+
+Listings on Uptodown, Indus Appstore, Palm Store, the Microsoft Store and the Snap Store are
+not live yet; `store/README.md` tracks what each one still needs.
 
 ---
 
