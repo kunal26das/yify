@@ -10,7 +10,6 @@
     "android": "NODE_OPTIONS=--max-old-space-size=8192 expo run:android",
     "android:debug": "bash scripts/run-android-debug.sh",
     "android:release": "bash scripts/run-android-release.sh",
-    "store:apk": "bash scripts/build-store-apk.sh",
     "ios": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
     "ios:start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "web": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --web",

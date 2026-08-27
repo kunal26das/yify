@@ -14,7 +14,6 @@ extraMetadata:
 files:
   - desktop/**/*
   - package.json
-  - "!node_modules/**/*"
 
 # Ship the exported Expo web build alongside the app; main.js loads it from
 # process.resourcesPath/dist in production.
@@ -34,23 +33,8 @@ win:
     - nsis
   icon: desktop/assets/icon.png
 
-appx:
-  applicationId: Yify
-  displayName: Yify
-  publisherDisplayName: Kudos Labs
-  backgroundColor: "#D97757"
-  showNameOnTiles: true
-  languages:
-    - en-US
-
 linux:
   target:
     - AppImage
   category: AudioVideo
   icon: desktop/assets/icon.png
-  synopsis: Browse the YTS movie catalogue with trailers and a watchlist
-
-snap:
-  confinement: strict
-  grade: stable
-  allowNativeWayland: true

@@ -1,27 +1,28 @@
+import Constants from 'expo-constants';
 import {Image} from 'expo-image';
 import * as Linking from 'expo-linking';
 import {Platform, StyleSheet} from 'react-native';
 import {PressableScale} from '../../components/motion';
-import {ThemedText} from '../../components/themed-text';
-import {usePalette} from '../../hooks/use-palette';
 import {Analytics} from '@/presentation/analytics/events';
-import {distributionChannel, storeLink} from '../constants/storeLinks';
 
-export {PLAY_STORE_URL} from '../constants/storeLinks';
+const PACKAGE_NAME = Constants.expoConfig?.android?.package ?? 'io.github.kunal26das.yify';
+
+export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PACKAGE_NAME}`;
+
+const PLAY_STORE_APP_URI = `market://details?id=${PACKAGE_NAME}`;
 
 export async function openPlayStore(source: string): Promise<void> {
     Analytics.playStoreOpen(source);
-    const {url, appUri} = storeLink();
-    if (Platform.OS === 'android' && appUri) {
+    if (Platform.OS === 'android') {
         try {
-            if (await Linking.canOpenURL(appUri)) {
-                await Linking.openURL(appUri);
+            if (await Linking.canOpenURL(PLAY_STORE_APP_URI)) {
+                await Linking.openURL(PLAY_STORE_APP_URI);
                 return;
             }
         } catch {
         }
     }
-    await Linking.openURL(url);
+    await Linking.openURL(PLAY_STORE_URL);
 }
 
 const BADGE = require('../../../assets/images/google-play-badge.png');
@@ -36,30 +37,7 @@ const IMAGE_WIDTH = Math.round(IMAGE_HEIGHT * (CANVAS.width / CANVAS.height));
 const BLEED = Math.round(IMAGE_HEIGHT * (41 / CANVAS.height));
 
 export function PlayStoreButton({source}: {source: string}) {
-    const {colors} = usePalette();
-
     if (Platform.OS === 'android') return null;
-
-    const link = storeLink();
-
-    if (distributionChannel() !== 'play') {
-        return (
-            <PressableScale
-                onPress={() => void openPlayStore(source)}
-                accessibilityRole="link"
-                accessibilityLabel={`Download Yify from ${link.label}`}
-                pressedScale={0.95}
-                pressedOpacity={0.85}
-                hoveredScale={1.04}
-                style={styles.hit}
-                contentStyle={styles.hit}
-            >
-                <ThemedText style={[styles.fallbackLabel, {color: colors.accent}]}>
-                    Download from {link.label}
-                </ThemedText>
-            </PressableScale>
-        );
-    }
 
     return (
         <PressableScale
@@ -85,5 +63,4 @@ export function PlayStoreButton({source}: {source: string}) {
 const styles = StyleSheet.create({
     hit: {alignSelf: 'flex-start', overflow: 'hidden'},
     image: {height: IMAGE_HEIGHT, width: IMAGE_WIDTH, margin: -BLEED},
-    fallbackLabel: {fontSize: 15, fontWeight: '600'},
 });

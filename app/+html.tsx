@@ -12,15 +12,11 @@ const JSON_LD = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name: 'Yify',
+    operatingSystem: 'ANDROID, IOS',
     applicationCategory: 'EntertainmentApplication',
     offers: {'@type': 'Offer', price: '0', priceCurrency: 'USD'},
     url: SITE_URL,
-    operatingSystem: 'ANDROID, IOS, WINDOWS, MACOS, LINUX, WEB',
-    installUrl: [
-        'https://play.google.com/store/apps/details?id=io.github.kunal26das.yify',
-        'https://github.com/kunal26das/yify/releases/latest',
-    ],
-    downloadUrl: 'https://github.com/kunal26das/yify/releases/latest',
+    installUrl: 'https://play.google.com/store/apps/details?id=io.github.kunal26das.yify',
     author: {'@type': 'Person', name: 'Kunal Das', url: 'https://kunal26das.github.io/'},
     description: DESCRIPTION,
 });

@@ -8,7 +8,6 @@ node_modules/
 dist/
 dist-hosting/
 desktop-dist/
-store-artifacts/
 web-build/
 expo-env.d.ts
 
