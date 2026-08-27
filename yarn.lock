@@ -4857,10 +4857,10 @@ expo-in-app-updates@0.12.0:
   resolved "https://registry.yarnpkg.com/expo-in-app-updates/-/expo-in-app-updates-0.12.0.tgz#d32b86227f66e9c6d98f1110237f219d590b52dc"
   integrity sha512-RqqT0KEqZNbOk5Zxq+JQ7ph7mH/ZNfKOowPyZI8K2YnYBjjNIOyt5PlSZz5/JtmPsBGe6/oKiu1QY+4rGfY+Eg==
 
-expo-insights@57.0.12:
-  version "57.0.12"
-  resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-57.0.12.tgz#ec6b1989ba734acb39a6a5e09ffe3d2a7931b37f"
-  integrity sha512-k4G+M657PX1D5YakTl/cyMrgoqI+a93+c0QU1s7dyJMGhBCAJslofi7zCqbqO/ZCjTQ4x2GPVYKo/eAEGxV2nA==
+expo-insights@57.0.13:
+  version "57.0.13"
+  resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-57.0.13.tgz#54ceeaa0e830003c55131052f14daea606977366"
+  integrity sha512-Ok74HJINTfILOHI1NZ2ODHlo1DkzHB0raPjf18VOn8FEpRKSmwzvjXByWOv1Kiy60nE9ds9RmjGMydDC9hKQpA==
   dependencies:
     expo-eas-client "~57.0.1"
 
