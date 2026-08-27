@@ -4962,13 +4962,13 @@ expo-server@^57.0.3:
   resolved "https://registry.yarnpkg.com/expo-server/-/expo-server-57.0.3.tgz#02e038a85453f1f4eb00024256b4b3cab949cace"
   integrity sha512-aK+LdKzauHSGmsOStZtyxdzv0zWssCkxTw3m4QuOhfDSJsZaMRTd9O41d8ixU/QfELTbaJ0oRNcF7JFV/7O9YQ==
 
-expo-splash-screen@57.0.7:
-  version "57.0.7"
-  resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-57.0.7.tgz#d466115b4f51c0eeda0e38af5676bb81e8007cf1"
-  integrity sha512-QxqfjOCTnTGnqK2BxfEtxUJOcnsJbUXO873Q342r3VkgHAG877eozsNzgYWQXcCFj/asMwx2uy9OXxBShxc5rQ==
+expo-splash-screen@57.0.8:
+  version "57.0.8"
+  resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-57.0.8.tgz#200c9ef51b27ba1b6a3b8997c9f852f37bb087d8"
+  integrity sha512-BEsrKg4niYBZa5AFzWRyGqxA4ZemtBOPwbCy+C336iGYYPuZYLEgWJGmm2xD1gRfCdrM/TP+l2ONd86Zvk3KyA==
   dependencies:
-    "@expo/config-plugins" "~57.0.8"
-    "@expo/image-utils" "^0.11.4"
+    "@expo/config-plugins" "~57.0.9"
+    "@expo/image-utils" "^0.11.5"
     xml2js "0.6.0"
 
 expo-status-bar@57.0.1:
