@@ -41,7 +41,10 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Export web bundle
-        run: yarn export:desktop
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          EXPO_WEB_BASE_URL: ''
+        run: npx expo export --platform web
 
       - name: Build appx
         shell: bash
@@ -95,7 +98,10 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Export web bundle
-        run: yarn export:desktop
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          EXPO_WEB_BASE_URL: ''
+        run: npx expo export --platform web
 
       - name: Build snap
         run: npx electron-builder --linux snap --publish never
@@ -124,7 +130,10 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Export web bundle
-        run: yarn export:desktop
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          EXPO_WEB_BASE_URL: ''
+        run: npx expo export --platform web
 
       - name: Build dmg
         run: npx electron-builder --mac dmg zip --publish never
