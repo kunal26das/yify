@@ -4913,16 +4913,16 @@ expo-modules-jsi@~57.0.6:
   resolved "https://registry.yarnpkg.com/expo-modules-jsi/-/expo-modules-jsi-57.0.6.tgz#98b9d22cee79720a8b4949e7e0c7c5bbfad189c5"
   integrity sha512-WK0xFEe0FdZTCLCdfXK+HVNYfAmEbA6goecRxqjr0gh3XYRKAr9tikxqcM0ItLQoEPKntscPZhWcPLGvr97Tfw==
 
-expo-notifications@57.0.13:
-  version "57.0.13"
-  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.13.tgz#151824cbc22e2de86bd9b880e3fe25aa9635cc18"
-  integrity sha512-4kTLfvCbpr92RWWmYGO1BP4pJ5ZhxOdhB/6zdtNs44wV7h6zKrbweccwovgZTLo4Ef/KPL3SD02Vam4Tl/xv9A==
+expo-notifications@57.0.14:
+  version "57.0.14"
+  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.14.tgz#295dc9282c4b3a2e6a4c484fc5ac9c88dcdd3c49"
+  integrity sha512-YDTW6vUEF1NnBwdXLJTaUbk+ZgtFCO3qIEaNkrXV56U+az2a5GBRgTnqGUI3ts7tR3oDthJVa/0UBn52f7ngsA==
   dependencies:
-    "@expo/image-utils" "^0.11.4"
+    "@expo/image-utils" "^0.11.5"
     abort-controller "^3.0.0"
     badgin "^1.1.5"
     expo-application "~57.0.2"
-    expo-constants "~57.0.13"
+    expo-constants "~57.0.14"
 
 expo-router@57.0.15:
   version "57.0.15"
