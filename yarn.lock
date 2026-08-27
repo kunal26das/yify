@@ -1039,10 +1039,10 @@
     micromatch "^4.0.4"
     walker "^1.0.8"
 
-"@expo/metro-runtime@57.0.12":
-  version "57.0.12"
-  resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-57.0.12.tgz#32709255757e12c1d2bdee74baa8d72e75675351"
-  integrity sha512-WpgjfRFh88B5tKJrbsypvyxx0MKuXMo+ru9Gbjq4Qwj7OboJmrQ+g555YCgiQD3uk3J1ThzgEU06yZOV43suGA==
+"@expo/metro-runtime@57.0.13":
+  version "57.0.13"
+  resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-57.0.13.tgz#e5646f609fc8371ebde004d0e824b60af9da124d"
+  integrity sha512-o5VKd/vGti4z8uEJRAvKgzUZf+b5UE6eXx9R9rjT5UFmcnjCGXjv5LNbzvcb8wiSSakDDXE/z4wpOhJEPqV5JA==
   dependencies:
     "@expo/log-box" "^57.0.3"
     anser "^1.4.9"
