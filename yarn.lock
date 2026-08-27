@@ -5021,10 +5021,10 @@ expo-updates-interface@~57.0.1:
   resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-57.0.1.tgz#2ff8a65f9ec139743b9b29273e42f2888420db00"
   integrity sha512-+LUWwJ0gf/TEKMVdQAw/Gjih4dvrk+URgy24X9qEGKuuMDZqjBRm9T4yQyBVALGL5TTdPUaB6ILxx3lshm3pwQ==
 
-expo-updates@57.0.16:
-  version "57.0.16"
-  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-57.0.16.tgz#1c13facc62d9d2f91eb761c0da2c18c1d4b92383"
-  integrity sha512-eb0arz9Vp5m1RaUKO6PJxogJv8z15/Rjt5GsRcSUjrf0vhignlT7b0D/Z07Po/ACG1H7Yn7rwIc73T647JVJFA==
+expo-updates@57.0.17:
+  version "57.0.17"
+  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-57.0.17.tgz#2c58ee748bb2461fd04f2ada3b9bcc7001939cf1"
+  integrity sha512-AllqV2LEvmwZFbvsAQqdMSVDwWgiC6NherrzgfESR3yPukzqRozY6vxl7hX7HeqAaet+vK3c4qYVyfNvc4aW/A==
   dependencies:
     "@expo/code-signing-certificates" "^0.0.6"
     "@expo/plist" "^0.8.1"
