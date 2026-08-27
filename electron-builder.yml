@@ -14,6 +14,7 @@ extraMetadata:
 files:
   - desktop/**/*
   - package.json
+  - "!node_modules/**/*"
 
 # Ship the exported Expo web build alongside the app; main.js loads it from
 # process.resourcesPath/dist in production.
@@ -36,6 +37,7 @@ win:
 appx:
   applicationId: Yify
   displayName: Yify
+  publisherDisplayName: Kudos Labs
   backgroundColor: "#D97757"
   showNameOnTiles: true
   languages:

@@ -2,6 +2,11 @@ name: Desktop artifacts
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to create or update, e.g. v1.6.3. Leave blank to build artifacts without publishing.'
+        required: false
+        default: ''
   push:
     tags: [ 'v*' ]
 
@@ -136,21 +141,19 @@ jobs:
         run: npx expo export --platform web
 
       - name: Build dmg
-        run: npx electron-builder --mac dmg zip --publish never
+        run: npx electron-builder --mac dmg --publish never
 
       - name: Upload dmg
         uses: actions/upload-artifact@v4
         with:
           name: yify-macos
-          path: |
-            desktop-dist/*.dmg
-            desktop-dist/*.zip
+          path: desktop-dist/*.dmg
           if-no-files-found: error
 
   release:
     name: Attach to release
     needs: [ windows, linux, macos ]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -163,7 +166,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --title "$TAG" --generate-notes
