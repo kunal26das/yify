@@ -4763,10 +4763,10 @@ expo-blur@57.0.2:
   resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-57.0.2.tgz#a87d7d5f7f038963349b5667d14adc3224b0aedf"
   integrity sha512-Aoud8H8lmlNkbRufyvRLefmGFELdBf1n5Te/Xm+Zx8ORINH+aXL+gKb5mbftFSha860+I7pMArz77TBYz8HDVg==
 
-expo-build-properties@57.0.14:
-  version "57.0.14"
-  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-57.0.14.tgz#414267da464e20a250c569520bb510542d299ec3"
-  integrity sha512-gIU7e37gHWDcozQPelPzGlIa+lg8s8/O/gSuU/M7isy46NMdrBZIu/1TCPuL6LwRUCErNvuzNs3t6ljtiGSOkw==
+expo-build-properties@57.0.15:
+  version "57.0.15"
+  resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-57.0.15.tgz#f982f8ea4a27385f59325bc1cdd2577626c650e4"
+  integrity sha512-qZe9pnxlBpHT7SSNDR2a3C+P34xv67Ep9I0Erh+3xCczGlokyRd4pu9h0PrBdsVlr1d0QREQ1Do/+IgrIWkQQA==
   dependencies:
     "@expo/schema-utils" "^57.0.2"
     resolve-from "^5.0.0"
