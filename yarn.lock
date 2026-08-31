@@ -4994,12 +4994,12 @@ expo-symbols@57.0.2, expo-symbols@^57.0.2:
     "@expo-google-fonts/material-symbols" "^0.4.1"
     sf-symbols-typescript "^2.0.0"
 
-expo-system-ui@57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.2.tgz#661a72f07df62e63bc9ee917ac1e1d3e8b9c2881"
-  integrity sha512-zABCRqFSioDBAo/RtmS0dQiGgDtDPZUVk01Y3Ti4ducobNM4HTM2sNAtq+YPpEUhaVW3hccPVsEUH4LK/ADVhA==
+expo-system-ui@57.0.3:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.3.tgz#31517c381af6d435829aff2328bf1e1b3a19c749"
+  integrity sha512-3N3BoagGojEvQw0h7kL0Lvv2LrVjqEvODSNS+Nc9lj/kzaTaVx4K1HI8qqxeALMf5jui3rLP2b3Ai2pXotoNuA==
   dependencies:
-    "@react-native/normalize-colors" "0.86.2"
+    "@react-native/normalize-colors" "0.86.3"
     debug "^4.3.2"
 
 expo-task-manager@57.0.13:
