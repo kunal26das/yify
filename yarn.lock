@@ -2617,27 +2617,27 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@revenuecat/purchases-js-hybrid-mappings@18.31.0":
-  version "18.31.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-18.31.0.tgz#a8ca9d8555d746c0d94e237bf90b5c11e89609b6"
-  integrity sha512-iVnTulEs9tXHAJwogYhUN639mU1vV/2eLv1vKvEV9lxDw6rbL5mj4vDHbK9Yrw4IeI0C8Z8Xy14UDZ74W+y2VQ==
+"@revenuecat/purchases-js-hybrid-mappings@18.33.1":
+  version "18.33.1"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-18.33.1.tgz#dae5f206dae27bcd1c4f249871cd9097d27885bc"
+  integrity sha512-pYKZz+w4CHQlLoU1Lp3kP9ERET9itevWwhb7P4gGcQaXpWUWPZQLiNzEtopc25J/CTn37xN/wQNm3FeIjJuOOQ==
   dependencies:
-    "@revenuecat/purchases-js" "1.52.3"
-
-"@revenuecat/purchases-js@1.52.3":
-  version "1.52.3"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.52.3.tgz#bfb38ea8928ba85b6738cee9dcf4cabfb64b0d29"
-  integrity sha512-ZU+mqdW7jsGTqYhtDmvDjcLzplvfh+jTspSKC0eMijxmFik0r/Wwq/CkD3o0QEqVRbVF0HkwEh2zZp6qdGR1Eg==
+    "@revenuecat/purchases-js" "1.54.0"
 
 "@revenuecat/purchases-js@1.53.1":
   version "1.53.1"
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.53.1.tgz#d4fc104f9b12c858ebace3a59f33daca446ce054"
   integrity sha512-7RMz5AE6rVtGORALYmTyauQ7fJh+/HPGAmDSrqsb2UcQS8pf/JvPbKP0iITCKeXnksTeN3D8+SKVyYMOio6mJQ==
 
-"@revenuecat/purchases-typescript-internal@18.31.0":
-  version "18.31.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-18.31.0.tgz#a0e5f3fc01fc2e662a80f70cebfdf75c0eb4bb20"
-  integrity sha512-5AE00P0AX34ou14ayEXFEdlWbNPFSYwAQl+1MWvTMKOd9wup1/T3erM53kp2t+ms4oajJv14qwNjzlCnH4JdnA==
+"@revenuecat/purchases-js@1.54.0":
+  version "1.54.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.54.0.tgz#e2746f03d85ac53d5255a29ad3b78dcabc6b786e"
+  integrity sha512-eYCzHLGeJ4DTMvSKjnOi2CpTTtCBAYfM/g0eYjWr5SU+oTXF8QBqpFvBFT5aEoH9/GiP9svL00gT9L7Ck7B+aQ==
+
+"@revenuecat/purchases-typescript-internal@18.33.1":
+  version "18.33.1"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-18.33.1.tgz#1e0e5a25c656f128b4cefe1ec29987b2fd31c0c5"
+  integrity sha512-TobtSjmMQUiPgNqcWZJfCyQgmCzhP77+KuvTZUKBcLlSTtoYTOFy5GnaOd5YPvwNHeFYL09nzgleg67n866pzw==
 
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
@@ -7441,13 +7441,13 @@ react-native-nitro-modules@0.37.0:
   resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.37.0.tgz#9ded1451fb517176bf388436c7c52dbed6b6e9b9"
   integrity sha512-ULS2CBZcdwGw5d4Y35EV/tbCOsNsQOnQ9LC9CehMhDNm5c90lwF/LxRamzKuFpjI547G7teTQgD0peqYSGnP9g==
 
-react-native-purchases@10.7.2:
-  version "10.7.2"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-10.7.2.tgz#c186d7f3d79cc2675bed8b33e981c54def2f7b88"
-  integrity sha512-pI2Vh1oUtjjggYCd8P6u4Rl8Hck/lNhx6exxeoZYCGEeu7VQgGxzRDYTJ5f+96g057G6FcZ0bfMyD4VBxxQsuA==
+react-native-purchases@10.8.1:
+  version "10.8.1"
+  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-10.8.1.tgz#64dc855b00d820c485f70da9ac07666208ebf97f"
+  integrity sha512-9PdZ27eoimgC7YT0SZRlsQxAIUoLaeh3B08Zv+U6bMsvWVXEyHBjy3L+dzikYqL81r1clXJhZ1PxdWISk22VYA==
   dependencies:
-    "@revenuecat/purchases-js-hybrid-mappings" "18.31.0"
-    "@revenuecat/purchases-typescript-internal" "18.31.0"
+    "@revenuecat/purchases-js-hybrid-mappings" "18.33.1"
+    "@revenuecat/purchases-typescript-internal" "18.33.1"
 
 react-native-reanimated@4.5.5:
   version "4.5.5"
