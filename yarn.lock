@@ -913,10 +913,10 @@
   resolved "https://registry.yarnpkg.com/@expo/dom-webview/-/dom-webview-57.0.1.tgz#e41e9ab9b691046c944ef2d0cd874cf316894097"
   integrity sha512-lAKsME4SAq+8sf56oN0DX5TBYyruupoRxbWbD2xf9RnKY8y6x8eb9LCE5pxSN0qyWdqnp+0wmyWzDkKboThKAw==
 
-"@expo/env@^2.4.2", "@expo/env@~2.4.2":
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.4.2.tgz#c180fd577e664b6090029157ae0e1b7ddfd66fac"
-  integrity sha512-28pqaEqwnmLduZ00Pq9HkSzE5wbj1MTwp5/n8nm8rD8MCjR9eUnVOwmNksPI3Be2ReAPO/DbPn1puy0mvoocsQ==
+"@expo/env@^2.4.2", "@expo/env@~2.4.2", "@expo/env@~2.4.3":
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/@expo/env/-/env-2.4.3.tgz#cba412d1cf19374bedd83106b32166a12862667c"
+  integrity sha512-M1NXeZCA1mkMkYOyIe7PlyRX0/jqFtMoJgyblnlq/vpCRfmueFT7RnGSQG8uEFDF5WHOFGijAQ3fogPh3/n5Ng==
   dependencies:
     chalk "^4.0.0"
     debug "^4.3.4"
@@ -4772,19 +4772,12 @@ expo-build-properties@57.0.14:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@57.0.14:
-  version "57.0.14"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.14.tgz#f7ddde89923a88f3b53f192b9b282957c4d19e5b"
-  integrity sha512-c9WlP18GqXRm/Kaa7rALRbpFvWiuijrXu3C/38iYdHt9lscA8deJhfK7TURRApWLacdzre5mnNmHdEthNeCEjg==
+expo-constants@57.0.16, expo-constants@~57.0.13, expo-constants@~57.0.14, expo-constants@~57.0.15:
+  version "57.0.16"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.16.tgz#904b5023d5fde5d43409e9d0dc9844e60624f009"
+  integrity sha512-HG3yJjGZo2BPTo2F1sBoxdJZRwX7d9C554EhKn8m12K62pxGolCsvPSoh/lQf95OEP9vO34wwXB2C3QFs0KG0g==
   dependencies:
-    "@expo/env" "~2.4.2"
-
-expo-constants@~57.0.13, expo-constants@~57.0.14, expo-constants@~57.0.15:
-  version "57.0.15"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.15.tgz#f8f1d166b48b843cdda23d38af390981b9f993a7"
-  integrity sha512-rLME1H/K+/uFMR/jEpe/p1nribvCEZZmQegzqxu/R1HTyvYweq4E+B38zB0baie+SEwmeIPLaM4KLVMnejhm5A==
-  dependencies:
-    "@expo/env" "~2.4.2"
+    "@expo/env" "~2.4.3"
 
 expo-dev-client@57.0.15:
   version "57.0.15"
