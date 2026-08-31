@@ -4823,7 +4823,7 @@ expo-device-corner-radius@0.1.1:
   resolved "https://registry.yarnpkg.com/expo-device-corner-radius/-/expo-device-corner-radius-0.1.1.tgz#945c90bf4bb0b335e2b5445f353907868142a2ca"
   integrity sha512-b4EwP8rxZK2ZBmyaDSYCPrFoNtKp+O1Ai/QUQTAehNiiRmigT+IN5n0b3cbuT8gpAWwnIxRh5WrxJUsJIUflYg==
 
-expo-eas-client@~57.0.1:
+expo-eas-client@~57.0.1, expo-eas-client@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-eas-client/-/expo-eas-client-57.0.2.tgz#739519039d2a87d0c5c6cf67a0205b2978d5a941"
   integrity sha512-EfFiqUr0o9TvTOgMbqDiV1oIdG/d7kirhqtwa7roGmm9wF+CpXUz20d9YGzO6KzJWUYgdUgu4B6Ocv0jNJUdnQ==
@@ -5021,10 +5021,10 @@ expo-updates-interface@~57.0.1:
   resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-57.0.1.tgz#2ff8a65f9ec139743b9b29273e42f2888420db00"
   integrity sha512-+LUWwJ0gf/TEKMVdQAw/Gjih4dvrk+URgy24X9qEGKuuMDZqjBRm9T4yQyBVALGL5TTdPUaB6ILxx3lshm3pwQ==
 
-expo-updates@57.0.17:
-  version "57.0.17"
-  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-57.0.17.tgz#2c58ee748bb2461fd04f2ada3b9bcc7001939cf1"
-  integrity sha512-AllqV2LEvmwZFbvsAQqdMSVDwWgiC6NherrzgfESR3yPukzqRozY6vxl7hX7HeqAaet+vK3c4qYVyfNvc4aW/A==
+expo-updates@57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-updates/-/expo-updates-57.0.19.tgz#cc6e2405d4a63ea0134af0ef3b725c7439935527"
+  integrity sha512-xX4KIUa8H2xKmiVDe/uEehD96MV6nyyF/OCrE+PBYfOEp6BbS8bYkHZfNFcoDCKMRuT6pg9JrCi8OmnoWlM/2A==
   dependencies:
     "@expo/code-signing-certificates" "^0.0.6"
     "@expo/plist" "^0.8.1"
@@ -5032,7 +5032,7 @@ expo-updates@57.0.17:
     arg "^4.1.0"
     chalk "^4.1.2"
     debug "^4.3.4"
-    expo-eas-client "~57.0.1"
+    expo-eas-client "~57.0.2"
     expo-manifests "~57.0.1"
     expo-structured-headers "~57.0.0"
     expo-updates-interface "~57.0.1"
