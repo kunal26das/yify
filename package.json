@@ -50,7 +50,7 @@
     "@react-native-firebase/crashlytics": "24.1.1",
     "@react-native-firebase/remote-config": "24.1.1",
     "@react-native-google-signin/google-signin": "16.1.4",
-    "@revenuecat/purchases-js": "1.53.1",
+    "@revenuecat/purchases-js": "1.54.0",
     "expo": "57.0.16",
     "expo-background-task": "57.0.13",
     "expo-blur": "57.0.2",
