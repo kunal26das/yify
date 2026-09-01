@@ -9,6 +9,7 @@ import mobileAds, {
 } from 'react-native-google-mobile-ads';
 
 import {
+    AD_WINDOW_MS,
     commitAdShown,
     decideAd,
     encodeAdGateState,
@@ -35,6 +36,7 @@ export interface AdMobAdGatewayOptions {
     enabled: () => boolean;
     unitId: () => string;
     cooldownMs: () => number;
+    dailyCap: () => number;
     entitlement: () => PurchaseState;
 }
 
@@ -85,7 +87,9 @@ export class AdMobAdGateway implements AdGateway {
                 state: this.state,
             },
             Date.now(),
-            this.options.cooldownMs()
+            this.options.cooldownMs(),
+            AD_WINDOW_MS,
+            this.options.dailyCap()
         );
         if (decision !== 'show') {
             this.options.analytics.trackEvent('trailer_ad_gated', {trigger, reason: decision});
@@ -120,7 +124,7 @@ export class AdMobAdGateway implements AdGateway {
     private async doInit(): Promise<void> {
         try {
             await this.options.ready();
-            if (!this.options.enabled()) {
+            if (!this.options.enabled() || !this.resolveUnitId()) {
                 this.readyPromise = null;
                 return;
             }

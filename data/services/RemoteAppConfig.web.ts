@@ -5,7 +5,7 @@ import {
   type RemoteConfig,
 } from 'firebase/remote-config';
 
-import {AD_COOLDOWN_MS, type AppConfig} from '@/domain';
+import {AD_COOLDOWN_MS, AD_WINDOW_LIMIT, type AppConfig} from '@/domain';
 import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {
@@ -63,6 +63,10 @@ export class RemoteAppConfig implements AppConfig {
 
   getAdCooldownMs(): number {
     return AD_COOLDOWN_MS;
+  }
+
+  getAdDailyCap(): number {
+    return AD_WINDOW_LIMIT;
   }
 
   getSupportUrl(): string {

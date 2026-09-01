@@ -59,6 +59,7 @@ export function createDependencies(): Dependencies {
         enabled: () => appConfig.getAdsEnabled(),
         unitId: () => appConfig.getAdUnitId(),
         cooldownMs: () => appConfig.getAdCooldownMs(),
+        dailyCap: () => appConfig.getAdDailyCap(),
         entitlement: () => purchases.getState(),
     });
 

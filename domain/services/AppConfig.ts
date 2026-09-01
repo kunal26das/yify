@@ -15,5 +15,7 @@ export interface AppConfig {
 
     getAdCooldownMs(): number;
 
+    getAdDailyCap(): number;
+
     getSupportUrl(): string;
 }

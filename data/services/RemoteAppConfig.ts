@@ -6,11 +6,13 @@ import {
   setDefaults,
 } from '@react-native-firebase/remote-config';
 
-import {AD_COOLDOWN_MS, type AppConfig} from '@/domain';
+import {AD_COOLDOWN_MS, AD_WINDOW_LIMIT, type AppConfig} from '@/domain';
 import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {
   ADS_COOLDOWN_SECONDS_DEFAULT,
   ADS_COOLDOWN_SECONDS_KEY,
+  ADS_DAILY_CAP_DEFAULT,
+  ADS_DAILY_CAP_KEY,
   ADS_ENABLED_DEFAULT,
   ADS_ENABLED_KEY,
   ADS_INTERSTITIAL_UNIT_KEY,
@@ -84,6 +86,15 @@ export class RemoteAppConfig implements AppConfig {
     }
   }
 
+  getAdDailyCap(): number {
+    try {
+      const cap = Number.parseInt(getString(getRemoteConfig(), ADS_DAILY_CAP_KEY), 10);
+      return Number.isFinite(cap) && cap >= 0 ? cap : AD_WINDOW_LIMIT;
+    } catch {
+      return AD_WINDOW_LIMIT;
+    }
+  }
+
   getSupportUrl(): string {
     try {
       return getString(getRemoteConfig(), SUPPORT_URL_KEY) || SUPPORT_URL_DEFAULT;
@@ -105,6 +116,7 @@ export class RemoteAppConfig implements AppConfig {
         [ADS_ENABLED_KEY]: ADS_ENABLED_DEFAULT,
         [ADS_INTERSTITIAL_UNIT_KEY]: '',
         [ADS_COOLDOWN_SECONDS_KEY]: ADS_COOLDOWN_SECONDS_DEFAULT,
+        [ADS_DAILY_CAP_KEY]: ADS_DAILY_CAP_DEFAULT,
         [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
       });
       await Promise.race([
