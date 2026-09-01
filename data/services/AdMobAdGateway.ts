@@ -131,6 +131,7 @@ export class AdMobAdGateway implements AdGateway {
             await this.gatherConsent();
             if (!this.canRequestAds) {
                 this.readyPromise = null;
+                this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent'});
                 return;
             }
             await mobileAds().setRequestConfiguration({
@@ -153,7 +154,7 @@ export class AdMobAdGateway implements AdGateway {
                 info.privacyOptionsRequirementStatus ===
                 AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
         } catch {
-            this.canRequestAds = false;
+            this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent_error'});
         }
     }
 
