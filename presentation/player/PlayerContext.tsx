@@ -13,7 +13,7 @@ import {
 import {Platform} from 'react-native';
 import type {AdTrigger} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {useAdGateway} from '../di/DependenciesContext';
+import {useAdBreak} from './use-ad-break';
 import {usePreferences} from '../hooks/use-preferences';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
 
@@ -72,7 +72,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const {playback} = usePreferences();
     const playbackRef = useRef(playback);
     playbackRef.current = playback;
-    const ads = useAdGateway();
+    const adBreak = useAdBreak();
     const generationRef = useRef(0);
 
     const [video, setVideo] = useState<PlayerVideo | null>(null);
@@ -122,14 +122,9 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                 applyPlaying(true);
                 Analytics.trailerPlay({id: next.movieId, title: next.title});
             };
-            const pending = ads.show(trigger);
-            if (pending == null) {
-                begin();
-                return;
-            }
-            void pending.then(begin, begin);
+            adBreak(trigger, begin);
         },
-        [ads, applyMuted, applyPlaying, applyVideo],
+        [adBreak, applyMuted, applyPlaying, applyVideo],
     );
 
     const open = useCallback(

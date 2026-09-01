@@ -5,7 +5,7 @@ export interface AdGateway {
 
     init(): Promise<void>;
 
-    show(trigger: AdTrigger): Promise<void> | null;
+    show(trigger: AdTrigger): Promise<boolean> | null;
 
     privacyOptionsRequired(): boolean;
 

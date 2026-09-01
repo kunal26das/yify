@@ -10,12 +10,14 @@ import {TmdbRepositoryImpl} from '../repositories/TmdbRepositoryImpl';
 import {FirebaseAuthRepositoryImpl} from '../repositories/FirebaseAuthRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
 import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
+import {WatchHistoryRepositoryImpl} from '../repositories/WatchHistoryRepositoryImpl';
 import {SearchHistoryRepositoryImpl} from '../repositories/SearchHistoryRepositoryImpl';
 import {RevenueCatPurchaseRepositoryImpl} from '../repositories/RevenueCatPurchaseRepositoryImpl';
 import {RemoteAppConfig} from '../services/RemoteAppConfig';
 import {ExpoAppUpdates} from '../services/ExpoAppUpdates';
 import {PlayStoreServices} from '../services/PlayStoreServices';
 import {AdMobAdGateway} from '../services/AdMobAdGateway';
+import {SupporterNudgeImpl} from '../services/SupporterNudgeImpl';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
@@ -39,6 +41,7 @@ export function createDependencies(): Dependencies {
     const auth = new FirebaseAuthRepositoryImpl();
     const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
     const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'));
+    const watchHistory = new WatchHistoryRepositoryImpl(new PersistentCache('history'));
     const purchases = new RevenueCatPurchaseRepositoryImpl(
         analytics,
         new PersistentCache('purchases')
@@ -47,6 +50,7 @@ export function createDependencies(): Dependencies {
         store: new PersistentCache('sync'),
         auth,
         watchlist,
+        watchHistory,
         preferences,
     });
 
@@ -63,6 +67,13 @@ export function createDependencies(): Dependencies {
         entitlement: () => purchases.getState(),
     });
 
+    const supporterNudge = new SupporterNudgeImpl({
+        analytics,
+        store: new PersistentCache('nudge'),
+        enabled: () => ads.supported && appConfig.getAdsEnabled(),
+        entitlement: () => purchases.getState(),
+    });
+
     instance = {
         analytics,
         appConfig,
@@ -74,11 +85,13 @@ export function createDependencies(): Dependencies {
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,
         watchlist,
+        watchHistory,
         purchases,
         accountSync,
         newMovies: new NewMoviesNotifierImpl(),
         storeServices: new PlayStoreServices(),
         ads,
+        supporterNudge,
     };
 
     return instance;

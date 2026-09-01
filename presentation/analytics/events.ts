@@ -103,6 +103,7 @@ export const Analytics = {
         trackEvent('account_delete_failed', {reason}),
 
     supporterPrompt: (source: string) => trackEvent('supporter_prompt', {source}),
+    supporterNudgeDeclined: (source: string) => trackEvent('supporter_nudge_declined', {source}),
     coffeeOpen: (source: string) => trackEvent('coffee_open', {source}),
 
     notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),

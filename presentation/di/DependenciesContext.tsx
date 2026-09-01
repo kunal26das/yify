@@ -2,6 +2,7 @@ import {createContext, useContext, type ReactNode} from 'react';
 import type {
     AccountSync,
     AdGateway,
+    SupporterNudge,
     AppConfig,
     AppUpdates,
     AuthRepository,
@@ -77,6 +78,10 @@ export function usePurchaseRepository(): PurchaseRepository {
 
 export function useAdGateway(): AdGateway {
     return useDependencies().ads;
+}
+
+export function useSupporterNudge(): SupporterNudge {
+    return useDependencies().supporterNudge;
 }
 
 export function useNewMoviesNotifier(): NewMoviesNotifier {

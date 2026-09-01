@@ -6,7 +6,7 @@ export class AdMobAdGateway implements AdGateway {
     async init(): Promise<void> {
     }
 
-    show(): Promise<void> | null {
+    show(): Promise<boolean> | null {
         return null;
     }
 

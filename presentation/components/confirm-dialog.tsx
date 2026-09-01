@@ -47,6 +47,7 @@ export interface ConfirmRequest {
     icon?: keyof typeof Ionicons.glyphMap;
     destructive?: boolean;
     onConfirm: () => void;
+    onCancel?: () => void;
 }
 
 type ConfirmFn = (request: ConfirmRequest) => void;
@@ -111,8 +112,12 @@ function ConfirmDialog({request, onClose}: {request: ConfirmRequest | null; onCl
         if (isLargeRef.current) return;
         if (!openRef.current) return;
         openRef.current = false;
+        if (!decidedRef.current) {
+            decidedRef.current = true;
+            shown?.onCancel?.();
+        }
         onClose();
-    }, [onClose]);
+    }, [onClose, shown]);
 
     const close = useCallback(() => {
         if (isLarge) {
@@ -125,9 +130,11 @@ function ConfirmDialog({request, onClose}: {request: ConfirmRequest | null; onCl
 
     const handleCancel = useCallback(() => {
         if (decidedRef.current) return;
+        const action = request?.onCancel;
         decidedRef.current = true;
         close();
-    }, [close]);
+        action?.();
+    }, [close, request]);
 
     const handleConfirm = useCallback(() => {
         if (decidedRef.current) return;

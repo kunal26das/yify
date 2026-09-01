@@ -26,7 +26,7 @@ import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {usePlayer, type PlayerVideo} from '../player/PlayerContext';
-import {useAdGateway} from '../di/DependenciesContext';
+import {useAdBreak} from '../player/use-ad-break';
 import {DescriptionCard} from './components/DescriptionCard';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
@@ -40,6 +40,9 @@ import {metaParts, thumbFor} from './components/format';
 import {useGoTo} from './constants/destinations';
 import {Genre} from '@/domain';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
+
+function noop(): void {
+}
 
 const IS_WEB = Platform.OS === 'web';
 const WIDE_MIN_WIDTH = 896;
@@ -100,7 +103,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const insets = useSafeAreaInsets();
     const topBarHeight = useTopBarHeight();
     const {video, open, minimize, setInlineRect, setQueue} = usePlayer();
-    const ads = useAdGateway();
+    const adBreak = useAdBreak();
     const goTo = useGoTo();
 
     const [titleExpanded, setTitleExpanded] = useState(false);
@@ -171,7 +174,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             ownedIdRef.current = null;
             setInlineRect(null);
             minimize();
-            void ads.show('movie_open');
+            adBreak('movie_open', noop);
             return;
         }
         ownedIdRef.current = details.id;
@@ -182,7 +185,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
             subtitle: metaParts(details).join(' · '),
             thumbnailUrl: thumbFor(details),
         });
-    }, [ads, details, minimize, open, setInlineRect, trailerCode]);
+    }, [adBreak, details, minimize, open, setInlineRect, trailerCode]);
 
     useEffect(() => {
         if (!trailerCode || !owns) return;

@@ -11,6 +11,7 @@ export {
   useAppUpdates,
   usePurchaseRepository,
   useAdGateway,
+  useSupporterNudge,
   useNewMoviesNotifier,
 } from './di/DependenciesContext';
 

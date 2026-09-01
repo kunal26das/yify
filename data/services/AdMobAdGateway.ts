@@ -50,7 +50,7 @@ export class AdMobAdGateway implements AdGateway {
     private interstitial: InterstitialAd | null = null;
     private unsubscribeAd: (() => void) | null = null;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
-    private pending: Promise<void> | null = null;
+    private pending: Promise<boolean> | null = null;
     private initialized = false;
     private loaded = false;
     private loading = false;
@@ -73,7 +73,7 @@ export class AdMobAdGateway implements AdGateway {
         return this.readyPromise;
     }
 
-    show(trigger: AdTrigger): Promise<void> | null {
+    show(trigger: AdTrigger): Promise<boolean> | null {
         if (!this.supported) return null;
         if (this.showing) return this.pending;
         const entitlement = this.options.entitlement();
@@ -200,9 +200,10 @@ export class AdMobAdGateway implements AdGateway {
         ad.load();
     }
 
-    private present(ad: InterstitialAd, trigger: AdTrigger): Promise<void> {
-        return new Promise<void>((resolve) => {
+    private present(ad: InterstitialAd, trigger: AdTrigger): Promise<boolean> {
+        return new Promise<boolean>((resolve) => {
             let settled = false;
+            let opened = false;
             let timer: ReturnType<typeof setTimeout> | null = null;
             let offForeground: (() => void) | null = null;
 
@@ -218,7 +219,7 @@ export class AdMobAdGateway implements AdGateway {
                 this.showing = false;
                 this.pending = null;
                 this.requestNext();
-                resolve();
+                resolve(opened);
             };
 
             const arm = () => {
@@ -238,6 +239,7 @@ export class AdMobAdGateway implements AdGateway {
             };
 
             const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
+                opened = true;
                 this.writeState(commitAdShown(this.state, Date.now()));
                 this.options.analytics.trackEvent('trailer_ad_shown', {trigger});
             });
