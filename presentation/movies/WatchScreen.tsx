@@ -4,28 +4,30 @@ import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
+    type NativeScrollEvent,
+    type NativeSyntheticEvent,
     Platform,
     RefreshControl,
     ScrollView,
     Share,
     StyleSheet,
     View,
-    type NativeScrollEvent,
-    type NativeSyntheticEvent,
 } from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
+import {Genre, movieHistoryEntry} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {PressableScale, enterFade, enterRise} from '../components/motion';
+import {enterFade, enterRise, PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
+import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
-import {usePlayer, type PlayerVideo} from '../player/PlayerContext';
+import {type PlayerVideo, usePlayer} from '../player/PlayerContext';
 import {useAdBreak} from '../player/use-ad-break';
 import {DescriptionCard} from './components/DescriptionCard';
 import {HoverCardHost} from './components/HoverCard';
@@ -38,7 +40,7 @@ import {WatchActions} from './components/WatchActions';
 import {WatchProviders} from './components/WatchProviders';
 import {metaParts, thumbFor} from './components/format';
 import {useGoTo} from './constants/destinations';
-import {Genre} from '@/domain';
+import {useRecordHistory} from './useWatchHistory';
 import type {MovieDetailsViewModel} from './useMovieDetailsViewModel';
 
 function noop(): void {
@@ -105,6 +107,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const {video, open, minimize, setInlineRect, setQueue} = usePlayer();
     const adBreak = useAdBreak();
     const goTo = useGoTo();
+    const recordHistory = useRecordHistory();
+    const {historyPaused} = usePreferences();
 
     const [titleExpanded, setTitleExpanded] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -152,6 +156,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
 
     const scrollYRef = useRef(0);
     const ownedIdRef = useRef<number | null>(null);
+    const recordedIdRef = useRef<number | null>(null);
     const videoRef = useRef(video);
 
     useEffect(() => {
@@ -167,6 +172,13 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     useEffect(() => {
         setTitleExpanded(false);
     }, [movieId]);
+
+    useEffect(() => {
+        if (!details || historyPaused) return;
+        if (recordedIdRef.current === details.id) return;
+        recordedIdRef.current = details.id;
+        recordHistory(movieHistoryEntry(details, Date.now()));
+    }, [details, historyPaused, recordHistory]);
 
     useEffect(() => {
         if (!details) return;

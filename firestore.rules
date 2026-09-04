@@ -11,14 +11,19 @@ service cloud.firestore {
                'watchlist',
                'watchlistUpdatedAt',
                'preferences',
-               'preferencesUpdatedAt'
+               'preferencesUpdatedAt',
+               'history',
+               'historyUpdatedAt'
              ])
              && (!('watchlist' in data)
                  || (data.watchlist is string && data.watchlist.size() <= 500000))
              && (!('preferences' in data)
                  || (data.preferences is string && data.preferences.size() <= 4000))
+             && (!('history' in data)
+                 || (data.history is string && data.history.size() <= 150000))
              && (!('watchlistUpdatedAt' in data) || data.watchlistUpdatedAt is int)
-             && (!('preferencesUpdatedAt' in data) || data.preferencesUpdatedAt is int);
+             && (!('preferencesUpdatedAt' in data) || data.preferencesUpdatedAt is int)
+             && (!('historyUpdatedAt' in data) || data.historyUpdatedAt is int);
     }
 
     match /users/{uid} {

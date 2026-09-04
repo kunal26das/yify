@@ -1,17 +1,20 @@
 import {Ionicons} from '@expo/vector-icons';
 import {Image} from 'expo-image';
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, ScrollView, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {Show, ShowEpisode, ShowRepository, TitleArtwork, Torrent, TmdbRepository} from '@/domain';
-import {PressableScale, enterFade, enterRise} from '../components/motion';
+import type {Show, ShowEpisode, ShowRepository, TitleArtwork, TmdbRepository, Torrent} from '@/domain';
+import {showHistoryEntry} from '@/domain';
+import {enterFade, enterRise, PressableScale} from '../components/motion';
 import {LinearGradient} from '../components/linear-gradient';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
+import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
+import {useRecordHistory} from './useWatchHistory';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 
 const POSTER_WIDTH = 128;
@@ -42,6 +45,9 @@ export function ShowDetailsScreen({
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
     const {width, gutter, contentMaxWidth} = useResponsive();
+    const recordHistory = useRecordHistory();
+    const {historyPaused} = usePreferences();
+    const recordedIdRef = useRef<string | null>(null);
 
     const [show, setShow] = useState<Show | null>(null);
     const [episodes, setEpisodes] = useState<ShowEpisode[]>([]);
@@ -84,6 +90,13 @@ export function ShowDetailsScreen({
             active = false;
         };
     }, [artwork, imdbCode, imdbId, shows]);
+
+    useEffect(() => {
+        if (!show || historyPaused) return;
+        if (recordedIdRef.current === show.imdbId) return;
+        recordedIdRef.current = show.imdbId;
+        recordHistory(showHistoryEntry(show, Date.now()));
+    }, [historyPaused, recordHistory, show]);
 
     const seasons = useMemo(() => {
         const grouped = new Map<number, ShowEpisode[]>();

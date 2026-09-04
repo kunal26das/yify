@@ -8,15 +8,20 @@ export const WATCHLIST_FIELD = 'watchlist';
 export const WATCHLIST_UPDATED_AT_FIELD = 'watchlistUpdatedAt';
 export const PREFERENCES_FIELD = 'preferences';
 export const PREFERENCES_UPDATED_AT_FIELD = 'preferencesUpdatedAt';
+export const HISTORY_FIELD = 'history';
+export const HISTORY_UPDATED_AT_FIELD = 'historyUpdatedAt';
 
 export const MAX_WATCHLIST_CHARS = 500000;
 export const MAX_PREFERENCES_CHARS = 4000;
+export const MAX_HISTORY_CHARS = 150000;
 
 export interface SyncDocument {
     watchlist?: string;
     watchlistUpdatedAt?: number;
     preferences?: string;
     preferencesUpdatedAt?: number;
+    history?: string;
+    historyUpdatedAt?: number;
 }
 
 export type SyncFetchResult =
@@ -27,8 +32,12 @@ export type SyncWriteResult = {ok: true} | {ok: false; failure: SyncFailure; det
 
 type FirestoreValue = {stringValue: string} | {integerValue: string};
 
-const STRING_FIELDS = [WATCHLIST_FIELD, PREFERENCES_FIELD] as const;
-const INTEGER_FIELDS = [WATCHLIST_UPDATED_AT_FIELD, PREFERENCES_UPDATED_AT_FIELD] as const;
+const STRING_FIELDS = [WATCHLIST_FIELD, PREFERENCES_FIELD, HISTORY_FIELD] as const;
+const INTEGER_FIELDS = [
+    WATCHLIST_UPDATED_AT_FIELD,
+    PREFERENCES_UPDATED_AT_FIELD,
+    HISTORY_UPDATED_AT_FIELD,
+] as const;
 
 function toFields(document: SyncDocument): Record<string, FirestoreValue> {
     const fields: Record<string, FirestoreValue> = {};

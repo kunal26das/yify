@@ -1,9 +1,8 @@
 import {useCallback} from 'react';
 import {Platform} from 'react-native';
 import {router, useNavigation, usePathname} from 'expo-router';
-import {OrderBy, SortBy} from '@/domain';
 
-export type DestinationKey = 'home' | 'movies' | 'shows' | 'watchlist';
+export type DestinationKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'history';
 
 export interface Destination {
     key: DestinationKey;
@@ -17,6 +16,7 @@ export const DESTINATIONS: readonly Destination[] = [
     {key: 'movies', label: 'Movies', href: '/movies'},
     {key: 'shows', label: 'Shows', href: '/shows'},
     {key: 'watchlist', label: 'Watchlist', href: '/watchlist'},
+    {key: 'history', label: 'History', href: '/history'},
 ];
 
 export function destinationHref(key: DestinationKey): string {
@@ -27,6 +27,7 @@ export type NavKey = DestinationKey | 'preferences';
 
 export function navKeyForPath(pathname: string): NavKey | undefined {
     if (pathname === '/preferences') return 'preferences';
+    if (pathname === '/history') return 'history';
     if (pathname === '/shows' || pathname.startsWith('/show/')) return 'shows';
     return DESTINATIONS.find((destination) => destination.href === pathname)?.key;
 }

@@ -8,6 +8,7 @@ export {
   useAuthRepository,
   usePreferencesRepository,
   useWatchlistRepository,
+    useWatchHistoryRepository,
   useAppUpdates,
   usePurchaseRepository,
   useAdGateway,
@@ -24,6 +25,7 @@ export type { FeedViewModel } from './movies/useFeedViewModel';
 export { useHomeViewModel } from './movies/useHomeViewModel';
 export type { HomeViewModel, ShelfState, ShelfStatus } from './movies/useHomeViewModel';
 export { WatchlistScreen } from './movies/WatchlistScreen';
+export {HistoryScreen} from './movies/HistoryScreen';
 export { ShowsScreen } from './movies/ShowsScreen';
 export { ShowDetailsScreen } from './movies/ShowDetailsScreen';
 export { useShowsViewModel } from './movies/useShowsViewModel';
@@ -56,6 +58,13 @@ export { WatchScreen } from './movies/WatchScreen';
 export { useMovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export type { MovieDetailsViewModel } from './movies/useMovieDetailsViewModel';
 export { useWatchlist, useIsInWatchlist } from './movies/useWatchlist';
+export {
+    useWatchHistory,
+    useRecordHistory,
+    useRemoveFromHistory,
+    useClearHistory,
+} from './movies/useWatchHistory';
+export {HistoryRow} from './movies/components/HistoryRow';
 
 export { PlayerProvider, usePlayer, PlayerHost } from './player';
 export type { PlayerApi, PlayerMode, PlayerRect, PlayerVideo } from './player';

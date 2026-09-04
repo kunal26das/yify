@@ -1,21 +1,21 @@
 import {
+    type BrowseDefaults,
     DEFAULT_BROWSE_DEFAULTS,
     DEFAULT_NOTIFICATION_PREFERENCES,
     DEFAULT_PLAYBACK_PREFERENCES,
     DEFAULT_PREFERENCES,
     Genre,
-    OrderBy,
-    Quality,
-    SortBy,
-    mergeSection,
-    readSection,
-    type BrowseDefaults,
     type KeyValueStore,
+    mergeSection,
     type NotificationPreferences,
+    OrderBy,
     type PlaybackPreferences,
     type Preferences,
     type PreferencesRepository,
+    Quality,
+    readSection,
     type SectionGuards,
+    SortBy,
     type SyncedPreferences,
     type ThemePreference,
 } from '@/domain';
@@ -23,6 +23,7 @@ import {
 const THEME_KEY = 'theme';
 const NOTIFICATIONS_KEY = 'notifications';
 const CONFIRM_WATCHLIST_REMOVAL_KEY = 'confirmWatchlistRemoval';
+const HISTORY_PAUSED_KEY = 'historyPaused';
 const BROWSE_DEFAULTS_KEY = 'browseDefaults';
 const PLAYBACK_KEY = 'playback';
 const NOTIFY_KEY = 'notify';
@@ -106,6 +107,9 @@ export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
             ...(typeof parsed.confirmWatchlistRemoval === 'boolean'
                 ? {confirmWatchlistRemoval: parsed.confirmWatchlistRemoval}
                 : {}),
+            ...(typeof parsed.historyPaused === 'boolean'
+                ? {historyPaused: parsed.historyPaused}
+                : {}),
             browseDefaults: parseBrowseDefaults(
                 parsed.browseDefaults ? JSON.stringify(parsed.browseDefaults) : undefined
             ),
@@ -161,6 +165,11 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         this.write({...this.read(), confirmWatchlistRemoval});
     }
 
+    setHistoryPaused(historyPaused: boolean): void {
+        if (this.read().historyPaused === historyPaused) return;
+        this.write({...this.read(), historyPaused});
+    }
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void {
         this.write({...this.read(), browseDefaults});
     }
@@ -178,6 +187,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         return {
             theme: current.theme,
             confirmWatchlistRemoval: current.confirmWatchlistRemoval,
+            historyPaused: current.historyPaused,
             browseDefaults: current.browseDefaults,
             playback: {...current.playback},
             notify: {...current.notify},
@@ -188,6 +198,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         return {
             theme: DEFAULT_PREFERENCES.theme,
             confirmWatchlistRemoval: DEFAULT_PREFERENCES.confirmWatchlistRemoval,
+            historyPaused: DEFAULT_PREFERENCES.historyPaused,
             browseDefaults: DEFAULT_BROWSE_DEFAULTS,
             playback: {...DEFAULT_PLAYBACK_PREFERENCES},
             notify: {...DEFAULT_NOTIFICATION_PREFERENCES},
@@ -201,6 +212,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             theme: next.theme,
             confirmWatchlistRemoval:
                 next.confirmWatchlistRemoval ?? current.confirmWatchlistRemoval,
+            historyPaused: next.historyPaused ?? current.historyPaused,
             browseDefaults: next.browseDefaults,
             playback: mergeSection(current.playback, next.playback),
             notify: mergeSection(current.notify, next.notify),
@@ -223,6 +235,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             notifications: this.store.getString(NOTIFICATIONS_KEY) !== 'false',
             confirmWatchlistRemoval:
                 this.store.getString(CONFIRM_WATCHLIST_REMOVAL_KEY) !== 'false',
+            historyPaused: this.store.getString(HISTORY_PAUSED_KEY) === 'true',
             playback: parseLocalSection(
                 this.store.getString(PLAYBACK_KEY),
                 PLAYBACK_GUARDS,
@@ -245,6 +258,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             CONFIRM_WATCHLIST_REMOVAL_KEY,
             next.confirmWatchlistRemoval ? 'true' : 'false'
         );
+        this.store.set(HISTORY_PAUSED_KEY, next.historyPaused ? 'true' : 'false');
         this.store.set(BROWSE_DEFAULTS_KEY, JSON.stringify(next.browseDefaults));
         this.store.set(PLAYBACK_KEY, JSON.stringify(next.playback));
         this.store.set(NOTIFY_KEY, JSON.stringify(next.notify));

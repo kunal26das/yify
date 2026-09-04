@@ -64,6 +64,12 @@ export const Analytics = {
     trailerClose: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('trailer_close', movieParams(movie)),
     watchlistAdd: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('watchlist_add', movieParams(movie)),
     watchlistRemove: (movie: Pick<Movie, 'id' | 'title'>) => trackEvent('watchlist_remove', movieParams(movie)),
+    historyOpen: (key: string, title: string) =>
+        trackEvent('history_open', {history_key: key, history_title: title}),
+    historyRemove: (key: string, title: string) =>
+        trackEvent('history_remove', {history_key: key, history_title: title}),
+    historyClear: (entryCount: number) => trackEvent('history_clear', {entry_count: entryCount}),
+    historyPaused: (paused: boolean) => trackEvent('history_paused', {paused}),
     screenshotOpen: (movieId: number, index: number) =>
         trackEvent('screenshot_open', {movie_id: movieId, screenshot_index: index}),
     torrentTap: (movieId: number, torrent: Torrent) =>

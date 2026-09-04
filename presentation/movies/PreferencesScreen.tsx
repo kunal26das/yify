@@ -4,28 +4,28 @@ import {useRef, useState} from 'react';
 import {Analytics} from '@/presentation/analytics/events';
 import {
     ActivityIndicator,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    View,
     type LayoutChangeEvent,
     type NativeScrollEvent,
     type NativeSyntheticEvent,
+    Platform,
+    ScrollView,
     type StyleProp,
+    StyleSheet,
+    Switch,
     type TextStyle,
+    View,
 } from 'react-native';
 import Animated, {LayoutAnimationConfig} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
-    DEFAULT_BROWSE_DEFAULTS,
-    Quality,
     type BrowseDefaults,
+    DEFAULT_BROWSE_DEFAULTS,
     type NotificationPreferences,
+    Quality,
     type ThemePreference,
 } from '@/domain';
 import {useConfirm} from '../components/confirm-dialog';
-import {Duration, PressableScale, enterFade, enterRise, exitFade} from '../components/motion';
+import {Duration, enterFade, enterRise, exitFade, PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
@@ -40,10 +40,10 @@ import {
 } from './constants/movieFilterLabels';
 import {HOUR_OPTIONS} from './constants/quietHours';
 import * as WebBrowser from 'expo-web-browser';
-import {PlayStoreButton, openPlayStore} from './components/PlayStoreButton';
+import {openPlayStore, PlayStoreButton} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
 import {useTopBarHeight} from './components/TopBar';
-import {usePreferencesViewModel, type PreferencesViewModel} from './usePreferencesViewModel';
+import {type PreferencesViewModel, usePreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
 import {usePurchases} from '../hooks/use-purchases';
 import {useSyncStatus} from '../hooks/use-sync-status';
@@ -690,7 +690,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
         confirm({
             title: 'Delete account?',
             message:
-                'This permanently deletes your account and the watchlist and settings synced to it. Titles saved on this device stay until you clear them.',
+                'This permanently deletes your account and the watchlist, history and settings synced to it. Titles saved on this device stay until you clear them.',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             icon: 'trash-outline',

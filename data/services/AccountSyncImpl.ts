@@ -1,34 +1,42 @@
 import {
-    IDLE_SYNC_STATUS,
-    chooseSyncMode,
-    encodeWatchlistState,
-    fitWatchlistPayload,
-    markChanges,
-    mergeWatchlistState,
-    parseWatchlistState,
-    payloadWithinBudget,
-    pruneMarks,
-    resolveSection,
-    sameWatchlistState,
     type AccountSync,
     type AuthRepository,
+    chooseSyncMode,
+    encodeWatchlistState,
+    fitHistoryPayload,
+    fitWatchlistPayload,
+    type HistoryState,
+    IDLE_SYNC_STATUS,
     type KeyValueStore,
+    markChanges,
+    mergeHistoryState,
+    mergeWatchlistState,
     type Movie,
+    parseHistoryState,
+    parseWatchlistState,
+    payloadWithinBudget,
     type PreferencesRepository,
+    pruneMarks,
+    pruneTombstones,
+    resolveSection,
+    sameHistoryState,
+    sameWatchlistState,
     type SyncFailure,
     type SyncMode,
     type SyncStatus,
+    type WatchHistoryRepository,
     type WatchlistMarks,
     type WatchlistRepository,
     type WatchlistState,
 } from '@/domain';
 import {
-    MAX_PREFERENCES_CHARS,
-    MAX_WATCHLIST_CHARS,
     deleteSyncDocument,
     fetchSyncDocument,
-    writeSyncDocument,
+    MAX_HISTORY_CHARS,
+    MAX_PREFERENCES_CHARS,
+    MAX_WATCHLIST_CHARS,
     type SyncDocument,
+    writeSyncDocument,
 } from '../datasources/sync/FirestoreSyncDataSource';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {parseSyncedPreferences} from '../repositories/PreferencesRepositoryImpl';
@@ -48,6 +56,7 @@ interface AccountSyncDeps {
     store: KeyValueStore;
     auth: AuthRepository;
     watchlist: WatchlistRepository;
+    watchHistory: WatchHistoryRepository;
     preferences: PreferencesRepository;
 }
 
@@ -55,6 +64,7 @@ export class AccountSyncImpl implements AccountSync {
     private readonly store: KeyValueStore;
     private readonly auth: AuthRepository;
     private readonly watchlist: WatchlistRepository;
+    private readonly watchHistory: WatchHistoryRepository;
     private readonly preferences: PreferencesRepository;
     private readonly status = createObservable<SyncStatus>(IDLE_SYNC_STATUS);
 
@@ -69,16 +79,19 @@ export class AccountSyncImpl implements AccountSync {
     private backoff = RETRY_MS;
     private watchlistDirty = false;
     private preferencesDirty = false;
+    private historyDirty = false;
     private watchlistRevision = 0;
     private preferencesRevision = 0;
+    private historyRevision = 0;
     private marks: WatchlistMarks = {};
     private trackedIds: number[] = [];
     private lastPreferencesPayload: string | null = null;
 
-    constructor({store, auth, watchlist, preferences}: AccountSyncDeps) {
+    constructor({store, auth, watchlist, watchHistory, preferences}: AccountSyncDeps) {
         this.store = store;
         this.auth = auth;
         this.watchlist = watchlist;
+        this.watchHistory = watchHistory;
         this.preferences = preferences;
     }
 
@@ -91,6 +104,7 @@ export class AccountSyncImpl implements AccountSync {
         const lastSyncedAt = this.readNumber(LAST_SYNCED_AT_KEY);
         this.status.set({lastSyncedAt: lastSyncedAt || null});
         this.watchlist.subscribe(() => this.onWatchlistChanged());
+        this.watchHistory.subscribe(() => this.onHistoryChanged());
         this.preferences.subscribe(() => this.onPreferencesChanged());
         watchForeground(() => this.syncNow());
         this.pollTimer = setInterval(() => {
@@ -139,6 +153,7 @@ export class AccountSyncImpl implements AccountSync {
         this.mergedUid = null;
         this.watchlistDirty = false;
         this.preferencesDirty = false;
+        this.historyDirty = false;
         this.marks = {};
         this.store.delete(MARKS_KEY);
         this.store.delete(LINKED_UID_KEY);
@@ -215,17 +230,21 @@ export class AccountSyncImpl implements AccountSync {
         this.scheduleRetry();
     }
 
-    private succeed(trimmed: boolean): void {
+    private succeed(trimmed: string | null): void {
         const now = Date.now();
         this.store.set(LAST_SYNCED_AT_KEY, String(now));
         this.backoff = RETRY_MS;
         this.status.set({
             state: trimmed ? 'error' : 'synced',
             failure: trimmed ? 'oversized' : null,
-            detail: trimmed ? 'watchlist too large to sync in full' : null,
+            detail: trimmed ? `${trimmed} too large to sync in full` : null,
             lastSyncedAt: now,
-            pendingChanges: this.watchlistDirty || this.preferencesDirty,
+            pendingChanges: this.pendingChanges(),
         });
+    }
+
+    private pendingChanges(): boolean {
+        return this.watchlistDirty || this.preferencesDirty || this.historyDirty;
     }
 
     private onWatchlistChanged(): void {
@@ -239,6 +258,14 @@ export class AccountSyncImpl implements AccountSync {
         this.persistMarks();
         this.watchlistDirty = true;
         this.watchlistRevision += 1;
+        this.status.set({pendingChanges: true});
+        this.schedulePush();
+    }
+
+    private onHistoryChanged(): void {
+        if (this.applying) return;
+        this.historyDirty = true;
+        this.historyRevision += 1;
         this.status.set({pendingChanges: true});
         this.schedulePush();
     }
@@ -258,7 +285,7 @@ export class AccountSyncImpl implements AccountSync {
     private async push(): Promise<void> {
         const uid = this.currentUid;
         if (!uid || uid !== this.mergedUid) return;
-        if (!this.watchlistDirty && !this.preferencesDirty) return;
+        if (!this.pendingChanges()) return;
         if (this.running) {
             this.schedulePush();
             return;
@@ -274,13 +301,20 @@ export class AccountSyncImpl implements AccountSync {
             }
             const watchlistRevision = this.watchlistRevision;
             const preferencesRevision = this.preferencesRevision;
+            const historyRevision = this.historyRevision;
             const patch: SyncDocument = {};
-            let trimmed = false;
+            let trimmed: string | null = null;
             if (this.watchlistDirty) {
                 const fitted = fitWatchlistPayload(this.localState(), MAX_WATCHLIST_CHARS);
                 patch.watchlist = fitted.payload;
                 patch.watchlistUpdatedAt = Date.now();
-                trimmed = fitted.trimmed;
+                if (fitted.trimmed) trimmed = 'watchlist';
+            }
+            if (this.historyDirty) {
+                const fitted = fitHistoryPayload(this.watchHistory.getState(), MAX_HISTORY_CHARS);
+                patch.history = fitted.payload;
+                patch.historyUpdatedAt = Date.now();
+                if (fitted.trimmed) trimmed = 'history';
             }
             if (this.preferencesDirty) {
                 const preferences = payloadWithinBudget(
@@ -309,8 +343,11 @@ export class AccountSyncImpl implements AccountSync {
             ) {
                 this.preferencesDirty = false;
             }
+            if (patch.history !== undefined && this.historyRevision === historyRevision) {
+                this.historyDirty = false;
+            }
             this.succeed(trimmed);
-            if (this.watchlistDirty || this.preferencesDirty) this.schedulePush();
+            if (this.pendingChanges()) this.schedulePush();
         } finally {
             this.running = false;
         }
@@ -338,6 +375,29 @@ export class AccountSyncImpl implements AccountSync {
         if (!sameWatchlistState(next, remoteState)) {
             this.watchlistDirty = true;
             this.watchlistRevision += 1;
+        }
+    }
+
+    private mergeHistory(remote: SyncDocument, mode: SyncMode): void {
+        const remoteState = parseHistoryState(remote.history);
+        if (mode === 'remote-wins') {
+            this.applyRemote(() => this.watchHistory.applyRemote(remoteState));
+            this.historyDirty = false;
+            return;
+        }
+        const merged = mergeHistoryState(this.watchHistory.getState(), remoteState);
+        const next: HistoryState = {
+            entries: merged.entries,
+            removed: pruneTombstones(merged.removed, merged.clearedAt, Date.now()),
+            clearedAt: merged.clearedAt,
+        };
+        this.applyRemote(() => this.watchHistory.applyRemote(next));
+        const publishable = parseHistoryState(
+            fitHistoryPayload(merged, MAX_HISTORY_CHARS).payload
+        );
+        if (!sameHistoryState(mergeHistoryState(publishable, remoteState), remoteState)) {
+            this.historyDirty = true;
+            this.historyRevision += 1;
         }
     }
 
@@ -405,6 +465,7 @@ export class AccountSyncImpl implements AccountSync {
             }
             const mode = chooseSyncMode(this.store.getString(LINKED_UID_KEY), uid);
             this.mergeWatchlist(result.document, mode);
+            this.mergeHistory(result.document, mode);
             this.mergePreferences(result.document, mode);
             this.store.set(LINKED_UID_KEY, uid);
             this.mergedUid = uid;
@@ -414,10 +475,10 @@ export class AccountSyncImpl implements AccountSync {
             this.running = false;
         }
         if (!merged || this.currentUid !== uid) return;
-        if (this.watchlistDirty || this.preferencesDirty) {
+        if (this.pendingChanges()) {
             await this.push();
             return;
         }
-        this.succeed(false);
+        this.succeed(null);
     }
 }

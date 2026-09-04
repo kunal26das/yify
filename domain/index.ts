@@ -5,6 +5,7 @@ export type {WatchProvider, WatchAvailability, WatchOffer} from './entities/Watc
 export type {Torrent} from './entities/Torrent';
 export type {CastMember} from './entities/CastMember';
 export type {MovieDetails} from './entities/MovieDetails';
+export type {HistoryEntry, HistoryKind} from './entities/HistoryEntry';
 export type {ParentalGuide} from './entities/ParentalGuide';
 
 export type {Account, AuthSession} from './entities/Account';
@@ -46,6 +47,7 @@ export type {KeyValueStore} from './repositories/KeyValueStore';
 export type {AuthRepository} from './repositories/AuthRepository';
 export type {PreferencesRepository} from './repositories/PreferencesRepository';
 export type {WatchlistRepository} from './repositories/WatchlistRepository';
+export type {WatchHistoryRepository} from './repositories/WatchHistoryRepository';
 export type {PurchaseRepository} from './repositories/PurchaseRepository';
 export type {SeenMoviesRepository} from './repositories/SeenMoviesRepository';
 export type {SearchHistoryRepository} from './repositories/SearchHistoryRepository';
@@ -104,6 +106,40 @@ export {
   WATCHLIST_PAYLOAD_VERSION,
   TOMBSTONE_HORIZON_MS,
 } from './policies/syncMerge';
+export {
+    clearHistory,
+    emptyHistoryState,
+    encodeHistoryState,
+    fitHistoryPayload,
+    liveHistory,
+    mergeHistoryState,
+    parseHistoryState,
+    pruneTombstones,
+    recordHistory,
+    removeHistory,
+    sameHistoryState,
+    sortHistory,
+    HISTORY_LIMIT,
+    HISTORY_PAYLOAD_VERSION,
+    HISTORY_TOMBSTONE_HORIZON_MS,
+} from './policies/historyMerge';
+export type {
+    HistoryState,
+    HistoryTombstones,
+    FittedHistoryPayload,
+} from './policies/historyMerge';
+export {
+    filterHistory,
+    groupHistory,
+    historyGroupLabel,
+    historyHref,
+    historyKind,
+    movieHistoryEntry,
+    movieHistoryKey,
+    showHistoryEntry,
+    showHistoryKey,
+} from './policies/historyView';
+export type {HistoryGroup, HistoryFilter} from './policies/historyView';
 export type {
   SyncMode,
   SectionResolution,

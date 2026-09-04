@@ -1,20 +1,21 @@
-import {createContext, useContext, type ReactNode} from 'react';
+import {createContext, type ReactNode, useContext} from 'react';
 import type {
     AccountSync,
     AdGateway,
-    SupporterNudge,
     AppConfig,
     AppUpdates,
     AuthRepository,
-    NewMoviesNotifier,
-    PurchaseRepository,
     Dependencies,
     MovieRepository,
+    NewMoviesNotifier,
     PreferencesRepository,
+    PurchaseRepository,
     SearchHistoryRepository,
-    WatchlistRepository,
     ShowRepository,
+    SupporterNudge,
     TmdbRepository,
+    WatchHistoryRepository,
+    WatchlistRepository,
 } from '@/domain';
 
 const DependenciesContext = createContext<Dependencies | null>(null);
@@ -66,6 +67,10 @@ export function usePreferencesRepository(): PreferencesRepository {
 
 export function useWatchlistRepository(): WatchlistRepository {
     return useDependencies().watchlist;
+}
+
+export function useWatchHistoryRepository(): WatchHistoryRepository {
+    return useDependencies().watchHistory;
 }
 
 export function useAppUpdates(): AppUpdates {

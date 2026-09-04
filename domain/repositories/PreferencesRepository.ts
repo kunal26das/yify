@@ -1,11 +1,6 @@
 import type {NotificationPreferences} from '../entities/NotificationPreferences';
 import type {PlaybackPreferences} from '../entities/PlaybackPreferences';
-import type {
-    BrowseDefaults,
-    Preferences,
-    SyncedPreferences,
-    ThemePreference,
-} from '../entities/Preferences';
+import type {BrowseDefaults, Preferences, SyncedPreferences, ThemePreference,} from '../entities/Preferences';
 
 export interface PreferencesRepository {
     getPreferences(): Preferences;
@@ -23,6 +18,8 @@ export interface PreferencesRepository {
     setNotificationsEnabled(enabled: boolean): void;
 
     setConfirmWatchlistRemoval(enabled: boolean): void;
+
+    setHistoryPaused(paused: boolean): void;
 
     setBrowseDefaults(browseDefaults: BrowseDefaults): void;
 
