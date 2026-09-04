@@ -109,6 +109,28 @@ export function createAndroidPublisher(deps: {
         return {appId: String(appId), projectNumber: String(projectNumber)};
     }
 
+    function javaMajorVersion(home: string): number | null {
+        const res = spawnSync(path.join(home, 'bin', 'java'), ['-version'], {
+            encoding: 'utf8',
+        });
+        const m = (res.stderr || res.stdout || '').match(/version "(\d+)/);
+        return m ? Number(m[1]) : null;
+    }
+
+    function resolveJavaHome(): string | null {
+        const current = process.env.JAVA_HOME;
+        if (current && fs.existsSync(path.join(current, 'bin', 'javac'))) {
+            if (javaMajorVersion(current) === 17) return current;
+        }
+        const res = spawnSync('/usr/libexec/java_home', ['-v', '17'], {
+            encoding: 'utf8',
+        });
+        const found = res.status === 0 ? res.stdout.trim() : '';
+        return found && fs.existsSync(path.join(found, 'bin', 'javac'))
+            ? found
+            : null;
+    }
+
     function keytoolBin(): string {
         const home = process.env.JAVA_HOME;
         if (home) {
@@ -231,10 +253,19 @@ export function createAndroidPublisher(deps: {
                 return;
             }
 
+            const javaHome = resolveJavaHome();
             const buildEnv = {
                 ...process.env,
+                ...(javaHome ? {JAVA_HOME: javaHome} : {}),
                 ...(channel ? {EXPO_UPDATE_CHANNEL: channel} : {}),
             };
+            if (javaHome && javaHome !== process.env.JAVA_HOME) {
+                onLine({
+                    stream: 'system',
+                    text: `Using JAVA_HOME=${javaHome} (JDK 17) for the Gradle build.`,
+                    label,
+                });
+            }
 
             onLine({
                 stream: 'system',
