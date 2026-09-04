@@ -4872,12 +4872,12 @@ expo-keep-awake@~57.0.1:
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-57.0.1.tgz#75dfd3d6faeb0f32eb8b670d6b736375fdf2cdb8"
   integrity sha512-28lkFImeXTS+bhAjuCFV7w7tW5bXg27BJVrxv+nC/nyYa86qEa0oFeHwqol6ha5k4pdVDQgBF09GM4A1k76Ssg==
 
-expo-linking@57.0.8:
-  version "57.0.8"
-  resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-57.0.8.tgz#cffb530d18a923da7cdf97b30229862fddf5a5ab"
-  integrity sha512-gv0ZNaF7tILbcvX8xinNbQr6GIGQStxeUAJseweP+LjC9ped7Wl6EeyIMBlDR83U6Da+8drVeqBQSMvwAXgytA==
+expo-linking@57.0.9:
+  version "57.0.9"
+  resolved "https://registry.yarnpkg.com/expo-linking/-/expo-linking-57.0.9.tgz#1329ce131b284c8e1133daa0a5c794438e4e37cc"
+  integrity sha512-TQJe3NsnpZXApBg1n6DKaZ4TNhYm+iYWq7W9rTp+G44IBMZSUcI8ba+ffYC/LMY1qw+95AuBPIF1zTx1NQoTXw==
   dependencies:
-    expo-constants "~57.0.15"
+    expo-constants "~57.0.17"
     invariant "^2.2.4"
 
 expo-manifests@~57.0.1:
