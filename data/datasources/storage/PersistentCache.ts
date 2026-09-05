@@ -1,22 +1,22 @@
-import {createMMKV} from 'react-native-mmkv';
+import Storage from 'expo-sqlite/kv-store';
 import type {KeyValueStore} from '@/domain';
 
 export class PersistentCache implements KeyValueStore {
-    private readonly mmkv;
+    private readonly prefix: string;
 
     constructor(id: string) {
-        this.mmkv = createMMKV({id});
+        this.prefix = `${id}:`;
     }
 
     getString(key: string): string | undefined {
-        return this.mmkv.getString(key);
+        return Storage.getItemSync(this.prefix + key) ?? undefined;
     }
 
     set(key: string, value: string): void {
-        this.mmkv.set(key, value);
+        Storage.setItemSync(this.prefix + key, value);
     }
 
     delete(key: string): void {
-        this.mmkv.remove(key);
+        Storage.removeItemSync(this.prefix + key);
     }
 }

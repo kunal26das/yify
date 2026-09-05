@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.6.8",
-  "versionCode": 70,
+  "version": "1.6.9",
+  "versionCode": 71,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -22,7 +22,6 @@
     "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
-    "postinstall": "patch-package",
     "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts'",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
@@ -67,6 +66,7 @@
     "expo-notifications": "57.0.16",
     "expo-router": "57.0.17",
     "expo-splash-screen": "57.0.8",
+    "expo-sqlite": "57.0.2",
     "expo-status-bar": "57.0.1",
     "expo-store-review": "57.0.2",
     "expo-symbols": "57.0.2",
@@ -80,8 +80,6 @@
     "react-native": "0.86.2",
     "react-native-gesture-handler": "3.2.1",
     "react-native-google-mobile-ads": "16.3.4",
-    "react-native-mmkv": "4.3.2",
-    "react-native-nitro-modules": "0.37.1",
     "react-native-purchases": "10.8.1",
     "react-native-reanimated": "4.5.5",
     "react-native-safe-area-context": "5.9.1",
@@ -99,8 +97,6 @@
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.2",
     "eslint-import-resolver-typescript": "3.10.1",
-    "patch-package": "8.0.1",
-    "postinstall-postinstall": "2.1.0",
     "typescript": "7.0.2"
   },
   "resolutions": {
