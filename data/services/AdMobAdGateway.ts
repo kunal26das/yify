@@ -5,20 +5,24 @@ import mobileAds, {
     AdsConsentPrivacyOptionsRequirementStatus,
     InterstitialAd,
     MaxAdContentRating,
+    type PaidEvent,
+    RevenuePrecisions,
     TestIds,
 } from 'react-native-google-mobile-ads';
 
 import {
     AD_WINDOW_MS,
+    type AdGateState,
+    type AdGateway,
+    type AdRevenuePrecision,
+    type AdRevenueSink,
+    type AdTrigger,
+    type AnalyticsSink,
     commitAdShown,
     decideAd,
     encodeAdGateState,
-    parseAdGateState,
-    type AdGateState,
-    type AdGateway,
-    type AdTrigger,
-    type AnalyticsSink,
     type KeyValueStore,
+    parseAdGateState,
     type PurchaseState,
 } from '@/domain';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
@@ -28,9 +32,20 @@ const AD_SHOW_TIMEOUT_MS = 8000;
 const LOAD_BACKOFF_MS = [30000, 60000, 120000];
 const LOAD_BUDGET = 12;
 const LOAD_BUDGET_WINDOW_MS = 60 * 60 * 1000;
+const AD_FORMAT = 'interstitial';
+const AD_PLATFORM = 'admob';
+const FALLBACK_CURRENCY = 'USD';
+
+const PRECISION: Record<number, AdRevenuePrecision> = {
+    [RevenuePrecisions.UNKNOWN]: 'unknown',
+    [RevenuePrecisions.ESTIMATED]: 'estimated',
+    [RevenuePrecisions.PUBLISHER_PROVIDED]: 'publisher_defined',
+    [RevenuePrecisions.PRECISE]: 'exact',
+};
 
 export interface AdMobAdGatewayOptions {
     analytics: AnalyticsSink;
+    adRevenue: AdRevenueSink;
     store: KeyValueStore;
     ready: () => Promise<void>;
     enabled: () => boolean;
@@ -57,6 +72,7 @@ export class AdMobAdGateway implements AdGateway {
     private showing = false;
     private failures = 0;
     private loads = 0;
+    private requestSeq = 0;
     private loadWindowStartedAt = 0;
     private privacyRequired = false;
     private canRequestAds = true;
@@ -179,8 +195,16 @@ export class AdMobAdGateway implements AdGateway {
         this.teardownAd();
         this.loading = true;
         this.loads += 1;
+        this.requestSeq += 1;
+        const impressionId = `${unitId}:${Date.now()}:${this.requestSeq}`;
         const ad = InterstitialAd.createForAdRequest(unitId);
         this.interstitial = ad;
+        let offPaid: (() => void) | null = null;
+        offPaid = ad.addAdEventListener(AdEventType.PAID, (payload) => {
+            offPaid?.();
+            offPaid = null;
+            this.reportRevenue(payload as unknown as PaidEvent, unitId, impressionId);
+        });
         const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
             this.loading = false;
             this.loaded = true;
@@ -255,6 +279,28 @@ export class AdMobAdGateway implements AdGateway {
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'show'});
                 settle();
             });
+        });
+    }
+
+    private reportRevenue(paid: PaidEvent | undefined, adUnitId: string, impressionId: string): void {
+        const raw = paid?.value;
+        const value = typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? raw : 0;
+        const currency = paid?.currency || FALLBACK_CURRENCY;
+        const precision = PRECISION[paid?.precision as number] ?? 'unknown';
+        this.options.analytics.trackEvent('ad_impression', {
+            ad_platform: AD_PLATFORM,
+            ad_format: AD_FORMAT,
+            ad_unit_name: adUnitId,
+            currency,
+            value,
+            precision,
+        });
+        this.options.adRevenue.trackImpression({
+            adUnitId,
+            impressionId,
+            value,
+            currency,
+            precision,
         });
     }
 

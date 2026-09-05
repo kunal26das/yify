@@ -13,6 +13,25 @@ TRACK="${1:-internal}"
 VERSION=$(python3 -c "import json;print(json.load(open('$ROOT/package.json'))['version'])")
 CODE=$(python3 -c "import json;print(json.load(open('$ROOT/package.json'))['versionCode'])")
 
+RUNTIME=$(unzip -p "$AAB" base/resources.pb 2>/dev/null | strings | grep -A1 '^expo_runtime_version$' | sed -n '2p' | tr -d '[:space:]')
+if [ "$RUNTIME" != "$VERSION" ]; then
+  echo "Refusing to upload: the AAB declares expo_runtime_version '${RUNTIME:-<absent>}' but package.json says '$VERSION'."
+  echo "No EAS update published for $VERSION could ever reach this binary, and updates published"
+  echo "for '${RUNTIME:-?}' would land on it instead. strings.xml is prebuild output that no Gradle"
+  echo "task regenerates, so a version bump alone does not change it."
+  echo "Fix: yarn prebuild && bash scripts/setup-android-signing.sh && (cd android && ./gradlew bundleRelease)"
+  exit 1
+fi
+CHANNEL=$(unzip -p "$AAB" base/manifest/AndroidManifest.xml 2>/dev/null | strings | grep -o 'expo-channel-name[^A-Za-z]*[A-Za-z]*' | grep -o '[A-Za-z]*$' | head -1)
+if [ "$TRACK" = "production" ] && [ "$CHANNEL" != "Production" ]; then
+  echo "Refusing to upload: the AAB is baked with EAS Update channel '${CHANNEL:-<absent>}' but the target track is production."
+  echo "Shipped users would receive updates published to the '${CHANNEL:-?}' channel."
+  echo "EXPO_UPDATE_CHANNEL is baked in at prebuild time, so rebuild with:"
+  echo "  EXPO_UPDATE_CHANNEL=Production yarn prebuild && bash scripts/setup-android-signing.sh && (cd android && ./gradlew bundleRelease)"
+  exit 1
+fi
+echo "Artifact verified: runtime $RUNTIME, channel ${CHANNEL:-<absent>}, track $TRACK"
+
 TOKEN=$(python3 - "$KEY" <<'PY'
 import base64, json, os, subprocess, sys, tempfile, time, urllib.parse, urllib.request
 sa = json.load(open(sys.argv[1]))

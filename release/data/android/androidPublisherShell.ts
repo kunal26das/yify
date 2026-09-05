@@ -151,6 +151,101 @@ export function createAndroidPublisher(deps: {
         }
     }
 
+    function packagedRuntimeVersion(): string {
+        try {
+            const strings = fs.readFileSync(
+                path.join(androidDir, 'app/src/main/res/values/strings.xml'),
+                'utf8',
+            );
+            return (
+                strings.match(
+                    /<string name="expo_runtime_version">([^<]*)<\/string>/,
+                )?.[1] || ''
+            ).trim();
+        } catch {
+            return '';
+        }
+    }
+
+    function declaredVersion(): string {
+        try {
+            const pkg = JSON.parse(
+                fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'),
+            );
+            return String(pkg?.version || '').trim();
+        } catch {
+            return '';
+        }
+    }
+
+    function ensureRuntimeVersion(
+        onLine: OnLine,
+        label?: string,
+        channel?: string,
+    ): boolean {
+        const expected = declaredVersion();
+        if (!expected) {
+            onLine({
+                stream: 'stderr',
+                text: 'Cannot build: version is missing from package.json.',
+                label,
+            });
+            return false;
+        }
+        if (packagedRuntimeVersion() === expected) return true;
+
+        onLine({
+            stream: 'system',
+            text: `expo_runtime_version is ${
+                packagedRuntimeVersion() || '<absent>'
+            }, expected ${expected}. Running an Expo prebuild to regenerate it.`,
+            label,
+        });
+        const prebuild = spawnSync(
+            'npx',
+            ['expo', 'prebuild', '--platform', 'android'],
+            {
+                cwd: repoRoot,
+                encoding: 'utf8',
+                env: {
+                    ...process.env,
+                    ...(channel ? {EXPO_UPDATE_CHANNEL: channel} : {}),
+                },
+            },
+        );
+        for (const line of String(prebuild.stdout || '').split('\n')) {
+            if (line.trim()) onLine({stream: 'stdout', text: line, label});
+        }
+        if (prebuild.status !== 0) {
+            onLine({
+                stream: 'stderr',
+                text: `Expo prebuild failed: ${
+                    String(prebuild.stderr || '').trim() || `exit ${prebuild.status}`
+                }`,
+                label,
+            });
+            return false;
+        }
+
+        const actual = packagedRuntimeVersion();
+        if (actual !== expected) {
+            onLine({
+                stream: 'stderr',
+                text: `Prebuild left expo_runtime_version at ${
+                    actual || '<absent>'
+                }, expected ${expected}. Refusing to build an artifact no update can reach.`,
+                label,
+            });
+            return false;
+        }
+        onLine({
+            stream: 'system',
+            text: `expo_runtime_version regenerated to ${actual}.`,
+            label,
+        });
+        return true;
+    }
+
     function ensureReleaseSigning(onLine: OnLine, label?: string): boolean {
         const propsPath = path.join(androidDir, 'keystore.properties');
         const script = path.join(repoRoot, 'scripts', 'setup-android-signing.sh');
@@ -244,6 +339,11 @@ export function createAndroidPublisher(deps: {
                     text: `Cannot build: ${gradlew} not found. Run an Expo prebuild first.`,
                     label,
                 });
+                resolve({ok: false});
+                return;
+            }
+
+            if (!ensureRuntimeVersion(onLine, label, channel)) {
                 resolve({ok: false});
                 return;
             }

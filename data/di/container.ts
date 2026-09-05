@@ -17,6 +17,7 @@ import {RemoteAppConfig} from '../services/RemoteAppConfig';
 import {ExpoAppUpdates} from '../services/ExpoAppUpdates';
 import {PlayStoreServices} from '../services/PlayStoreServices';
 import {AdMobAdGateway} from '../services/AdMobAdGateway';
+import {RevenueCatAdRevenueSink} from '../services/RevenueCatAdRevenueSink';
 import {SupporterNudgeImpl} from '../services/SupporterNudgeImpl';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
@@ -58,6 +59,7 @@ export function createDependencies(): Dependencies {
 
     const ads = new AdMobAdGateway({
         analytics,
+        adRevenue: new RevenueCatAdRevenueSink(() => purchases.getState().ready),
         store: new PersistentCache('ads'),
         ready: () => appConfig.ready(),
         enabled: () => appConfig.getAdsEnabled(),

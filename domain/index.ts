@@ -155,6 +155,11 @@ export type {AppConfig} from './services/AppConfig';
 export type {AppUpdates} from './services/AppUpdates';
 export type {StoreServices} from './services/StoreServices';
 export type {AdGateway} from './services/AdGateway';
+export type {
+    AdRevenueSink,
+    AdImpressionRevenue,
+    AdRevenuePrecision,
+} from './services/AdRevenueSink';
 export type {SupporterNudge} from './services/SupporterNudge';
 export type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 export type {AccountSync} from './services/AccountSync';
