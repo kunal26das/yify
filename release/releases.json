@@ -216,6 +216,20 @@
       "version": "1.6.7",
       "runtimeVersion": "1.6.7",
       "releasedAt": "2026-09-04T02:26:27.888Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Staging",
+      "version": "1.6.8",
+      "runtimeVersion": "1.6.8",
+      "releasedAt": "2026-09-05T01:17:24.915Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.6.8",
+      "runtimeVersion": "1.6.8",
+      "releasedAt": "2026-09-05T01:21:51.887Z"
     }
   ]
 }
