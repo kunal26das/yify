@@ -3,6 +3,7 @@ import {ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {Duration, PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
+import {useHaptics} from '../../hooks/use-haptics';
 import {Radius, Spacing} from '../../constants/theme';
 
 interface ChipBarProps {
@@ -16,6 +17,7 @@ const REVEAL_RETRIES = [0, 120, 400];
 
 export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: ChipBarProps) {
     const {colors} = usePalette();
+    const haptics = useHaptics();
     const scrollRef = useRef<ScrollView | null>(null);
     const contentRef = useRef<View | null>(null);
     const chipRefs = useRef<Record<string, View | null>>({});
@@ -71,14 +73,17 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                                 accessibilityRole="button"
                                 accessibilityState={{selected}}
                                 accessibilityLabel={chip.label}
-                                onPress={() => onSelect(chip.key)}
+                                onPress={() => {
+                                    haptics.select();
+                                    onSelect(chip.key);
+                                }}
                                 pressedScale={0.94}
                                 pressedOpacity={0.85}
                                 contentStyle={[
                                     styles.chip,
                                     {
                                         backgroundColor: selected
-                                            ? colors.accent
+                                            ? colors.accentStrong
                                             : colors.surfaceSunken,
                                         borderColor: selected ? 'transparent' : colors.border,
                                         transitionProperty: ['backgroundColor', 'borderColor'],

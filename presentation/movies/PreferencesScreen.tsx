@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {useRef, useState} from 'react';
 import {Analytics} from '@/presentation/analytics/events';
@@ -127,7 +127,7 @@ const QUIET_ROWS: NotifyRow[] = [
     {key: 'quietEndHour', icon: 'sunny-outline', title: 'Quiet until', options: HOUR_OPTIONS},
 ];
 
-const WEBSITE_URL = 'https://kunal26das.github.io/yify';
+const WEBSITE_URL = 'https://yify.expo.app';
 
 const GLYPH_SIZE = 22;
 const GLYPH_GAP = Spacing.md;

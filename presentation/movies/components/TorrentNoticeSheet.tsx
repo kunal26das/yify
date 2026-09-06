@@ -8,7 +8,7 @@ import {
     type GestureResponderEvent,
     type LayoutChangeEvent,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Reanimated from 'react-native-reanimated';
 import {
     BottomSheetBackdrop,
@@ -178,7 +178,7 @@ export function TorrentNoticeSheet({torrent, onClose, bottomInset}: TorrentNotic
         <View style={styles.footer}>
             <PressableScale onPress={handleGotIt} accessibilityRole="button"
                             pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
-                <View style={[styles.dismissButton, {backgroundColor: colors.accent}]}>
+                <View style={[styles.dismissButton, {backgroundColor: colors.accentStrong}]}>
                     <ThemedText style={[styles.dismissLabel, {color: colors.onAccent}]}>Got
                         it</ThemedText>
                 </View>

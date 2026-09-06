@@ -17,7 +17,7 @@ import {
     type GestureResponderEvent,
     type LayoutChangeEvent,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Reanimated from 'react-native-reanimated';
 import {usePathname} from 'expo-router';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -187,7 +187,7 @@ function ConfirmDialog({request, onClose}: {request: ConfirmRequest | null; onCl
     );
 
     const destructive = shown?.destructive !== false;
-    const accentColor = destructive ? colors.danger : colors.accent;
+    const accentColor = destructive ? colors.danger : colors.accentStrong;
     const accentSoftColor = destructive ? colors.dangerSoft : colors.accentSoft;
     const onAccentColor = destructive ? colors.onDanger : colors.onAccent;
 

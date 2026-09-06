@@ -7,15 +7,15 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {Platform, StyleSheet, View} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
-import {
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
-    HankenGrotesk_800ExtraBold,
-    useFonts,
-} from '@expo-google-fonts/hanken-grotesk';
-import {Fraunces_600SemiBold, Fraunces_700Bold, Fraunces_900Black} from '@expo-google-fonts/fraunces';
+import {useFonts} from 'expo-font';
+import {HankenGrotesk_400Regular} from '@expo-google-fonts/hanken-grotesk/400Regular';
+import {HankenGrotesk_500Medium} from '@expo-google-fonts/hanken-grotesk/500Medium';
+import {HankenGrotesk_600SemiBold} from '@expo-google-fonts/hanken-grotesk/600SemiBold';
+import {HankenGrotesk_700Bold} from '@expo-google-fonts/hanken-grotesk/700Bold';
+import {HankenGrotesk_800ExtraBold} from '@expo-google-fonts/hanken-grotesk/800ExtraBold';
+import {Fraunces_600SemiBold} from '@expo-google-fonts/fraunces/600SemiBold';
+import {Fraunces_700Bold} from '@expo-google-fonts/fraunces/700Bold';
+import {Fraunces_900Black} from '@expo-google-fonts/fraunces/900Black';
 
 import {
     BlurTargetProvider,
@@ -23,8 +23,11 @@ import {
     Colors,
     ConfirmProvider,
     DependenciesProvider,
+    OfflineBanner,
     PlayerHost,
     PlayerProvider,
+    SystemBars,
+    ToastProvider,
     TopBar,
     UpdateSnackbar,
     useColorScheme,
@@ -110,28 +113,24 @@ function AppShell() {
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
             <ConfirmProvider>
+                <ToastProvider>
                 <PlayerProvider>
                     <BlurTargetProvider>
                         <View style={styles.flex}>
                             <BlurTargetSurface>
-                                <Stack>
-                                    <Stack.Screen name="index" options={{headerShown: false}}/>
-                                    <Stack.Screen name="movies" options={{headerShown: false}}/>
-                                    <Stack.Screen name="watchlist" options={{headerShown: false}}/>
-                                    <Stack.Screen name="shows" options={{headerShown: false}}/>
-                                    <Stack.Screen name="show/[imdbId]" options={{headerShown: false}}/>
-                                    <Stack.Screen name="preferences" options={{headerShown: false}}/>
-                                    <Stack.Screen name="movie/[id]" options={{headerShown: false}}/>
-                                </Stack>
+                                <Stack screenOptions={{headerShown: false}}/>
                             </BlurTargetSurface>
                             <TopBar/>
                         </View>
                     </BlurTargetProvider>
                     <PlayerHost/>
                 </PlayerProvider>
+                </ToastProvider>
             </ConfirmProvider>
+            <OfflineBanner/>
             <UpdateSnackbar/>
-            <StatusBar style="auto"/>
+            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'}/>
+            <SystemBars/>
         </ThemeProvider>
     );
 

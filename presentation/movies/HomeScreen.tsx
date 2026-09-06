@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
+import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {ChipBar} from './components/ChipBar';
 import {HeroBillboard} from './components/HeroBillboard';
@@ -236,6 +237,8 @@ export function HomeScreen({
         reloadFeed();
     }, [reloadShelves, reloadFeed]);
 
+    useReloadWhenOnline(handleRetry, !!shelvesError || !!feedError);
+
     const handleScrollToTop = useCallback(() => {
         Analytics.scrollToTop();
         listRef.current?.scrollToOffset({offset: 0, animated: true});
@@ -379,7 +382,7 @@ export function HomeScreen({
                         pressedOpacity={0.85}
                         hoveredScale={1.03}
                     >
-                        <View style={[styles.cta, {backgroundColor: colors.accent}]}>
+                        <View style={[styles.cta, {backgroundColor: colors.accentStrong}]}>
                             <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                             <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
                         </View>

@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {useSyncExternalStore} from 'react';
 import {StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';

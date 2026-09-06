@@ -20,6 +20,7 @@ import {AdMobAdGateway} from '../services/AdMobAdGateway';
 import {RevenueCatAdRevenueSink} from '../services/RevenueCatAdRevenueSink';
 import {SupporterNudgeImpl} from '../services/SupporterNudgeImpl';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
+import {ExpoNetworkMonitor} from '../services/ExpoNetworkMonitor';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
 
@@ -90,6 +91,7 @@ export function createDependencies(): Dependencies {
         watchHistory,
         purchases,
         accountSync,
+        network: new ExpoNetworkMonitor(),
         newMovies: new NewMoviesNotifierImpl(),
         storeServices: new PlayStoreServices(),
         ads,

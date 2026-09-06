@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
@@ -9,7 +9,7 @@ import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
 import {Duration, PressableScale, enterFade, enterPop} from '../../components/motion';
-import {getPosterContainerStyle} from './moviePosterLayout';
+import {getPosterContainerStyle, posterRung} from './moviePosterLayout';
 import {Analytics} from '@/presentation/analytics/events';
 import {useHoverCard} from './HoverCard';
 import {NewBadge} from './NewBadge';
@@ -48,8 +48,9 @@ export function MoviePosterItem({
   const hoverCard = useHoverCard();
   const rank = useTopTenRank(movie.id);
 
-  const placeholderUrl = posterUrls.length > 1 ? posterUrls[0] : undefined;
-  const sourceUrl = posterUrls[Math.min(1, posterUrls.length - 1)] ?? posterUrls[0];
+    const rung = posterRung(posterUrls, width);
+    const placeholderUrl = rung > 0 ? posterUrls[0] : undefined;
+    const sourceUrl = posterUrls[rung];
 
   const hasRating = movie.rating > 0;
 

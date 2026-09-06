@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import {Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {Image} from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
+import * as Localization from 'expo-localization';
 import Animated from 'react-native-reanimated';
 import type {MovieDetails, WatchAvailability, WatchProvider} from '@/domain';
 import {useTmdbRepository} from '../../di/DependenciesContext';
@@ -34,11 +35,8 @@ const ZONE_REGION: Record<string, string> = {
 
 export function deviceRegion(): string {
     try {
-        const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const city = zone?.split('/').pop();
-        if (city && ZONE_REGION[city]) return ZONE_REGION[city];
-        if (zone?.startsWith('America/')) return 'US';
-        if (zone?.startsWith('Europe/')) return 'GB';
+        const region = Localization.getLocales()[0]?.regionCode;
+        if (region) return region.toUpperCase();
     } catch {
     }
     try {
@@ -48,6 +46,14 @@ export function deviceRegion(): string {
                 : new Intl.DateTimeFormat().resolvedOptions().locale;
         const region = locale?.split('-')[1];
         if (region) return region.toUpperCase();
+    } catch {
+    }
+    try {
+        const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const city = zone?.split('/').pop();
+        if (city && ZONE_REGION[city]) return ZONE_REGION[city];
+        if (zone?.startsWith('America/')) return 'US';
+        if (zone?.startsWith('Europe/')) return 'GB';
     } catch {
     }
     return 'US';

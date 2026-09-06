@@ -10,6 +10,7 @@ export interface MovieDetails extends Movie {
     likeCount?: number;
     downloadCount?: number;
     screenshotUrls: string[];
+    screenshotThumbUrls: string[];
     cast: CastMember[];
     torrents: Torrent[];
 }

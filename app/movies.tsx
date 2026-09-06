@@ -3,7 +3,9 @@ import Head from 'expo-router/head';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {Genre, OrderBy, Quality, SortBy} from '@/domain';
 import {
+    canonicalUrl,
   MoviesScreen,
+    usePageMeta,
   useMovieRepository,
   usePreferencesRepository,
   useMoviesViewModel,
@@ -126,6 +128,12 @@ export default function BrowseRoute() {
     });
   }, [appliedQuery, appliedFilters]);
 
+    usePageMeta({
+        title: 'Browse Movies — Yify',
+        description: 'Search and filter thousands of movies by genre, rating and quality on Yify.',
+        canonical: canonicalUrl('movies'),
+    });
+
   return (
     <>
       <Head>
@@ -134,6 +142,8 @@ export default function BrowseRoute() {
           name="description"
           content="Search and filter thousands of movies by genre, rating and quality on Yify."
         />
+          <link rel="canonical" href={canonicalUrl('movies')}/>
+          <meta property="og:url" content={canonicalUrl('movies')}/>
       </Head>
       <MoviesScreen viewModel={viewModel} autoFocus={params.focus === '1'} />
     </>

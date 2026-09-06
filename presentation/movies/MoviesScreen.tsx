@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image as ExpoImage} from 'expo-image';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
@@ -21,6 +21,7 @@ import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
+import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {ChipBar} from './components/ChipBar';
 import {HoverCardHost} from './components/HoverCard';
@@ -31,7 +32,7 @@ import {ScrollProgress} from './components/ScrollProgress';
 import {SearchOverlay} from './components/SearchOverlay';
 import {useTopBarHeight} from './components/TopBar';
 import {TopBarSlot} from './components/TopBarSlot';
-import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
+import {POSTER_GAP, POSTER_MIN_WIDTH, posterRung} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
 import {OrderBy, SortBy} from '@/domain';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
@@ -138,6 +139,8 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         if (error) Analytics.loadError('browse');
     }, [error]);
 
+    useReloadWhenOnline(loadInitial, !!error);
+
     useEffect(() => {
         if (autoFocus && isPhone) setSearchOverlayVisible(true);
     }, [autoFocus, isPhone]);
@@ -156,10 +159,10 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         const fresh = movies.slice(prefetchedRef.current);
         prefetchedRef.current = movies.length;
         const urls = fresh
-            .map((movie) => movie.posterUrls[Math.min(1, movie.posterUrls.length - 1)])
+            .map((movie) => movie.posterUrls[posterRung(movie.posterUrls, itemWidth)])
             .filter((url): url is string => !!url);
         if (urls.length) ExpoImage.prefetch(urls, {cachePolicy: 'memory-disk'});
-    }, [movies]);
+    }, [movies, itemWidth]);
 
     const loadingMore = loading && !refreshing && hasMore && movies.length > 0;
 
@@ -321,7 +324,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             hoveredScale={1.08}
             hitSlop={8}
         >
-            <View style={[styles.filtersCircle, {backgroundColor: colors.accent}]}>
+            <View style={[styles.filtersCircle, {backgroundColor: colors.accentStrong}]}>
                 <Ionicons name="options" size={20} color={colors.onAccent}/>
                 {activeFilterCount > 0 ? (
                     <Animated.View
@@ -382,7 +385,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             accessibilityRole="button"
                             pressedScale={0.95}
                             pressedOpacity={0.85}
-                            contentStyle={[styles.stateAction, {backgroundColor: colors.accent}]}
+                            contentStyle={[styles.stateAction, {backgroundColor: colors.accentStrong}]}
                         >
                             <Ionicons name="refresh" size={16} color={colors.onAccent}/>
                             <ThemedText style={[styles.stateActionLabel, {color: colors.onAccent}]}>

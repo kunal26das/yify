@@ -35,6 +35,36 @@ jobs:
       - name: Tests
         run: yarn test
 
+      - name: Expo doctor
+        run: npx expo-doctor@latest
+        env:
+          EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK: '1'
+
+      - name: Committed OTA channel is Production
+        run: node scripts/check-update-channel.mjs
+
+  web-export:
+    name: Web export renders
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Export web build
+        run: yarn export:hosting
+
+      - name: Check the export is not an empty shell
+        run: node scripts/check-web-export.mjs dist-hosting
+
   release-console:
     name: Typecheck release console
     runs-on: ubuntu-latest

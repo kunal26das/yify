@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 
 const accentLight = '#BD5D3A';
 const accentDark = '#D97757';
+const accentStrong = '#B4501F';
 
 export const Colors = {
     light: {
@@ -13,13 +14,14 @@ export const Colors = {
         tabIconSelected: accentLight,
 
         textMuted: '#606060',
-        textFaint: '#909090',
+        textFaint: '#767676',
         surface: '#F9F9F9',
         surfaceElevated: '#FFFFFF',
         surfaceSunken: '#F2F2F2',
         border: 'rgba(0, 0, 0, 0.10)',
         borderStrong: 'rgba(0, 0, 0, 0.16)',
         accent: accentLight,
+        accentStrong,
         accentSecondary: '#C8895A',
         accentSoft: 'rgba(189, 93, 58, 0.11)',
         onAccent: '#FFFFFF',
@@ -41,13 +43,14 @@ export const Colors = {
         tabIconSelected: accentDark,
 
         textMuted: '#AAAAAA',
-        textFaint: '#717171',
+        textFaint: '#8A8A8A',
         surface: '#212121',
         surfaceElevated: '#272727',
         surfaceSunken: '#181818',
         border: 'rgba(255, 255, 255, 0.10)',
         borderStrong: 'rgba(255, 255, 255, 0.18)',
         accent: accentDark,
+        accentStrong,
         accentSecondary: '#E0A06B',
         accentSoft: 'rgba(217, 119, 87, 0.18)',
         onAccent: '#FFFFFF',
@@ -55,7 +58,7 @@ export const Colors = {
         gold: '#E6B450',
         seed: '#4CAF50',
         peer: '#E07A63',
-        danger: '#E5675A',
+        danger: '#C24234',
         dangerSoft: 'rgba(229, 103, 90, 0.18)',
         onDanger: '#FFFFFF',
         scrim: 'rgba(0, 0, 0, 0.60)',

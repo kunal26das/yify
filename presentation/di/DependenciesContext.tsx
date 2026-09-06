@@ -7,6 +7,7 @@ import type {
     AuthRepository,
     Dependencies,
     MovieRepository,
+    NetworkMonitor,
     NewMoviesNotifier,
     PreferencesRepository,
     PurchaseRepository,
@@ -87,6 +88,10 @@ export function useAdGateway(): AdGateway {
 
 export function useSupporterNudge(): SupporterNudge {
     return useDependencies().supporterNudge;
+}
+
+export function useNetworkMonitor(): NetworkMonitor {
+    return useDependencies().network;
 }
 
 export function useNewMoviesNotifier(): NewMoviesNotifier {

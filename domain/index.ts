@@ -1,5 +1,6 @@
 export { Quality, SortBy, OrderBy, Genre } from './entities/MovieQuery';
 export type { Movie } from './entities/Movie';
+export {POSTER_WIDTHS} from './entities/Movie';
 export type {Show, ShowEpisode} from './entities/Show';
 export type {WatchProvider, WatchAvailability, WatchOffer} from './entities/WatchProvider';
 export type {Torrent} from './entities/Torrent';
@@ -161,6 +162,7 @@ export type {
     AdRevenuePrecision,
 } from './services/AdRevenueSink';
 export type {SupporterNudge} from './services/SupporterNudge';
+export type {NetworkMonitor} from './services/NetworkMonitor';
 export type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 export type {AccountSync} from './services/AccountSync';
 

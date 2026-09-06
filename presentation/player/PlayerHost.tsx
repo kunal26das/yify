@@ -1,9 +1,10 @@
 import {useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type ReactElement} from 'react';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {router, usePathname} from 'expo-router';
 import {Platform, Pressable, StyleSheet, View, type ViewStyle} from 'react-native';
 import Animated, {Easing, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {activateKeepAwakeAsync, deactivateKeepAwake} from 'expo-keep-awake';
 
 import {Radius} from '../constants/theme';
 import {usePreferences} from '../hooks/use-preferences';
@@ -15,6 +16,7 @@ import {usePlayer, usePlayerInternal, type PlayerRect} from './PlayerContext';
 import {useDocumentPip} from './useDocumentPip';
 import {useKeyboardShortcuts} from './useKeyboardShortcuts';
 
+const KEEP_AWAKE_TAG = 'yify-trailer';
 const MINI_PHONE_WIDTH = 128;
 const MINI_WIDE_WIDTH = 400;
 const MINI_PHONE_MARGIN = 8;
@@ -39,6 +41,16 @@ export function PlayerHost(): ReactElement | null {
 
     useKeyboardShortcuts();
     const pip = useDocumentPip();
+
+    useEffect(() => {
+        if (!playing) return;
+        void activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {
+        });
+        return () => {
+            void deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {
+            });
+        };
+    }, [playing]);
 
     const inlineTarget = useMemo<PlayerRect>(() => {
         if (inlineRect) return inlineRect;

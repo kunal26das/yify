@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {FlatList, StyleSheet, View} from 'react-native';
@@ -87,7 +87,7 @@ function PlaylistHeader({
                     pressedScale={0.95}
                     pressedOpacity={0.85}
                     hoveredScale={1.03}
-                    contentStyle={[styles.playAll, {backgroundColor: colors.accent}]}
+                    contentStyle={[styles.playAll, {backgroundColor: colors.accentStrong}]}
                 >
                     <Ionicons name="play" size={16} color={colors.onAccent}/>
                     <ThemedText style={[styles.playAllLabel, {color: colors.onAccent}]}>
@@ -292,7 +292,7 @@ export function WatchlistScreen() {
                             pressedScale={0.95}
                             pressedOpacity={0.85}
                             hoveredScale={1.03}
-                            contentStyle={[styles.cta, {backgroundColor: colors.accent}]}
+                            contentStyle={[styles.cta, {backgroundColor: colors.accentStrong}]}
                         >
                             <Ionicons name="search" size={16} color={colors.onAccent}/>
                             <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>

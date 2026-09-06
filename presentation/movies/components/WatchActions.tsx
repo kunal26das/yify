@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import type {MovieDetails} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
@@ -7,6 +7,7 @@ import {PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
+import {useHaptics} from '../../hooks/use-haptics';
 import {formatCompact} from './format';
 import {useIsInWatchlist} from '../useWatchlist';
 
@@ -42,6 +43,7 @@ export function WatchActions({
     pad?: number;
 }) {
     const {colors} = usePalette();
+    const haptics = useHaptics();
     const saved = useIsInWatchlist(details.id);
     const toggleWatchlist = useToggleWatchlist();
 
@@ -65,6 +67,7 @@ export function WatchActions({
                 onPress={() => {
                     if (saved) Analytics.watchlistRemove(details);
                     else Analytics.watchlistAdd(details);
+                    haptics.commit();
                     toggleWatchlist(details);
                 }}
                 accessibilityRole="button"

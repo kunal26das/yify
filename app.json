@@ -6,10 +6,15 @@
     "icon": "./assets/images/icon.png",
     "scheme": "yify",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "io.github.kunal26das.yify",
+      "associatedDomains": [
+        "applinks:yify.expo.app"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
       "icon": {
         "light": "./assets/images/icon.png",
         "dark": "./assets/images/icon-dark.png",
@@ -24,14 +29,52 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "io.github.kunal26das.yify"
+      "package": "io.github.kunal26das.yify",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "yify.expo.app",
+              "pathPrefix": "/movie"
+            },
+            {
+              "scheme": "https",
+              "host": "yify.expo.app",
+              "pathPrefix": "/show"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "sitemap": false,
+          "headOrigin": "https://yify.expo.app",
+          "headers": {
+            "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "strict-origin-when-cross-origin",
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -60,11 +103,18 @@
       ],
       "./plugins/withGwpAsan",
       "expo-updates",
+      "expo-localization",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
+        }
+      ],
       "expo-background-task",
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/splash-icon.png",
+          "icon": "./assets/images/notification-icon.png",
           "color": "#D97757"
         }
       ],

@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {StyleSheet, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated from 'react-native-reanimated';
 import {LiquidGlassGroup, LiquidGlassView} from '../../components/liquid-glass-view';
 import {ThemedText} from '../../components/themed-text';

@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {useCallback, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, FlatList, RefreshControl, StyleSheet, View} from 'react-native';
@@ -146,7 +146,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         pressedOpacity={0.85}
                         hoveredScale={1.03}
                     >
-                        <View style={[styles.cta, {backgroundColor: colors.accent}]}>
+                        <View style={[styles.cta, {backgroundColor: colors.accentStrong}]}>
                             <Ionicons name="film-outline" size={17} color={colors.onAccent}/>
                             <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>
                                 Browse movies

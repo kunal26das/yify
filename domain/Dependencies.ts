@@ -13,6 +13,7 @@ import type {SupporterNudge} from './services/SupporterNudge';
 import type {AnalyticsSink} from './services/AnalyticsSink';
 import type {AppConfig} from './services/AppConfig';
 import type {AppUpdates} from './services/AppUpdates';
+import type {NetworkMonitor} from './services/NetworkMonitor';
 import type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 import type {StoreServices} from './services/StoreServices';
 
@@ -30,6 +31,7 @@ export interface Dependencies {
     watchHistory: WatchHistoryRepository;
     purchases: PurchaseRepository;
     accountSync: AccountSync;
+    network: NetworkMonitor;
     newMovies: NewMoviesNotifier;
     storeServices: StoreServices;
     ads: AdGateway;

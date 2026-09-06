@@ -1,3 +1,4 @@
+import {POSTER_WIDTHS} from '@/domain';
 import type {
   CastMember,
   ListMoviesParams,
@@ -10,6 +11,8 @@ import type {
 } from '@/domain';
 import type {YtsApi} from '../datasources/YtsApiDataSource';
 import type {YtsCastMemberDto, YtsMovieDto, YtsTorrentDto} from '../models';
+
+const SCREENSHOT_THUMB_WIDTH = 800;
 
 export class MovieRepositoryImpl implements MovieRepository {
   constructor(private readonly api: YtsApi) {
@@ -90,12 +93,10 @@ export class MovieRepositoryImpl implements MovieRepository {
   }
 
   private toPosterUrls(dto: YtsMovieDto): string[] {
-    return [
-      {url: dto.small_cover_image, width: 240},
-      {url: dto.medium_cover_image, width: 480},
-      {url: dto.large_cover_image, width: 720},
-    ]
-        .map(({url, width}) => this.toDisplayImageUrl(url, width))
+      const cover = dto.large_cover_image ?? dto.medium_cover_image ?? dto.small_cover_image;
+      if (!cover) return [];
+      return POSTER_WIDTHS
+          .map((width) => this.toDisplayImageUrl(cover, width))
         .filter((url): url is string => url != null);
   }
 
@@ -109,15 +110,25 @@ export class MovieRepositoryImpl implements MovieRepository {
     ].filter((url): url is string => url != null);
   }
 
-  private toScreenshotUrls(dto: YtsMovieDto): string[] {
+    private screenshotSources(dto: YtsMovieDto): (string | undefined)[] {
     return [
       dto.large_screenshot_image1 ?? dto.medium_screenshot_image1,
       dto.large_screenshot_image2 ?? dto.medium_screenshot_image2,
       dto.large_screenshot_image3 ?? dto.medium_screenshot_image3,
-    ]
+    ];
+    }
+
+    private toScreenshotUrls(dto: YtsMovieDto): string[] {
+        return this.screenshotSources(dto)
         .map((url) => this.toDisplayImageUrl(url, 1920, {quality: 88}))
         .filter((url): url is string => url != null);
   }
+
+    private toScreenshotThumbUrls(dto: YtsMovieDto): string[] {
+        return this.screenshotSources(dto)
+            .map((url) => this.toDisplayImageUrl(url, SCREENSHOT_THUMB_WIDTH, {quality: 82}))
+            .filter((url): url is string => url != null);
+    }
 
   private toMovie(dto: YtsMovieDto): Movie {
     const thumbnailUrls = this.toThumbnailUrls(dto);
@@ -182,6 +193,7 @@ export class MovieRepositoryImpl implements MovieRepository {
       likeCount: dto.like_count,
       downloadCount: dto.download_count,
       screenshotUrls: this.toScreenshotUrls(dto),
+        screenshotThumbUrls: this.toScreenshotThumbUrls(dto),
       cast: (dto.cast ?? []).map((c) => this.toCastMember(c)),
       torrents: (dto.torrents ?? []).map((t) => this.toTorrent(t)),
     };

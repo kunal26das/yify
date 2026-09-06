@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
@@ -9,7 +9,6 @@ import {
     Platform,
     RefreshControl,
     ScrollView,
-    Share,
     StyleSheet,
     View,
 } from 'react-native';
@@ -20,6 +19,9 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
 import {Genre, movieHistoryEntry} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
+import {canonicalUrl} from '../constants/site';
+import {useToast} from '../components/toast';
+import {shareLink} from './components/shareLink';
 import {enterFade, enterRise, PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
@@ -101,6 +103,7 @@ function toPlayerQueue(movies: Movie[]): PlayerVideo[] {
 export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const {details, suggestions, loading, refreshing, error, reload, refresh} = viewModel;
     const {colors} = usePalette();
+    const toast = useToast();
     const {width, contentMaxWidth, gutter, isPhone} = useResponsive();
     const insets = useSafeAreaInsets();
     const topBarHeight = useTopBarHeight();
@@ -271,14 +274,12 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
 
     const handleShare = useCallback(() => {
         if (!details) return;
-        const link = trailerCode ? `https://youtu.be/${trailerCode}` : undefined;
+        const link = canonicalUrl(`movie/${details.id}`);
         const heading = details.titleLong || details.title;
-        void Share.share({
-            title: details.title,
-            message: link ? `${heading}\n${link}` : heading,
-            ...(link ? {url: link} : {}),
-        }).catch(() => {});
-    }, [details, trailerCode]);
+        void shareLink(details.title, `${heading}\n${link}`, link).then((outcome) => {
+            if (outcome === 'copied') toast('Link copied');
+        });
+    }, [details, toast]);
 
     const handleDownload = useCallback(() => {
         if (!details) return;
@@ -338,7 +339,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                             pressedScale={0.95}
                             pressedOpacity={0.85}
                         >
-                            <View style={[styles.retryButton, {backgroundColor: colors.accent}]}>
+                            <View style={[styles.retryButton, {backgroundColor: colors.accentStrong}]}>
                                 <Ionicons name="refresh" size={18} color={colors.onAccent}/>
                                 <ThemedText style={[styles.retryLabel, {color: colors.onAccent}]}>
                                     Try again
@@ -367,7 +368,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const secondary = (
         <>
             <ScreenshotStrip
-                screenshots={details.screenshotUrls}
+                screenshots={details.screenshotThumbUrls}
                 pad={pad}
                 onPress={handleScreenshot}
             />

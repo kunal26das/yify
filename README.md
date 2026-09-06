@@ -16,6 +16,8 @@ deep-linkable browse-and-filter grid; and cinematic detail pages with inline tra
 [![OTA](https://img.shields.io/badge/OTA-EAS%20Update-000020?logo=expo&logoColor=white)](#-over-the-air-updates)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-lightgrey)](#-get-started)
 
+**[yify.expo.app](https://yify.expo.app/)**
+
 </div>
 
 ---
@@ -366,19 +368,19 @@ npm start
 
 ### Run on a platform
 
-| Command | What it does |
-| --- | --- |
-| `npm run ios` | iOS simulator (needs Xcode at `/Applications/Xcode.app`) |
-| `npm run android` | Android emulator / connected device |
-| `npm run android:debug` | Scripted Android **debug** build |
-| `npm run android:release` | Scripted Android **release** build (standalone APK) |
-| `npm run web` | Browser |
-| `npm run export:web` | Static web export (deployed to GitHub Pages) |
-| `npm run desktop` | Build the web export and launch the **Electron** desktop app |
-| `npm run desktop:build` | Package a macOS desktop binary (`:build:all` for mac/win/linux) |
-| `npm run release` | Launch the release console (store releases + EAS Update) |
-| `npm run lint` | ESLint **+ module-boundary enforcement** |
-| `npm run prebuild` | Regenerate native `ios/` & `android/` |
+| Command                   | What it does                                                    |
+|---------------------------|-----------------------------------------------------------------|
+| `npm run ios`             | iOS simulator (needs Xcode at `/Applications/Xcode.app`)        |
+| `npm run android`         | Android emulator / connected device                             |
+| `npm run android:debug`   | Scripted Android **debug** build                                |
+| `npm run android:release` | Scripted Android **release** build (standalone APK)             |
+| `npm run web`             | Browser                                                         |
+| `npm run export:web`      | Static web export (deployed to the GitHub Pages mirror)         |
+| `npm run desktop`         | Build the web export and launch the **Electron** desktop app    |
+| `npm run desktop:build`   | Package a macOS desktop binary (`:build:all` for mac/win/linux) |
+| `npm run release`         | Launch the release console (store releases + EAS Update)        |
+| `npm run lint`            | ESLint **+ module-boundary enforcement**                        |
+| `npm run prebuild`        | Regenerate native `ios/` & `android/`                           |
 
 > 💡 Release builds embed the JS bundle — no Metro required. Unplug and go.
 
@@ -429,10 +431,18 @@ cloud build cannot silently sign with a key Play would reject.
 
 ### Hosting
 
-`npm run deploy:hosting` exports the web bundle with a **root** `baseUrl` into `dist-hosting/` and
-pushes it to [EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/); `:prod` promotes it to
-the production alias. This is entirely separate from the GitHub Pages deploy, which needs
-`baseUrl=/yify` and keeps building from `dist/` on every push to `main`.
+[EAS Hosting](https://docs.expo.dev/eas/hosting/introduction/) serves the canonical site at
+**[yify.expo.app](https://yify.expo.app/)** — every `rel="canonical"`, `og:url` and the in-app
+"Open Yify on the web" link points there. A push to `main` deploys it straight to the production
+alias; `npm run deploy:hosting` does the same by hand and `:prod` promotes it.
+
+GitHub Pages stays live as a mirror at `baseUrl=/yify`, building from `dist/` on every push to
+`main`. Because the canonical URL is absolute, the mirror correctly defers to the hosting origin
+rather than competing with it for the same queries.
+
+Both deploys are gated on `scripts/check-web-export.mjs`, which fails the build if a route
+prerenders an empty shell, loses its `<title>`, or drops a `public/` asset — the failure mode an
+`expo export` exit code cannot see.
 
 > ⚠️ Any new web origin must be added to Firebase Auth authorized domains and the Google OAuth
 > client, or sign-in will fail there.

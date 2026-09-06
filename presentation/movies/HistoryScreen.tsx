@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useMemo, useState} from 'react';
 import {FlatList, StyleSheet, TextInput, View} from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -61,7 +61,7 @@ function ControlButton({
             contentStyle={[
                 styles.control,
                 {
-                    backgroundColor: active ? colors.accent : colors.surfaceSunken,
+                    backgroundColor: active ? colors.accentStrong : colors.surfaceSunken,
                     borderColor: active ? 'transparent' : colors.border,
                 },
             ]}
@@ -242,7 +242,7 @@ export function HistoryScreen() {
                     pressedScale={0.95}
                     pressedOpacity={0.85}
                     hoveredScale={1.03}
-                    contentStyle={[styles.cta, {backgroundColor: colors.accent}]}
+                    contentStyle={[styles.cta, {backgroundColor: colors.accentStrong}]}
                 >
                     <Ionicons name="search" size={16} color={colors.onAccent}/>
                     <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>

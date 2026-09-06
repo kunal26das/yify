@@ -1,4 +1,4 @@
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
@@ -27,6 +27,7 @@ import {HeroTrailerLayer} from './HeroTrailerLayer';
 import {useTopTenRank} from './TopTenContext';
 import {Thumbnail} from './Thumbnail';
 import {thumbFor, thumbPlaceholder} from './format';
+import {useReduceMotion} from '../../hooks/use-reduce-motion';
 
 const ROTATE_MS = 6500;
 const ROTATE_WITH_TRAILER_MS = 30000;
@@ -117,15 +118,19 @@ export function HeroBillboard({
         }
     }, []);
 
+    const reduceMotion = useReduceMotion();
+
+
     const scheduleNext = useCallback(() => {
         clearAuto();
+        if (reduceMotion) return;
         if (!looped || page <= 0) return;
         if (mode === 'feature') return;
         autoTimerRef.current = setTimeout(() => {
             scrollToData(indexRef.current + 1, true);
             scheduleNextRef.current();
         }, mode === 'ambient' ? ROTATE_WITH_TRAILER_MS : ROTATE_MS);
-    }, [clearAuto, looped, page, scrollToData, mode]);
+    }, [clearAuto, looped, page, scrollToData, mode, reduceMotion]);
 
     useEffect(() => {
         scheduleNextRef.current = scheduleNext;
@@ -268,6 +273,7 @@ export function HeroBillboard({
                         width={page}
                         height={height}
                         colors={colors}
+                        near={Math.abs(i - index) <= 1}
                         trailerId={i === index && mode !== 'idle' ? activeTrailer ?? null : null}
                         backdropUrl={backdrops?.[movie.id] ?? null}
                         feature={mode === 'feature'}
@@ -409,6 +415,7 @@ function HeroSlide({
                        width,
                        height,
                        colors,
+                       near,
                        trailerId,
                        backdropUrl,
                        feature,
@@ -421,6 +428,7 @@ function HeroSlide({
     width: number;
     height: number;
     colors: Colors;
+    near: boolean;
     trailerId: string | null;
     backdropUrl: string | null;
     feature: boolean;
@@ -454,16 +462,16 @@ function HeroSlide({
         <View style={[styles.slide, {width, height}]}>
             {heroArt ? (
                 <Image
-                    source={{uri: heroArt}}
+                    source={near ? {uri: heroArt} : undefined}
                     style={StyleSheet.absoluteFill}
                     contentFit="cover"
                     transition={260}
-                    priority="high"
+                    priority={near ? 'high' : undefined}
                     cachePolicy="memory-disk"
                 />
-            ) : (
+            ) : near ? (
                 <Thumbnail movie={movie} style={StyleSheet.absoluteFill} transition={260} priority="high"/>
-            )}
+            ) : null}
 
             {trailerId ? (
                 <HeroTrailerLayer

@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Modal, Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -28,6 +28,7 @@ export function SearchOverlay({
     const {colors} = usePalette();
     const inputRef = useRef<TextInput>(null);
     const [query, setQuery] = useState(initialQuery ?? '');
+    const [inputFocused, setInputFocused] = useState(false);
     const [recents, setRecents] = useState<string[]>([]);
     const searchHistory = useSearchHistory();
 
@@ -66,7 +67,15 @@ export function SearchOverlay({
             onShow={() => inputRef.current?.focus()}
         >
             <View style={[styles.overlay, {backgroundColor: colors.background, paddingTop: insets.top}]}>
-                <View style={[styles.searchRow, {borderBottomColor: colors.border}]}>
+                <View
+                    style={[
+                        styles.searchRow,
+                        {
+                            borderBottomColor: inputFocused ? colors.accent : colors.border,
+                            borderBottomWidth: inputFocused ? 2 : StyleSheet.hairlineWidth,
+                        },
+                    ]}
+                >
                     <PressableScale
                         onPress={onClose}
                         accessibilityRole="button"
@@ -88,9 +97,11 @@ export function SearchOverlay({
                         ]}
                         value={query}
                         onChangeText={setQuery}
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => setInputFocused(false)}
                         onSubmitEditing={() => submit(query)}
                         placeholder="Search movies"
-                        placeholderTextColor={colors.textFaint}
+                        placeholderTextColor={colors.textMuted}
                         autoFocus
                         autoCapitalize="none"
                         autoCorrect={false}

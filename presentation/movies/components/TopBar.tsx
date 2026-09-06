@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import {usePathname} from 'expo-router';
-import {Ionicons} from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -41,6 +41,7 @@ export function TopBar() {
     const {isPhone, gutter} = useResponsive();
     const goTo = useGoTo();
     const [query, setQuery] = useState(searchValue ?? '');
+    const [searchFocused, setSearchFocused] = useState(false);
     const [overlayVisible, setOverlayVisible] = useState(false);
 
     useEffect(() => {
@@ -158,7 +159,11 @@ export function TopBar() {
         <View
             style={[
                 styles.searchPill,
-                {backgroundColor: colors.surfaceSunken, borderColor: colors.border},
+                {
+                    backgroundColor: colors.surfaceSunken,
+                    borderColor: searchFocused ? colors.accent : colors.border,
+                    borderWidth: searchFocused ? 2 : 1,
+                },
             ]}
         >
             <TextInput
@@ -169,9 +174,11 @@ export function TopBar() {
                 ]}
                 value={query}
                 onChangeText={setQuery}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
                 onSubmitEditing={() => submitQuery(query)}
                 placeholder="Search"
-                placeholderTextColor={colors.textFaint}
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
                 returnKeyType="search"

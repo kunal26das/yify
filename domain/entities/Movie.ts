@@ -1,3 +1,5 @@
+export const POSTER_WIDTHS = [240, 480, 720] as const;
+
 export interface Movie {
   id: number;
   imdbCode: string;

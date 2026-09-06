@@ -14,6 +14,7 @@ import {Duration, PressableScale, enterPop, enterRise} from '../../components/mo
 import {ThemedText} from '../../components/themed-text';
 import {LinearGradient} from '../../components/linear-gradient';
 import {usePalette} from '../../hooks/use-palette';
+import {useHaptics} from '../../hooks/use-haptics';
 import {useResponsive} from '../../hooks/use-responsive';
 import {useAndroidBackHandler} from '../../hooks/use-android-back';
 import {Radius, Spacing} from '../../constants/theme';
@@ -53,6 +54,7 @@ function FilterChipGroup<T extends string | number>({
                                                         index = 0,
                                                     }: FilterChipGroupProps<T> & {index?: number}) {
     const {colors} = usePalette();
+    const haptics = useHaptics();
 
     return (
         <Reanimated.View entering={enterRise(index)} style={styles.section}>
@@ -65,15 +67,18 @@ function FilterChipGroup<T extends string | number>({
                             <PressableScale
                                 accessibilityRole="button"
                                 accessibilityState={{selected}}
-                                onPress={() => onSelect(value)}
+                                onPress={() => {
+                                    haptics.select();
+                                    onSelect(value);
+                                }}
                                 pressedScale={0.93}
                                 pressedOpacity={0.85}
                                 hoveredScale={1.05}
                                 contentStyle={[
                                     styles.chip,
                                     {
-                                        backgroundColor: selected ? colors.accent : colors.surfaceSunken,
-                                        borderColor: selected ? colors.accent : colors.border,
+                                        backgroundColor: selected ? colors.accentStrong : colors.surfaceSunken,
+                                        borderColor: selected ? colors.accentStrong : colors.border,
                                         transitionProperty: ['backgroundColor', 'borderColor'],
                                         transitionDuration: Duration.fast,
                                     },
@@ -134,6 +139,7 @@ export function MovieFilterModal({
                                  }: MovieFilterModalProps) {
     const {isLarge} = useResponsive();
     const {colors} = usePalette();
+    const haptics = useHaptics();
     const insets = useSafeAreaInsets();
 
     const sheetRef = useRef<BottomSheetModal>(null);
@@ -162,8 +168,9 @@ export function MovieFilterModal({
 
     const handleApply = useCallback(() => {
         appliedRef.current = true;
+        haptics.commit();
         onApply(filters);
-    }, [filters, onApply]);
+    }, [filters, haptics, onApply]);
 
     const handleReset = useCallback(() => {
         appliedRef.current = true;
@@ -188,7 +195,7 @@ export function MovieFilterModal({
                 }]}>
                     <PressableScale onPress={handleApply} accessibilityRole="button"
                                     pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
-                        <View style={[styles.applyButton, {backgroundColor: colors.accent}]}>
+                        <View style={[styles.applyButton, {backgroundColor: colors.accentStrong}]}>
                             <ThemedText style={[styles.applyButtonLabel, {color: colors.onAccent}]}>Apply
                                 filters</ThemedText>
                         </View>
@@ -339,7 +346,7 @@ export function MovieFilterModal({
                         >
                             <PressableScale onPress={handleApply} accessibilityRole="button"
                                             pressedScale={0.97} pressedOpacity={0.9} hoveredScale={1.01}>
-                                <View style={[styles.applyButton, {backgroundColor: colors.accent}]}>
+                                <View style={[styles.applyButton, {backgroundColor: colors.accentStrong}]}>
                                     <ThemedText style={[styles.applyButtonLabel, {color: colors.onAccent}]}>
                                         Apply filters
                                     </ThemedText>
@@ -418,5 +425,5 @@ const styles = StyleSheet.create({
     chipLabel: {fontSize: 14, lineHeight: 18},
     footer: {paddingHorizontal: Spacing.xl, paddingTop: Spacing.md, borderTopWidth: StyleSheet.hairlineWidth},
     applyButton: {borderRadius: Radius.pill, paddingVertical: 15, alignItems: 'center', justifyContent: 'center'},
-    applyButtonLabel: {color: '#ffffff', fontSize: 16, fontWeight: '700'},
+    applyButtonLabel: {fontSize: 16, fontWeight: '700'},
 });

@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.kunal26das.yify",
+      "sha256_cert_fingerprints": [
+        "EC:97:73:0B:A7:90:E8:25:A7:F7:77:50:7A:A2:E7:18:8F:7E:F2:10:4C:F6:4F:9F:CC:A8:BB:FF:89:02:E7:9F",
+        "FD:E1:90:5C:25:FA:BE:94:F3:9C:20:B6:AF:90:E2:E6:E0:27:7A:B9:57:C2:63:E8:8B:63:56:EA:ED:82:FE:BE"
+      ]
+    }
+  }
+]

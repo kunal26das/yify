@@ -1,6 +1,8 @@
 name: Deploy web to EAS Hosting
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       production:
@@ -46,7 +48,10 @@ jobs:
           EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID }}
           EXPO_PUBLIC_REVENUECAT_WEB_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_WEB_KEY }}
 
+      - name: Check the export is not an empty shell
+        run: node scripts/check-web-export.mjs dist-hosting
+
       - name: Deploy to EAS Hosting
-        run: bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --non-interactive ${{ inputs.production && '--prod' || '' }}
+        run: bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --non-interactive ${{ (github.event_name == 'push' || inputs.production) && '--prod' || '' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
