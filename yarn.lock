@@ -781,7 +781,7 @@
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/material-symbols/-/material-symbols-0.4.45.tgz#2536d34796127ef209d80ffd8b8b248b2a3fd1ee"
   integrity sha512-D5gd/uFa7KfMJX9S11hvej4GpQnBl27oKiUgyIq3cLTPtyDOWBwRgmeePIdV6+PGcedlDkaCND2BnRgAkxzNaA==
 
-"@expo/cli@^57.0.21":
+"@expo/cli@^57.0.22":
   version "57.0.22"
   resolved "https://registry.yarnpkg.com/@expo/cli/-/cli-57.0.22.tgz#18b9c27f3ac1c3d90b38abbf0687f2b3862eee33"
   integrity sha512-MdToR0ZZ1yjfkqbP1jcA7viS9duMPGq/C+qQ/21dtq+en583Ghp+O11BP/wujHa9ZGRtXimzuKPZDpPresVE0g==
@@ -4876,7 +4876,7 @@ expo-modules-autolinking@~57.0.12:
     chalk "^4.1.0"
     commander "^7.2.0"
 
-expo-modules-core@~57.0.15:
+expo-modules-core@~57.0.16:
   version "57.0.16"
   resolved "https://registry.yarnpkg.com/expo-modules-core/-/expo-modules-core-57.0.16.tgz#367765f8b86c2ee1515c5f4dbcdc073bce31feb8"
   integrity sha512-vPbxDOdvG6Ucpws5ucdbQa+nNmdxKONS1fTg92sy0p4TnHX8hBiExtbrtUA/5+1t3FRCUuiy29/1nJEGdt3E4A==
@@ -5036,13 +5036,13 @@ expo-web-browser@57.0.2:
   resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-57.0.2.tgz#37a9386069bbf0a35709b3f0b394f195dc1cd43a"
   integrity sha512-3vl5kvd7PB48ub6PpNIJUuPxO8xVa6D8RnIgNba6SXRwqFprOfeEZgwTgtm41kz0AAtvMOztUVNEUkwrHKjqMQ==
 
-expo@57.0.19:
-  version "57.0.19"
-  resolved "https://registry.yarnpkg.com/expo/-/expo-57.0.19.tgz#06b4371f5ff32cc71c0ba68dbc4ae3770a56891b"
-  integrity sha512-oIoAIisim1DwS2Zjp0rcEY9cfcq1wU6KpkBfwwFhJWI5YHV6i/aIzTUMX+uf0Q0CD6AvMls7IZVh34o27NjaJA==
+expo@57.0.20:
+  version "57.0.20"
+  resolved "https://registry.yarnpkg.com/expo/-/expo-57.0.20.tgz#e370c81e23024dac4d98187ad650227ee46109e9"
+  integrity sha512-H57GWLLpNPrltsrjvx6ROsMecoFQza7h9OzujUjBsaY+aDL+bj3GsZaH3T5v5B96R7txuidUwjUh5q5hi3qttg==
   dependencies:
     "@babel/runtime" "^7.20.0"
-    "@expo/cli" "^57.0.21"
+    "@expo/cli" "^57.0.22"
     "@expo/config" "~57.0.9"
     "@expo/config-plugins" "~57.0.9"
     "@expo/devtools" "~57.0.1"
@@ -5060,7 +5060,7 @@ expo@57.0.19:
     expo-font "~57.0.3"
     expo-keep-awake "~57.0.1"
     expo-modules-autolinking "~57.0.12"
-    expo-modules-core "~57.0.15"
+    expo-modules-core "~57.0.16"
     pretty-format "^29.7.0"
     react-refresh "^0.14.2"
     whatwg-url-minimum "^0.1.2"
