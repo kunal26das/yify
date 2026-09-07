@@ -2430,10 +2430,10 @@
     text-encoding "^0.7.0"
     web-streams-polyfill "^4.2.0"
 
-"@react-native-google-signin/google-signin@16.1.4":
-  version "16.1.4"
-  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.4.tgz#64838d2c39d0f001081a900a008817841f42eeea"
-  integrity sha512-Lt4vjihJ+Nk9I4HjScWHzch3ebtIlP3QIea0XEHVN0PJumwUwiK/J2tU8qs7H9DIqNblC0qlXkR0Ts4ELvq7yA==
+"@react-native-google-signin/google-signin@16.1.5":
+  version "16.1.5"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.5.tgz#0de2624f291050b1e7bd935919cdd06080f13bb0"
+  integrity sha512-9rmMwACzHK9Cbd0Yp7efg5uWgiYoLwmNAJh4gRCuMcSQH+qplpK7E4d1Q4tbsD8M9jvvVtRX2Z0AP9wwBKmPrQ==
 
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"
