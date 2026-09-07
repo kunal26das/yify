@@ -47,6 +47,22 @@ for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png'
     if (!existsSync(join(dir, asset))) failures.push(`${asset}: missing from the export`);
 }
 
+const DELETION_PAGES = ['delete-account.html', join('delete-account', 'index.html')];
+const deletionBodies = [];
+for (const page of DELETION_PAGES) {
+    const path = join(dir, page);
+    if (!existsSync(path)) {
+        failures.push(`${page}: missing — Play requires the account deletion URL to resolve`);
+        continue;
+    }
+    deletionBodies.push(readFileSync(path, 'utf8'));
+}
+if (deletionBodies.length === DELETION_PAGES.length && deletionBodies[0] !== deletionBodies[1]) {
+    failures.push(
+        `${DELETION_PAGES.join(' and ')} have drifted — they serve /delete-account and /delete-account/ and must stay identical`
+    );
+}
+
 if (existsSync(join(dir, '_sitemap.html'))) {
     failures.push('_sitemap.html: the expo-router dev route leaked into the export');
 }
