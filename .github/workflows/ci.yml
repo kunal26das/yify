@@ -35,13 +35,11 @@ jobs:
       - name: Tests
         run: yarn test
 
-      - name: Expo doctor
-        run: npx expo-doctor@latest
-        env:
-          EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK: '1'
-
       - name: Committed OTA channel is Production
         run: node scripts/check-update-channel.mjs
+
+      - name: Expo doctor
+        run: node scripts/check-expo-doctor.mjs
 
   web-export:
     name: Web export renders
