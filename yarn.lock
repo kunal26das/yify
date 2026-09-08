@@ -781,7 +781,7 @@
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/material-symbols/-/material-symbols-0.4.45.tgz#2536d34796127ef209d80ffd8b8b248b2a3fd1ee"
   integrity sha512-D5gd/uFa7KfMJX9S11hvej4GpQnBl27oKiUgyIq3cLTPtyDOWBwRgmeePIdV6+PGcedlDkaCND2BnRgAkxzNaA==
 
-"@expo/cli@^57.0.21":
+"@expo/cli@^57.0.22":
   version "57.0.22"
   resolved "https://registry.yarnpkg.com/@expo/cli/-/cli-57.0.22.tgz#18b9c27f3ac1c3d90b38abbf0687f2b3862eee33"
   integrity sha512-MdToR0ZZ1yjfkqbP1jcA7viS9duMPGq/C+qQ/21dtq+en583Ghp+O11BP/wujHa9ZGRtXimzuKPZDpPresVE0g==
@@ -1030,7 +1030,7 @@
     micromatch "^4.0.4"
     walker "^1.0.8"
 
-"@expo/metro-runtime@57.0.15", "@expo/metro-runtime@^57.0.14":
+"@expo/metro-runtime@57.0.15", "@expo/metro-runtime@^57.0.15":
   version "57.0.15"
   resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-57.0.15.tgz#395e286f193b97ce1e5d4da1764a85459a8acecc"
   integrity sha512-9RaFkqIzRud6ol9fc5ZKHgNDYeDjQVBdAQC+rjSQ6RiKV0pY+SjDqGmKY5a4M9TaV0qLMCNNrp5R88BqC2xbuQ==
@@ -1143,7 +1143,7 @@
   resolved "https://registry.yarnpkg.com/@expo/sudo-prompt/-/sudo-prompt-9.3.2.tgz#0fd2813402a42988e49145cab220e25bea74b308"
   integrity sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==
 
-"@expo/ui@57.0.16", "@expo/ui@^57.0.14":
+"@expo/ui@57.0.16", "@expo/ui@^57.0.16":
   version "57.0.16"
   resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.16.tgz#c45a5ef996a69a17912879588a2c8258f07c3f54"
   integrity sha512-3MK74dEPE4mwlv0VbyQKepmHigOs2bcOvay2SFqc1/QSywVTOjbkNPYUbq2H+LyOLP2sHMazrPBwfXGiYn3q7A==
@@ -2430,10 +2430,10 @@
     text-encoding "^0.7.0"
     web-streams-polyfill "^4.2.0"
 
-"@react-native-google-signin/google-signin@16.1.4":
-  version "16.1.4"
-  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.4.tgz#64838d2c39d0f001081a900a008817841f42eeea"
-  integrity sha512-Lt4vjihJ+Nk9I4HjScWHzch3ebtIlP3QIea0XEHVN0PJumwUwiK/J2tU8qs7H9DIqNblC0qlXkR0Ts4ELvq7yA==
+"@react-native-google-signin/google-signin@16.1.5":
+  version "16.1.5"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.5.tgz#0de2624f291050b1e7bd935919cdd06080f13bb0"
+  integrity sha512-9rmMwACzHK9Cbd0Yp7efg5uWgiYoLwmNAJh4gRCuMcSQH+qplpK7E4d1Q4tbsD8M9jvvVtRX2Z0AP9wwBKmPrQ==
 
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"
@@ -4876,7 +4876,7 @@ expo-modules-autolinking@~57.0.12:
     chalk "^4.1.0"
     commander "^7.2.0"
 
-expo-modules-core@~57.0.15:
+expo-modules-core@~57.0.16:
   version "57.0.16"
   resolved "https://registry.yarnpkg.com/expo-modules-core/-/expo-modules-core-57.0.16.tgz#367765f8b86c2ee1515c5f4dbcdc073bce31feb8"
   integrity sha512-vPbxDOdvG6Ucpws5ucdbQa+nNmdxKONS1fTg92sy0p4TnHX8hBiExtbrtUA/5+1t3FRCUuiy29/1nJEGdt3E4A==
@@ -4913,15 +4913,15 @@ expo-notifications@57.0.17:
     expo-application "~57.0.2"
     expo-constants "~57.0.17"
 
-expo-router@57.0.17:
-  version "57.0.17"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.17.tgz#d572b9a4db04ddaeef1cf5d45c98ace98d5216bb"
-  integrity sha512-zKAfGLxrbdkUFzzW1xHezLXPSa0V4DlYKEWweDUUFGgnPWPNy3OY0EKYAqOhlBGSDebAvtnJXn+2zyyJjYKwyg==
+expo-router@57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.19.tgz#64f313594a37eff66841b30fea997597a2728002"
+  integrity sha512-JovzZ066+qhykyJLC4hSEJpM8ToVWnJqbxmTN7USzARM0HgRR/g05a75f/EIsY4S//hbPGm6wGl/ObcCVtAX+A==
   dependencies:
     "@expo/log-box" "^57.0.4"
-    "@expo/metro-runtime" "^57.0.14"
+    "@expo/metro-runtime" "^57.0.15"
     "@expo/schema-utils" "^57.0.2"
-    "@expo/ui" "^57.0.14"
+    "@expo/ui" "^57.0.16"
     "@radix-ui/react-slot" "^1.2.0"
     "@radix-ui/react-tabs" "^1.1.12"
     "@react-native-masked-view/masked-view" "^0.3.2"
@@ -5036,13 +5036,13 @@ expo-web-browser@57.0.2:
   resolved "https://registry.yarnpkg.com/expo-web-browser/-/expo-web-browser-57.0.2.tgz#37a9386069bbf0a35709b3f0b394f195dc1cd43a"
   integrity sha512-3vl5kvd7PB48ub6PpNIJUuPxO8xVa6D8RnIgNba6SXRwqFprOfeEZgwTgtm41kz0AAtvMOztUVNEUkwrHKjqMQ==
 
-expo@57.0.19:
-  version "57.0.19"
-  resolved "https://registry.yarnpkg.com/expo/-/expo-57.0.19.tgz#06b4371f5ff32cc71c0ba68dbc4ae3770a56891b"
-  integrity sha512-oIoAIisim1DwS2Zjp0rcEY9cfcq1wU6KpkBfwwFhJWI5YHV6i/aIzTUMX+uf0Q0CD6AvMls7IZVh34o27NjaJA==
+expo@57.0.20:
+  version "57.0.20"
+  resolved "https://registry.yarnpkg.com/expo/-/expo-57.0.20.tgz#e370c81e23024dac4d98187ad650227ee46109e9"
+  integrity sha512-H57GWLLpNPrltsrjvx6ROsMecoFQza7h9OzujUjBsaY+aDL+bj3GsZaH3T5v5B96R7txuidUwjUh5q5hi3qttg==
   dependencies:
     "@babel/runtime" "^7.20.0"
-    "@expo/cli" "^57.0.21"
+    "@expo/cli" "^57.0.22"
     "@expo/config" "~57.0.9"
     "@expo/config-plugins" "~57.0.9"
     "@expo/devtools" "~57.0.1"
@@ -5060,7 +5060,7 @@ expo@57.0.19:
     expo-font "~57.0.3"
     expo-keep-awake "~57.0.1"
     expo-modules-autolinking "~57.0.12"
-    expo-modules-core "~57.0.15"
+    expo-modules-core "~57.0.16"
     pretty-format "^29.7.0"
     react-refresh "^0.14.2"
     whatwg-url-minimum "^0.1.2"
