@@ -1,4 +1,4 @@
-import {app, BrowserWindow, ipcMain, nativeImage, nativeTheme, shell,} from 'electron';
+import {app, BrowserWindow, clipboard, ipcMain, nativeImage, nativeTheme, shell,} from 'electron';
 import dns from 'node:dns';
 import net from 'node:net';
 import path from 'node:path';
@@ -87,6 +87,10 @@ app.whenReady().then(() => {
             packageVersion,
             branch: currentBranch() ?? '',
         };
+    });
+
+    ipcMain.handle('clipboard:read', async () => {
+        return clipboard.readText();
     });
 
     ipcMain.handle('auth:check', async () => {

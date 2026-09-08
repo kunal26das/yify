@@ -1,11 +1,11 @@
-import {clipboard, contextBridge, ipcRenderer} from 'electron';
+import {contextBridge, ipcRenderer} from 'electron';
 
 contextBridge.exposeInMainWorld('release', {
     platform: process.platform,
     info: () => ipcRenderer.invoke('meta:info'),
     checkAuth: () => ipcRenderer.invoke('auth:check'),
     cancelTask: () => ipcRenderer.invoke('task:cancel'),
-    readClipboard: () => clipboard.readText(),
+    readClipboard: () => ipcRenderer.invoke('clipboard:read'),
     openLoginPage: () => ipcRenderer.invoke('auth:openLoginPage'),
     login: (token: string) => ipcRenderer.invoke('auth:login', token),
     logout: () => ipcRenderer.invoke('auth:logout'),

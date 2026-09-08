@@ -19,7 +19,8 @@ export const bridge = {
     info: (): Promise<Info> => api.info!(),
     checkAuth: (): Promise<AuthCheck> => api.checkAuth!(),
     cancelTask: (): Promise<{ killed: number }> | undefined => api.cancelTask?.(),
-    readClipboard: (): string => api.readClipboard?.() ?? '',
+    readClipboard: (): Promise<string> =>
+        api.readClipboard?.() ?? Promise.resolve(''),
     openLoginPage: (): Promise<{ ok: boolean; url?: string }> =>
         api.openLoginPage!(),
     login: (token: string): Promise<OkResult> => api.login!(token),

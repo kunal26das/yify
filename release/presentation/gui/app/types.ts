@@ -67,7 +67,7 @@ export interface ReleaseApi {
     info: () => Promise<Info>;
     checkAuth: () => Promise<AuthCheck>;
     cancelTask?: () => Promise<{ killed: number }>;
-    readClipboard: () => string;
+    readClipboard: () => Promise<string>;
     openLoginPage: () => Promise<{ ok: boolean; url?: string }>;
     login: (token: string) => Promise<OkResult>;
     logout: () => Promise<OkResult>;

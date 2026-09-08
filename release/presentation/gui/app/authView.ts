@@ -87,7 +87,7 @@ export class AuthView {
         }
     }
 
-    #keyAffixClick(): void {
+    async #keyAffixClick(): Promise<void> {
         const input = $<HTMLInputElement>('#accessToken');
         if (input.value.trim()) {
             input.value = '';
@@ -97,7 +97,7 @@ export class AuthView {
         }
         let text = '';
         try {
-            text = this.vm.readClipboard().trim();
+            text = (await this.vm.readClipboard()).trim();
         } catch {
             text = '';
         }

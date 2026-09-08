@@ -27,7 +27,7 @@ export class AuthViewModel extends Emitter {
         return bridge.openLoginPage();
     }
 
-    readClipboard(): string {
+    readClipboard(): Promise<string> {
         return bridge.readClipboard();
     }
 }
