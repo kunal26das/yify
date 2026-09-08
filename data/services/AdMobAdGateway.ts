@@ -11,27 +11,19 @@ import mobileAds, {
 } from 'react-native-google-mobile-ads';
 
 import {
-    AD_WINDOW_MS,
-    type AdGateState,
     type AdGateway,
     type AdRevenuePrecision,
     type AdRevenueSink,
     type AdTrigger,
     type AnalyticsSink,
-    commitAdShown,
     decideAd,
-    encodeAdGateState,
-    type KeyValueStore,
-    parseAdGateState,
     type PurchaseState,
 } from '@/domain';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
 
-const AD_STATE_KEY = 'gate';
+const AD_UNIT_ID = 'ca-app-pub-2292299294214510/8726265265';
 const AD_SHOW_TIMEOUT_MS = 8000;
 const LOAD_BACKOFF_MS = [30000, 60000, 120000];
-const LOAD_BUDGET = 12;
-const LOAD_BUDGET_WINDOW_MS = 60 * 60 * 1000;
 const AD_FORMAT = 'interstitial';
 const AD_PLATFORM = 'admob';
 const FALLBACK_CURRENCY = 'USD';
@@ -46,12 +38,6 @@ const PRECISION: Record<number, AdRevenuePrecision> = {
 export interface AdMobAdGatewayOptions {
     analytics: AnalyticsSink;
     adRevenue: AdRevenueSink;
-    store: KeyValueStore;
-    ready: () => Promise<void>;
-    enabled: () => boolean;
-    unitId: () => string;
-    cooldownMs: () => number;
-    dailyCap: () => number;
     entitlement: () => PurchaseState;
 }
 
@@ -60,7 +46,6 @@ export class AdMobAdGateway implements AdGateway {
 
     private readonly options: AdMobAdGatewayOptions;
 
-    private state: AdGateState;
     private readyPromise: Promise<void> | null = null;
     private interstitial: InterstitialAd | null = null;
     private unsubscribeAd: (() => void) | null = null;
@@ -71,16 +56,12 @@ export class AdMobAdGateway implements AdGateway {
     private loading = false;
     private showing = false;
     private failures = 0;
-    private loads = 0;
     private requestSeq = 0;
-    private loadWindowStartedAt = 0;
     private privacyRequired = false;
     private canRequestAds = true;
-    private testUnitReported = false;
 
     constructor(options: AdMobAdGatewayOptions) {
         this.options = options;
-        this.state = parseAdGateState(options.store.getString(AD_STATE_KEY));
     }
 
     init(): Promise<void> {
@@ -93,20 +74,12 @@ export class AdMobAdGateway implements AdGateway {
         if (!this.supported) return null;
         if (this.showing) return this.pending;
         const entitlement = this.options.entitlement();
-        const decision = decideAd(
-            {
-                trigger,
-                enabled: this.options.enabled() && entitlement.available,
-                entitlementKnown: entitlement.ready,
-                adsRemoved: entitlement.adsRemoved,
-                loaded: this.loaded && !this.showing && this.interstitial != null,
-                state: this.state,
-            },
-            Date.now(),
-            this.options.cooldownMs(),
-            AD_WINDOW_MS,
-            this.options.dailyCap()
-        );
+        const decision = decideAd({
+            trigger,
+            entitlementKnown: entitlement.ready,
+            adsRemoved: entitlement.adsRemoved,
+            loaded: this.loaded && !this.showing && this.interstitial != null,
+        });
         if (decision !== 'show') {
             this.options.analytics.trackEvent('trailer_ad_gated', {trigger, reason: decision});
             if (decision === 'unfilled') {
@@ -139,11 +112,6 @@ export class AdMobAdGateway implements AdGateway {
 
     private async doInit(): Promise<void> {
         try {
-            await this.options.ready();
-            if (!this.options.enabled() || !this.resolveUnitId()) {
-                this.readyPromise = null;
-                return;
-            }
             await this.gatherConsent();
             if (!this.canRequestAds) {
                 this.readyPromise = null;
@@ -175,26 +143,16 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private resolveUnitId(): string {
-        if (__DEV__) return TestIds.INTERSTITIAL;
-        const configured = this.options.unitId();
-        if (configured) return configured;
-        if (!this.testUnitReported) {
-            this.testUnitReported = true;
-            this.options.analytics.trackEvent('trailer_ad_missing_unit');
-        }
-        return '';
+        return __DEV__ ? TestIds.INTERSTITIAL : AD_UNIT_ID;
     }
 
     private requestNext(): void {
         if (!this.initialized || !this.canRequestAds) return;
         if (this.loading || this.loaded || this.showing) return;
-        if (!this.hasLoadBudget()) return;
         const unitId = this.resolveUnitId();
-        if (!unitId) return;
         this.clearRetry();
         this.teardownAd();
         this.loading = true;
-        this.loads += 1;
         this.requestSeq += 1;
         const impressionId = `${unitId}:${Date.now()}:${this.requestSeq}`;
         const ad = InterstitialAd.createForAdRequest(unitId);
@@ -264,7 +222,6 @@ export class AdMobAdGateway implements AdGateway {
 
             const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
                 opened = true;
-                this.writeState(commitAdShown(this.state, Date.now()));
                 this.options.analytics.trackEvent('trailer_ad_shown', {trigger});
             });
             const offClosed = ad.addAdEventListener(AdEventType.CLOSED, settle);
@@ -304,17 +261,6 @@ export class AdMobAdGateway implements AdGateway {
         });
     }
 
-    private hasLoadBudget(): boolean {
-        const now = Date.now();
-        if (now - this.loadWindowStartedAt >= LOAD_BUDGET_WINDOW_MS) {
-            this.loadWindowStartedAt = now;
-            this.loads = 0;
-        }
-        if (this.loads < LOAD_BUDGET) return true;
-        this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'budget'});
-        return false;
-    }
-
     private scheduleRetry(): void {
         this.clearRetry();
         const index = Math.min(Math.max(this.failures - 1, 0), LOAD_BACKOFF_MS.length - 1);
@@ -334,13 +280,5 @@ export class AdMobAdGateway implements AdGateway {
         this.unsubscribeAd?.();
         this.unsubscribeAd = null;
         this.interstitial = null;
-    }
-
-    private writeState(next: AdGateState): void {
-        this.state = next;
-        try {
-            this.options.store.set(AD_STATE_KEY, encodeAdGateState(next));
-        } catch {
-        }
     }
 }

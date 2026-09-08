@@ -66,17 +66,7 @@ export {
 export type {NewMoviesNotification, NewMoviesFilter} from './policies/newMoviesNotification';
 export {readSection, mergeSection} from './policies/preferencesMerge';
 export type {SectionGuards} from './policies/preferencesMerge';
-export {
-  decideAd,
-  commitAdShown,
-  parseAdGateState,
-  encodeAdGateState,
-  INITIAL_AD_GATE_STATE,
-  AD_GATE_STATE_VERSION,
-  AD_COOLDOWN_MS,
-  AD_WINDOW_MS,
-  AD_WINDOW_LIMIT,
-} from './policies/adGating';
+export {decideAd} from './policies/adGating';
 export {
   decideNudge,
   commitAdWatched,
@@ -92,7 +82,7 @@ export {
   NUDGE_DECLINE_LIMIT,
 } from './policies/supporterNudge';
 export type {NudgeDecision, NudgeState, NudgeInput} from './policies/supporterNudge';
-export type {AdTrigger, AdGateDecision, AdGateState, AdGateInput} from './policies/adGating';
+export type {AdTrigger, AdGateDecision, AdGateInput} from './policies/adGating';
 export {
   chooseSyncMode,
   resolveSection,

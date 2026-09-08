@@ -61,19 +61,13 @@ export function createDependencies(): Dependencies {
     const ads = new AdMobAdGateway({
         analytics,
         adRevenue: new RevenueCatAdRevenueSink(() => purchases.getState().ready),
-        store: new PersistentCache('ads'),
-        ready: () => appConfig.ready(),
-        enabled: () => appConfig.getAdsEnabled(),
-        unitId: () => appConfig.getAdUnitId(),
-        cooldownMs: () => appConfig.getAdCooldownMs(),
-        dailyCap: () => appConfig.getAdDailyCap(),
         entitlement: () => purchases.getState(),
     });
 
     const supporterNudge = new SupporterNudgeImpl({
         analytics,
         store: new PersistentCache('nudge'),
-        enabled: () => ads.supported && appConfig.getAdsEnabled(),
+        enabled: () => ads.supported,
         entitlement: () => purchases.getState(),
     });
 

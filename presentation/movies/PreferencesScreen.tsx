@@ -814,7 +814,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const sellable = state.available && (state.adsRemoved || offer != null);
     const coffeeUrl = config.getSupportUrl();
     const showCoffee = coffeeUrl.startsWith('https://');
-    const adsLive = ads.supported && config.getAdsEnabled();
+    const adsLive = ads.supported;
     const billing = offer?.recurring ? 'A monthly subscription' : 'One payment';
 
     const notice = (title: string, message: string, icon: Glyph) =>

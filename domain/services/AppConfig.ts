@@ -9,13 +9,5 @@ export interface AppConfig {
 
     getTmdbApiKey(): string;
 
-    getAdsEnabled(): boolean;
-
-    getAdUnitId(): string;
-
-    getAdCooldownMs(): number;
-
-    getAdDailyCap(): number;
-
     getSupportUrl(): string;
 }

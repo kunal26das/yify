@@ -26,6 +26,7 @@ const apiKey =
         : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
 const ADS_REMOVED_KEY = 'ads_removed';
+const INIT_BACKOFF_MS = [5000, 15000, 60000, 300000];
 
 function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
@@ -66,6 +67,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private pendingAccount: Account | null | undefined;
     private reportedAdsRemoved: boolean | undefined;
     private verified = false;
+    private initFailures = 0;
+    private initRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore) {
         this.analytics = analytics;
@@ -107,7 +110,18 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             }
         } catch {
             this.initialized = false;
+            this.scheduleInitRetry();
         }
+    }
+
+    private scheduleInitRetry(): void {
+        if (this.initRetryTimer != null) return;
+        const delay = INIT_BACKOFF_MS[Math.min(this.initFailures, INIT_BACKOFF_MS.length - 1)];
+        this.initFailures += 1;
+        this.initRetryTimer = setTimeout(() => {
+            this.initRetryTimer = null;
+            void this.init();
+        }, delay);
     }
 
     async purchase(offerId: string): Promise<boolean> {
