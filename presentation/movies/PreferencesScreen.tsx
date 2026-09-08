@@ -658,6 +658,24 @@ function SyncRow({colors, gutter}: {colors: Colors; gutter: number}) {
     );
 }
 
+const SIGN_IN_ERRORS: Record<string, string> = {
+    'auth/unauthorized-domain': 'This site is not authorised for sign-in.',
+    'auth/popup-blocked': 'Your browser blocked the sign-in window.',
+    'auth/network-request-failed': 'Could not reach Google. Check your connection.',
+    'auth/account-exists-with-different-credential':
+        'That email is already signed up a different way.',
+    'auth/user-disabled': 'That account has been disabled.',
+    DEVELOPER_ERROR: 'This build is not registered for Google sign-in.',
+    PLAY_SERVICES_NOT_AVAILABLE: 'Google Play services is unavailable on this device.',
+};
+
+function signInErrorText(error: string): string {
+    const known = SIGN_IN_ERRORS[error];
+    if (known) return known;
+    if (error.includes(' ')) return error;
+    return 'Sign-in failed. Tap to try again.';
+}
+
 function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const {ready, available, signingIn, account, error} = useAuth();
     const auth = useAuthRepository();
@@ -758,8 +776,11 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitle={
                             unavailable
                                 ? (error ?? 'Sign-in is unavailable in this build.')
-                                : 'Syncs your watchlist and settings across your devices.'
+                                : error
+                                    ? signInErrorText(error)
+                                    : 'Syncs your watchlist and settings across your devices.'
                         }
+                        subtitleStyle={error ? {color: colors.peer} : undefined}
                         colors={colors}
                         gutter={gutter}
                         onPress={signingIn || unavailable ? undefined : () => void auth.signIn()}
@@ -1006,6 +1027,7 @@ function Row({
                  title,
                  titleStyle,
                  subtitle,
+                 subtitleStyle,
                  trailing,
                  colors,
                  gutter,
@@ -1019,6 +1041,7 @@ function Row({
     title: string;
     titleStyle?: StyleProp<TextStyle>;
     subtitle?: string;
+    subtitleStyle?: StyleProp<TextStyle>;
     trailing?: React.ReactNode;
     colors: Colors;
     gutter: number;
@@ -1033,7 +1056,7 @@ function Row({
             <View style={styles.rowText}>
                 <ThemedText style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
                 {subtitle ? (
-                    <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>{subtitle}</ThemedText>
+                    <ThemedText style={[styles.subtitle, {color: colors.textMuted}, subtitleStyle]}>{subtitle}</ThemedText>
                 ) : null}
             </View>
             {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
