@@ -32,6 +32,10 @@ The [production Ads dashboard](https://app.revenuecat.com/projects/8b6ff243/ads)
 
 The AdMob dashboard integration supplies ad-network metadata; the app still needs to send lifecycle and revenue events through the installed SDK. The app uses `react-native-purchases` 10.9.0, which already exposes the five ad callbacks and custom paywall impression tracking. These JavaScript changes do not require a native dependency upgrade. See [AdMob integration](https://www.revenuecat.com/docs/integrations/third-party-integrations/google-admob) and [custom paywall impressions](https://www.revenuecat.com/docs/getting-started/tracking-custom-paywall-impressions).
 
+For revenue reporting, enable **Impression-level ad revenue** in AdMob Settings and use the RevenueCat Android SDK key for this project. Debug builds report sandbox events; use test ads and the dashboard's Sandbox filter when checking tracking.
+
+Android reports loaded, displayed, clicked, failed-to-load, and revenue events with a shared impression ID and the `movie_open` placement. AdMob `OPENED` means displayed; only `CLICKED` maps to RevenueCat's Ad Opened event. Tracking runs independently of purchase loading, and rejected calls produce a sanitized `ad_tracking_failed` diagnostic. See the [manual integration guide](https://www.revenuecat.com/docs/ad-monetization/manual-integration) for event definitions.
+
 ## Google Play notifications: connected and verified
 
 Real-time developer notifications (RTDN) are enabled for Yify in [Google Play monetization setup](https://play.google.com/console/u/0/developers/7945922940168867324/app/4974126843295183994/monetization-setup).
