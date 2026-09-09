@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.7.6",
-  "versionCode": 78,
+  "version": "1.7.7",
+  "versionCode": 79,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -51,6 +51,7 @@
     "@react-native-google-signin/google-signin": "16.1.5",
     "@revenuecat/purchases-js": "1.58.0",
     "@sentry/react-native": "8.25.0",
+    "error-stack-parser": "2.1.4",
     "expo": "57.0.20",
     "expo-background-task": "57.0.16",
     "expo-blur": "57.0.2",

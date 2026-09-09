@@ -5,6 +5,30 @@ Yify uses `@sentry/react-native` for JavaScript and native errors in Sentry proj
 [`entry.ts`](../entry.ts); development sessions and static web rendering do not send events.
 Existing Firebase Crashlytics remains enabled.
 
+## Firebase fatal JavaScript crashes
+
+Crashlytics initializes before Sentry and Expo Router. Sentry captures and flushes an
+uncaught error, then the Firebase handler records its JavaScript stack as fatal and
+terminates the failed app. Disabling Firebase's handler chaining avoids a second generic
+React Native exception. A guard keeps recoverable errors nonfatal.
+
+Firebase receives an error copy with the original message and parsed stack frames, plus a
+stable grouping frame based on the error type and failure location, including the Hermes
+column offset. Repeated failures at that location share a signature; different locations
+get different signatures. Caller stacks, timestamps, user identifiers and changing error
+messages do not split a known failure. Errors without a usable location fall back to type
+and message. Sentry receives the original error unchanged.
+
+Firebase controls final issue grouping and may create variants; it has no custom fingerprint
+API. Verify changes with release-build crashes A, B, then A again, checking two fatal issues
+and two events under A. Restart the test app after each crash to upload its report.
+Firebase retains bundle positions; Sentry's uploaded maps provide original TypeScript locations.
+Runtime, update ID and channel are attached as Firebase custom keys.
+
+The Firebase configuration change first ships in **1.7.7 / Android 79** and requires a new
+binary. Do not publish this handler to older runtimes through OTA. Native crashes continue
+through the native SDKs; caught errors and promise rejections are not automatically fatal.
+
 ## Configuration
 
 The public DSN lives in [`instrumentation/sentry.ts`](../instrumentation/sentry.ts).
