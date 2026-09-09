@@ -34,7 +34,7 @@ async function fixture(t, options = {}) {
     const state = observable({...INITIAL_PURCHASE_STATE, available: true, ready: true, ...options.state});
     const session = observable({ready: true, signingIn: false, available: true, account: user('A'), error: null, ...options.session});
     let offers = options.offers ?? [plan()];
-    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], links: []};
+    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], links: [], browsers: []};
     const purchases = {
         getState: state.get,
         subscribe: state.subscribe,
@@ -65,6 +65,7 @@ async function fixture(t, options = {}) {
             Linking: {async openURL(url) { calls.links.push(url); if (options.openURL) await options.openURL(url); }},
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 20, bottom: 10, left: 0, right: 0})},
+        'expo-web-browser': {async openBrowserAsync(url, options) { calls.browsers.push({url, options}); return {type: 'opened'}; }},
         '../di/DependenciesContext': {
             usePurchaseRepository: () => purchases, useAuthRepository: () => auth,
             useAdGateway: () => ({supported: true}),
@@ -180,12 +181,13 @@ test('active access shows manage and restore actions without recording a sales i
     assert.ok(f.pressable('Restore purchases'));
 });
 
-test('privacy link uses the existing policy and invalid management URLs are not rendered', async t => {
+test('Android privacy link opens a custom tab and invalid management URLs are not rendered', async t => {
     const f = await fixture(t, {state: {managementURL: 'javascript:alert(1)'}});
     await f.open();
     assert.equal(f.pressable('Manage billing or cancel'), undefined);
     await f.press('Privacy policy');
-    assert.deepEqual(f.calls.links, ['https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e']);
+    assert.deepEqual(f.calls.browsers, [{url: 'https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e', options: {enableBarCollapsing: true}}]);
+    assert.deepEqual(f.calls.links, []);
     assert.equal(f.pressable('Privacy policy').props.accessibilityRole, 'link');
     assert.doesNotMatch(f.text(), /Terms of service/);
 });

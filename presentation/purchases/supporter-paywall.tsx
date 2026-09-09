@@ -1,6 +1,7 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 import type {AuthSession, PurchaseOffer, PurchasePlacement} from '@/domain';
 import {useAdGateway, useAuthRepository, usePurchaseRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
@@ -149,6 +150,15 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
         try { await Linking.openURL(url); }
         catch { if (mounted.current) setNotice('This link could not be opened. Please try again.'); }
     };
+    const openPrivacyPolicy = async () => {
+        try {
+            if (Platform.OS === 'android') {
+                await WebBrowser.openBrowserAsync(PRIVACY_URL, {enableBarCollapsing: true});
+            } else {
+                await Linking.openURL(PRIVACY_URL);
+            }
+        } catch { if (mounted.current) setNotice('This link could not be opened. Please try again.'); }
+    };
     const managementURL = safeManagementURL(state.managementURL);
     const message = notice ?? purchaseFailureMessage(state.failure);
 
@@ -197,7 +207,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
                         onPress={restore} disabled={busy || !state.ready || !session.account || !state.available}/>
                     <PaywallButton label={state.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => { void refresh(); }} disabled={busy || state.refreshing || !state.available}/>
                     <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Prices above are the regular prices. Any eligible trial or introductory offer and the final billing details are confirmed at checkout. Manage or cancel a subscription in the store where you paid. Cancellation keeps access until the paid period ends.</ThemedText>
-                    <Pressable accessibilityRole="link" onPress={() => { void openLink(PRIVACY_URL); }} style={styles.privacy}>
+                    <Pressable accessibilityRole="link" onPress={() => { void openPrivacyPolicy(); }} style={styles.privacy}>
                         <ThemedText style={{color: colors.accent}}>Privacy policy</ThemedText>
                     </Pressable>
                 </ScrollView>
