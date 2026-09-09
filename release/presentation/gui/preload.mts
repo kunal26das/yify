@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld('release', {
         apkPath: string,
         ipaPath: string,
         platforms: string[],
-    ) => ipcRenderer.invoke('store:validate', apkPath, ipaPath, platforms),
+        channels: string[],
+    ) => ipcRenderer.invoke('store:validate', apkPath, ipaPath, platforms, channels),
     releaseCoverage: (platforms: string[], channels: string[]) =>
         ipcRenderer.invoke('store:coverage', platforms, channels),
     runStoreRelease: (

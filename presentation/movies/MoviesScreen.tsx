@@ -18,7 +18,6 @@ import {useNewMoviesNotifier} from '../di/DependenciesContext';
 import {PressableScale, enterFade, enterPop, enterRise, exitPop} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Screen} from '../components/screen';
-import {ThemedView} from '../components/themed-view';
 import {Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
@@ -34,8 +33,8 @@ import {useTopBarHeight} from './components/TopBar';
 import {TopBarSlot} from './components/TopBarSlot';
 import {POSTER_GAP, POSTER_MIN_WIDTH, posterRung} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
-import {OrderBy, SortBy} from '@/domain';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
+import {createPosterPrefetcher, posterPrefetchUrls} from './posterPrefetch';
 
 interface MoviesScreenProps {
     viewModel: MoviesViewModel;
@@ -150,19 +149,21 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         prevMoviesLengthRef.current = movies.length;
     }, [movies.length]);
 
-    const prefetchedRef = useRef(0);
+    const prefetchedRef = useRef<ReturnType<typeof createPosterPrefetcher> | null>(null);
     useEffect(() => {
-        if (movies.length <= prefetchedRef.current) {
-            prefetchedRef.current = movies.length;
-            return;
-        }
-        const fresh = movies.slice(prefetchedRef.current);
-        prefetchedRef.current = movies.length;
-        const urls = fresh
-            .map((movie) => movie.posterUrls[posterRung(movie.posterUrls, itemWidth)])
-            .filter((url): url is string => !!url);
-        if (urls.length) ExpoImage.prefetch(urls, {cachePolicy: 'memory-disk'});
-    }, [movies, itemWidth]);
+        const prefetcher = createPosterPrefetcher((urls) => ExpoImage.prefetch(urls, {cachePolicy: 'disk'}));
+        prefetchedRef.current = prefetcher;
+        return () => {
+            prefetcher.dispose();
+            prefetchedRef.current = null;
+        };
+    }, []);
+    useEffect(() => {
+        prefetchedRef.current?.request(posterPrefetchUrls(
+            movies, lastVisibleIndex, numColumns,
+            (movie) => movie.posterUrls[posterRung(movie.posterUrls, itemWidth)]
+        ));
+    }, [movies, itemWidth, numColumns, lastVisibleIndex]);
 
     const loadingMore = loading && !refreshing && hasMore && movies.length > 0;
 
@@ -240,7 +241,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             applyFilters(next);
             scrollToTop();
         },
-        [appliedFilters, applyFilters, scrollToTop]
+        [applyFilters, scrollToTop]
     );
 
     const handleClearFilters = useCallback(() => {

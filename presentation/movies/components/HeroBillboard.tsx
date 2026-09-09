@@ -28,6 +28,7 @@ import {useTopTenRank} from './TopTenContext';
 import {Thumbnail} from './Thumbnail';
 import {thumbFor, thumbPlaceholder} from './format';
 import {useReduceMotion} from '../../hooks/use-reduce-motion';
+import {usePreviewActive} from '../../hooks/use-preview-active';
 
 const ROTATE_MS = 6500;
 const ROTATE_WITH_TRAILER_MS = 30000;
@@ -37,6 +38,7 @@ const SETTLE_MS = 520;
 type Colors = ReturnType<typeof usePalette>['colors'];
 
 interface HeroBillboardProps {
+    visible?: boolean;
     movies: Movie[];
     width: number;
     height: number;
@@ -47,6 +49,7 @@ interface HeroBillboardProps {
 }
 
 export function HeroBillboard({
+                                  visible = true,
                                   movies,
                                   width,
                                   height,
@@ -58,6 +61,7 @@ export function HeroBillboard({
     const {colors} = usePalette();
     const {isDesktop} = useResponsive();
     const {playback} = usePreferences();
+    const active = usePreviewActive(visible);
     const insets = useSafeAreaInsets();
     const count = movies.length;
     const looped = count > 1;
@@ -94,6 +98,7 @@ export function HeroBillboard({
 
     const scrollToData = useCallback(
         (d: number, animated: boolean) => {
+            if (!active) return;
             scrollRef.current?.scrollTo({x: d * page, animated});
             if (!animated || page <= 0) return;
             pendingTargetRef.current = d;
@@ -108,7 +113,7 @@ export function HeroBillboard({
                 scrollXRef.current = settled;
             }, SETTLE_MS);
         },
-        [page]
+        [active, page]
     );
 
     const clearAuto = useCallback(() => {
@@ -123,14 +128,14 @@ export function HeroBillboard({
 
     const scheduleNext = useCallback(() => {
         clearAuto();
-        if (reduceMotion) return;
+        if (!active || reduceMotion) return;
         if (!looped || page <= 0) return;
         if (mode === 'feature') return;
         autoTimerRef.current = setTimeout(() => {
             scrollToData(indexRef.current + 1, true);
             scheduleNextRef.current();
         }, mode === 'ambient' ? ROTATE_WITH_TRAILER_MS : ROTATE_MS);
-    }, [clearAuto, looped, page, scrollToData, mode, reduceMotion]);
+    }, [active, clearAuto, looped, page, scrollToData, mode, reduceMotion]);
 
     useEffect(() => {
         scheduleNextRef.current = scheduleNext;
@@ -146,24 +151,25 @@ export function HeroBillboard({
     );
 
     const scheduleReposition = useCallback(() => {
+        if (!active) return;
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
         idleTimerRef.current = setTimeout(() => {
             if (looped && page > 0 && Math.abs(scrollXRef.current - count * page) < page * 0.04) {
                 scrollToData(0, false);
             }
         }, 90);
-    }, [looped, page, count, scrollToData]);
+    }, [active, looped, page, count, scrollToData]);
 
     const onScroll = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            if (page <= 0) return;
+            if (!active || page <= 0) return;
             const x = e.nativeEvent.contentOffset.x;
             scrollXRef.current = x;
             setActive(realForData(Math.round(x / page)));
             scheduleNext();
             scheduleReposition();
         },
-        [page, setActive, realForData, scheduleNext, scheduleReposition]
+        [active, page, setActive, realForData, scheduleNext, scheduleReposition]
     );
 
     const onBeginDrag = useCallback(() => {
@@ -203,6 +209,10 @@ export function HeroBillboard({
         setMode('idle');
         setTrailerPlaying(false);
         if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
+        if (!active) {
+            setMuted(true);
+            return;
+        }
         if (!activeMovie) return;
         onRequestTrailer?.(activeMovie.id);
         if (!activeTrailer || !playback.autoplayTrailers) return;
@@ -213,14 +223,14 @@ export function HeroBillboard({
         return () => {
             if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         };
-    }, [activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers]);
+    }, [active, activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers]);
 
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
-        if (!activeMovie || seenRef.current.has(activeMovie.id)) return;
+        if (!active || !activeMovie || seenRef.current.has(activeMovie.id)) return;
         seenRef.current.add(activeMovie.id);
         Analytics.heroImpression(activeMovie, index);
-    }, [index, activeMovie]);
+    }, [active, index, activeMovie]);
 
     const onPlay = useCallback(() => {
         if (!activeMovie) return;
@@ -274,7 +284,7 @@ export function HeroBillboard({
                         height={height}
                         colors={colors}
                         near={Math.abs(i - index) <= 1}
-                        trailerId={i === index && mode !== 'idle' ? activeTrailer ?? null : null}
+                        trailerId={active && i === index && mode !== 'idle' ? activeTrailer ?? null : null}
                         backdropUrl={backdrops?.[movie.id] ?? null}
                         feature={mode === 'feature'}
                         muted={muted}
@@ -285,7 +295,7 @@ export function HeroBillboard({
                 ))}
             </ScrollView>
 
-            {mode !== 'idle' && activeTrailer && trailerPlaying ? (
+            {active && mode !== 'idle' && activeTrailer && trailerPlaying ? (
                 <Animated.View
                     entering={enterPop()}
                     style={[styles.muteButton, isDesktop ? styles.muteButtonWide : {top: insets.top + 64}]}

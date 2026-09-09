@@ -34,13 +34,21 @@ export function StoreFlow({onDone}: { onDone: () => void }) {
             )}
 
             {vm.step === 'apk' && (
-                <Field label="Android .apk path">
-                    <TextInput
-                        value={vm.apk}
-                        onChange={vm.setApk}
-                        onSubmit={vm.submitApk}
-                    />
-                </Field>
+                <Box flexDirection="column">
+                    <Text dimColor>
+                        Production builds on Expo. Leave this blank for Production or both channels.
+                    </Text>
+                    <Text dimColor>
+                        For Staging only, provide an APK or leave blank for a local build.
+                    </Text>
+                    <Field label="Android .apk path (optional)">
+                        <TextInput
+                            value={vm.apk}
+                            onChange={vm.setApk}
+                            onSubmit={vm.submitApk}
+                        />
+                    </Field>
+                </Box>
             )}
 
             {vm.step === 'ipa' && (
@@ -67,7 +75,7 @@ export function StoreFlow({onDone}: { onDone: () => void }) {
                 </Box>
             )}
 
-            {vm.step === 'validating' && <Text>Validating binaries…</Text>}
+            {vm.step === 'validating' && <Text>Validating release inputs…</Text>}
 
             {vm.step === 'confirm' && <StoreConfirm vm={vm} onDone={onDone}/>}
 
@@ -84,6 +92,11 @@ export function StoreFlow({onDone}: { onDone: () => void }) {
                                 </Box>
                             ) : (
                                 <Text color="red">✖ Store release finished with errors.</Text>
+                            )}
+                            {vm.submittedToPlay && (
+                                <Text dimColor>
+                                    Submitted to Google Play. Google review or publishing may still be pending.
+                                </Text>
                             )}
                             <Text dimColor>Press m to return to the menu.</Text>
                         </Box>

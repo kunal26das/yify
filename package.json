@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "expo-router/entry",
-  "version": "1.7.4",
-  "versionCode": 76,
+  "version": "1.7.5",
+  "versionCode": 77,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -22,7 +22,7 @@
     "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
-    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts'",
+    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts' 'tests/**/*.test.cjs'",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
     "build:dev:ios": "bash scripts/eas.sh build --platform ios --profile development",
@@ -102,7 +102,8 @@
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.2",
     "eslint-import-resolver-typescript": "3.10.1",
-    "typescript": "7.0.2"
+    "react-test-renderer": "19.2.8",
+    "typescript": "6.0.3"
   },
   "resolutions": {
     "**/xcode/uuid": "11.1.1"

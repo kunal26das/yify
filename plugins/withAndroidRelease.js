@@ -1,8 +1,6 @@
 const {withAppBuildGradle} = require('@expo/config-plugins');
 
 const PREAMBLE = `
-def packageJson = new groovy.json.JsonSlurper().parseText(file("$projectRoot/package.json").text)
-
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
@@ -38,19 +36,7 @@ module.exports = (config) =>
             'projectRoot'
         );
 
-        contents = replace(
-            contents,
-            /^(\s*)versionCode \d+$/m,
-            '$1versionCode packageJson.versionCode',
-            'versionCode'
-        );
-
-        contents = replace(
-            contents,
-            /^(\s*)versionName ".*"$/m,
-            '$1versionName packageJson.version',
-            'versionName'
-        );
+        // Keep the literal versions generated from app.config.js so EAS can read them.
 
         contents = replace(
             contents,

@@ -4,6 +4,7 @@ import {
     getAuth,
     getIdToken as firebaseGetIdToken,
     onAuthStateChanged,
+    reauthenticateWithCredential,
     signInWithCredential,
     signOut,
     type FirebaseAuthTypes,
@@ -109,10 +110,9 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
             await deleteUser(user);
         } catch (error) {
             if (errorCode(error) !== 'auth/requires-recent-login') return false;
-            const refreshed = await this.reauthenticate();
-            if (refreshed == null) return false;
+            if (!await this.reauthenticate(user)) return false;
             try {
-                await deleteUser(refreshed);
+                await deleteUser(user);
             } catch {
                 return false;
             }
@@ -129,17 +129,17 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
         return true;
     }
 
-    private async reauthenticate(): Promise<FirebaseAuthTypes.User | null> {
-        if (!this.ensureConfigured()) return null;
+    private async reauthenticate(user: FirebaseAuthTypes.User): Promise<boolean> {
+        if (!this.ensureConfigured()) return false;
         try {
             await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
             const result = await GoogleSignin.signIn();
-            if (result.type !== 'success' || !result.data.idToken) return null;
+            if (result.type !== 'success' || !result.data.idToken) return false;
             const credential = GoogleAuthProvider.credential(result.data.idToken);
-            const signed = await signInWithCredential(getAuth(), credential);
-            return signed.user;
+            const refreshed = await reauthenticateWithCredential(user, credential);
+            return refreshed.user.uid === user.uid && getAuth().currentUser?.uid === user.uid;
         } catch {
-            return null;
+            return false;
         }
     }
 

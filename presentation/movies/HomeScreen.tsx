@@ -35,8 +35,7 @@ import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import type {FeedViewModel} from './useFeedViewModel';
 import type {ShowsViewModel} from './useShowsViewModel';
 import {ShowStrip} from './components/ShowStrip';
-
-const SCROLL_AT_TOP_THRESHOLD = 8;
+import {useHomeScrollVisibility} from './useHomeScrollVisibility';
 
 const CARD_MIN_WIDTH = 304;
 const SINGLE_COLUMN_MAX_WIDTH = 480;
@@ -119,20 +118,16 @@ export function HomeScreen({
     const topBarHeight = useTopBarHeight();
 
     const listRef = useRef<FlatList<HomeRow>>(null);
-    const scrollY = useRef(new Animated.Value(0)).current;
-    const [atTop, setAtTop] = useState(true);
+    const [scrollY] = useState(() => new Animated.Value(0));
+    const heroHeight = isPhone
+        ? Math.round(Math.min(height * 0.62, 560))
+        : Math.round(Math.min(height * 0.78, 624));
+    const {atTop, heroVisible} = useHomeScrollVisibility(scrollY, heroHeight);
     const [gridVisible, setGridVisible] = useState(false);
     const [lastGridIndex, setLastGridIndex] = useState(0);
     const [chipsPinned, setChipsPinned] = useState(false);
     const prevFeedLengthRef = useRef(0);
     const lastRequestedCountRef = useRef(-1);
-
-    useEffect(() => {
-        const id = scrollY.addListener(({value}) => {
-            setAtTop(value <= SCROLL_AT_TOP_THRESHOLD);
-        });
-        return () => scrollY.removeListener(id);
-    }, [scrollY]);
 
     const onScroll = useMemo(
         () =>
@@ -167,9 +162,6 @@ export function HomeScreen({
     );
 
     const posterWidth = isPhone ? 128 : isTablet ? 144 : 160;
-    const heroHeight = isPhone
-        ? Math.round(Math.min(height * 0.62, 560))
-        : Math.round(Math.min(height * 0.78, 624));
     const skeletons = skeletonCount(width, posterWidth, gutter);
 
     const columnsWidth = Math.max(0, width - gutter * 2);
@@ -474,11 +466,12 @@ export function HomeScreen({
                                     ]}
                                 >
                                     <HeroBillboard
+                                        visible={heroVisible}
                                         movies={heroMovies}
                                         width={width}
                                         height={heroHeight}
                                         trailers={heroTrailers}
-                                    backdrops={heroBackdrops}
+                                        backdrops={heroBackdrops}
                                         onRequestTrailer={requestHeroTrailer}
                                     />
                                 </Animated.View>

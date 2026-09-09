@@ -65,6 +65,15 @@ export interface AndroidArtifacts {
     aabPath: string;
 }
 
+export interface AndroidProductionPublisher {
+    release(
+        version: string,
+        runtimeVersion: string,
+        onLine: OnLine,
+        label?: string,
+    ): Promise<{ ok: boolean; buildId?: string }>;
+}
+
 export interface AndroidPublisher {
     build(
         onLine: OnLine,

@@ -39,6 +39,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   const hasMoreRef = useRef(hasMore);
   const appliedQueryRef = useRef(appliedQuery);
   const appliedFiltersRef = useRef(appliedFilters);
+  const reloadRequiredRef = useRef(true);
   const pendingReloadRef = useRef<{ query: string; filters: MovieFilters } | null>(null);
   const loadMoviesRef = useRef<
     ((batch: number, query: string, activeFilters: MovieFilters) => void) | null
@@ -68,6 +69,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
 
       const trimmed = query.trim();
       if (batch === 1) {
+        reloadRequiredRef.current = true;
         appliedQueryRef.current = trimmed;
         appliedFiltersRef.current = activeFilters;
         setAppliedQuery(trimmed);
@@ -108,6 +110,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
         setPage(batch);
         setHasMore(complete && last.hasMore);
         setTotalMovieCount(results[0].movieCount);
+        if (batch === 1) reloadRequiredRef.current = false;
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load movies');
       } finally {
@@ -180,7 +183,13 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   useEffect(() => cancelDebounce, [cancelDebounce]);
 
   const loadMore = useCallback(() => {
-    if (!hasMoreRef.current || loadingRef.current) return;
+    if (loadingRef.current) return;
+    // A failed replacement must finish before we can append to the old list.
+    if (reloadRequiredRef.current) {
+      loadMovies(1, appliedQueryRef.current, appliedFiltersRef.current);
+      return;
+    }
+    if (!hasMoreRef.current) return;
     loadMovies(pageRef.current + 1, appliedQueryRef.current, appliedFiltersRef.current);
   }, [loadMovies]);
 

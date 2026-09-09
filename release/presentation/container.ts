@@ -20,6 +20,7 @@ const {
     ledger,
     urlOpener,
     androidPublisher,
+    androidProductionPublisher,
 } = data;
 
 const operation = createOperationGuard(cancellation);
@@ -34,6 +35,7 @@ const store = createStoreReleaseUseCases({
     workspace,
     binary,
     androidPublisher,
+    androidProductionPublisher,
 });
 const updates = createUpdateUseCases({
     ledger,

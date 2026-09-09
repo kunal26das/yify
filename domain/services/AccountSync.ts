@@ -7,6 +7,11 @@ export interface AccountSync {
 
     syncNow(): void;
 
+    // Pause new work and wait for any in-flight sync request before deleting data.
+    pause(): Promise<void>;
+
+    resume(): void;
+
     deleteRemote(): Promise<boolean>;
 
     getStatus(): SyncStatus;

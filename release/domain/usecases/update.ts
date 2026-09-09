@@ -105,20 +105,7 @@ export function createUpdateUseCases(deps: {
                 text: 'Resolving runtime versions against the installed tree…',
             });
 
-            const embedded = await runtimeVersions.embeddedChannel();
-
-            if (embedded === null) {
-                onLine({
-                    stream: 'system',
-                    text: 'Warning: could not read expo-channel-name from the app config. Builds without that header cannot receive any update.',
-                });
-            } else {
-                onLine({
-                    stream: 'system',
-                    text: `Builds of this config listen on channel "${embedded}".`,
-                });
-            }
-
+            const embeddedChannels = new Map<string, Promise<string | null>>();
             const checked: Array<{
                 platform: Platform;
                 channel: Channel;
@@ -132,6 +119,19 @@ export function createUpdateUseCases(deps: {
                 let allowed = false;
                 try {
                     const target = workspace.channelName(job.channel);
+                    let embeddedChannel = embeddedChannels.get(target);
+                    if (!embeddedChannel) {
+                        embeddedChannel = runtimeVersions.embeddedChannel(target);
+                        embeddedChannels.set(target, embeddedChannel);
+                    }
+                    const embedded = await embeddedChannel;
+                    if (embedded === null) {
+                        onLine({
+                            stream: 'system',
+                            text: `Warning: could not read expo-channel-name from the ${target} app config. Builds without that header cannot receive any update.`,
+                            label,
+                        });
+                    }
                     if (embedded !== null && target !== embedded) {
                         onLine({
                             stream: 'system',

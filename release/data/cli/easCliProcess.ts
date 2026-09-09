@@ -31,6 +31,7 @@ export function createReleaseCli(deps: {
         args: string[],
         onLine: OnLine,
         label?: string,
+        idleTimeoutMs: number = IDLE_TIMEOUT_MS,
     ): Promise<RunResult> {
         return new Promise((resolve) => {
             const emit = (stream: LogLine['stream'], text: string) => {
@@ -45,8 +46,19 @@ export function createReleaseCli(deps: {
             } catch {
                 tmp = os.tmpdir();
             }
+            const cleanTemporaryDirectory = () => {
+                try {
+                    if (tmp !== os.tmpdir()) fs.rmSync(tmp, {recursive: true, force: true});
+                } catch {
+                }
+            };
 
             emit('system', `$ eas ${args.join(' ')}  (cwd: ${repoRoot})`);
+            if (cancellation.isCancelling()) {
+                cleanTemporaryDirectory();
+                resolve({code: 130, ok: false});
+                return;
+            }
 
             const env = easEnv(sessionStore.read());
             const child = spawn(nodeBinaryPath(), [cli, ...args], {
@@ -58,23 +70,20 @@ export function createReleaseCli(deps: {
             let idle: NodeJS.Timeout | undefined;
             const bumpIdle = () => {
                 if (idle) clearTimeout(idle);
+                if (idleTimeoutMs === 0) return;
                 idle = setTimeout(() => {
                     emit(
                         'stderr',
                         `No output for ${
-                            IDLE_TIMEOUT_MS / 60000
+                            idleTimeoutMs / 60000
                         } min — terminating (likely hung).`,
                     );
                     child.kill('SIGKILL');
-                }, IDLE_TIMEOUT_MS);
+                }, idleTimeoutMs);
             };
             const finish = (result: RunResult) => {
                 if (idle) clearTimeout(idle);
-                try {
-                    if (tmp !== os.tmpdir())
-                        fs.rmSync(tmp, {recursive: true, force: true});
-                } catch {
-                }
+                cleanTemporaryDirectory();
                 resolve(result);
             };
 
@@ -111,12 +120,14 @@ export function createReleaseCli(deps: {
         if (cancellation.isCancelling()) return {code: 130, ok: false};
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            if (cancellation.isCancelling()) return {code: 130, ok: false};
             let transient = false;
             const tap = (line: LogLine) => {
                 if (TRANSIENT_RE.test(line.text)) transient = true;
                 onLine(line);
             };
-            last = await spawnEas(args, tap, opts.label);
+            last = await spawnEas(args, tap, opts.label, opts.idleTimeoutMs);
+            if (cancellation.isCancelling()) return {code: 130, ok: false};
             if (last.ok || !transient) return last;
             if (attempt < maxRetries) {
                 onLine({

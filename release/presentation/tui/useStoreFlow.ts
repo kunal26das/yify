@@ -30,6 +30,7 @@ export interface StoreFlowViewModel {
     allCovered: boolean;
     lines: LogLine[];
     ok: boolean;
+    submittedToPlay: boolean;
     setApk: (v: string) => void;
     setIpa: (v: string) => void;
     choosePlatforms: (p: Platform[]) => void;
@@ -51,6 +52,7 @@ export function useStoreFlow(): StoreFlowViewModel {
     const [allCovered, setAllCovered] = useState(false);
     const [lines, setLines] = useState<LogLine[]>([]);
     const [ok, setOk] = useState(false);
+    const [submittedToPlay, setSubmittedToPlay] = useState(false);
 
     const append = (l: LogLine) => setLines((prev) => [...prev, l]);
 
@@ -60,7 +62,7 @@ export function useStoreFlow(): StoreFlowViewModel {
     };
 
     const submitApk = () => {
-        if (apk.trim()) setStep(platforms.includes('ios') ? 'ipa' : 'channels');
+        setStep(platforms.includes('ios') ? 'ipa' : 'channels');
     };
 
     const submitIpa = () => {
@@ -74,7 +76,7 @@ export function useStoreFlow(): StoreFlowViewModel {
         setExistingSummary('');
         setAllCovered(false);
 
-        const v = await validateBinaries(apk.trim(), ipa.trim(), platforms);
+        const v = await validateBinaries(apk.trim(), ipa.trim(), platforms, chosen);
         if (!v.ok) {
             setError(v.error);
             setStep('confirm');
@@ -114,6 +116,10 @@ export function useStoreFlow(): StoreFlowViewModel {
             append,
         );
         setOk(res.ok);
+        setSubmittedToPlay(res.steps.some((step) =>
+            step.platform === 'android' && step.channel === 'Production' &&
+            step.ok && !step.skipped,
+        ));
         setStep('result');
     };
 
@@ -129,6 +135,7 @@ export function useStoreFlow(): StoreFlowViewModel {
         allCovered,
         lines,
         ok,
+        submittedToPlay,
         setApk,
         setIpa,
         choosePlatforms,

@@ -27,7 +27,7 @@ const SHOT = process.env.SHOT_PATH || '/tmp/yify-desktop.png';
 const NAV = process.env.NAV;
 
 app.whenReady().then(async () => {
-    const {server, port} = await startStaticServer(path.join(__dirname, '..', 'dist'));
+    const {server, port} = await startStaticServer(path.join(__dirname, '..', 'dist'), 0);
 
     const win = new BrowserWindow({
         ...WIN,

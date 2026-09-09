@@ -44,6 +44,8 @@ export interface RunResult {
 export interface RunOptions {
     label?: string;
     retries?: number;
+    // Zero disables the inactivity watchdog while waiting for remote cloud jobs.
+    idleTimeoutMs?: number;
 }
 
 export type BinaryValidation =

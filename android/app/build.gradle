@@ -4,8 +4,6 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
-def packageJson = new groovy.json.JsonSlurper().parseText(file("$projectRoot/package.json").text)
-
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
@@ -101,8 +99,8 @@ android {
         applicationId 'io.github.kunal26das.yify'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode packageJson.versionCode
-        versionName packageJson.version
+        versionCode 77
+        versionName "1.7.5"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

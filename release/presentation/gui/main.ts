@@ -113,8 +113,8 @@ app.whenReady().then(() => {
 
     ipcMain.handle(
         'store:validate',
-        async (_e, apkPath: string, ipaPath: string, platforms: Platform[]) => {
-            return validateBinaries(apkPath, ipaPath, platforms);
+        async (_e, apkPath: string, ipaPath: string, platforms: Platform[], channels: Channel[]) => {
+            return validateBinaries(apkPath, ipaPath, platforms, channels);
         },
     );
 

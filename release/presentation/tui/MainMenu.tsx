@@ -21,7 +21,7 @@ export function MainMenu({
     }
 
     const items = [
-        {label: 'Store release (Play + Firebase)', value: 'store' as const},
+        {label: 'Store release (Expo → Play / Firebase)', value: 'store' as const},
         {label: 'EAS Update (over-the-air)', value: 'update' as const},
         {
             label: `Log out${auth.account ? ` (${auth.account})` : ''}`,

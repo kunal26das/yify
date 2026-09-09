@@ -21,7 +21,8 @@ export function StoreConfirm({
     }
     return (
         <Box flexDirection="column">
-            <Text color="green">✓ apk and ipa both report v{vm.version}</Text>
+            <Text color="green">✓ Release inputs validated for v{vm.version}</Text>
+            <Text>Platforms: {vm.platforms.join(', ')}</Text>
             <Text>Channels: {vm.channels.join(', ')}</Text>
             {vm.existingSummary ? (
                 <Text color="yellow">
@@ -49,10 +50,22 @@ export function StoreConfirm({
                             Channels that already have this runtime version will be skipped.
                         </Text>
                     ) : null}
-                    <Text dimColor>
-                        Each release runs a clean install (rm -rf node_modules + yarn
-                        install) first.
-                    </Text>
+                    <Text dimColor>Dependencies are reinstalled locally before the release.</Text>
+                    {vm.platforms.includes('android') && vm.channels.includes('Production') && (
+                        <Text dimColor>
+                            Android Production: build the current repository on Expo, then submit to Google Play production. Google review may still be required.
+                        </Text>
+                    )}
+                    {vm.platforms.includes('android') && vm.channels.includes('Staging') && (
+                        <Text dimColor>
+                            Android Staging: {vm.apk.trim() ? 'upload the supplied APK' : 'build locally and upload the APK'} to Firebase App Distribution.
+                        </Text>
+                    )}
+                    {vm.platforms.includes('ios') && (
+                        <Text dimColor>
+                            iOS: record the IPA runtime for updates. Upload to App Store Connect separately.
+                        </Text>
+                    )}
                     <Confirm
                         onYes={() => void vm.start()}
                         onNo={onDone}

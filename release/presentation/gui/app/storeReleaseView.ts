@@ -44,10 +44,6 @@ export class StoreReleaseView {
     #apkSync: () => void = () => {
     };
 
-    #productionSelected(): boolean {
-        return this.#selectedChannels().includes('Production');
-    }
-
     #selectedPlatforms(): Platform[] {
         const plats: Platform[] = [];
         if ($<HTMLInputElement>('#apkInc').checked) plats.push('android');
@@ -154,7 +150,7 @@ export class StoreReleaseView {
         $<HTMLButtonElement>('#baseRunBtn').disabled = true;
         this.#evaluateValidate();
         if (wasValidated) {
-            showToast('Files changed — click Validate again.', 'warn');
+            showToast('Release inputs changed — click Validate again.', 'warn');
         }
     }
 
@@ -192,7 +188,7 @@ export class StoreReleaseView {
         const plats = this.#selectedPlatforms();
         const chans = this.#selectedChannels();
         if (plats.length === 0) {
-            showToast('Drop the .apk and/or .ipa first.', 'warn');
+            showToast('Select Android or provide an iOS .ipa.', 'warn');
             return;
         }
         if (chans.length === 0) {
@@ -208,6 +204,7 @@ export class StoreReleaseView {
                     this.#apkArg(),
                     this.#ipaArg(),
                     plats,
+                    chans,
                 );
             } catch (e) {
                 showToast(errMessage(e), 'bad');
@@ -253,7 +250,7 @@ export class StoreReleaseView {
         const plats = this.#selectedPlatforms();
         const chans = this.#selectedChannels();
         if (plats.length === 0) {
-            showToast('Drop the .apk and/or .ipa first.', 'warn');
+            showToast('Select Android or provide an iOS .ipa.', 'warn');
             return;
         }
         if (chans.length === 0) {
@@ -271,10 +268,14 @@ export class StoreReleaseView {
                 chans,
             );
             if (res.ok) {
+                const submittedToPlay = res.steps.some((step) =>
+                    step.platform === 'android' && step.channel === 'Production' &&
+                    step.ok && !step.skipped,
+                );
                 showToast(
-                    'Store release complete — all ' +
-                    plats.length * chans.length +
-                    ' target(s) succeeded.',
+                    submittedToPlay
+                        ? 'Submitted to Google Play. Google review or publishing may still be pending.'
+                        : 'Store release complete — all selected targets succeeded.',
                 );
             } else {
                 showToast('Store release finished with errors.', 'bad');

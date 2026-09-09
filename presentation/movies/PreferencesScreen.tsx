@@ -692,16 +692,34 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
 
     const runDelete = async () => {
         setDeleting(true);
-        const cleared = await accountSync.deleteRemote();
-        if (!cleared) {
+        const uid = account?.uid;
+        let stage: 'sync' | 'auth' = 'sync';
+        try {
+            await accountSync.pause();
+            if (!uid || auth.getSession().account?.uid !== uid) {
+                Analytics.accountDeleteFailed('auth');
+                return;
+            }
+            const cleared = await accountSync.deleteRemote();
+            if (!cleared) {
+                Analytics.accountDeleteFailed('sync');
+                return;
+            }
+            stage = 'auth';
+            if (auth.getSession().account?.uid !== uid) {
+                Analytics.accountDeleteFailed('auth');
+                return;
+            }
+            const deleted = await auth.deleteAccount();
+            if (deleted) Analytics.accountDeleted();
+            else Analytics.accountDeleteFailed('auth');
+        } catch {
+            Analytics.accountDeleteFailed(stage);
+        } finally {
+            accountSync.setAccount(auth.getSession().account?.uid ?? null);
+            accountSync.resume();
             setDeleting(false);
-            Analytics.accountDeleteFailed('sync');
-            return;
         }
-        const deleted = await auth.deleteAccount();
-        setDeleting(false);
-        if (deleted) Analytics.accountDeleted();
-        else Analytics.accountDeleteFailed('auth');
     };
 
     const confirmDelete = () => {

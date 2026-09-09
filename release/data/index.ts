@@ -1,4 +1,5 @@
 import type {
+    AndroidProductionPublisher,
     AndroidPublisher,
     BinaryInspector,
     EasApi,
@@ -21,6 +22,7 @@ import {createRuntimeVersions} from './version/runtimeVersionsCli.js';
 import {createReleaseLedger} from './ledger/releaseLedgerFs.js';
 import {createUrlOpener} from './system/urlOpenerOs.js';
 import {createAndroidPublisher} from './android/androidPublisherShell.js';
+import {createAndroidProductionPublisher} from './android/androidProductionPublisherEas.js';
 
 export interface DataLayer {
     workspace: Workspace;
@@ -34,6 +36,7 @@ export interface DataLayer {
     ledger: ReleaseLedger;
     urlOpener: UrlOpener;
     androidPublisher: AndroidPublisher;
+    androidProductionPublisher: AndroidProductionPublisher;
 }
 
 export function createDataLayer(): DataLayer {
@@ -48,6 +51,7 @@ export function createDataLayer(): DataLayer {
     const ledger = createReleaseLedger({workspace});
     const urlOpener = createUrlOpener();
     const androidPublisher = createAndroidPublisher({workspace, cancellation});
+    const androidProductionPublisher = createAndroidProductionPublisher({workspace, cancellation, cli});
 
     return {
         workspace,
@@ -61,5 +65,6 @@ export function createDataLayer(): DataLayer {
         ledger,
         urlOpener,
         androidPublisher,
+        androidProductionPublisher,
     };
 }

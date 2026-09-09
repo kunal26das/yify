@@ -10,7 +10,8 @@
     "build": "tsc -p tsconfig.json && npm run copy-assets",
     "copy-assets": "node dist/scripts/copyAssets.js",
     "gui": "npm run build && electron dist/presentation/gui/main.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test 'domain/**/*.test.ts' 'data/**/*.test.ts'"
   },
   "dependencies": {
     "app-info-parser": "1.1.6",

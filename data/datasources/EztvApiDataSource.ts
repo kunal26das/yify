@@ -1,10 +1,12 @@
 import type {EztvTorrentsResponse} from '../models';
+import {ResponseCache} from './storage/ResponseCache';
 
 export const EZTV_BASE_URL = 'https://eztvx.to/api';
 
 export const EZTV_MAX_LIMIT = 50;
 
 const REQUEST_TIMEOUT_MS = 12000;
+const RESPONSE_TTL_MS = 60_000;
 
 export interface ListTorrentsApiParams {
     page: number;
@@ -24,6 +26,8 @@ export class EztvUnavailableError extends Error {
 }
 
 export class EztvApiDataSource implements EztvApi {
+    private readonly responses = new ResponseCache();
+
     constructor(private readonly resolveBaseUrl: () => string = () => EZTV_BASE_URL) {
     }
 
@@ -36,13 +40,16 @@ export class EztvApiDataSource implements EztvApi {
             searchParams.set('imdb_id', params.imdb_id.trim());
         }
 
+        const baseUrl = this.resolveBaseUrl().replace(/\/+$/, '');
+        const url = `${baseUrl}/get-torrents?${searchParams.toString()}`;
+        return this.responses.getOrLoad(url, RESPONSE_TTL_MS, () => this.fetchTorrents(url));
+    }
+
+    private async fetchTorrents(url: string): Promise<EztvTorrentsResponse> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         try {
-            const response = await fetch(
-                `${this.resolveBaseUrl()}/get-torrents?${searchParams.toString()}`,
-                {signal: controller.signal}
-            );
+            const response = await fetch(url, {signal: controller.signal});
             if (!response.ok) {
                 throw new EztvUnavailableError(new Error(`EZTV error: ${response.status}`));
             }

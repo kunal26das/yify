@@ -178,12 +178,38 @@ export function createAndroidPublisher(deps: {
         }
     }
 
-    function ensureRuntimeVersion(
+    function packagedUpdateChannel(): string {
+        try {
+            const manifest = fs.readFileSync(
+                path.join(androidDir, 'app/src/main/AndroidManifest.xml'),
+                'utf8',
+            );
+            const metaData = manifest.match(/<meta-data\b[^>]*>/g)?.find((tag) =>
+                /\bandroid:name=["']expo\.modules\.updates\.UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY["']/.test(tag),
+            );
+            const encoded = metaData?.match(/\bandroid:value=(["'])(.*?)\1/)?.[2];
+            if (!encoded) return '';
+            const headers = JSON.parse(
+                encoded
+                    .replace(/&quot;/g, '"')
+                    .replace(/&apos;/g, "'")
+                    .replace(/&amp;/g, '&'),
+            );
+            return typeof headers['expo-channel-name'] === 'string'
+                ? headers['expo-channel-name']
+                : '';
+        } catch {
+            return '';
+        }
+    }
+
+    function ensureNativeUpdateConfiguration(
         onLine: OnLine,
         label?: string,
         channel?: string,
     ): boolean {
         const expected = declaredVersion();
+        const expectedChannel = channel || process.env.EXPO_UPDATE_CHANNEL || 'Production';
         if (!expected) {
             onLine({
                 stream: 'stderr',
@@ -192,13 +218,16 @@ export function createAndroidPublisher(deps: {
             });
             return false;
         }
-        if (packagedRuntimeVersion() === expected) return true;
+        if (
+            packagedRuntimeVersion() === expected &&
+            packagedUpdateChannel() === expectedChannel
+        ) return true;
 
         onLine({
             stream: 'system',
-            text: `expo_runtime_version is ${
+            text: `Native update config is runtime ${
                 packagedRuntimeVersion() || '<absent>'
-            }, expected ${expected}. Running an Expo prebuild to regenerate it.`,
+            } on ${packagedUpdateChannel() || '<absent>'}, expected ${expected} on ${expectedChannel}. Running an Expo prebuild to regenerate it.`,
             label,
         });
         const prebuild = spawnSync(
@@ -209,7 +238,7 @@ export function createAndroidPublisher(deps: {
                 encoding: 'utf8',
                 env: {
                     ...process.env,
-                    ...(channel ? {EXPO_UPDATE_CHANNEL: channel} : {}),
+                    EXPO_UPDATE_CHANNEL: expectedChannel,
                 },
             },
         );
@@ -228,19 +257,20 @@ export function createAndroidPublisher(deps: {
         }
 
         const actual = packagedRuntimeVersion();
-        if (actual !== expected) {
+        const actualChannel = packagedUpdateChannel();
+        if (actual !== expected || actualChannel !== expectedChannel) {
             onLine({
                 stream: 'stderr',
-                text: `Prebuild left expo_runtime_version at ${
+                text: `Prebuild left native update config at runtime ${
                     actual || '<absent>'
-                }, expected ${expected}. Refusing to build an artifact no update can reach.`,
+                } on ${actualChannel || '<absent>'}, expected ${expected} on ${expectedChannel}. Refusing to build an artifact with the wrong update target.`,
                 label,
             });
             return false;
         }
         onLine({
             stream: 'system',
-            text: `expo_runtime_version regenerated to ${actual}.`,
+            text: `Native update config regenerated to runtime ${actual} on ${actualChannel}.`,
             label,
         });
         return true;
@@ -343,7 +373,7 @@ export function createAndroidPublisher(deps: {
                 return;
             }
 
-            if (!ensureRuntimeVersion(onLine, label, channel)) {
+            if (!ensureNativeUpdateConfiguration(onLine, label, channel)) {
                 resolve({ok: false});
                 return;
             }
@@ -525,6 +555,7 @@ export function createAndroidPublisher(deps: {
         label?: string,
     ): Promise<{ ok: boolean; versionCode?: number }> {
         try {
+            if (cancellation.isCancelling()) return {ok: false};
             const saFile = serviceAccountPath();
             if (!fs.existsSync(saFile)) {
                 onLine({
@@ -542,6 +573,7 @@ export function createAndroidPublisher(deps: {
             const token = await getAccessToken(sa, PLAY_SCOPE);
             const auth = {Authorization: `Bearer ${token}`};
 
+            if (cancellation.isCancelling()) return {ok: false};
             onLine({stream: 'system', text: 'Play: opening edit…', label});
             const insert = await fetch(`${appUrl}/edits`, {
                 method: 'POST',
@@ -571,6 +603,7 @@ export function createAndroidPublisher(deps: {
                 token,
                 aabPath,
             );
+            if (cancellation.isCancelling()) return {ok: false};
             let up: any = {};
             try {
                 up = JSON.parse(upRes.body || '{}');
@@ -596,6 +629,7 @@ export function createAndroidPublisher(deps: {
                 text: 'Play: assigning to production track (100% rollout)…',
                 label,
             });
+            if (cancellation.isCancelling()) return {ok: false};
             const trackRes = await fetch(
                 `${appUrl}/edits/${editId}/tracks/production`,
                 {
@@ -623,6 +657,7 @@ export function createAndroidPublisher(deps: {
             }
 
             onLine({stream: 'system', text: 'Play: committing release…', label});
+            if (cancellation.isCancelling()) return {ok: false};
             const commitRes = await fetch(`${appUrl}/edits/${editId}:commit`, {
                 method: 'POST',
                 headers: {...auth, 'Content-Length': '0'},

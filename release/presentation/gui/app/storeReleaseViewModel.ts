@@ -13,9 +13,10 @@ export class StoreReleaseViewModel extends Emitter {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        channels: Channel[],
     ): Promise<ValidateResult> {
         this.validatedVersion = '';
-        const res = await bridge.validateBinaries(apkPath, ipaPath, platforms);
+        const res = await bridge.validateBinaries(apkPath, ipaPath, platforms, channels);
         if (res.ok) this.validatedVersion = res.version;
         return res;
     }

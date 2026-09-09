@@ -40,6 +40,12 @@ export interface Coverage {
 
 export interface StoreReleaseResult {
     ok: boolean;
+    steps: Array<{
+        platform: Platform;
+        channel: Channel;
+        ok: boolean;
+        skipped?: boolean;
+    }>;
 }
 
 export interface UpdateStep {
@@ -75,6 +81,7 @@ export interface ReleaseApi {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        channels: Channel[],
     ) => Promise<ValidateResult>;
     releaseCoverage: (
         platforms: Platform[],

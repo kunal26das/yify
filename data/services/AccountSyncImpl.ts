@@ -73,6 +73,9 @@ export class AccountSyncImpl implements AccountSync {
     private mergedUid: string | null = null;
     private applying = false;
     private running = false;
+    private paused = false;
+    private runningDone: Promise<void> = Promise.resolve();
+    private resolveRunning: (() => void) | null = null;
     private pushTimer: ReturnType<typeof setTimeout> | null = null;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
     private pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -128,21 +131,35 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     syncNow(): void {
-        if (!this.currentUid) return;
+        if (!this.currentUid || this.paused) return;
         this.cancelRetry();
         this.backoff = RETRY_MS;
         void this.pull();
+    }
+
+    async pause(): Promise<void> {
+        this.paused = true;
+        this.cancelPush();
+        this.cancelRetry();
+        await this.runningDone;
+    }
+
+    resume(): void {
+        this.paused = false;
+        this.syncNow();
     }
 
     async deleteRemote(): Promise<boolean> {
         const uid = this.currentUid;
         if (!uid) return true;
         const token = await this.auth.getIdToken();
+        if (this.currentUid !== uid) return false;
         if (!token) {
             this.fail('denied', 'no id token available');
             return false;
         }
         const result = await deleteSyncDocument(uid, token);
+        if (this.currentUid !== uid) return false;
         if (!result.ok) {
             this.fail(result.failure, result.detail);
             return false;
@@ -156,7 +173,8 @@ export class AccountSyncImpl implements AccountSync {
         this.historyDirty = false;
         this.marks = {};
         this.store.delete(MARKS_KEY);
-        this.store.delete(LINKED_UID_KEY);
+        // Retained local data must stay attributed to its account on the next sign-in.
+        if (!this.store.getString(LINKED_UID_KEY)) this.store.set(LINKED_UID_KEY, uid);
         this.store.delete(PREFERENCES_AT_KEY);
         this.store.delete(LAST_SYNCED_AT_KEY);
         this.status.set({state: 'idle', failure: null, detail: null, pendingChanges: false, lastSyncedAt: null});
@@ -207,7 +225,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private schedulePush(): void {
-        if (!this.currentUid) return;
+        if (!this.currentUid || this.paused) return;
         this.cancelPush();
         this.pushTimer = setTimeout(() => {
             this.pushTimer = null;
@@ -216,7 +234,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private scheduleRetry(): void {
-        if (this.retryTimer || !this.currentUid) return;
+        if (this.retryTimer || !this.currentUid || this.paused) return;
         const delay = this.backoff;
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
@@ -284,17 +302,17 @@ export class AccountSyncImpl implements AccountSync {
 
     private async push(): Promise<void> {
         const uid = this.currentUid;
-        if (!uid || uid !== this.mergedUid) return;
+        if (!uid || uid !== this.mergedUid || this.paused) return;
         if (!this.pendingChanges()) return;
         if (this.running) {
             this.schedulePush();
             return;
         }
-        this.running = true;
+        this.beginSync();
         this.status.set({state: 'syncing'});
         try {
             const token = await this.auth.getIdToken();
-            if (this.currentUid !== uid) return;
+            if (this.currentUid !== uid || this.paused) return;
             if (!token) {
                 this.fail('denied', 'no id token available');
                 return;
@@ -329,7 +347,7 @@ export class AccountSyncImpl implements AccountSync {
                 patch.preferencesUpdatedAt = this.readNumber(PREFERENCES_AT_KEY);
             }
             const result = await writeSyncDocument(uid, token, patch);
-            if (this.currentUid !== uid) return;
+            if (this.currentUid !== uid || this.paused) return;
             if (!result.ok) {
                 this.fail(result.failure, result.detail);
                 return;
@@ -349,8 +367,21 @@ export class AccountSyncImpl implements AccountSync {
             this.succeed(trimmed);
             if (this.pendingChanges()) this.schedulePush();
         } finally {
-            this.running = false;
+            this.endSync();
         }
+    }
+
+    private beginSync(): void {
+        this.running = true;
+        this.runningDone = new Promise((resolve) => {
+            this.resolveRunning = resolve;
+        });
+    }
+
+    private endSync(): void {
+        this.running = false;
+        this.resolveRunning?.();
+        this.resolveRunning = null;
     }
 
     private mergeWatchlist(remote: SyncDocument, mode: SyncMode): void {
@@ -442,23 +473,23 @@ export class AccountSyncImpl implements AccountSync {
 
     private async pull(): Promise<void> {
         const uid = this.currentUid;
-        if (!uid) return;
+        if (!uid || this.paused) return;
         if (this.running) {
             this.scheduleRetry();
             return;
         }
-        this.running = true;
+        this.beginSync();
         this.status.set({state: 'syncing'});
         let merged = false;
         try {
             const token = await this.auth.getIdToken();
-            if (this.currentUid !== uid) return;
+            if (this.currentUid !== uid || this.paused) return;
             if (!token) {
                 this.fail('denied', 'no id token available');
                 return;
             }
             const result = await fetchSyncDocument(uid, token);
-            if (this.currentUid !== uid) return;
+            if (this.currentUid !== uid || this.paused) return;
             if (!result.ok) {
                 this.fail(result.failure, result.detail);
                 return;
@@ -472,9 +503,9 @@ export class AccountSyncImpl implements AccountSync {
             this.backoff = RETRY_MS;
             merged = true;
         } finally {
-            this.running = false;
+            this.endSync();
         }
-        if (!merged || this.currentUid !== uid) return;
+        if (!merged || this.currentUid !== uid || this.paused) return;
         if (this.pendingChanges()) {
             await this.push();
             return;

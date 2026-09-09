@@ -2,6 +2,9 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// The renderer's origin includes this port. Changing it hides its localStorage.
+const DESKTOP_PORT = 41783;
+
 const MIME = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -26,7 +29,7 @@ function send(res, status, body, type) {
     res.end(body);
 }
 
-function startStaticServer(rootDir) {
+function startStaticServer(rootDir, port = DESKTOP_PORT) {
     return new Promise((resolve, reject) => {
         const server = http.createServer((req, res) => {
             let urlPath;
@@ -64,11 +67,11 @@ function startStaticServer(rootDir) {
         });
 
         server.on('error', reject);
-        server.listen(0, '127.0.0.1', () => {
+        server.listen(port, '127.0.0.1', () => {
             const {port} = server.address();
             resolve({server, port});
         });
     });
 }
 
-module.exports = {startStaticServer};
+module.exports = {startStaticServer, DESKTOP_PORT};

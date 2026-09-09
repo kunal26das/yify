@@ -310,6 +310,12 @@ binaries, which EAS has no record of.
 
 The repo also ships **`release/`** — a standalone, clean-architecture TUI/GUI release console
 (`yarn release`) that drives Expo logins, store releases, and EAS Update rollouts with guardrails.
+For Android Production, select Android and Production, leave the APK empty, validate, and release.
+The console builds the current repository on Expo with the `production` profile, then submits that
+build to Google Play using `play-production`. Staging continues to build locally and distribute an
+APK through Firebase App Distribution; a supplied APK is accepted when only Staging is selected.
+Selecting both channels requires an empty APK field and creates a separate build for each channel.
+The iOS flow records a supplied IPA for updates; upload it to App Store Connect separately.
 
 ---
 
@@ -388,10 +394,10 @@ npm start
 
 ## ☁️ EAS
 
-Local gradle builds and the release console remain the primary path. EAS sits **alongside** them
-for the things a local Mac cannot do: cloud iOS builds, shareable internal builds, and hosted web.
-Every command routes through `scripts/eas.sh`, which reuses the release console's `EXPO_TOKEN`, so
-there is no separate login.
+The release console uses **EAS Build and EAS Submit for Android Production**. Android Staging
+continues to use local Gradle builds and Firebase App Distribution. EAS also provides cloud iOS
+builds, shareable internal builds, and hosted web. The commands below route through `scripts/eas.sh`,
+which reuses the release console's `EXPO_TOKEN`, so there is no separate login.
 
 ### Development builds
 
@@ -415,10 +421,21 @@ Sign-In, RevenueCat, MMKV) against a live bundle.
 | `npm run build:preview:android` | Internal-distribution APK on the `Staging` channel |
 | `npm run build:production:android` | Store AAB on the `Production` channel |
 | `npm run submit:android` | Upload an AAB to Play — **`internal` track, `draft`** |
-| `npm run submit:android:play` | Upload an AAB to Play — `production` track, live |
+| `npm run submit:android:play` | Submit an AAB to Play — `production` track, `completed` rollout |
 
-`submit:android` is deliberately the harmless one, because the release console already publishes to
-the production track through the Play API. Pass `--path` to submit a locally built artifact:
+The release console uses build profile `production` followed by submit profile `play-production`,
+which targets Google Play's production track with a full rollout. It submits the exact completed
+Expo build. A successful submission does not mean the release is publicly available: Google review
+or managed publishing may still be pending. Check the release's publishing status in Google Play.
+
+`submit:android` uses the separate internal/draft profile. For manual submission, select a specific
+completed Expo build:
+
+```bash
+npm run submit:android:play -- --id <EAS_BUILD_ID>
+```
+
+Or pass `--path` to submit a locally built artifact to the internal track:
 
 ```bash
 npm run submit:android -- --path android/app/build/outputs/bundle/release/app-release.aab

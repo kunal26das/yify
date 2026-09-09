@@ -26,6 +26,7 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
     private readonly store: KeyValueStore;
     private readonly listeners = new Set<() => void>();
     private snapshot: Movie[] | null = null;
+    private ids = new Set<number>();
 
     constructor(store: KeyValueStore) {
         this.store = store;
@@ -36,18 +37,19 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
     }
 
     contains(id: number): boolean {
-        return this.read().some((m) => m.id === id);
+        this.read();
+        return this.ids.has(id);
     }
 
     add(movie: Movie): void {
         const items = this.read();
-        if (items.some((m) => m.id === movie.id)) return;
+        if (this.ids.has(movie.id)) return;
         this.write([toWatchlistMovie(movie), ...items]);
     }
 
     remove(id: number): void {
         const items = this.read();
-        if (!items.some((m) => m.id === id)) return;
+        if (!this.ids.has(id)) return;
         this.write(items.filter((m) => m.id !== id));
     }
 
@@ -89,11 +91,13 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
         } catch {
             this.snapshot = [];
         }
+        this.ids = new Set(this.snapshot.map((movie) => movie.id));
         return this.snapshot;
     }
 
     private write(next: Movie[]): void {
         this.snapshot = next;
+        this.ids = new Set(next.map((movie) => movie.id));
         this.store.set(KEY, JSON.stringify(next));
         this.listeners.forEach((listener) => listener());
     }

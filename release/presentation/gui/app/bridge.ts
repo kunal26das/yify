@@ -29,8 +29,9 @@ export const bridge = {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[],
+        channels: Channel[],
     ): Promise<ValidateResult> =>
-        api.validateBinaries!(apkPath, ipaPath, platforms),
+        api.validateBinaries!(apkPath, ipaPath, platforms, channels),
     releaseCoverage: (
         platforms: Platform[],
         channels: Channel[],

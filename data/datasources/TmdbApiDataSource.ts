@@ -1,7 +1,10 @@
+import {ResponseCache} from './storage/ResponseCache';
+
 export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
 const REQUEST_TIMEOUT_MS = 10000;
+const RESPONSE_TTL_MS = 10 * 60_000;
 
 export type TmdbMediaType = 'movie' | 'tv';
 
@@ -55,6 +58,8 @@ export function tmdbImageUrl(path: string | null | undefined, size: string): str
 }
 
 export class TmdbApiDataSource implements TmdbApi {
+    private readonly responses = new ResponseCache();
+
     constructor(
         private readonly resolveApiKey: () => string | Promise<string>,
         private readonly baseUrl: string = TMDB_BASE_URL
@@ -65,11 +70,15 @@ export class TmdbApiDataSource implements TmdbApi {
         const key = await this.resolveApiKey();
         if (!key) throw new Error('TMDB key unavailable');
         params.set('api_key', key);
+        const url = `${this.baseUrl}${path}?${params.toString()}`;
+        return this.responses.getOrLoad(url, RESPONSE_TTL_MS, () => this.fetchResponse<T>(url));
+    }
 
+    private async fetchResponse<T>(url: string): Promise<T> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         try {
-            const response = await fetch(`${this.baseUrl}${path}?${params.toString()}`, {
+            const response = await fetch(url, {
                 signal: controller.signal,
             });
             if (!response.ok) throw new Error(`TMDB error: ${response.status}`);

@@ -58,7 +58,7 @@ export class AdMobAdGateway implements AdGateway {
     private failures = 0;
     private requestSeq = 0;
     private privacyRequired = false;
-    private canRequestAds = true;
+    private canRequestAds = false;
 
     constructor(options: AdMobAdGatewayOptions) {
         this.options = options;
@@ -131,15 +131,16 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private async gatherConsent(): Promise<void> {
-        try {
-            const info = await AdsConsent.gatherConsent();
-            this.canRequestAds = info.canRequestAds;
-            this.privacyRequired =
-                info.privacyOptionsRequirementStatus ===
-                AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
-        } catch {
+        this.canRequestAds = false;
+        const info = await AdsConsent.gatherConsent().catch(() => {
             this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent_error'});
-        }
+            return AdsConsent.getConsentInfo().catch(() => null);
+        });
+        if (info == null) return;
+        this.canRequestAds = info.canRequestAds;
+        this.privacyRequired =
+            info.privacyOptionsRequirementStatus ===
+            AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
     }
 
     private resolveUnitId(): string {

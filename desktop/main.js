@@ -1,9 +1,11 @@
-const {app, BrowserWindow, ipcMain, shell, Menu, Tray, nativeImage, nativeTheme} = require('electron');
+const {app, BrowserWindow, ipcMain, shell, Menu, Tray, nativeImage, nativeTheme, dialog} = require('electron');
 const path = require('path');
-const {startStaticServer} = require('./static-server');
+const {startStaticServer, DESKTOP_PORT} = require('./static-server');
 const {startNewMoviesNotifier, checkForNewMovies, writeSettings} = require('./new-movies-notifier');
 
 const isDev = !app.isPackaged;
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) app.quit();
 
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
@@ -44,11 +46,24 @@ let tray = null;
 let currentPort = null;
 let stopNotifier = null;
 let isQuitting = false;
+let creatingWindow = null;
 
-async function createWindow() {
-    const {server, port} = await startStaticServer(DIST_DIR);
-    staticServer = server;
-    currentPort = port;
+function createWindow() {
+    if (mainWindow) return Promise.resolve();
+    if (!creatingWindow) {
+        creatingWindow = openWindow().finally(() => {
+            creatingWindow = null;
+        });
+    }
+    return creatingWindow;
+}
+
+async function openWindow() {
+    if (!staticServer) {
+        const {server, port} = await startStaticServer(DIST_DIR);
+        staticServer = server;
+        currentPort = port;
+    }
 
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -82,7 +97,7 @@ async function createWindow() {
         return {action: 'deny'};
     });
 
-    await mainWindow.loadURL(`http://127.0.0.1:${port}`);
+    await mainWindow.loadURL(`http://127.0.0.1:${currentPort}`);
 
     mainWindow.on('close', (event) => {
         if (isQuitting) return;
@@ -96,10 +111,18 @@ async function createWindow() {
     });
 }
 
+function handleWindowError(error) {
+    const message = error?.code === 'EADDRINUSE'
+        ? `Yify's local port (${DESKTOP_PORT}) is already in use. Close the application using it and try again. Yify must use the same port to keep your saved data accessible.`
+        : `Yify could not open its window. ${error instanceof Error ? error.message : String(error)}`;
+    dialog.showErrorBox('Unable to start Yify', message);
+    app.quit();
+}
+
 function showWindow() {
     if (isMac && app.dock) void app.dock.show();
     if (!mainWindow) {
-        void createWindow();
+        void createWindow().catch(handleWindowError);
         return;
     }
     if (mainWindow.isMinimized()) mainWindow.restore();
@@ -108,10 +131,14 @@ function showWindow() {
 }
 
 async function showMovie(movieId) {
-    if (!mainWindow) await createWindow();
-    showWindow();
-    if (typeof movieId === 'number' && currentPort) {
-        await mainWindow.loadURL(`http://127.0.0.1:${currentPort}/movie/${movieId}`);
+    try {
+        if (!mainWindow) await createWindow();
+        showWindow();
+        if (typeof movieId === 'number' && currentPort) {
+            await mainWindow.loadURL(`http://127.0.0.1:${currentPort}/movie/${movieId}`);
+        }
+    } catch (error) {
+        handleWindowError(error);
     }
 }
 
@@ -149,19 +176,24 @@ ipcMain.on('yify:notification-settings', (_event, value) => {
     writeSettings(value);
 });
 
-app.whenReady().then(() => {
+app.on('second-instance', () => {
+    showWindow();
+});
+
+app.whenReady().then(async () => {
+    if (!hasSingleInstanceLock) return;
     if (isMac && isDev && app.dock) {
         app.dock.setIcon(path.join(__dirname, 'assets', 'icon.png'));
     }
     Menu.setApplicationMenu(buildMenu());
+    await createWindow();
     createTray();
-    void createWindow();
     stopNotifier = startNewMoviesNotifier((id) => void showMovie(id));
 
     app.on('activate', () => {
         showWindow();
     });
-});
+}).catch(handleWindowError);
 
 app.on('window-all-closed', () => {
 });

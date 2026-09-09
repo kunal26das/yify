@@ -64,7 +64,7 @@ jobs:
         run: node scripts/check-web-export.mjs dist-hosting
 
   release-console:
-    name: Typecheck release console
+    name: Typecheck and test release console
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -81,4 +81,8 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit
+        working-directory: release
+
+      - name: Tests
+        run: yarn test
         working-directory: release

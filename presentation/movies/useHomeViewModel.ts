@@ -7,12 +7,11 @@ import {
     HOME_SHELVES,
     type HomeShelf,
 } from './constants/homeShelves';
+import {createHomeShelfSelector} from './homeShelfSelection';
+
+export {MIN_SHELF_MOVIES} from './homeShelfSelection';
 
 export type ShelfStatus = 'idle' | 'loading' | 'loaded' | 'empty' | 'error';
-
-export const MIN_SHELF_MOVIES = 5;
-
-const MAX_SHELF_PAGES = 5;
 
 export interface ShelfState extends HomeShelf {
     movies: Movie[];
@@ -134,7 +133,7 @@ export function useHomeViewModel(repository: MovieRepository) {
         [repository]
     );
 
-    const pump = useCallback(() => {
+    const pump = useCallback(function pumpQueue() {
         if (busyRef.current) return;
         const next = takeNextInShelfOrder(queueRef.current);
         if (!next) return;
@@ -142,7 +141,7 @@ export function useHomeViewModel(repository: MovieRepository) {
         void runFetch(next.key, next.page).finally(() => {
             busyRef.current = false;
             inFlightRef.current.delete(next.key);
-            pump();
+            pumpQueue();
         });
     }, [runFetch]);
 
@@ -180,38 +179,11 @@ export function useHomeViewModel(repository: MovieRepository) {
         void loadHero();
     }, [loadHero]);
 
-    const {shelves: dedupedShelves, needsMore} = useMemo(() => {
-        const seen = new Set<number>(heroMovies.map((m) => m.id));
-        const more: {key: string; next: number}[] = [];
-
-        let aboveSettled = true;
-
-        const next = shelves.map((shelf) => {
-            const available = shelf.movies.filter((m) => !seen.has(m.id));
-
-            const visible = available.slice(0, shelf.limit);
-            for (const m of visible) seen.add(m.id);
-
-            const exhausted = !shelf.hasMore || shelf.page >= MAX_SHELF_PAGES;
-            const thin =
-                shelf.status === 'loaded' && visible.length < MIN_SHELF_MOVIES && !exhausted;
-            const own: ShelfStatus = shelf.status === 'loaded' && thin ? 'loading' : shelf.status;
-            if (thin && shelf.page > 0) more.push({key: shelf.key, next: shelf.page + 1});
-
-            const settled = own === 'loaded' || own === 'empty' || own === 'error';
-            const revealed = aboveSettled;
-            aboveSettled = aboveSettled && settled;
-
-            return {
-                ...shelf,
-                movies: visible,
-                status: revealed ? own : 'loading',
-                needsRequest: shelf.status === 'idle',
-            } as ShelfState;
-        });
-
-        return {shelves: next, needsMore: more};
-    }, [shelves, heroMovies]);
+    const selectShelves = useMemo(() => createHomeShelfSelector(), []);
+    const {shelves: dedupedShelves, needsMore} = useMemo(
+        () => selectShelves(shelves, heroMovies),
+        [selectShelves, shelves, heroMovies]
+    );
 
     useEffect(() => {
         for (const {key, next} of needsMore) fetchPage(key, next);

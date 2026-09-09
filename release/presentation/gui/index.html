@@ -1880,6 +1880,8 @@
                     <span class="badge-no">1</span>
                     <h2 id="baseTitle">Store release</h2>
                 </div>
+                <p class="hint">Android Production builds on Expo and submits to Google Play.
+                    Staging uses a local build or your APK, sent to Firebase testers.</p>
                 <label class="tile platbox dropcard" data-kind="apk" id="apkDrop">
                     <input class="cardInc" id="apkInc" type="checkbox"/>
                     <div class="platbox-top">
@@ -1891,7 +1893,8 @@
                         <span class="platbox-title">Android</span>
                     </div>
                     <input class="platbox-sub platbox-path" id="apkPath"
-                           placeholder="Drop / paste .apk" type="text"/>
+                           aria-label="Optional Android APK for Staging only"
+                           placeholder="Optional .apk for Staging only" type="text"/>
                     <span class="platbox-check"><svg fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"
                                                                                            stroke="currentColor"
                                                                                            stroke-linecap="round"
@@ -1919,6 +1922,8 @@
                 </label>
 
                 <div class="card-foot">
+                    <p class="hint">For Production, select Android and leave the APK empty.
+                        Google review or publishing may remain after submission.</p>
                     <div class="chips">
                         <label class="toggle">
                             <input class="baseChan" type="checkbox" value="Staging"/>

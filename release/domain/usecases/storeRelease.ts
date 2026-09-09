@@ -11,6 +11,7 @@ import {
 } from '../entities/index.js';
 import type {
     AndroidArtifacts,
+    AndroidProductionPublisher,
     AndroidPublisher,
     BinaryInspector,
     Cancellation,
@@ -32,6 +33,7 @@ export interface StoreReleaseUseCases {
         apkPath: string,
         ipaPath: string,
         platforms?: Platform[],
+        channels?: Channel[],
     ): Promise<BinaryValidation>;
 
     findExistingReleases(
@@ -59,6 +61,7 @@ export function createStoreReleaseUseCases(deps: {
     workspace: Workspace;
     binary: BinaryInspector;
     androidPublisher: AndroidPublisher;
+    androidProductionPublisher: AndroidProductionPublisher;
 }): StoreReleaseUseCases {
     const {
         ledger,
@@ -69,6 +72,7 @@ export function createStoreReleaseUseCases(deps: {
         workspace,
         binary,
         androidPublisher,
+        androidProductionPublisher,
     } = deps;
     const apps = workspace.apps;
 
@@ -89,14 +93,24 @@ export function createStoreReleaseUseCases(deps: {
         apkPath: string,
         ipaPath: string,
         platforms: Platform[] = ALL_PLATFORMS,
+        channels: Channel[] = workspace.channels,
     ): Promise<BinaryValidation> {
         const needAndroid = platforms.includes('android');
         const needIos = platforms.includes('ios');
+        if (needAndroid && channels.includes('Production') && apkPath) {
+            return {
+                ok: false,
+                error: 'Android Production builds the current repository through Expo. Remove the APK, or select Staging only to distribute it.',
+            };
+        }
         if (!needAndroid && !needIos) {
             return {
                 ok: false,
                 error: 'Select at least one platform (Android / iOS).',
             };
+        }
+        if (channels.length === 0) {
+            return {ok: false, error: 'Select at least one channel (Staging / Production).'};
         }
 
         let apkVersion: string | undefined;
@@ -197,11 +211,23 @@ export function createStoreReleaseUseCases(deps: {
         const wrapped = await operation.withOperation('store', async () => {
             const {apkPath, ipaPath, version, platforms, channels} = opts;
 
+            const validation = await validateBinaries(apkPath, ipaPath, platforms, channels);
+            if (!validation.ok || validation.version !== version) {
+                onLine({
+                    stream: 'stderr',
+                    text: validation.ok
+                        ? 'The app version changed after validation. Validate the release again before publishing.'
+                        : validation.error,
+                });
+                return {ok: false, steps: []};
+            }
+            if (cancellation.isCancelling()) return {ok: false, steps: []};
+
             onLine({
                 stream: 'system',
                 text: 'Clean install before release (rm -rf node_modules && install)…',
             });
-            const inst = await installer.cleanInstall(onLine);
+            const inst = await installer.cleanInstall(onLine, undefined, 'frozen');
             if (!inst.ok) {
                 onLine({
                     stream: 'system',
@@ -265,6 +291,7 @@ export function createStoreReleaseUseCases(deps: {
                     continue;
                 }
 
+                if (cancellation.isCancelling()) break;
                 if (ledger.find(job.platform, job.channel, runtimeVersion)) {
                     onLine({
                         stream: 'system',
@@ -280,7 +307,25 @@ export function createStoreReleaseUseCases(deps: {
                     continue;
                 }
 
-                if (job.platform === 'android') {
+                if (job.platform === 'android' && job.channel === 'Production') {
+                    onLine({
+                        stream: 'system',
+                        text: 'Android Production: building in Expo and submitting the completed build to Google Play…',
+                        label,
+                    });
+                    const published = await androidProductionPublisher.release(
+                        version, runtimeVersion, onLine, label,
+                    );
+                    if (!published.ok || cancellation.isCancelling()) {
+                        steps.push({platform: job.platform, channel: job.channel, ok: false});
+                        continue;
+                    }
+                    onLine({
+                        stream: 'system',
+                        text: 'Submitted to Google Play production through Expo. Google review and publishing status are managed in Play Console.',
+                        label,
+                    });
+                } else if (job.platform === 'android') {
                     const built = await ensureAndroidArtifacts(label, job.channel);
                     if (!built.ok || !built.artifacts) {
                         onLine({
@@ -295,69 +340,33 @@ export function createStoreReleaseUseCases(deps: {
                         });
                         continue;
                     }
-                    const {apkPath: builtApk, aabPath: builtAab} = built.artifacts;
-
-                    if (job.channel === 'Production') {
-                        if (!builtAab) {
-                            onLine({
-                                stream: 'stderr',
-                                text: `Production Android needs a generated AAB — don't drop an .apk when targeting Production; let the console build it.`,
-                                label,
-                            });
-                            steps.push({
-                                platform: job.platform,
-                                channel: job.channel,
-                                ok: false,
-                            });
-                            continue;
-                        }
+                    const {apkPath: builtApk} = built.artifacts;
+                    if (cancellation.isCancelling()) {
+                        steps.push({platform: job.platform, channel: job.channel, ok: false});
+                        continue;
+                    }
+                    onLine({
+                        stream: 'system',
+                        text: `Staging Android: uploading APK to Firebase App Distribution…`,
+                        label,
+                    });
+                    const dist = await androidPublisher.distributeToFirebase(
+                        builtApk,
+                        onLine,
+                        label,
+                    );
+                    if (!dist.ok) {
                         onLine({
                             stream: 'system',
-                            text: `Publishing AAB to Play Store production track (100% rollout)…`,
+                            text: `Aborting ${app} Staging store release: Firebase App Distribution upload failed.`,
                             label,
                         });
-                        const pub = await androidPublisher.publishProduction(
-                            builtAab,
-                            onLine,
-                            label,
-                        );
-                        if (!pub.ok) {
-                            onLine({
-                                stream: 'system',
-                                text: `Aborting ${app} Production store release: Play Store publish failed.`,
-                                label,
-                            });
-                            steps.push({
-                                platform: job.platform,
-                                channel: job.channel,
-                                ok: false,
-                            });
-                            continue;
-                        }
-                    } else {
-                        onLine({
-                            stream: 'system',
-                            text: `Staging Android: uploading APK to Firebase App Distribution…`,
-                            label,
+                        steps.push({
+                            platform: job.platform,
+                            channel: job.channel,
+                            ok: false,
                         });
-                        const dist = await androidPublisher.distributeToFirebase(
-                            builtApk,
-                            onLine,
-                            label,
-                        );
-                        if (!dist.ok) {
-                            onLine({
-                                stream: 'system',
-                                text: `Aborting ${app} Staging store release: Firebase App Distribution upload failed.`,
-                                label,
-                            });
-                            steps.push({
-                                platform: job.platform,
-                                channel: job.channel,
-                                ok: false,
-                            });
-                            continue;
-                        }
+                        continue;
                     }
                 } else {
                     onLine({
@@ -367,6 +376,10 @@ export function createStoreReleaseUseCases(deps: {
                     });
                 }
 
+                if (cancellation.isCancelling()) {
+                    steps.push({platform: job.platform, channel: job.channel, ok: false});
+                    continue;
+                }
                 ledger.record({
                     platform: job.platform,
                     channel: job.channel,
@@ -387,7 +400,11 @@ export function createStoreReleaseUseCases(deps: {
                 });
             }
 
-            return {ok: steps.length > 0 && steps.every((s) => s.ok), steps};
+            return {
+                ok: !cancellation.isCancelling() && steps.length > 0 &&
+                    steps.length === jobs.length && steps.every((s) => s.ok),
+                steps,
+            };
         });
 
         if (!wrapped.ok) {
