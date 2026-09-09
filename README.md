@@ -589,6 +589,9 @@ in the RevenueCat/store catalogs, rather than being hardcoded in the app. Curren
 this custom purchase experience through Expo OTA; adding RevenueCat's native managed Paywalls
 or Customer Center UI package would require a new native build.
 
+See [RevenueCat operations](docs/revenuecat-operations.md) for the verified product catalog,
+Google Play notification connection, analytics setup and remaining account configuration.
+
 Sign-in is optional and degrades quietly. The account row hides itself when the platform has nothing
 to sign in with — no Firebase config on web, no `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` on native — so a
 build without credentials simply has no account section.
