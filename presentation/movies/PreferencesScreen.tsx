@@ -166,7 +166,6 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const navHeight = useTopBarHeight();
     const {account} = useAuth();
     const confirm = useConfirm();
-    const goTo = useGoTo();
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
     const [sections, setSections] = useState<Partial<Record<SectionKey, boolean>>>({});
@@ -582,25 +581,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </SettingsSection>
 
-                <Group colors={colors} index={8}>
-                    <Row
-                        icon="time-outline"
-                        title="History"
-                        titleStyle={styles.sectionRowTitle}
-                        subtitle="Movies and shows you've opened."
-                        colors={colors}
-                        gutter={gutter}
-                        onPress={() => {
-                            Analytics.navSelect('history');
-                            goTo('/history');
-                        }}
-                        accessibilityRole="link"
-                        accessibilityLabel="History"
-                        trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}
-                    />
-                </Group>
-
-                <SettingsSection {...sectionProps('about', 9, 'About')} summary={vm.appInfo.version}>
+                <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
                     <Row
                         icon="information-circle-outline"
                         title="Version"
@@ -702,6 +683,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const auth = useAuthRepository();
     const accountSync = useAccountSync();
     const confirm = useConfirm();
+    const goTo = useGoTo();
     const [deleting, setDeleting] = useState(false);
 
     const unavailable = ready && !available;
@@ -834,6 +816,20 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                 )}
+                <Row
+                    icon="time-outline"
+                    title="History"
+                    subtitle="Movies and shows you've opened."
+                    colors={colors}
+                    gutter={gutter}
+                    onPress={() => {
+                        Analytics.navSelect('history');
+                        goTo('/history');
+                    }}
+                    accessibilityRole="link"
+                    accessibilityLabel="History"
+                    trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}
+                />
             </Group>
         </>
     );
