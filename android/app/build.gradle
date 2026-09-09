@@ -1,3 +1,4 @@
+apply plugin: "io.sentry.android.gradle"
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -88,6 +89,8 @@ def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBu
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+apply from: new File(["node", "--print", "require('path').dirname(require.resolve('@sentry/react-native/package.json'))"].execute().text.trim(), "sentry.gradle.kts")
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -99,8 +102,8 @@ android {
         applicationId 'io.github.kunal26das.yify'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 77
-        versionName "1.7.5"
+        versionCode 78
+        versionName "1.7.6"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -195,4 +198,20 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+
+  sentry {
+      autoUploadProguardMapping = shouldSentryAutoUpload()
+      includeProguardMapping = true
+      dexguardEnabled = false
+      uploadNativeSymbols = shouldSentryAutoUpload()
+      autoUploadNativeSymbols = shouldSentryAutoUpload()
+      includeNativeSources = false
+      includeSourceContext = false
+      tracingInstrumentation {
+          enabled = false
+      }
+      autoInstallation {
+          enabled = false
+      }
+  }
 apply plugin: 'com.google.firebase.crashlytics'

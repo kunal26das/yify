@@ -208,6 +208,8 @@ export function createUpdateUseCases(deps: {
                         'update',
                         '--channel',
                         workspace.channelName(c.channel),
+                        '--environment',
+                        c.channel === 'Production' ? 'production' : 'preview',
                         '--platform',
                         c.platform,
                         '--message',
@@ -216,7 +218,8 @@ export function createUpdateUseCases(deps: {
                         '--non-interactive',
                     ],
                     onLine,
-                    {label},
+                    // A failed map upload can follow a successful publish; never republish automatically.
+                    {label, retries: 0},
                 );
 
                 steps.push({

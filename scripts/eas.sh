@@ -29,4 +29,4 @@ if [ -z "${EXPO_TOKEN:-}" ]; then
 fi
 
 cd "$PROJECT_ROOT"
-exec "$EAS_BIN" "$@"
+exec node "$PROJECT_ROOT/scripts/eas-with-sentry.mjs" "$EAS_BIN" "$@"

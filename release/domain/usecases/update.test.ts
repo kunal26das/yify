@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type {Channel, LogLine, ReleaseRecord} from '../entities/index.js';
+import type {RunOptions} from '../entities/index.js';
 import type {RuntimeVersions, Workspace} from '../repositories/index.js';
 import {createCancellation} from '../../data/process/cancellationRegistry.js';
 import {createOperationGuard} from '../services/operationGuard.js';
@@ -13,6 +14,7 @@ function fixture(options: {
     const cancellation = createCancellation();
     const channelChecks: Array<string | undefined> = [];
     const published: string[][] = [];
+    const publishOptions: RunOptions[] = [];
     const logs: LogLine[] = [];
     const workspace: Workspace = {
         repoRoot: '/mock/repo',
@@ -52,17 +54,18 @@ function fixture(options: {
             cleanInstall: async () => ({ok: true, code: 0}),
         },
         cli: {
-            run: async (args) => {
+            run: async (args, _onLine, options) => {
                 published.push(args);
+                publishOptions.push(options ?? {});
                 return {ok: true, code: 0};
             },
         },
     });
-    return {updates, channelChecks, published, logs};
+    return {updates, channelChecks, published, publishOptions, logs};
 }
 
 test('publishes both channels using their own config and caches checks per channel', async () => {
-    const {updates, channelChecks, published, logs} = fixture();
+    const {updates, channelChecks, published, publishOptions, logs} = fixture();
     const channels: Channel[] = ['Staging', 'Production'];
     const result = await updates.runUpdate(
         ['android', 'ios'], channels, 'test update', (line) => logs.push(line),
@@ -74,6 +77,10 @@ test('publishes both channels using their own config and caches checks per chann
     assert.deepEqual(published.map((args) => args[args.indexOf('--channel') + 1]), [
         'Staging', 'Staging', 'Production', 'Production',
     ]);
+    assert.deepEqual(published.map((args) => args[args.indexOf('--environment') + 1]), [
+        'preview', 'preview', 'production', 'production',
+    ]);
+    assert.equal(publishOptions.every((options) => options.retries === 0), true);
 });
 
 test('blocks a target whose channel-specific config still points elsewhere', async () => {

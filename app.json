@@ -90,6 +90,19 @@
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/auth",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "kudos-labs",
+          "project": "react-native",
+          "experimental_android": {
+            "enableAndroidGradlePlugin": true,
+            "includeNativeSources": false,
+            "includeSourceContext": false
+          }
+        }
+      ],
       "@react-native-google-signin/google-signin",
       "./plugins/withAndroidRelease",
       "./plugins/withGradleJvmArgs",

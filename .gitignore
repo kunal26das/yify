@@ -36,6 +36,7 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+.env.sentry-build-plugin
 
 # typescript
 *.tsbuildinfo

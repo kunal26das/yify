@@ -12,7 +12,9 @@ type TestContext = Parameters<NonNullable<Parameters<typeof test>[0]>>[0];
 
 function fixture(t: TestContext) {
     const cancellation = createCancellation();
-    const children: Array<EventEmitter & {stdout: PassThrough; stderr: PassThrough; kill: () => boolean}> = [];
+    const children: Array<EventEmitter & {stdout: PassThrough; stderr: PassThrough; kill: (signal?: NodeJS.Signals) => boolean}> = [];
+    const spawnedArgs: string[][] = [];
+    const killSignals: Array<NodeJS.Signals | undefined> = [];
     const timeouts: Array<{callback: () => void; milliseconds: number | undefined}> = [];
     const originalSetTimeout = globalThis.setTimeout;
     t.mock.method(globalThis, 'setTimeout', ((callback: () => void, milliseconds: number) => {
@@ -20,10 +22,11 @@ function fixture(t: TestContext) {
         return originalSetTimeout(callback, milliseconds);
     }) as typeof setTimeout);
     t.mock.method(childProcess, 'spawn', ((_command: string, _args: string[], options: childProcess.SpawnOptions) => {
+        spawnedArgs.push(_args);
         assert.equal(options.env?.EXPO_TOKEN, 'configured-session-token');
         const child = Object.assign(new EventEmitter(), {
             stdout: new PassThrough(), stderr: new PassThrough(),
-            kill() { child.emit('close', null); return true; },
+            kill(signal?: NodeJS.Signals) { killSignals.push(signal); child.emit('close', null); return true; },
         });
         children.push(child);
         return child as unknown as childProcess.ChildProcess;
@@ -38,7 +41,7 @@ function fixture(t: TestContext) {
         read: () => ({token: 'configured-session-token'}), save() {}, clear() {}, configFilePath: () => '/unused',
     }});
     t.after(() => { t.mock.restoreAll(); syncBuiltinESMExports(); });
-    return {cli, cancellation, children, timeouts};
+    return {cli, cancellation, children, timeouts, spawnedArgs, killSignals};
 }
 
 test('cloud waits disable the inactivity timer and retain the configured Expo session', async (t) => {
@@ -57,6 +60,17 @@ test('ordinary CLI operations keep the existing ten-minute inactivity watchdog',
     assert.equal(f.timeouts[0].milliseconds, 10 * 60 * 1000);
     f.timeouts[0].callback();
     assert.equal((await running).ok, false);
+    assert.deepEqual(f.killSignals, ['SIGTERM']);
+});
+
+test('OTA uses the upload wrapper and graceful cancellation so it can stop the publishing child', async (t) => {
+    const f = fixture(t);
+    const running = f.cli.run(['update', '--json'], () => {}, {retries: 0});
+    assert.match(f.spawnedArgs[0][0], /scripts\/eas-with-sentry\.mjs$/);
+    assert.deepEqual(f.spawnedArgs[0].slice(2), ['update', '--json']);
+    f.cancellation.cancelActive();
+    assert.deepEqual(await running, {ok: false, code: 130});
+    assert.deepEqual(f.killSignals, ['SIGTERM']);
 });
 
 test('explicit retries zero never reruns a mutation after a transient network error', async (t) => {
@@ -75,6 +89,7 @@ test('cancellation prevents default transient-error retries after the child fini
     f.cancellation.cancelActive();
     assert.deepEqual(await running, {ok: false, code: 130});
     assert.equal(f.children.length, 1);
+    assert.deepEqual(f.killSignals, ['SIGKILL']);
 });
 
 test('cancellation while announcing a command prevents spawning the cloud mutation', async (t) => {

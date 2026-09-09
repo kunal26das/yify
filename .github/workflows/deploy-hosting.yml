@@ -55,3 +55,4 @@ jobs:
         run: bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --non-interactive ${{ (github.event_name == 'push' || inputs.production) && '--prod' || '' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

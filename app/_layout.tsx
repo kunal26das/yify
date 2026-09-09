@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
-import {DarkTheme, DefaultTheme, router, Stack, ThemeProvider, usePathname} from 'expo-router';
+import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, usePathname} from 'expo-router';
+import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
@@ -160,4 +161,6 @@ const styles = StyleSheet.create({
     flex: { flex: 1 },
 });
 
-export default RootLayout;
+export const ErrorBoundary = Sentry.wrapExpoRouterErrorBoundary(ExpoErrorBoundary);
+
+export default Sentry.wrap(RootLayout);

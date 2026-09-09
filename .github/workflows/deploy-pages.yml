@@ -45,6 +45,11 @@ jobs:
       - name: Check the export is not an empty shell
         run: node scripts/check-web-export.mjs dist
 
+      - name: Upload private source maps to Sentry
+        run: node scripts/sentry-sourcemaps.mjs dist --strip
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
       - name: Disable Jekyll
         run: touch dist/.nojekyll
 

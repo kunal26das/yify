@@ -37,6 +37,7 @@ changes, and rebuild the app.
 `EXPO_PUBLIC_*` values are bundled at build/export time. Restart the development
 server or rebuild the export after changing them. Purchase and ad configuration is
 covered in [RevenueCat operations](revenuecat-operations.md).
+Error reporting and source-map uploads are covered in [Sentry setup](sentry.md).
 
 ## Working in the codebase
 
