@@ -14,7 +14,9 @@ interface FooterLink {
     href: string;
 }
 
-const BROWSE_LINKS: readonly FooterLink[] = DESTINATIONS.map(({label, href}) => ({label, href}));
+const BROWSE_LINKS: readonly FooterLink[] = DESTINATIONS
+    .filter(({key}) => key !== 'history')
+    .map(({label, href}) => ({label, href}));
 
 const GENRE_LINKS: readonly FooterLink[] = [
     {label: 'Action', href: '/movies?genre=action'},

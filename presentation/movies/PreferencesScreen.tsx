@@ -39,6 +39,7 @@ import {
     SORT_BY_OPTIONS,
 } from './constants/movieFilterLabels';
 import {HOUR_OPTIONS} from './constants/quietHours';
+import {useGoTo} from './constants/destinations';
 import * as WebBrowser from 'expo-web-browser';
 import {openPlayStore, PlayStoreButton} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
@@ -165,6 +166,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const navHeight = useTopBarHeight();
     const {account} = useAuth();
     const confirm = useConfirm();
+    const goTo = useGoTo();
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
     const [sections, setSections] = useState<Partial<Record<SectionKey, boolean>>>({});
@@ -580,7 +582,25 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </SettingsSection>
 
-                <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
+                <Group colors={colors} index={8}>
+                    <Row
+                        icon="time-outline"
+                        title="History"
+                        titleStyle={styles.sectionRowTitle}
+                        subtitle="Movies and shows you've opened."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={() => {
+                            Analytics.navSelect('history');
+                            goTo('/history');
+                        }}
+                        accessibilityRole="link"
+                        accessibilityLabel="History"
+                        trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}
+                    />
+                </Group>
+
+                <SettingsSection {...sectionProps('about', 9, 'About')} summary={vm.appInfo.version}>
                     <Row
                         icon="information-circle-outline"
                         title="Version"

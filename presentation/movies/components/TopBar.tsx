@@ -31,7 +31,9 @@ interface NavLink {
     upcoming?: boolean;
 }
 
-const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter((destination) => destination.key !== 'home');
+const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter(
+    (destination) => destination.key !== 'home' && destination.key !== 'history'
+);
 
 export function TopBar() {
     const {below, searchValue, onSearchSubmit, showSearch = true} = useTopBarSlot();
