@@ -392,15 +392,78 @@ test('startup installs Firebase crash interception before Sentry and application
     assert.ok(sentry < router, 'both reporters must initialize before application modules');
 });
 
+test('bootstrap captures React Native before importing the SDK that eagerly installs its fatal handler', async () => {
+    const savedDev = Object.getOwnPropertyDescriptor(globalThis, '__DEV__');
+    const savedErrorUtils = Object.getOwnPropertyDescriptor(globalThis, 'ErrorUtils');
+    const events = [];
+    const original = (error, fatal) => events.push({kind: 'original', error, fatal});
+    let current = original;
+    const errorUtils = {
+        getGlobalHandler: () => current,
+        setGlobalHandler: handler => { current = handler; },
+    };
+    const client = {isCrashlyticsCollectionEnabled: true};
+    let imports = 0;
+    let loadedSdk;
+    const mocks = {
+        'expo-updates': {runtimeVersion: '1.7.7', updateId: null, channel: 'Production'},
+    };
+    Object.defineProperty(mocks, '@react-native-firebase/crashlytics', {
+        get() {
+            if (loadedSdk) return loadedSdk;
+            imports += 1;
+            // The real RNFB package creates its default instance and installs this
+            // handler while the module is imported, before getCrashlytics is called.
+            errorUtils.setGlobalHandler(async (error, fatal) => {
+                events.push({kind: 'sdk-fatal', error, fatal});
+            });
+            loadedSdk = {
+                getCrashlytics: () => client,
+                recordError: (instance, error) => events.push({kind: 'nonfatal', instance, error}),
+                setAttributes: async () => {},
+            };
+            return loadedSdk;
+        },
+    });
+    Object.defineProperty(globalThis, '__DEV__', {value: false, configurable: true});
+    Object.defineProperty(globalThis, 'ErrorUtils', {value: errorUtils, configurable: true});
+    try {
+        loadTypeScript('instrumentation/crashlytics.ts', mocks);
+        assert.equal(imports, 1);
+        const fatal = errorAt(100);
+        await current(fatal, true);
+        assert.deepEqual(events.map(event => event.kind), ['sdk-fatal', 'original']);
+        assert.notEqual(events[0].error, fatal);
+        assert.match(events[0].error.stack, /YifyReactNative_TypeError_[a-f0-9]{16}/);
+        assert.equal(events[0].fatal, true);
+        assert.equal(events[1].error, fatal);
+        assert.equal(events[1].fatal, true);
+        assert.equal(fatal.stack.includes('YifyReactNative_'), false);
+
+        events.length = 0;
+        const nonfatal = errorAt(101);
+        await current(nonfatal, false);
+        assert.deepEqual(events.map(event => event.kind), ['nonfatal', 'original']);
+        assert.equal(events[0].instance, client);
+        assert.match(events[0].error.stack, /YifyReactNative_TypeError_[a-f0-9]{16}/);
+        assert.equal(events[1].error, nonfatal);
+        assert.equal(events[1].fatal, false);
+        assert.equal(imports, 1, 'the SDK should remain loaded after startup');
+    } finally {
+        if (savedDev) Object.defineProperty(globalThis, '__DEV__', savedDev);
+        else delete globalThis.__DEV__;
+        if (savedErrorUtils) Object.defineProperty(globalThis, 'ErrorUtils', savedErrorUtils);
+        else delete globalThis.ErrorUtils;
+    }
+});
+
 test('development and web entry points do not initialize Firebase crash reporting', () => {
     const savedDev = Object.getOwnPropertyDescriptor(globalThis, '__DEV__');
     const savedErrorUtils = Object.getOwnPropertyDescriptor(globalThis, 'ErrorUtils');
     let calls = 0;
     const unexpected = () => { calls += 1; throw new Error('Firebase must not initialize'); };
     const mocks = {
-        '@react-native-firebase/crashlytics': {
-            getCrashlytics: unexpected, recordError: unexpected, setAttributes: unexpected,
-        },
+        get '@react-native-firebase/crashlytics'() { return unexpected(); },
         'expo-updates': {},
     };
     Object.defineProperty(globalThis, 'ErrorUtils', {

@@ -8,6 +8,10 @@ module.exports = defineConfig([
     ignores: ['dist/*', '**/*.test.ts'],
   },
   {
+    files: ['instrumentation/crashlytics.ts'],
+    rules: {'@typescript-eslint/no-require-imports': 'off'},
+  },
+  {
     files: ['**/*.{ts,tsx,mts,cts}'],
     settings: {
       'import/resolver': {

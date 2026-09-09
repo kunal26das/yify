@@ -11,6 +11,8 @@ Crashlytics initializes before Sentry and Expo Router. Sentry captures and flush
 uncaught error, then the Firebase handler records its JavaScript stack as fatal and
 terminates the failed app. Disabling Firebase's handler chaining avoids a second generic
 React Native exception. A guard keeps recoverable errors nonfatal.
+The Firebase SDK is loaded synchronously inside the installer, after saving React Native's
+handler: importing it at module scope installs its own handler too early.
 
 Firebase receives an error copy with the original message and parsed stack frames, plus a
 stable grouping frame based on the error type and failure location, including the Hermes
