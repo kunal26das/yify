@@ -583,7 +583,8 @@ Each visible offering records one RevenueCat custom paywall impression with its 
 context and placement; checkout preserves the same context. Merely loading offers is not counted
 as viewing a paywall. The optional post-ad prompt skips itself if loading plans takes over 1.5 seconds.
 
-The configured `remove_ads` entitlement is shared by Android and Web monthly/lifetime products.
+The current offering sells monthly subscriptions on Android and Web. Previously sold lifetime
+products remain attached to `remove_ads` so their owners retain access and can restore purchases.
 Do not change the entitlement identifier when editing offerings. Existing prices and products stay
 in the RevenueCat/store catalogs, rather than being hardcoded in the app. Current SDKs support
 this custom purchase experience through Expo OTA; adding RevenueCat's native managed Paywalls

@@ -15,13 +15,14 @@ The current/default offering is [Support Yify (`default`, `ofrng79abbf96a9`)](ht
 | Package | Android product | Web product |
 | --- | --- | --- |
 | `$rc_monthly` | `remove_ads_monthly:p1m` | `remove_ads_monthly_web` |
-| `$rc_lifetime` | `remove_ads_lifetime` | `remove_ads_web` |
 
-All four products grant the [Supporter entitlement (`remove_ads`, `entl2b0b9c6396`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/entitlements/entl2b0b9c6396). The legacy, currently unoffered Web product `remove_ads_lifetime_web` is also attached; it was preserved so existing purchases retain access.
+The offering is monthly-only. On 2026-09-09, `$rc_lifetime` was removed from the default offering for Android and Web at the owner's request. Reloading the app's plans confirmed that only the monthly subscription remained. Current and older app versions read their packages from this offering, so no OTA or native build is needed; already-open/cached paywalls update when offerings refresh.
+
+The monthly products and previously sold lifetime products still grant the [Supporter entitlement (`remove_ads`, `entl2b0b9c6396`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/entitlements/entl2b0b9c6396). The unoffered lifetime products `remove_ads_lifetime`, `remove_ads_web` and `remove_ads_lifetime_web` remain attached so existing purchasers retain access and can restore purchases. Do not detach or delete these legacy products to stop new sales; the offering controls which options are displayed.
 
 [Targeting](https://app.revenuecat.com/projects/8b6ff243/targeting) has no rules. This is valid: RevenueCat returns the project's default offering when no targeting rule matches a placement. The app's `settings_supporter` and `post_ad_supporter` placements can use the existing offering without creating a new product or experiment. See [placements documentation](https://www.revenuecat.com/docs/tools/targeting/placements).
 
-No managed RevenueCat Paywall or Web Purchase Link is attached to the offering. The app uses its own purchase UI. Adding a native Customer Center or RevenueCat Paywalls UI would require the separate native UI package and a new store build; it is not required for the existing monthly/lifetime purchase flow.
+No managed RevenueCat Paywall or Web Purchase Link is attached to the offering. The app uses its own purchase UI. Adding a native Customer Center or RevenueCat Paywalls UI would require the separate native UI package and a new store build; it is not required for the monthly subscription and legacy purchase-restoration flows.
 
 ## Ad tracking and AdMob
 
@@ -59,11 +60,11 @@ No credentials were rotated. RevenueCat's **Track new purchases from server-to-s
 
 References: [Google server notifications](https://www.revenuecat.com/docs/platform-resources/server-notifications/google-server-notifications), [Play service credentials and required roles](https://www.revenuecat.com/docs/service-credentials/creating-play-service-credentials).
 
-## Firebase analytics: authorized, credential setup pending
+## Firebase analytics: Android configured
 
-The [Firebase integration](https://app.revenuecat.com/projects/8b6ff243/integrations/firebase) is **not configured**. No integration secret has been created or entered.
+The [Firebase integration](https://app.revenuecat.com/projects/8b6ff243/integrations/firebase) is saved for the production Android stream. The configured App ID and masked credential persisted after a full page reload. Google’s data-collection acknowledgement was accepted with the owner's explicit authorization.
 
-Verified existing native Android configuration:
+Verified configuration:
 
 | Setting | Value |
 | --- | --- |
@@ -73,22 +74,16 @@ Verified existing native Android configuration:
 | Google Analytics property | `292918173` |
 | Production Android data stream | `3042389195` |
 | Android Firebase App ID | `1:325235052319:android:d0952f8b37e046062d2a2a` |
+| Measurement Protocol credential nickname | `RevenueCat Android production` |
+| Sales reporting | Gross revenue, in US dollars |
+| Sandbox events | Off |
+| Hashed email for ad conversion matching | Off |
 
-The [Android stream's Measurement Protocol API secrets page](https://analytics.google.com/analytics/web/#/a61423288p292918173/admin/streams/table/3042389195) initially had **no API secrets**. Google required **User Data Collection Acknowledgement**:
+The dedicated credential was created in the [production Android stream](https://analytics.google.com/analytics/web/#/a61423288p292918173/admin/streams/table/3042389195) after confirming no existing credential was present. Its value is stored in RevenueCat, not in this repository. iOS and Web analytics fields remain blank. No Firebase extension was installed; it is separate from the Analytics integration.
 
-> I acknowledge that I have the necessary privacy disclosures and rights from my end users for the collection and processing of their data, including the association of such data with the visitation information Google Analytics collects from my site and/or app property.
+The installed app's Firebase linkage supplies the real native `$firebaseAppInstanceId` subscriber attribute. A Web GA client ID must not be substituted for this value. The current RevenueCat instructions document Android/iOS analytics streams; the dashboard's Web fields alone do not establish supported Web identity matching. Web purchases remain tracked in RevenueCat independently.
 
-The dialog links to [Data collection settings](https://analytics.google.com/analytics/web/#/a61423288p292918173/admin/datapolicies/datacollection). The user explicitly confirmed the stated rights and authorized accepting the acknowledgement and creating the integration credential. The acknowledgement was then accepted, and Google enabled Create. Credential creation and RevenueCat configuration are still pending; concurrent user activity in the browser interrupted the form before a secret was created.
-
-Complete only the verified native Android stream using the authorization already provided:
-
-1. Create a dedicated Measurement Protocol API secret for this production Android stream.
-2. Enter the Android Firebase App ID and that secret in RevenueCat's Firebase/Google Analytics integration, then save and verify the integration status.
-3. Confirm the app sends the real native `$firebaseAppInstanceId` subscriber attribute, then observe eligible real purchase events in Analytics. Do not claim event delivery from saving configuration alone.
-
-The installed app's Firebase linkage supplies the native app-instance ID. A Web GA client ID must not be substituted for the native Firebase app-instance ID. The current RevenueCat instructions document Android/iOS analytics streams; the dashboard's Web fields alone do not establish supported Web identity matching. Web purchases remain tracked in RevenueCat independently. No Firestore extension is needed simply to configure the Analytics integration.
-
-The existing CLI identity could read the Firebase project's Analytics linkage, but its Analytics Admin request lacked the required authentication scopes. No additional OAuth scopes were granted; the already signed-in Analytics dashboard was used to verify the stream and the acknowledgement blocker.
+Purchase-event delivery has **not yet been verified**: RevenueCat's Integration Events table was empty after setup, and no purchase or synthetic production event was generated. Verify the next legitimate Android purchase in RevenueCat's integration event log and Google Analytics. A `204` response alone does not prove Google processed an event, especially if the app-instance ID is invalid. Sandbox forwarding remains off to avoid mixing test events into the production Analytics stream.
 
 Reference: [RevenueCat Firebase integration](https://www.revenuecat.com/docs/integrations/third-party-integrations/firebase-integration).
 
@@ -98,11 +93,11 @@ The [Web Billing settings](https://app.revenuecat.com/projects/8b6ff243/web/app2
 
 No separate Privacy Policy URL field was visible in the inspected App info, Billing or Appearance overview. No dashboard privacy field was changed. The app purchase UI links the existing published [privacy policy](https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e).
 
-An anonymous local-browser check of the updated Support Yify dialog loaded both actual Web offerings: monthly `$1.00` with automatic renewal disclosure, and lifetime `$1.00` with one-time/no-renewal disclosure. Purchase controls correctly required sign-in. The dialog scrolled to reload, account-purchase checks, access refresh and policy controls, while its close control remained available. No sign-in, purchase or restore transaction was performed during this check. Displayed prices are a verification snapshot, not a replacement for SDK-provided localized pricing.
+An anonymous local-browser check after removing the lifetime package showed only the monthly `$1.00` Web subscription with automatic renewal disclosure. Purchase controls correctly required sign-in. The dialog scrolled to reload, account-purchase checks, access refresh and policy controls, while its close control remained available. No sign-in, purchase or restore transaction was performed during this check. Displayed prices are a verification snapshot, not a replacement for SDK-provided localized pricing.
 
 ## Remaining operational checks
 
-- Finish creating the already authorized Android integration credential, then save and verify the Firebase integration above when the browser is available.
+- Verify the next legitimate Android purchase reaches both the RevenueCat Firebase integration log and Google Analytics; configuration is saved, but delivery has not yet been observed.
 - Obtain the actual Terms URL before configuring Web Billing terms or requiring acceptance.
 - If native iOS purchases are intended, configure the real RevenueCat iOS app and App Store products/credentials; Android and Web setup does not establish iOS readiness.
 - Validate purchase, restore and subscription-management behavior with the appropriate existing test accounts. Do not use the successful RTDN test or observed ad events as evidence that a new purchase was exercised.
