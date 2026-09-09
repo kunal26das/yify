@@ -287,6 +287,35 @@ The diff logic is shared; only the delivery differs per platform:
 
 ---
 
+## Ad performance in RevenueCat
+
+Android interstitial ads report loaded, displayed, clicked, failed-to-load, and revenue events
+to RevenueCat's `AdTracker`. Each ad instance shares one impression ID and the `movie_open`
+placement across its events. AdMob's `OPENED` callback means the ad is visible; only `CLICKED`
+is reported as RevenueCat's **Ad Opened** event. The installed AdMob wrapper does not expose a
+separate interstitial impression callback, so display counts use its visible-ad callback.
+
+To view the data in [this project's Ads dashboard](https://app.revenuecat.com/projects/8b6ff243/ads):
+
+1. Open the RevenueCat Ads page and opt in to ad monetization if prompted.
+2. Enable **Impression-level ad revenue** in the AdMob account's Settings. Without it, AdMob
+   does not send the paid callbacks that supply revenue amounts.
+3. Confirm the app's RevenueCat Android public SDK key belongs to this project. Production
+   updates use the key in Expo's `production` environment.
+4. Use **Sandbox data** when testing a debug build with Google's test ads. RevenueCat's native
+   SDK marks debug events as sandbox; never click your own production ads to test tracking.
+
+The SDK manages event batching and delivery. Tracking does not wait for purchase offerings or
+entitlement requests, and rejected SDK calls produce a sanitized Firebase `ad_tracking_failed`
+diagnostic. Invalid paid amounts/currencies are discarded instead of recorded as invented revenue.
+Web and desktop have no native ads and keep a no-op tracking implementation.
+
+See RevenueCat's [manual integration guide](https://www.revenuecat.com/docs/ad-monetization/manual-integration)
+for event definitions and dashboard troubleshooting. Connecting AdMob in RevenueCat is optional
+and makes ad unit names readable; it does not replace the app's event tracking.
+
+---
+
 ## 🚀 Over-the-air updates
 
 Native builds ship JS and asset updates **over the air** through

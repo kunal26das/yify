@@ -12,6 +12,7 @@ import mobileAds, {
 
 import {
     type AdGateway,
+    type AdImpression,
     type AdRevenuePrecision,
     type AdRevenueSink,
     type AdTrigger,
@@ -23,10 +24,18 @@ import {isForeground, watchForeground} from '../datasources/platform/ForegroundW
 
 const AD_UNIT_ID = 'ca-app-pub-2292299294214510/8726265265';
 const AD_SHOW_TIMEOUT_MS = 8000;
+const LATE_REVENUE_GRACE_MS = 60000;
+const MAX_TRACKING_DURATION_MS = 30 * 60 * 1000;
 const LOAD_BACKOFF_MS = [30000, 60000, 120000];
 const AD_FORMAT = 'interstitial';
 const AD_PLATFORM = 'admob';
-const FALLBACK_CURRENCY = 'USD';
+const AD_PLACEMENT: AdTrigger = 'movie_open';
+
+interface AdTracking {
+    start(): void;
+    finish(): void;
+    discard(): void;
+}
 
 const PRECISION: Record<number, AdRevenuePrecision> = {
     [RevenuePrecisions.UNKNOWN]: 'unknown',
@@ -49,6 +58,7 @@ export class AdMobAdGateway implements AdGateway {
     private readyPromise: Promise<void> | null = null;
     private interstitial: InterstitialAd | null = null;
     private unsubscribeAd: (() => void) | null = null;
+    private adTracking: AdTracking | null = null;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
     private pending: Promise<boolean> | null = null;
     private initialized = false;
@@ -94,7 +104,9 @@ export class AdMobAdGateway implements AdGateway {
         this.loaded = false;
         this.unsubscribeAd?.();
         this.unsubscribeAd = null;
-        this.pending = this.present(ad, trigger);
+        const tracking = this.adTracking;
+        tracking?.start();
+        this.pending = this.present(ad, trigger, () => tracking?.finish());
         return this.pending;
     }
 
@@ -155,25 +167,35 @@ export class AdMobAdGateway implements AdGateway {
         this.teardownAd();
         this.loading = true;
         this.requestSeq += 1;
-        const impressionId = `${unitId}:${Date.now()}:${this.requestSeq}`;
+        const impression: AdImpression = {
+            adUnitId: unitId,
+            impressionId: `${unitId}:${Date.now()}:${this.requestSeq}`,
+            placement: AD_PLACEMENT,
+        };
         const ad = InterstitialAd.createForAdRequest(unitId);
         this.interstitial = ad;
-        let offPaid: (() => void) | null = null;
-        offPaid = ad.addAdEventListener(AdEventType.PAID, (payload) => {
-            offPaid?.();
-            offPaid = null;
-            this.reportRevenue(payload as unknown as PaidEvent, unitId, impressionId);
-        });
+        this.adTracking = this.observeImpression(ad, impression);
+        let loadReported = false;
+        let loadFailed = false;
         const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+            if (loadReported || loadFailed) return;
+            loadReported = true;
             this.loading = false;
             this.loaded = true;
             this.failures = 0;
+            this.options.adRevenue.trackLoaded(impression);
         });
         const offError = ad.addAdEventListener(AdEventType.ERROR, () => {
+            if (loadFailed) return;
+            loadFailed = true;
             this.loading = false;
             this.loaded = false;
             this.failures += 1;
             this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'load'});
+            // The native bridge exposes symbolic errors, not AdMob's numeric code.
+            if (!loadReported) {
+                this.options.adRevenue.trackFailedToLoad({adUnitId: unitId, placement: AD_PLACEMENT});
+            }
             this.scheduleRetry();
         });
         this.unsubscribeAd = () => {
@@ -183,7 +205,70 @@ export class AdMobAdGateway implements AdGateway {
         ad.load();
     }
 
-    private present(ad: InterstitialAd, trigger: AdTrigger): Promise<boolean> {
+    private observeImpression(ad: InterstitialAd, impression: AdImpression): AdTracking {
+        let started = false;
+        let finished = false;
+        let displayed = false;
+        let clicked = false;
+        let paid = false;
+        let timer: ReturnType<typeof setTimeout> | null = null;
+
+        const dispose = () => {
+            if (timer != null) clearTimeout(timer);
+            timer = null;
+            offPaid();
+            offOpened();
+            offClicked();
+            offClosed();
+            offError();
+        };
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            offOpened();
+            offClicked();
+            offClosed();
+            offError();
+            if (timer != null) clearTimeout(timer);
+            // PAID may cross the native bridge after CLOSED. Failed loads cannot earn revenue.
+            if (started && !paid) timer = setTimeout(dispose, LATE_REVENUE_GRACE_MS);
+            else dispose();
+        };
+
+        const offPaid = ad.addAdEventListener(AdEventType.PAID, (payload) => {
+            if (paid || !this.reportRevenue(payload as unknown as PaidEvent, impression)) return;
+            paid = true;
+            offPaid();
+            if (finished) dispose();
+        });
+        const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
+            if (displayed) return;
+            displayed = true;
+            // AdMob OPENED means visible; RevenueCat OPENED means the user clicked.
+            this.options.adRevenue.trackDisplayed(impression);
+        });
+        const offClicked = ad.addAdEventListener(AdEventType.CLICKED, () => {
+            if (clicked) return;
+            clicked = true;
+            this.options.adRevenue.trackOpened(impression);
+        });
+        const offClosed = ad.addAdEventListener(AdEventType.CLOSED, finish);
+        const offError = ad.addAdEventListener(AdEventType.ERROR, finish);
+
+        return {
+            start: () => {
+                started = true;
+                // Keep tracking a visible ad beyond the navigation timeout, but bound orphaned listeners.
+                timer = setTimeout(dispose, MAX_TRACKING_DURATION_MS);
+            },
+            finish,
+            discard: () => {
+                if (!started) dispose();
+            },
+        };
+    }
+
+    private present(ad: InterstitialAd, trigger: AdTrigger, finishTracking: () => void): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             let settled = false;
             let opened = false;
@@ -233,33 +318,43 @@ export class AdMobAdGateway implements AdGateway {
 
             arm();
 
-            void ad.show().catch(() => {
+            const showFailed = () => {
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'show'});
+                finishTracking();
                 settle();
-            });
+            };
+            try {
+                void ad.show().catch(showFailed);
+            } catch {
+                showFailed();
+            }
         });
     }
 
-    private reportRevenue(paid: PaidEvent | undefined, adUnitId: string, impressionId: string): void {
+    private reportRevenue(paid: PaidEvent | undefined, impression: AdImpression): boolean {
         const raw = paid?.value;
-        const value = typeof raw === 'number' && Number.isFinite(raw) && raw >= 0 ? raw : 0;
-        const currency = paid?.currency || FALLBACK_CURRENCY;
+        const currency = typeof paid?.currency === 'string' ? paid.currency.trim().toUpperCase() : '';
+        if (typeof raw !== 'number' || !Number.isFinite(raw) || raw < 0 ||
+            !Number.isSafeInteger(Math.round(raw * 1000000)) || !/^[A-Z]{3}$/.test(currency)) {
+            return false;
+        }
+        const value = raw;
         const precision = PRECISION[paid?.precision as number] ?? 'unknown';
         this.options.analytics.trackEvent('ad_impression', {
             ad_platform: AD_PLATFORM,
             ad_format: AD_FORMAT,
-            ad_unit_name: adUnitId,
+            ad_unit_name: impression.adUnitId,
             currency,
             value,
             precision,
         });
         this.options.adRevenue.trackImpression({
-            adUnitId,
-            impressionId,
+            ...impression,
             value,
             currency,
             precision,
         });
+        return true;
     }
 
     private scheduleRetry(): void {
@@ -280,6 +375,8 @@ export class AdMobAdGateway implements AdGateway {
     private teardownAd(): void {
         this.unsubscribeAd?.();
         this.unsubscribeAd = null;
+        this.adTracking?.discard();
+        this.adTracking = null;
         this.interstitial = null;
     }
 }

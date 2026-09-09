@@ -151,7 +151,13 @@ function adsFixture({gatherConsent, getConsentInfo = async () => consentInfo(fal
     });
     const gateway = new AdMobAdGateway({
         analytics: {trackEvent: (name, data) => calls.events.push({name, data})},
-        adRevenue: {trackImpression: () => {}},
+        adRevenue: {
+            trackLoaded: () => {},
+            trackDisplayed: () => {},
+            trackOpened: () => {},
+            trackFailedToLoad: () => {},
+            trackImpression: () => {},
+        },
         entitlement: () => ({ready: true, adsRemoved: false}),
     });
     return {gateway, calls};

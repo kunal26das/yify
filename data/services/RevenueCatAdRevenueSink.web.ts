@@ -1,7 +1,19 @@
-import type {AdRevenueSink} from '@/domain';
+import type {AdRevenueSink, AnalyticsSink} from '@/domain';
 
 export class RevenueCatAdRevenueSink implements AdRevenueSink {
-    constructor(_ready: () => boolean) {
+    constructor(_analytics: AnalyticsSink) {
+    }
+
+    trackLoaded(): void {
+    }
+
+    trackDisplayed(): void {
+    }
+
+    trackOpened(): void {
+    }
+
+    trackFailedToLoad(): void {
     }
 
     trackImpression(): void {

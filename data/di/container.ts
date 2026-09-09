@@ -60,7 +60,7 @@ export function createDependencies(): Dependencies {
 
     const ads = new AdMobAdGateway({
         analytics,
-        adRevenue: new RevenueCatAdRevenueSink(() => purchases.getState().ready),
+        adRevenue: new RevenueCatAdRevenueSink(analytics),
         entitlement: () => purchases.getState(),
     });
 

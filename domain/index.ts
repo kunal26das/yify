@@ -148,6 +148,8 @@ export type {StoreServices} from './services/StoreServices';
 export type {AdGateway} from './services/AdGateway';
 export type {
     AdRevenueSink,
+    AdImpression,
+    AdLoadFailure,
     AdImpressionRevenue,
     AdRevenuePrecision,
 } from './services/AdRevenueSink';
