@@ -8,7 +8,7 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
-function fixture(t, {dev = false, show} = {}) {
+function fixture(t, {dev = false, show, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});
     const originalDev = global.__DEV__;
     global.__DEV__ = dev;
@@ -61,10 +61,50 @@ function fixture(t, {dev = false, show} = {}) {
     const gateway = new AdMobAdGateway({
         analytics: {trackEvent: (name, data) => analytics.push({name, data})},
         adRevenue: Object.fromEntries(methods.map((method) => [method, (data) => tracked.push({method, data})])),
-        entitlement: () => ({ready: true, adsRemoved: false}),
+        entitlement,
     });
     return {gateway, ads, tracked, analytics};
 }
+
+test('preload tracking does not wait for identity, while showing waits for known entitlement', async (t) => {
+    let state = {ready: false, adsRemoved: false};
+    let showCount = 0;
+    const {gateway, ads, tracked} = fixture(t, {
+        entitlement: () => state,
+        show: async () => { showCount++; },
+    });
+    await gateway.init();
+    const ad = ads[0];
+    ad.emit('loaded');
+    assert.deepEqual(tracked.map(({method}) => method), ['trackLoaded']);
+    assert.equal(gateway.show('movie_open'), null);
+    assert.equal(showCount, 0);
+
+    state = {ready: true, adsRemoved: true};
+    assert.equal(gateway.show('movie_open'), null);
+    assert.equal(showCount, 0);
+
+    state = {ready: true, adsRemoved: false};
+    const completion = gateway.show('movie_open');
+    assert.equal(showCount, 1);
+    ad.emit('opened');
+    ad.emit('paid', paid());
+    ad.emit('closed');
+    assert.equal(await completion, true);
+    assert.deepEqual(tracked.map(({method}) => method), ['trackLoaded', 'trackDisplayed', 'trackImpression']);
+});
+
+test('load failures are tracked while identity and entitlement are still unresolved', async (t) => {
+    const {gateway, ads, tracked} = fixture(t, {
+        entitlement: () => ({ready: false, adsRemoved: false}),
+    });
+    await gateway.init();
+    ads[0].emit('error', {code: 'googleMobileAds/no-fill'});
+    assert.deepEqual(tracked, [{method: 'trackFailedToLoad', data: {
+        adUnitId: productionUnit, placement: 'movie_open',
+    }}]);
+    assert.equal(gateway.show('movie_open'), null);
+});
 
 test('load, display, click, and revenue share one impression and movie placement', async (t) => {
     const {gateway, ads, tracked} = fixture(t);

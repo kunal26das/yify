@@ -1,10 +1,16 @@
 export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
+export type PurchasePlacement = 'settings_supporter' | 'post_ad_supporter';
+
 export interface PurchaseOffer {
     id: string;
     title: string;
     priceLabel: string;
     recurring: boolean;
+    autoRenewing?: boolean;
+    billingPeriod?: string | null;
+    offeringId?: string;
+    placement?: PurchasePlacement;
 }
 
 export type PurchaseFailure =
@@ -23,6 +29,12 @@ export interface PurchaseState {
     offers: PurchaseOffer[];
     purchasing: string | null;
     failure: PurchaseFailure | null;
+    restoring: boolean;
+    refreshing: boolean;
+    managementURL: string | null;
+    expiresAt: string | null;
+    willRenew: boolean;
+    billingIssue: boolean;
 }
 
 export const INITIAL_PURCHASE_STATE: PurchaseState = {
@@ -32,4 +44,10 @@ export const INITIAL_PURCHASE_STATE: PurchaseState = {
     offers: [],
     purchasing: null,
     failure: null,
+    restoring: false,
+    refreshing: false,
+    managementURL: null,
+    expiresAt: null,
+    willRenew: false,
+    billingIssue: false,
 };

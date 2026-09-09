@@ -561,10 +561,33 @@ implement the identical `AuthRepository` port — `init`, `subscribe`, `getSessi
 `signOut`, `getIdToken` — so the UI never branches on platform.
 
 Signing in exists to carry entitlements between devices. `AccountLink` watches auth state and
-hands the Firebase uid to RevenueCat: `logIn(uid)` on the way in, `logOut()` on the way out, with the
-web SDK using `changeUser`. Purchases made on the phone therefore show up on the web, and an
-anonymous shopper keeps their purchases when they later sign in. Because RevenueCat finishes
-configuring asynchronously, an identity that arrives first is queued and applied once it is ready.
+hands the Firebase uid to RevenueCat: `logIn(uid)` on the way in and `logOut()` on the way out.
+Web uses `identifyUser` to link an anonymous customer at sign-in, then `changeUser` for account
+switches and a fresh anonymous identity at sign-out. Purchases made on the phone therefore show
+up on the web when the same account is used. SDK identity changes, checkout and restoration are
+serialized, and stale results cannot grant access to another account. Entitlement caches are
+account-scoped and respect subscription expiry. Restoration happens only when the customer
+chooses it; foreground refresh checks current access without transferring store purchases.
+
+### Supporter purchases and RevenueCat
+
+Settings → **Support Yify** shows all packages in the applicable offering, with their localized
+regular prices and actual billing periods. Existing supporters can see renewal/expiry information,
+restore store purchases, refresh access and open the store or web billing-management URL.
+On web, **Check account purchases** checks the signed-in RevenueCat customer; restoring an
+App Store or Google Play purchase must be done in the mobile app with the original store account.
+
+The custom paywall uses `settings_supporter` and `post_ad_supporter` placements. Without targeting
+rules RevenueCat supplies the default offering. An explicit targeting exclusion stays empty.
+Each visible offering records one RevenueCat custom paywall impression with its original offering
+context and placement; checkout preserves the same context. Merely loading offers is not counted
+as viewing a paywall. The optional post-ad prompt skips itself if loading plans takes over 1.5 seconds.
+
+The configured `remove_ads` entitlement is shared by Android and Web monthly/lifetime products.
+Do not change the entitlement identifier when editing offerings. Existing prices and products stay
+in the RevenueCat/store catalogs, rather than being hardcoded in the app. Current SDKs support
+this custom purchase experience through Expo OTA; adding RevenueCat's native managed Paywalls
+or Customer Center UI package would require a new native build.
 
 Sign-in is optional and degrades quietly. The account row hides itself when the platform has nothing
 to sign in with — no Firebase config on web, no `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` on native — so a

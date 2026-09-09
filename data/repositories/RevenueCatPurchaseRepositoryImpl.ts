@@ -4,6 +4,7 @@ import Purchases, {
     PRODUCT_CATEGORY,
     type CustomerInfo,
     type PurchasesPackage,
+    type PurchasesOffering,
 } from 'react-native-purchases';
 
 import {
@@ -14,10 +15,12 @@ import {
     type KeyValueStore,
     type PurchaseFailure,
     type PurchaseOffer,
+    type PurchasePlacement,
     type PurchaseRepository,
     type PurchaseState,
 } from '@/domain';
 import {getAnalyticsInstanceId} from '../datasources/analytics/FirebaseAnalyticsSink';
+import {watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {createObservable} from './support/observable';
 
 const apiKey =
@@ -25,11 +28,24 @@ const apiKey =
         ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
         : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
-const ADS_REMOVED_KEY = 'ads_removed';
+const ADS_REMOVED_KEY = 'ads_removed:v2:';
 const INIT_BACKOFF_MS = [5000, 15000, 60000, 300000];
 
 function hasRemoveAds(info: CustomerInfo): boolean {
     return info.entitlements.active[REMOVE_ADS_ENTITLEMENT] !== undefined;
+}
+
+function customerState(info: CustomerInfo): Pick<PurchaseState,
+    'adsRemoved' | 'managementURL' | 'expiresAt' | 'willRenew' | 'billingIssue'> {
+    const entitlement = info.entitlements.active[REMOVE_ADS_ENTITLEMENT] ??
+        info.entitlements.all?.[REMOVE_ADS_ENTITLEMENT];
+    return {
+        adsRemoved: hasRemoveAds(info),
+        managementURL: info.managementURL ?? null,
+        expiresAt: entitlement?.expirationDate ?? null,
+        willRenew: entitlement?.willRenew ?? false,
+        billingIssue: entitlement?.billingIssueDetectedAt != null,
+    };
 }
 
 function purchaseFailureReason(error: unknown): PurchaseFailure {
@@ -47,36 +63,55 @@ function purchaseFailureReason(error: unknown): PurchaseFailure {
     }
 }
 
-function toOffer(pkg: PurchasesPackage): PurchaseOffer {
+function toOffer(
+    pkg: PurchasesPackage, offering: PurchasesOffering, placement: PurchasePlacement, revision: number
+): PurchaseOffer {
+    const recurring = pkg.product.productCategory === PRODUCT_CATEGORY.SUBSCRIPTION;
+    const option = Platform.OS === 'android' ? pkg.product.defaultOption : null;
+    const fullPricePhase = option?.fullPricePhase;
     return {
-        id: pkg.identifier,
+        id: [String(revision), placement, offering.identifier, pkg.identifier].map(encodeURIComponent).join(':'),
         title: pkg.product.title,
-        priceLabel: pkg.product.priceString,
-        recurring: pkg.product.productCategory === PRODUCT_CATEGORY.SUBSCRIPTION,
+        priceLabel: fullPricePhase?.price.formatted ?? pkg.product.priceString,
+        recurring,
+        autoRenewing: recurring && option?.isPrepaid !== true,
+        billingPeriod: fullPricePhase?.billingPeriod.iso8601 ?? pkg.product.subscriptionPeriod,
+        offeringId: offering.identifier,
+        placement,
     };
 }
 
 export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private readonly store = createObservable<PurchaseState>(INITIAL_PURCHASE_STATE);
-    private readonly packages = new Map<string, PurchasesPackage>();
+    private readonly packages = new Map<string, {
+        pkg: PurchasesPackage; offering: PurchasesOffering; offer: PurchaseOffer; revision: number;
+    }>();
+    private readonly pendingOfferings = new Map<PurchasePlacement, Promise<PurchaseOffer[]>>();
     private readonly analytics: AnalyticsSink;
     private readonly cache: KeyValueStore;
 
-    private initialized = false;
     private configured = false;
-    private pendingAccount: Account | null | undefined;
-    private reportedAdsRemoved: boolean | undefined;
-    private verified = false;
-    private initFailures = 0;
-    private initRetryTimer: ReturnType<typeof setTimeout> | null = null;
+    private observing = false;
+    private desiredUid: string | null | undefined;
+    private activeSdkUid: string | null = null;
+    private revision = 0;
+    private syncedRevision = -1;
+    private queue: Promise<unknown> = Promise.resolve();
+    private refreshPromise: Promise<void> | null = null;
+    private forceRefresh = false;
+    private customerUpdatePending = false;
+    private customerSignature: string | null = null;
+    private mutation: {kind: string; promise: Promise<boolean>} | null = null;
+    private reportedEntitlement: string | undefined;
+    private syncFailures = 0;
+    private linkedRevision = -1;
+    private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore) {
         this.analytics = analytics;
         this.cache = cache;
-        this.store.set({
-            available: Boolean(apiKey),
-            adsRemoved: cache.getString(ADS_REMOVED_KEY) === 'true',
-        });
+        // The legacy unscoped cache cannot identify which customer owned the entitlement.
+        this.store.set({available: Boolean(apiKey)});
     }
 
     getState(): PurchaseState {
@@ -87,143 +122,344 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         return this.store.subscribe(listener);
     }
 
-    async init(): Promise<void> {
-        if (this.initialized || !apiKey) return;
-        this.initialized = true;
-        try {
-            Purchases.setLogLevel(LOG_LEVEL.WARN);
-            await Purchases.configure({apiKey});
-            await this.linkFirebaseAnalytics();
-            Purchases.addCustomerInfoUpdateListener((info) => {
-                this.verified = true;
-                this.setState({adsRemoved: hasRemoveAds(info)});
+    init(): Promise<void> {
+        if (!apiKey || (this.configured && this.store.get().ready)) return Promise.resolve();
+        return this.requestSync();
+    }
+
+    refresh(): Promise<void> {
+        return this.requestSync(true);
+    }
+
+    identify(account: Account | null): Promise<void> {
+        if (!apiKey) return Promise.resolve();
+        const uid = account?.uid ?? null;
+        if (uid !== this.desiredUid) {
+            this.desiredUid = uid;
+            this.revision += 1;
+            this.packages.clear();
+            this.pendingOfferings.clear();
+            this.clearRetry();
+            this.syncFailures = 0;
+            this.setState({
+                ready: false,
+                adsRemoved: uid != null && this.cachedAdsRemoved(uid),
+                offers: [],
+                purchasing: null,
+                restoring: false,
+                failure: null,
+                managementURL: null,
+                expiresAt: null,
+                willRenew: false,
+                billingIssue: false,
             });
-            const info = await Purchases.getCustomerInfo();
-            this.configured = true;
-            this.verified = true;
-            this.setState({ready: true, adsRemoved: hasRemoveAds(info)});
-            await this.loadOfferings();
-            if (this.pendingAccount !== undefined) {
-                const account = this.pendingAccount;
-                this.pendingAccount = undefined;
-                await this.identify(account);
-            }
-        } catch {
-            this.initialized = false;
-            this.scheduleInitRetry();
+        } else if (this.syncedRevision === this.revision && this.store.get().ready) {
+            return this.refreshPromise ?? Promise.resolve();
         }
+        return this.requestSync();
     }
 
-    private scheduleInitRetry(): void {
-        if (this.initRetryTimer != null) return;
-        const delay = INIT_BACKOFF_MS[Math.min(this.initFailures, INIT_BACKOFF_MS.length - 1)];
-        this.initFailures += 1;
-        this.initRetryTimer = setTimeout(() => {
-            this.initRetryTimer = null;
-            void this.init();
-        }, delay);
+    getOffers(placement: PurchasePlacement): Promise<PurchaseOffer[]> {
+        if (!this.store.get().ready) return Promise.resolve([]);
+        const pending = this.pendingOfferings.get(placement);
+        if (pending) return pending;
+        const revision = this.revision;
+        const promise = this.enqueue(async () => {
+            if (revision !== this.revision || !this.store.get().ready) return [];
+            try {
+                return await this.fetchOffers(placement, revision);
+            } catch {
+                this.analytics.trackEvent('revenuecat_sync_failed', {phase: 'offerings'});
+                return [];
+            }
+        }).finally(() => {
+            if (this.pendingOfferings.get(placement) === promise) this.pendingOfferings.delete(placement);
+        });
+        this.pendingOfferings.set(placement, promise);
+        return promise;
     }
 
-    async purchase(offerId: string): Promise<boolean> {
-        const pkg = this.packages.get(offerId);
-        if (pkg == null) {
+    trackPaywallImpression(offerId: string): void {
+        const entry = this.packages.get(offerId);
+        if (!entry || !this.isCurrent(entry.revision, this.activeSdkUid)) return;
+        void this.enqueue(async () => {
+            if (!this.isCurrent(entry.revision, this.activeSdkUid)) return;
+            try {
+                await Purchases.trackCustomPaywallImpression({offering: entry.offering, paywallId: entry.offer.placement});
+            } catch {
+                this.analytics.trackEvent('revenuecat_sync_failed', {phase: 'paywall_impression'});
+            }
+        });
+    }
+
+    purchase(offerId: string): Promise<boolean> {
+        const kind = `purchase:${offerId}`;
+        if (this.mutation) {
+            return this.mutation.kind === kind ? this.mutation.promise : Promise.resolve(false);
+        }
+        const entry = this.packages.get(offerId);
+        if (!this.store.get().ready || entry == null || entry.revision !== this.revision) {
             this.setState({failure: 'offer_unavailable'});
             this.analytics.trackEvent('remove_ads_purchase_failed', {
                 package_id: offerId,
                 reason: 'offer_unavailable',
             });
-            return false;
+            return Promise.resolve(false);
         }
+        const revision = this.revision;
+        const uid = this.activeSdkUid;
         this.setState({purchasing: offerId, failure: null});
-        this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
-        try {
-            const {customerInfo} = await Purchases.purchasePackage(pkg);
-            const purchased = hasRemoveAds(customerInfo);
-            this.verified = true;
-            this.setState({
-                adsRemoved: purchased,
-                purchasing: null,
-                failure: purchased ? null : 'not_granted',
-            });
-            this.analytics.trackEvent('remove_ads_purchase_done', {
-                package_id: offerId,
-                granted: purchased,
-            });
-            return purchased;
-        } catch (error) {
-            const reason = purchaseFailureReason(error);
-            this.setState({purchasing: null, failure: reason});
-            this.analytics.trackEvent('remove_ads_purchase_failed', {
-                package_id: offerId,
-                reason,
-            });
-            return false;
-        }
+        return this.runMutation(kind, async () => {
+            if (!this.isCurrent(revision, uid)) return false;
+            if (!this.packages.has(offerId)) {
+                this.setState({failure: 'offer_unavailable'});
+                return false;
+            }
+            this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
+            try {
+                const {customerInfo} = await Purchases.purchasePackage(entry.pkg);
+                if (!this.isCurrent(revision, uid)) return false;
+                const purchased = hasRemoveAds(customerInfo);
+                this.applyCustomerInfo(customerInfo, uid!);
+                this.setState({failure: purchased ? null : 'not_granted'});
+                this.analytics.trackEvent('remove_ads_purchase_done', {
+                    package_id: offerId,
+                    granted: purchased,
+                });
+                return purchased;
+            } catch (error) {
+                if (!this.isCurrent(revision, uid)) return false;
+                const reason = purchaseFailureReason(error);
+                this.setState({failure: reason});
+                this.analytics.trackEvent('remove_ads_purchase_failed', {package_id: offerId, reason});
+                return false;
+            }
+        });
     }
 
-    async restore(): Promise<boolean> {
-        try {
-            const info = await Purchases.restorePurchases();
-            const restored = hasRemoveAds(info);
-            this.verified = true;
-            this.setState({adsRemoved: restored, failure: null});
-            this.analytics.trackEvent('remove_ads_restore', {
-                result: restored ? 'restored' : 'none',
-            });
-            return restored;
-        } catch {
+    restore(): Promise<boolean> {
+        if (this.mutation) {
+            return this.mutation.kind === 'restore' ? this.mutation.promise : Promise.resolve(false);
+        }
+        if (!this.store.get().ready) {
             this.setState({failure: 'restore_failed'});
-            this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
-            return false;
+            return Promise.resolve(false);
+        }
+        const revision = this.revision;
+        const uid = this.activeSdkUid;
+        this.setState({restoring: true, failure: null});
+        return this.runMutation('restore', async () => {
+            if (!this.isCurrent(revision, uid)) return false;
+            try {
+                const info = await Purchases.restorePurchases();
+                if (!this.isCurrent(revision, uid)) return false;
+                const restored = hasRemoveAds(info);
+                this.applyCustomerInfo(info, uid!);
+                this.setState({failure: null});
+                this.analytics.trackEvent('remove_ads_restore', {result: restored ? 'restored' : 'none'});
+                return restored;
+            } catch {
+                if (!this.isCurrent(revision, uid)) return false;
+                this.setState({failure: 'restore_failed'});
+                this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
+                return false;
+            }
+        });
+    }
+
+    private enqueue<T>(work: () => Promise<T>): Promise<T> {
+        const result = this.queue.then(work);
+        this.queue = result.catch(() => {});
+        return result;
+    }
+
+    private runMutation(kind: string, work: () => Promise<boolean>): Promise<boolean> {
+        const promise = this.enqueue(work).finally(() => {
+            this.mutation = null;
+            this.setState({purchasing: null, restoring: false});
+        });
+        this.mutation = {kind, promise};
+        return promise;
+    }
+
+    private requestSync(force = false): Promise<void> {
+        if (!apiKey) return Promise.resolve();
+        this.forceRefresh ||= force;
+        if (this.refreshPromise) return this.refreshPromise;
+        this.setState({refreshing: true});
+        const promise = this.enqueue(() => this.synchronize()).finally(() => {
+            this.refreshPromise = null;
+            this.setState({refreshing: false});
+        });
+        this.refreshPromise = promise;
+        return promise;
+    }
+
+    private async configure(): Promise<void> {
+        if (!this.configured) {
+            Purchases.setLogLevel(LOG_LEVEL.WARN);
+            await Purchases.configure({apiKey: apiKey!});
+            this.configured = true;
+        }
+        if (!this.observing) {
+            Purchases.addCustomerInfoUpdateListener((info) => {
+                // Listener payloads have no reliable current-user ID. Read through the serialized SDK identity.
+                if (JSON.stringify(customerState(info)) === this.customerSignature) return;
+                this.customerUpdatePending = true;
+                void this.requestSync();
+            });
+            watchForeground(() => { void this.requestSync(); });
+            this.observing = true;
         }
     }
 
-    async identify(account: Account | null): Promise<void> {
-        if (!apiKey) return;
-        if (!this.configured) {
-            this.pendingAccount = account;
-            void this.init();
+    private async synchronize(): Promise<void> {
+        try {
+            await this.configure();
+        } catch {
+            this.scheduleRetry('configure');
             return;
         }
+        // Configure early for ad tracking, but wait for Firebase's initial account before exposing entitlements.
+        while (this.desiredUid !== undefined) {
+            const revision = this.revision;
+            const desiredUid = this.desiredUid;
+            this.customerUpdatePending = false;
+            try {
+                let info: CustomerInfo | undefined;
+                const previousUid = await Purchases.getAppUserID();
+                if (revision !== this.revision) continue;
+                if (desiredUid != null && previousUid !== desiredUid) {
+                    info = (await Purchases.logIn(desiredUid)).customerInfo;
+                } else if (desiredUid == null) {
+                    const anonymous = await Purchases.isAnonymous();
+                    if (revision !== this.revision) continue;
+                    if (!anonymous) info = await Purchases.logOut();
+                }
+                const sdkUid = await Purchases.getAppUserID();
+                if (revision !== this.revision) continue;
+                if (desiredUid != null && sdkUid !== desiredUid) throw new Error('identity_mismatch');
+                if (!this.store.get().ready) {
+                    this.setState({adsRemoved: this.cachedAdsRemoved(sdkUid)});
+                }
+                if (this.forceRefresh) {
+                    this.forceRefresh = false;
+                    await Purchases.invalidateCustomerInfoCache();
+                    info = undefined;
+                }
+                info ??= await Purchases.getCustomerInfo();
+                if (revision !== this.revision) continue;
+                this.activeSdkUid = sdkUid;
+                this.syncedRevision = revision;
+                this.applyCustomerInfo(info, sdkUid);
+                if (this.linkedRevision !== revision && await this.linkFirebaseAnalytics()) {
+                    this.linkedRevision = revision;
+                }
+                if (revision !== this.revision) continue;
+                const offersLoaded = await this.loadOfferings(revision);
+                if (revision !== this.revision || this.forceRefresh || this.customerUpdatePending) continue;
+                if (offersLoaded) {
+                    this.clearRetry();
+                    this.syncFailures = 0;
+                }
+                return;
+            } catch {
+                if (revision !== this.revision) continue;
+                this.scheduleRetry('customer');
+                return;
+            }
+        }
+    }
+
+    private isCurrent(revision: number, uid: string | null): boolean {
+        return uid != null && revision === this.revision && this.syncedRevision === revision &&
+            this.activeSdkUid === uid && this.store.get().ready;
+    }
+
+    private cacheKey(uid: string): string {
+        return ADS_REMOVED_KEY + encodeURIComponent(uid);
+    }
+
+    private cachedAdsRemoved(uid: string): boolean {
         try {
-            const info = account
-                ? (await Purchases.logIn(account.uid)).customerInfo
-                : await Purchases.logOut();
-            this.verified = true;
-            this.setState({adsRemoved: hasRemoveAds(info)});
-            await this.linkFirebaseAnalytics();
-            if (account && !hasRemoveAds(info)) await this.restore();
-            await this.loadOfferings();
+            const cached: unknown = JSON.parse(this.cache.getString(this.cacheKey(uid)) ?? 'null');
+            if (cached == null || typeof cached !== 'object') return false;
+            const {adsRemoved, expiresAt} = cached as {adsRemoved?: unknown; expiresAt?: unknown};
+            if (adsRemoved !== true) return false;
+            if (expiresAt === null) return true;
+            return typeof expiresAt === 'string' && Date.parse(expiresAt) > Date.now();
         } catch {
+            return false;
+        }
+    }
+
+    private applyCustomerInfo(info: CustomerInfo, uid: string): void {
+        const adsRemoved = hasRemoveAds(info);
+        const next = customerState(info);
+        this.customerSignature = JSON.stringify(next);
+        this.cache.set(this.cacheKey(uid), JSON.stringify({adsRemoved, expiresAt: next.expiresAt}));
+        this.setState({ready: true, ...next});
+        const reported = `${uid}:${adsRemoved}`;
+        if (this.reportedEntitlement !== reported) {
+            this.reportedEntitlement = reported;
+            this.analytics.setUserProperty('remove_ads', adsRemoved ? 'true' : 'false');
         }
     }
 
     private setState(next: Partial<PurchaseState>): void {
         this.store.set(next);
-        const state = this.store.get();
-        if (state.ready && this.reportedAdsRemoved !== state.adsRemoved) {
-            this.reportedAdsRemoved = state.adsRemoved;
-            if (this.verified) this.cache.set(ADS_REMOVED_KEY, state.adsRemoved ? 'true' : 'false');
-            this.analytics.setUserProperty('remove_ads', state.adsRemoved ? 'true' : 'false');
-        }
     }
 
-    private async loadOfferings(): Promise<void> {
+    private async fetchOffers(placement: PurchasePlacement, revision: number): Promise<PurchaseOffer[]> {
+        const offering = await Purchases.getCurrentOfferingForPlacement(placement);
+        if (revision !== this.revision) return [];
+        for (const [id, entry] of this.packages) {
+            if (entry.offer.placement === placement) this.packages.delete(id);
+        }
+        const offers = (offering?.availablePackages ?? []).map((pkg) => {
+            const offer = toOffer(pkg, offering!, placement, revision);
+            this.packages.set(offer.id, {pkg, offering: offering!, offer, revision});
+            return offer;
+        });
+        if (placement === 'settings_supporter') this.setState({offers});
+        return offers;
+    }
+
+    private async loadOfferings(revision: number): Promise<boolean> {
         try {
-            const offerings = await Purchases.getOfferings();
-            const available = offerings.current?.availablePackages ?? [];
-            this.packages.clear();
-            available.forEach((pkg) => this.packages.set(pkg.identifier, pkg));
-            this.setState({offers: available.map(toOffer)});
+            await this.fetchOffers('settings_supporter', revision);
+            return true;
         } catch {
+            if (revision === this.revision) this.scheduleRetry('offerings');
+            return false;
         }
     }
 
-    private async linkFirebaseAnalytics(): Promise<void> {
+    private scheduleRetry(phase: string): void {
+        this.analytics.trackEvent('revenuecat_sync_failed', {phase});
+        if (this.retryTimer != null) return;
+        const delay = INIT_BACKOFF_MS[Math.min(this.syncFailures, INIT_BACKOFF_MS.length - 1)];
+        this.syncFailures += 1;
+        this.retryTimer = setTimeout(() => {
+            this.retryTimer = null;
+            void this.requestSync();
+        }, delay);
+    }
+
+    private clearRetry(): void {
+        if (this.retryTimer == null) return;
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+    }
+
+    private async linkFirebaseAnalytics(): Promise<boolean> {
         try {
             const instanceId = await getAnalyticsInstanceId();
-            if (instanceId) await Purchases.setFirebaseAppInstanceID(instanceId);
+            if (!instanceId) return false;
+            await Purchases.setFirebaseAppInstanceID(instanceId);
+            return true;
         } catch {
+            return false;
         }
     }
 }

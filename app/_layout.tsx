@@ -27,6 +27,7 @@ import {
     PlayerHost,
     PlayerProvider,
     SystemBars,
+    SupporterProvider,
     ToastProvider,
     TopBar,
     UpdateSnackbar,
@@ -113,6 +114,7 @@ function AppShell() {
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
             <ConfirmProvider>
+                <SupporterProvider>
                 <ToastProvider>
                 <PlayerProvider>
                     <BlurTargetProvider>
@@ -126,6 +128,7 @@ function AppShell() {
                     <PlayerHost/>
                 </PlayerProvider>
                 </ToastProvider>
+                </SupporterProvider>
             </ConfirmProvider>
             <OfflineBanner/>
             <UpdateSnackbar/>

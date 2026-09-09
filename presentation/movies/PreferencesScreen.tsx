@@ -46,13 +46,14 @@ import {useTopBarHeight} from './components/TopBar';
 import {type PreferencesViewModel, usePreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
 import {usePurchases} from '../hooks/use-purchases';
+import {useSupporterPaywall} from '../purchases/supporter-paywall';
+import {supporterStatus} from '../purchases/offer-copy';
 import {useSyncStatus} from '../hooks/use-sync-status';
 import {
     useAccountSync,
     useAdGateway,
     useAppConfig,
     useAuthRepository,
-    usePurchaseRepository,
 } from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
@@ -819,150 +820,31 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
 }
 
 function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
-    const purchases = usePurchaseRepository();
     const ads = useAdGateway();
     const state = usePurchases();
-    const {account, signingIn, available: canSignIn} = useAuth();
-    const auth = useAuthRepository();
-    const confirm = useConfirm();
+    const showSupporter = useSupporterPaywall();
     const config = useAppConfig();
-
-    const offer = state.offers.length > 0 ? state.offers[0] : null;
-    const terms = offer?.recurring ? 'billed monthly until you cancel' : 'one payment, nothing renews';
-    const sellable = state.available && (state.adsRemoved || offer != null);
     const coffeeUrl = config.getSupportUrl();
     const showCoffee = coffeeUrl.startsWith('https://');
-    const adsLive = ads.supported;
-    const billing = offer?.recurring ? 'A monthly subscription' : 'One payment';
 
-    const notice = (title: string, message: string, icon: Glyph) =>
-        confirm({
-            title,
-            message,
-            confirmLabel: 'OK',
-            icon,
-            destructive: false,
-            onConfirm: () => undefined,
-        });
-
-    const buy = () => {
-        if (offer == null || account == null || state.purchasing != null) return;
-        Analytics.supporterPrompt('settings');
-        confirm({
-            title: 'Support Yify',
-            message: adsLive
-                ? `Yify is built by one person. ${offer.priceLabel}, ${terms}. It turns off the ads in Yify on every device you sign in on. Trailers still play YouTube's own ads, which no app can remove.`
-                : `Yify is built by one person and has no ads today. ${offer.priceLabel}, ${terms}. It carries across every device you sign in on, and if ads are ever switched on they will never apply to you.`,
-            confirmLabel: `Support \u00b7 ${offer.priceLabel}`,
-            cancelLabel: 'Not now',
-            icon: 'heart-outline',
-            destructive: false,
-            onConfirm: () => {
-                void purchases.purchase(offer.id).then((granted) => {
-                    if (granted) return;
-                    const reason = purchases.getState().failure;
-                    if (reason == null || reason === 'cancelled') return;
-                    if (reason === 'already_purchased') {
-                        notice(
-                            'Already a supporter',
-                            'This account has already supported Yify. It will come back on this device on its own \u2014 give it a moment.',
-                            'information-circle-outline'
-                        );
-                        return;
-                    }
-                    if (reason === 'pending') {
-                        notice(
-                            'Payment pending',
-                            'Your payment is still being processed. It will apply on its own once it clears \u2014 no need to pay again.',
-                            'time-outline'
-                        );
-                        return;
-                    }
-                    if (reason === 'not_granted') {
-                        notice(
-                            'Not applied yet',
-                            'The payment went through but has not applied yet. It should arrive shortly \u2014 reopen Yify if it does not.',
-                            'alert-circle-outline'
-                        );
-                        return;
-                    }
-                    notice(
-                        'Payment failed',
-                        'We could not complete the payment. If you were charged, it will apply on its own once the store confirms it.',
-                        'alert-circle-outline'
-                    );
-                });
-            },
-        });
-    };
-
-    if (!sellable && !showCoffee && !ads.privacyOptionsRequired()) return null;
+    if (!state.available && !state.adsRemoved && !showCoffee && !ads.privacyOptionsRequired()) return null;
 
     return (
         <>
             <SectionHeader title="Yify" colors={colors} gutter={gutter} index={1}/>
             <Group colors={colors} index={1}>
-                {!sellable ? null : state.adsRemoved ? (
-                    <Row
-                        icon="heart"
-                        title="You support Yify"
-                        subtitle={
-                            adsLive
-                                ? 'Thank you. The ads in Yify are off for you, on every device you sign in on.'
-                                : 'Thank you. This carries across every device you sign in on.'
-                        }
-                        colors={colors}
-                        gutter={gutter}
-                        trailing={<Ionicons name="checkmark" size={18} color={colors.accent}/>}
-                    />
-                ) : account == null ? (
-                    <Row
-                        icon="heart-outline"
-                        title="Support Yify"
-                        subtitle={
-                            canSignIn
-                                ? 'Sign in first, then your support carries across every device you use.'
-                                : 'Sign-in is unavailable in this build.'
-                        }
-                        colors={colors}
-                        gutter={gutter}
-                        onPress={signingIn || !canSignIn ? undefined : () => void auth.signIn()}
-                        accessibilityLabel="Sign in to support Yify"
-                        accessibilityState={{disabled: !canSignIn}}
-                        trailing={
-                            signingIn ? (
-                                <ActivityIndicator color={colors.accent}/>
-                            ) : offer ? (
-                                <ThemedText style={[styles.value, {color: colors.accent}]}>
-                                    {offer.priceLabel}
-                                </ThemedText>
-                            ) : null
-                        }
-                    />
-                ) : (
-                    <Row
-                        icon="heart-outline"
-                        title="Support Yify"
-                        subtitle={
-                            adsLive
-                                ? `Built by one person. ${billing} to turn off the ads in Yify, on every device you sign in on.`
-                                : `Built by one person, with no ads. ${billing}, on every device you sign in on.`
-                        }
-                        colors={colors}
-                        gutter={gutter}
-                        onPress={state.purchasing == null ? buy : undefined}
-                        accessibilityLabel="Support Yify"
-                        trailing={
-                            state.purchasing != null ? (
-                                <ActivityIndicator color={colors.accent}/>
-                            ) : offer ? (
-                                <ThemedText style={[styles.value, {color: colors.accent}]}>
-                                    {offer.priceLabel}
-                                </ThemedText>
-                            ) : null
-                        }
-                    />
-                )}
+                {state.available || state.adsRemoved ? <Row
+                    icon={state.adsRemoved ? 'heart' : 'heart-outline'}
+                    title={state.adsRemoved ? 'Your Yify support' : 'Support Yify'}
+                    subtitle={state.adsRemoved
+                        ? supporterStatus(state)
+                        : 'See supporter plans, restore purchases, and manage your access.'}
+                    colors={colors}
+                    gutter={gutter}
+                    onPress={() => showSupporter('settings_supporter')}
+                    accessibilityLabel={state.adsRemoved ? 'Manage Yify support' : 'Support Yify and restore purchases'}
+                    trailing={<Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>}
+                /> : null}
                 {showCoffee ? (
                     <Row
                         icon="cafe-outline"

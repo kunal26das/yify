@@ -63,6 +63,45 @@ test('ad tracking does not wait for purchase details and preserves optional netw
     assert.equal(calls[0].data.networkName, 'actual SDK network');
 });
 
+test('installed RevenueCat bridge sends all ad events after configuration without waiting for customer info', async () => {
+    const calls = [];
+    const diagnostics = [];
+    let configurationChecks = 0;
+    let customerReads = 0;
+    const native = {
+        isConfigured: async () => { configurationChecks++; return true; },
+        getCustomerInfo: () => { customerReads++; return new Promise(() => {}); },
+        ...Object.fromEntries(methods.map(method => [method, data => calls.push({method, data})])),
+    };
+    const sdk = loadTypeScript('node_modules/react-native-purchases/dist/purchases.js', {
+        'react-native': {
+            NativeModules: {RNPurchases: native},
+            NativeEventEmitter: class { addListener() {} },
+            Platform: {OS: 'android'},
+        },
+        './utils/environment': {shouldUseBrowserMode: () => false},
+        './browser/nativeModule': {},
+    });
+    const {RevenueCatAdRevenueSink} = loadTypeScript('data/services/RevenueCatAdRevenueSink.ts', {
+        'react-native-purchases': sdk,
+    });
+    const sink = new RevenueCatAdRevenueSink({
+        trackEvent: (name, params) => diagnostics.push({name, params}),
+    });
+
+    sink.trackLoaded(impression);
+    sink.trackDisplayed(impression);
+    sink.trackOpened(impression);
+    sink.trackImpression(revenue);
+    sink.trackFailedToLoad({adUnitId: impression.adUnitId, placement: impression.placement});
+    await new Promise(resolve => setImmediate(resolve));
+
+    assert.equal(configurationChecks, 5);
+    assert.equal(customerReads, 0);
+    assert.deepEqual(calls.map(({method}) => method), methods);
+    assert.deepEqual(diagnostics, []);
+});
+
 test('revenue conversion retains zero and all reported precision types', () => {
     const {sink, calls} = fixture();
     for (const precision of ['unknown', 'estimated', 'publisher_defined', 'exact']) {
