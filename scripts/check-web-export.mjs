@@ -63,17 +63,26 @@ if (deletionBodies.length === DELETION_PAGES.length && deletionBodies[0] !== del
     );
 }
 
-for (const [page, title] of [['privacy/index.html', 'Privacy Policy'], ['terms/index.html', 'Terms &amp; Conditions']]) {
-    const path = join(dir, page);
-    if (!existsSync(path)) {
-        failures.push(`${page}: missing legal page`);
-        continue;
+for (const [name, title] of [['privacy', 'Privacy Policy'], ['terms', 'Terms &amp; Conditions']]) {
+    const pages = [`${name}/index.html`, `${name}.html`];
+    const normalizedPages = [];
+    for (const page of pages) {
+        const path = join(dir, page);
+        if (!existsSync(path)) {
+            failures.push(`${page}: missing legal page`);
+            continue;
+        }
+        const html = readFileSync(path, 'utf8');
+        if (!html.includes(`<h1>${title}</h1>`) || !html.includes('mailto:kunal26das@gmail.com')) {
+            failures.push(`${page}: legal content or contact information is missing`);
+        }
+        if (/<script\b/i.test(html)) failures.push(`${page}: legal pages must remain readable without app scripts`);
+        normalizedPages.push(html.replace(/href="(\.\.?\/[^"\r\n]*)"/g, (_attribute, href) =>
+            `href="${new URL(href, `https://legal.yify.invalid/yify/${page}`).href}"`));
     }
-    const html = readFileSync(path, 'utf8');
-    if (!html.includes(`<h1>${title}</h1>`) || !html.includes('mailto:kunal26das@gmail.com')) {
-        failures.push(`${page}: legal content or contact information is missing`);
+    if (normalizedPages.length === pages.length && normalizedPages[0] !== normalizedPages[1]) {
+        failures.push(`${pages.join(' and ')} have drifted — their legal content and resolved links must stay identical`);
     }
-    if (/<script\b/i.test(html)) failures.push(`${page}: legal pages must remain readable without app scripts`);
 }
 
 if (existsSync(join(dir, '_sitemap.html'))) {
