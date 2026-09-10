@@ -1,4 +1,9 @@
-export type WatchOffer = 'stream' | 'rent' | 'buy';
+export type WatchOffer = 'stream' | 'free' | 'ads' | 'rent' | 'buy';
+
+export interface WatchRegion {
+    code: string;
+    name: string;
+}
 
 export interface WatchProvider {
     id: number;
@@ -10,4 +15,5 @@ export interface WatchProvider {
 export interface WatchAvailability {
     region: string;
     providers: WatchProvider[];
+    url?: string;
 }

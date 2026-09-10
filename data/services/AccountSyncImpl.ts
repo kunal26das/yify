@@ -1,5 +1,10 @@
 import {
     type AccountSync,
+    type LibraryRepository,
+    encodeLibraryState,
+    mergeLibraryState,
+    parseLibraryState,
+    sameLibraryState,
     type AuthRepository,
     type Diagnostics,
     type DiagnosticSpan,
@@ -35,9 +40,11 @@ import {
     deleteSyncDocument,
     fetchSyncDocument,
     MAX_HISTORY_CHARS,
+    MAX_LIBRARY_CHARS,
     MAX_PREFERENCES_CHARS,
     MAX_WATCHLIST_CHARS,
     type SyncDocument,
+    type SyncWritePrecondition,
     writeSyncDocument,
 } from '../datasources/sync/FirestoreSyncDataSource';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
@@ -46,6 +53,10 @@ import {createObservable} from '../repositories/support/observable';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 const LINKED_UID_KEY = 'linkedUid';
+const LIBRARY_UID_KEY = 'libraryUid';
+const LIBRARY_TRANSITION_KEY = 'libraryTransition';
+const LIBRARY_WRITE_ATTEMPTS = 3;
+const libraryAccountKey = (uid: string) => `libraryAccount:${uid}`;
 const MARKS_KEY = 'watchlistMarks';
 const PREFERENCES_AT_KEY = 'preferencesUpdatedAt';
 const LAST_SYNCED_AT_KEY = 'lastSyncedAt';
@@ -59,6 +70,7 @@ interface AccountSyncDeps {
     store: KeyValueStore;
     auth: AuthRepository;
     watchlist: WatchlistRepository;
+    library: LibraryRepository;
     watchHistory: WatchHistoryRepository;
     preferences: PreferencesRepository;
     diagnostics?: Diagnostics;
@@ -68,6 +80,7 @@ export class AccountSyncImpl implements AccountSync {
     private readonly store: KeyValueStore;
     private readonly auth: AuthRepository;
     private readonly watchlist: WatchlistRepository;
+    private readonly library: LibraryRepository;
     private readonly watchHistory: WatchHistoryRepository;
     private readonly preferences: PreferencesRepository;
     private readonly diagnostics: Diagnostics;
@@ -90,17 +103,21 @@ export class AccountSyncImpl implements AccountSync {
     private watchlistDirty = false;
     private preferencesDirty = false;
     private historyDirty = false;
+    private libraryDirty = false;
+    private libraryAccountReady = false;
     private watchlistRevision = 0;
     private preferencesRevision = 0;
     private historyRevision = 0;
+    private libraryRevision = 0;
     private marks: WatchlistMarks = {};
     private trackedIds: number[] = [];
     private lastPreferencesPayload: string | null = null;
 
-    constructor({store, auth, watchlist, watchHistory, preferences, diagnostics = NOOP_DIAGNOSTICS}: AccountSyncDeps) {
+    constructor({store, auth, watchlist, library, watchHistory, preferences, diagnostics = NOOP_DIAGNOSTICS}: AccountSyncDeps) {
         this.store = store;
         this.auth = auth;
         this.watchlist = watchlist;
+        this.library = library;
         this.watchHistory = watchHistory;
         this.preferences = preferences;
         this.diagnostics = diagnostics;
@@ -116,30 +133,44 @@ export class AccountSyncImpl implements AccountSync {
         this.status.set({lastSyncedAt: lastSyncedAt || null});
         this.watchlist.subscribe(() => this.onWatchlistChanged());
         this.watchHistory.subscribe(() => this.onHistoryChanged());
+        this.library.subscribe(() => this.onLibraryChanged());
         this.preferences.subscribe(() => this.onPreferencesChanged());
         watchForeground(() => this.syncNow());
         this.pollTimer = setInterval(() => {
-            if (!this.currentUid || !isForeground()) return;
+            if (!isForeground()) return;
+            if (!this.currentUid) {
+                if (!this.libraryAccountReady) this.recoverAnonymousLibrary();
+                return;
+            }
             void this.pull();
         }, POLL_MS);
+        if (!this.currentUid) this.recoverAnonymousLibrary();
     }
 
     setAccount(uid: string | null): void {
-        if (uid === this.currentUid) return;
+        if (uid === this.currentUid) {
+            if (!uid && !this.libraryAccountReady) this.recoverAnonymousLibrary();
+            return;
+        }
         this.cancelPush();
         this.cancelRetry();
         this.backoff = RETRY_MS;
         this.currentUid = uid;
         this.mergedUid = null;
+        this.libraryAccountReady = false;
         if (!uid) {
-            this.status.set({state: 'idle', failure: null, detail: null});
+            this.recoverAnonymousLibrary();
             return;
         }
-        void this.pull();
+        if (this.selectLibraryAccount(uid)) void this.pull();
     }
 
     syncNow(): void {
-        if (!this.currentUid || this.paused) return;
+        if (this.paused) return;
+        if (!this.currentUid) {
+            if (!this.libraryAccountReady) this.recoverAnonymousLibrary();
+            return;
+        }
         this.cancelRetry();
         this.backoff = RETRY_MS;
         void this.pull();
@@ -194,6 +225,7 @@ export class AccountSyncImpl implements AccountSync {
         this.watchlistDirty = false;
         this.preferencesDirty = false;
         this.historyDirty = false;
+        this.libraryDirty = false;
         this.marks = {};
         this.store.delete(MARKS_KEY);
         // Retained local data must stay attributed to its account on the next sign-in.
@@ -257,11 +289,12 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private scheduleRetry(): void {
-        if (this.retryTimer || !this.currentUid || this.paused) return;
+        if (this.retryTimer || (!this.currentUid && this.libraryAccountReady) || this.paused) return;
         const delay = this.backoff;
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
-            void this.pull();
+            if (this.currentUid) void this.pull();
+            else if (!this.libraryAccountReady) this.recoverAnonymousLibrary();
         }, delay);
         this.backoff = Math.min(this.backoff * 2, RETRY_MAX_MS);
     }
@@ -293,7 +326,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private pendingChanges(): boolean {
-        return this.watchlistDirty || this.preferencesDirty || this.historyDirty;
+        return this.watchlistDirty || this.preferencesDirty || this.historyDirty || this.libraryDirty;
     }
 
     private onWatchlistChanged(): void {
@@ -319,6 +352,82 @@ export class AccountSyncImpl implements AccountSync {
         this.schedulePush();
     }
 
+    private recoverAnonymousLibrary(): void {
+        try {
+            const journal = this.store.getString(LIBRARY_TRANSITION_KEY);
+            let owner = this.store.getString(LIBRARY_UID_KEY) ?? this.store.getString(LINKED_UID_KEY);
+            if (journal) {
+                const transition = JSON.parse(journal) as {uid?: unknown};
+                if (typeof transition.uid !== 'string' || !transition.uid) throw new Error('Invalid library transition');
+                owner = transition.uid;
+            }
+            if (owner) {
+                if (!this.selectLibraryAccount(owner)) return;
+            } else {
+                this.library.setMutationBlocked(false);
+                this.libraryAccountReady = true;
+            }
+            this.cancelRetry();
+            this.status.set({state: 'idle', failure: null, detail: null, pendingChanges: this.pendingChanges()});
+        } catch {
+            this.fail('server', 'Local library storage could not be prepared. Please try again.');
+        }
+    }
+
+    private selectLibraryAccount(uid: string): boolean {
+        this.libraryAccountReady = false;
+        try {
+            this.library.setMutationBlocked(true);
+            const journal = this.store.getString(LIBRARY_TRANSITION_KEY);
+            let transition: {uid: string; state: string} | null = null;
+            if (journal) {
+                const parsed = JSON.parse(journal) as {uid?: unknown; state?: unknown};
+                if (typeof parsed.uid !== 'string' || typeof parsed.state !== 'string') throw new Error('Invalid library transition');
+                transition = {uid: parsed.uid, state: parsed.state};
+            }
+            const previousUid = this.store.getString(LIBRARY_UID_KEY) ?? this.store.getString(LINKED_UID_KEY);
+            if (!transition && (!previousUid || previousUid === uid)) {
+                const state = encodeLibraryState(this.library.getState());
+                this.store.set(libraryAccountKey(uid), state);
+                this.store.set(LIBRARY_UID_KEY, uid);
+            } else {
+                if (!transition && previousUid) {
+                    this.store.set(libraryAccountKey(previousUid), encodeLibraryState(this.library.getState()));
+                }
+                const state = transition?.uid === uid ? transition.state :
+                    encodeLibraryState(parseLibraryState(this.store.getString(libraryAccountKey(uid))));
+                this.store.set(LIBRARY_TRANSITION_KEY, JSON.stringify({uid, state}));
+                this.applyRemote(() => this.library.applyRemote(parseLibraryState(state)));
+                this.store.set(libraryAccountKey(uid), state);
+                this.store.set(LIBRARY_UID_KEY, uid);
+                this.store.delete(LIBRARY_TRANSITION_KEY);
+                this.libraryDirty = false;
+                this.libraryRevision += 1;
+            }
+            this.library.setMutationBlocked(false);
+            this.libraryAccountReady = true;
+            return true;
+        } catch {
+            this.fail('server', 'Local library storage could not be prepared. Please try again.');
+            return false;
+        }
+    }
+
+    private persistLibraryAccount(): void {
+        if (!this.libraryAccountReady || this.store.getString(LIBRARY_TRANSITION_KEY)) return;
+        const uid = this.store.getString(LIBRARY_UID_KEY);
+        if (uid) this.store.set(libraryAccountKey(uid), encodeLibraryState(this.library.getState()));
+    }
+
+    private onLibraryChanged(): void {
+        if (this.applying) return;
+        this.persistLibraryAccount();
+        this.libraryDirty = true;
+        this.libraryRevision += 1;
+        this.status.set({pendingChanges: true});
+        this.schedulePush();
+    }
+
     private onPreferencesChanged(): void {
         if (this.applying) return;
         const payload = JSON.stringify(this.preferences.getSynced());
@@ -333,7 +442,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private async push(): Promise<void> {
         const uid = this.currentUid;
-        if (!uid || uid !== this.mergedUid || this.paused) return;
+        if (!uid || uid !== this.mergedUid || this.paused || !this.libraryAccountReady) return;
         if (!this.pendingChanges()) return;
         if (this.running) {
             this.schedulePush();
@@ -348,55 +457,84 @@ export class AccountSyncImpl implements AccountSync {
                 this.fail('denied', 'no id token available');
                 return;
             }
-            const watchlistRevision = this.watchlistRevision;
-            const preferencesRevision = this.preferencesRevision;
-            const historyRevision = this.historyRevision;
-            const patch: SyncDocument = {};
-            let trimmed: string | null = null;
-            if (this.watchlistDirty) {
-                const fitted = fitWatchlistPayload(this.localState(), MAX_WATCHLIST_CHARS);
-                patch.watchlist = fitted.payload;
-                patch.watchlistUpdatedAt = Date.now();
-                if (fitted.trimmed) trimmed = 'watchlist';
-            }
-            if (this.historyDirty) {
-                const fitted = fitHistoryPayload(this.watchHistory.getState(), MAX_HISTORY_CHARS);
-                patch.history = fitted.payload;
-                patch.historyUpdatedAt = Date.now();
-                if (fitted.trimmed) trimmed = 'history';
-            }
-            if (this.preferencesDirty) {
-                const preferences = payloadWithinBudget(
-                    this.preferences.getSynced(),
-                    MAX_PREFERENCES_CHARS
-                );
-                if (preferences == null) {
-                    this.fail('oversized', 'preferences exceed the sync budget');
+            for (let attempt = 0; attempt < LIBRARY_WRITE_ATTEMPTS; attempt += 1) {
+                let precondition: SyncWritePrecondition | undefined;
+                if (this.libraryDirty) {
+                    const remote = await fetchSyncDocument(uid, token);
+                    if (this.currentUid !== uid || this.paused) return;
+                    if (!remote.ok) {
+                        this.fail(remote.failure, remote.detail);
+                        return;
+                    }
+                    this.mergeLibrary(remote.document);
+                    precondition = remote.updateTime ? {updateTime: remote.updateTime} : {exists: false};
+                }
+                const libraryRevision = this.libraryRevision;
+                const watchlistRevision = this.watchlistRevision;
+                const preferencesRevision = this.preferencesRevision;
+                const historyRevision = this.historyRevision;
+                const patch: SyncDocument = {};
+                let trimmed: string | null = null;
+                if (this.watchlistDirty) {
+                    const fitted = fitWatchlistPayload(this.localState(), MAX_WATCHLIST_CHARS);
+                    patch.watchlist = fitted.payload;
+                    patch.watchlistUpdatedAt = Date.now();
+                    if (fitted.trimmed) trimmed = 'watchlist';
+                }
+                if (this.historyDirty) {
+                    const fitted = fitHistoryPayload(this.watchHistory.getState(), MAX_HISTORY_CHARS);
+                    patch.history = fitted.payload;
+                    patch.historyUpdatedAt = Date.now();
+                    if (fitted.trimmed) trimmed = 'history';
+                }
+                if (this.libraryDirty) {
+                    const library = encodeLibraryState(this.library.getState());
+                    if (library.length > MAX_LIBRARY_CHARS) {
+                        this.fail('oversized', 'library exceeds the sync budget');
+                        return;
+                    }
+                    patch.library = library;
+                    patch.libraryUpdatedAt = Date.now();
+                }
+                if (this.preferencesDirty) {
+                    const preferences = payloadWithinBudget(
+                        this.preferences.getSynced(),
+                        MAX_PREFERENCES_CHARS
+                    );
+                    if (preferences == null) {
+                        this.fail('oversized', 'preferences exceed the sync budget');
+                        return;
+                    }
+                    patch.preferences = preferences;
+                    patch.preferencesUpdatedAt = this.readNumber(PREFERENCES_AT_KEY);
+                }
+                const result = await writeSyncDocument(uid, token, patch, precondition);
+                if (this.currentUid !== uid || this.paused) return;
+                if (!result.ok) {
+                    if (result.conflict) continue;
+                    this.fail(result.failure, result.detail);
                     return;
                 }
-                patch.preferences = preferences;
-                patch.preferencesUpdatedAt = this.readNumber(PREFERENCES_AT_KEY);
-            }
-            const result = await writeSyncDocument(uid, token, patch);
-            if (this.currentUid !== uid || this.paused) return;
-            if (!result.ok) {
-                this.fail(result.failure, result.detail);
+                if (patch.watchlist !== undefined && this.watchlistRevision === watchlistRevision) {
+                    this.watchlistDirty = false;
+                }
+                if (
+                    patch.preferences !== undefined &&
+                    this.preferencesRevision === preferencesRevision
+                ) {
+                    this.preferencesDirty = false;
+                }
+                if (patch.history !== undefined && this.historyRevision === historyRevision) {
+                    this.historyDirty = false;
+                }
+                if (patch.library !== undefined && this.libraryRevision === libraryRevision) {
+                    this.libraryDirty = false;
+                }
+                this.succeed(trimmed);
+                if (this.pendingChanges()) this.schedulePush();
                 return;
             }
-            if (patch.watchlist !== undefined && this.watchlistRevision === watchlistRevision) {
-                this.watchlistDirty = false;
-            }
-            if (
-                patch.preferences !== undefined &&
-                this.preferencesRevision === preferencesRevision
-            ) {
-                this.preferencesDirty = false;
-            }
-            if (patch.history !== undefined && this.historyRevision === historyRevision) {
-                this.historyDirty = false;
-            }
-            this.succeed(trimmed);
-            if (this.pendingChanges()) this.schedulePush();
+            this.fail('server', 'Your library changed on another device. Retrying sync.');
         } catch (error) {
             this.diagnosticSpan?.fail(error);
             throw error;
@@ -469,6 +607,17 @@ export class AccountSyncImpl implements AccountSync {
         }
     }
 
+    private mergeLibrary(remote: SyncDocument): void {
+        const remoteState = parseLibraryState(remote.library);
+        const next = mergeLibraryState(this.library.getState(), remoteState);
+        this.applyRemote(() => this.library.applyRemote(next));
+        this.persistLibraryAccount();
+        if (!sameLibraryState(next, remoteState)) {
+            this.libraryDirty = true;
+            this.libraryRevision += 1;
+        }
+    }
+
     private mergePreferences(remote: SyncDocument, mode: SyncMode): void {
         const remotePreferences = remote.preferences
             ? parseSyncedPreferences(remote.preferences)
@@ -490,6 +639,8 @@ export class AccountSyncImpl implements AccountSync {
             return;
         }
         const resolution = resolveSection(mode, remoteAt, localAt);
+        const preserveWatchRegion = mode !== 'remote-wins' && remotePreferences.watchRegion === undefined &&
+            this.preferences.getSynced().watchRegion != null;
         if (resolution === 'apply-remote') {
             this.applyRemote(() => {
                 if (mode === 'remote-wins') {
@@ -499,10 +650,11 @@ export class AccountSyncImpl implements AccountSync {
             });
             this.lastPreferencesPayload = JSON.stringify(this.preferences.getSynced());
             this.store.set(PREFERENCES_AT_KEY, String(remoteAt));
-            this.preferencesDirty = false;
+            this.preferencesDirty = preserveWatchRegion;
+            if (preserveWatchRegion) this.preferencesRevision += 1;
             return;
         }
-        if (resolution === 'push-local') {
+        if (resolution === 'push-local' || preserveWatchRegion) {
             this.preferencesDirty = true;
             this.preferencesRevision += 1;
         }
@@ -511,6 +663,7 @@ export class AccountSyncImpl implements AccountSync {
     private async pull(): Promise<void> {
         const uid = this.currentUid;
         if (!uid || this.paused) return;
+        if (!this.libraryAccountReady && !this.selectLibraryAccount(uid)) return;
         if (this.running) {
             this.scheduleRetry();
             return;
@@ -534,6 +687,7 @@ export class AccountSyncImpl implements AccountSync {
             const mode = chooseSyncMode(this.store.getString(LINKED_UID_KEY), uid);
             this.mergeWatchlist(result.document, mode);
             this.mergeHistory(result.document, mode);
+            this.mergeLibrary(result.document);
             this.mergePreferences(result.document, mode);
             this.store.set(LINKED_UID_KEY, uid);
             this.mergedUid = uid;

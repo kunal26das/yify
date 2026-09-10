@@ -48,10 +48,16 @@ export interface TmdbWatchProvidersResponse {
     results?: Record<string, TmdbProviderRegionDto>;
 }
 
+export interface TmdbWatchRegionsResponse {
+    results?: {iso_3166_1: string; english_name: string}[];
+}
+
 export interface TmdbApi {
     findByImdbId(imdbCode: string): Promise<TmdbFindResponse>;
 
     getWatchProviders(id: number, media: TmdbMediaType): Promise<TmdbWatchProvidersResponse>;
+
+    getWatchRegions(): Promise<TmdbWatchRegionsResponse>;
 }
 
 export function tmdbImageUrl(path: string | null | undefined, size: string): string | undefined {
@@ -114,6 +120,13 @@ export class TmdbApiDataSource implements TmdbApi {
         return this.request<TmdbWatchProvidersResponse>(
             `/${media}/${id}/watch/providers`,
             new URLSearchParams(), 'api.tmdb.watch_providers',
+        );
+    }
+
+    async getWatchRegions(): Promise<TmdbWatchRegionsResponse> {
+        return this.request<TmdbWatchRegionsResponse>(
+            '/watch/providers/regions',
+            new URLSearchParams({language: 'en-US'}), 'api.tmdb.watch_regions',
         );
     }
 }

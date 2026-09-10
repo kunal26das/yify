@@ -17,6 +17,7 @@ import {useResponsive} from '../hooks/use-responsive';
 import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 import {useRecordHistory} from './useWatchHistory';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
+import {WatchProviders} from './components/WatchProviders';
 
 const POSTER_WIDTH = 128;
 const POSTER_OVERLAP = 56;
@@ -34,15 +35,26 @@ function episodeCode(episode: ShowEpisode): string {
     return `S${String(episode.season).padStart(2, '0')}E${String(episode.episode).padStart(2, '0')}`;
 }
 
-export function ShowDetailsScreen({
-                                      imdbId,
-                                      shows,
-                                      artwork,
-                                  }: {
+interface LoadResult<T, Source> {
+    source: Source;
+    version: number;
+    value: T;
+    status: 'ready' | 'unavailable';
+}
+
+const EMPTY_EPISODES: ShowEpisode[] = [];
+
+interface ShowDetailsProps {
     imdbId: string;
     shows: ShowRepository;
     artwork: TmdbRepository;
-}) {
+}
+
+export function ShowDetailsScreen(props: ShowDetailsProps) {
+    return <ShowDetailsContent key={props.imdbId} {...props}/>;
+}
+
+function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
     const {width, gutter, contentMaxWidth} = useResponsive();
@@ -50,14 +62,24 @@ export function ShowDetailsScreen({
     const {historyPaused} = usePreferences();
     const recordedIdRef = useRef<string | null>(null);
 
-    const [show, setShow] = useState<Show | null>(null);
-    const [episodes, setEpisodes] = useState<ShowEpisode[]>([]);
-    const [meta, setMeta] = useState<TitleArtwork | null>(null);
-    const [loading, setLoading] = useState(true);
     const [reloadKey, setReloadKey] = useState(0);
-    const [openSeasons, setOpenSeasons] = useState<Record<number, boolean>>({});
-    const [notice, setNotice] = useState<Torrent | null>(null);
+    const [showResult, setShowResult] = useState<LoadResult<Show | null, ShowRepository> | null>(null);
+    const [episodeResult, setEpisodeResult] = useState<LoadResult<ShowEpisode[], ShowRepository> | null>(null);
+    const [metaResult, setMetaResult] = useState<LoadResult<TitleArtwork | null, TmdbRepository> | null>(null);
+    const [seasonState, setSeasonState] = useState({source: shows, version: 0, values: {} as Record<number, boolean>});
+    const [noticeState, setNoticeState] = useState<{source: ShowRepository; version: number; torrent: Torrent} | null>(null);
+    const showCurrent = showResult?.source === shows && showResult.version === reloadKey;
+    const episodeCurrent = episodeResult?.source === shows && episodeResult.version === reloadKey;
+    const show = showCurrent ? showResult.value : null;
+    const episodes = episodeCurrent ? episodeResult.value : EMPTY_EPISODES;
+    const meta = metaResult?.source === artwork && metaResult.version === reloadKey ? metaResult.value : null;
+    const showStatus = showCurrent ? showResult.status : 'loading';
+    const episodeStatus = episodeCurrent ? episodeResult.status : 'loading';
+    const openSeasons = seasonState.source === shows && seasonState.version === reloadKey ? seasonState.values : {};
+    const notice = noticeState?.source === shows && noticeState.version === reloadKey ? noticeState.torrent : null;
+    const setNotice = (torrent: Torrent | null) => setNoticeState(torrent ? {source: shows, version: reloadKey, torrent} : null);
     const reload = useCallback(() => setReloadKey(value => value + 1), []);
+    const loading = showStatus === 'loading' || episodeStatus === 'loading';
     useReloadOnCatalogAccess(reload, loading);
 
     const imdbCode = useMemo(() => {
@@ -67,33 +89,47 @@ export function ShowDetailsScreen({
 
     useEffect(() => {
         let active = true;
-        setLoading(true);
-
         void (async () => {
             try {
-                const [result, list] = await Promise.all([
-                    shows.listShows({page: 1, imdbId}),
-                    shows.listEpisodes(imdbId),
-                ]);
+                const result = await shows.listShows({page: 1, imdbId});
                 if (!active) return;
-                setShow(result.shows[0] ?? null);
-                setEpisodes(list);
+                setShowResult({source: shows, version: reloadKey, value: result.shows[0] ?? null, status: 'ready'});
             } catch {
-                if (active) setShow(null);
-            } finally {
-                if (active) setLoading(false);
+                if (active) setShowResult({source: shows, version: reloadKey, value: null, status: 'unavailable'});
             }
         })();
 
         void (async () => {
-            const found = await artwork.findByImdbCode(imdbCode);
-            if (active) setMeta(found);
+            try {
+                const list = await shows.listEpisodes(imdbId);
+                if (!active) return;
+                setEpisodeResult({source: shows, version: reloadKey, value: list, status: 'ready'});
+            } catch {
+                if (active) setEpisodeResult({source: shows, version: reloadKey, value: [], status: 'unavailable'});
+            }
         })();
 
         return () => {
             active = false;
         };
-    }, [artwork, imdbCode, imdbId, shows, reloadKey]);
+    }, [imdbId, shows, reloadKey]);
+
+    useEffect(() => {
+        let active = true;
+        if (!imdbCode) return;
+
+        void (async () => {
+            try {
+                const found = await artwork.findByImdbCode(imdbCode);
+                if (active) setMetaResult({source: artwork, version: reloadKey, value: found, status: 'ready'});
+            } catch {
+            }
+        })();
+
+        return () => {
+            active = false;
+        };
+    }, [artwork, imdbCode, reloadKey]);
 
     useEffect(() => {
         if (!show || historyPaused) return;
@@ -117,11 +153,6 @@ export function ShowDetailsScreen({
             .sort((a, b) => b.season - a.season);
     }, [episodes]);
 
-    useEffect(() => {
-        if (seasons.length === 0) return;
-        setOpenSeasons((prev) => (Object.keys(prev).length > 0 ? prev : {[seasons[0].season]: true}));
-    }, [seasons]);
-
     const toEpisodeTorrent = (episode: ShowEpisode): Torrent => ({
         url: episode.magnetUrl,
         hash: '',
@@ -141,7 +172,8 @@ export function ShowDetailsScreen({
     const backdropUrl = meta?.backdropUrl || meta?.posterUrl || show?.thumbnailUrl;
     const backdropHeight = Math.round(Math.min(width, contentMaxWidth) / BACKDROP_ASPECT);
     const seasonCount = seasons.filter((group) => group.season > 0).length;
-    const metaLine = [
+    const metaLine = episodeStatus === 'loading' ? 'Loading episode releases…'
+        : episodeStatus === 'unavailable' ? 'Episode releases unavailable' : [
         seasonCount > 0 ? `${seasonCount} ${seasonCount === 1 ? 'season' : 'seasons'}` : null,
         `${episodes.length} ${episodes.length === 1 ? 'release' : 'releases'}`,
     ]
@@ -239,27 +271,60 @@ export function ShowDetailsScreen({
                         </Animated.View>
                     ) : null}
 
+                    {showStatus === 'unavailable' ? (
+                        <View style={styles.statusBox}>
+                            <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                                Series information couldn’t load.
+                            </ThemedText>
+                            <PressableScale
+                                onPress={reload}
+                                accessibilityRole="button"
+                                accessibilityLabel="Retry series information"
+                                contentStyle={[styles.retry, {backgroundColor: colors.accentSoft}]}
+                            >
+                                <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>Try again</ThemedText>
+                            </PressableScale>
+                        </View>
+                    ) : null}
+
+                    <WatchProviders imdbCode={imdbCode} title={title} media="tv" pad={gutter}/>
+
                     <ThemedText type="section" style={[styles.sectionHeading, {color: colors.text}]}>
                         Episodes
                     </ThemedText>
 
-                {loading ? (
-                    <ActivityIndicator color={colors.accent} style={styles.loader}/>
+                {episodeStatus === 'loading' ? (
+                    <ActivityIndicator accessibilityLabel="Loading episode releases" color={colors.accent} style={styles.loader}/>
+                ) : episodeStatus === 'unavailable' ? (
+                    <View style={styles.statusBox}>
+                        <ThemedText style={[styles.episodeTitle, {color: colors.text}]}>
+                            Episode releases couldn’t load
+                        </ThemedText>
+                        <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                            Try again to load the releases for this series.
+                        </ThemedText>
+                        <PressableScale
+                            onPress={reload}
+                            accessibilityRole="button"
+                            accessibilityLabel="Retry episode releases"
+                            contentStyle={[styles.retry, {backgroundColor: colors.accentSoft}]}
+                        >
+                            <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>Try again</ThemedText>
+                        </PressableScale>
+                    </View>
                 ) : episodes.length === 0 ? (
                     <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
-                        No releases found for this series.
+                        No episode releases are listed for this series.
                     </ThemedText>
                 ) : (
                     seasons.map((group) => {
-                        const expanded = openSeasons[group.season] ?? false;
+                        const expanded = openSeasons[group.season] ?? group.season === seasons[0]?.season;
                         return (
                             <View key={group.season}>
                                 <PressableScale
                                     onPress={() =>
-                                        setOpenSeasons((prev) => ({
-                                            ...prev,
-                                            [group.season]: !expanded,
-                                        }))
+                                        setSeasonState({source: shows, version: reloadKey,
+                                            values: {...openSeasons, [group.season]: !expanded}})
                                     }
                                     accessibilityRole="button"
                                     accessibilityState={{expanded}}
@@ -390,6 +455,9 @@ const styles = StyleSheet.create({
     seasonTitle: {fontSize: 15, fontWeight: '700'},
     seasonRight: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     loader: {marginTop: Spacing.lg},
+    statusBox: {gap: Spacing.sm, marginTop: Spacing.md},
+    retry: {alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md},
+    retryLabel: {fontSize: 14, fontFamily: FontFamily.bold},
     episode: {
         flexDirection: 'row',
         gap: Spacing.md,

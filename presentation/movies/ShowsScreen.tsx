@@ -39,7 +39,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
     const {width, contentMaxWidth, gutter} = useResponsive();
     const topBarHeight = useTopBarHeight();
     const goTo = useGoTo();
-    const {shows, status, refreshing, loadingMore, loadMore, reload} = viewModel;
+    const {shows, status, refreshing, loadingMore, error, loadMore, reload} = viewModel;
 
     const [lastVisible, setLastVisible] = useState(0);
     const [atTop, setAtTop] = useState(true);
@@ -66,17 +66,18 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
         return chunks;
     }, [numColumns, shows]);
 
-    const onViewableItemsChanged = useRef(
+    const onViewableItemsChanged = useCallback(
         ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
             const max = viewableItems.reduce(
                 (acc, token) => (token.index != null && token.index > acc ? token.index : acc),
                 -1
             );
             if (max >= 0) setLastVisible(max);
-        }
-    ).current;
+        },
+        []
+    );
 
-    const viewabilityConfig = useRef({itemVisiblePercentThreshold: 10, minimumViewTime: 50}).current;
+    const viewabilityConfig = useMemo(() => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}), []);
 
     const renderRow = useCallback(
         ({item}: {item: Show[]}) => (
@@ -129,13 +130,25 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                     <View style={[styles.glyph, {backgroundColor: colors.surfaceSunken}]}>
                         <Ionicons name="tv-outline" size={34} color={colors.accent}/>
                     </View>
-                    <View style={[styles.badge, {backgroundColor: colors.accentSoft}]}>
-                        <ThemedText style={[styles.badgeLabel, {color: colors.accent}]}>COMING SOON</ThemedText>
-                    </View>
-                    <ThemedText type="heading" style={styles.title}>Shows are on the way</ThemedText>
-                    <ThemedText style={[styles.body, {color: colors.textMuted}]}>
-                        Series browsing is not available right now. Movies are all yours in the meantime.
+                    <ThemedText type="heading" style={styles.title}>
+                        {status === 'unavailable' ? 'Shows couldn’t load' : 'No series listed yet'}
                     </ThemedText>
+                    <ThemedText style={[styles.body, {color: colors.textMuted}]}>
+                        {status === 'unavailable'
+                            ? 'Series browsing is temporarily unavailable. Try again to reconnect.'
+                            : 'The catalog returned no series. Check again for new listings.'}
+                    </ThemedText>
+                    <PressableScale
+                        onPress={reload}
+                        accessibilityRole="button"
+                        accessibilityLabel="Retry series loading"
+                        contentStyle={[styles.cta, {backgroundColor: colors.accentStrong}]}
+                    >
+                        <Ionicons name="refresh" size={17} color={colors.onAccent}/>
+                        <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>
+                            Try again
+                        </ThemedText>
+                    </PressableScale>
                     <PressableScale
                         onPress={() => {
                             Analytics.browseAllOpen('shows_placeholder');
@@ -146,9 +159,9 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                         pressedOpacity={0.85}
                         hoveredScale={1.03}
                     >
-                        <View style={[styles.cta, {backgroundColor: colors.accentStrong}]}>
-                            <Ionicons name="film-outline" size={17} color={colors.onAccent}/>
-                            <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>
+                        <View style={styles.cta}>
+                            <Ionicons name="film-outline" size={17} color={colors.accent}/>
+                            <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>
                                 Browse movies
                             </ThemedText>
                         </View>
@@ -180,7 +193,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                 keyExtractor={(item, index) => item[0]?.imdbId ?? `row-${index}`}
                 renderItem={renderRow}
                 showsVerticalScrollIndicator={false}
-                onEndReached={loadMore}
+                onEndReached={error ? undefined : loadMore}
                 onEndReachedThreshold={3}
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
@@ -205,6 +218,22 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                             <ThemedText style={[styles.footerLabel, {color: colors.textMuted}]}>
                                 Loading more series…
                             </ThemedText>
+                        </View>
+                    ) : error ? (
+                        <View style={styles.footer}>
+                            <ThemedText style={[styles.footerLabel, {color: colors.textMuted}]}>
+                                {error === 'more' ? 'More series couldn’t load.' : 'The series list couldn’t refresh.'}
+                            </ThemedText>
+                            <PressableScale
+                                onPress={error === 'more' ? loadMore : reload}
+                                accessibilityRole="button"
+                                accessibilityLabel={error === 'more' ? 'Retry loading more series' : 'Retry series refresh'}
+                                contentStyle={[styles.cta, {backgroundColor: colors.accentSoft}]}
+                            >
+                                <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>
+                                    Try again
+                                </ThemedText>
+                            </PressableScale>
                         </View>
                     ) : null
                 }
@@ -298,8 +327,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginBottom: Spacing.xs,
     },
-    badge: {borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 4},
-    badgeLabel: {fontSize: 10.5, letterSpacing: 0.8, fontFamily: FontFamily.extrabold},
     title: {marginTop: Spacing.xs},
     body: {fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 380},
     cta: {

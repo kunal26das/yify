@@ -9,6 +9,7 @@ import type {
     Diagnostics,
     DisplayAds,
     MovieRepository,
+    LibraryRepository,
     NetworkMonitor,
     NewMoviesNotifier,
     PreferencesRepository,
@@ -114,4 +115,8 @@ export function useSearchHistory(): SearchHistoryRepository {
 
 export function useAccountSync(): AccountSync {
     return useDependencies().accountSync;
+}
+
+export function useLibraryRepository(): LibraryRepository {
+    return useDependencies().library;
 }

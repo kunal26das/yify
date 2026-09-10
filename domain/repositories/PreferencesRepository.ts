@@ -21,6 +21,8 @@ export interface PreferencesRepository {
 
     setHistoryPaused(paused: boolean): void;
 
+    setWatchRegion(region: string | null): void;
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void;
 
     setPlaybackPreferences(playback: PlaybackPreferences): void;

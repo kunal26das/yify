@@ -4,8 +4,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const {createRoutesManifest} = require('@expo/router-server/build/routes-manifest');
 
-const root = path.resolve(__dirname, '..');
+const root = path.dirname(require.resolve('../package.json'));
 const checker = path.join(root, 'scripts/check-web-export.mjs');
 const markers = ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
 const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
@@ -14,6 +15,20 @@ const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIB
 const apiRoutes = ['catalog', 'subscriber-catalog'].map(name => ({
     page: `/api/${name}/[operation]`, file: `_expo/functions/api/${name}/[operation]+api.js`,
 }));
+
+function expoConfig(output, baseUrl = '') {
+    const env = {...process.env, EXPO_WEB_BASE_URL: baseUrl};
+    if (output === undefined) delete env.EXPO_WEB_OUTPUT;
+    else env.EXPO_WEB_OUTPUT = output;
+    const result = spawnSync(process.execPath, ['-e', 'console.log(JSON.stringify(require("./app.config.js").expo));'], {
+        cwd: root, env, encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return JSON.parse(result.stdout);
+}
+
+const routerOptions = expoConfig('server').plugins.find(plugin => Array.isArray(plugin) && plugin[0] === 'expo-router')[1];
+const legalRedirects = createRoutesManifest(['./_layout.tsx', './index.tsx'], routerOptions).redirects;
 
 function fixture(t, server = false) {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'yify-web-export-'));
@@ -39,7 +54,7 @@ function fixture(t, server = false) {
     }
     write('_expo/static/js/web/entry-app.js', 'const endpoints = ["/api/catalog/movies", "/api/subscriber-catalog/movies"];');
     if (server) {
-        write('_expo/routes.json', JSON.stringify({apiRoutes}), serverDirectory);
+        write('_expo/routes.json', JSON.stringify({apiRoutes, redirects: legalRedirects}), serverDirectory);
         for (const route of apiRoutes) {
             write(route.file, `const privateConfiguration = ${JSON.stringify([...markers, ...subscriberMarkers])};`, serverDirectory);
         }
@@ -65,6 +80,65 @@ test('Hosting export checks prerendered server HTML and public client assets sep
     assert.ok(fs.existsSync(path.join(f.client, 'privacy/index.html')));
     const result = f.check();
     assert.equal(result.status, 0, result.output);
+});
+
+test('Hosting gate rejects legal directory copies without server redirects', (t) => {
+    const f = fixture(t, true);
+    f.write('_expo/routes.json', JSON.stringify({apiRoutes}), f.serverDirectory);
+    const result = f.check();
+    assert.equal(result.status, 1);
+    for (const name of ['privacy', 'terms', 'delete-account']) {
+        for (const source of [`/${name}`, `/${name}/`]) {
+            assert.ok(result.output.includes(`${source}: missing permanent Hosting redirect`));
+        }
+    }
+});
+
+test('Hosting gate requires trailing-slash matching, standalone targets and both page request methods', (t) => {
+    const f = fixture(t, true);
+    for (const replacement of [
+        {namedRegex: '^/privacy$'}, {namedRegex: '['}, {page: 'https://yify.expo.app/'},
+        {permanent: false}, {methods: ['POST']}, {methods: ['GET']},
+    ]) {
+        const redirects = legalRedirects.map(route => route.page.endsWith('/privacy.html') ? {...route, ...replacement} : route);
+        f.write('_expo/routes.json', JSON.stringify({apiRoutes, redirects}), f.serverDirectory);
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /\/privacy\/: missing permanent Hosting redirect/);
+    }
+});
+
+test('Expo generates narrow Hosting redirects for both forms of each legal URL', () => {
+    assert.equal(legalRedirects.length, 3);
+    for (const name of ['privacy', 'terms', 'delete-account']) {
+        for (const source of [`/${name}`, `/${name}/`]) {
+            const redirect = legalRedirects.find(route => new RegExp(route.namedRegex).test(source));
+            assert.equal(redirect?.page, `https://yify.expo.app/${name}.html`);
+            assert.equal(redirect.permanent, true);
+            assert.equal(redirect.methods, undefined);
+        }
+        for (const source of [`/${name}.html`, `/${name}/other`, `/${name}-other`]) {
+            assert.equal(legalRedirects.some(route => new RegExp(route.namedRegex).test(source)), false);
+        }
+    }
+});
+
+test('Hosting redirects preserve the native configuration and existing router settings', () => {
+    const native = expoConfig();
+    const staticWeb = expoConfig('static', '/yify');
+    const hosting = expoConfig('server');
+    assert.deepEqual(native.plugins, require('../app.json').expo.plugins);
+    assert.deepEqual(staticWeb.plugins, native.plugins);
+    const {plugins: hostingPlugins, web: hostingWeb, ...hostingRest} = hosting;
+    const {plugins: nativePlugins, web: nativeWeb, ...nativeRest} = native;
+    assert.deepEqual(hostingRest, nativeRest);
+    assert.deepEqual(hostingWeb, {...nativeWeb, output: 'server'});
+    assert.deepEqual(hostingPlugins.map(plugin => {
+        if (!Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
+        const {redirects, ...options} = plugin[1];
+        assert.equal(redirects.length, 3);
+        return [plugin[0], options];
+    }), nativePlugins);
 });
 
 test('Hosting gate rejects missing server HTML even when a client copy exists', (t) => {

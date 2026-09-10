@@ -24,12 +24,17 @@ const THEME_KEY = 'theme';
 const NOTIFICATIONS_KEY = 'notifications';
 const CONFIRM_WATCHLIST_REMOVAL_KEY = 'confirmWatchlistRemoval';
 const HISTORY_PAUSED_KEY = 'historyPaused';
+const WATCH_REGION_KEY = 'watchRegion';
 const BROWSE_DEFAULTS_KEY = 'browseDefaults';
 const PLAYBACK_KEY = 'playback';
 const NOTIFY_KEY = 'notify';
 
 function isThemePreference(value: unknown): value is ThemePreference {
     return value === 'system' || value === 'light' || value === 'dark';
+}
+
+function isWatchRegion(value: unknown): value is string | null {
+    return value === null || (typeof value === 'string' && /^[A-Z]{2}$/.test(value));
 }
 
 function isHour(value: unknown): boolean {
@@ -110,6 +115,7 @@ export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
             ...(typeof parsed.historyPaused === 'boolean'
                 ? {historyPaused: parsed.historyPaused}
                 : {}),
+            ...(isWatchRegion(parsed.watchRegion) ? {watchRegion: parsed.watchRegion} : {}),
             browseDefaults: parseBrowseDefaults(
                 parsed.browseDefaults ? JSON.stringify(parsed.browseDefaults) : undefined
             ),
@@ -170,6 +176,11 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         this.write({...this.read(), historyPaused});
     }
 
+    setWatchRegion(watchRegion: string | null): void {
+        if (!isWatchRegion(watchRegion) || this.read().watchRegion === watchRegion) return;
+        this.write({...this.read(), watchRegion});
+    }
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void {
         this.write({...this.read(), browseDefaults});
     }
@@ -188,6 +199,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             theme: current.theme,
             confirmWatchlistRemoval: current.confirmWatchlistRemoval,
             historyPaused: current.historyPaused,
+            watchRegion: current.watchRegion,
             browseDefaults: current.browseDefaults,
             playback: {...current.playback},
             notify: {...current.notify},
@@ -199,6 +211,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             theme: DEFAULT_PREFERENCES.theme,
             confirmWatchlistRemoval: DEFAULT_PREFERENCES.confirmWatchlistRemoval,
             historyPaused: DEFAULT_PREFERENCES.historyPaused,
+            watchRegion: DEFAULT_PREFERENCES.watchRegion,
             browseDefaults: DEFAULT_BROWSE_DEFAULTS,
             playback: {...DEFAULT_PLAYBACK_PREFERENCES},
             notify: {...DEFAULT_NOTIFICATION_PREFERENCES},
@@ -213,6 +226,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             confirmWatchlistRemoval:
                 next.confirmWatchlistRemoval ?? current.confirmWatchlistRemoval,
             historyPaused: next.historyPaused ?? current.historyPaused,
+            watchRegion: isWatchRegion(next.watchRegion) ? next.watchRegion : current.watchRegion,
             browseDefaults: next.browseDefaults,
             playback: mergeSection(current.playback, next.playback),
             notify: mergeSection(current.notify, next.notify),
@@ -229,6 +243,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
     private read(): Preferences {
         if (this.snapshot) return this.snapshot;
         const theme = this.store.getString(THEME_KEY);
+        const watchRegion = this.store.getString(WATCH_REGION_KEY);
         this.snapshot = {
             theme: isThemePreference(theme) ? theme : DEFAULT_PREFERENCES.theme,
             browseDefaults: parseBrowseDefaults(this.store.getString(BROWSE_DEFAULTS_KEY)),
@@ -236,6 +251,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             confirmWatchlistRemoval:
                 this.store.getString(CONFIRM_WATCHLIST_REMOVAL_KEY) !== 'false',
             historyPaused: this.store.getString(HISTORY_PAUSED_KEY) === 'true',
+            watchRegion: isWatchRegion(watchRegion) ? watchRegion : null,
             playback: parseLocalSection(
                 this.store.getString(PLAYBACK_KEY),
                 PLAYBACK_GUARDS,
@@ -259,6 +275,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             next.confirmWatchlistRemoval ? 'true' : 'false'
         );
         this.store.set(HISTORY_PAUSED_KEY, next.historyPaused ? 'true' : 'false');
+        this.store.set(WATCH_REGION_KEY, next.watchRegion ?? '');
         this.store.set(BROWSE_DEFAULTS_KEY, JSON.stringify(next.browseDefaults));
         this.store.set(PLAYBACK_KEY, JSON.stringify(next.playback));
         this.store.set(NOTIFY_KEY, JSON.stringify(next.notify));

@@ -67,7 +67,7 @@ export function MiniBar({video, rect, wide}: {video: PlayerVideo; rect: PlayerRe
                 </PressableScale>
                 <IconButton
                     name={playing ? 'pause' : 'play'}
-                    label={playing ? 'Pause' : 'Play'}
+                    label={playing ? 'Pause trailer' : 'Play trailer'}
                     color="#FFFFFF"
                     size={17}
                     compact
@@ -115,7 +115,7 @@ export function MiniBar({video, rect, wide}: {video: PlayerVideo; rect: PlayerRe
             </PressableScale>
             <IconButton
                 name={playing ? 'pause' : 'play'}
-                label={playing ? 'Pause' : 'Play'}
+                label={playing ? 'Pause trailer' : 'Play trailer'}
                 color={colors.text}
                 size={22}
                 onPress={togglePlay}

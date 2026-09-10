@@ -1,20 +1,26 @@
-import {useEffect, useState} from 'react';
-import {Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
+import {useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import * as Localization from 'expo-localization';
 import Animated from 'react-native-reanimated';
-import type {MovieDetails, WatchAvailability, WatchProvider} from '@/domain';
-import {useTmdbRepository} from '../../di/DependenciesContext';
+import type {MovieDetails, TitleMedia, WatchAvailability, WatchProvider} from '@/domain';
+import {usePreferencesRepository, useTmdbRepository} from '../../di/DependenciesContext';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing, Typography} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
-import {providerLinkable, providerUrl} from './providerLinks';
+import {usePreferences} from '../../hooks/use-preferences';
+import {useToast} from '../../components/toast';
+import {providerUrl} from './providerLinks';
+import {countryName, WatchRegionPicker} from './WatchRegionPicker';
 
 const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     stream: 'Stream',
+    free: 'Free',
+    ads: 'With ads',
     rent: 'Rent',
     buy: 'Buy',
 };
@@ -36,7 +42,7 @@ const ZONE_REGION: Record<string, string> = {
 export function deviceRegion(): string {
     try {
         const region = Localization.getLocales()[0]?.regionCode;
-        if (region) return region.toUpperCase();
+        if (region && /^[A-Z]{2}$/.test(region.toUpperCase())) return region.toUpperCase();
     } catch {
     }
     try {
@@ -44,8 +50,8 @@ export function deviceRegion(): string {
             Platform.OS === 'web' && typeof navigator !== 'undefined'
                 ? navigator.language
                 : new Intl.DateTimeFormat().resolvedOptions().locale;
-        const region = locale?.split('-')[1];
-        if (region) return region.toUpperCase();
+        const region = locale ? new Intl.Locale(locale).region : undefined;
+        if (region && /^[A-Z]{2}$/.test(region.toUpperCase())) return region.toUpperCase();
     } catch {
     }
     try {
@@ -59,64 +65,104 @@ export function deviceRegion(): string {
     return 'US';
 }
 
-export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?: number}) {
+export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
+    details?: Pick<MovieDetails, 'id' | 'imdbCode' | 'title'>;
+    imdbCode?: string;
+    title?: string;
+    media?: TitleMedia;
+    pad?: number;
+}) {
     const {colors} = usePalette();
-    const [availability, setAvailability] = useState<WatchAvailability | null>(null);
-
+    const preferences = usePreferences();
+    const preferencesRepository = usePreferencesRepository();
     const repository = useTmdbRepository();
+    const toast = useToast();
+    const automatic = useMemo(() => deviceRegion(), []);
+    const region = preferences.watchRegion ?? automatic;
+    const identity = details?.imdbCode ?? imdbCode;
+    const displayTitle = details?.title ?? title ?? '';
+    const [pickingCountry, setPickingCountry] = useState(false);
+    const [attempt, setAttempt] = useState(0);
+    const key = `${identity}:${media ?? 'auto'}:${region}:${attempt}`;
+    const [result, setResult] = useState<{
+        key: string;
+        status: 'ready' | 'error';
+        availability: WatchAvailability | null;
+    } | null>(null);
+    const current = result?.key === key ? result : null;
+    const availability = current?.availability;
 
     useEffect(() => {
         let active = true;
-        setAvailability(null);
-        if (!details.imdbCode) return;
+        if (!identity) return;
 
         void (async () => {
-            const artwork = await repository.findByImdbCode(details.imdbCode);
-            if (!active || !artwork) return;
-            const found = await repository.getWatchAvailability(
-                artwork.tmdbId,
-                artwork.media,
-                deviceRegion()
-            );
-            if (active) setAvailability(found);
+            try {
+                const artwork = await repository.findByImdbCode(identity);
+                if (!active) return;
+                if (!artwork || (media && artwork.media !== media)) {
+                    setResult({key, status: 'ready', availability: null});
+                    return;
+                }
+                const found = await repository.getWatchAvailability(artwork.tmdbId, artwork.media, region);
+                if (active) setResult({key, status: 'ready', availability: found});
+            } catch {
+                if (active) setResult({key, status: 'error', availability: null});
+            }
         })();
 
         return () => {
             active = false;
         };
-    }, [details.imdbCode, repository]);
+    }, [identity, key, media, region, repository]);
 
-    const shown = (availability?.providers ?? []).filter((provider) => providerLinkable(provider.id));
-    if (!availability || shown.length === 0) return null;
-
-    const open = (provider: WatchProvider) => {
-        const url = providerUrl(provider.id, details.title);
+    const open = async (url: string | undefined) => {
         if (!url) return;
-        Analytics.watchProviderOpen(details.id, availability.region);
-        if (Platform.OS === 'web') {
-            void Linking.openURL(url);
-            return;
+        if (details) Analytics.watchProviderOpen(details.id, region);
+        try {
+            if (Platform.OS === 'web') await Linking.openURL(url);
+            else await WebBrowser.openBrowserAsync(url, {enableBarCollapsing: true});
+        } catch {
+            toast('Couldn’t open viewing options. Please try again.');
         }
-        void WebBrowser.openBrowserAsync(url, {enableBarCollapsing: true}).catch(() => Linking.openURL(url));
     };
+
+    if (!identity) return null;
 
     return (
         <Animated.View entering={enterFade()} style={styles.section}>
-            <ThemedText type="section" style={{color: colors.text}}>
-                Watch on
-            </ThemedText>
-            <ScrollView
+            <View style={styles.heading}>
+                <ThemedText type="section" style={{color: colors.text}}>Where to watch</ThemedText>
+                <PressableScale onPress={() => setPickingCountry(true)} accessibilityRole="button"
+                    accessibilityLabel={`Change viewing country, currently ${countryName(region)}`}
+                    contentStyle={styles.country}>
+                    <ThemedText style={{color: colors.accent}}>{countryName(region)}</ThemedText>
+                    <Ionicons name="chevron-down" size={14} color={colors.accent}/>
+                </PressableScale>
+            </View>
+            {!current ? <ActivityIndicator style={styles.loading} color={colors.accent}/> : current.status === 'error' ? (
+                <View style={styles.message}>
+                    <ThemedText style={{color: colors.textMuted}}>Viewing options couldn’t be loaded.</ThemedText>
+                    <PressableScale onPress={() => setAttempt(value => value + 1)} accessibilityRole="button">
+                        <ThemedText style={{color: colors.accent}}>Try again</ThemedText>
+                    </PressableScale>
+                </View>
+            ) : !availability?.providers.length ? (
+                <ThemedText style={{color: colors.textMuted}}>No viewing options listed for {countryName(region)}.</ThemedText>
+            ) : <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 style={{marginHorizontal: -pad}}
                 contentContainerStyle={[styles.row, {paddingHorizontal: pad}]}
             >
-                {shown.map((provider) => (
+                {availability.providers.map((provider) => {
+                    const url = availability.url ?? providerUrl(provider.id, displayTitle);
+                    return (
                     <PressableScale
                         key={`${provider.offer}-${provider.id}`}
-                        onPress={() => open(provider)}
-                        accessibilityRole="link"
-                        accessibilityLabel={`${OFFER_LABEL[provider.offer]} on ${provider.name}`}
+                        onPress={url ? () => void open(url) : undefined}
+                        accessibilityRole={url ? 'link' : 'text'}
+                        accessibilityLabel={`${OFFER_LABEL[provider.offer]} on ${provider.name}${url ? ', view options' : ''}`}
                         pressedScale={0.96}
                         pressedOpacity={0.85}
                         contentStyle={[
@@ -142,8 +188,17 @@ export function WatchProviders({details, pad = 0}: {details: MovieDetails; pad?:
                             </ThemedText>
                         </View>
                     </PressableScale>
-                ))}
-            </ScrollView>
+                    );
+                })}
+            </ScrollView>}
+            <View style={styles.footer}>
+                <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch</ThemedText>
+                {availability?.url ? <PressableScale onPress={() => void open(availability.url)} accessibilityRole="link">
+                    <ThemedText style={[Typography.videoMeta, {color: colors.accent}]}>View all options ↗</ThemedText>
+                </PressableScale> : null}
+            </View>
+            {pickingCountry ? <WatchRegionPicker selected={preferences.watchRegion ?? null} automatic={automatic}
+                onSelect={code => preferencesRepository.setWatchRegion(code)} onClose={() => setPickingCountry(false)}/> : null}
         </Animated.View>
     );
 }
@@ -163,4 +218,9 @@ const styles = StyleSheet.create({
     logo: {width: 40, height: 40},
     providerText: {gap: 1},
     name: {fontSize: 14, fontWeight: '600'},
+    heading: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm},
+    country: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44},
+    footer: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.sm},
+    message: {gap: Spacing.sm},
+    loading: {alignSelf: 'flex-start', paddingVertical: Spacing.sm},
 });

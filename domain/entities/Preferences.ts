@@ -19,6 +19,7 @@ export interface Preferences {
     notifications: boolean;
     confirmWatchlistRemoval: boolean;
     historyPaused: boolean;
+    watchRegion: string | null;
     browseDefaults: BrowseDefaults;
     playback: PlaybackPreferences;
     notify: NotificationPreferences;
@@ -28,6 +29,7 @@ export interface SyncedPreferences {
     theme: ThemePreference;
     confirmWatchlistRemoval?: boolean;
     historyPaused?: boolean;
+    watchRegion?: string | null;
     browseDefaults: BrowseDefaults;
     playback?: Partial<PlaybackPreferences>;
     notify?: Partial<NotificationPreferences>;
@@ -46,6 +48,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
     notifications: true,
     confirmWatchlistRemoval: true,
     historyPaused: false,
+    watchRegion: null,
     browseDefaults: DEFAULT_BROWSE_DEFAULTS,
     playback: DEFAULT_PLAYBACK_PREFERENCES,
     notify: DEFAULT_NOTIFICATION_PREFERENCES,

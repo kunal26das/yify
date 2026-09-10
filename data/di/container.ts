@@ -1,3 +1,4 @@
+import {LibraryRepositoryImpl} from '../repositories/LibraryRepositoryImpl';
 import type {Dependencies} from '@/domain';
 import {createCatalogRepositories} from './catalogRepositories';
 import {TmdbApiDataSource} from '../datasources/TmdbApiDataSource';
@@ -40,6 +41,7 @@ export function createDependencies(): Dependencies {
 
     const auth = new FirebaseAuthRepositoryImpl(diagnostics);
     const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
+    const library = new LibraryRepositoryImpl(new PersistentCache('library'));
     const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'));
     const watchHistory = new WatchHistoryRepositoryImpl(new PersistentCache('history'));
     const purchases = new RevenueCatPurchaseRepositoryImpl(
@@ -52,6 +54,7 @@ export function createDependencies(): Dependencies {
         store: new PersistentCache('sync'),
         auth,
         watchlist,
+        library,
         watchHistory,
         preferences,
     });
@@ -84,6 +87,7 @@ export function createDependencies(): Dependencies {
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,
         watchlist,
+        library,
         watchHistory,
         purchases,
         accountSync,

@@ -8,6 +8,9 @@ export const WATCHLIST_FIELD = 'watchlist';
 export const WATCHLIST_UPDATED_AT_FIELD = 'watchlistUpdatedAt';
 export const PREFERENCES_FIELD = 'preferences';
 export const PREFERENCES_UPDATED_AT_FIELD = 'preferencesUpdatedAt';
+export const LIBRARY_FIELD = 'library';
+export const LIBRARY_UPDATED_AT_FIELD = 'libraryUpdatedAt';
+export const MAX_LIBRARY_CHARS = 300000;
 export const HISTORY_FIELD = 'history';
 export const HISTORY_UPDATED_AT_FIELD = 'historyUpdatedAt';
 
@@ -20,23 +23,27 @@ export interface SyncDocument {
     watchlistUpdatedAt?: number;
     preferences?: string;
     preferencesUpdatedAt?: number;
+    library?: string;
+    libraryUpdatedAt?: number;
     history?: string;
     historyUpdatedAt?: number;
 }
 
 export type SyncFetchResult =
-    | {ok: true; document: SyncDocument}
+    | {ok: true; document: SyncDocument; updateTime?: string}
     | {ok: false; failure: SyncFailure; detail: string};
 
-export type SyncWriteResult = {ok: true} | {ok: false; failure: SyncFailure; detail: string};
+export type SyncWriteResult = {ok: true} | {ok: false; failure: SyncFailure; detail: string; conflict?: boolean};
+export type SyncWritePrecondition = {updateTime: string} | {exists: false};
 
 type FirestoreValue = {stringValue: string} | {integerValue: string};
 
-const STRING_FIELDS = [WATCHLIST_FIELD, PREFERENCES_FIELD, HISTORY_FIELD] as const;
+const STRING_FIELDS = [WATCHLIST_FIELD, PREFERENCES_FIELD, HISTORY_FIELD, LIBRARY_FIELD] as const;
 const INTEGER_FIELDS = [
     WATCHLIST_UPDATED_AT_FIELD,
     PREFERENCES_UPDATED_AT_FIELD,
     HISTORY_UPDATED_AT_FIELD,
+    LIBRARY_UPDATED_AT_FIELD,
 ] as const;
 
 function toFields(document: SyncDocument): Record<string, FirestoreValue> {
@@ -107,8 +114,11 @@ export async function fetchSyncDocument(uid: string, token: string): Promise<Syn
         };
     }
     try {
-        const body = (await response.json()) as {fields?: Record<string, FirestoreValue>};
-        return {ok: true, document: fromFields(body.fields)};
+        const body = (await response.json()) as {fields?: Record<string, FirestoreValue>; updateTime?: string};
+        if (typeof body.updateTime !== 'string' || !body.updateTime) {
+            return {ok: false, failure: 'server', detail: 'sync document revision is missing'};
+        }
+        return {ok: true, document: fromFields(body.fields), updateTime: body.updateTime};
     } catch (error) {
         return {ok: false, failure: 'server', detail: String(error)};
     }
@@ -135,29 +145,42 @@ export async function deleteSyncDocument(uid: string, token: string): Promise<Sy
 export async function writeSyncDocument(
     uid: string,
     token: string,
-    patch: SyncDocument
+    patch: SyncDocument,
+    precondition?: SyncWritePrecondition
 ): Promise<SyncWriteResult> {
     const fields = toFields(patch);
     const paths = Object.keys(fields);
     if (paths.length === 0) return {ok: true};
-    const mask = paths.map((path) => `updateMask.fieldPaths=${path}`).join('&');
+    const query = new URLSearchParams();
+    paths.forEach(path => query.append('updateMask.fieldPaths', path));
+    const commit = precondition ? {
+        writes: [{update: {name: `projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}`, fields},
+            updateMask: {fieldPaths: paths}, currentDocument: precondition}],
+    } : null;
     let response: Response;
     try {
-        response = await fetch(`${documentUrl(uid)}?${mask}`, {
-            method: 'PATCH',
+        response = await fetch(commit ? `${BASE}:commit` : `${documentUrl(uid)}?${query.toString()}`, {
+            method: commit ? 'POST' : 'PATCH',
             headers: {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({fields}),
+            body: JSON.stringify(commit ?? {fields}),
         });
     } catch (error) {
         return {ok: false, failure: 'network', detail: String(error)};
     }
     if (response.ok) return {ok: true};
+    let error: {message?: string; status?: string} | undefined;
+    try {
+        error = ((await response.json()) as {error?: {message?: string; status?: string}}).error;
+    } catch {}
+    const conflict = precondition != null && (response.status === 409 || response.status === 412 ||
+        ['FAILED_PRECONDITION', 'ABORTED', 'ALREADY_EXISTS'].includes(error?.status ?? ''));
     return {
         ok: false,
-        failure: failureFor(response.status),
-        detail: await detailFor(response, `write failed with ${response.status}`),
+        failure: conflict ? 'server' : failureFor(response.status),
+        detail: error?.message || `write failed with ${response.status}`,
+        ...(conflict ? {conflict: true} : {}),
     };
 }

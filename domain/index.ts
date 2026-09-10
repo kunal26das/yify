@@ -2,7 +2,7 @@ export { Quality, SortBy, OrderBy, Genre } from './entities/MovieQuery';
 export type { Movie } from './entities/Movie';
 export {POSTER_WIDTHS} from './entities/Movie';
 export type {Show, ShowEpisode} from './entities/Show';
-export type {WatchProvider, WatchAvailability, WatchOffer} from './entities/WatchProvider';
+export type {WatchProvider, WatchAvailability, WatchOffer, WatchRegion} from './entities/WatchProvider';
 export type {Torrent} from './entities/Torrent';
 export type {CastMember} from './entities/CastMember';
 export type {MovieDetails} from './entities/MovieDetails';
@@ -162,3 +162,9 @@ export type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 export type {AccountSync} from './services/AccountSync';
 
 export type {Dependencies} from './Dependencies';
+
+export type {LibraryState, LibraryMark, LibraryCollection} from './entities/LibraryState';
+export type {LibraryRepository} from './repositories/LibraryRepository';
+export {emptyLibraryState, normalizeLibraryState, parseLibraryState, mergeLibraryState, encodeLibraryState, sameLibraryState, liveLibraryCollections, libraryMovieWatched, libraryCollectionContains, libraryLatestTimestamp, normalizeCollectionName, LIBRARY_MAX_COLLECTIONS, LIBRARY_MAX_COLLECTION_RECORDS, LIBRARY_MAX_MARKS, LIBRARY_NAME_LIMIT, LIBRARY_MAX_PAYLOAD_CHARS} from './policies/libraryMerge';
+export {selectWatchlistMovies, pickWatchlistMovie} from './policies/watchlistView';
+export type {WatchlistViewOptions, WatchlistSort, WatchlistStatus} from './policies/watchlistView';

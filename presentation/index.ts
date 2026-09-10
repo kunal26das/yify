@@ -9,6 +9,7 @@ export {
   useAuthRepository,
   usePreferencesRepository,
   useWatchlistRepository,
+  useLibraryRepository,
     useWatchHistoryRepository,
   useAppUpdates,
   usePurchaseRepository,

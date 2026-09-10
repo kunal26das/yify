@@ -15,6 +15,7 @@ function syncFixture(t, options = {}) {
     const calls = [];
     let foreground;
     let movies = [{id: 123}];
+    let library = {watched: {}, collections: {}, memberships: {}, clearedAt: 0};
     let history = {entries: [], removed: {}, clearedAt: 0};
     let preferences = {
         theme: 'dark',
@@ -29,6 +30,7 @@ function syncFixture(t, options = {}) {
             MAX_WATCHLIST_CHARS: 500000,
             MAX_PREFERENCES_CHARS: 4000,
             MAX_HISTORY_CHARS: 150000,
+            MAX_LIBRARY_CHARS: 300000,
             fetchSyncDocument: async (uid) => {
                 calls.push(`read:${uid}`);
                 await options.beforeRead?.();
@@ -60,6 +62,12 @@ function syncFixture(t, options = {}) {
         watchlist: {
             getAll: () => movies,
             applyRemote: (next) => { movies = next; },
+            subscribe: () => () => {},
+        },
+        library: {
+            setMutationBlocked: () => {},
+            getState: () => library,
+            applyRemote: (next) => { library = next; },
             subscribe: () => () => {},
         },
         watchHistory: {

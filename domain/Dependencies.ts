@@ -1,3 +1,4 @@
+import type {LibraryRepository} from './repositories/LibraryRepository';
 import type {AuthRepository} from './repositories/AuthRepository';
 import type {MovieRepository} from './repositories/MovieRepository';
 import type {PreferencesRepository} from './repositories/PreferencesRepository';
@@ -31,6 +32,7 @@ export interface Dependencies {
     searchHistory: SearchHistoryRepository;
     preferences: PreferencesRepository;
     watchlist: WatchlistRepository;
+    library: LibraryRepository;
     watchHistory: WatchHistoryRepository;
     purchases: PurchaseRepository;
     accountSync: AccountSync;

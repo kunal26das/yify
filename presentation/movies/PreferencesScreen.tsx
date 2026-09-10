@@ -110,7 +110,7 @@ const PLAYBACK_ROWS: PlaybackRow[] = [
     {
         key: 'autoplayNext',
         icon: 'play-forward-outline',
-        title: 'Autoplay next',
+        title: 'Autoplay next trailer',
         subtitle: 'When a trailer ends, roll on to the next one in the list.',
     },
     {

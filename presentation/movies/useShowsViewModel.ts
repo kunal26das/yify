@@ -13,26 +13,44 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
     const [refreshing, setRefreshing] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState<'refresh' | 'more' | null>(null);
+    const [source, setSource] = useState({repository, artwork});
+
+    if (source.repository !== repository || source.artwork !== artwork) {
+        setSource({repository, artwork});
+        setShows([]);
+        setStatus('loading');
+        setRefreshing(false);
+        setLoadingMore(false);
+        setHasMore(true);
+        setError(null);
+    }
 
     const pageRef = useRef(0);
     const loadingRef = useRef(false);
+    const generationRef = useRef(0);
     const seenRef = useRef<Set<string>>(new Set());
 
     const decorate = useCallback(
-        async (batch: Show[]) => {
+        async (batch: Show[], generation: number) => {
             if (!artwork) return;
             for (const show of batch) {
+                if (generation !== generationRef.current) return;
                 if (!show.imdbCode) continue;
-                const found = await artwork.findByImdbCode(show.imdbCode);
-                const poster = found?.posterUrl ?? found?.backdropUrl;
-                if (!poster) continue;
-                setShows((prev) =>
-                    prev.map((item) =>
-                        item.imdbId === show.imdbId
-                            ? {...item, thumbnailUrl: poster, title: found?.title || item.title}
-                            : item
-                    )
-                );
+                try {
+                    const found = await artwork.findByImdbCode(show.imdbCode);
+                    if (generation !== generationRef.current) return;
+                    const poster = found?.posterUrl ?? found?.backdropUrl;
+                    if (!poster) continue;
+                    setShows((prev) =>
+                        prev.map((item) =>
+                            item.imdbId === show.imdbId
+                                ? {...item, thumbnailUrl: poster, title: found?.title || item.title}
+                                : item
+                        )
+                    );
+                } catch {
+                }
             }
         },
         [artwork]
@@ -40,80 +58,84 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
 
     const load = useCallback(
         async (page: number) => {
-            if (loadingRef.current) return;
+            if (page > 1 && loadingRef.current) return;
+            const generation = page === 1 ? ++generationRef.current : generationRef.current;
             loadingRef.current = true;
-            if (page === 1) setRefreshing(true);
-            else setLoadingMore(true);
-
             try {
                 let current = page;
-                let received = 0;
+                const seen = page === 1 ? new Set<string>() : new Set(seenRef.current);
 
                 for (let attempt = 0; attempt <= MAX_EMPTY_PAGES; attempt += 1) {
                     const result = await repository.listShows({page: current});
+                    if (generation !== generationRef.current) return;
+                    const fresh = result.shows.filter((show) => {
+                        if (seen.has(show.imdbId)) return false;
+                        seen.add(show.imdbId);
+                        return true;
+                    });
+                    const canContinue = result.hasMore && attempt < MAX_EMPTY_PAGES;
+                    if (fresh.length === 0 && canContinue) {
+                        current += 1;
+                        continue;
+                    }
+
                     pageRef.current = current;
-                    received = result.shows.length;
-
-                    if (current === page && page === 1) seenRef.current = new Set();
-                    const fresh = result.shows.filter((show) => !seenRef.current.has(show.imdbId));
-                    for (const show of fresh) seenRef.current.add(show.imdbId);
-
-                    setShows((prev) =>
-                        current === page && page === 1 ? fresh : [...prev, ...fresh]
-                    );
-                    if (artwork) void decorate(fresh);
-                    setHasMore(result.hasMore);
-
-                    if (current === page && page === 1 && received > 0) {
-                        Analytics.showsImpression(received);
-                    }
-
-                    if (fresh.length > 0 || !result.hasMore) break;
-                    if (attempt === MAX_EMPTY_PAGES) {
-                        setHasMore(false);
-                        break;
-                    }
-                    current += 1;
+                    seenRef.current = seen;
+                    setShows((prev) => page === 1 ? fresh : [...prev, ...fresh]);
+                    setHasMore(result.hasMore && (fresh.length > 0 || canContinue));
+                    setStatus(seen.size > 0 ? 'ready' : 'empty');
+                    if (page === 1 && fresh.length > 0) Analytics.showsImpression(fresh.length);
+                    void decorate(fresh, generation);
+                    break;
                 }
-
-                setStatus((prev) => {
-                    if (page > 1) return prev === 'unavailable' ? 'ready' : prev;
-                    return received > 0 ? 'ready' : 'empty';
-                });
             } catch {
-                if (page === 1) {
+                if (generation !== generationRef.current) return;
+                Analytics.loadError('shows');
+                if (seenRef.current.size === 0) {
                     Analytics.showsUnavailable();
-                    Analytics.loadError('shows');
-                    setShows([]);
                     setStatus('unavailable');
+                } else {
+                    setError(page === 1 ? 'refresh' : 'more');
                 }
-                setHasMore(false);
             } finally {
-                loadingRef.current = false;
-                if (page === 1) setRefreshing(false);
-                else setLoadingMore(false);
+                if (generation === generationRef.current) {
+                    loadingRef.current = false;
+                    setRefreshing(false);
+                    setLoadingMore(false);
+                }
             }
         },
-        [artwork, decorate, repository]
+        [decorate, repository]
     );
 
     useEffect(() => {
+        pageRef.current = 0;
+        seenRef.current = new Set();
         void load(1);
+        return () => {
+            generationRef.current += 1;
+            loadingRef.current = false;
+        };
     }, [load]);
 
     const loadMore = useCallback(() => {
         if (!hasMore || loadingRef.current) return;
+        setError(null);
+        setLoadingMore(true);
         void load(pageRef.current + 1);
     }, [hasMore, load]);
 
     const reload = useCallback(() => {
-        setHasMore(true);
+        setError(null);
+        setRefreshing(true);
+        setLoadingMore(false);
+        if (seenRef.current.size === 0) setStatus('loading');
         void load(1);
     }, [load]);
 
     useReloadOnCatalogAccess(reload, status === 'loading' || refreshing || loadingMore);
 
-    return {shows, status, refreshing, loadingMore, hasMore, loadMore, reload};
+    return {shows, status, refreshing, loadingMore, hasMore, error, loadMore, reload};
 }
 
 export type ShowsViewModel = ReturnType<typeof useShowsViewModel>;

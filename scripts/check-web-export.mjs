@@ -45,6 +45,21 @@ if (serverOutput) {
                 throw new Error(`${page} bundle is missing or outside the server directory`);
             }
         }
+        for (const page of ['privacy', 'terms', 'delete-account']) {
+            for (const source of [`/${page}`, `/${page}/`]) {
+                const redirect = Array.isArray(manifest.redirects) ? manifest.redirects.find((entry) => {
+                    try {
+                        return typeof entry?.namedRegex === 'string' && new RegExp(entry.namedRegex).test(source);
+                    } catch {
+                        return false;
+                    }
+                }) : undefined;
+                if (redirect?.page !== `https://yify.expo.app/${page}.html` || !redirect.permanent ||
+                    (redirect.methods && !['GET', 'HEAD'].every((method) => redirect.methods.includes(method)))) {
+                    failures.push(`${source}: missing permanent Hosting redirect to its standalone legal HTML page`);
+                }
+            }
+        }
     } catch (error) {
         failures.push(`server catalog API: ${error.message}`);
     }
