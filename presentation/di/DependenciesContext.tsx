@@ -7,6 +7,7 @@ import type {
     AuthRepository,
     Dependencies,
     Diagnostics,
+    DisplayAds,
     MovieRepository,
     NetworkMonitor,
     NewMoviesNotifier,
@@ -89,6 +90,10 @@ export function usePurchaseRepository(): PurchaseRepository {
 
 export function useAdGateway(): AdGateway {
     return useDependencies().ads;
+}
+
+export function useDisplayAds(): DisplayAds {
+    return useDependencies().displayAds;
 }
 
 export function useSupporterNudge(): SupporterNudge {

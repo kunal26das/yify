@@ -17,6 +17,7 @@ import {RemoteAppConfig} from '../services/RemoteAppConfig';
 import {ExpoAppUpdates} from '../services/ExpoAppUpdates';
 import {PlayStoreServices} from '../services/PlayStoreServices';
 import {AdMobAdGateway} from '../services/AdMobAdGateway';
+import {AdSenseDisplayAds} from '../services/AdSenseDisplayAds';
 import {RevenueCatAdRevenueSink} from '../services/RevenueCatAdRevenueSink';
 import {SupporterNudgeImpl} from '../services/SupporterNudgeImpl';
 import {AccountSyncImpl} from '../services/AccountSyncImpl';
@@ -94,6 +95,7 @@ export function createDependencies(): Dependencies {
         newMovies: new NewMoviesNotifierImpl(diagnostics),
         storeServices: new PlayStoreServices(),
         ads,
+        displayAds: new AdSenseDisplayAds(purchases),
         supporterNudge,
     };
 

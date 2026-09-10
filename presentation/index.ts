@@ -13,6 +13,7 @@ export {
   useAppUpdates,
   usePurchaseRepository,
   useAdGateway,
+  useDisplayAds,
   useSupporterNudge,
   useNewMoviesNotifier,
     useNetworkMonitor,

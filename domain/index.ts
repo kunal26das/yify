@@ -147,6 +147,8 @@ export type {AppConfig} from './services/AppConfig';
 export type {AppUpdates} from './services/AppUpdates';
 export type {StoreServices} from './services/StoreServices';
 export type {AdGateway} from './services/AdGateway';
+export type {DisplayAds} from './services/DisplayAds';
+export type {DisplayAdState} from './services/DisplayAdState';
 export type {
     AdRevenueSink,
     AdImpression,

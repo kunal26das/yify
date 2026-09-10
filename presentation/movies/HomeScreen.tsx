@@ -10,6 +10,7 @@ import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
 import {Screen} from '../components/screen';
 import {ThemedView} from '../components/themed-view';
+import {WebAdvertisement} from '../components/WebAdvertisement';
 import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
@@ -436,46 +437,49 @@ export function HomeScreen({
                         scrollEventThrottle={16}
                         showsVerticalScrollIndicator={false}
                         ListHeaderComponent={
-                            heroMovies.length > 0 ? (
-                                <Animated.View
-                                    style={[
-                                        styles.heroWrap,
-                                        {
-                                            opacity: scrollY.interpolate({
-                                                inputRange: [0, heroHeight * 0.75],
-                                                outputRange: [1, 0],
-                                                extrapolate: 'clamp',
-                                            }),
-                                            transform: [
-                                                {
-                                                    scale: scrollY.interpolate({
-                                                        inputRange: [-heroHeight, 0, heroHeight],
-                                                        outputRange: [1.15, 1, 0.92],
-                                                        extrapolate: 'clamp',
-                                                    }),
-                                                },
-                                                {
-                                                    translateY: scrollY.interpolate({
-                                                        inputRange: [0, heroHeight],
-                                                        outputRange: [0, heroHeight * 0.22],
-                                                        extrapolate: 'clamp',
-                                                    }),
-                                                },
-                                            ],
-                                        },
-                                    ]}
-                                >
-                                    <HeroBillboard
-                                        visible={heroVisible}
-                                        movies={heroMovies}
-                                        width={width}
-                                        height={heroHeight}
-                                        trailers={heroTrailers}
-                                        backdrops={heroBackdrops}
-                                        onRequestTrailer={requestHeroTrailer}
-                                    />
-                                </Animated.View>
-                            ) : null
+                            <>
+                                {heroMovies.length > 0 ? (
+                                    <Animated.View
+                                        style={[
+                                            styles.heroWrap,
+                                            {
+                                                opacity: scrollY.interpolate({
+                                                    inputRange: [0, heroHeight * 0.75],
+                                                    outputRange: [1, 0],
+                                                    extrapolate: 'clamp',
+                                                }),
+                                                transform: [
+                                                    {
+                                                        scale: scrollY.interpolate({
+                                                            inputRange: [-heroHeight, 0, heroHeight],
+                                                            outputRange: [1.15, 1, 0.92],
+                                                            extrapolate: 'clamp',
+                                                        }),
+                                                    },
+                                                    {
+                                                        translateY: scrollY.interpolate({
+                                                            inputRange: [0, heroHeight],
+                                                            outputRange: [0, heroHeight * 0.22],
+                                                            extrapolate: 'clamp',
+                                                        }),
+                                                    },
+                                                ],
+                                            },
+                                        ]}
+                                    >
+                                        <HeroBillboard
+                                            visible={heroVisible}
+                                            movies={heroMovies}
+                                            width={width}
+                                            height={heroHeight}
+                                            trailers={heroTrailers}
+                                            backdrops={heroBackdrops}
+                                            onRequestTrailer={requestHeroTrailer}
+                                        />
+                                    </Animated.View>
+                                ) : null}
+                                <WebAdvertisement gutter={gutter}/>
+                            </>
                         }
                         ListFooterComponent={
                             <>

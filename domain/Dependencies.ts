@@ -17,6 +17,7 @@ import type {NetworkMonitor} from './services/NetworkMonitor';
 import type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 import type {StoreServices} from './services/StoreServices';
 import type {Diagnostics} from './services/Diagnostics';
+import type {DisplayAds} from './services/DisplayAds';
 
 export interface Dependencies {
     diagnostics: Diagnostics;
@@ -37,5 +38,6 @@ export interface Dependencies {
     newMovies: NewMoviesNotifier;
     storeServices: StoreServices;
     ads: AdGateway;
+    displayAds: DisplayAds;
     supporterNudge: SupporterNudge;
 }
