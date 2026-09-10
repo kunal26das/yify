@@ -47,6 +47,25 @@ An existing APK is accepted only when Staging alone is selected. Selecting both 
 an empty APK field and builds each channel separately. The iOS console flow records a supplied IPA;
 upload it to App Store Connect separately.
 
+## Android native crash symbols
+
+React Native Firebase includes Crashlytics NDK capture by default. The
+`withCrashlyticsNdk` Expo plugin enables Firebase symbol generation and makes both
+`assembleRelease` and `bundleRelease` depend on `uploadCrashlyticsSymbolFileRelease`.
+This covers local, preview and production builds; an upload failure fails the build.
+Debug builds do not trigger this upload, and requesting both release tasks uploads once.
+
+Crashlytics reads Gradle's merged native-library artifact, including app and dependency
+libraries, before packaging strips it. Sentry's native symbol upload remains separate.
+Function and source-line coverage depends on the symbols each library provides; already
+stripped third-party libraries may need matching unstripped symbols from their publisher.
+
+After a failed Firebase upload, retry `./gradlew :app:uploadCrashlyticsSymbolFileRelease`
+from `android/` with the same build inputs. For a shipped build, recover its original
+symbols and verify their GNU build IDs against that exact APK/AAB before uploading;
+matching version names alone are insufficient. OTA updates do not replace native libraries
+or supply their symbols. See [Firebase's NDK guidance](https://firebase.google.com/docs/crashlytics/ndk-reports).
+
 ## Over-the-air updates
 
 OTA updates can change JavaScript and assets supported by an installed binary. Native dependency,

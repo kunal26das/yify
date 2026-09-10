@@ -214,4 +214,12 @@ apply plugin: 'com.google.gms.google-services'
           enabled = false
       }
   }
+
+pluginManager.withPlugin("com.google.firebase.crashlytics") {
+    android.buildTypes.release.firebaseCrashlytics.nativeSymbolUploadEnabled = true
+    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
+        dependsOn("uploadCrashlyticsSymbolFileRelease")
+    }
+}
+
 apply plugin: 'com.google.firebase.crashlytics'

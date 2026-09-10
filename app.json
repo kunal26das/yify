@@ -89,6 +89,7 @@
       ],
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
+      "./plugins/withCrashlyticsNdk",
       "@react-native-firebase/auth",
       [
         "@sentry/react-native/expo",
