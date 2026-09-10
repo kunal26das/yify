@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -131,15 +132,70 @@ export function completePlan(input, publication, finishedAt = new Date().toISOSt
 export function saveReceipt(filename, receipt) {
     const validated = validateReceipt(receipt);
     fs.mkdirSync(path.dirname(filename), {recursive: true});
-    fs.writeFileSync(filename, `${JSON.stringify(validated, null, 2)}\n`, {mode: 0o600});
+    try {
+        fs.writeFileSync(filename, `${JSON.stringify(validated, null, 2)}\n`, {mode: 0o600, flag: 'wx'});
+    } catch (error) {
+        if (error.code === 'EEXIST') {
+            throw new Error(`A publication receipt already exists at ${filename}. Preserve it and retry metadata only: node scripts/sentry-release.mjs ${JSON.stringify(filename)}`);
+        }
+        throw error;
+    }
     return validated;
 }
 
-export async function recordDeployment(input, {cwd = projectRoot, env = process.env, fetch: request = globalThis.fetch} = {}) {
+export async function recordDeployment(input, {cwd = projectRoot, env = process.env, fetch: request = globalThis.fetch, receiptPath} = {}) {
     const receipt = validateReceipt(input);
     const uploadEnv = uploadEnvironment(cwd, env);
     const base = new URL(`/api/0/organizations/${encodeURIComponent(uploadEnv.SENTRY_ORG)}/releases/`, uploadEnv.SENTRY_URL);
     if (base.protocol !== 'https:' || base.username || base.password) throw new Error('Sentry API must use HTTPS without URL credentials.');
+    const target = {url: base.origin, organization: uploadEnv.SENTRY_ORG, project: uploadEnv.SENTRY_PROJECT};
+    const identity = createHash('sha256').update(JSON.stringify({receipt, target})).digest('hex');
+    const savedReceipt = receiptPath && fs.existsSync(receiptPath)
+        ? JSON.parse(fs.readFileSync(receiptPath, 'utf8')) : input;
+    if (JSON.stringify(validateReceipt(savedReceipt)) !== JSON.stringify(receipt)) {
+        throw new Error('The saved Sentry receipt belongs to another publication. Use a unique receipt file for each publication.');
+    }
+    const recorded = new Map();
+    const attempted = new Set();
+    if (savedReceipt.sentry) {
+        const checkpoint = savedReceipt.sentry;
+        if (JSON.stringify(checkpoint.target) !== JSON.stringify(target)) {
+            throw new Error('The saved Sentry checkpoint targets a different URL, organization or project.');
+        }
+        if (checkpoint.identity !== identity || !Array.isArray(checkpoint.deployments)) {
+            throw new Error('The saved Sentry checkpoint does not match this receipt.');
+        }
+        if (checkpoint.attemptedReleases !== undefined && !Array.isArray(checkpoint.attemptedReleases)) {
+            throw new Error('The saved Sentry attempted-deployment checkpoint is invalid.');
+        }
+        for (const version of checkpoint.attemptedReleases || []) {
+            if (!receipt.releases.includes(version) || attempted.has(version)) throw new Error('The saved Sentry attempted-deployment checkpoint is invalid.');
+            attempted.add(version);
+        }
+        for (const entry of checkpoint.deployments) {
+            if (!receipt.releases.includes(entry.release) || !/^\d+$/.test(entry.deploymentId) || recorded.has(entry.release)) {
+                throw new Error('The saved Sentry deployment checkpoint is invalid.');
+            }
+            recorded.set(entry.release, entry.deploymentId);
+        }
+    }
+    const persistCheckpoint = () => {
+        if (receiptPath) {
+            const temporary = `${receiptPath}.tmp`;
+            const sentry = {identity, target,
+                status: recorded.size === receipt.releases.length ? 'recorded' : recorded.size ? 'partial' : 'pending',
+                deployments: [...recorded].map(([release, id]) => ({release, deploymentId: id})),
+                attemptedReleases: [...attempted]};
+            fs.writeFileSync(temporary, `${JSON.stringify({...receipt, sentry}, null, 2)}\n`, {mode: 0o600});
+            fs.renameSync(temporary, receiptPath);
+        }
+    };
+    const remember = (version, deploymentId) => {
+        if (!/^\d+$/.test(String(deploymentId))) throw new Error('Sentry did not return a valid deployment ID. Inspect the saved receipt before retrying.');
+        recorded.set(version, String(deploymentId));
+        attempted.delete(version);
+        persistCheckpoint();
+    };
     const headers = {Authorization: `Bearer ${uploadEnv.SENTRY_AUTH_TOKEN}`, 'Content-Type': 'application/json'};
     const call = async (url, method = 'GET', body) => {
         const target = new URL(url, base);
@@ -171,6 +227,10 @@ export async function recordDeployment(input, {cwd = projectRoot, env = process.
     };
     const result = [];
     for (const version of receipt.releases) {
+        if (recorded.has(version)) {
+            result.push({release: version, deploymentId: recorded.get(version), alreadyRecorded: true});
+            continue;
+        }
         const releaseUrl = new URL(`${encodeURIComponent(version)}/`, base);
         const existing = await call(releaseUrl);
         const deployUrl = new URL('deploys/', releaseUrl);
@@ -178,8 +238,17 @@ export async function recordDeployment(input, {cwd = projectRoot, env = process.
         const already = deploys.find((deploy) => deploy.name === receipt.name && deploy.environment === receipt.environment);
         if (already) {
             if (already.url !== receipt.url) throw new Error('An existing Sentry deployment has the same identity but a different URL.');
+            remember(version, already.id);
             result.push({release: version, deploymentId: String(already.id), alreadyRecorded: true});
             continue;
+        }
+        if (attempted.has(version)) {
+            throw new Error('A previous Sentry deployment POST has no confirmed response, and the visible deployment does not match this receipt. Refusing an automatic retry that could create a duplicate; inspect the original workflow receipt and logs.');
+        }
+        const later = deploys.find((deploy) => deploy.environment === receipt.environment &&
+            (!Number.isFinite(Date.parse(deploy.dateFinished)) || Date.parse(deploy.dateFinished) >= Date.parse(receipt.dateFinished)));
+        if (later) {
+            throw new Error('Sentry only lists the latest deployment per environment. This older receipt has no saved Sentry checkpoint, so its prior recording cannot be verified. Refusing to create a possible duplicate; inspect the original workflow receipt and logs.');
         }
         const commits = existing.missing ? [] : await list(new URL('commits/', releaseUrl));
         const knownCommits = commits.map((commit) => ({id: commit.id, repository: commit.repository?.name || repository}));
@@ -190,8 +259,11 @@ export async function recordDeployment(input, {cwd = projectRoot, env = process.
             dateReleased: existing.data?.dateReleased || receipt.dateFinished, commits: knownCommits};
         if (existing.missing) await call(base, 'POST', {version, projects: [uploadEnv.SENTRY_PROJECT], ...metadata});
         else await call(releaseUrl, 'PUT', metadata);
+        attempted.add(version);
+        persistCheckpoint();
         const deployed = await call(deployUrl, 'POST', {environment: receipt.environment, name: receipt.name,
             url: receipt.url, dateFinished: receipt.dateFinished, projects: [uploadEnv.SENTRY_PROJECT]});
+        remember(version, deployed.data.id);
         result.push({release: version, deploymentId: String(deployed.data.id), alreadyRecorded: false});
     }
     return result;
@@ -210,14 +282,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     try {
         const [filename, ...args] = process.argv.slice(2);
         let receipt;
+        let receiptPath;
         if (filename === '--github-pages' && args.length === 2) {
-            receipt = saveReceipt(path.resolve(args[1]), githubPagesReceipt(process.env, args[0]));
+            receiptPath = path.resolve(args[1]);
+            receipt = saveReceipt(receiptPath, githubPagesReceipt(process.env, args[0]));
         } else if (filename && args.length === 0) {
-            receipt = JSON.parse(fs.readFileSync(path.resolve(filename), 'utf8'));
+            receiptPath = path.resolve(filename);
+            receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
         } else {
             throw new Error('Usage: node scripts/sentry-release.mjs <successful-deployment-receipt.json>');
         }
-        const result = await recordDeployment(receipt);
+        const result = await recordDeployment(receipt, {receiptPath});
         console.error(`Sentry release metadata recorded: ${result.map((entry) => entry.release).join(', ')}.`);
     } catch (error) {
         console.error(error.message);

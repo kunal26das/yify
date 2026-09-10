@@ -232,8 +232,8 @@ test('deployment source verification rejects a later commit and uncommitted sour
 
 test('a successful OTA uploads source maps even when its deployment receipt cannot be verified', async (t) => {
     const [, {runEas}] = await modules;
-    const f = fixture(t);
     for (const stdout of ['not valid JSON', JSON.stringify([{...update, runtimeVersion: 'unexpected-runtime'}])]) {
+        const f = fixture(t);
         let uploaded = false;
         await assert.rejects(runEas('/eas', ['update', '--json', '--channel', 'Production'], {...f,
             run: async (_command, _args, options) => { options.onStdout(stdout); return 0; },
@@ -304,4 +304,138 @@ test('planned hosting rejects a stale exported Sentry release before uploading m
     assert.doesNotThrow(() => verifyWebExportRelease(directory, 'Yify@1.7.7'));
     fs.writeFileSync(entry, 'console.log("missing release prelude");');
     assert.throws(() => verifyWebExportRelease(directory, 'Yify@1.7.7'), /no unambiguous Sentry release prelude/);
+});
+
+test('saved deployment checkpoints keep older receipts idempotent after later deployments hide them', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const receiptPath = path.join(f.cwd, 'published.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+    const results = [response({}, 404), response({}, 201), response({id: '123'}, 201)];
+    await recordDeployment(receipt, {...f, receiptPath, fetch: async () => results.shift()});
+    const checkpoint = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    assert.equal(checkpoint.sentry.status, 'recorded');
+    assert.deepEqual(checkpoint.sentry.deployments, [{release: receipt.releases[0], deploymentId: '123'}]);
+    const retry = await recordDeployment(receipt, {...f, receiptPath,
+        fetch: () => assert.fail('a later deployment cannot hide a locally confirmed successful recording'),
+    });
+    assert.deepEqual(retry, [{release: receipt.releases[0], deploymentId: '123', alreadyRecorded: true}]);
+    await assert.rejects(recordDeployment({...receipt, name: 'another-publication'}, {...f, receiptPath,
+        fetch: () => assert.fail('must not reuse a checkpoint for another receipt'),
+    }), /receipt belongs to another publication/);
+});
+
+test('an older receipt without a checkpoint refuses an ambiguous duplicate when Sentry only returns the latest deploy', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const results = [response({dateReleased: receipt.dateFinished}), response([{id: '456', environment: receipt.environment,
+        name: 'expo-update:later-deployment', dateFinished: '2026-09-02T12:00:00.000Z', url: 'https://expo.dev/later'}])];
+    let reads = 0;
+    await assert.rejects(recordDeployment(receipt, {...f, fetch: async (_url, options) => {
+        assert.equal(options.method, 'GET', 'historical retry must never create a duplicate');
+        reads += 1;
+        return results.shift();
+    }}), /only lists the latest deployment.*Refusing to create a possible duplicate/);
+    assert.equal(reads, 2);
+});
+
+
+test('an uncertain Sentry POST never marks its receipt recorded or retries the mutation automatically', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const receiptPath = path.join(f.cwd, 'published.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+    const results = [response({}, 404), response({}, 201)];
+    let posts = 0;
+    await assert.rejects(recordDeployment(receipt, {...f, receiptPath, fetch: async (_url, options) => {
+        if (options.method === 'POST' && ++posts === 2) throw new Error('response lost after server accepted deployment');
+        return results.shift();
+    }}), /request did not complete.*saved receipt only/);
+    assert.equal(posts, 2, 'only one release POST and one deployment POST are attempted');
+    const saved = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    assert.equal(saved.sentry.status, 'pending');
+    assert.deepEqual(saved.sentry.deployments, []);
+    assert.deepEqual(saved.sentry.attemptedReleases, receipt.releases);
+});
+
+
+test('a successful receipt checkpoint cannot be reused for another Sentry URL, organization or project', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const receiptPath = path.join(f.cwd, 'published.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+    const results = [response({}, 404), response({}, 201), response({id: '123'}, 201)];
+    await recordDeployment(receipt, {...f, receiptPath, fetch: async () => results.shift()});
+    for (const changed of [{SENTRY_PROJECT: 'another-project'}, {SENTRY_ORG: 'another-org'}, {SENTRY_URL: 'https://another.sentry.io/'}]) {
+        await assert.rejects(recordDeployment(receipt, {...f, receiptPath, env: {...f.env, ...changed},
+            fetch: () => assert.fail('must reject the old target checkpoint before HTTP'),
+        }), /checkpoint targets a different URL, organization or project/);
+    }
+});
+
+
+test('an uncertain POST cannot be repeated when an out-of-order backfill hides it behind an older timestamp', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const receiptPath = path.join(f.cwd, 'published.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(receipt));
+    const initial = [response({}, 404), response({}, 201)];
+    await assert.rejects(recordDeployment(receipt, {...f, receiptPath, fetch: async () => {
+        if (!initial.length) throw new Error('deployment response was lost');
+        return initial.shift();
+    }}), /request did not complete/);
+    const retried = [response({}), response([{id: '456', environment: receipt.environment,
+        name: 'historical-backfill', dateFinished: '2026-08-01T12:00:00.000Z', url: 'https://expo.dev/older'}])];
+    await assert.rejects(recordDeployment(receipt, {...f, receiptPath, fetch: async (_url, options) => {
+        assert.equal(options.method, 'GET');
+        return retried.shift();
+    }}), /previous Sentry deployment POST has no confirmed response.*Refusing an automatic retry/);
+    assert.equal(retried.length, 0);
+});
+
+test('partial multi-release success persists the first ID and resolves an uncertain second release without another POST', async (t) => {
+    const [{recordDeployment}] = await modules;
+    const f = fixture(t);
+    const multi = {...receipt, releases: [...receipt.releases, 'ios-app@1.7.7+79']};
+    const receiptPath = path.join(f.cwd, 'published.json');
+    fs.writeFileSync(receiptPath, JSON.stringify(multi));
+    const initial = [response({}, 404), response({}, 201), response({id: '123'}, 201), response({}, 404), response({}, 201)];
+    await assert.rejects(recordDeployment(multi, {...f, receiptPath, fetch: async () => {
+        if (!initial.length) throw new Error('second deployment response was lost');
+        return initial.shift();
+    }}), /request did not complete/);
+    const saved = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+    assert.equal(saved.sentry.status, 'partial');
+    assert.deepEqual(saved.sentry.deployments, [{release: multi.releases[0], deploymentId: '123'}]);
+    assert.deepEqual(saved.sentry.attemptedReleases, [multi.releases[1]]);
+    const retried = [response({}), response([{id: '456', environment: receipt.environment,
+        name: receipt.name, dateFinished: receipt.dateFinished, url: receipt.url}])];
+    const result = await recordDeployment(multi, {...f, receiptPath, fetch: async (url, options) => {
+        assert.equal(options.method, 'GET');
+        assert.ok(String(url).includes(encodeURIComponent(multi.releases[1])));
+        return retried.shift();
+    }});
+    assert.deepEqual(result, multi.releases.map((release, index) => ({release, deploymentId: index ? '456' : '123', alreadyRecorded: true})));
+    assert.equal(JSON.parse(fs.readFileSync(receiptPath, 'utf8')).sentry.status, 'recorded');
+});
+
+
+test('reusing a publication output cannot erase receipt checkpoints or start another EAS publication', async (t) => {
+    const [{saveReceipt}, {runEas}] = await modules;
+    const f = fixture(t);
+    const receiptPath = `${f.planPath}.published.json`;
+    const saved = {...receipt, sentry: {status: 'pending', attemptedReleases: receipt.releases}};
+    fs.writeFileSync(receiptPath, JSON.stringify(saved));
+    assert.throws(() => saveReceipt(receiptPath, {...receipt, dateFinished: '2026-09-02T12:00:00.000Z'}),
+        /receipt already exists.*retry metadata only/);
+    assert.deepEqual(JSON.parse(fs.readFileSync(receiptPath, 'utf8')), saved);
+    await assert.rejects(runEas('/eas', ['update', '--json', '--channel', 'Production'], {...f,
+        run: () => assert.fail('must not repeat publication'), upload: () => assert.fail('must not upload'),
+    }), /already has a publication receipt.*new plan file/);
+    fs.unlinkSync(receiptPath);
+    fs.writeFileSync(`${f.planPath}.eas.json`, 'prior publication output');
+    await assert.rejects(runEas('/eas', ['update', '--json', '--channel', 'Production'], {...f,
+        run: () => assert.fail('must not repeat an unverified publication'), upload: () => assert.fail('must not upload'),
+    }), /already has a publication receipt/);
+    assert.equal(fs.readFileSync(`${f.planPath}.eas.json`, 'utf8'), 'prior publication output');
 });

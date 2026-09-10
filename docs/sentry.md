@@ -153,7 +153,8 @@ checkout. Example for the Android 1.7.7 binary:
 }
 ```
 
-Save the plan outside tracked source, such as under `.expo/`. Set `SENTRY_DEPLOYMENT_PLAN` to
+Use a unique plan file for each publication, outside tracked source such as under `.expo/`. Existing
+publication receipts and raw Expo responses cannot be overwritten by another publication. Set `SENTRY_DEPLOYMENT_PLAN` to
 that file and publish through `scripts/eas.sh` with `--json` and explicit `--channel Production`
 or `--channel Staging` from a clean checkout at its stated commit. The channel must match the plan
 environment and `EXPO_UPDATE_CHANNEL` when it is set.
@@ -184,8 +185,16 @@ If metadata recording fails after publishing, retry only the saved successful re
 node scripts/sentry-release.mjs /path/to/plan.json.published.json
 ```
 
-The API checks existing deployments before writing, including paginated results, so sequential
-retries retain the original deployment. It preserves the first release date and existing commit
-associations. Serialize metadata updates for the same release, including updates from different deployment paths. GitHub workflows retain receipts as
+Sentry's deployment list exposes only the latest deployment for each project/environment. After
+recording metadata, the script atomically saves the returned deployment IDs and recording status in
+the `.published.json` receipt. Later retries validate that checkpoint against the receipt identity
+and Sentry URL, organization and project
+and use it even after another deployment has shipped.
+The script records an attempted deployment before sending its POST. After an uncertain response, a
+retry requires either the confirmed ID or an exact visible deployment match; it never repeats that
+POST automatically. Legacy receipts without checkpoints cannot prove whether they were recorded.
+Clearly historical retries are refused when a newer deployment is visible; recover the original
+workflow receipt and logs instead of guessing. It preserves the first release
+date and existing commit associations. Serialize metadata updates for the same release, including updates from different deployment paths. GitHub workflows retain receipts as
 workflow artifacts for 30 days. Metadata uses the existing `org:ci` upload credential; it does not
 need broader project administration access.

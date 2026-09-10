@@ -26,6 +26,10 @@ export async function runEas(cli, args, {cwd = projectRoot, env = process.env, r
     const isUpdate = args[0] === 'update';
     const planPath = uploadEnv.SENTRY_DEPLOYMENT_PLAN && path.resolve(cwd, uploadEnv.SENTRY_DEPLOYMENT_PLAN);
     const plan = planPath && validatePlan(JSON.parse(fs.readFileSync(planPath, 'utf8')));
+    const receiptPath = planPath && `${planPath}.published.json`;
+    if (planPath && (fs.existsSync(receiptPath) || fs.existsSync(`${planPath}.eas.json`))) {
+        throw new Error('This Sentry plan already has a publication receipt. Inspect and retry its saved metadata only; use a new plan file for a new publication.');
+    }
     if (plan && (plan.kind !== (isUpdate ? 'ota' : 'hosting') || !args.includes('--json'))) {
         throw new Error('A Sentry deployment plan must match the EAS operation and requires --json.');
     }
@@ -68,10 +72,9 @@ export async function runEas(cli, args, {cwd = projectRoot, env = process.env, r
     if (code !== 0) return code;
     let receipt;
     let receiptError;
-    const receiptPath = planPath && `${planPath}.published.json`;
     if (plan) {
         try {
-            fs.writeFileSync(`${planPath}.eas.json`, stdout, {mode: 0o600});
+            fs.writeFileSync(`${planPath}.eas.json`, stdout, {mode: 0o600, flag: 'wx'});
             receipt = saveReceipt(receiptPath, completePlan(plan, JSON.parse(stdout)));
         } catch (error) {
             receiptError = new Error(`Expo publication succeeded, but its Sentry deployment receipt could not be verified: ${error.message} Inspect ${planPath}.eas.json; do not republish.`);
@@ -87,7 +90,7 @@ export async function runEas(cli, args, {cwd = projectRoot, env = process.env, r
     if (receiptError) throw receiptError;
     if (receipt) {
         try {
-            await record(receipt, {cwd, env: uploadEnv});
+            await record(receipt, {cwd, env: uploadEnv, receiptPath});
         } catch (error) {
             throw new Error(`Expo publication succeeded, but ${error.message} Retry only: node scripts/sentry-release.mjs ${JSON.stringify(receiptPath)}`);
         }
