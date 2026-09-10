@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, ScrollView, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 import {useRecordHistory} from './useWatchHistory';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 
@@ -53,8 +54,11 @@ export function ShowDetailsScreen({
     const [episodes, setEpisodes] = useState<ShowEpisode[]>([]);
     const [meta, setMeta] = useState<TitleArtwork | null>(null);
     const [loading, setLoading] = useState(true);
+    const [reloadKey, setReloadKey] = useState(0);
     const [openSeasons, setOpenSeasons] = useState<Record<number, boolean>>({});
     const [notice, setNotice] = useState<Torrent | null>(null);
+    const reload = useCallback(() => setReloadKey(value => value + 1), []);
+    useReloadOnCatalogAccess(reload, loading);
 
     const imdbCode = useMemo(() => {
         const digits = imdbId.replace(/\D/g, '');
@@ -89,7 +93,7 @@ export function ShowDetailsScreen({
         return () => {
             active = false;
         };
-    }, [artwork, imdbCode, imdbId, shows]);
+    }, [artwork, imdbCode, imdbId, shows, reloadKey]);
 
     useEffect(() => {
         if (!show || historyPaused) return;

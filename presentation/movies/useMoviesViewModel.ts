@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Genre, Movie, MovieRepository, OrderBy, Quality, SortBy } from '@/domain';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 
 const PAGE_SIZE = 50;
 const PAGES_PER_BATCH = 2;
@@ -134,6 +135,8 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   const loadInitial = useCallback(() => {
     loadMovies(1, appliedQueryRef.current, appliedFiltersRef.current);
   }, [loadMovies]);
+
+  useReloadOnCatalogAccess(loadInitial, loading || refreshing);
 
   const setSearchQuery = useCallback(
     (value: string) => {

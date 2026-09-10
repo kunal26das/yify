@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Movie, MovieDetails, MovieRepository } from '@/domain';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 
 export function useMovieDetailsViewModel(repository: MovieRepository, movieId: number) {
   const [details, setDetails] = useState<MovieDetails | null>(null);
@@ -51,6 +52,8 @@ export function useMovieDetailsViewModel(repository: MovieRepository, movieId: n
     setRefreshing(true);
     setReloadKey((k) => k + 1);
   }, []);
+
+  useReloadOnCatalogAccess(refresh, loading || refreshing);
 
   return { details, suggestions, loading, refreshing, error, reload, refresh };
 }

@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {Show, ShowRepository, TmdbRepository} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 
 export type ShowsStatus = 'loading' | 'ready' | 'empty' | 'unavailable';
 
@@ -109,6 +110,8 @@ export function useShowsViewModel(repository: ShowRepository, artwork?: TmdbRepo
         setHasMore(true);
         void load(1);
     }, [load]);
+
+    useReloadOnCatalogAccess(reload, status === 'loading' || refreshing || loadingMore);
 
     return {shows, status, refreshing, loadingMore, hasMore, loadMore, reload};
 }

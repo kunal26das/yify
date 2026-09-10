@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {Movie, MovieRepository} from '@/domain';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 import {
     API_MAX_LIMIT,
     HERO_LIMIT,
@@ -49,6 +50,7 @@ export function useHomeViewModel(repository: MovieRepository) {
     const [shelves, setShelves] = useState<ShelfState[]>(initialShelves);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [fetchingShelves, setFetchingShelves] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const heroLoadingRef = useRef(false);
@@ -138,8 +140,10 @@ export function useHomeViewModel(repository: MovieRepository) {
         const next = takeNextInShelfOrder(queueRef.current);
         if (!next) return;
         busyRef.current = true;
+        setFetchingShelves(true);
         void runFetch(next.key, next.page).finally(() => {
             busyRef.current = false;
+            setFetchingShelves(false);
             inFlightRef.current.delete(next.key);
             pumpQueue();
         });
@@ -178,6 +182,8 @@ export function useHomeViewModel(repository: MovieRepository) {
         setShelves(initialShelves());
         void loadHero();
     }, [loadHero]);
+
+    useReloadOnCatalogAccess(reload, loading || refreshing || fetchingShelves);
 
     const selectShelves = useMemo(() => createHomeShelfSelector(), []);
     const {shelves: dedupedShelves, needsMore} = useMemo(

@@ -139,6 +139,11 @@ keys and does not perform Firebase token-revocation checks; a revoked ID token c
 until its normal expiry. Signing out stops further subscriber requests in that browser, but cannot
 erase responses already received or invalidate a copied token immediately.
 
+To inspect subscriber traffic, filter the browser Network panel by `subscriber-catalog`.
+A `403` means the server found no qualifying subscription. The app's “supporter access”
+message also covers legacy lifetime and sandbox purchases, so it does not confirm eligibility
+for raw responses. Inspect the customer's production subscriptions in RevenueCat before changing access.
+
 Catalog requests have a 25-second deadline that cancels upstream fetches and further pagination.
 For each API, a worker limits upstream work to 60 units per client per minute and 240 units overall, with bursts
 of the same size and at most 24/48 concurrent units. An episode request reserves six units for its

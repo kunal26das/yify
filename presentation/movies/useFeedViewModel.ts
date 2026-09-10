@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {Movie, MovieRepository} from '@/domain';
+import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
 import {API_MAX_LIMIT, HERO_LIMIT, HERO_QUERY} from './constants/homeShelves';
 
@@ -32,6 +33,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
     const [totalCount, setTotalCount] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadingHero, setLoadingHero] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
@@ -47,6 +49,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
     const loadHero = useCallback(async () => {
         if (skipHero || heroLoadingRef.current) return;
         heroLoadingRef.current = true;
+        setLoadingHero(true);
         try {
             const {movies} = await repository.listMovies({
                 page: 1,
@@ -59,6 +62,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
             setHero([]);
         } finally {
             heroLoadingRef.current = false;
+            setLoadingHero(false);
         }
     }, [repository, skipHero]);
 
@@ -145,6 +149,8 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
         void loadHero();
         void loadPage(1, chipRef.current);
     }, [loadHero, loadPage]);
+
+    useReloadOnCatalogAccess(reload, loading || refreshing || loadingHero);
 
     const movies = useMemo(() => {
         if (hero.length === 0) return fetched;
