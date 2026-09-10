@@ -103,7 +103,7 @@ function fixture(t, options = {}) {
         setUserProperty: (...args) => { calls.push(['property', ...args]); },
     }, {
         getString: (key) => cache.get(key), set: (key, value) => cache.set(key, value), delete: (key) => cache.delete(key),
-    });
+    }, options.diagnostics);
     return {repository, calls, listeners, foreground, infos, cache, defaultOffering,
         uid: () => sdkUid,
         ready: async (uid = null) => {
@@ -514,4 +514,67 @@ test('offerings failures use increasing retry delays without repeatedly configur
     await flush();
     assert.equal(attempts, 3);
     assert.equal(f.calls.filter(([name]) => name === 'configure').length, 1);
+});
+
+function diagnosticRecorder() {
+    const operations = [];
+    const diagnostics = {
+        start(operation, attributes) {
+            const entry = {operation, attributes};
+            operations.push(entry);
+            return {
+                finish(outcome = 'ok', attributes) { Object.assign(entry, {outcome, finishAttributes: attributes}); },
+                fail(error, attributes) { Object.assign(entry, {outcome: 'error', error, finishAttributes: attributes}); },
+            };
+        },
+        event(operation, attributes) { operations.push({operation, attributes}); },
+        capture(error, operation, attributes) { operations.push({operation, error, attributes}); },
+    };
+    return {diagnostics, operations};
+}
+
+test('purchase diagnostics preserve coalescing and classify pending, cancelled and already-owned outcomes', async (t) => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let failure = {code: 'cancelled'};
+    const result = deferred();
+    const f = fixture(t, {diagnostics, purchase: async () => { await result.promise; throw failure; }});
+    await f.ready();
+    const id = f.repository.getState().offers[0].id;
+    const first = f.repository.purchase(id);
+    assert.equal(f.repository.purchase(id), first);
+    result.resolve();
+    assert.equal(await first, false);
+    failure = {code: 'pending'};
+    assert.equal(await f.repository.purchase(id), false);
+    failure = {code: 'already'};
+    assert.equal(await f.repository.purchase(id), false);
+    assert.deepEqual(operations.filter(e => e.operation === 'purchases.purchase').map(e => e.outcome),
+        ['cancelled', 'pending', 'skipped']);
+    assert.equal(operations.some(e => e.error), false);
+});
+
+test('native purchase and restore diagnostics retain errors once without account or package metadata', async (t) => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    const failure = Object.assign(new Error('private purchase response'), {code: 'private-customer-123'});
+    const f = fixture(t, {diagnostics, purchase: async () => { throw failure; }, restore: async () => customer(false)});
+    await f.ready('private-account-123');
+    await f.repository.purchase(f.repository.getState().offers[0].id);
+    assert.equal(await f.repository.restore(), false);
+    const failures = operations.filter(e => e.error);
+    assert.equal(failures.length, 1);
+    assert.equal(failures[0].error, failure);
+    assert.equal(failures[0].finishAttributes.error_code, 'unknown');
+    assert.equal(operations.find(e => e.operation === 'purchases.restore').outcome, 'empty');
+    const metadata = JSON.stringify(operations.map(({error, ...entry}) => entry));
+    assert.doesNotMatch(metadata, /private|customerInfo|package_id|offeringId|\$rc_monthly/);
+});
+
+test('native offerings diagnostics capture a swallowed sync failure at its owning boundary only', async (t) => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    const failure = new Error('private offering payload');
+    const f = fixture(t, {diagnostics, offerings: async () => { throw failure; }});
+    await f.ready();
+    assert.deepEqual(operations.filter(e => e.error).map(e => [e.operation, e.error]), [['purchases.offerings', failure]]);
+    assert.equal(operations.find(e => e.operation === 'purchases.sync').outcome, 'error');
+    assert.equal(f.repository.getState().ready, true);
 });

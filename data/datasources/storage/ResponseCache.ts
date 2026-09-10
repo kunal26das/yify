@@ -10,9 +10,10 @@ export class ResponseCache {
     constructor(private readonly maxEntries = 120) {
     }
 
-    getOrLoad<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
+    getOrLoad<T>(key: string, ttlMs: number, load: () => Promise<T>, onCached?: (state: 'hit' | 'shared') => void): Promise<T> {
         const cached = this.entries.get(key);
         if (cached && cached.expiresAt > Date.now()) {
+            try { onCached?.(cached.expiresAt === Infinity ? 'shared' : 'hit'); } catch {}
             this.entries.delete(key);
             this.entries.set(key, cached);
             return cached.promise as Promise<T>;

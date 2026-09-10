@@ -2,7 +2,7 @@ import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 
-import type {Movie, NewMoviesNotifier, NotificationPreferences, Preferences} from '@/domain';
+import type {Diagnostics, Movie, NewMoviesNotifier, NotificationPreferences, Preferences} from '@/domain';
 import {
     DEFAULT_NOTIFICATION_PREFERENCES,
     NOTIFICATION_BURST_LIMIT,
@@ -20,6 +20,9 @@ import {PersistentCache} from '../datasources/storage/PersistentCache';
 import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
 import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
 import {RemoteAppConfig} from './RemoteAppConfig';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+
+let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
 
 const PAGE_SIZE = 50;
 
@@ -55,7 +58,7 @@ function currentPreferences(): Preferences {
 async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
     await appConfig.ready();
     const repository = new MovieRepositoryImpl(
-        new YtsApiDataSource(() => appConfig.getApiBaseUrl())
+        new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics)
     );
     const result = await repository.listMovies({
         page: 1,
@@ -98,6 +101,18 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
+    const span = diagnostics.start('notifications.check', {forced: force});
+    try {
+        const result = await performCheck(force);
+        span.finish(result > 0 ? 'ok' : 'empty');
+        return result;
+    } catch (error) {
+        span.fail(error);
+        throw error;
+    }
+}
+
+async function performCheck(force: boolean): Promise<number> {
     const preferences = currentPreferences();
     if (!preferences.notifications) return 0;
     const notify = preferences.notify;
@@ -151,9 +166,11 @@ TaskManager.defineTask(NEW_MOVIES_TASK, async () => {
 });
 
 export async function registerNewMoviesTask(): Promise<void> {
+    const span = diagnostics.start('notifications.register', {provider: 'expo'});
     try {
         const status2 = await BackgroundTask.getStatusAsync();
         if (status2 === BackgroundTask.BackgroundTaskStatus.Restricted) {
+            span.finish('unavailable');
             return;
         }
 
@@ -163,12 +180,18 @@ export async function registerNewMoviesTask(): Promise<void> {
                 minimumInterval: DAILY_INTERVAL_MINUTES,
             });
         }
+        span.finish();
     } catch (e) {
+        span.fail(e);
         console.warn('[new-movies] failed to register background task', e);
     }
 }
 
 export class NewMoviesNotifierImpl implements NewMoviesNotifier {
+    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS) {
+        diagnostics = implementation;
+    }
+
     hasPermission(): Promise<boolean> {
         return hasNotificationPermission();
     }

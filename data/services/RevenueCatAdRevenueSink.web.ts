@@ -1,7 +1,7 @@
-import type {AdRevenueSink, AnalyticsSink} from '@/domain';
+import type {AdRevenueSink, AnalyticsSink, Diagnostics} from '@/domain';
 
 export class RevenueCatAdRevenueSink implements AdRevenueSink {
-    constructor(_analytics: AnalyticsSink) {
+    constructor(_analytics: AnalyticsSink, _diagnostics?: Diagnostics) {
     }
 
     trackLoaded(): void {

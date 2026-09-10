@@ -6,7 +6,8 @@ import {
   setDefaults,
 } from '@react-native-firebase/remote-config';
 
-import type {AppConfig} from '@/domain';
+import type {AppConfig, Diagnostics} from '@/domain';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {
   API_BASE_URL_KEY,
@@ -18,6 +19,7 @@ import {
 } from '../datasources/config/remoteConfigKeys';
 
 export class RemoteAppConfig implements AppConfig {
+  constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
   private initialized = false;
   private readyPromise: Promise<void> | null = null;
   private lastError: string | null = null;
@@ -61,6 +63,7 @@ export class RemoteAppConfig implements AppConfig {
 
   private async doInit(): Promise<void> {
     if (this.initialized) return;
+    const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});
     try {
       const rc = getRemoteConfig();
       await setConfigSettings(rc, {
@@ -71,12 +74,14 @@ export class RemoteAppConfig implements AppConfig {
         [TMDB_API_KEY]: '',
         [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
       });
-      await Promise.race([
-        fetchAndActivate(rc),
-        new Promise<void>((resolve) => setTimeout(resolve, CONFIG_TIMEOUT_MS)),
+      const fetched = await Promise.race([
+        fetchAndActivate(rc).then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), CONFIG_TIMEOUT_MS)),
       ]);
+      span.finish(fetched ? 'ok' : 'timeout');
       this.initialized = true;
     } catch (error) {
+      span.fail(error);
       this.lastError = error instanceof Error ? error.message : String(error);
     }
   }

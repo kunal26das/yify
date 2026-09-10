@@ -17,11 +17,14 @@ export interface PlayerSurfaceProps {
     captions: boolean;
     onEnded?: () => void;
     onStateChange?: (playing: boolean) => void;
+    onReady?: () => void;
+    onPlaybackState?: (state: string) => void;
+    onError?: (code: string) => void;
 }
 
 interface InfoDelivery {
     event?: string;
-    info?: {playerState?: number; currentTime?: number};
+    info?: {playerState?: number; currentTime?: number} | number;
 }
 
 const EMBED_ORIGIN = 'https://www.youtube-nocookie.com';
@@ -47,7 +50,7 @@ function embedSource(videoId: string, captions: boolean): string {
 }
 
 export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>(function PlayerSurface(
-    {videoId, width, height, muted, playing, captions, onEnded, onStateChange},
+    {videoId, width, height, muted, playing, captions, onEnded, onStateChange, onReady, onPlaybackState, onError},
     ref,
 ) {
     const frameRef = useRef<HTMLIFrameElement | null>(null);
@@ -57,6 +60,10 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
     const appliedMutedRef = useRef<boolean | null>(null);
     const endedRef = useRef(onEnded);
     const stateRef = useRef(onStateChange);
+    const callbacksRef = useRef({onReady, onPlaybackState, onError});
+    useEffect(() => {
+        callbacksRef.current = {onReady, onPlaybackState, onError};
+    }, [onReady, onPlaybackState, onError]);
     const [connected, setConnected] = useState(false);
 
     useEffect(() => {
@@ -88,7 +95,10 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
                 JSON.stringify({event: 'listening', id: videoId, channel: 'widget'}),
                 EMBED_ORIGIN,
             );
-            if (connectedRef.current || attempts >= HANDSHAKE_ATTEMPTS) window.clearInterval(handshake);
+            if (connectedRef.current || attempts >= HANDSHAKE_ATTEMPTS) {
+                window.clearInterval(handshake);
+                if (!connectedRef.current) callbacksRef.current.onError?.('handshake_timeout');
+            }
         }, HANDSHAKE_INTERVAL);
 
         const receive = (event: MessageEvent) => {
@@ -102,16 +112,25 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
             } catch {
                 return;
             }
-            if (payload.event !== 'infoDelivery' || !payload.info) return;
+            if (!payload || typeof payload !== 'object') return;
+            if (payload.event === 'onError' && typeof payload.info === 'number') {
+                callbacksRef.current.onError?.(String(payload.info));
+                return;
+            }
+            if (payload.event !== 'infoDelivery' || !payload.info || typeof payload.info !== 'object') return;
 
             if (!connectedRef.current) {
                 connectedRef.current = true;
                 setConnected(true);
+                post('addEventListener', ['onError']);
+                callbacksRef.current.onReady?.();
             }
 
             const {playerState, currentTime} = payload.info;
             if (typeof currentTime === 'number') positionRef.current = currentTime;
             if (typeof playerState !== 'number') return;
+            const state = ({0: 'ended', 1: 'playing', 2: 'paused', 3: 'buffering'} as Record<number, string>)[playerState];
+            if (state) callbacksRef.current.onPlaybackState?.(state);
 
             if (playerState === STATE_ENDED) {
                 reportedPlayingRef.current = false;
@@ -135,7 +154,7 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
             window.clearInterval(handshake);
             window.removeEventListener('message', receive);
         };
-    }, [videoId]);
+    }, [videoId, post]);
 
     useEffect(() => {
         if (!connected || reportedPlayingRef.current === playing) return;

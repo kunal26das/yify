@@ -17,10 +17,14 @@ import {
     type AdRevenueSink,
     type AdTrigger,
     type AnalyticsSink,
+    type Diagnostics,
+    type DiagnosticOutcome,
+    type DiagnosticSpan,
     decideAd,
     type PurchaseState,
 } from '@/domain';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 const AD_UNIT_ID = 'ca-app-pub-2292299294214510/8726265265';
 const AD_SHOW_TIMEOUT_MS = 8000;
@@ -48,12 +52,38 @@ export interface AdMobAdGatewayOptions {
     analytics: AnalyticsSink;
     adRevenue: AdRevenueSink;
     entitlement: () => PurchaseState;
+    diagnostics?: Diagnostics;
+}
+
+function adErrorCode(error: unknown): string {
+    const code = error != null && typeof error === 'object' && 'code' in error ? error.code : undefined;
+    const known: Record<string, string> = {
+        'googleMobileAds/no-fill': 'no_fill',
+        'googleMobileAds/mediation-no-fill': 'no_fill',
+        'googleMobileAds/error-code-no-fill': 'no_fill',
+        'googleMobileAds/network-error': 'network_error',
+        'googleMobileAds/invalid-request': 'invalid_request',
+        'googleMobileAds/internal-error': 'internal_error',
+        'googleMobileAds/app-not-foreground': 'app_not_foreground',
+    };
+    return typeof code === 'string' ? known[code] ?? 'unknown' : 'unknown';
+}
+
+function finishAdFailure(span: DiagnosticSpan, error: unknown): void {
+    const errorCode = adErrorCode(error);
+    if (errorCode === 'no_fill' || errorCode === 'network_error' || errorCode === 'app_not_foreground') {
+        span.finish(errorCode === 'no_fill' ? 'empty' : 'unavailable', {error_code: errorCode});
+    } else {
+        span.fail(error, {error_code: errorCode});
+    }
 }
 
 export class AdMobAdGateway implements AdGateway {
     readonly supported = Platform.OS === 'android';
 
     private readonly options: AdMobAdGatewayOptions;
+    private readonly diagnostics: Diagnostics;
+    private loadSpan: DiagnosticSpan | null = null;
 
     private readyPromise: Promise<void> | null = null;
     private interstitial: InterstitialAd | null = null;
@@ -72,6 +102,7 @@ export class AdMobAdGateway implements AdGateway {
 
     constructor(options: AdMobAdGatewayOptions) {
         this.options = options;
+        this.diagnostics = options.diagnostics ?? NOOP_DIAGNOSTICS;
     }
 
     init(): Promise<void> {
@@ -123,9 +154,11 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private async doInit(): Promise<void> {
+        const span = this.diagnostics.start('ads.initialize', {provider: 'admob'});
         try {
             await this.gatherConsent();
             if (!this.canRequestAds) {
+                span.finish('unavailable');
                 this.readyPromise = null;
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent'});
                 return;
@@ -135,8 +168,10 @@ export class AdMobAdGateway implements AdGateway {
             });
             await mobileAds().initialize();
             this.initialized = true;
+            span.finish();
             this.requestNext();
-        } catch {
+        } catch (error) {
+            span.fail(error);
             this.readyPromise = null;
             this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'init'});
         }
@@ -167,6 +202,8 @@ export class AdMobAdGateway implements AdGateway {
         this.teardownAd();
         this.loading = true;
         this.requestSeq += 1;
+        const span = this.diagnostics.start('ads.load', {provider: 'admob', attempt: this.failures + 1});
+        this.loadSpan = span;
         const impression: AdImpression = {
             adUnitId: unitId,
             impressionId: `${unitId}:${Date.now()}:${this.requestSeq}`,
@@ -180,14 +217,16 @@ export class AdMobAdGateway implements AdGateway {
         const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
             if (loadReported || loadFailed) return;
             loadReported = true;
+            span.finish();
             this.loading = false;
             this.loaded = true;
             this.failures = 0;
             this.options.adRevenue.trackLoaded(impression);
         });
-        const offError = ad.addAdEventListener(AdEventType.ERROR, () => {
+        const offError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
             if (loadFailed) return;
             loadFailed = true;
+            finishAdFailure(span, error);
             this.loading = false;
             this.loaded = false;
             this.failures += 1;
@@ -269,15 +308,17 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private present(ad: InterstitialAd, trigger: AdTrigger, finishTracking: () => void): Promise<boolean> {
+        const span = this.diagnostics.start('ads.present', {provider: 'admob'});
         return new Promise<boolean>((resolve) => {
             let settled = false;
             let opened = false;
             let timer: ReturnType<typeof setTimeout> | null = null;
             let offForeground: (() => void) | null = null;
 
-            const settle = () => {
+            const settle = (outcome: DiagnosticOutcome = 'ok') => {
                 if (settled) return;
                 settled = true;
+                span.finish(outcome);
                 if (timer != null) clearTimeout(timer);
                 offForeground?.();
                 offForeground = null;
@@ -295,7 +336,7 @@ export class AdMobAdGateway implements AdGateway {
                     timer = null;
                     if (isForeground()) {
                         this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'timeout'});
-                        settle();
+                        settle('timeout');
                         return;
                     }
                     offForeground = watchForeground(() => {
@@ -310,23 +351,25 @@ export class AdMobAdGateway implements AdGateway {
                 opened = true;
                 this.options.analytics.trackEvent('trailer_ad_shown', {trigger});
             });
-            const offClosed = ad.addAdEventListener(AdEventType.CLOSED, settle);
-            const offShowError = ad.addAdEventListener(AdEventType.ERROR, () => {
+            const offClosed = ad.addAdEventListener(AdEventType.CLOSED, () => settle());
+            const offShowError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+                finishAdFailure(span, error);
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'show'});
-                settle();
+                settle('error');
             });
 
             arm();
 
-            const showFailed = () => {
+            const showFailed = (error: unknown) => {
+                finishAdFailure(span, error);
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'show'});
                 finishTracking();
-                settle();
+                settle('error');
             };
             try {
                 void ad.show().catch(showFailed);
-            } catch {
-                showFailed();
+            } catch (error) {
+                showFailed(error);
             }
         });
     }
@@ -373,6 +416,8 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private teardownAd(): void {
+        this.loadSpan?.finish('cancelled');
+        this.loadSpan = null;
         this.unsubscribeAd?.();
         this.unsubscribeAd = null;
         this.adTracking?.discard();

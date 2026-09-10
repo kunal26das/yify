@@ -1,4 +1,5 @@
 import Head from 'expo-router/head';
+import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {
     canonicalUrl,
   ShowsScreen,
@@ -24,6 +25,7 @@ export default function ShowsRoute() {
           <meta property="og:url" content={canonicalUrl('shows')}/>
       </Head>
       <ShowsScreen viewModel={viewModel} />
+      <ScreenDisplay ready={viewModel.status !== 'loading'}/>
     </>
   );
 }

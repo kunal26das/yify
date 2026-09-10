@@ -19,10 +19,13 @@ export interface PlayerSurfaceProps {
     captions: boolean;
     onEnded?: () => void;
     onStateChange?: (playing: boolean) => void;
+    onReady?: () => void;
+    onPlaybackState?: (state: string) => void;
+    onError?: (code: string) => void;
 }
 
 export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>(function PlayerSurface(
-    {videoId, width, height, muted, playing, captions, onEnded, onStateChange},
+    {videoId, width, height, muted, playing, captions, onEnded, onStateChange, onReady, onPlaybackState, onError},
     ref,
 ) {
     const playerRef = useRef<YoutubeIframeRef | null>(null);
@@ -56,6 +59,7 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
     );
 
     const handleState = (state: string) => {
+        onPlaybackState?.(state);
         if (state === 'ended') {
             setActive(false);
             onStateChange?.(false);
@@ -85,6 +89,8 @@ export const PlayerSurface = forwardRef<PlayerSurfaceHandle, PlayerSurfaceProps>
                 mute={silent}
                 forceAndroidAutoplay
                 onChangeState={handleState}
+                onReady={onReady}
+                onError={onError}
                 initialPlayerParams={{
                     controls: true,
                     modestbranding: true,

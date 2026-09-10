@@ -5,7 +5,8 @@ import {
   type RemoteConfig,
 } from 'firebase/remote-config';
 
-import type {AppConfig} from '@/domain';
+import type {AppConfig, Diagnostics} from '@/domain';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {
@@ -18,6 +19,7 @@ import {
 } from '../datasources/config/remoteConfigKeys';
 
 export class RemoteAppConfig implements AppConfig {
+  constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
   private remoteConfig: RemoteConfig | null = null;
   private readyPromise: Promise<void> | null = null;
   private lastError: string | null = null;
@@ -64,10 +66,12 @@ export class RemoteAppConfig implements AppConfig {
 
   private async doInit(): Promise<void> {
     if (this.remoteConfig != null) return;
+    const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});
     try {
       const app = getFirebaseApp();
       if (app == null) {
         this.lastError = 'firebase app unavailable';
+        span.finish('unavailable');
         return;
       }
       const rc = getRemoteConfig(app);
@@ -76,18 +80,21 @@ export class RemoteAppConfig implements AppConfig {
         [TMDB_API_KEY]: '',
         [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
       };
-      await Promise.race([
+      const fetched = await Promise.race([
         fetchAndActivate(rc).then(() => {
           this.remoteConfig = rc;
+          return true;
         }),
-        new Promise<void>((resolve) => {
+        new Promise<boolean>((resolve) => {
           setTimeout(() => {
             this.lastError = this.lastError ?? 'remote config timed out';
-            resolve();
+            resolve(false);
           }, CONFIG_TIMEOUT_MS);
         }),
       ]);
+      span.finish(fetched ? 'ok' : 'timeout');
     } catch (error) {
+      span.fail(error);
       this.lastError = error instanceof Error ? error.message : String(error);
     }
   }

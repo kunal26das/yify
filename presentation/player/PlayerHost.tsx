@@ -32,7 +32,8 @@ function heightFor(width: number): number {
 export function PlayerHost(): ReactElement | null {
     const {video, mode, playing, muted, maximize, minimize} = usePlayer();
     const {playback} = usePreferences();
-    const {surfaceRef, subscribeInlineRect, getInlineRect, reportPlaying, reportEnded} = usePlayerInternal();
+    const {surfaceRef, subscribeInlineRect, getInlineRect, reportPlaying, reportEnded,
+        reportReady, reportState, reportError} = usePlayerInternal();
     const insets = useSafeAreaInsets();
     const {width: windowWidth, height: windowHeight, isPhone} = useResponsive();
     const inlineRect = useSyncExternalStore(subscribeInlineRect, getInlineRect, getInlineRect);
@@ -187,6 +188,9 @@ export function PlayerHost(): ReactElement | null {
                         playing={playing}
                         captions={playback.trailerCaptions}
                         onStateChange={reportPlaying}
+                        onReady={reportReady}
+                        onPlaybackState={reportState}
+                        onError={reportError}
                         onEnded={reportEnded}
                     />
                 </Animated.View>

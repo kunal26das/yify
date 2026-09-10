@@ -36,9 +36,25 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli@21.4.0
 
+      - name: Prepare Sentry deployment identity
+        run: |
+          mkdir -p .expo
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const config = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+          fs.writeFileSync('.expo/sentry-hosting-plan.json', JSON.stringify({
+            kind: 'hosting', releases: {web: `${config.expo.name}@${pkg.version}`},
+            commit: process.env.GITHUB_SHA, environment: process.env.SENTRY_DEPLOY_ENV,
+          }));
+          NODE
+        env:
+          SENTRY_DEPLOY_ENV: ${{ (github.event_name == 'push' || inputs.production) && 'production' || 'preview' }}
+
       - name: Export web build for hosting
         run: yarn export:hosting
         env:
+          EXPO_PUBLIC_SENTRY_ENVIRONMENT: ${{ (github.event_name == 'push' || inputs.production) && 'production' || 'preview' }}
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
           EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
@@ -52,7 +68,18 @@ jobs:
         run: node scripts/check-web-export.mjs dist-hosting
 
       - name: Deploy to EAS Hosting
-        run: bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --non-interactive ${{ (github.event_name == 'push' || inputs.production) && '--prod' || '' }}
+        run: bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --non-interactive --json ${{ (github.event_name == 'push' || inputs.production) && '--prod' || '' }}
         env:
+          EXPO_PUBLIC_SENTRY_ENVIRONMENT: ${{ (github.event_name == 'push' || inputs.production) && 'production' || 'preview' }}
+          SENTRY_DEPLOYMENT_PLAN: .expo/sentry-hosting-plan.json
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Preserve deployment receipts for metadata-only retries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentry-hosting-deployment
+          path: .expo/sentry-hosting-plan.json*
+          include-hidden-files: true
+          retention-days: 30

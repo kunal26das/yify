@@ -1,4 +1,6 @@
 import {ResponseCache} from './storage/ResponseCache';
+import type {Diagnostics} from '@/domain';
+import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 
 export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -62,27 +64,40 @@ export class TmdbApiDataSource implements TmdbApi {
 
     constructor(
         private readonly resolveApiKey: () => string | Promise<string>,
-        private readonly baseUrl: string = TMDB_BASE_URL
+        private readonly baseUrl: string = TMDB_BASE_URL,
+        private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
     ) {
     }
 
-    private async request<T>(path: string, params: URLSearchParams): Promise<T> {
+    private async request<T>(path: string, params: URLSearchParams, operation: string): Promise<T> {
         const key = await this.resolveApiKey();
-        if (!key) throw new Error('TMDB key unavailable');
+        if (!key) {
+            this.diagnostics.event(operation, {provider: 'tmdb', outcome: 'unavailable'});
+            throw new Error('TMDB key unavailable');
+        }
         params.set('api_key', key);
         const url = `${this.baseUrl}${path}?${params.toString()}`;
-        return this.responses.getOrLoad(url, RESPONSE_TTL_MS, () => this.fetchResponse<T>(url));
+        return this.responses.getOrLoad(url, RESPONSE_TTL_MS, () => this.fetchResponse<T>(url, operation),
+            cache => this.diagnostics.event('api.tmdb.cache', {provider: 'tmdb', cache}));
     }
 
-    private async fetchResponse<T>(url: string): Promise<T> {
+    private async fetchResponse<T>(url: string, operation: string): Promise<T> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const span = this.diagnostics.start(operation, {provider: 'tmdb', method: 'GET', cache: 'miss'});
+        let status: number | undefined;
         try {
             const response = await fetch(url, {
                 signal: controller.signal,
             });
+            status = response.status;
             if (!response.ok) throw new Error(`TMDB error: ${response.status}`);
-            return (await response.json()) as T;
+            const body = (await response.json()) as T;
+            span.finish('ok', {status_code: status});
+            return body;
+        } catch (error) {
+            span.fail(error, {status_code: status});
+            throw error;
         } finally {
             clearTimeout(timeoutId);
         }
@@ -91,14 +106,14 @@ export class TmdbApiDataSource implements TmdbApi {
     async findByImdbId(imdbCode: string): Promise<TmdbFindResponse> {
         return this.request<TmdbFindResponse>(
             `/find/${encodeURIComponent(imdbCode)}`,
-            new URLSearchParams({external_source: 'imdb_id'})
+            new URLSearchParams({external_source: 'imdb_id'}), 'api.tmdb.find',
         );
     }
 
     async getWatchProviders(id: number, media: TmdbMediaType): Promise<TmdbWatchProvidersResponse> {
         return this.request<TmdbWatchProvidersResponse>(
             `/${media}/${id}/watch/providers`,
-            new URLSearchParams()
+            new URLSearchParams(), 'api.tmdb.watch_providers',
         );
     }
 }

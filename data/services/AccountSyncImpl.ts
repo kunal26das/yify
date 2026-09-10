@@ -1,6 +1,8 @@
 import {
     type AccountSync,
     type AuthRepository,
+    type Diagnostics,
+    type DiagnosticSpan,
     chooseSyncMode,
     encodeWatchlistState,
     fitHistoryPayload,
@@ -41,6 +43,7 @@ import {
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {parseSyncedPreferences} from '../repositories/PreferencesRepositoryImpl';
 import {createObservable} from '../repositories/support/observable';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 const LINKED_UID_KEY = 'linkedUid';
 const MARKS_KEY = 'watchlistMarks';
@@ -58,6 +61,7 @@ interface AccountSyncDeps {
     watchlist: WatchlistRepository;
     watchHistory: WatchHistoryRepository;
     preferences: PreferencesRepository;
+    diagnostics?: Diagnostics;
 }
 
 export class AccountSyncImpl implements AccountSync {
@@ -66,6 +70,9 @@ export class AccountSyncImpl implements AccountSync {
     private readonly watchlist: WatchlistRepository;
     private readonly watchHistory: WatchHistoryRepository;
     private readonly preferences: PreferencesRepository;
+    private readonly diagnostics: Diagnostics;
+    private diagnosticSpan: DiagnosticSpan | null = null;
+    private reportedFailure: SyncFailure | null = null;
     private readonly status = createObservable<SyncStatus>(IDLE_SYNC_STATUS);
 
     private started = false;
@@ -90,12 +97,13 @@ export class AccountSyncImpl implements AccountSync {
     private trackedIds: number[] = [];
     private lastPreferencesPayload: string | null = null;
 
-    constructor({store, auth, watchlist, watchHistory, preferences}: AccountSyncDeps) {
+    constructor({store, auth, watchlist, watchHistory, preferences, diagnostics = NOOP_DIAGNOSTICS}: AccountSyncDeps) {
         this.store = store;
         this.auth = auth;
         this.watchlist = watchlist;
         this.watchHistory = watchHistory;
         this.preferences = preferences;
+        this.diagnostics = diagnostics;
     }
 
     start(): void {
@@ -150,6 +158,21 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     async deleteRemote(): Promise<boolean> {
+        const uid = this.currentUid;
+        const span = this.diagnostics.start('sync.delete', {provider: 'firebase'});
+        try {
+            const deleted = await this.performDeleteRemote();
+            span.finish(deleted ? 'ok' : this.currentUid !== uid ? 'cancelled' : 'error', {
+                error_code: !deleted && this.currentUid === uid ? this.status.get().failure ?? undefined : undefined,
+            });
+            return deleted;
+        } catch (error) {
+            span.fail(error);
+            throw error;
+        }
+    }
+
+    private async performDeleteRemote(): Promise<boolean> {
         const uid = this.currentUid;
         if (!uid) return true;
         const token = await this.auth.getIdToken();
@@ -244,11 +267,19 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private fail(failure: SyncFailure, detail: string): void {
+        if (failure !== 'network' && this.diagnosticSpan && this.reportedFailure !== failure) {
+            this.diagnosticSpan.fail(new Error('Account sync failed'), {error_code: failure});
+        } else {
+            this.diagnosticSpan?.finish('error', {error_code: failure});
+        }
+        this.reportedFailure = failure;
         this.status.set({state: 'error', failure, detail});
         this.scheduleRetry();
     }
 
     private succeed(trimmed: string | null): void {
+        this.reportedFailure = null;
+        this.diagnosticSpan?.finish(trimmed ? 'error' : 'ok', {trimmed: trimmed != null});
         const now = Date.now();
         this.store.set(LAST_SYNCED_AT_KEY, String(now));
         this.backoff = RETRY_MS;
@@ -308,7 +339,7 @@ export class AccountSyncImpl implements AccountSync {
             this.schedulePush();
             return;
         }
-        this.beginSync();
+        this.beginSync('sync.push');
         this.status.set({state: 'syncing'});
         try {
             const token = await this.auth.getIdToken();
@@ -366,12 +397,16 @@ export class AccountSyncImpl implements AccountSync {
             }
             this.succeed(trimmed);
             if (this.pendingChanges()) this.schedulePush();
+        } catch (error) {
+            this.diagnosticSpan?.fail(error);
+            throw error;
         } finally {
             this.endSync();
         }
     }
 
-    private beginSync(): void {
+    private beginSync(operation: string): void {
+        this.diagnosticSpan = this.diagnostics.start(operation, {provider: 'firebase'});
         this.running = true;
         this.runningDone = new Promise((resolve) => {
             this.resolveRunning = resolve;
@@ -379,6 +414,8 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private endSync(): void {
+        this.diagnosticSpan?.finish('cancelled');
+        this.diagnosticSpan = null;
         this.running = false;
         this.resolveRunning?.();
         this.resolveRunning = null;
@@ -478,7 +515,7 @@ export class AccountSyncImpl implements AccountSync {
             this.scheduleRetry();
             return;
         }
-        this.beginSync();
+        this.beginSync('sync.pull');
         this.status.set({state: 'syncing'});
         let merged = false;
         try {
@@ -502,6 +539,10 @@ export class AccountSyncImpl implements AccountSync {
             this.mergedUid = uid;
             this.backoff = RETRY_MS;
             merged = true;
+            this.diagnosticSpan?.finish('ok');
+        } catch (error) {
+            this.diagnosticSpan?.fail(error);
+            throw error;
         } finally {
             this.endSync();
         }

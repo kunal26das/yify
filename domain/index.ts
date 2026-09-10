@@ -142,6 +142,7 @@ export type {
 } from './policies/syncMerge';
 
 export type {AnalyticsSink, AnalyticsParams} from './services/AnalyticsSink';
+export type {Diagnostics, DiagnosticSpan, DiagnosticOutcome, DiagnosticAttributes} from './services/Diagnostics';
 export type {AppConfig} from './services/AppConfig';
 export type {AppUpdates} from './services/AppUpdates';
 export type {StoreServices} from './services/StoreServices';

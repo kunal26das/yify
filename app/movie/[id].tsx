@@ -1,4 +1,5 @@
 import Head from 'expo-router/head';
+import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {useLocalSearchParams} from 'expo-router';
 import {
     canonicalUrl,
@@ -33,6 +34,7 @@ export default function MovieDetailsRoute() {
                 {poster ? <meta name="twitter:image" content={poster}/> : null}
             </Head>
             <WatchScreen viewModel={viewModel}/>
+            <ScreenDisplay ready={!viewModel.loading}/>
         </>
     );
 }

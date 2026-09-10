@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      sentry_release: ${{ steps.release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -29,6 +31,10 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Record the exported Sentry release identity
+        id: release
+        run: node -e 'const fs = require("node:fs"); const pkg = require("./package.json"); const config = require("./app.json"); fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${config.expo.name}@${pkg.version}\n`);'
 
       - name: Export web build
         run: yarn export:web
@@ -71,3 +77,27 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Record successful deployment in Sentry
+        run: node scripts/sentry-release.mjs --github-pages "$DEPLOYMENT_URL" .expo/sentry-pages.published.json
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.page_url }}
+          SENTRY_RELEASE: ${{ needs.build.outputs.sentry_release }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Preserve deployment receipt for metadata-only retries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentry-pages-deployment
+          path: .expo/sentry-pages.published.json
+          include-hidden-files: true
+          retention-days: 30

@@ -2,6 +2,7 @@ import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -10,12 +11,14 @@ import {
     type RefObject,
 } from 'react';
 
-import {Platform} from 'react-native';
+import {AppState, Platform} from 'react-native';
 import type {AdTrigger} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
 import {useAdBreak} from './use-ad-break';
 import {usePreferences} from '../hooks/use-preferences';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
+import {useDiagnostics} from '../di/DependenciesContext';
+import {PlaybackDiagnostics} from './PlaybackDiagnostics';
 
 export interface PlayerVideo {
     movieId: number;
@@ -57,6 +60,9 @@ export interface PlayerInternalApi {
     getInlineRect(): PlayerRect | null;
     reportPlaying(playing: boolean): void;
     reportEnded(): void;
+    reportReady(): void;
+    reportState(state: string): void;
+    reportError(code: string): void;
 }
 
 function sameRect(a: PlayerRect | null, b: PlayerRect | null): boolean {
@@ -69,6 +75,18 @@ const PlayerContext = createContext<PlayerApi | null>(null);
 const PlayerInternalContext = createContext<PlayerInternalApi | null>(null);
 
 export function PlayerProvider({children}: {children: ReactNode}): ReactElement {
+    const diagnostics = useDiagnostics();
+    const playbackDiagnostics = useMemo(() => new PlaybackDiagnostics(diagnostics), [diagnostics]);
+    useEffect(() => {
+        const subscription = AppState.addEventListener('change', (state) => {
+            if (state === 'active') playbackDiagnostics.resume();
+            else playbackDiagnostics.suspend();
+        });
+        return () => {
+            subscription.remove();
+            playbackDiagnostics.stop();
+        };
+    }, [playbackDiagnostics]);
     const {playback} = usePreferences();
     const playbackRef = useRef(playback);
     playbackRef.current = playback;
@@ -109,6 +127,8 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const start = useCallback(
         (next: PlayerVideo, trigger: AdTrigger) => {
             const generation = ++generationRef.current;
+            playbackDiagnostics.prepare();
+            if (AppState.currentState && AppState.currentState !== 'active') playbackDiagnostics.suspend();
             applyVideo(next);
             applyPlaying(false);
             if (trigger === 'movie_open') {
@@ -119,12 +139,13 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             const begin = () => {
                 if (generationRef.current !== generation) return;
                 if (videoRef.current?.videoId !== next.videoId) return;
+                playbackDiagnostics.begin();
                 applyPlaying(true);
                 Analytics.trailerPlay({id: next.movieId, title: next.title});
             };
             adBreak(trigger, begin);
         },
-        [adBreak, applyMuted, applyPlaying, applyVideo],
+        [adBreak, applyMuted, applyPlaying, applyVideo, playbackDiagnostics],
     );
 
     const open = useCallback(
@@ -142,12 +163,13 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const close = useCallback(() => {
         const current = videoRef.current;
         generationRef.current += 1;
+        playbackDiagnostics.stop();
         queueRef.current = [];
         setMode('closed');
         applyVideo(null);
         applyPlaying(false);
         if (current) Analytics.trailerClose({id: current.movieId, title: current.title});
-    }, [applyPlaying, applyVideo]);
+    }, [applyPlaying, applyVideo, playbackDiagnostics]);
 
     const minimize = useCallback(() => {
         if (!playbackRef.current.miniPlayer) {
@@ -277,8 +299,11 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                 }
             },
             reportEnded: handleEnded,
+            reportReady: () => playbackDiagnostics.ready(),
+            reportState: (state: string) => playbackDiagnostics.state(state),
+            reportError: (code: string) => playbackDiagnostics.error(code),
         }),
-        [applyMuted, applyPlaying, getInlineRect, handleEnded, subscribeInlineRect],
+        [applyMuted, applyPlaying, getInlineRect, handleEnded, subscribeInlineRect, playbackDiagnostics],
     );
 
     return (

@@ -1,9 +1,47 @@
-# Error reporting
+# Diagnostics
 
 Yify uses `@sentry/react-native` for JavaScript and native errors in Sentry project
 **kudos-labs / react-native**. Initialization runs before Expo Router in
 [`entry.ts`](../entry.ts); development sessions and static web rendering do not send events.
 Existing Firebase Crashlytics remains enabled.
+
+## Application monitoring
+
+Production and preview builds record errors, release sessions, native crashes and hangs,
+navigation timing, frame performance, and explicit operation diagnostics. Tracing samples
+10% of operations; native profiling samples 10% of those traces (about 1% overall).
+Screen display checkpoints cover home, browse, movie details and shows. Native SDK options
+refresh from JavaScript, so these settings are compatible with runtime **1.7.7** through OTA.
+
+The domain `Diagnostics` port separates monitoring from application behavior. Its Sentry
+adapter records spans, structured logs, operation counts and duration distributions. It
+observes catalogue requests/cache behavior, account authentication/sync, purchases/restore,
+ads, remote configuration, background notification work, OTA checks/downloads and playback.
+Playback separates ad wait from startup and buffering; unavailable videos and cancellations
+are outcomes rather than application issues. Instrument actual failures at the owning
+operation to avoid duplicate captures from consumers of a shared request.
+
+Preferences → About → **Report a problem** opens Sentry's feedback form. The user chooses
+whether to submit text; identity fields, screenshots and shake-to-report are disabled.
+Feedback may reference the last captured error, as provided by the SDK.
+
+Operation names and attributes must be static and bounded. Never forward the Firebase
+Analytics stream into Sentry: it contains content titles, identifiers and search activity.
+Diagnostics deliberately exclude those fields, purchase receipts, customer records,
+authentication tokens and network bodies. HTTP data retains only origin, method and status;
+route names use templates without parameters. Error messages are scrubbed while original
+stack locations and debugging identifiers are retained. Console logging is not collected.
+No tracing headers propagate to external APIs.
+
+Session replay is configured for controlled verification but disabled in distributed builds.
+It must pass a real-device masking/performance check before activation; error-only buffering
+also has overhead. The verification option masks text, images and vectors, excludes player
+surfaces, and captures no network bodies or headers. No native source attachment or automatic
+screenshot collection is enabled.
+
+There is no instrumented backend, AI agent, or reliably scheduled server job in this app.
+Do not fabricate Sentry AI spans, cron check-ins or feature flags for unrelated capabilities.
+Current Remote Config values are endpoints and keys, not feature switches.
 
 ## Firebase fatal JavaScript crashes
 
@@ -86,9 +124,68 @@ build resolves to the original TypeScript file and line in Sentry. Remove tempor
 before distribution. Check the native release and `ota_updates` context for the expected runtime,
 channel and update ID; source-map upload success alone does not prove device event delivery.
 
-The app disables console breadcrumbs and default personal information, strips HTTP request
-details to the origin/method, and retains only origin/method/status for HTTP breadcrumbs.
-Session replay, performance tracing, screenshots and structured logs are not enabled.
-
 References: [Expo's Sentry guide](https://docs.expo.dev/guides/using-sentry/),
-[Sentry React Native setup](https://docs.sentry.io/platforms/react-native/).
+[Sentry React Native setup](https://docs.sentry.io/platforms/react-native/),
+[tracing](https://docs.sentry.io/platforms/react-native/tracing/),
+[logs](https://docs.sentry.io/platforms/react-native/logs/),
+[metrics](https://docs.sentry.io/platforms/react-native/metrics/),
+[feedback](https://docs.sentry.io/platforms/react-native/user-feedback/).
+
+## Release and deployment metadata
+
+The web workflows finalize the exact exported release after deployment succeeds, associate its
+source commit, and record the deployment environment and immutable identity. Pages records its
+workflow run; Hosting records Expo's deployment identifier. Hosting preview exports set
+`EXPO_PUBLIC_SENTRY_ENVIRONMENT=preview`; manual preview exports must set this too before bundling.
+Native builds alone are not marked deployed: store submission must finish successfully first.
+
+For a manual OTA, prepare a JSON plan using the shipped binary's exact Sentry release, the source
+commit being published, and its runtime. Do not infer an older binary's version code from the current
+checkout. Example for the Android 1.7.7 binary:
+
+```json
+{
+  "kind": "ota",
+  "releases": {"android": "io.github.kunal26das.yify@1.7.7+79"},
+  "commit": "<full source commit hash>",
+  "environment": "production",
+  "runtimeVersion": "1.7.7"
+}
+```
+
+Save the plan outside tracked source, such as under `.expo/`. Set `SENTRY_DEPLOYMENT_PLAN` to
+that file and publish through `scripts/eas.sh` with `--json` and explicit `--channel Production`
+or `--channel Staging` from a clean checkout at its stated commit. The channel must match the plan
+environment and `EXPO_UPDATE_CHANNEL` when it is set.
+The wrapper checks the returned update's commit, runtime and platforms against the plan. It saves
+Expo's response beside the plan as `.eas.json` and a verified `.published.json` receipt, then uploads
+maps and records Sentry metadata. A manual Hosting plan instead uses `kind: "hosting"` and
+`releases: {"web": "Yify@<exported version>"}`; production plans require confirmed Expo promotion. The wrapper also reads the exported entry
+bundle’s Sentry release prelude and rejects stale or unidentifiable web exports before uploading maps.
+Without a plan, manual publication still uploads source maps but does not guess release metadata.
+
+A successful store submission can be recorded with the same receipt format:
+
+```json
+{
+  "status": "succeeded",
+  "releases": ["io.github.kunal26das.yify@1.7.7+79"],
+  "commit": "<verified build source commit>",
+  "environment": "production",
+  "name": "expo-submission:<confirmed submission ID>",
+  "url": "https://expo.dev/accounts/kunal26das/projects/yify/submissions/<submission ID>",
+  "dateFinished": "<confirmed submission completion timestamp>"
+}
+```
+
+If metadata recording fails after publishing, retry only the saved successful receipt:
+
+```bash
+node scripts/sentry-release.mjs /path/to/plan.json.published.json
+```
+
+The API checks existing deployments before writing, including paginated results, so sequential
+retries retain the original deployment. It preserves the first release date and existing commit
+associations. Serialize metadata updates for the same release, including updates from different deployment paths. GitHub workflows retain receipts as
+workflow artifacts for 30 days. Metadata uses the existing `org:ci` upload credential; it does not
+need broader project administration access.

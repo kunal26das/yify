@@ -1,5 +1,6 @@
 export {
   DependenciesProvider,
+  useDiagnostics,
   useMovieRepository,
   useShowRepository,
   useTmdbRepository,

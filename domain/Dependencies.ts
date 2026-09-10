@@ -16,8 +16,10 @@ import type {AppUpdates} from './services/AppUpdates';
 import type {NetworkMonitor} from './services/NetworkMonitor';
 import type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 import type {StoreServices} from './services/StoreServices';
+import type {Diagnostics} from './services/Diagnostics';
 
 export interface Dependencies {
+    diagnostics: Diagnostics;
     analytics: AnalyticsSink;
     appConfig: AppConfig;
     appUpdates: AppUpdates;

@@ -1,7 +1,7 @@
 import {router} from 'expo-router';
 
 
-import type {Movie, NewMoviesNotifier, Preferences} from '@/domain';
+import type {Diagnostics, Movie, NewMoviesNotification, NewMoviesNotifier, Preferences} from '@/domain';
 import {
     DEFAULT_NOTIFICATION_PREFERENCES,
     NOTIFICATION_BURST_LIMIT,
@@ -12,7 +12,6 @@ import {
     notificationQuerySignature,
     selectNewMovies,
 } from '@/domain';
-import type {NewMoviesNotification} from '@/domain';
 
 import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
@@ -20,6 +19,9 @@ import {PersistentCache} from '../datasources/storage/PersistentCache';
 import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
 import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
 import {RemoteAppConfig} from './RemoteAppConfig';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+
+let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
 
 
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
@@ -61,7 +63,7 @@ function localDateKey(date: Date): string {
 async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
     await appConfig.ready();
     const repository = new MovieRepositoryImpl(
-        new YtsApiDataSource(() => appConfig.getApiBaseUrl())
+        new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics)
     );
     const result = await repository.listMovies({
         page: 1,
@@ -103,6 +105,18 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
+    const span = diagnostics.start('notifications.check', {forced: force});
+    try {
+        const result = await performCheck(force);
+        span.finish(result > 0 ? 'ok' : 'empty');
+        return result;
+    } catch (error) {
+        span.fail(error);
+        throw error;
+    }
+}
+
+async function performCheck(force: boolean): Promise<number> {
     const preferences = currentPreferences();
     publishNotificationSettings(preferences);
     if (!preferences.notifications) return 0;
@@ -174,6 +188,10 @@ export async function registerNewMoviesTask(): Promise<void> {
 }
 
 export class NewMoviesNotifierImpl implements NewMoviesNotifier {
+    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS) {
+        diagnostics = implementation;
+    }
+
     hasPermission(): Promise<boolean> {
         return hasNotificationPermission();
     }

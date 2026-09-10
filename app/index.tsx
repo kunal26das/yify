@@ -1,4 +1,5 @@
 import Head from 'expo-router/head';
+import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {
     canonicalUrl,
   HomeScreen,
@@ -34,6 +35,7 @@ export default function HomeRoute() {
           <meta property="og:url" content={canonicalUrl('/')}/>
       </Head>
       <HomeScreen shelves={shelves} feed={feed} shows={shows} />
+      <ScreenDisplay ready={!shelves.loading && !feed.loading}/>
     </>
   );
 }

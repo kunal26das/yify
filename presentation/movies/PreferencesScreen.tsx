@@ -25,6 +25,7 @@ import {
     type ThemePreference,
 } from '@/domain';
 import {useConfirm} from '../components/confirm-dialog';
+import {useToast} from '../components/toast';
 import {Duration, enterFade, enterRise, exitFade, PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
@@ -55,6 +56,7 @@ import {
     useAdGateway,
     useAppConfig,
     useAuthRepository,
+    useDiagnostics,
 } from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
@@ -166,6 +168,20 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const navHeight = useTopBarHeight();
     const {account} = useAuth();
     const confirm = useConfirm();
+    const diagnostics = useDiagnostics();
+    const toast = useToast();
+    const openingFeedback = useRef(false);
+    const reportProblem = async () => {
+        if (openingFeedback.current) return;
+        openingFeedback.current = true;
+        try {
+            if (!await diagnostics.showFeedback()) {
+                toast('Could not open the report form. Please try again.', 'alert-circle-outline');
+            }
+        } finally {
+            openingFeedback.current = false;
+        }
+    };
 
     const [open, setOpen] = useState<DisclosureKey | null>(null);
     const [sections, setSections] = useState<Partial<Record<SectionKey, boolean>>>({});
@@ -582,6 +598,17 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 </SettingsSection>
 
                 <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
+                    <Row
+                        icon="chatbox-ellipses-outline"
+                        title="Report a problem"
+                        subtitle="Tell us what went wrong. Please leave out personal information."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={() => void reportProblem()}
+                        accessibilityRole="button"
+                        accessibilityLabel="Report a problem"
+                        trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}
+                    />
                     <Row
                         icon="information-circle-outline"
                         title="Version"

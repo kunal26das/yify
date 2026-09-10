@@ -36,7 +36,7 @@ const deferred = () => {
 };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key'} = {}) {
+function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key', diagnostics} = {}) {
     const calls = [];
     const events = [];
     const properties = [];
@@ -105,7 +105,7 @@ function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_
     const repository = new RevenueCatPurchaseRepositoryImpl({
         trackEvent: (name, params) => events.push({name, params}),
         setUserProperty: (name, value) => properties.push({name, value}),
-    }, store);
+    }, store, diagnostics);
     return {repository, calls, events, properties, values, sdk, PurchasesError};
 }
 
@@ -437,4 +437,62 @@ test('returning to the visible page refreshes customer details once and hidden p
     listeners.get('visibilitychange')();
     await tick();
     assert.equal(f.calls.filter(call => call.method === 'info').length, 2);
+});
+
+function diagnosticRecorder() {
+    const operations = [];
+    return {operations, diagnostics: {
+        start(operation, attributes) {
+            const entry = {operation, attributes};
+            operations.push(entry);
+            return {
+                finish(outcome = 'ok', attributes) { Object.assign(entry, {outcome, finishAttributes: attributes}); },
+                fail(error, attributes) { Object.assign(entry, {outcome: 'error', error, finishAttributes: attributes}); },
+            };
+        },
+        event(operation, attributes) { operations.push({operation, attributes}); },
+        capture(error, operation, attributes) { operations.push({operation, error, attributes}); },
+    }};
+}
+
+test('web purchase diagnostics classify normal checkout outcomes without errors or purchase metadata', async () => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let code = 1;
+    const f = fixture({diagnostics, overrides: {purchase: async () => { throw new f.PurchasesError(code); }}});
+    await f.repository.identify(account('private-account'));
+    const id = selectedOffer(f.repository);
+    for (code of [1, 20, 6]) assert.equal(await f.repository.purchase(id), false);
+    assert.deepEqual(operations.filter(e => e.operation === 'purchases.purchase').map(e => e.outcome),
+        ['cancelled', 'pending', 'skipped']);
+    assert.equal(operations.some(e => e.error), false);
+    assert.doesNotMatch(JSON.stringify(operations), /private|customerInfo|package_id|offeringId|rc_lifetime/);
+});
+
+test('web restore captures a shared synchronization failure once and preserves its false result', async () => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let failed = false;
+    const failure = new Error('private customer response');
+    const f = fixture({diagnostics, overrides: {info: async () => {
+        if (failed) throw failure;
+        return grantedInfo();
+    }}});
+    await f.repository.identify(null);
+    operations.length = 0;
+    failed = true;
+    const first = f.repository.restore();
+    const second = f.repository.restore();
+    assert.deepEqual(await Promise.all([first, second]), [false, false]);
+    assert.deepEqual(operations.filter(e => e.error).map(e => [e.operation, e.error]), [['purchases.sync', failure]]);
+    assert.equal(operations.filter(e => e.operation === 'purchases.restore').length, 1);
+    assert.equal(operations.find(e => e.operation === 'purchases.restore').outcome, 'error');
+});
+
+test('web offerings failures are reported once while the customer sync still completes', async () => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    const failure = new Error('private offerings response');
+    const f = fixture({diagnostics, overrides: {offers: async () => { throw failure; }}});
+    await f.repository.identify(null);
+    assert.deepEqual(operations.filter(e => e.error).map(e => [e.operation, e.error]), [['purchases.offerings', failure]]);
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(operations.find(e => e.operation === 'purchases.sync').outcome, 'ok');
 });

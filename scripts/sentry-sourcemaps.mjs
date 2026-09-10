@@ -49,9 +49,13 @@ export function validateSourceMaps(directory) {
     return maps;
 }
 
-export function runCommand(command, args, {cwd = projectRoot, env = process.env, stderrOnly = false} = {}) {
+export function runCommand(command, args, {cwd = projectRoot, env = process.env, stderrOnly = false, onStdout} = {}) {
     return new Promise((resolve, reject) => {
-        const child = spawn(command, args, {cwd, env, stdio: ['inherit', stderrOnly ? 2 : 'inherit', 'inherit']});
+        const child = spawn(command, args, {cwd, env, stdio: ['inherit', stderrOnly ? 2 : onStdout ? 'pipe' : 'inherit', 'inherit']});
+        if (onStdout && !stderrOnly) child.stdout.on('data', (chunk) => {
+            process.stdout.write(chunk);
+            onStdout(chunk.toString());
+        });
         let cancelled = false;
         let killTimer;
         const forward = (signal) => {

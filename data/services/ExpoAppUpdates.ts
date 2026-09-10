@@ -1,11 +1,13 @@
 import {AppState} from 'react-native';
 import * as Updates from 'expo-updates';
 
-import {IDLE_UPDATE_STATUS, type AppUpdates, type UpdateStatus} from '@/domain';
+import {IDLE_UPDATE_STATUS, type AppUpdates, type Diagnostics, type UpdateStatus} from '@/domain';
+import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 const ERROR_VISIBLE_MS = 6000;
 
 export class ExpoAppUpdates implements AppUpdates {
+    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
     private status: UpdateStatus = IDLE_UPDATE_STATUS;
     private readonly listeners = new Set<() => void>();
     private syncing = false;
@@ -43,7 +45,10 @@ export class ExpoAppUpdates implements AppUpdates {
     }
 
     restart(): void {
-        void Updates.reloadAsync().catch(() => undefined);
+        this.diagnostics.event('updates.reload', {provider: 'expo', outcome: 'pending'});
+        void Updates.reloadAsync().catch(error => {
+            this.diagnostics.capture(error, 'updates.reload', {provider: 'expo'});
+        });
     }
 
     async sync(): Promise<void> {
@@ -59,11 +64,14 @@ export class ExpoAppUpdates implements AppUpdates {
             }
 
             this.publish({state: 'downloading', progress: 0});
+            const download = this.diagnostics.start('updates.download', {provider: 'expo'});
             try {
                 const fetched = await Updates.fetchUpdateAsync();
+                download.finish(fetched.isNew ? 'ok' : 'empty');
                 this.downloadFailed = false;
                 this.publish(fetched.isNew ? {state: 'ready', progress: 1} : IDLE_UPDATE_STATUS);
-            } catch {
+            } catch (error) {
+                download.fail(error);
                 if (this.downloadFailed) {
                     this.publish(IDLE_UPDATE_STATUS);
                     return;
@@ -78,9 +86,13 @@ export class ExpoAppUpdates implements AppUpdates {
     }
 
     private async check(): Promise<Updates.UpdateCheckResult | null> {
+        const span = this.diagnostics.start('updates.check', {provider: 'expo'});
         try {
-            return await Updates.checkForUpdateAsync();
-        } catch {
+            const result = await Updates.checkForUpdateAsync();
+            span.finish(result.isAvailable ? 'ok' : 'empty');
+            return result;
+        } catch (error) {
+            span.fail(error);
             return null;
         }
     }

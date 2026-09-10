@@ -1,5 +1,6 @@
 import {router, useLocalSearchParams} from 'expo-router';
 import Head from 'expo-router/head';
+import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {Genre, OrderBy, Quality, SortBy} from '@/domain';
 import {
@@ -146,6 +147,7 @@ export default function BrowseRoute() {
           <meta property="og:url" content={canonicalUrl('movies')}/>
       </Head>
       <MoviesScreen viewModel={viewModel} autoFocus={params.focus === '1'} />
+      <ScreenDisplay ready={!viewModel.loading && (viewModel.totalMovieCount !== null || viewModel.error !== null)}/>
     </>
   );
 }

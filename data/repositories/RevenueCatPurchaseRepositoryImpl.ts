@@ -12,6 +12,7 @@ import {
     REMOVE_ADS_ENTITLEMENT,
     type Account,
     type AnalyticsSink,
+    type Diagnostics,
     type KeyValueStore,
     type PurchaseFailure,
     type PurchaseOffer,
@@ -21,6 +22,7 @@ import {
 } from '@/domain';
 import {getAnalyticsInstanceId} from '../datasources/analytics/FirebaseAnalyticsSink';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
+import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {createObservable} from './support/observable';
 
 const apiKey =
@@ -60,6 +62,27 @@ function purchaseFailureReason(error: unknown): PurchaseFailure {
             return 'pending';
         default:
             return 'unknown';
+    }
+}
+
+function diagnosticCode(error: unknown): string {
+    try {
+        const code = (error as {code?: unknown} | null)?.code;
+        if (typeof code !== 'string') return 'unknown';
+        switch (code) {
+            case Purchases.PURCHASES_ERROR_CODE.NETWORK_ERROR: return 'network';
+            case Purchases.PURCHASES_ERROR_CODE.OFFLINE_CONNECTION_ERROR: return 'offline';
+            case Purchases.PURCHASES_ERROR_CODE.STORE_PROBLEM_ERROR: return 'store_problem';
+            case Purchases.PURCHASES_ERROR_CODE.CONFIGURATION_ERROR: return 'configuration';
+            case Purchases.PURCHASES_ERROR_CODE.PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR: return 'product_unavailable';
+            case Purchases.PURCHASES_ERROR_CODE.PURCHASE_NOT_ALLOWED_ERROR: return 'purchase_not_allowed';
+            case Purchases.PURCHASES_ERROR_CODE.INVALID_CREDENTIALS_ERROR: return 'invalid_credentials';
+            case Purchases.PURCHASES_ERROR_CODE.UNEXPECTED_BACKEND_RESPONSE_ERROR: return 'backend_response';
+            case Purchases.PURCHASES_ERROR_CODE.PRODUCT_REQUEST_TIMED_OUT_ERROR: return 'timeout';
+            default: return 'unknown';
+        }
+    } catch {
+        return 'unknown';
     }
 }
 
@@ -107,7 +130,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private linkedRevision = -1;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(analytics: AnalyticsSink, cache: KeyValueStore) {
+    constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
         this.analytics = analytics;
         this.cache = cache;
         // The legacy unscoped cache cannot identify which customer owned the entitlement.
@@ -204,21 +227,24 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 package_id: offerId,
                 reason: 'offer_unavailable',
             });
+            this.diagnostics.event('purchases.purchase', {outcome: 'unavailable'});
             return Promise.resolve(false);
         }
         const revision = this.revision;
         const uid = this.activeSdkUid;
         this.setState({purchasing: offerId, failure: null});
         return this.runMutation(kind, async () => {
-            if (!this.isCurrent(revision, uid)) return false;
+            const span = this.diagnostics.start('purchases.purchase', {provider: 'revenuecat'});
+            if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
             if (!this.packages.has(offerId)) {
                 this.setState({failure: 'offer_unavailable'});
+                span.finish('unavailable');
                 return false;
             }
             this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
             try {
                 const {customerInfo} = await Purchases.purchasePackage(entry.pkg);
-                if (!this.isCurrent(revision, uid)) return false;
+                if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const purchased = hasRemoveAds(customerInfo);
                 this.applyCustomerInfo(customerInfo, uid!);
                 this.setState({failure: purchased ? null : 'not_granted'});
@@ -226,10 +252,13 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                     package_id: offerId,
                     granted: purchased,
                 });
+                span.finish(purchased ? 'ok' : 'empty');
                 return purchased;
             } catch (error) {
-                if (!this.isCurrent(revision, uid)) return false;
+                if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const reason = purchaseFailureReason(error);
+                if (reason === 'unknown') span.fail(error, {error_code: diagnosticCode(error)});
+                else span.finish(reason === 'cancelled' ? 'cancelled' : reason === 'pending' ? 'pending' : 'skipped', {error_code: reason});
                 this.setState({failure: reason});
                 this.analytics.trackEvent('remove_ads_purchase_failed', {package_id: offerId, reason});
                 return false;
@@ -243,23 +272,29 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         }
         if (!this.store.get().ready) {
             this.setState({failure: 'restore_failed'});
+            this.diagnostics.event('purchases.restore', {outcome: 'unavailable'});
             return Promise.resolve(false);
         }
         const revision = this.revision;
         const uid = this.activeSdkUid;
         this.setState({restoring: true, failure: null});
         return this.runMutation('restore', async () => {
-            if (!this.isCurrent(revision, uid)) return false;
+            const span = this.diagnostics.start('purchases.restore', {provider: 'revenuecat'});
+            if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
             try {
                 const info = await Purchases.restorePurchases();
-                if (!this.isCurrent(revision, uid)) return false;
+                if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const restored = hasRemoveAds(info);
                 this.applyCustomerInfo(info, uid!);
                 this.setState({failure: null});
                 this.analytics.trackEvent('remove_ads_restore', {result: restored ? 'restored' : 'none'});
+                span.finish(restored ? 'ok' : 'empty');
                 return restored;
-            } catch {
-                if (!this.isCurrent(revision, uid)) return false;
+            } catch (error) {
+                if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
+                const reason = purchaseFailureReason(error);
+                if (reason === 'unknown') span.fail(error, {error_code: diagnosticCode(error)});
+                else span.finish(reason === 'cancelled' ? 'cancelled' : reason === 'pending' ? 'pending' : 'skipped', {error_code: reason});
                 this.setState({failure: 'restore_failed'});
                 this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
                 return false;
@@ -314,9 +349,13 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     private async synchronize(): Promise<void> {
+        const span = this.diagnostics.start('purchases.sync', {
+            provider: 'revenuecat', attempt: Math.min(this.syncFailures + 1, INIT_BACKOFF_MS.length),
+        });
         try {
             await this.configure();
-        } catch {
+        } catch (error) {
+            span.fail(error, {stage: 'configure', error_code: diagnosticCode(error)});
             this.scheduleRetry('configure');
             return;
         }
@@ -362,13 +401,16 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                     this.clearRetry();
                     this.syncFailures = 0;
                 }
+                span.finish(offersLoaded ? 'ok' : 'error', {stage: offersLoaded ? 'customer' : 'offerings'});
                 return;
-            } catch {
+            } catch (error) {
                 if (revision !== this.revision) continue;
+                span.fail(error, {stage: 'customer', error_code: diagnosticCode(error)});
                 this.scheduleRetry('customer');
                 return;
             }
         }
+        span.finish('skipped');
     }
 
     private isCurrent(revision: number, uid: string | null): boolean {
@@ -411,18 +453,25 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     private async fetchOffers(placement: PurchasePlacement, revision: number): Promise<PurchaseOffer[]> {
-        const offering = await Purchases.getCurrentOfferingForPlacement(placement);
-        if (revision !== this.revision) return [];
-        for (const [id, entry] of this.packages) {
-            if (entry.offer.placement === placement) this.packages.delete(id);
+        const span = this.diagnostics.start('purchases.offerings', {provider: 'revenuecat'});
+        try {
+            const offering = await Purchases.getCurrentOfferingForPlacement(placement);
+            if (revision !== this.revision) { span.finish('skipped'); return []; }
+            for (const [id, entry] of this.packages) {
+                if (entry.offer.placement === placement) this.packages.delete(id);
+            }
+            const offers = (offering?.availablePackages ?? []).map((pkg) => {
+                const offer = toOffer(pkg, offering!, placement, revision);
+                this.packages.set(offer.id, {pkg, offering: offering!, offer, revision});
+                return offer;
+            });
+            if (placement === 'settings_supporter') this.setState({offers});
+            span.finish(offers.length ? 'ok' : 'empty');
+            return offers;
+        } catch (error) {
+            span.fail(error, {error_code: diagnosticCode(error)});
+            throw error;
         }
-        const offers = (offering?.availablePackages ?? []).map((pkg) => {
-            const offer = toOffer(pkg, offering!, placement, revision);
-            this.packages.set(offer.id, {pkg, offering: offering!, offer, revision});
-            return offer;
-        });
-        if (placement === 'settings_supporter') this.setState({offers});
-        return offers;
     }
 
     private async loadOfferings(revision: number): Promise<boolean> {
@@ -458,7 +507,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             if (!instanceId) return false;
             await Purchases.setFirebaseAppInstanceID(instanceId);
             return true;
-        } catch {
+        } catch (error) {
+            this.diagnostics.capture(error, 'purchases.analytics_link', {provider: 'revenuecat'});
             return false;
         }
     }

@@ -6,6 +6,8 @@ import type {
   YtsMovieSuggestionsResponse,
 } from '../models';
 import {YtsEndpoint} from './YtsEndpoint';
+import type {Diagnostics} from '@/domain';
+import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 
 export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
@@ -91,13 +93,16 @@ export interface YtsApi
 }
 
 async function fetchWithTimeout<T extends { status: string; status_message?: string }>(
-    url: string
+    url: string, diagnostics: Diagnostics, operation: string
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const span = diagnostics.start(operation, {provider: 'yts', method: 'GET', cache: 'miss'});
+  let status: number | undefined;
 
   try {
     const response = await fetch(url, {signal: controller.signal});
+    status = response.status;
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
@@ -105,14 +110,19 @@ async function fetchWithTimeout<T extends { status: string; status_message?: str
     if (json.status !== 'ok') {
       throw new Error(json.status_message ?? 'Unknown API error');
     }
+    span.finish('ok', {status_code: status});
     return json;
+  } catch (error) {
+    span.fail(error, {status_code: status});
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
 export class YtsApiDataSource implements YtsApi {
-  constructor(private readonly resolveBaseUrl: () => string = () => DEFAULT_BASE_URL) {
+  constructor(private readonly resolveBaseUrl: () => string = () => DEFAULT_BASE_URL,
+              private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
   }
 
   async listMovies(params: ListMoviesApiParams): Promise<YtsListMoviesResponse> {
@@ -191,10 +201,14 @@ export class YtsApiDataSource implements YtsApi {
 
     if (ttlMs > 0) {
       const cached = getCachedResponse<T>(url);
-      if (cached) return cached;
+      if (cached) {
+        this.diagnostics.event('api.yts.cache', {provider: 'yts', cache: 'hit'});
+        return cached;
+      }
     }
 
-    const promise = fetchWithTimeout<T>(url).catch((error) => {
+    const operation = `api.yts.${endpoint.replace('.json', '')}`;
+    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation).catch((error) => {
       responseCache.delete(url);
       throw error;
     });

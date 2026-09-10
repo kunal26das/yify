@@ -6,6 +6,7 @@ import type {
     AppUpdates,
     AuthRepository,
     Dependencies,
+    Diagnostics,
     MovieRepository,
     NetworkMonitor,
     NewMoviesNotifier,
@@ -40,6 +41,10 @@ function useDependencies(): Dependencies {
         throw new Error('DependenciesProvider is missing above this component');
     }
     return dependencies;
+}
+
+export function useDiagnostics(): Diagnostics {
+    return useDependencies().diagnostics;
 }
 
 export function useMovieRepository(): MovieRepository {

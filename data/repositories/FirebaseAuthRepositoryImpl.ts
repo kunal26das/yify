@@ -11,7 +11,8 @@ import {
 } from '@react-native-firebase/auth';
 import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
 
-import {INITIAL_AUTH_SESSION, type Account, type AuthRepository, type AuthSession} from '@/domain';
+import {INITIAL_AUTH_SESSION, type Account, type AuthRepository, type AuthSession, type Diagnostics} from '@/domain';
+import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {createObservable} from './support/observable';
 
 const FALLBACK_WEB_CLIENT_ID =
@@ -37,10 +38,34 @@ function errorCode(error: unknown): string {
         : '';
 }
 
+const DIAGNOSTIC_AUTH_CODES = new Set([
+    'auth/network-request-failed', 'auth/too-many-requests', 'auth/user-disabled',
+    'auth/invalid-credential', 'auth/account-exists-with-different-credential',
+    'auth/credential-already-in-use', 'auth/operation-not-allowed', 'auth/invalid-api-key',
+    'auth/app-not-authorized', 'auth/unauthorized-domain', 'auth/internal-error',
+    'auth/requires-recent-login', 'auth/user-token-expired', 'auth/invalid-user-token',
+    'auth/popup-blocked', 'auth/popup-closed-by-user', 'auth/cancelled-popup-request',
+    'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported',
+]);
+
+function diagnosticCode(error: unknown): string {
+    try {
+        const code = errorCode(error);
+        if (code === statusCodes.SIGN_IN_CANCELLED) return 'cancelled';
+        if (code === statusCodes.IN_PROGRESS) return 'in_progress';
+        if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) return 'play_services_unavailable';
+        return DIAGNOSTIC_AUTH_CODES.has(code) ? code.slice(5).replace(/-/g, '_') : 'unknown';
+    } catch {
+        return 'unknown';
+    }
+}
+
 export class FirebaseAuthRepositoryImpl implements AuthRepository {
     private readonly store = createObservable<AuthSession>(INITIAL_AUTH_SESSION);
     private started = false;
     private configured = false;
+
+    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
 
     init(): void {
         if (this.started) return;
@@ -51,7 +76,8 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
             onAuthStateChanged(getAuth(), (user) => {
                 this.store.set({ready: true, account: toAccount(user), signingIn: false});
             });
-        } catch {
+        } catch (error) {
+            this.diagnostics.capture(error, 'auth.initialize', {provider: 'google', error_code: diagnosticCode(error)});
             this.store.set({ready: true, available: false});
         }
     }
@@ -65,8 +91,10 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
     }
 
     async signIn(): Promise<boolean> {
+        const span = this.diagnostics.start('auth.sign_in', {provider: 'google'});
         if (!this.ensureConfigured()) {
             this.store.set({error: 'google sign-in is not configured'});
+            span.finish('unavailable', {stage: 'configure'});
             return false;
         }
         this.store.set({signingIn: true, error: null});
@@ -75,14 +103,18 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
             const result = await GoogleSignin.signIn();
             if (result.type !== 'success' || !result.data.idToken) {
                 this.store.set({signingIn: false});
+                span.finish(result.type !== 'success' ? 'cancelled' : 'unavailable');
                 return false;
             }
             const credential = GoogleAuthProvider.credential(result.data.idToken);
             const signed = await signInWithCredential(getAuth(), credential);
             this.store.set({account: toAccount(signed.user), signingIn: false});
+            span.finish('ok');
             return true;
         } catch (error) {
             const code = errorCode(error);
+            if (SILENT.has(code)) span.finish(code === statusCodes.IN_PROGRESS ? 'skipped' : 'cancelled');
+            else span.fail(error, {error_code: diagnosticCode(error)});
             this.store.set({
                 signingIn: false,
                 error: SILENT.has(code) ? null : code || 'sign-in failed',
@@ -92,53 +124,83 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
     }
 
     async signOut(): Promise<void> {
+        const span = this.diagnostics.start('auth.sign_out', {provider: 'google'});
+        let failure: {error: unknown; stage: string} | undefined;
         try {
             if (this.configured) await GoogleSignin.signOut();
-        } catch {
+        } catch (error) {
+            failure = {error, stage: 'google'};
         }
         try {
             await signOut(getAuth());
-        } catch {
+        } catch (error) {
+            failure ??= {error, stage: 'firebase'};
         }
         this.store.set({account: null});
+        if (failure) span.fail(failure.error, {stage: failure.stage, error_code: diagnosticCode(failure.error)});
+        else span.finish('ok');
     }
 
     async deleteAccount(): Promise<boolean> {
         const user = getAuth().currentUser;
-        if (user == null) return false;
+        const span = this.diagnostics.start('auth.delete', {provider: 'google'});
+        if (user == null) { span.finish('unavailable'); return false; }
         try {
             await deleteUser(user);
         } catch (error) {
-            if (errorCode(error) !== 'auth/requires-recent-login') return false;
-            if (!await this.reauthenticate(user)) return false;
+            if (errorCode(error) !== 'auth/requires-recent-login') {
+                span.fail(error, {stage: 'delete', error_code: diagnosticCode(error)});
+                return false;
+            }
+            if (!await this.reauthenticate(user)) {
+                span.finish('skipped', {stage: 'reauthenticate'});
+                return false;
+            }
             try {
                 await deleteUser(user);
-            } catch {
+            } catch (deleteError) {
+                span.fail(deleteError, {stage: 'delete_after_reauthentication', error_code: diagnosticCode(deleteError)});
                 return false;
             }
         }
+        let cleanupFailure: {error: unknown; stage: string} | undefined;
         try {
             if (this.configured) await GoogleSignin.revokeAccess();
-        } catch {
+        } catch (error) {
+            cleanupFailure = {error, stage: 'revoke_access'};
         }
         try {
             if (this.configured) await GoogleSignin.signOut();
-        } catch {
+        } catch (error) {
+            cleanupFailure ??= {error, stage: 'sign_out'};
         }
+        if (cleanupFailure) this.diagnostics.capture(cleanupFailure.error, 'auth.delete_cleanup', {
+            provider: 'google', stage: cleanupFailure.stage, error_code: diagnosticCode(cleanupFailure.error),
+        });
         this.store.set({account: null});
+        span.finish('ok');
         return true;
     }
 
     private async reauthenticate(user: FirebaseAuthTypes.User): Promise<boolean> {
-        if (!this.ensureConfigured()) return false;
+        const span = this.diagnostics.start('auth.reauthenticate', {provider: 'google'});
+        if (!this.ensureConfigured()) { span.finish('unavailable'); return false; }
         try {
             await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
             const result = await GoogleSignin.signIn();
-            if (result.type !== 'success' || !result.data.idToken) return false;
+            if (result.type !== 'success' || !result.data.idToken) {
+                span.finish(result.type !== 'success' ? 'cancelled' : 'unavailable');
+                return false;
+            }
             const credential = GoogleAuthProvider.credential(result.data.idToken);
             const refreshed = await reauthenticateWithCredential(user, credential);
-            return refreshed.user.uid === user.uid && getAuth().currentUser?.uid === user.uid;
-        } catch {
+            const matches = refreshed.user.uid === user.uid && getAuth().currentUser?.uid === user.uid;
+            span.finish(matches ? 'ok' : 'unavailable', {stage: 'identity'});
+            return matches;
+        } catch (error) {
+            const code = errorCode(error);
+            if (SILENT.has(code)) span.finish(code === statusCodes.IN_PROGRESS ? 'skipped' : 'cancelled');
+            else span.fail(error, {error_code: diagnosticCode(error)});
             return false;
         }
     }
@@ -148,7 +210,8 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
             const user = getAuth().currentUser;
             if (user == null) return null;
             return await firebaseGetIdToken(user);
-        } catch {
+        } catch (error) {
+            this.diagnostics.capture(error, 'auth.token_refresh', {provider: 'google', error_code: diagnosticCode(error)});
             return null;
         }
     }

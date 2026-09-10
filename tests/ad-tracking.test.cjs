@@ -8,7 +8,7 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
-function fixture(t, {dev = false, show, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
+function fixture(t, {dev = false, show, diagnostics, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});
     const originalDev = global.__DEV__;
     global.__DEV__ = dev;
@@ -59,6 +59,7 @@ function fixture(t, {dev = false, show, entitlement = () => ({ready: true, adsRe
     });
     const methods = ['trackLoaded', 'trackDisplayed', 'trackOpened', 'trackFailedToLoad', 'trackImpression'];
     const gateway = new AdMobAdGateway({
+        diagnostics,
         analytics: {trackEvent: (name, data) => analytics.push({name, data})},
         adRevenue: Object.fromEntries(methods.map((method) => [method, (data) => tracked.push({method, data})])),
         entitlement,
@@ -271,4 +272,45 @@ test('development test ads remain available to RevenueCat native sandbox reporti
     ad.emit('paid', paid());
     assert.equal(ad.adUnitId, 'test-interstitial');
     assert.deepEqual(tracked.map(({method}) => method), ['trackLoaded', 'trackImpression']);
+});
+
+function diagnosticRecorder() {
+    const records = [];
+    return {records, diagnostics: {start(operation) {
+        const record = {operation};
+        records.push(record);
+        return {finish(outcome = 'ok', attributes) {
+            if (!record.outcome) Object.assign(record, {outcome, attributes});
+        }, fail(error, attributes) {
+            if (!record.outcome) Object.assign(record, {outcome: 'error', error, attributes});
+        }};
+    }}};
+}
+
+for (const code of ['googleMobileAds/no-fill', 'googleMobileAds/mediation-no-fill']) {
+    test(`ad diagnostics classify ${code} as an empty auction without an issue`, async (t) => {
+        const {diagnostics, records} = diagnosticRecorder();
+        const {gateway, ads} = fixture(t, {diagnostics});
+        await gateway.init();
+        ads[0].emit('error', {code, message: 'private SDK data'});
+        const load = records.find(record => record.operation === 'ads.load');
+        assert.equal(load.outcome, 'empty');
+        assert.equal(load.error, undefined);
+        assert.deepEqual(load.attributes, {error_code: 'no_fill'});
+        assert.doesNotMatch(JSON.stringify(records), /private|ca-app-pub/);
+    });
+}
+
+test('background ad presentation is unavailable without reporting an exception', async (t) => {
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads} = fixture(t, {diagnostics, show: async () => {
+        throw {code: 'googleMobileAds/app-not-foreground', message: 'private SDK data'};
+    }});
+    await gateway.init();
+    ads[0].emit('loaded');
+    assert.equal(await gateway.show('movie_open'), false);
+    const present = records.find(record => record.operation === 'ads.present');
+    assert.equal(present.outcome, 'unavailable');
+    assert.equal(present.error, undefined);
+    assert.deepEqual(present.attributes, {error_code: 'app_not_foreground'});
 });

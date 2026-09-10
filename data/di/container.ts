@@ -23,6 +23,7 @@ import {AccountSyncImpl} from '../services/AccountSyncImpl';
 import {ExpoNetworkMonitor} from '../services/ExpoNetworkMonitor';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
+import {SentryDiagnostics} from '../services/SentryDiagnostics';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -31,24 +32,26 @@ export function createDependencies(): Dependencies {
     if (instance != null) return instance;
 
     const analytics = new FirebaseAnalyticsSink();
-    const appConfig = new RemoteAppConfig();
+    const diagnostics = new SentryDiagnostics();
+    const appConfig = new RemoteAppConfig(diagnostics);
 
-    const ytsApi = new YtsApiDataSource(() => appConfig.getApiBaseUrl());
-    const eztvApi = new EztvApiDataSource();
+    const ytsApi = new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics);
+    const eztvApi = new EztvApiDataSource(undefined, diagnostics);
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();
         return appConfig.getTmdbApiKey();
-    });
+    }, undefined, diagnostics);
 
-    const auth = new FirebaseAuthRepositoryImpl();
+    const auth = new FirebaseAuthRepositoryImpl(diagnostics);
     const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
     const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'));
     const watchHistory = new WatchHistoryRepositoryImpl(new PersistentCache('history'));
     const purchases = new RevenueCatPurchaseRepositoryImpl(
         analytics,
-        new PersistentCache('purchases')
+        new PersistentCache('purchases'), diagnostics,
     );
     const accountSync = new AccountSyncImpl({
+        diagnostics,
         store: new PersistentCache('sync'),
         auth,
         watchlist,
@@ -59,8 +62,9 @@ export function createDependencies(): Dependencies {
     accountLink = new AccountLink({auth, purchases, accountSync, analytics});
 
     const ads = new AdMobAdGateway({
+        diagnostics,
         analytics,
-        adRevenue: new RevenueCatAdRevenueSink(analytics),
+        adRevenue: new RevenueCatAdRevenueSink(analytics, diagnostics),
         entitlement: () => purchases.getState(),
     });
 
@@ -72,9 +76,10 @@ export function createDependencies(): Dependencies {
     });
 
     instance = {
+        diagnostics,
         analytics,
         appConfig,
-        appUpdates: new ExpoAppUpdates(),
+        appUpdates: new ExpoAppUpdates(diagnostics),
         auth,
         movies: new MovieRepositoryImpl(ytsApi),
         shows: new ShowRepositoryImpl(eztvApi),
@@ -86,7 +91,7 @@ export function createDependencies(): Dependencies {
         purchases,
         accountSync,
         network: new ExpoNetworkMonitor(),
-        newMovies: new NewMoviesNotifierImpl(),
+        newMovies: new NewMoviesNotifierImpl(diagnostics),
         storeServices: new PlayStoreServices(),
         ads,
         supporterNudge,
