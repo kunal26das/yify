@@ -306,6 +306,22 @@ test('planned hosting rejects a stale exported Sentry release before uploading m
     assert.throws(() => verifyWebExportRelease(directory, 'Yify@1.7.7'), /no unambiguous Sentry release prelude/);
 });
 
+test('server Hosting exports verify the client bundle release before any publication', async (t) => {
+    const [{verifyWebExportRelease}, {runEas}] = await modules;
+    const f = fixture(t);
+    fs.writeFileSync(f.planPath, JSON.stringify({kind: 'hosting', releases: {web: 'Yify@1.7.7'}, commit, environment: 'preview'}));
+    const directory = path.join(f.cwd, 'export');
+    const webDirectory = path.join(directory, 'client', '_expo', 'static', 'js', 'web');
+    fs.mkdirSync(webDirectory, {recursive: true});
+    const entry = path.join(webDirectory, 'entry-bundle.js');
+    fs.writeFileSync(entry, 'var SENTRY_RELEASE;SENTRY_RELEASE={name: "Yify", version: "1.7.6"};');
+    await assert.rejects(runEas('/eas', ['deploy', '--json', '--export-dir', directory], {...f,
+        upload: () => assert.fail('must not upload stale maps'), run: () => assert.fail('must not publish stale export'),
+    }), /web export Sentry release is Yify@1.7.6.*expects Yify@1.7.7/);
+    fs.writeFileSync(entry, 'var SENTRY_RELEASE;SENTRY_RELEASE={name: "Yify", version: "1.7.7"};');
+    assert.doesNotThrow(() => verifyWebExportRelease(directory, 'Yify@1.7.7'));
+});
+
 test('saved deployment checkpoints keep older receipts idempotent after later deployments hide them', async (t) => {
     const [{recordDeployment}] = await modules;
     const f = fixture(t);

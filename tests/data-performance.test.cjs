@@ -163,6 +163,34 @@ function watchlistFixture(raw) {
     return {repository: new WatchlistRepositoryImpl(store), writes, reload: () => new WatchlistRepositoryImpl(store)};
 }
 
+test('reading an older watchlist removes download data from memory and persisted storage', () => {
+    const oldMovie = {
+        id: 17, title: 'Saved title', year: 2026, posterUrls: ['https://images.example/poster.jpg'],
+        torrents: [{hash: 'private-hash', url: 'magnet:?xt=urn:btih:private-hash'}],
+        magnetUrl: 'magnet:?xt=urn:btih:private-hash', downloadUrl: 'https://downloads.example/file.torrent',
+    };
+    const {repository, writes, reload} = watchlistFixture(JSON.stringify([oldMovie, null, {id: 'invalid'}]));
+    assert.deepEqual(JSON.parse(JSON.stringify(repository.getAll())), [{
+        id: 17, title: 'Saved title', year: 2026, posterUrls: ['https://images.example/poster.jpg'],
+    }]);
+    assert.equal(repository.contains(17), true);
+    assert.equal(writes.length, 1);
+    assert.doesNotMatch(writes[0], /private-hash|magnet|torrent|download/i);
+    assert.equal(reload().getAll()[0].title, 'Saved title');
+    assert.equal(writes.length, 1, 'already cleaned storage is not rewritten');
+});
+
+test('watchlist cleanup keeps saved titles available when migration storage is read-only', () => {
+    const {WatchlistRepositoryImpl} = loadTypeScript('data/repositories/WatchlistRepositoryImpl.ts');
+    const repository = new WatchlistRepositoryImpl({
+        getString: () => JSON.stringify([{id: 17, title: 'Saved title', torrents: [{hash: 'private-hash'}]}]),
+        set: () => { throw new Error('Storage is read-only'); },
+    });
+    assert.equal(repository.contains(17), true);
+    assert.equal(repository.getAll()[0].title, 'Saved title');
+    assert.equal(repository.getAll()[0].torrents, undefined);
+});
+
 test('watchlist membership avoids scanning saved movies during repeated card snapshot checks', () => {
     const saved = Array.from({length: 5000}, (_, id) => ({id}));
     const {repository} = watchlistFixture(JSON.stringify(saved));

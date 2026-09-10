@@ -48,8 +48,8 @@ jobs:
           EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID }}
           EXPO_PUBLIC_REVENUECAT_WEB_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_WEB_KEY }}
 
-      - name: Check the export is not an empty shell
-        run: node scripts/check-web-export.mjs dist
+      - name: Check rendered pages and static client data boundary
+        run: node scripts/check-web-export.mjs dist --static
 
       - name: Upload private source maps to Sentry
         run: node scripts/sentry-sourcemaps.mjs dist --strip

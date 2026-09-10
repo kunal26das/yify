@@ -49,6 +49,16 @@ export function validateSourceMaps(directory) {
     return maps;
 }
 
+export async function prepareServerSourceMaps(directory, {cwd = projectRoot, env = process.env, run = runCommand} = {}) {
+    const serverDirectory = path.join(directory, 'server');
+    if (!fs.existsSync(path.join(directory, 'client')) || !fs.existsSync(serverDirectory)) return;
+    const packagePath = require.resolve('@sentry/cli/package.json');
+    const cli = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    const executable = path.resolve(path.dirname(packagePath), cli.bin['sentry-cli']);
+    const code = await run(process.execPath, [executable, 'sourcemaps', 'inject', serverDirectory], {cwd, env, stderrOnly: true});
+    if (code !== 0) throw new Error(`Sentry server source-map preparation failed (exit ${code}). The export has been kept for retry.`);
+}
+
 export function runCommand(command, args, {cwd = projectRoot, env = process.env, stderrOnly = false, onStdout} = {}) {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, {cwd, env, stdio: ['inherit', stderrOnly ? 2 : onStdout ? 'pipe' : 'inherit', 'inherit']});
@@ -80,6 +90,7 @@ export function runCommand(command, args, {cwd = projectRoot, env = process.env,
 
 export async function uploadSourceMaps(directory, {cwd = projectRoot, env = process.env, strip = false, run = runCommand} = {}) {
     const uploadEnv = uploadEnvironment(cwd, env);
+    await prepareServerSourceMaps(directory, {cwd, env: uploadEnv, run});
     const maps = validateSourceMaps(directory);
     const packagePath = require.resolve('@sentry/react-native/package.json');
     const sdk = JSON.parse(fs.readFileSync(packagePath, 'utf8'));

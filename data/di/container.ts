@@ -1,11 +1,8 @@
 import type {Dependencies} from '@/domain';
-import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
-import {EztvApiDataSource} from '../datasources/EztvApiDataSource';
+import {createCatalogRepositories} from './catalogRepositories';
 import {TmdbApiDataSource} from '../datasources/TmdbApiDataSource';
 import {FirebaseAnalyticsSink} from '../datasources/analytics/FirebaseAnalyticsSink';
 import {PersistentCache} from '../datasources/storage/PersistentCache';
-import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
-import {ShowRepositoryImpl} from '../repositories/ShowRepositoryImpl';
 import {TmdbRepositoryImpl} from '../repositories/TmdbRepositoryImpl';
 import {FirebaseAuthRepositoryImpl} from '../repositories/FirebaseAuthRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
@@ -36,8 +33,7 @@ export function createDependencies(): Dependencies {
     const diagnostics = new SentryDiagnostics();
     const appConfig = new RemoteAppConfig(diagnostics);
 
-    const ytsApi = new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics);
-    const eztvApi = new EztvApiDataSource(undefined, diagnostics);
+    const catalog = createCatalogRepositories(appConfig, diagnostics);
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();
         return appConfig.getTmdbApiKey();
@@ -82,8 +78,8 @@ export function createDependencies(): Dependencies {
         appConfig,
         appUpdates: new ExpoAppUpdates(diagnostics),
         auth,
-        movies: new MovieRepositoryImpl(ytsApi),
-        shows: new ShowRepositoryImpl(eztvApi),
+        movies: catalog.movies,
+        shows: catalog.shows,
         tmdb: new TmdbRepositoryImpl(tmdbApi),
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,

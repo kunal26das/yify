@@ -30,6 +30,10 @@ module.exports = {
             ...base.expo.experiments,
             baseUrl,
         },
+        web: {
+            ...base.expo.web,
+            output: process.env.EXPO_WEB_OUTPUT === 'server' ? 'server' : 'static',
+        },
         android: {
             ...base.expo.android,
             package: packageName,

@@ -282,8 +282,9 @@ export function ShowDetailsScreen({
                                     ? group.episodes.map((episode) => (
                                           <PressableScale
                                               key={episode.id}
-                                              onPress={() => setNotice(toEpisodeTorrent(episode))}
-                                              accessibilityRole="button"
+                                              disabled={!episode.magnetUrl}
+                                              onPress={() => episode.magnetUrl && setNotice(toEpisodeTorrent(episode))}
+                                              accessibilityRole={episode.magnetUrl ? 'button' : undefined}
                                               accessibilityLabel={`${episodeCode(episode)} ${episode.title}`}
                                               pressedScale={0.99}
                                               pressedOpacity={0.7}
@@ -304,7 +305,7 @@ export function ShowDetailsScreen({
                                                   >
                                                       {episode.title}
                                                   </ThemedText>
-                                                  <View style={styles.episodeMeta}>
+                                                  {episode.magnetUrl ? <View style={styles.episodeMeta}>
                                                       <ThemedText
                                                           style={[Typography.videoMeta, {color: colors.textMuted}]}
                                                       >
@@ -326,7 +327,7 @@ export function ShowDetailsScreen({
                                                               {episode.peers}
                                                           </ThemedText>
                                                       </View>
-                                                  </View>
+                                                  </View> : null}
                                               </View>
                                           </PressableScale>
                                       ))

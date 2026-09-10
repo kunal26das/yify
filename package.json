@@ -13,9 +13,9 @@
     "ios": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo run:ios",
     "ios:start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer expo start --ios",
     "web": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start --web",
-    "export:web": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL=/yify expo export --platform web --clear --source-maps",
-    "export:desktop": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL='' expo export --platform web",
-    "export:hosting": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_BASE_URL='' expo export --platform web --clear --source-maps --output-dir dist-hosting",
+    "export:web": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_OUTPUT=static EXPO_WEB_BASE_URL=/yify expo export --platform web --clear --source-maps",
+    "export:desktop": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_OUTPUT=static EXPO_WEB_BASE_URL='' expo export --platform web",
+    "export:hosting": "NODE_OPTIONS=--max-old-space-size=8192 EXPO_WEB_OUTPUT=server EXPO_WEB_BASE_URL='' expo export --platform web --clear --source-maps --output-dir dist-hosting",
     "desktop": "yarn export:desktop && electron desktop/main.js",
     "desktop:dev": "electron desktop/main.js",
     "desktop:build": "yarn export:desktop && electron-builder --mac",
@@ -31,8 +31,8 @@
     "build:production:android": "bash scripts/eas.sh build --platform android --profile production",
     "submit:android": "bash scripts/eas.sh submit --platform android --profile production",
     "submit:android:play": "bash scripts/eas.sh submit --platform android --profile play-production",
-    "deploy:hosting": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
-    "deploy:hosting:prod": "yarn export:hosting && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
+    "deploy:hosting": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
+    "deploy:hosting:prod": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
     "release": "cd release && yarn gui"
   },
   "dependencies": {

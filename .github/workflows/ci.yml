@@ -42,7 +42,7 @@ jobs:
         run: node scripts/check-expo-doctor.mjs
 
   web-export:
-    name: Web export renders
+    name: Web exports render and isolate catalog data
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -57,11 +57,17 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Export web build
+      - name: Export EAS Hosting build
         run: yarn export:hosting
 
-      - name: Check the export is not an empty shell
-        run: node scripts/check-web-export.mjs dist-hosting
+      - name: Check Hosting pages, catalog API and client data boundary
+        run: node scripts/check-web-export.mjs dist-hosting --server
+
+      - name: Export GitHub Pages build
+        run: yarn export:web
+
+      - name: Check Pages rendering and static client data boundary
+        run: node scripts/check-web-export.mjs dist --static
 
   release-console:
     name: Typecheck and test release console

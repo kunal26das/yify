@@ -87,7 +87,16 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
         }
         try {
             const parsed = JSON.parse(raw) as Movie[];
-            this.snapshot = Array.isArray(parsed) ? parsed : [];
+            this.snapshot = Array.isArray(parsed)
+                ? parsed.filter((movie) => movie != null && typeof movie === 'object' && Number.isSafeInteger(movie.id))
+                    .map(toWatchlistMovie)
+                : [];
+            const projected = JSON.stringify(this.snapshot);
+            if (projected !== raw) {
+                try {
+                    this.store.set(KEY, projected);
+                } catch {}
+            }
         } catch {
             this.snapshot = [];
         }

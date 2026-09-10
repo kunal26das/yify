@@ -71,7 +71,8 @@ export function verifyPlannedSource(plan, cwd = projectRoot) {
 }
 
 export function verifyWebExportRelease(directory, expected) {
-    const webDirectory = path.join(directory, '_expo', 'static', 'js', 'web');
+    const clientDirectory = fs.existsSync(path.join(directory, 'client')) ? path.join(directory, 'client') : directory;
+    const webDirectory = path.join(clientDirectory, '_expo', 'static', 'js', 'web');
     let prelude;
     try {
         const entries = fs.readdirSync(webDirectory, {withFileTypes: true})

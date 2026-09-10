@@ -16,9 +16,8 @@ import {
 import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
 import {PersistentCache} from '../datasources/storage/PersistentCache';
-import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
-import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
-import {RemoteAppConfig} from './RemoteAppConfig';
+import {WebMovieRepositoryImpl} from '../repositories/WebMovieRepositoryImpl';
+import {WebCatalogClient} from '../datasources/WebCatalogClient';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
@@ -30,7 +29,6 @@ export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 const PAGE_SIZE = 50;
 
 const cache = new SeenMoviesRepositoryImpl(new PersistentCache('new-movies'));
-const appConfig = new RemoteAppConfig();
 const settingsStore = new PersistentCache('settings');
 
 interface DesktopBridge {
@@ -61,10 +59,7 @@ function localDateKey(date: Date): string {
 }
 
 async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
-    await appConfig.ready();
-    const repository = new MovieRepositoryImpl(
-        new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics)
-    );
+    const repository = new WebMovieRepositoryImpl(new WebCatalogClient(diagnostics));
     const result = await repository.listMovies({
         page: 1,
         limit: PAGE_SIZE,
