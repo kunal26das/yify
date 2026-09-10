@@ -14,9 +14,11 @@ React Native exception. A guard keeps recoverable errors nonfatal.
 The Firebase SDK is loaded synchronously inside the installer, after saving React Native's
 handler: importing it at module scope installs its own handler too early.
 
-Firebase receives an error copy with the original message and parsed stack frames, plus a
-stable grouping frame based on the error type and failure location, including the Hermes
-column offset. Repeated failures at that location share a signature; different locations
+Firebase receives an error copy with the original message and parsed stack frames. The first
+source frame's function name gains a stable suffix based on the error type and failure location,
+including the Hermes column offset; its file, line and column and the remaining frames are retained.
+A separate helper frame is insufficient because Firebase ignores it when choosing the failure.
+Repeated failures at that location share a signature; different locations
 get different signatures. Caller stacks, timestamps, user identifiers and changing error
 messages do not split a known failure. Errors without a usable location fall back to type
 and message. Sentry receives the original error unchanged.

@@ -18,8 +18,11 @@ const errorAt = (column, {message = 'Playback failed', caller = 800} = {}) => ({
 
 async function signatureOf(error) {
     const frames = await framesOf(createCrashlyticsError(error));
-    assert.match(frames[0].functionName, /^YifyReactNative_[A-Za-z0-9_]+_[a-f0-9]{16}$/);
-    return frames[0].functionName;
+    const identified = frames.filter(frame => frame.functionName?.includes('YifyReactNative_'));
+    assert.equal(identified.length, 1, 'exactly one crash frame should carry the grouping identity');
+    const signature = identified[0].functionName.match(/YifyReactNative_[A-Za-z0-9_$]+_[a-f0-9]{16}$/);
+    assert.ok(signature, 'the identity must end in a stable 64-bit fingerprint');
+    return signature[0];
 }
 
 function handlerHarness({enabled = true, sdkHandler, recordNonFatal} = {}) {
@@ -86,22 +89,24 @@ test('same-named source files in different directories keep distinct crash ident
     assert.equal(await signatureOf(movieCrash), await signatureOf(fromFile('presentation/movies/Details.tsx')));
 });
 
-test('the Firebase copy keeps the error message and all original JavaScript frames', async () => {
+test('the Firebase copy annotates the real failing frame without adding synthetic frames or losing source positions', async () => {
     const input = errorAt(100);
     const result = createCrashlyticsError(input);
     const frames = await framesOf(result);
     assert.ok(result instanceof Error);
     assert.equal(result.message, input.message);
-    assert.equal(frames.length, 3);
-    assert.deepEqual(frames.slice(1).map(frame => ({
-        fn: frame.functionName,
+    assert.equal(frames.length, 2);
+    assert.match(frames[0].functionName, /^anonymous__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+    assert.equal(frames[1].functionName, 'onPress');
+    assert.deepEqual(frames.map(frame => ({
         file: frame.fileName,
         line: frame.lineNumber,
         column: frame.columnNumber,
     })), [
-        {fn: 'anonymous', file: 'index.android.bundle', line: 1, column: 100},
-        {fn: 'onPress', file: 'index.android.bundle', line: 1, column: 800},
+        {file: 'index.android.bundle', line: 1, column: 100},
+        {file: 'index.android.bundle', line: 1, column: 800},
     ]);
+    assert.equal(result.stack.includes('react-native-crash'), false, 'a disposable helper frame must not carry grouping');
 });
 
 test('native frames remain in the report while grouping follows the first usable JavaScript source', async () => {
@@ -111,11 +116,13 @@ test('native frames remain in the report while grouping follows the first usable
     ]) {
         const input = {name: 'TypeError', message: 'Playback failed', stack: stackAt(100)};
         const frames = await framesOf(createCrashlyticsError(input));
-        assert.equal(frames.length, 3);
-        assert.equal(frames[1].functionName, 'nativeCall');
-        assert.equal(frames[1].fileName, nativeFile);
-        assert.equal(frames[2].functionName, 'play');
-        assert.equal(frames[2].columnNumber, 100);
+        assert.equal(frames.length, 2);
+        assert.equal(frames[0].functionName, 'nativeCall');
+        assert.equal(frames[0].fileName, nativeFile);
+        assert.match(frames[1].functionName, /^play__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+        assert.equal(frames[1].fileName, 'index.android.bundle');
+        assert.equal(frames[1].lineNumber, 1);
+        assert.equal(frames[1].columnNumber, 100);
         assert.equal(await signatureOf(input), await signatureOf({
             name: 'TypeError', message: 'Another dynamic message',
             stack: 'TypeError: Another dynamic message\n    at play (index.android.bundle:1:100)',
@@ -141,11 +148,12 @@ test('an error with no useful JS source falls back to its React component stack'
     const second = {name: 'Error', message: 'Render failed for 456', stack: 'unknown', componentStack};
     assert.equal(await signatureOf(first), await signatureOf(second));
     const frames = await framesOf(createCrashlyticsError(first));
-    assert.equal(frames.length, 3);
-    assert.equal(frames[1].functionName, 'MovieDetails');
-    assert.equal(frames[1].fileName, 'MovieDetails.tsx');
-    assert.equal(frames[1].lineNumber, 30);
-    assert.equal(frames[1].columnNumber, 4);
+    assert.equal(frames.length, 2);
+    assert.match(frames[0].functionName, /^MovieDetails__YifyReactNative_Error_[a-f0-9]{16}$/);
+    assert.equal(frames[0].fileName, 'MovieDetails.tsx');
+    assert.equal(frames[0].lineNumber, 30);
+    assert.equal(frames[0].columnNumber, 4);
+    assert.equal(frames[1].functionName, 'RootLayout');
     assert.notEqual(await signatureOf(first), await signatureOf({
         ...first, componentStack: componentStack.replace('30:4', '31:4'),
     }));
@@ -363,13 +371,30 @@ test('the actual RNFB handler receives the fatal marker and individual JavaScrip
         const payload = nativeEvents.find(event => event.kind === 'crash').error;
         assert.equal(payload.message, original.message);
         assert.equal(payload.isUnhandledRejection, false);
-        assert.equal(payload.frames.length, 3);
-        assert.match(payload.frames[0].fn, /^YifyReactNative_TypeError_[a-f0-9]{16}$/);
-        assert.equal(payload.frames[1].fn, 'anonymous');
-        assert.equal(payload.frames[1].file, 'index.android.bundle:1:100');
-        assert.equal(payload.frames[2].fn, 'onPress');
+        assert.equal(payload.frames.length, 2);
+        assert.match(payload.frames[0].fn, /^anonymous__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+        assert.equal(payload.frames[0].file, 'index.android.bundle:1:100');
+        assert.equal(payload.frames[0].line, 1);
+        assert.equal(payload.frames[0].col, 100);
+        assert.equal(payload.frames[1].fn, 'onPress');
+        assert.equal(payload.frames[1].file, 'index.android.bundle:1:800');
+        assert.equal(payload.frames.some(frame => frame.file.includes('react-native-crash')), false);
         assert.equal(nativeEvents.at(-1).kind, 'original');
         assert.equal(nativeEvents.at(-1).error, original);
+
+        // Exercise the real SDK conversion for A/B/A. The distinction must be on
+        // an original source frame, because Crashlytics may ignore helper frames.
+        for (const error of [errorAt(101), errorAt(100, {message: 'Another title failed'})]) {
+            await current(error, true);
+        }
+        const crashes = nativeEvents.filter(event => event.kind === 'crash').map(event => event.error);
+        assert.equal(crashes.length, 3);
+        assert.notEqual(crashes[0].frames[0].fn, crashes[1].frames[0].fn);
+        assert.equal(crashes[0].frames[0].fn, crashes[2].frames[0].fn);
+        assert.deepEqual(crashes.map(crash => crash.frames[0].file), [
+            'index.android.bundle:1:100', 'index.android.bundle:1:101', 'index.android.bundle:1:100',
+        ]);
+        assert.ok(crashes.every(crash => crash.frames.length === 2));
 
         nativeEvents.length = 0;
         await current(errorAt(101), false);

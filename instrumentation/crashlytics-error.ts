@@ -76,8 +76,11 @@ export function createCrashlyticsError(input: unknown): Error {
     if (componentStack) Object.assign(copy, {componentStack});
     copy.stack = [
         `${name}: ${message}`,
-        `    at ${symbol} (react-native-crash:1:1)`,
-        ...frames.map(frame => `    at ${frame.functionName || '<anonymous>'} (${fileLocation(frame.fileName)}:${frame.lineNumber || 0}:${frame.columnNumber || 0})`),
+        ...(!failure ? [`    at ${symbol} (react-native-crash:1:1)`] : []),
+        ...frames.map(frame => {
+            const functionName = `${frame.functionName || '<anonymous>'}${frame === failure ? `__${symbol}` : ''}`;
+            return `    at ${functionName} (${fileLocation(frame.fileName)}:${frame.lineNumber || 0}:${frame.columnNumber || 0})`;
+        }),
         ...(!frames.length && originalStack ? [originalStack] : []),
     ].join('\n');
     return copy;
