@@ -267,18 +267,20 @@ export class StoreReleaseView {
                 plats,
                 chans,
             );
+            const queued = res.steps.filter((step) => step.ok && step.queued).length;
             if (res.ok) {
-                const submittedToPlay = res.steps.some((step) =>
-                    step.platform === 'android' && step.channel === 'Production' &&
-                    step.ok && !step.skipped,
-                );
                 showToast(
-                    submittedToPlay
-                        ? 'Submitted to Google Play. Google review or publishing may still be pending.'
+                    queued > 0
+                        ? 'Queued on Expo. Play upload is automatic.'
                         : 'Store release complete — all selected targets succeeded.',
                 );
             } else {
-                showToast('Store release finished with errors.', 'bad');
+                showToast(
+                    queued > 0
+                        ? 'Production queued on Expo; see output for errors or cancellation.'
+                        : 'Store release finished with errors.',
+                    'bad',
+                );
             }
         } catch (e) {
             showToast(errMessage(e), 'bad');

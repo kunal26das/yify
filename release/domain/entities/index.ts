@@ -80,6 +80,11 @@ export interface StoreReleaseStep {
     channel: Channel;
     ok: boolean;
     skipped?: boolean;
+    queued?: boolean;
+    buildId?: string;
+    submissionId?: string;
+    buildUrl?: string;
+    submissionUrl?: string;
 }
 
 export interface StoreReleaseResult {

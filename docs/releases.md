@@ -23,12 +23,21 @@ the default path in [eas.json](../eas.json). Keep credentials outside source con
 ## Android store releases
 
 In the console, select **Android → Production**, leave the APK field empty, validate, and release.
-It builds the current repository with the `production` EAS profile, verifies the completed build,
-then submits that exact build ID with `play-production` to Google Play's production track.
+It uploads the current repository with the `production` EAS profile and schedules automatic
+Google Play production submission with `play-production`. The console finishes once Expo accepts
+both jobs. Expo continues the build and Play upload remotely; the console can then be closed.
+Follow the build and upload links in the output for their final status. Check those jobs before
+retrying to avoid creating a duplicate build.
 
 Update `package.json`'s `versionCode` for each new Play binary. The console synchronizes the
 checked-in Android version, runtime and channel before building. Review those changes afterward.
-A successful submission can still await Google review or managed publishing; check Play Console.
+A queued job is not recorded as a shipped release or used to unlock OTA updates. After confirming
+the actual release, record it in `release/releases.json`. A successful Play upload can still await
+Google review or managed publishing; check Play Console. Record a confirmed release with:
+
+```bash
+yarn --cwd release tsx scripts/recordRelease.ts android Production <VERSION> <RUNTIME_VERSION>
+```
 
 | Command | Result |
 | --- | --- |

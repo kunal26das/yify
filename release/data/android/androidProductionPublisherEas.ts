@@ -102,27 +102,55 @@ function synchronizeNative(repoRoot: string, version: string, runtimeVersion: st
     return {versionCode, projectId};
 }
 
-function finishedBuild(output: string, expected: {version: string; runtimeVersion: string; versionCode: number; projectId: string}): string {
+function acceptedRelease(output: string, expected: {
+    version: string;
+    runtimeVersion: string;
+    versionCode: number;
+    projectId: string
+}) {
     const parsed: unknown = JSON.parse(output.trim());
     const builds = Array.isArray(parsed) ? parsed : [parsed];
     if (builds.length !== 1 || !builds[0] || typeof builds[0] !== 'object') throw new Error('EAS did not return exactly one build.');
     const build = builds[0];
     if (typeof build.id !== 'string' || !UUID.test(build.id)) throw new Error('EAS returned an invalid build ID.');
+    if (!['NEW', 'IN_QUEUE', 'IN_PROGRESS', 'FINISHED'].includes(build.status)) {
+        throw new Error(`EAS build ${build.id} is ${String(build.status)}.`);
+    }
     const checks: Array<[string, unknown, unknown]> = [
-        ['status', build.status, 'FINISHED'],
         ['platform', build.platform, 'ANDROID'],
         ['distribution', build.distribution, 'STORE'],
         ['build profile', build.buildProfile, 'production'],
         ['channel', build.channel, 'Production'],
         ['version', build.appVersion, expected.version],
-        ['version code', String(build.appBuildVersion), String(expected.versionCode)],
+        ['version code', build.appBuildVersion, String(expected.versionCode)],
         ['runtime version', build.runtimeVersion, expected.runtimeVersion],
         ['Expo project', build.project?.id, expected.projectId],
     ];
     for (const [name, actual, wanted] of checks) {
-        if (actual !== wanted) throw new Error(`Refusing to submit build ${build.id}: ${name} is ${String(actual)}, expected ${wanted}.`);
+        if (actual !== wanted) throw new Error(`Could not verify build ${build.id}: ${name} is ${String(actual)}, expected ${wanted}.`);
     }
-    return build.id;
+    if (!Array.isArray(build.submissions) || build.submissions.length !== 1) {
+        throw new Error(`EAS build ${build.id} did not return exactly one scheduled Play submission.`);
+    }
+    const submission = build.submissions[0];
+    if (!submission || typeof submission.id !== 'string' || !UUID.test(submission.id) ||
+        !['AWAITING_BUILD', 'IN_QUEUE', 'IN_PROGRESS', 'FINISHED'].includes(submission.status) ||
+        submission.platform !== 'ANDROID' || submission.app?.id !== expected.projectId ||
+        submission.androidConfig?.track !== 'production' || submission.androidConfig?.releaseStatus !== 'COMPLETED') {
+        throw new Error(`Could not verify the scheduled Play production submission for build ${build.id}.`);
+    }
+    const owner = build.project?.ownerAccount?.name;
+    const slug = build.project?.slug;
+    if (typeof owner !== 'string' || !owner || typeof slug !== 'string' || !slug) {
+        throw new Error(`EAS build ${build.id} did not return its project URL details.`);
+    }
+    const projectUrl = `https://expo.dev/accounts/${encodeURIComponent(owner)}/projects/${encodeURIComponent(slug)}`;
+    return {
+        buildId: build.id as string,
+        submissionId: submission.id as string,
+        buildUrl: `${projectUrl}/builds/${build.id}`,
+        submissionUrl: `${projectUrl}/submissions/${submission.id}`,
+    };
 }
 
 export function createAndroidProductionPublisher(deps: {
@@ -154,12 +182,15 @@ export function createAndroidProductionPublisher(deps: {
         });
     }
 
-    async function release(version: string, runtimeVersion: string, onLine: OnLine, label?: string): Promise<{ok: boolean; buildId?: string}> {
-        let buildId: string | undefined;
+    async function release(version: string, runtimeVersion: string, onLine: OnLine, label?: string) {
         let remoteStarted = false;
         const cancelled = () => {
             if (!cancellation.isCancelling()) return false;
-            if (remoteStarted) onLine({stream: 'system', text: 'Local wait cancelled. Remote EAS build or submission work may continue; inspect the EAS dashboard before retrying.', label});
+            if (remoteStarted) onLine({
+                stream: 'system',
+                text: 'Local handoff cancelled. Remote EAS build or submission work may continue; inspect the EAS dashboard before retrying.',
+                label
+            });
             return true;
         };
         try {
@@ -173,27 +204,34 @@ export function createAndroidProductionPublisher(deps: {
 
             const stdout: string[] = [];
             remoteStarted = true;
-            const built = await cli.run(['build', '--platform', 'android', '--profile', 'production', '--non-interactive', '--wait', '--json'], (line) => {
+            const queued = await cli.run(['build', '--platform', 'android', '--profile', 'production', '--auto-submit-with-profile', 'play-production', '--non-interactive', '--no-wait', '--json'], (line) => {
                 if (line.stream === 'stdout') stdout.push(line.text);
                 else onLine(line);
             }, {label, retries: 0, idleTimeoutMs: 0});
             if (cancelled()) return {ok: false};
-            if (!built.ok) {
-                onLine({stream: 'stderr', text: 'EAS build did not complete successfully. No submission was started. Inspect the EAS dashboard before starting another build.', label});
+            if (!queued.ok) {
+                onLine({
+                    stream: 'stderr',
+                    text: 'Could not confirm the Expo handoff. Remote work may already exist; inspect the EAS dashboard before retrying.',
+                    label
+                });
                 return {ok: false};
             }
-            buildId = finishedBuild(stdout.join('\n'), {version, runtimeVersion, ...expected});
-            validateProfiles(workspace.repoRoot, runtimeVersion);
-            onLine({stream: 'system', text: `Verified finished EAS build ${buildId}. Submitting this build to Play production.`, label});
-            if (cancelled()) return {ok: false, buildId};
-            const submitted = await cli.run(['submit', '--platform', 'android', '--profile', 'play-production', '--id', buildId, '--non-interactive', '--wait'], onLine,
-                {label, retries: 0, idleTimeoutMs: 0});
-            if (cancelled()) return {ok: false, buildId};
-            if (!submitted.ok) onLine({stream: 'stderr', text: `Submission for build ${buildId} did not finish successfully. Inspect its EAS submission status before retrying; remote work may continue.`, label});
-            return {ok: submitted.ok, buildId};
+            const receipt = acceptedRelease(stdout.join('\n'), {version, runtimeVersion, ...expected});
+            onLine({
+                stream: 'system',
+                text: `Queued on Expo. Build and Play upload will continue remotely.\nBuild: ${receipt.buildUrl}\nPlay upload: ${receipt.submissionUrl}`,
+                label
+            });
+            return {ok: true, ...receipt};
         } catch (error) {
             onLine({stream: 'stderr', text: error instanceof Error ? error.message : String(error), label});
-            return {ok: false, ...(buildId ? {buildId} : {})};
+            if (remoteStarted) onLine({
+                stream: 'stderr',
+                text: 'Remote work may already exist; inspect the EAS dashboard before retrying.',
+                label
+            });
+            return {ok: false};
         }
     }
 

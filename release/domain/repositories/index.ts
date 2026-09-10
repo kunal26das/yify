@@ -71,7 +71,13 @@ export interface AndroidProductionPublisher {
         runtimeVersion: string,
         onLine: OnLine,
         label?: string,
-    ): Promise<{ ok: boolean; buildId?: string }>;
+    ): Promise<{
+        ok: boolean;
+        buildId?: string;
+        submissionId?: string;
+        buildUrl?: string;
+        submissionUrl?: string;
+    }>;
 }
 
 export interface AndroidPublisher {

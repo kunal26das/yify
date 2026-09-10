@@ -53,7 +53,8 @@ export function StoreConfirm({
                     <Text dimColor>Dependencies are reinstalled locally before the release.</Text>
                     {vm.platforms.includes('android') && vm.channels.includes('Production') && (
                         <Text dimColor>
-                            Android Production: build the current repository on Expo, then submit to Google Play production. Google review may still be required.
+                            Android Production: queue an Expo build with automatic Google Play submission, then return
+                            once accepted.
                         </Text>
                     )}
                     {vm.platforms.includes('android') && vm.channels.includes('Staging') && (

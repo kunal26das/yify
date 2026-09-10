@@ -30,7 +30,7 @@ export interface StoreFlowViewModel {
     allCovered: boolean;
     lines: LogLine[];
     ok: boolean;
-    submittedToPlay: boolean;
+    queuedCount: number;
     setApk: (v: string) => void;
     setIpa: (v: string) => void;
     choosePlatforms: (p: Platform[]) => void;
@@ -52,7 +52,7 @@ export function useStoreFlow(): StoreFlowViewModel {
     const [allCovered, setAllCovered] = useState(false);
     const [lines, setLines] = useState<LogLine[]>([]);
     const [ok, setOk] = useState(false);
-    const [submittedToPlay, setSubmittedToPlay] = useState(false);
+    const [queuedCount, setQueuedCount] = useState(0);
 
     const append = (l: LogLine) => setLines((prev) => [...prev, l]);
 
@@ -116,10 +116,7 @@ export function useStoreFlow(): StoreFlowViewModel {
             append,
         );
         setOk(res.ok);
-        setSubmittedToPlay(res.steps.some((step) =>
-            step.platform === 'android' && step.channel === 'Production' &&
-            step.ok && !step.skipped,
-        ));
+        setQueuedCount(res.steps.filter((step) => step.ok && step.queued).length);
         setStep('result');
     };
 
@@ -135,7 +132,7 @@ export function useStoreFlow(): StoreFlowViewModel {
         allCovered,
         lines,
         ok,
-        submittedToPlay,
+        queuedCount,
         setApk,
         setIpa,
         choosePlatforms,

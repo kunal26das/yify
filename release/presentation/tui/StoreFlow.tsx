@@ -87,15 +87,17 @@ export function StoreFlow({onDone}: { onDone: () => void }) {
                             {vm.ok ? (
                                 <Box borderStyle="round" borderColor="green" paddingX={1}>
                                     <Text color="green" bold>
-                                        🎉 Store release complete — all targets succeeded!
+                                        {vm.queuedCount > 0
+                                            ? 'Release requests accepted.'
+                                            : '🎉 Store release complete — all targets succeeded!'}
                                     </Text>
                                 </Box>
                             ) : (
-                                <Text color="red">✖ Store release finished with errors.</Text>
+                                <Text color="red">✖ Store release ended with errors or cancellation.</Text>
                             )}
-                            {vm.submittedToPlay && (
+                            {vm.queuedCount > 0 && (
                                 <Text dimColor>
-                                    Submitted to Google Play. Google review or publishing may still be pending.
+                                    Queued on Expo. Play upload is automatic.
                                 </Text>
                             )}
                             <Text dimColor>Press m to return to the menu.</Text>

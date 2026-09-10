@@ -12,11 +12,19 @@ import {createAndroidProductionPublisher} from './androidProductionPublisherEas.
 
 const PROJECT_ID = '130cfded-cef0-49b3-94a4-82d3a3852ef5';
 const BUILD_ID = 'ad48b005-9201-4c1c-a943-569ca3ed962c';
+const SUBMISSION_ID = 'cab2740c-fc9a-4e92-8f3c-5b997c794f73';
+const PROJECT_URL = 'https://expo.dev/accounts/kunal26das/projects/yify';
 type TestContext = Parameters<NonNullable<Parameters<typeof test>[0]>>[0];
+const expectedSubmission = {
+    id: SUBMISSION_ID, status: 'AWAITING_BUILD', platform: 'ANDROID', app: {id: PROJECT_ID},
+    androidConfig: {track: 'production', releaseStatus: 'COMPLETED'},
+};
 const expectedBuild = {
-    id: BUILD_ID, status: 'FINISHED', platform: 'ANDROID', distribution: 'STORE',
+    id: BUILD_ID, status: 'IN_QUEUE', platform: 'ANDROID', distribution: 'STORE',
     buildProfile: 'production', channel: 'Production', appVersion: '1.7.5',
-    appBuildVersion: '77', runtimeVersion: '1.7.5', project: {id: PROJECT_ID},
+    appBuildVersion: '77', runtimeVersion: '1.7.5',
+    project: {id: PROJECT_ID, slug: 'yify', ownerAccount: {name: 'kunal26das'}},
+    submissions: [expectedSubmission],
 };
 
 function fixture(t: TestContext, options: {
@@ -24,9 +32,7 @@ function fixture(t: TestContext, options: {
     output?: string;
     credentialsFail?: boolean;
     buildFail?: boolean;
-    submitFail?: boolean;
-    onBuild?: () => void;
-    cancelAt?: 'credentials' | 'build' | 'verified' | 'submit';
+    cancelAt?: 'credentials' | 'build';
 } = {}) {
     const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'yify-eas-publisher-'));
     const cancellation = createCancellation();
@@ -83,13 +89,10 @@ function fixture(t: TestContext, options: {
             if (args[0] === 'build') {
                 const output = options.output ?? JSON.stringify([{...expectedBuild, ...options.build}], null, 2);
                 for (const text of output.split('\n')) onLine({stream: 'stdout', text});
-                options.onBuild?.();
                 if (options.cancelAt === 'build') cancellation.cancelActive();
                 return {ok: !options.buildFail, code: options.buildFail ? 1 : 0};
             }
-            assert.equal(args[0], 'submit');
-            if (options.cancelAt === 'submit') cancellation.cancelActive();
-            return {ok: !options.submitFail, code: options.submitFail ? 1 : 0};
+            assert.fail('The handoff must not poll or create a separate submission.');
         },
     };
     const publisher = createAndroidProductionPublisher({workspace, cancellation, cli});
@@ -100,18 +103,20 @@ function fixture(t: TestContext, options: {
     });
     const release = (version = '1.7.5') => publisher.release(version, '1.7.5', (line) => {
         lines.push(line);
-        if (options.cancelAt === 'verified' && line.text.startsWith('Verified finished EAS build')) cancellation.cancelActive();
     }, 'Android Production');
     return {release, processes, calls, cancellation, lines, write, read};
 }
 
-test('synchronizes only native release fields and submits the exact validated EAS build', async (t) => {
+test('synchronizes native release fields and returns when the build and automatic Play upload are queued', async (t) => {
     const f = fixture(t);
-    assert.deepEqual(await f.release(), {ok: true, buildId: BUILD_ID});
+    assert.deepEqual(await f.release(), {
+        ok: true, buildId: BUILD_ID, submissionId: SUBMISSION_ID,
+        buildUrl: `${PROJECT_URL}/builds/${BUILD_ID}`,
+        submissionUrl: `${PROJECT_URL}/submissions/${SUBMISSION_ID}`,
+    });
     assert.deepEqual(f.processes, [['bash', 'scripts/setup-eas-credentials.sh']]);
     assert.deepEqual(f.calls.map(({args}) => args), [
-        ['build', '--platform', 'android', '--profile', 'production', '--non-interactive', '--wait', '--json'],
-        ['submit', '--platform', 'android', '--profile', 'play-production', '--id', BUILD_ID, '--non-interactive', '--wait'],
+        ['build', '--platform', 'android', '--profile', 'production', '--auto-submit-with-profile', 'play-production', '--non-interactive', '--no-wait', '--json'],
     ]);
     for (const call of f.calls) assert.deepEqual(call.opts, {label: 'Android Production', retries: 0, idleTimeoutMs: 0});
     const gradle = f.read('android/app/build.gradle');
@@ -126,6 +131,7 @@ test('synchronizes only native release fields and submits the exact validated EA
     assert.match(manifest, /&quot;custom&quot;:&quot;retained&quot;/);
     assert.match(manifest, /android:name="custom" android:value="Keep me"/);
     assert.equal(f.lines.some((line) => line.stream === 'stdout'), false, 'raw build JSON is not forwarded to the UI');
+    assert.ok(f.lines.some((line) => line.text.includes(`${PROJECT_URL}/builds/${BUILD_ID}`) && line.text.includes(`${PROJECT_URL}/submissions/${SUBMISSION_ID}`)));
 });
 
 test('replaces legacy Gradle package expressions with literal versions EAS can inspect', async (t) => {
@@ -186,24 +192,48 @@ test('preflight resolves the inherited Play key environment expression like EAS'
     assert.equal((await f.release()).ok, true);
 });
 
-test('rechecks submit configuration after a long build before creating a submission', async (t) => {
-    const f = fixture(t, {onBuild: () => {
-        const config = JSON.parse(f.read('eas.json'));
-        config.submit['play-production'].android.track = 'internal';
-        f.write('eas.json', JSON.stringify(config));
-    }});
-    assert.deepEqual(await f.release(), {ok: false, buildId: BUILD_ID});
-    assert.equal(f.calls.length, 1);
-});
+for (const status of ['NEW', 'IN_QUEUE', 'IN_PROGRESS', 'FINISHED']) {
+    test(`accepts a scheduled release while its build is ${status}`, async (t) => {
+        const f = fixture(t, {build: {status}});
+        assert.equal((await f.release()).ok, true);
+        assert.equal(f.calls.length, 1);
+    });
+}
+
+for (const status of ['AWAITING_BUILD', 'IN_QUEUE', 'IN_PROGRESS', 'FINISHED']) {
+    test(`accepts a scheduled Play upload while it is ${status}`, async (t) => {
+        const f = fixture(t, {build: {submissions: [{...expectedSubmission, status}]}});
+        assert.equal((await f.release()).ok, true);
+        assert.equal(f.calls.length, 1);
+    });
+}
 
 for (const [name, value] of [
-    ['status', 'CANCELED'], ['status', 'IN_QUEUE'], ['status', 'ERRORED'], ['platform', 'IOS'],
+    ['status', 'CANCELED'], ['status', 'PENDING_CANCEL'], ['status', 'ERRORED'], ['status', 'UNKNOWN'], ['platform', 'IOS'],
     ['distribution', 'INTERNAL'], ['buildProfile', 'preview'], ['channel', 'Staging'],
     ['appVersion', '1.7.4'], ['appBuildVersion', '76'], ['runtimeVersion', '1.7.4'],
+    ['appBuildVersion', ['77']],
     ['id', 'invalid-id'], ['project', {id: 'another-project'}],
 ] as const) {
-    test(`does not submit a build with mismatched ${name}: ${JSON.stringify(value)}`, async (t) => {
+    test(`does not confirm a build with mismatched ${name}: ${JSON.stringify(value)}`, async (t) => {
         const f = fixture(t, {build: {[name]: value}});
+        assert.equal((await f.release()).ok, false);
+        assert.equal(f.calls.length, 1);
+        assert.ok(f.lines.some((line) => /Remote work may already exist/.test(line.text)));
+    });
+}
+
+for (const submissions of [
+    undefined, null, [], [expectedSubmission, expectedSubmission], [null],
+    ...[
+        {id: 'invalid'}, {status: 'ERRORED'}, {status: 'CANCELED'}, {status: 'UNKNOWN'},
+        {platform: 'IOS'}, {app: {id: 'another-project'}},
+        {androidConfig: {track: 'internal', releaseStatus: 'COMPLETED'}},
+        {androidConfig: {track: 'production', releaseStatus: 'DRAFT'}},
+    ].map((changes) => [{...expectedSubmission, ...changes}]),
+]) {
+    test(`does not confirm missing, failed or mismatched automatic submission: ${JSON.stringify(submissions)}`, async (t) => {
+        const f = fixture(t, {build: {submissions}});
         assert.equal((await f.release()).ok, false);
         assert.equal(f.calls.length, 1);
     });
@@ -223,16 +253,11 @@ test('failed credential validation prevents creating any cloud build', async (t)
     assert.equal(f.calls.length, 0);
 });
 
-test('an unsuccessful cloud build is never submitted or retried even with finished JSON', async (t) => {
+test('a failed handoff is never retried even with a valid receipt', async (t) => {
     const f = fixture(t, {buildFail: true});
     assert.equal((await f.release()).ok, false);
     assert.equal(f.calls.length, 1);
-});
-
-test('a failed submission retains the exact build ID without retrying the mutation', async (t) => {
-    const f = fixture(t, {submitFail: true});
-    assert.deepEqual(await f.release(), {ok: false, buildId: BUILD_ID});
-    assert.equal(f.calls.length, 2);
+    assert.ok(f.lines.some((line) => /Remote work may already exist/.test(line.text)));
 });
 
 test('cancellation before release leaves native sources and external processes untouched', async (t) => {
@@ -245,11 +270,11 @@ test('cancellation before release leaves native sources and external processes u
     assert.equal(f.calls.length, 0);
 });
 
-for (const cancelAt of ['credentials', 'build', 'verified', 'submit'] as const) {
+for (const cancelAt of ['credentials', 'build'] as const) {
     test(`cancellation during ${cancelAt} does not start a later cloud mutation`, async (t) => {
         const f = fixture(t, {cancelAt});
         assert.equal((await f.release()).ok, false);
-        assert.equal(f.calls.length, cancelAt === 'credentials' ? 0 : cancelAt === 'submit' ? 2 : 1);
+        assert.equal(f.calls.length, cancelAt === 'credentials' ? 0 : 1);
         if (cancelAt !== 'credentials') assert.ok(f.lines.some((line) => /Remote EAS build or submission work may continue/.test(line.text)));
     });
 }

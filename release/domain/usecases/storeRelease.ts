@@ -310,21 +310,32 @@ export function createStoreReleaseUseCases(deps: {
                 if (job.platform === 'android' && job.channel === 'Production') {
                     onLine({
                         stream: 'system',
-                        text: 'Android Production: building in Expo and submitting the completed build to Google Play…',
+                        text: 'Android Production: queuing an Expo build and automatic Google Play submission…',
                         label,
                     });
                     const published = await androidProductionPublisher.release(
                         version, runtimeVersion, onLine, label,
                     );
-                    if (!published.ok || cancellation.isCancelling()) {
+                    if (!published.ok) {
                         steps.push({platform: job.platform, channel: job.channel, ok: false});
                         continue;
                     }
                     onLine({
                         stream: 'system',
-                        text: 'Submitted to Google Play production through Expo. Google review and publishing status are managed in Play Console.',
+                        text: 'Handoff complete. Record the confirmed release later to enable OTA updates.',
                         label,
                     });
+                    steps.push({
+                        platform: job.platform,
+                        channel: job.channel,
+                        ok: true,
+                        queued: true,
+                        buildId: published.buildId,
+                        submissionId: published.submissionId,
+                        buildUrl: published.buildUrl,
+                        submissionUrl: published.submissionUrl,
+                    });
+                    continue;
                 } else if (job.platform === 'android') {
                     const built = await ensureAndroidArtifacts(label, job.channel);
                     if (!built.ok || !built.artifacts) {
