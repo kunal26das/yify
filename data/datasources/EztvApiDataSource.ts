@@ -31,7 +31,8 @@ export class EztvApiDataSource implements EztvApi {
     private readonly responses = new ResponseCache();
 
     constructor(private readonly resolveBaseUrl: () => string = () => EZTV_BASE_URL,
-                private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+                private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+                private readonly fetcher?: typeof fetch) {
     }
 
     async getTorrents(params: ListTorrentsApiParams): Promise<EztvTorrentsResponse> {
@@ -55,7 +56,7 @@ export class EztvApiDataSource implements EztvApi {
         const span = this.diagnostics.start('api.eztv.torrents', {provider: 'eztv', method: 'GET', cache: 'miss'});
         let status: number | undefined;
         try {
-            const response = await fetch(url, {signal: controller.signal});
+            const response = await (this.fetcher ?? fetch)(url, {signal: controller.signal});
             status = response.status;
             if (!response.ok) {
                 throw new EztvUnavailableError(new Error(`EZTV error: ${response.status}`));

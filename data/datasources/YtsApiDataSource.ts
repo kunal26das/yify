@@ -93,7 +93,7 @@ export interface YtsApi
 }
 
 async function fetchWithTimeout<T extends { status: string; status_message?: string }>(
-    url: string, diagnostics: Diagnostics, operation: string
+    url: string, diagnostics: Diagnostics, operation: string, fetcher: typeof fetch
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -101,7 +101,7 @@ async function fetchWithTimeout<T extends { status: string; status_message?: str
   let status: number | undefined;
 
   try {
-    const response = await fetch(url, {signal: controller.signal});
+    const response = await fetcher(url, {signal: controller.signal});
     status = response.status;
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -122,7 +122,8 @@ async function fetchWithTimeout<T extends { status: string; status_message?: str
 
 export class YtsApiDataSource implements YtsApi {
   constructor(private readonly resolveBaseUrl: () => string = () => DEFAULT_BASE_URL,
-              private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+              private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+              private readonly options: {fetch?: typeof fetch; cache?: boolean} = {}) {
   }
 
   async listMovies(params: ListMoviesApiParams): Promise<YtsListMoviesResponse> {
@@ -194,6 +195,7 @@ export class YtsApiDataSource implements YtsApi {
       searchParams: URLSearchParams,
       ttlMs = 0
   ): Promise<T> {
+    if (this.options.cache === false) ttlMs = 0;
     const query = searchParams.toString();
     const suffix = query ? `?${query}` : '';
     const baseUrl = this.resolveBaseUrl().replace(/\/+$/, '');
@@ -208,8 +210,8 @@ export class YtsApiDataSource implements YtsApi {
     }
 
     const operation = `api.yts.${endpoint.replace('.json', '')}`;
-    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation).catch((error) => {
-      responseCache.delete(url);
+    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation, this.options.fetch ?? fetch).catch((error) => {
+      if (ttlMs > 0) responseCache.delete(url);
       throw error;
     });
 

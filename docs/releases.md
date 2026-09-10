@@ -111,5 +111,20 @@ with `scripts/check-web-export.mjs` before deployment.
 | `yarn deploy:hosting:prod` | Export and deploy to the production alias |
 | `yarn export:web` | Export the `/yify` mirror to `dist/` |
 
-For manual deployments, check the export with `node scripts/check-web-export.mjs dist-hosting`.
+For manual deployments, check the export with `node scripts/check-web-export.mjs dist-hosting --server`.
 New web origins also need Firebase Auth and Google OAuth configuration for sign-in.
+
+The web catalog API projects public metadata before responding. Browser exports must pass the
+provider-data check; never promote or restore a deployment built before that boundary was added.
+Old EAS deployments retain public URLs until deleted, even after production moves to a newer build.
+
+Catalog requests have a 25-second deadline that cancels upstream fetches and further pagination.
+Each worker limits upstream work to 60 units per client per minute and 240 units overall, with bursts
+of the same size and at most 24/48 concurrent units. An episode request reserves six units for its
+possible six upstream pages; other operations reserve one. Excess requests receive uncached `429`
+responses with `Retry-After`. Client identity uses EAS Hosting's `X-Real-IP`; absent or invalid values
+share one fallback bucket. The bounded, transient client table is not persisted or logged.
+
+These counters protect each warm worker independently. They reset on worker replacement and are
+not a distributed quota across regions or deployments. A strict service-wide quota requires a
+shared rate-limit store or an edge gateway; never expose such a store's credential in the web bundle.

@@ -1,6 +1,9 @@
 import type {MovieRepository, ShowRepository} from '@/domain';
 import {InvalidCatalogRequest, parseCatalogRequest} from './parameters';
 import type {CatalogRequest} from './parameters';
+import {assertCatalogActive} from './cancellation';
+import {createCatalogAdmission} from './admission';
+import type {CatalogAdmission} from './admission';
 import {
     projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
 } from './projections';
@@ -12,6 +15,7 @@ export interface CatalogRepositories {
 
 interface CatalogHandlerOptions {
     timeoutMs?: number;
+    admission?: CatalogAdmission;
 }
 
 class CatalogTimeout extends Error {}
@@ -28,10 +32,11 @@ async function execute(request: CatalogRequest, repositories: CatalogRepositorie
 }
 
 export function createCatalogHandler(
-    repositories: CatalogRepositories | (() => CatalogRepositories),
+    repositories: CatalogRepositories | ((signal: AbortSignal) => CatalogRepositories),
     options: CatalogHandlerOptions = {},
 ): (request: Request, operation: string) => Promise<Response> {
     const timeoutMs = options.timeoutMs ?? 25_000;
+    const admission = options.admission ?? createCatalogAdmission();
     return async (request, operation) => {
         const headers = new Headers({
             'Content-Type': 'application/json; charset=utf-8',
@@ -65,25 +70,40 @@ export function createCatalogHandler(
             return new Response(null, {status: 204, headers});
         }
 
+        const permit = admission.acquire(request, parsed);
+        if (!permit.allowed) {
+            headers.set('Retry-After', String(permit.retryAfter));
+            return respond({error: 'Too many catalog requests. Please try again shortly.'}, 429);
+        }
+        const controller = new AbortController();
         let timer: ReturnType<typeof setTimeout> | undefined;
+        let rejectCancellation: (error: Error) => void = () => {};
+        const cancelled = new Promise<never>((_, reject) => { rejectCancellation = reject; });
+        const cancel = () => {
+            controller.abort();
+            rejectCancellation(new CatalogTimeout());
+        };
+        try { request.signal.addEventListener('abort', cancel, {once: true}); } catch {}
+        if (request.signal.aborted) cancel();
+        else timer = setTimeout(cancel, timeoutMs);
+        const work = Promise.resolve().then(() => {
+            assertCatalogActive(controller.signal);
+            return execute(parsed, typeof repositories === 'function' ? repositories(controller.signal) : repositories);
+        });
+        void work.then(permit.release, permit.release);
         try {
-            const deadline = new Promise<never>((_, reject) => {
-                timer = setTimeout(() => reject(new CatalogTimeout()), timeoutMs);
-            });
-            const result = await Promise.race([
-                execute(parsed, typeof repositories === 'function' ? repositories() : repositories),
-                deadline,
-            ]);
+            const result = await Promise.race([work, cancelled]);
             if (parsed.operation !== 'movies' || !parsed.params.query) {
                 headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             }
             return respond(result, 200);
         } catch (error) {
-            const timeout = error instanceof CatalogTimeout || (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name));
+            const timeout = controller.signal.aborted || error instanceof CatalogTimeout || (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name));
             headers.set('Cache-Control', 'no-store');
             return respond({error: timeout ? 'Catalog request timed out' : 'Catalog is temporarily unavailable'}, timeout ? 504 : 502);
         } finally {
             if (timer !== undefined) clearTimeout(timer);
+            try { request.signal.removeEventListener('abort', cancel); } catch {}
         }
     };
 }
