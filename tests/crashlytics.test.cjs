@@ -18,9 +18,9 @@ const errorAt = (column, {message = 'Playback failed', caller = 800} = {}) => ({
 
 async function signatureOf(error) {
     const frames = await framesOf(createCrashlyticsError(error));
-    const identified = frames.filter(frame => frame.functionName?.includes('YifyReactNative_'));
+    const identified = frames.filter(frame => frame.functionName?.includes('YifyReactNative.'));
     assert.equal(identified.length, 1, 'exactly one crash frame should carry the grouping identity');
-    const signature = identified[0].functionName.match(/YifyReactNative_[A-Za-z0-9_$]+_[a-f0-9]{16}$/);
+    const signature = identified[0].functionName.match(/^YifyReactNative\.[a-p]{16}\..+_[A-Za-z0-9_$]+$/);
     assert.ok(signature, 'the identity must end in a stable 64-bit fingerprint');
     return signature[0];
 }
@@ -96,7 +96,7 @@ test('the Firebase copy annotates the real failing frame without adding syntheti
     assert.ok(result instanceof Error);
     assert.equal(result.message, input.message);
     assert.equal(frames.length, 2);
-    assert.match(frames[0].functionName, /^anonymous__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+    assert.match(frames[0].functionName, /^YifyReactNative\.[a-p]{16}\.anonymous_TypeError$/);
     assert.equal(frames[1].functionName, 'onPress');
     assert.deepEqual(frames.map(frame => ({
         file: frame.fileName,
@@ -119,7 +119,7 @@ test('native frames remain in the report while grouping follows the first usable
         assert.equal(frames.length, 2);
         assert.equal(frames[0].functionName, 'nativeCall');
         assert.equal(frames[0].fileName, nativeFile);
-        assert.match(frames[1].functionName, /^play__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+        assert.match(frames[1].functionName, /^YifyReactNative\.[a-p]{16}\.play_TypeError$/);
         assert.equal(frames[1].fileName, 'index.android.bundle');
         assert.equal(frames[1].lineNumber, 1);
         assert.equal(frames[1].columnNumber, 100);
@@ -149,7 +149,7 @@ test('an error with no useful JS source falls back to its React component stack'
     assert.equal(await signatureOf(first), await signatureOf(second));
     const frames = await framesOf(createCrashlyticsError(first));
     assert.equal(frames.length, 2);
-    assert.match(frames[0].functionName, /^MovieDetails__YifyReactNative_Error_[a-f0-9]{16}$/);
+    assert.match(frames[0].functionName, /^YifyReactNative\.[a-p]{16}\.MovieDetails_Error$/);
     assert.equal(frames[0].fileName, 'MovieDetails.tsx');
     assert.equal(frames[0].lineNumber, 30);
     assert.equal(frames[0].columnNumber, 4);
@@ -188,7 +188,7 @@ test('normalization survives unusual thrown values and hostile error property ge
             const normalized = createCrashlyticsError(input);
             assert.ok(normalized instanceof Error);
             assert.equal(typeof normalized.message, 'string');
-            assert.match(normalized.stack, /YifyReactNative_/);
+            assert.match(normalized.stack, /YifyReactNative\./);
         });
     }
 });
@@ -202,7 +202,7 @@ test('fatal interception sends the normalized crash to RNFB and preserves the or
     assert.equal(sdk.fatal, true);
     assert.notEqual(sdk.error, error);
     assert.equal(sdk.error.message, error.message);
-    assert.match(sdk.error.stack, /YifyReactNative_/);
+    assert.match(sdk.error.stack, /YifyReactNative\./);
     assert.equal(harness.events[2].error, error);
     assert.equal(harness.events[2].fatal, true);
 });
@@ -322,8 +322,66 @@ test('Sentry can wrap the guard and observe the untouched crash before Firebase 
     assert.equal(sentryEvents.length, 1);
     assert.equal(sentryEvents[0].error, error);
     assert.equal(sentryEvents[0].fatal, true);
-    assert.equal(error.stack.includes('YifyReactNative_'), false);
+    assert.equal(error.stack.includes('YifyReactNative.'), false);
     assert.notEqual(harness.events.find(event => event.kind === 'sdk').error, error);
+});
+
+function rendererHarness({enabled = true, reporterThrows = false} = {}) {
+    const events = [];
+    const manager = {
+        handleException: (error, fatal) => events.push({kind: 'native', error, fatal}),
+    };
+    let current = (error, fatal) => manager.handleException(error, fatal);
+    const errorUtils = {
+        getGlobalHandler: () => current,
+        setGlobalHandler: handler => { current = handler; },
+    };
+    installCrashlyticsHandler(errorUtils, () => {
+        current = async (error, fatal) => {
+            events.push({kind: 'firebase', error, fatal});
+            if (reporterThrows) throw new Error('Reporter unavailable');
+        };
+        return {isCrashlyticsCollectionEnabled: enabled};
+    }, () => events.push({kind: 'nonfatal'}), manager);
+    const firebase = current;
+    current = async (error, fatal) => {
+        events.push({kind: 'sentry', error, fatal});
+        await Promise.resolve();
+        return firebase(error, fatal);
+    };
+    return {events, manager, globalFatal: error => current(error, true)};
+}
+
+test('uncaught render errors reach both reporters with the original Sentry error and no fallback recursion', async () => {
+    const harness = rendererHarness();
+    const error = errorAt(100);
+    await harness.manager.handleException(error, true);
+    assert.deepEqual(harness.events.map(event => event.kind), ['sentry', 'firebase', 'native']);
+    assert.equal(harness.events[0].error, error);
+    assert.notEqual(harness.events[1].error, error);
+    assert.equal(harness.events[2].error, error);
+    assert.ok(harness.events.every(event => event.fatal === true));
+});
+
+test('global fatal fallback bypasses the renderer hook even when Firebase is disabled or fails', async () => {
+    for (const options of [{}, {enabled: false}, {reporterThrows: true}]) {
+        for (const origin of ['renderer', 'global']) {
+            const harness = rendererHarness(options);
+            const error = errorAt(100);
+            if (origin === 'renderer') await harness.manager.handleException(error, true);
+            else await harness.globalFatal(error);
+            assert.deepEqual(harness.events.map(event => event.kind), options.enabled === false
+                ? ['sentry', 'native'] : ['sentry', 'firebase', 'native']);
+            assert.equal(harness.events.at(-1).error, error);
+        }
+    }
+});
+
+test('caught render errors stay on React Native’s nonfatal path', () => {
+    const harness = rendererHarness();
+    const error = errorAt(100);
+    harness.manager.handleException(error, false);
+    assert.deepEqual(harness.events, [{kind: 'native', error, fatal: false}]);
 });
 
 test('the actual RNFB handler receives the fatal marker and individual JavaScript frames', async () => {
@@ -372,7 +430,7 @@ test('the actual RNFB handler receives the fatal marker and individual JavaScrip
         assert.equal(payload.message, original.message);
         assert.equal(payload.isUnhandledRejection, false);
         assert.equal(payload.frames.length, 2);
-        assert.match(payload.frames[0].fn, /^anonymous__YifyReactNative_TypeError_[a-f0-9]{16}$/);
+        assert.match(payload.frames[0].fn, /^YifyReactNative\.[a-p]{16}\.anonymous_TypeError$/);
         assert.equal(payload.frames[0].file, 'index.android.bundle:1:100');
         assert.equal(payload.frames[0].line, 1);
         assert.equal(payload.frames[0].col, 100);
@@ -432,6 +490,7 @@ test('bootstrap captures React Native before importing the SDK that eagerly inst
     let loadedSdk;
     const mocks = {
         'expo-updates': {runtimeVersion: '1.7.7', updateId: null, channel: 'Production'},
+        'react-native/Libraries/Core/ExceptionsManager': {default: {handleException() {}}},
     };
     Object.defineProperty(mocks, '@react-native-firebase/crashlytics', {
         get() {
@@ -459,18 +518,18 @@ test('bootstrap captures React Native before importing the SDK that eagerly inst
         await current(fatal, true);
         assert.deepEqual(events.map(event => event.kind), ['sdk-fatal', 'original']);
         assert.notEqual(events[0].error, fatal);
-        assert.match(events[0].error.stack, /YifyReactNative_TypeError_[a-f0-9]{16}/);
+        assert.match(events[0].error.stack, /YifyReactNative\.[a-p]{16}\.anonymous_TypeError/);
         assert.equal(events[0].fatal, true);
         assert.equal(events[1].error, fatal);
         assert.equal(events[1].fatal, true);
-        assert.equal(fatal.stack.includes('YifyReactNative_'), false);
+        assert.equal(fatal.stack.includes('YifyReactNative.'), false);
 
         events.length = 0;
         const nonfatal = errorAt(101);
         await current(nonfatal, false);
         assert.deepEqual(events.map(event => event.kind), ['nonfatal', 'original']);
         assert.equal(events[0].instance, client);
-        assert.match(events[0].error.stack, /YifyReactNative_TypeError_[a-f0-9]{16}/);
+        assert.match(events[0].error.stack, /YifyReactNative\.[a-p]{16}\.anonymous_TypeError/);
         assert.equal(events[1].error, nonfatal);
         assert.equal(events[1].fatal, false);
         assert.equal(imports, 1, 'the SDK should remain loaded after startup');
@@ -489,6 +548,7 @@ test('development and web entry points do not initialize Firebase crash reportin
     const unexpected = () => { calls += 1; throw new Error('Firebase must not initialize'); };
     const mocks = {
         get '@react-native-firebase/crashlytics'() { return unexpected(); },
+        get 'react-native/Libraries/Core/ExceptionsManager'() { return unexpected(); },
         'expo-updates': {},
     };
     Object.defineProperty(globalThis, 'ErrorUtils', {

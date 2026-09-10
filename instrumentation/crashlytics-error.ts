@@ -38,7 +38,8 @@ function fingerprint(value: string): string {
         hash ^= BigInt(value.charCodeAt(i));
         hash = BigInt.asUintN(64, hash * 0x100000001b3n);
     }
-    return hash.toString(16).padStart(16, '0');
+    return hash.toString(16).padStart(16, '0')
+        .replace(/[0-9a-f]/g, nibble => String.fromCharCode(97 + parseInt(nibble, 16)));
 }
 
 function fileLocation(file: string | undefined): string {
@@ -69,7 +70,7 @@ export function createCrashlyticsError(input: unknown): Error {
             failure.lineNumber || 0, failure.columnNumber || 0]
         : [name, message.replace(/\s+/g, ' ').trim()];
     const signature = fingerprint(JSON.stringify(identity));
-    const symbol = `YifyReactNative_${name.replace(/[^a-zA-Z0-9_$]/g, '_')}_${signature}`;
+    const symbol = `YifyReactNative.${signature}.${failure?.functionName || 'anonymous'}_${name.replace(/[^a-zA-Z0-9_$]/g, '_')}`;
     const copy = new Error(message);
     copy.name = name;
     const componentStack = readString(input, 'componentStack');
@@ -78,7 +79,7 @@ export function createCrashlyticsError(input: unknown): Error {
         `${name}: ${message}`,
         ...(!failure ? [`    at ${symbol} (react-native-crash:1:1)`] : []),
         ...frames.map(frame => {
-            const functionName = `${frame.functionName || '<anonymous>'}${frame === failure ? `__${symbol}` : ''}`;
+            const functionName = frame === failure ? symbol : frame.functionName || '<anonymous>';
             return `    at ${functionName} (${fileLocation(frame.fileName)}:${frame.lineNumber || 0}:${frame.columnNumber || 0})`;
         }),
         ...(!frames.length && originalStack ? [originalStack] : []),

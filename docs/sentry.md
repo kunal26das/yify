@@ -13,11 +13,16 @@ terminates the failed app. Disabling Firebase's handler chaining avoids a second
 React Native exception. A guard keeps recoverable errors nonfatal.
 The Firebase SDK is loaded synchronously inside the installer, after saving React Native's
 handler: importing it at module scope installs its own handler too early.
+React Native 0.86 sends uncaught render errors directly to `ExceptionsManager`, so its fatal
+path is routed through the current global handler too. A guarded fallback prevents recursion;
+caught and recoverable render errors retain React Native's normal handling. Recheck this private
+React Native integration when upgrading the framework.
 
 Firebase receives an error copy with the original message and parsed stack frames. The first
-source frame's function name gains a stable suffix based on the error type and failure location,
+source frame's function name gains a stable namespace based on the error type and failure location,
 including the Hermes column offset; its file, line and column and the remaining frames are retained.
-A separate helper frame is insufficient because Firebase ignores it when choosing the failure.
+The namespace uses an alphabetic encoding of a 64-bit signature. Live Android tests showed
+that Firebase merged hexadecimal suffixes but separated this class-like representation.
 Repeated failures at that location share a signature; different locations
 get different signatures. Caller stacks, timestamps, user identifiers and changing error
 messages do not split a known failure. Errors without a usable location fall back to type
@@ -26,6 +31,8 @@ and message. Sentry receives the original error unchanged.
 Firebase controls final issue grouping and may create variants; it has no custom fingerprint
 API. Verify changes with release-build crashes A, B, then A again, checking two fatal issues
 and two events under A. Restart the test app after each crash to upload its report.
+This A/B/A result was verified against Firebase on Android on 2026-09-10. Signatures follow
+the available stack locations; rebuilt bundles can move those locations between releases.
 Firebase retains bundle positions; Sentry's uploaded maps provide original TypeScript locations.
 Runtime, update ID and channel are attached as Firebase custom keys.
 
