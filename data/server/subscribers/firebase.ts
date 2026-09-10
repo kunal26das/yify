@@ -65,6 +65,7 @@ export function createFirebaseTokenVerifier(options: {fetch: typeof fetch; now: 
             const payload = verified.payload;
             const now = Math.floor(options.now() / 1000);
             if (payload.aud !== projectId || typeof payload.sub !== 'string' || !payload.sub.trim() || payload.sub.length > 128
+                || payload.sub === '.' || payload.sub === '..'
                 || /[\u0000-\u001f\u007f]/.test(payload.sub)
                 || !Number.isSafeInteger(payload.iat) || payload.iat! > now
                 || !Number.isSafeInteger(payload.auth_time) || (payload.auth_time as number) > now

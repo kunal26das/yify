@@ -122,6 +122,7 @@ test('invalid signature, issuer, audience, dates and subject cannot authorize a 
         token({aud: [PROJECT, 'other-project']}), token({exp: NOW / 1000}),
         token({iat: NOW / 1000 + 1}), token({auth_time: NOW / 1000 + 1}), token({auth_time: undefined}),
         token({auth_time: -1}), token({sub: ''}), token({sub: 'x'.repeat(129)}), token({sub: 'invalid\nsubject'}),
+        token({sub: '.'}), token({sub: '..'}),
     ];
     for (const value of invalid) await denies(authorize(request(await value), new AbortController().signal), 401);
     assert.ok(calls.every(call => call.url.hostname === 'www.googleapis.com'));
