@@ -30,6 +30,7 @@ import {Duration, enterFade, enterRise, exitFade, PressableScale} from '../compo
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
+import {LEGAL_LINKS, openLegalPage, PRIVACY_POLICY_URL} from '../constants/legal';
 import {usePalette} from '../hooks/use-palette';
 import {useResponsive} from '../hooks/use-responsive';
 import {
@@ -598,6 +599,21 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 </SettingsSection>
 
                 <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
+                    {LEGAL_LINKS.map(link => <Row
+                        key={link.url}
+                        icon={link.url === PRIVACY_POLICY_URL ? 'shield-checkmark-outline' : 'document-text-outline'}
+                        title={link.label}
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={() => {
+                            void openLegalPage(link.url).catch(() => {
+                                toast('This link could not be opened. Please try again.', 'alert-circle-outline');
+                            });
+                        }}
+                        accessibilityRole="link"
+                        accessibilityLabel={link.label}
+                        trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}
+                    />)}
                     <Row
                         icon="chatbox-ellipses-outline"
                         title="Report a problem"

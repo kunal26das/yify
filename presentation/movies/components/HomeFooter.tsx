@@ -1,9 +1,10 @@
-import {StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterRise} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';
+import {LEGAL_LINKS} from '../../constants/legal';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
@@ -77,7 +78,13 @@ export function HomeFooter() {
                     {column('App', APP_LINKS, 2)}
                 </View>
             </View>
-
+            {Platform.OS === 'web' ? <View style={styles.legal}>
+                {LEGAL_LINKS.map(link => <a key={link.url} href={link.url}
+                    onClick={() => Analytics.footerLink(link.label)}
+                    style={{color: colors.textMuted, textDecoration: 'none'}}>
+                    <ThemedText style={[styles.link, {color: colors.textMuted}]}>{link.label}</ThemedText>
+                </a>)}
+            </View> : null}
         </View>
     );
 }
@@ -103,5 +110,6 @@ const styles = StyleSheet.create({
     columnTitle: {fontSize: 13, letterSpacing: 0.6, marginBottom: 2, fontFamily: FontFamily.bold},
     link: {fontSize: 13.5, fontFamily: FontFamily.regular},
     linkHit: {alignSelf: 'flex-start'},
+    legal: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xl, paddingTop: Spacing.xl},
 
 });

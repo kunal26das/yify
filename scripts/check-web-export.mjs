@@ -43,7 +43,7 @@ for (const [file, expectTitle] of ROUTES) {
     }
 }
 
-for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json']) {
+for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) {
     if (!existsSync(join(dir, asset))) failures.push(`${asset}: missing from the export`);
 }
 
@@ -55,12 +55,25 @@ for (const page of DELETION_PAGES) {
         failures.push(`${page}: missing — Play requires the account deletion URL to resolve`);
         continue;
     }
-    deletionBodies.push(readFileSync(path, 'utf8'));
+    deletionBodies.push(readFileSync(path, 'utf8').match(/<body>([\s\S]*)<\/body>/)?.[1] ?? '');
 }
 if (deletionBodies.length === DELETION_PAGES.length && deletionBodies[0] !== deletionBodies[1]) {
     failures.push(
-        `${DELETION_PAGES.join(' and ')} have drifted — they serve /delete-account and /delete-account/ and must stay identical`
+        `${DELETION_PAGES.join(' and ')} have drifted — their account-deletion content must stay identical`
     );
+}
+
+for (const [page, title] of [['privacy/index.html', 'Privacy Policy'], ['terms/index.html', 'Terms &amp; Conditions']]) {
+    const path = join(dir, page);
+    if (!existsSync(path)) {
+        failures.push(`${page}: missing legal page`);
+        continue;
+    }
+    const html = readFileSync(path, 'utf8');
+    if (!html.includes(`<h1>${title}</h1>`) || !html.includes('mailto:kunal26das@gmail.com')) {
+        failures.push(`${page}: legal content or contact information is missing`);
+    }
+    if (/<script\b/i.test(html)) failures.push(`${page}: legal pages must remain readable without app scripts`);
 }
 
 if (existsSync(join(dir, '_sitemap.html'))) {

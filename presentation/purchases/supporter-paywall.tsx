@@ -1,7 +1,6 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import * as WebBrowser from 'expo-web-browser';
 import type {AuthSession, PurchaseOffer, PurchasePlacement} from '@/domain';
 import {useAdGateway, useAuthRepository, usePurchaseRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
@@ -10,8 +9,8 @@ import {usePalette} from '../hooks/use-palette';
 import {ThemedText} from '../components/themed-text';
 import {Analytics} from '../analytics/events';
 import {offerDisclosure, purchaseFailureMessage, safeManagementURL, supporterStatus} from './offer-copy';
+import {LEGAL_LINKS, openLegalPage} from '../constants/legal';
 
-const PRIVACY_URL = 'https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e';
 const NO_OFFERS: PurchaseOffer[] = [];
 type Request = {id: number; placement: PurchasePlacement; onClose?: (supported: boolean) => void};
 type ShowPaywall = (placement: PurchasePlacement, onClose?: Request['onClose']) => void;
@@ -150,13 +149,9 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
         try { await Linking.openURL(url); }
         catch { if (mounted.current) setNotice('This link could not be opened. Please try again.'); }
     };
-    const openPrivacyPolicy = async () => {
+    const openLegalLink = async (url: string) => {
         try {
-            if (Platform.OS === 'android') {
-                await WebBrowser.openBrowserAsync(PRIVACY_URL, {enableBarCollapsing: true});
-            } else {
-                await Linking.openURL(PRIVACY_URL);
-            }
+            await openLegalPage(url);
         } catch { if (mounted.current) setNotice('This link could not be opened. Please try again.'); }
     };
     const managementURL = safeManagementURL(state.managementURL);
@@ -207,9 +202,10 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
                         onPress={restore} disabled={busy || !state.ready || !session.account || !state.available}/>
                     <PaywallButton label={state.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => { void refresh(); }} disabled={busy || state.refreshing || !state.available}/>
                     <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Prices above are the regular prices. Any eligible trial or introductory offer and the final billing details are confirmed at checkout. Manage or cancel a subscription in the store where you paid. Cancellation keeps access until the paid period ends.</ThemedText>
-                    <Pressable accessibilityRole="link" onPress={() => { void openPrivacyPolicy(); }} style={styles.privacy}>
-                        <ThemedText style={{color: colors.accent}}>Privacy policy</ThemedText>
-                    </Pressable>
+                    {LEGAL_LINKS.map(link => <Pressable key={link.url} accessibilityRole="link"
+                        onPress={() => { void openLegalLink(link.url); }} style={styles.privacy}>
+                        <ThemedText style={{color: colors.accent}}>{link.label}</ThemedText>
+                    </Pressable>)}
                 </ScrollView>
             </View>
         </View>

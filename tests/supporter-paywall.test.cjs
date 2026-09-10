@@ -181,15 +181,28 @@ test('active access shows manage and restore actions without recording a sales i
     assert.ok(f.pressable('Restore purchases'));
 });
 
-test('Android privacy link opens a custom tab and invalid management URLs are not rendered', async t => {
+test('Android legal links open our hosted pages in custom tabs and invalid management URLs are not rendered', async t => {
     const f = await fixture(t, {state: {managementURL: 'javascript:alert(1)'}});
     await f.open();
     assert.equal(f.pressable('Manage billing or cancel'), undefined);
     await f.press('Privacy policy');
-    assert.deepEqual(f.calls.browsers, [{url: 'https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e', options: {enableBarCollapsing: true}}]);
+    await f.press('Terms and conditions');
+    assert.deepEqual(f.calls.browsers, [
+        {url: 'https://yify.expo.app/privacy/', options: {enableBarCollapsing: true}},
+        {url: 'https://yify.expo.app/terms/', options: {enableBarCollapsing: true}},
+    ]);
     assert.deepEqual(f.calls.links, []);
     assert.equal(f.pressable('Privacy policy').props.accessibilityRole, 'link');
-    assert.doesNotMatch(f.text(), /Terms of service/);
+    assert.equal(f.pressable('Terms and conditions').props.accessibilityRole, 'link');
+});
+
+test('web legal links use the browser without changing custom-tab behavior on Android', async t => {
+    const f = await fixture(t, {platform: 'web'});
+    await f.open();
+    await f.press('Privacy policy');
+    await f.press('Terms and conditions');
+    assert.deepEqual(f.calls.links, ['https://yify.expo.app/privacy/', 'https://yify.expo.app/terms/']);
+    assert.deepEqual(f.calls.browsers, []);
 });
 
 test('restore reports a recovered purchase and distinguishes web account checks from mobile restoration', async t => {
