@@ -16,21 +16,6 @@ interface CatalogHandlerOptions {
 
 class CatalogTimeout extends Error {}
 
-function allowedOrigin(origin: string): boolean {
-    try {
-        const url = new URL(origin);
-        if (url.origin !== origin || url.username || url.password) return false;
-        if (['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) return url.protocol === 'http:' || url.protocol === 'https:';
-        return url.protocol === 'https:' && !url.port && (
-            url.hostname === 'yify.expo.app'
-            || url.hostname === 'kunal26das.github.io'
-            || /^yify--[a-z\d-]+\.expo\.app$/.test(url.hostname)
-        );
-    } catch {
-        return false;
-    }
-}
-
 async function execute(request: CatalogRequest, repositories: CatalogRepositories): Promise<unknown> {
     switch (request.operation) {
         case 'movies': return projectMovieList(await repositories.movies.listMovies(request.params));
@@ -52,14 +37,9 @@ export function createCatalogHandler(
             'Content-Type': 'application/json; charset=utf-8',
             'Cache-Control': 'no-store',
             'X-Content-Type-Options': 'nosniff',
-            'Vary': 'Origin',
+            'Access-Control-Allow-Origin': '*',
         });
         const respond = (body: unknown, status: number) => new Response(JSON.stringify(body), {status, headers});
-        const origin = request.headers.get('Origin');
-        if (origin !== null) {
-            if (!allowedOrigin(origin)) return respond({error: 'Origin is not allowed'}, 403);
-            headers.set('Access-Control-Allow-Origin', origin);
-        }
         headers.set('Allow', 'GET, OPTIONS');
         if (request.method !== 'GET' && request.method !== 'OPTIONS') return respond({error: 'Method is not allowed'}, 405);
 

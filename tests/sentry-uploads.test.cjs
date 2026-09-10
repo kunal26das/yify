@@ -156,12 +156,18 @@ test('Hosting prepares matching server Debug IDs without changing client artifac
     const calls = [];
     await uploadSourceMaps(f.directory, {...f, strip: true, run: async (command, args, options) => {
         assert.equal(options.stderrOnly, true);
-        if (args[1] === 'sourcemaps') {
+        if (args[1] === 'sourcemaps' && args[2] === 'inject') {
             calls.push('inject');
             assert.deepEqual(args.slice(1), ['sourcemaps', 'inject', path.join(f.directory, 'server')]);
             return runCommand(command, args, options);
         }
-        calls.push('upload');
+        if (args[1] === 'sourcemaps') {
+            calls.push('server-upload');
+            assert.deepEqual(args.slice(1), ['sourcemaps', 'upload', '--strict', path.join(f.directory, 'server')]);
+        } else {
+            calls.push('client-upload');
+            assert.equal(args[1], path.join(f.directory, 'client'));
+        }
         const map = JSON.parse(fs.readFileSync(f.serverMap, 'utf8'));
         const debugId = map.debugId || map.debug_id;
         assert.match(debugId, /^[a-f0-9-]{36}$/);
@@ -170,7 +176,7 @@ test('Hosting prepares matching server Debug IDs without changing client artifac
         assert.equal(fs.readFileSync(f.sourceMap, 'utf8'), clientMap);
         return 0;
     }});
-    assert.deepEqual(calls, ['inject', 'upload']);
+    assert.deepEqual(calls, ['inject', 'client-upload', 'server-upload']);
     assert.equal(fs.existsSync(f.sourceMap), false);
     assert.equal(fs.existsSync(f.serverMap), false);
     assert.equal(fs.existsSync(f.serverBundle), true);
@@ -203,6 +209,28 @@ test('failed or ineffective server preparation preserves maps and prevents uploa
         assert.equal(fs.existsSync(f.sourceMap), true);
         assert.equal(fs.existsSync(f.serverMap), true);
     }
+});
+
+test('failed strict server upload retains both maps and prevents Hosting deployment', async (t) => {
+    const [{runEas}, {runCommand}] = await wrappers;
+    const f = hostingFixture(t);
+    const calls = [];
+    await assert.rejects(runEas('/eas', ['deploy', '--export-dir', f.directory, '--json'], {
+        ...f, run: async (command, args, options) => {
+            assert.notEqual(args[0], '/eas');
+            if (args[1] === 'sourcemaps' && args[2] === 'inject') return runCommand(command, args, options);
+            if (args[1] === 'sourcemaps') {
+                calls.push('server-upload');
+                assert.ok(args.includes('--strict'));
+                return 1;
+            }
+            calls.push('client-upload');
+            return 0;
+        },
+    }), /Sentry server source-map upload failed/);
+    assert.deepEqual(calls, ['client-upload', 'server-upload']);
+    assert.equal(fs.existsSync(f.sourceMap), true);
+    assert.equal(fs.existsSync(f.serverMap), true);
 });
 
 test('cancelling the OTA wrapper stops EAS and never starts the upload even when EAS exits cleanly', async (t) => {

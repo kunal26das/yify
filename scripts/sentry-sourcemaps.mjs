@@ -49,13 +49,21 @@ export function validateSourceMaps(directory) {
     return maps;
 }
 
-export async function prepareServerSourceMaps(directory, {cwd = projectRoot, env = process.env, run = runCommand} = {}) {
-    const serverDirectory = path.join(directory, 'server');
-    if (!fs.existsSync(path.join(directory, 'client')) || !fs.existsSync(serverDirectory)) return;
+function sentryCliPath() {
     const packagePath = require.resolve('@sentry/cli/package.json');
     const cli = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-    const executable = path.resolve(path.dirname(packagePath), cli.bin['sentry-cli']);
-    const code = await run(process.execPath, [executable, 'sourcemaps', 'inject', serverDirectory], {cwd, env, stderrOnly: true});
+    return path.resolve(path.dirname(packagePath), cli.bin['sentry-cli']);
+}
+
+function hostingServerDirectory(directory) {
+    const serverDirectory = path.join(directory, 'server');
+    return fs.existsSync(path.join(directory, 'client')) && fs.existsSync(serverDirectory) ? serverDirectory : undefined;
+}
+
+export async function prepareServerSourceMaps(directory, {cwd = projectRoot, env = process.env, run = runCommand} = {}) {
+    const serverDirectory = hostingServerDirectory(directory);
+    if (!serverDirectory) return;
+    const code = await run(process.execPath, [sentryCliPath(), 'sourcemaps', 'inject', serverDirectory], {cwd, env, stderrOnly: true});
     if (code !== 0) throw new Error(`Sentry server source-map preparation failed (exit ${code}). The export has been kept for retry.`);
 }
 
@@ -95,9 +103,15 @@ export async function uploadSourceMaps(directory, {cwd = projectRoot, env = proc
     const packagePath = require.resolve('@sentry/react-native/package.json');
     const sdk = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
     const uploader = path.resolve(path.dirname(packagePath), sdk.bin['sentry-expo-upload-sourcemaps']);
+    const serverDirectory = hostingServerDirectory(directory);
+    const clientDirectory = serverDirectory ? path.join(directory, 'client') : directory;
     // Keep stdout exclusively for EAS --json output, including the uploader's nested CLI output.
-    const code = await run(process.execPath, [uploader, directory], {cwd, env: uploadEnv, stderrOnly: true});
+    const code = await run(process.execPath, [uploader, clientDirectory], {cwd, env: uploadEnv, stderrOnly: true});
     if (code !== 0) throw new Error(`Sentry source-map upload failed (exit ${code}). The export has been kept for retry.`);
+    if (serverDirectory) {
+        const serverCode = await run(process.execPath, [sentryCliPath(), 'sourcemaps', 'upload', '--strict', serverDirectory], {cwd, env: uploadEnv, stderrOnly: true});
+        if (serverCode !== 0) throw new Error(`Sentry server source-map upload failed (exit ${serverCode}). The export has been kept for retry.`);
+    }
     if (strip) {
         for (const filename of maps) fs.unlinkSync(filename);
         console.error(`Uploaded source maps and removed ${maps.length} map files from the public web export.`);

@@ -74,8 +74,8 @@ for (const [operation, query] of [
         const {handler, calls} = fixtures();
         const response = await handler(request(operation, query), operation);
         assert.equal(response.status, 200);
-        assert.equal(response.headers.get('Access-Control-Allow-Origin'), ORIGIN);
-        assert.equal(response.headers.get('Vary'), 'Origin');
+        assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
+        assert.equal(response.headers.get('Vary'), null);
         assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
         assert.equal(response.headers.get('Cache-Control'), 'public, max-age=60, s-maxage=300');
         const body = await response.json();
@@ -210,25 +210,18 @@ test('invalid, extra and duplicate parameters never reach repositories', async (
     assert.deepEqual(calls, []);
 });
 
-test('CORS accepts canonical, GitHub, project preview and desktop loopback origins only', async () => {
-    const {handler, calls} = fixtures();
-    for (const origin of [ORIGIN, 'https://kunal26das.github.io', 'https://yify--catalog-preview.expo.app', 'http://localhost:8081', 'http://127.0.0.1:54321', 'http://[::1]:8081']) {
+test('public metadata CORS is independent of browser or Hosting-rewritten origins and never enables credentials', async () => {
+    const {handler} = fixtures();
+    for (const origin of [ORIGIN, 'https://kunal26das.github.io', 'https://yify--catalog-preview.expo.app', 'http://localhost:8081', 'http://127.0.0.1:54321', 'http://[::1]:8081', 'https://unknown-origin.invalid', 'null', null]) {
         const response = await handler(request('movies', '', origin), 'movies');
         assert.equal(response.status, 200, origin);
-        assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);
+        assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
         assert.equal(response.headers.get('Access-Control-Allow-Credentials'), null);
+        assert.equal(response.headers.get('Vary'), null);
+        const body = await response.json();
+        assert.equal(body.movies[0].title, movie.title);
+        assertNoRestrictedFields(body);
     }
-    const before = calls.length;
-    for (const origin of ['null', 'https://evil.invalid', 'https://yify.expo.app.evil.invalid', 'http://yify.expo.app', 'https://other--preview.expo.app', 'http://127.0.0.1.evil.invalid', 'https://localhost.evil.invalid', 'https://yify.expo.app/path']) {
-        const response = await handler(request('movies', '', origin), 'movies');
-        assert.equal(response.status, 403, origin);
-        assert.equal(response.headers.get('Access-Control-Allow-Origin'), null);
-        assert.equal(response.headers.get('Vary'), 'Origin');
-    }
-    assert.equal(calls.length, before);
-    const sameOrigin = await handler(request('movies', '', null), 'movies');
-    assert.equal(sameOrigin.status, 200);
-    assert.equal(sameOrigin.headers.get('Access-Control-Allow-Origin'), null);
 });
 
 test('OPTIONS validates CORS without upstream access and other methods are rejected', async () => {
@@ -237,7 +230,9 @@ test('OPTIONS validates CORS without upstream access and other methods are rejec
     assert.equal(response.status, 204);
     assert.equal(await response.text(), '');
     assert.equal(response.headers.get('Access-Control-Allow-Methods'), 'GET, OPTIONS');
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
     assert.equal(response.headers.get('Access-Control-Allow-Credentials'), null);
+    assert.equal(response.headers.get('Vary'), null);
     for (const method of ['POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']) {
         const denied = await handler(request('movies', '', ORIGIN, method), 'movies');
         assert.equal(denied.status, 405);
@@ -254,7 +249,7 @@ test('upstream failures expose no provider details or messages', async () => {
         const response = await handler(request('movie', 'id=10'), 'movie');
         assert.equal(response.status, 502);
         assert.equal(response.headers.get('Cache-Control'), 'no-store');
-        assert.equal(response.headers.get('Access-Control-Allow-Origin'), ORIGIN);
+        assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
         assert.deepEqual(await response.json(), {error: 'Catalog is temporarily unavailable'});
     }
 });
