@@ -49,7 +49,7 @@
     "@react-native-firebase/crashlytics": "24.1.1",
     "@react-native-firebase/remote-config": "24.1.1",
     "@react-native-google-signin/google-signin": "16.1.5",
-    "@revenuecat/purchases-js": "1.58.0",
+    "@revenuecat/purchases-js": "1.59.0",
     "@sentry/react-native": "8.25.0",
     "error-stack-parser": "2.1.4",
     "expo": "57.0.20",
