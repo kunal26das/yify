@@ -93,16 +93,17 @@ Reference: [RevenueCat Firebase integration](https://www.revenuecat.com/docs/int
 
 ## Web Billing policy and purchase UI
 
-The [Web Billing settings](https://app.revenuecat.com/projects/8b6ff243/web/app28ce2d8b73?activeTab=settings) have the existing support contact and Play store link. The Terms and conditions URL is blank, and the requirement to agree to terms before paying is off. The user has been asked for the actual Terms URL; no placeholder or invented terms were added.
+The [Web Billing settings](https://app.revenuecat.com/projects/8b6ff243/web/app28ce2d8b73?activeTab=settings) retain the Play store link and the account-email fallback for support. On 10 September 2026, the approved [Terms and conditions](https://yify.expo.app/terms/) URL was saved and verified after reloading the dashboard. The existing requirement to agree to terms before paying remains off.
 
-No separate Privacy Policy URL field was visible in the inspected App info, Billing or Appearance overview. No dashboard privacy field was changed. The app purchase UI links the existing published [privacy policy](https://www.freeprivacypolicy.com/live/a06bb609-730e-41fe-8ca4-c5494cdad41e).
+No separate Privacy Policy URL field was visible in the inspected App info, Billing or Appearance overview. No dashboard privacy field was changed. The purchase UI, Preferences and web footer link the self-hosted [Privacy Policy](https://yify.expo.app/privacy/) and [Terms and conditions](https://yify.expo.app/terms/). Android opens both pages in custom tabs.
+
+The published AdSense message, `Yify web consent`, also uses the self-hosted privacy URL for both `yify.expo.app` and `kunal26das.github.io`. Both saved URLs and the message's Published status were verified after publication on 10 September 2026.
 
 An anonymous local-browser check after removing the lifetime package showed only the monthly `$1.00` Web subscription with automatic renewal disclosure. Purchase controls correctly required sign-in. The dialog scrolled to reload, account-purchase checks, access refresh and policy controls, while its close control remained available. No sign-in, purchase or restore transaction was performed during this check. Displayed prices are a verification snapshot, not a replacement for SDK-provided localized pricing.
 
 ## Remaining operational checks
 
 - Verify the next legitimate Android purchase reaches both the RevenueCat Firebase integration log and Google Analytics; configuration is saved, but delivery has not yet been observed.
-- Obtain the actual Terms URL before configuring Web Billing terms or requiring acceptance.
 - If native iOS purchases are intended, configure the real RevenueCat iOS app and App Store products/credentials; Android and Web setup does not establish iOS readiness.
 - Validate purchase, restore and subscription-management behavior with the appropriate existing test accounts. Do not use the successful RTDN test or observed ad events as evidence that a new purchase was exercised.
 - Add targeting rules or experiments only for a deliberate product decision; existing default-offering fallback already supports both app placements.
