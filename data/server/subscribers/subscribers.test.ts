@@ -75,7 +75,32 @@ test('a signed Firebase identity plus a current production recurring subscriptio
     assert.equal(calls[1].url.pathname, `/v2/projects/8b6ff243/customers/${UID}/subscriptions`);
     assert.equal(calls[1].url.searchParams.get('environment'), 'production');
     assert.equal(new Headers(calls[1].init.headers).get('Authorization'), `Bearer ${SECRET}`);
-    assert.ok(calls.every(call => call.init.redirect === 'error' && call.init.cache === 'no-store' && call.init.credentials === 'omit'));
+    assert.ok(calls.every(call => call.init.redirect === 'manual' && call.init.cache === 'no-store' && call.init.credentials === 'omit'));
+});
+
+test('Google and RevenueCat redirects fail closed without following or forwarding credentials', async () => {
+    const signed = await token();
+    for (const provider of ['www.googleapis.com', 'api.revenuecat.com']) {
+        for (const status of [301, 302, 303, 307, 308]) {
+            const calls: {url: URL; init: RequestInit}[] = [];
+            const {authorize} = fixture({fetch: async (input: string, init: RequestInit) => {
+                const url = new URL(input);
+                calls.push({url, init});
+                assert.equal(init.redirect, 'manual');
+                if (url.hostname === provider) return new Response('private redirect response', {
+                    status, headers: {Location: 'https://untrusted.invalid/collect'},
+                });
+                assert.equal(url.hostname, 'www.googleapis.com');
+                return Response.json({keys: [key]});
+            }});
+            await denies(authorize(request(signed), new AbortController().signal), 503);
+            assert.equal(calls.length, provider === 'www.googleapis.com' ? 1 : 2);
+            assert.ok(calls.every(call => ['www.googleapis.com', 'api.revenuecat.com'].includes(call.url.hostname)));
+            for (const call of calls) {
+                assert.equal(new Headers(call.init.headers).get('Authorization'), call.url.hostname === 'api.revenuecat.com' ? `Bearer ${SECRET}` : null);
+            }
+        }
+    }
 });
 
 test('missing, malformed, unsigned and unexpected-algorithm tokens fail before any provider lookup', async () => {

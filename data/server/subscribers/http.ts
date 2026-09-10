@@ -14,7 +14,7 @@ export async function fetchSubscriberJson(
         const response = await fetcher(url, {
             ...init,
             signal: AbortSignal.any([signal, controller.signal]),
-            redirect: 'error',
+            redirect: 'manual',
             cache: 'no-store',
             credentials: 'omit',
         });
