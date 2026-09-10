@@ -7,11 +7,12 @@ const SORTS = ['date_added', 'title', 'year', 'rating', 'download_count', 'like_
 
 export class InvalidCatalogRequest extends Error {}
 
-export type CatalogRequest =
+export type CatalogRequest = (
     | {operation: 'movies'; params: ListMoviesParams}
     | {operation: 'movie' | 'suggestions' | 'parental-guides'; id: number}
     | {operation: 'shows'; params: ListShowsParams}
-    | {operation: 'episodes'; imdbId: string};
+    | {operation: 'episodes'; imdbId: string}
+) & {version: 1 | 2};
 
 function integer(value: string | null, maximum: number, fallback?: number): number {
     if (value === null && fallback !== undefined) return fallback;
@@ -40,13 +41,16 @@ export function parseCatalogRequest(operation: string, params: URLSearchParams):
             : operation === 'episodes' ? ['imdbId']
                 : ['movie', 'suggestions', 'parental-guides'].includes(operation) ? ['id'] : null;
     const keys = [...params.keys()];
-    if (!allowed || keys.some(key => !allowed.includes(key)) || new Set(keys).size !== keys.length) throw new InvalidCatalogRequest();
+    if (!allowed || keys.some(key => key !== 'v' && !allowed.includes(key)) || new Set(keys).size !== keys.length) throw new InvalidCatalogRequest();
+    const requestedVersion = params.get('v');
+    if (requestedVersion !== null && requestedVersion !== '2') throw new InvalidCatalogRequest();
+    const version = requestedVersion === '2' ? 2 : 1;
     if (operation === 'movies') {
         const query = params.get('query');
         if (query !== null && (query.length > 200 || /[\u0000-\u001f\u007f]/.test(query))) throw new InvalidCatalogRequest();
         const minimumRating = params.get('minimum_rating');
         if (minimumRating !== null && (!/^(?:[0-9](?:\.\d)?|10(?:\.0)?)$/.test(minimumRating))) throw new InvalidCatalogRequest();
-        return {operation, params: {
+        return {operation, version, params: {
             page: integer(params.get('page'), 10_000, 1),
             limit: params.has('limit') ? integer(params.get('limit'), 50) : undefined,
             query: query?.trim() || undefined,
@@ -57,11 +61,11 @@ export function parseCatalogRequest(operation: string, params: URLSearchParams):
             order_by: choice<OrderBy>(params.get('order_by'), ['asc', 'desc']),
         }};
     }
-    if (operation === 'shows') return {operation, params: {
+    if (operation === 'shows') return {operation, version, params: {
         page: integer(params.get('page'), 10_000, 1),
         limit: params.has('limit') ? integer(params.get('limit'), 50) : undefined,
         imdbId: params.has('imdbId') ? imdb(params.get('imdbId')) : undefined,
     }};
-    if (operation === 'episodes') return {operation, imdbId: imdb(params.get('imdbId'))};
-    return {operation: operation as 'movie' | 'suggestions' | 'parental-guides', id: integer(params.get('id'), 2_147_483_647)};
+    if (operation === 'episodes') return {operation, version, imdbId: imdb(params.get('imdbId'))};
+    return {operation: operation as 'movie' | 'suggestions' | 'parental-guides', version, id: integer(params.get('id'), 2_147_483_647)};
 }

@@ -118,6 +118,12 @@ The web catalog API projects public metadata before responding. Browser exports 
 provider-data check; never promote or restore a deployment built before that boundary was added.
 Old EAS deployments retain public URLs until deleted, even after production moves to a newer build.
 
+Current clients request `v=2`, which includes the torrent list, format, size, seeds and peers for
+everyone. The existing torrent panels and notice remain available without sign-in. Public JSON
+omits hashes, torrent URLs and magnets; those remain in the verified subscriber's `raw.responses`.
+Requests without `v` retain the earlier response shape for already-open clients. Deploy the API
+with `v=2` support before publishing an updated Pages client.
+
 Signed-in subscribers use `/api/subscriber-catalog/[operation]`. Every request verifies the Firebase
 ID token and checks RevenueCat for a current production monthly subscription before fetching the
 catalog. Its response contains `metadata` for the UI and `raw.responses` with the original upstream
@@ -139,7 +145,8 @@ keys and does not perform Firebase token-revocation checks; a revoked ID token c
 until its normal expiry. Signing out stops further subscriber requests in that browser, but cannot
 erase responses already received or invalidate a copied token immediately.
 
-To inspect subscriber traffic, filter the browser Network panel by `subscriber-catalog`.
+Open the browser Network panel before reloading, enable Keep log, and filter by `catalog`
+to see both public and subscriber requests. Select a fetch request and its Response tab.
 A `403` means the server found no qualifying subscription. The app's “supporter access”
 message also covers legacy lifetime and sandbox purchases, so it does not confirm eligibility
 for raw responses. Inspect the customer's production subscriptions in RevenueCat before changing access.

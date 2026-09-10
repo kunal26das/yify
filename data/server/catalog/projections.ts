@@ -1,6 +1,10 @@
 import type {
-    CastMember, ListMoviesResult, ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode,
+    CastMember, ListMoviesResult, ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode, Torrent,
 } from '@/domain';
+
+export interface CatalogProjectionOptions {
+    includeTorrentMetadata?: boolean;
+}
 
 const HASH = /\b(?:[a-f\d]{32,64}|[a-z2-7]{32})\b/gi;
 const UNSAFE_IMAGE = /(?:magnet\s*:|urn\s*:|btih|btmh|bittorrent|\.torrent(?:\b|$)|(?:^|[/_.?&=-])downloads?(?:[/_.?&=-]|$))/i;
@@ -95,6 +99,21 @@ function imageList(value: unknown): string[] {
     return Array.isArray(value) ? value.slice(0, 30).map(item => safeImageUrl(item)).filter((item): item is string => !!item) : [];
 }
 
+function projectTorrent(value: Torrent) {
+    return {
+        quality: text(value.quality, 60),
+        type: text(value.type, 60),
+        videoCodec: text(value.videoCodec, 60),
+        bitDepth: text(value.bitDepth, 60),
+        audioChannels: text(value.audioChannels, 60),
+        seeds: number(value.seeds),
+        peers: number(value.peers),
+        size: text(value.size, 60),
+        sizeBytes: number(value.sizeBytes),
+        uploadedAt: value.uploadedAt.toISOString(),
+    };
+}
+
 export function projectMovie(value: Movie) {
     return {
         id: number(value.id),
@@ -124,7 +143,7 @@ function projectCastMember(value: CastMember) {
     };
 }
 
-export function projectMovieDetails(value: MovieDetails) {
+export function projectMovieDetails(value: MovieDetails, options: CatalogProjectionOptions = {}) {
     return {
         ...projectMovie(value),
         descriptionIntro: value.descriptionIntro === undefined ? undefined : text(value.descriptionIntro),
@@ -135,6 +154,10 @@ export function projectMovieDetails(value: MovieDetails) {
         screenshotUrls: imageList(value.screenshotUrls),
         screenshotThumbUrls: imageList(value.screenshotThumbUrls),
         cast: list<CastMember>(value.cast, projectCastMember, 100),
+        ...(options.includeTorrentMetadata ? {
+            torrents: list<Torrent>(value.torrents, projectTorrent, 30),
+            downloadCount: value.downloadCount === undefined ? undefined : number(value.downloadCount),
+        } : {}),
     };
 }
 
@@ -142,7 +165,7 @@ export function projectParentalGuide(value: ParentalGuide) {
     return {type: text(value.type, 100), text: text(value.text)};
 }
 
-export function projectEpisode(value: ShowEpisode) {
+export function projectEpisode(value: ShowEpisode, options: CatalogProjectionOptions = {}) {
     return {
         id: number(value.id),
         title: text(value.title, 500),
@@ -150,16 +173,21 @@ export function projectEpisode(value: ShowEpisode) {
         episode: number(value.episode),
         releasedAt: value.releasedAt.toISOString(),
         thumbnailUrl: safeImageUrl(value.thumbnailUrl),
+        ...(options.includeTorrentMetadata ? {
+            seeds: number(value.seeds),
+            peers: number(value.peers),
+            sizeBytes: number(value.sizeBytes),
+        } : {}),
     };
 }
 
-export function projectShow(value: Show) {
+export function projectShow(value: Show, options: CatalogProjectionOptions = {}) {
     return {
         imdbId: identifier(value.imdbId, /^\d{1,12}$/),
         imdbCode: identifier(value.imdbCode, /^tt\d{1,12}$/),
         title: text(value.title, 300),
         episodeCount: number(value.episodeCount),
-        latestEpisode: projectEpisode(value.latestEpisode),
+        latestEpisode: projectEpisode(value.latestEpisode, options),
         thumbnailUrl: safeImageUrl(value.thumbnailUrl),
         updatedAt: value.updatedAt.toISOString(),
     };
@@ -174,9 +202,9 @@ export function projectMovieList(value: ListMoviesResult) {
     };
 }
 
-export function projectShowList(value: ListShowsResult) {
+export function projectShowList(value: ListShowsResult, options: CatalogProjectionOptions = {}) {
     return {
-        shows: list<Show>(value.shows, projectShow, 50),
+        shows: list<Show>(value.shows, show => projectShow(show, options), 50),
         pageNumber: number(value.pageNumber),
         hasMore: value.hasMore === true,
     };
@@ -184,4 +212,4 @@ export function projectShowList(value: ListShowsResult) {
 
 export const projectSuggestions = (value: Movie[]) => list<Movie>(value, projectMovie, 50);
 export const projectParentalGuides = (value: ParentalGuide[]) => list<ParentalGuide>(value, projectParentalGuide, 100);
-export const projectEpisodes = (value: ShowEpisode[]) => list<ShowEpisode>(value, projectEpisode, 300);
+export const projectEpisodes = (value: ShowEpisode[], options: CatalogProjectionOptions = {}) => list<ShowEpisode>(value, episode => projectEpisode(episode, options), 300);

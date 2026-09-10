@@ -97,7 +97,7 @@ test('only a signed-in ready account with a ready ad-removal hint attempts subsc
         assert.equal((await f.movies.listMovies({page: 1})).movies[0].title, 'Metadata');
         assert.equal(f.tokenRequests(), 0);
     }
-    assert.ok(requests.every(request => request.url === `${publicBase}/movies?page=1` &&
+    assert.ok(requests.every(request => request.url === `${publicBase}/movies?page=1&v=2` &&
         request.options.headers.Authorization === undefined));
 });
 
@@ -115,7 +115,7 @@ test('lifetime, expired and ambiguous expiry hints require server approval and f
         assert.equal(f.tokenRequests(), 1);
     }
     assert.deepEqual(requests.map(request => request.url), Array(4).fill([
-        `${privateBase}/movie?id=42`, `${publicBase}/movie?id=42`,
+        `${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`,
     ]).flat());
     assert.ok(requests.filter(request => request.url.startsWith(privateBase)).every(request =>
         request.options.headers.Authorization === 'Bearer token-for-account-a'));
@@ -134,7 +134,7 @@ test('server-approved grace periods and combined purchase hints return validated
         assert.deepEqual(value.torrents, []);
         assert.doesNotMatch(JSON.stringify(value), /private-upstream|upstream\.example|urn:btih|"raw"/);
     }
-    assert.deepEqual(requests, Array(2).fill(`${privateBase}/movie?id=42`));
+    assert.deepEqual(requests, Array(2).fill(`${privateBase}/movie?id=42&v=2`));
 });
 
 test('subscriber transport covers all endpoints while returning only validated domain metadata', async t => {
@@ -169,7 +169,7 @@ test('subscriber transport covers all endpoints while returning only validated d
     assert.deepEqual(requests.map(request => request.url.pathname),
         Object.keys(payloads).map(endpoint => `/api/subscriber-catalog/${endpoint}`));
     assert.deepEqual(Object.fromEntries(requests[0].url.searchParams), {page: '1', limit: '20', query: 'a & b',
-        quality: '1080p', minimum_rating: '5', genre: 'drama', sort_by: 'rating', order_by: 'desc'});
+        quality: '1080p', minimum_rating: '5', genre: 'drama', sort_by: 'rating', order_by: 'desc', v: '2'});
     assert.ok(requests.every(request => request.options.headers.Authorization === 'Bearer token-for-account-a' &&
         request.options.cache === 'no-store' && request.options.redirect === 'error' &&
         request.options.credentials === 'omit' && request.options.signal instanceof AbortSignal));
@@ -190,7 +190,30 @@ test('subscriber responses never enter the public cache or suppress future priva
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Subscriber metadata');
     f.session({account: null});
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Public metadata');
-    assert.deepEqual(paths, [`${publicBase}/movie?id=42`, `${privateBase}/movie?id=42`, `${privateBase}/movie?id=42`]);
+    assert.deepEqual(paths, [`${publicBase}/movie?id=42&v=2`, `${privateBase}/movie?id=42&v=2`, `${privateBase}/movie?id=42&v=2`]);
+});
+
+test('public and subscriber requests both preserve torrent rows without exposing raw links to the UI', async t => {
+    const published = '2026-09-11T05:00:00.000Z';
+    const torrent = {quality: '2160p', type: 'web', videoCodec: 'x265', bitDepth: '10', audioChannels: '5.1',
+        seeds: 30, peers: 7, size: '4 GB', sizeBytes: 4000000000, uploadedAt: published};
+    const metadata = {...details(), torrents: [torrent]};
+    const privatePayload = {metadata};
+    Object.defineProperty(privatePayload, 'raw', {enumerable: true, get() { assert.fail('raw links consumed by the UI'); }});
+    const requests = [];
+    t.mock.method(globalThis, 'fetch', async url => {
+        requests.push(url);
+        return response(url.startsWith(privateBase) ? privatePayload : metadata);
+    });
+    const f = fixture({session: {account: null}});
+    const publicResult = await f.movies.getMovieDetails(42);
+    f.session({account: {uid: 'account-a'}});
+    const subscriberResult = await f.movies.getMovieDetails(42);
+    for (const result of [publicResult, subscriberResult]) {
+        assert.deepEqual(result.torrents, [{...torrent, uploadedAt: new Date(published), hash: '', url: ''}]);
+    }
+    assert.deepEqual(requests, [`${publicBase}/movie?id=42&v=2`, `${privateBase}/movie?id=42&v=2`]);
+    assert.doesNotMatch(JSON.stringify(f.diagnostics), /raw|token|magnet/);
 });
 
 for (const status of [401, 403, 503]) {
@@ -207,7 +230,7 @@ for (const status of [401, 403, 503]) {
         const f = fixture();
         await f.movies.getMovieDetails(42);
         await f.movies.getMovieDetails(42);
-        assert.deepEqual(paths, [`${privateBase}/movie?id=42`, `${publicBase}/movie?id=42`]);
+        assert.deepEqual(paths, [`${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`]);
         now += 30_000;
         await f.movies.getMovieDetails(42);
         assert.equal(paths.filter(url => url.startsWith(privateBase)).length, 2);
@@ -245,7 +268,7 @@ test('an account round trip while acquiring its token cancels the stale grant', 
     f.session({account: {uid: 'account-a'}});
     token.resolve('stale-account-a-token');
     assert.equal((await pending).title, 'Public metadata');
-    assert.deepEqual(paths, [`${publicBase}/movie?id=42`]);
+    assert.deepEqual(paths, [`${publicBase}/movie?id=42&v=2`]);
 });
 
 test('sign-out aborts an in-flight subscriber fetch and falls back without awaiting its body', async t => {
@@ -265,7 +288,7 @@ test('sign-out aborts an in-flight subscriber fetch and falls back without await
     assert.equal(signal.aborted, true);
     assert.equal((await pending).title, 'Public metadata');
     privateRequest.resolve({ok: true, status: 200, json: () => assert.fail('retired request body consumed')});
-    assert.deepEqual(paths, [`${privateBase}/movie?id=42`, `${publicBase}/movie?id=42`]);
+    assert.deepEqual(paths, [`${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`]);
 });
 
 test('identity changes during body parsing discard old metadata and permit a fresh account request', async t => {
@@ -327,7 +350,7 @@ test('an expiry change cancels the old generation and requires a fresh server de
     assert.equal(signal.aborted, true);
     assert.equal((await pending).title, 'Public metadata');
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Public metadata');
-    assert.deepEqual(requests, [`${privateBase}/movie?id=42`, `${publicBase}/movie?id=42`, `${privateBase}/movie?id=42`]);
+    assert.deepEqual(requests, [`${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`, `${privateBase}/movie?id=42&v=2`]);
 });
 
 test('private parsing ignores the raw property entirely but rejects protected or invalid metadata', async t => {
@@ -338,7 +361,7 @@ test('private parsing ignores the raw property entirely but rejects protected or
     const f = fixture();
     assert.equal((await f.movies.getMovieDetails(42)).id, 42);
     for (payload of [
-        envelope({...details(), torrents: []}), envelope({...details(), extra: {hash: 'private'}}),
+        envelope({...details(), torrents: [{}]}), envelope({...details(), extra: {hash: 'private'}}),
         envelope({...details(), synopsis: 'magnet:?xt=urn:btih:private'}),
         envelope({...details(), id: '42'}), {raw: {responses: []}}, null, [],
     ]) {
@@ -368,7 +391,7 @@ test('subscriber transport failures stay generic without falling back to raw ori
             error.message === 'The catalog is unavailable. Please try again.');
         assert.doesNotMatch(JSON.stringify(f.diagnostics), /private|token/);
     }
-    assert.deepEqual(paths, Array(3).fill(`${privateBase}/movie?id=42`));
+    assert.deepEqual(paths, Array(3).fill(`${privateBase}/movie?id=42&v=2`));
 });
 
 test('a stalled private request times out, aborts, and can be retried without a retained response', async t => {
@@ -398,5 +421,5 @@ test('a stalled token lookup is bounded and falls back to public browsing', asyn
     const pending = f.movies.getMovieDetails(42);
     t.mock.timers.tick(30_000);
     assert.equal((await pending).id, 42);
-    assert.deepEqual(paths, [`${publicBase}/movie?id=42`]);
+    assert.deepEqual(paths, [`${publicBase}/movie?id=42&v=2`]);
 });

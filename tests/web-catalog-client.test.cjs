@@ -6,6 +6,11 @@ const base = 'https://yify.expo.app/api/catalog';
 const cover = 'https://images.example/cover.jpg';
 const date = '2026-09-11T05:00:00.000Z';
 
+function torrent() {
+    return {quality: '1080p', type: 'web', videoCodec: 'x265', bitDepth: '10', audioChannels: '5.1',
+        seeds: 25, peers: 8, size: '1.5 GB', sizeBytes: 1500000000, uploadedAt: date};
+}
+
 function movie() {
     return {id: 42, imdbCode: 'tt0000042', title: 'Example', titleLong: 'Example (2026)',
         year: 2026, rating: 8, runtimeMinutes: 90, genres: ['Drama'], summary: 'A story.',
@@ -15,12 +20,13 @@ function movie() {
 
 function details() {
     return {...movie(), descriptionIntro: 'Introduction', descriptionFull: 'Description',
-        synopsis: 'Synopsis', likeCount: 9, screenshotUrls: [cover], screenshotThumbUrls: [cover],
-        cast: [{name: 'Actor', character: 'Character', imdbCode: 'nm0000001', imageUrl: cover}]};
+        synopsis: 'Synopsis', likeCount: 9, downloadCount: 25, screenshotUrls: [cover], screenshotThumbUrls: [cover],
+        cast: [{name: 'Actor', character: 'Character', imdbCode: 'nm0000001', imageUrl: cover}], torrents: [torrent()]};
 }
 
 function episode() {
-    return {id: 12, title: 'Episode', season: 1, episode: 2, releasedAt: date, thumbnailUrl: cover};
+    return {id: 12, title: 'Episode', season: 1, episode: 2, releasedAt: date, thumbnailUrl: cover,
+        seeds: 20, peers: 10, sizeBytes: 1000};
 }
 
 function show() {
@@ -77,10 +83,10 @@ test('web factory uses all six metadata endpoints, projects parameters and resto
         minimum_rating: 5, genre: 'drama', sort_by: 'rating', order_by: 'desc', url: 'https://outside.example'});
     assert.equal(listed.movies[0].title, 'Example');
     assert.deepEqual(Object.fromEntries(requests[0].url.searchParams), {page: '2', limit: '20', query: 'a & b',
-        quality: '1080p', minimum_rating: '5', genre: 'drama', sort_by: 'rating', order_by: 'desc'});
+        quality: '1080p', minimum_rating: '5', genre: 'drama', sort_by: 'rating', order_by: 'desc', v: '2'});
     const detail = await repositories.movies.getMovieDetails(42);
-    assert.deepEqual(detail.torrents, []);
-    assert.equal(Object.hasOwn(detail, 'downloadCount'), false);
+    assert.deepEqual(detail.torrents, [{...torrent(), uploadedAt: new Date(date), url: '', hash: ''}]);
+    assert.equal(detail.downloadCount, 25);
     assert.equal(detail.cast[0].name, 'Actor');
     assert.equal((await repositories.movies.getMovieSuggestions(42))[0].id, 42);
     assert.deepEqual(await repositories.movies.getMovieParentalGuides(42), payloads['parental-guides']);
@@ -90,15 +96,15 @@ test('web factory uses all six metadata endpoints, projects parameters and resto
     assert.equal(shows.shows[0].latestEpisode.releasedAt.toISOString(), date);
     assert.equal(episodes[0].releasedAt.toISOString(), date);
     assert.equal(episodes[0].magnetUrl, '');
-    assert.equal(episodes[0].seeds, 0);
-    assert.equal(episodes[0].peers, 0);
-    assert.equal(episodes[0].sizeBytes, 0);
+    assert.equal(episodes[0].seeds, 20);
+    assert.equal(episodes[0].peers, 10);
+    assert.equal(episodes[0].sizeBytes, 1000);
     assert.deepEqual(requests.map(request => request.url.pathname),
         Object.keys(payloads).map(endpoint => `/api/catalog/${endpoint}`));
     assert.ok(requests.every(request => request.url.origin === 'https://yify.expo.app' &&
         request.options.redirect === 'error' && request.options.credentials === 'omit'));
-    assert.deepEqual(Object.fromEntries(requests[4].url.searchParams), {page: '2', limit: '50', imdbId: '1234567'});
-    assert.deepEqual(Object.fromEntries(requests[5].url.searchParams), {imdbId: '1234567'});
+    assert.deepEqual(Object.fromEntries(requests[4].url.searchParams), {page: '2', limit: '50', imdbId: '1234567', v: '2'});
+    assert.deepEqual(Object.fromEntries(requests[5].url.searchParams), {imdbId: '1234567', v: '2'});
 });
 
 test('unexpected metadata fields are projected away and malformed values fail closed', async t => {
@@ -117,7 +123,7 @@ test('unexpected metadata fields are projected away and malformed values fail cl
 test('the real server projection and web client agree across all catalog response shapes', async t => {
     const {createCatalogHandler} = loadTypeScript('data/server/catalog/handler.ts');
     const nativeMovie = {...details(), downloadCount: 25,
-        torrents: [{url: 'https://provider.example/file.torrent', hash: 'a'.repeat(40)}]};
+        torrents: [{...torrent(), uploadedAt: new Date(date), url: 'https://provider.example/file.torrent', hash: 'a'.repeat(40)}]};
     const nativeEpisode = {...episode(), releasedAt: new Date(date), seeds: 20, peers: 10,
         sizeBytes: 1000, magnetUrl: 'magnet:?xt=urn:btih:example'};
     const nativeShow = {...show(), latestEpisode: nativeEpisode, updatedAt: new Date(date)};
@@ -141,13 +147,13 @@ test('the real server projection and web client agree across all catalog respons
     });
     const api = client();
     assert.equal((await api.listMovies({page: 1})).movies[0].id, 42);
-    assert.deepEqual((await api.getMovieDetails(42)).torrents, []);
+    assert.deepEqual((await api.getMovieDetails(42)).torrents, [{...torrent(), uploadedAt: new Date(date), url: '', hash: ''}]);
     assert.equal((await api.getMovieSuggestions(42))[0].id, 42);
     assert.equal((await api.getMovieParentalGuides(42))[0].type, 'violence');
     assert.equal((await api.listShows({page: 1})).shows[0].updatedAt.toISOString(), date);
     assert.equal((await api.listEpisodes('1234567'))[0].magnetUrl, '');
     assert.equal(responses.length, 6);
-    assert.ok(responses.every(body => !/torrent|magnet|downloadCount|sizeBytes|seeds|peers|provider\.example/i.test(body)));
+    assert.ok(responses.every(body => !/magnet|"hash"|"url"|provider\.example/i.test(body)));
 });
 
 test('raw providers and nested download data are rejected without fallback or cached reuse', async t => {
@@ -160,8 +166,12 @@ test('raw providers and nested download data are rejected without fallback or ca
     const api = client();
     const failures = [
         {status: 'ok', data: {movie: details()}},
-        {...details(), torrents: []},
-        {...details(), downloadCount: 10},
+        {...details(), torrents: [{...torrent(), hash: 'a'.repeat(40)}]},
+        {...details(), torrents: [{...torrent(), url: 'https://provider.example/file.torrent'}]},
+        {...details(), torrents: [{...torrent(), seeds: -1}]},
+        {...details(), torrents: [{...torrent(), uploadedAt: 'invalid'}]},
+        {...details(), download_count: 10},
+        {...details(), downloadCount: -1},
         {...details(), extra: {hash: 'a'.repeat(40)}},
         {...details(), extra: {magnet_url: 'magnet:?xt=urn:btih:example'}},
         {...details(), synopsis: 'See magnet:?xt=urn:btih:example'},
@@ -170,7 +180,7 @@ test('raw providers and nested download data are rejected without fallback or ca
     payload = details();
     assert.equal((await api.getMovieDetails(42)).id, 42);
     assert.equal(requests.length, failures.length + 1);
-    assert.ok(requests.every(url => url === `${base}/movie?id=42`));
+    assert.ok(requests.every(url => url === `${base}/movie?id=42&v=2`));
 });
 
 test('HTTP, JSON and network failures remain generic and never call another provider', async t => {
@@ -184,7 +194,7 @@ test('HTTP, JSON and network failures remain generic and never call another prov
         await assert.rejects(client().listMovies({page: 1}), error =>
             error.message === 'The catalog is unavailable. Please try again.');
     }
-    assert.deepEqual(requests, Array(3).fill(`${base}/movies?page=1`));
+    assert.deepEqual(requests, Array(3).fill(`${base}/movies?page=1&v=2`));
 });
 
 test('identical requests share fetching and validation until the metadata cache expires', async t => {
@@ -258,7 +268,7 @@ test('web notification checks use the metadata repository independently of the m
         }},
     });
     assert.equal(await checkForNewMovies(true), 0);
-    assert.deepEqual(requests, [`${base}/movies?page=1&limit=50&quality=1080p`]);
+    assert.deepEqual(requests, [`${base}/movies?page=1&limit=50&quality=1080p&v=2`]);
 });
 
 test('native catalog factory retains its configured source and native torrent metadata', async t => {

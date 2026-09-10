@@ -14,7 +14,9 @@ const movie = {
     id: 10, imdb_code: 'tt1234567', title: 'A film', title_long: 'A film (2026)', year: 2026,
     rating: 8, runtime: 90, genres: ['Drama'], summary: 'A story', language: 'en', mpa_rating: 'PG',
     description_full: 'A story', synopsis: 'A story', yt_trailer_code: '',
-    torrents: [{url: 'https://provider.invalid/movie.torrent', hash: HASH, quality: '1080p'}],
+    torrents: [{url: 'https://provider.invalid/movie.torrent', hash: HASH, quality: '1080p',
+        type: 'bluray', video_codec: 'x265', bit_depth: '10', audio_channels: '5.1',
+        seeds: 10, peers: 2, size: '2.1 GB', size_bytes: 2_100_000_000, date_uploaded_unix: 100}],
 };
 const episode = {
     id: 20, title: 'A series S01E02', imdb_id: '1234567', season: '1', episode: '2',
@@ -24,6 +26,61 @@ const episode = {
 function request(operation = 'movie', query = 'id=10', init: RequestInit = {}): Request {
     return new Request(`https://yify.expo.app/api/subscriber-catalog/${operation}?${query}`, init);
 }
+
+for (const [operation, query] of [['movie', 'id=10'], ['shows', 'page=1'], ['episodes', 'imdbId=1234567']]) {
+    test(`version 2 ${operation} subscriber metadata restores format and statistics while links stay in raw responses`, async () => {
+        const responses: unknown[] = [];
+        let authorized = false;
+        const handler = createCatalogHandler((signal: AbortSignal, onResponse: (body: unknown) => void) => {
+            assert.equal(authorized, true);
+            return createCatalogRepositories({}, {signal, onResponse, fetch: async (input: string) => {
+                const url = new URL(input);
+                const body = operation === 'movie' ? {status: 'ok', data: {movie}}
+                    : {torrents: url.searchParams.get('page') === '1' ? [episode] : []};
+                responses.push(body);
+                return Response.json(body);
+            }});
+        }, {subscriber: {authorize: async () => { authorized = true; return {uid: 'verified-account'}; }}});
+        const response = await handler(request(operation, `${query}&v=2`), operation);
+        assert.equal(response.status, 200);
+        privateHeaders(response);
+        const body = await response.json();
+        assert.deepEqual(body.raw.responses, responses);
+        assert.ok(JSON.stringify(body.raw.responses).includes(HASH));
+        assert.ok(!JSON.stringify(body.metadata).includes(HASH));
+        assert.ok(!JSON.stringify(body.metadata).includes('magnet'));
+        assert.ok(!JSON.stringify(body.metadata).includes('movie.torrent'));
+        const item = operation === 'movie' ? body.metadata.torrents[0]
+            : operation === 'shows' ? body.metadata.shows[0].latestEpisode : body.metadata[0];
+        assert.equal(item.seeds, 10);
+        assert.equal(item.url, undefined);
+        assert.equal(item.hash, undefined);
+        assert.equal(item.magnetUrl, undefined);
+        if (operation === 'movie') {
+            assert.equal(item.quality, '1080p');
+            assert.equal(item.videoCodec, 'x265');
+            assert.equal(item.uploadedAt, new Date(100_000).toISOString());
+        }
+    });
+}
+
+test('version 2 public metadata never gains download links from bearer headers or subscriber-like parameters', async () => {
+    const handler = createCatalogHandler((signal: AbortSignal, capture: unknown) => {
+        assert.equal(capture, undefined);
+        return createCatalogRepositories({}, {signal, fetch: async () => Response.json({status: 'ok', data: {movie}})});
+    });
+    const response = await handler(request('movie', 'id=10&v=2', {headers: {Authorization: 'Bearer client-claim'}}), 'movie');
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.torrents[0].quality, '1080p');
+    assert.equal(body.raw, undefined);
+    assert.equal(body.torrents[0].url, undefined);
+    assert.equal(body.torrents[0].hash, undefined);
+    assert.ok(!JSON.stringify(body).includes(HASH));
+    for (const extra of ['subscribed=true', 'includeTorrentLinks=true', 'raw=true']) {
+        assert.equal((await handler(request('movie', `id=10&v=2&${extra}`), 'movie')).status, 400);
+    }
+});
 
 function privateHeaders(response: Response): void {
     assert.equal(response.headers.get('Cache-Control'), 'private, no-store');

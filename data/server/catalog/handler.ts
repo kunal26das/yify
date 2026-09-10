@@ -8,6 +8,7 @@ import {SubscriberAccessError} from '../subscribers/errors';
 import {
     projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
 } from './projections';
+import type {CatalogProjectionOptions} from './projections';
 
 export interface CatalogRepositories {
     movies: MovieRepository;
@@ -22,14 +23,14 @@ interface CatalogHandlerOptions {
 
 class CatalogTimeout extends Error {}
 
-async function execute(request: CatalogRequest, repositories: CatalogRepositories): Promise<unknown> {
+async function execute(request: CatalogRequest, repositories: CatalogRepositories, options: CatalogProjectionOptions): Promise<unknown> {
     switch (request.operation) {
         case 'movies': return projectMovieList(await repositories.movies.listMovies(request.params));
-        case 'movie': return projectMovieDetails(await repositories.movies.getMovieDetails(request.id));
+        case 'movie': return projectMovieDetails(await repositories.movies.getMovieDetails(request.id), options);
         case 'suggestions': return projectSuggestions(await repositories.movies.getMovieSuggestions(request.id));
         case 'parental-guides': return projectParentalGuides(await repositories.movies.getMovieParentalGuides(request.id));
-        case 'shows': return projectShowList(await repositories.shows.listShows(request.params));
-        case 'episodes': return projectEpisodes(await repositories.shows.listEpisodes(request.imdbId));
+        case 'shows': return projectShowList(await repositories.shows.listShows(request.params), options);
+        case 'episodes': return projectEpisodes(await repositories.shows.listEpisodes(request.imdbId), options);
     }
 }
 
@@ -101,7 +102,9 @@ export function createCatalogHandler(
             const responses: unknown[] = [];
             const onResponse = privateResponse ? (body: unknown) => { responses.push(body); } : undefined;
             const source = typeof repositories === 'function' ? repositories(controller.signal, onResponse) : repositories;
-            const metadata = await execute(parsed, source);
+            const metadata = await execute(parsed, source, {
+                includeTorrentMetadata: parsed.version === 2,
+            });
             assertCatalogActive(controller.signal);
             return privateResponse ? {metadata, raw: {responses}} : metadata;
         });

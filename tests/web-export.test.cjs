@@ -76,6 +76,26 @@ test('Hosting gate rejects missing server HTML even when a client copy exists', 
 });
 
 for (const server of [false, true]) {
+    test(`${server ? 'Hosting' : 'Pages'} export permits public torrent statistics and subscriber parser field names`, (t) => {
+        const f = fixture(t, server);
+        const metadata = {
+            torrents: [{
+                quality: '1080p', type: 'web', videoCodec: 'x265', bitDepth: '10', audioChannels: '5.1',
+                seeds: 12, peers: 3, size: '1.2 GB', sizeBytes: 1_200_000_000, uploadedAt: '2026-09-11T00:00:00.000Z',
+            }],
+        };
+        f.write('_expo/static/js/web/entry-app.js', `
+            const endpoint = "/api/catalog/movie?id=1&v=2";
+            const metadata = ${JSON.stringify(metadata)};
+            const subscriberEndpoint = "/api/subscriber-catalog/movie?id=1";
+            const subscriberFields = ["torrents", "hash", "url", "magnetUrl"];
+            function parseSubscriberTorrent(value) {
+                return {hash: value.hash, url: value.url, magnetUrl: value.magnetUrl};
+            }
+        `);
+        const result = f.check();
+        assert.equal(result.status, 0, result.output);
+    });
     test(`${server ? 'Hosting' : 'Pages'} export rejects forbidden browser catalog markers`, (t) => {
         const f = fixture(t, server);
         for (const marker of markers) {

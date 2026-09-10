@@ -286,9 +286,8 @@ export function ShowDetailsScreen({
                                     ? group.episodes.map((episode) => (
                                           <PressableScale
                                               key={episode.id}
-                                              disabled={!episode.magnetUrl}
-                                              onPress={() => episode.magnetUrl && setNotice(toEpisodeTorrent(episode))}
-                                              accessibilityRole={episode.magnetUrl ? 'button' : undefined}
+                                              onPress={() => setNotice(toEpisodeTorrent(episode))}
+                                              accessibilityRole="button"
                                               accessibilityLabel={`${episodeCode(episode)} ${episode.title}`}
                                               pressedScale={0.99}
                                               pressedOpacity={0.7}
@@ -309,7 +308,7 @@ export function ShowDetailsScreen({
                                                   >
                                                       {episode.title}
                                                   </ThemedText>
-                                                  {episode.magnetUrl ? <View style={styles.episodeMeta}>
+                                                  <View style={styles.episodeMeta}>
                                                       <ThemedText
                                                           style={[Typography.videoMeta, {color: colors.textMuted}]}
                                                       >
@@ -331,7 +330,7 @@ export function ShowDetailsScreen({
                                                               {episode.peers}
                                                           </ThemedText>
                                                       </View>
-                                                  </View> : null}
+                                                  </View>
                                               </View>
                                           </PressableScale>
                                       ))

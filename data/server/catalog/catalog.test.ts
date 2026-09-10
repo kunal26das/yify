@@ -12,6 +12,11 @@ const MAGNET = `magnet:?xt=urn:btih:${HASH}`;
 const DOWNLOAD = 'https://provider.invalid/download/movie.torrent';
 const IMAGE = 'https://images.example.com/poster.jpg';
 const DATE = new Date('2026-09-11T04:00:00.000Z');
+const torrent = {
+    quality: '1080p', type: 'bluray', videoCodec: 'x265', bitDepth: '10', audioChannels: '5.1',
+    seeds: 100, peers: 20, size: '2.1 GB', sizeBytes: 2_100_000_000, uploadedAt: DATE,
+    url: DOWNLOAD, hash: HASH, magnetUrl: MAGNET, unknown: {hash: HASH},
+};
 const movie = {
     id: 10, imdbCode: 'tt1234567', title: 'A film', titleLong: 'A film (2026)', year: 2026,
     rating: 8.2, runtimeMinutes: 110, genres: ['Drama'], summary: 'A safe synopsis.', language: 'en',
@@ -19,7 +24,7 @@ const movie = {
     descriptionIntro: 'Introduction', descriptionFull: 'Full description', synopsis: 'Synopsis', likeCount: 3,
     downloadCount: 123, screenshotUrls: [IMAGE], screenshotThumbUrls: [IMAGE],
     cast: [{name: 'Actor', character: 'Hero', imdbCode: 'nm1234567', imageUrl: IMAGE, hash: HASH, url: DOWNLOAD}],
-    torrents: [{url: DOWNLOAD, hash: HASH, magnetUrl: MAGNET}], url: DOWNLOAD, unknown: {hash: HASH},
+    torrents: [torrent], url: DOWNLOAD, unknown: {hash: HASH},
 };
 const episode = {
     id: 20, title: 'A series S01E02', season: 1, episode: 2, releasedAt: DATE, thumbnailUrl: IMAGE,
@@ -54,17 +59,95 @@ function request(operation: string, query = '', origin: string | null = ORIGIN, 
     });
 }
 
-function assertNoRestrictedFields(value: unknown) {
+function assertNoRestrictedFields(value: unknown, includeTorrentMetadata = false) {
     if (!value || typeof value !== 'object') return;
     for (const [key, child] of Object.entries(value)) {
-        assert.ok(!['torrents', 'torrent', 'downloadCount', 'magnetUrl', 'magnet', 'hash', 'seeds', 'peers', 'sizeBytes', 'url', 'unknown'].includes(key), key);
-        assertNoRestrictedFields(child);
+        const restricted = ['torrent', 'download_count', 'magnetUrl', 'magnet', 'hash', 'url', 'unknown'];
+        if (!includeTorrentMetadata) restricted.push('torrents', 'seeds', 'peers', 'sizeBytes', 'downloadCount');
+        assert.ok(!restricted.includes(key), key);
+        assertNoRestrictedFields(child, includeTorrentMetadata);
     }
     const serialized = JSON.stringify(value);
     assert.ok(!serialized.includes(HASH));
     assert.ok(!serialized.includes(DOWNLOAD));
     assert.ok(!serialized.includes(MAGNET));
 }
+
+for (const [operation, query] of [
+    ['movies', 'page=1&limit=20'], ['movie', 'id=10'], ['suggestions', 'id=10'],
+    ['parental-guides', 'id=10'], ['shows', 'page=1'], ['episodes', 'imdbId=tt1234567'],
+]) {
+    test(`${operation} version 2 restores only safe torrent metadata and keeps version 1 unchanged`, async () => {
+        const {handler, calls} = fixtures();
+        const prior = await (await handler(request(operation, query), operation)).json();
+        const response = await handler(request(operation, `${query}&v=2`), operation);
+        const body = await response.json();
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('Cache-Control'), 'public, max-age=60, s-maxage=300');
+        assertNoRestrictedFields(prior);
+        assertNoRestrictedFields(body, true);
+        assert.deepEqual(calls[1], calls[0]);
+        if (operation === 'movie') {
+            assert.deepEqual(body.torrents, [{
+                quality: '1080p', type: 'bluray', videoCodec: 'x265', bitDepth: '10', audioChannels: '5.1',
+                seeds: 100, peers: 20, size: '2.1 GB', sizeBytes: 2_100_000_000, uploadedAt: DATE.toISOString(),
+            }]);
+            assert.equal(body.downloadCount, 123);
+            const {torrents: _, downloadCount: _count, ...unchanged} = body;
+            assert.deepEqual(unchanged, prior);
+        } else if (operation === 'episodes' || operation === 'shows') {
+            const projected = operation === 'episodes' ? body[0] : body.shows[0].latestEpisode;
+            const original = operation === 'episodes' ? prior[0] : prior.shows[0].latestEpisode;
+            const {seeds, peers, sizeBytes, ...unchanged} = projected;
+            assert.deepEqual({seeds, peers, sizeBytes}, {seeds: 100, peers: 20, sizeBytes: 12345});
+            assert.deepEqual(unchanged, original);
+        } else assert.deepEqual(body, prior);
+    });
+}
+
+test('version 2 torrent descriptions are sanitized and cannot carry download URLs or hashes', async () => {
+    const malicious = `Safe ${MAGNET} ${encodeURIComponent(DOWNLOAD)} ${HASH} end`;
+    const {handler} = fixtures({async getMovieDetails() {
+        return {...movie, torrents: [{...torrent, quality: malicious, type: malicious, videoCodec: malicious,
+            bitDepth: malicious, audioChannels: malicious, size: malicious, seeds: -1, peers: Infinity, sizeBytes: malicious}]};
+    }});
+    const response = await handler(request('movie', 'id=10&v=2'), 'movie');
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assertNoRestrictedFields(body, true);
+    assert.deepEqual(body.torrents[0], {quality: 'Safe end', type: 'Safe end', videoCodec: 'Safe end',
+        bitDepth: 'Safe end', audioChannels: 'Safe end', size: 'Safe end', seeds: 0, peers: 0, sizeBytes: 0,
+        uploadedAt: DATE.toISOString()});
+});
+
+test('version 2 download counts remain optional and invalid upstream values cannot leak into metadata', async () => {
+    for (const [value, expected] of [[undefined, undefined], [0, 0], [-1, 0], [Infinity, 0], [MAGNET, 0]]) {
+        const {handler} = fixtures({async getMovieDetails() {
+            return {...movie, downloadCount: value, download_count: HASH};
+        }});
+        const current = await (await handler(request('movie', 'id=10&v=2'), 'movie')).json();
+        const prior = await (await handler(request('movie', 'id=10'), 'movie')).json();
+        assert.equal(current.downloadCount, expected);
+        assert.equal(Object.hasOwn(current, 'downloadCount'), value !== undefined);
+        assert.equal(Object.hasOwn(current, 'download_count'), false);
+        assert.equal(Object.hasOwn(prior, 'downloadCount'), false);
+        assertNoRestrictedFields(current, true);
+        assertNoRestrictedFields(prior);
+    }
+});
+
+test('all operations reject unsupported or duplicate catalog versions before provider access', async () => {
+    const {handler, calls} = fixtures();
+    for (const [operation, query] of [['movies', 'page=1'], ['movie', 'id=10'], ['suggestions', 'id=10'],
+        ['parental-guides', 'id=10'], ['shows', 'page=1'], ['episodes', 'imdbId=1234567']]) {
+        for (const version of ['', '1', '3', '02', '2&v=2']) {
+            const response = await handler(request(operation, `${query}&v=${version}`), operation);
+            assert.equal(response.status, 400);
+            assert.equal(response.headers.get('Cache-Control'), 'no-store');
+        }
+    }
+    assert.deepEqual(calls, []);
+});
 
 for (const [operation, query] of [
     ['movies', 'page=1&limit=20'], ['movie', 'id=10'], ['suggestions', 'id=10'],

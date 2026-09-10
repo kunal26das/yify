@@ -1,6 +1,6 @@
 import type {
     CastMember, Diagnostics, ListMoviesParams, ListMoviesResult, ListShowsParams,
-    ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode,
+    ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode, Torrent,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import type {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
@@ -14,9 +14,9 @@ const CANONICAL_ORIGIN = 'https://yify.expo.app';
 const REQUEST_TIMEOUT_MS = 30_000;
 const LIST_TTL_MS = 60_000;
 const DETAILS_TTL_MS = 10 * 60_000;
-const BLOCKED_FIELDS = new Set(['torrents', 'torrent', 'hash', 'infoHash', 'info_hash', 'url',
-    'magnetUrl', 'magnet_url', 'torrentUrl', 'torrent_url', 'downloadCount', 'download_count',
-    'seeds', 'peers', 'sizeBytes', 'size_bytes']);
+const BLOCKED_FIELDS = new Set(['torrent', 'hash', 'infoHash', 'info_hash', 'url',
+    'magnetUrl', 'magnet_url', 'torrentUrl', 'torrent_url', 'download_count',
+    'size_bytes']);
 
 export function webCatalogBaseUrl(
     location: CatalogLocation | undefined = typeof window === 'undefined' ? undefined : window.location,
@@ -133,6 +133,24 @@ function castMember(value: unknown): CastMember {
     };
 }
 
+function torrent(value: unknown): Torrent {
+    const item = object(value);
+    return {
+        url: '',
+        hash: '',
+        quality: text(item.quality),
+        type: text(item.type),
+        videoCodec: text(item.videoCodec),
+        bitDepth: text(item.bitDepth),
+        audioChannels: text(item.audioChannels),
+        seeds: integer(item.seeds),
+        peers: integer(item.peers),
+        size: text(item.size),
+        sizeBytes: integer(item.sizeBytes),
+        uploadedAt: date(item.uploadedAt),
+    };
+}
+
 function movieDetails(value: unknown): MovieDetails {
     const item = object(value);
     return {
@@ -142,10 +160,11 @@ function movieDetails(value: unknown): MovieDetails {
         synopsis: text(item.synopsis),
         ytTrailerCode: text(item.ytTrailerCode),
         likeCount: item.likeCount == null ? undefined : numeric(item.likeCount),
+        ...(item.downloadCount == null ? {} : {downloadCount: integer(item.downloadCount)}),
         screenshotUrls: array(item.screenshotUrls, imageUrl),
         screenshotThumbUrls: array(item.screenshotThumbUrls, imageUrl),
         cast: array(item.cast, castMember),
-        torrents: [],
+        torrents: item.torrents == null ? [] : array(item.torrents, torrent),
     };
 }
 
@@ -159,9 +178,9 @@ function episode(value: unknown): ShowEpisode {
         releasedAt: date(item.releasedAt),
         thumbnailUrl: optionalImage(item.thumbnailUrl),
         magnetUrl: '',
-        seeds: 0,
-        peers: 0,
-        sizeBytes: 0,
+        seeds: item.seeds == null ? 0 : integer(item.seeds),
+        peers: item.peers == null ? 0 : integer(item.peers),
+        sizeBytes: item.sizeBytes == null ? 0 : integer(item.sizeBytes),
     };
 }
 
@@ -230,6 +249,7 @@ export class WebCatalogClient {
         for (const [key, value] of Object.entries(query)) {
             if (value !== undefined && value !== '') params.set(key, String(value));
         }
+        params.set('v', '2');
         const url = `${webCatalogBaseUrl()}/${endpoint}?${params}`;
         if (this.subscriberAccess) {
             const subscriberUrl = url.replace('/api/catalog/', '/api/subscriber-catalog/');
