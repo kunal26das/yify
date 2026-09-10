@@ -146,6 +146,7 @@ test('already cancelled requests avoid repository construction and release the a
     const handler = createCatalogHandler(() => { initialized = true; throw new Error('Not reached'); }, {admission: lease.port});
     assert.equal((await handler(request('movie', caller.signal), 'movie')).status, 504);
     assert.equal(initialized, false);
+    await nextTurn();
     assert.deepEqual(lease.state, {acquired: 1, released: 1});
 });
 

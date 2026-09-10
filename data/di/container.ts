@@ -33,7 +33,6 @@ export function createDependencies(): Dependencies {
     const diagnostics = new SentryDiagnostics();
     const appConfig = new RemoteAppConfig(diagnostics);
 
-    const catalog = createCatalogRepositories(appConfig, diagnostics);
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();
         return appConfig.getTmdbApiKey();
@@ -47,6 +46,7 @@ export function createDependencies(): Dependencies {
         analytics,
         new PersistentCache('purchases'), diagnostics,
     );
+    const catalog = createCatalogRepositories(appConfig, diagnostics, auth, purchases);
     const accountSync = new AccountSyncImpl({
         diagnostics,
         store: new PersistentCache('sync'),

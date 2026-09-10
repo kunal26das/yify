@@ -3,6 +3,7 @@ import type {
     ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
+import type {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
 import {ResponseCache} from './storage/ResponseCache';
 
 type CatalogLocation = Pick<Location, 'origin' | 'hostname' | 'protocol'>;
@@ -180,7 +181,10 @@ function show(value: unknown): Show {
 export class WebCatalogClient {
     private readonly responses = new ResponseCache();
 
-    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+    constructor(
+        private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly subscriberAccess?: SubscriberCatalogAccess,
+    ) {}
 
     listMovies(params: ListMoviesParams): Promise<ListMoviesResult> {
         return this.request('movies', {
@@ -227,6 +231,17 @@ export class WebCatalogClient {
             if (value !== undefined && value !== '') params.set(key, String(value));
         }
         const url = `${webCatalogBaseUrl()}/${endpoint}?${params}`;
+        if (this.subscriberAccess) {
+            const subscriberUrl = url.replace('/api/catalog/', '/api/subscriber-catalog/');
+            return this.subscriberAccess.load(subscriberUrl, value => {
+                metadataOnly(value);
+                return parse(value);
+            }).then(result => result === null ? this.publicRequest(url, endpoint, parse) : result.value);
+        }
+        return this.publicRequest(url, endpoint, parse);
+    }
+
+    private publicRequest<T>(url: string, endpoint: CatalogEndpoint, parse: (value: unknown) => T): Promise<T> {
         const ttl = ['movies', 'shows', 'episodes'].includes(endpoint) ? LIST_TTL_MS : DETAILS_TTL_MS;
         return this.responses.getOrLoad(url, ttl, async () => {
             const controller = new AbortController();

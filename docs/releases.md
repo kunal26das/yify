@@ -118,8 +118,29 @@ The web catalog API projects public metadata before responding. Browser exports 
 provider-data check; never promote or restore a deployment built before that boundary was added.
 Old EAS deployments retain public URLs until deleted, even after production moves to a newer build.
 
+Signed-in subscribers use `/api/subscriber-catalog/[operation]`. Every request verifies the Firebase
+ID token and checks RevenueCat for a current production monthly subscription before fetching the
+catalog. Its response contains `metadata` for the UI and `raw.responses` with the original upstream
+JSON, visible in the browser's Network panel. Raw responses are never cached, saved in app storage,
+or included in diagnostics. Subscribers can still copy or share data they receive.
+
+Set these **sensitive**, server-only variables in the EAS `production` environment before deploying:
+`YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID`, `YIFY_SUBSCRIBER_REVENUECAT_API_KEY`, and
+`YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS`. The key requires only
+`customer_information:subscriptions:read`; `.env.example` lists the project and approved product IDs.
+Do not prefix these with `EXPO_PUBLIC_`. Missing configuration fails closed and the browser falls
+back to public metadata. Both API bundles are required by the Hosting export check and excluded
+from Pages assets. See [Expo's Hosting environment-variable rules](https://docs.expo.dev/eas/environment-variables/usage/#using-environment-variables-with-eas-hosting).
+
+Legacy lifetime, promotional and sandbox access does not qualify for this endpoint. Canceled
+subscriptions retain access through their paid period; RevenueCat-approved grace periods also
+qualify. Subscription checks are not cached. JWT verification caches only Google's public signing
+keys and does not perform Firebase token-revocation checks; a revoked ID token can remain valid
+until its normal expiry. Signing out stops further subscriber requests in that browser, but cannot
+erase responses already received or invalidate a copied token immediately.
+
 Catalog requests have a 25-second deadline that cancels upstream fetches and further pagination.
-Each worker limits upstream work to 60 units per client per minute and 240 units overall, with bursts
+For each API, a worker limits upstream work to 60 units per client per minute and 240 units overall, with bursts
 of the same size and at most 24/48 concurrent units. An episode request reserves six units for its
 possible six upstream pages; other operations reserve one. Excess requests receive uncached `429`
 responses with `Retry-After`. Client identity uses EAS Hosting's `X-Real-IP`; absent or invalid values

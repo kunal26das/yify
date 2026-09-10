@@ -8,6 +8,12 @@ const test = require('node:test');
 const root = path.resolve(__dirname, '..');
 const checker = path.join(root, 'scripts/check-web-export.mjs');
 const markers = ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
+const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
+    'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'https://api.revenuecat.com/v2/projects/',
+    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'];
+const apiRoutes = ['catalog', 'subscriber-catalog'].map(name => ({
+    page: `/api/${name}/[operation]`, file: `_expo/functions/api/${name}/[operation]+api.js`,
+}));
 
 function fixture(t, server = false) {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'yify-web-export-'));
@@ -31,10 +37,12 @@ function fixture(t, server = false) {
     for (const [name, title] of [['privacy', 'Privacy Policy'], ['terms', 'Terms &amp; Conditions']]) {
         for (const file of [`${name}.html`, `${name}/index.html`]) write(file, `<h1>${title}</h1><a href="mailto:kunal26das@gmail.com">Contact</a>`);
     }
-    write('_expo/static/js/web/entry-app.js', 'console.log("metadata catalog");');
+    write('_expo/static/js/web/entry-app.js', 'const endpoints = ["/api/catalog/movies", "/api/subscriber-catalog/movies"];');
     if (server) {
-        write('_expo/routes.json', JSON.stringify({apiRoutes: [{page: '/api/catalog/[operation]', file: '_expo/functions/api/catalog/[operation]+api.js'}]}), serverDirectory);
-        write('_expo/functions/api/catalog/[operation]+api.js', `const upstream = ${JSON.stringify(markers)};`, serverDirectory);
+        write('_expo/routes.json', JSON.stringify({apiRoutes}), serverDirectory);
+        for (const route of apiRoutes) {
+            write(route.file, `const privateConfiguration = ${JSON.stringify([...markers, ...subscriberMarkers])};`, serverDirectory);
+        }
     }
     const check = (flag = server ? '--server' : '--static') => {
         const result = spawnSync(process.execPath, [checker, directory, flag], {encoding: 'utf8'});
@@ -77,6 +85,27 @@ for (const server of [false, true]) {
             assert.ok(result.output.includes(`forbidden browser catalog data marker ${marker}`));
         }
     });
+    test(`${server ? 'Hosting' : 'Pages'} export rejects server-only subscriber verification code in browser bundles`, (t) => {
+        const f = fixture(t, server);
+        for (const marker of subscriberMarkers) {
+            f.write('_expo/static/js/web/entry-app.js', `const value = ${JSON.stringify(marker)};`);
+            const result = f.check();
+            assert.equal(result.status, 1);
+            assert.ok(result.output.includes(`server-only subscriber verification marker ${marker}`));
+        }
+    });
+    test(`${server ? 'Hosting' : 'Pages'} export excludes subscriber server artifacts from public assets`, (t) => {
+        const f = fixture(t, server);
+        for (const file of ['_expo/functions/api/subscriber-catalog/[operation]+api.js', '_expo/routes.json',
+            'api/subscriber-catalog/[operation]+api.js']) {
+            f.write(file, 'server implementation');
+            const result = f.check();
+            assert.equal(result.status, 1);
+            assert.match(result.output, /server output must not be published as/);
+            fs.rmSync(path.join(f.client, file.split('/')[0]), {recursive: true, force: true});
+            f.write('_expo/static/js/web/entry-app.js', 'const endpoint = "/api/subscriber-catalog/movies";');
+        }
+    });
 }
 
 test('Pages gate rejects Hosting output and accidental server artifacts', (t) => {
@@ -89,16 +118,29 @@ test('Pages gate rejects Hosting output and accidental server artifacts', (t) =>
     assert.match(result.output, /server output must not be published as a static site/);
 });
 
-test('Hosting gate rejects absent or invalid catalog route bundles', (t) => {
+for (const route of apiRoutes) {
+    test(`Hosting gate requires the ${route.page} bundle and rejects invalid manifest paths`, (t) => {
+        const f = fixture(t, true);
+        fs.unlinkSync(path.join(f.serverDirectory, route.file));
+        assert.equal(f.check().status, 1);
+        f.write(route.file, 'server implementation', f.serverDirectory);
+        for (const replacement of [undefined, {page: route.page}, {page: route.page, file: '../client/privacy.html'},
+            {page: route.page, file: path.join(f.client, 'privacy.html')}]) {
+            const routes = apiRoutes.filter(entry => entry.page !== route.page);
+            if (replacement) routes.push(replacement);
+            f.write('_expo/routes.json', JSON.stringify({apiRoutes: routes}), f.serverDirectory);
+            const result = f.check();
+            assert.equal(result.status, 1);
+            assert.match(result.output, /server catalog API:/);
+            assert.ok(result.output.includes(route.page));
+        }
+    });
+}
+
+test('Hosting gate rejects an invalid API route manifest', (t) => {
     const f = fixture(t, true);
-    fs.unlinkSync(path.join(f.serverDirectory, '_expo/functions/api/catalog/[operation]+api.js'));
-    assert.equal(f.check().status, 1);
-    for (const manifest of [{apiRoutes: []}, {apiRoutes: [{page: '/api/catalog/[operation]', file: '../client/index.html'}]}, null]) {
-        f.write('_expo/routes.json', JSON.stringify(manifest), f.serverDirectory);
-        const result = f.check();
-        assert.equal(result.status, 1);
-        assert.match(result.output, /server catalog API:/);
-    }
+    f.write('_expo/routes.json', 'null', f.serverDirectory);
+    assert.match(f.check().output, /server catalog API:/);
 });
 
 for (const server of [false, true]) {

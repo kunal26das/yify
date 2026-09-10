@@ -19,6 +19,14 @@ const ROUTES = [
     ['history.html', 'History'],
     ['preferences.html', 'Preferences'],
 ];
+const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]'];
+const SERVER_ONLY_MARKERS = [
+    'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
+    'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
+    'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS',
+    'https://api.revenuecat.com/v2/projects/',
+    'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
+];
 
 const failures = [];
 
@@ -26,21 +34,26 @@ if (serverOutput) {
     const serverDirectory = resolve(exportDirectory, 'server');
     try {
         const manifest = JSON.parse(readFileSync(join(serverDirectory, '_expo', 'routes.json'), 'utf8'));
-        const route = Array.isArray(manifest?.apiRoutes)
-            ? manifest.apiRoutes.find((entry) => entry?.page === '/api/catalog/[operation]')
-            : undefined;
-        if (typeof route?.file !== 'string') throw new Error('catalog route missing from server manifest');
-        const routeFile = resolve(serverDirectory, route.file);
-        const routePath = relative(serverDirectory, routeFile);
-        if (isAbsolute(route.file) || routePath.startsWith('..') || !routePath || !statSync(routeFile).isFile()) {
-            throw new Error('catalog route bundle is missing or outside the server directory');
+        for (const page of CATALOG_API_ROUTES) {
+            const route = Array.isArray(manifest?.apiRoutes)
+                ? manifest.apiRoutes.find((entry) => entry?.page === page)
+                : undefined;
+            if (typeof route?.file !== 'string') throw new Error(`${page} missing from server manifest`);
+            const routeFile = resolve(serverDirectory, route.file);
+            const routePath = relative(serverDirectory, routeFile);
+            if (isAbsolute(route.file) || routePath.startsWith('..') || !routePath || !statSync(routeFile).isFile()) {
+                throw new Error(`${page} bundle is missing or outside the server directory`);
+            }
         }
     } catch (error) {
         failures.push(`server catalog API: ${error.message}`);
     }
-} else {
-    for (const serverPath of ['server', 'client', '_expo/functions', '_expo/routes.json']) {
-        if (existsSync(join(dir, serverPath))) failures.push(`${serverPath}: server output must not be published as a static site`);
+}
+
+for (const serverPath of ['_expo/functions', '_expo/routes.json', 'api/catalog', 'api/subscriber-catalog',
+    ...(serverOutput ? [] : ['server', 'client'])]) {
+    if (existsSync(join(dir, serverPath))) {
+        failures.push(`${serverPath}: server output must not be published as ${serverOutput ? 'public client assets' : 'a static site'}`);
     }
 }
 
@@ -59,6 +72,9 @@ for (const bundle of bundles) {
     const source = readFileSync(bundle, 'utf8');
     for (const marker of ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih']) {
         if (source.includes(marker)) failures.push(`${relative(dir, bundle)}: forbidden browser catalog data marker ${marker}`);
+    }
+    for (const marker of SERVER_ONLY_MARKERS) {
+        if (source.includes(marker)) failures.push(`${relative(dir, bundle)}: server-only subscriber verification marker ${marker}`);
     }
 }
 

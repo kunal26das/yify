@@ -20,6 +20,13 @@ The offering is monthly-only. On 2026-09-09, `$rc_lifetime` was removed from the
 
 The monthly products and previously sold lifetime products still grant the [Supporter entitlement (`remove_ads`, `entl2b0b9c6396`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/entitlements/entl2b0b9c6396). The unoffered lifetime products `remove_ads_lifetime`, `remove_ads_web` and `remove_ads_lifetime_web` remain attached so existing purchasers retain access and can restore purchases. Do not detach or delete these legacy products to stop new sales; the offering controls which options are displayed.
 
+The subscriber catalog API separately requires a current production subscription to Android
+`prod4a474db633` or Web Billing `prod3b9edb236c`. Its V2 key **Yify subscriber catalog server**
+(`apikeya111bdc6fb`, created 2026-09-11) has only `customer_information:subscriptions:read`.
+The existing product-setup key is unchanged. The server queries the Firebase-verified UID, including
+RevenueCat aliases; it does not trust the browser's supporter state or grant catalog access from a
+lifetime entitlement alone. [Deployment configuration](releases.md#web)
+
 [Targeting](https://app.revenuecat.com/projects/8b6ff243/targeting) has no rules. This is valid: RevenueCat returns the project's default offering when no targeting rule matches a placement. The app's `settings_supporter` and `post_ad_supporter` placements can use the existing offering without creating a new product or experiment. See [placements documentation](https://www.revenuecat.com/docs/tools/targeting/placements).
 
 No managed RevenueCat Paywall or Web Purchase Link is attached to the offering. The app uses its own purchase UI. Adding a native Customer Center or RevenueCat Paywalls UI would require the separate native UI package and a new store build; it is not required for the monthly subscription and legacy purchase-restoration flows.
