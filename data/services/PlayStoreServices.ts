@@ -1,6 +1,5 @@
 import {Platform} from 'react-native';
 import * as InAppUpdates from 'expo-in-app-updates';
-import * as StoreReview from 'expo-store-review';
 import {getCrashlytics, log} from '@react-native-firebase/crashlytics';
 
 import type {StoreServices} from '@/domain';
@@ -36,9 +35,6 @@ export class PlayStoreServices implements StoreServices {
             }
 
             breadcrumb('in_app_update none');
-            if (await StoreReview.hasAction()) {
-                await StoreReview.requestReview();
-            }
         } catch (error) {
             breadcrumb(
                 `in_app_update failed ${error instanceof Error ? error.message : String(error)}`
