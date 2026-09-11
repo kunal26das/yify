@@ -1143,10 +1143,18 @@
   resolved "https://registry.yarnpkg.com/@expo/sudo-prompt/-/sudo-prompt-9.3.2.tgz#0fd2813402a42988e49145cab220e25bea74b308"
   integrity sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==
 
-"@expo/ui@57.0.16", "@expo/ui@^57.0.16":
+"@expo/ui@57.0.16":
   version "57.0.16"
   resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.16.tgz#c45a5ef996a69a17912879588a2c8258f07c3f54"
   integrity sha512-3MK74dEPE4mwlv0VbyQKepmHigOs2bcOvay2SFqc1/QSywVTOjbkNPYUbq2H+LyOLP2sHMazrPBwfXGiYn3q7A==
+  dependencies:
+    sf-symbols-typescript "^2.1.0"
+    vaul "^1.1.2"
+
+"@expo/ui@^57.0.17":
+  version "57.0.18"
+  resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.18.tgz#5897bbd15da8af0ea339ebefc962892fb7210db8"
+  integrity sha512-9RkA26v0FSyHlkQCyavZrT8EzsALfkNHIFO5uC+IsAxzWzItdOWdy6asjpg1yaCvBEGMYkP17FUZxluhVbeleA==
   dependencies:
     sf-symbols-typescript "^2.1.0"
     vaul "^1.1.2"
@@ -4932,10 +4940,15 @@ expo-font@57.0.3, expo-font@~57.0.3:
   dependencies:
     fontfaceobserver "^2.1.0"
 
-expo-glass-effect@57.0.1, expo-glass-effect@^57.0.1:
+expo-glass-effect@57.0.1:
   version "57.0.1"
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.1.tgz#8829b8f3f801589266bd1c75fdfed4a6d73cf9d8"
   integrity sha512-m/n8maxqNcHk6ZDhuqXBfD5Kt1Iz3M8xykVgdB0iSCIXvF70IqWXmQhX8Psswhrp8eZ+3r0mAD0Jh/2gFA3QaA==
+
+expo-glass-effect@^57.0.2:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.3.tgz#acf0ba84733f5762b8f8b13819e6542faf627dbe"
+  integrity sha512-aTh2J5eCxf+rSRMBJTnP8Ib5/k8DYFVDuEX1xqesN9F9aqTXocwMv/aQRVBNUs/iogDWhHIJz2pN97IsrrTcoA==
 
 expo-haptics@57.0.2:
   version "57.0.2"
@@ -5040,15 +5053,15 @@ expo-notifications@57.0.17:
     expo-application "~57.0.2"
     expo-constants "~57.0.17"
 
-expo-router@57.0.19:
-  version "57.0.19"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.19.tgz#64f313594a37eff66841b30fea997597a2728002"
-  integrity sha512-JovzZ066+qhykyJLC4hSEJpM8ToVWnJqbxmTN7USzARM0HgRR/g05a75f/EIsY4S//hbPGm6wGl/ObcCVtAX+A==
+expo-router@57.0.20:
+  version "57.0.20"
+  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.20.tgz#3805b1eb52f9167ed99bd63b630b5dc38b076288"
+  integrity sha512-pBY0Ek5opUgpUSdoX3bAmyd8mkGSeTIOEdIDdpSG/02owrrwpnaQuSn/XuwOtizoeFedAD3VgS5DDVSyQTdI7g==
   dependencies:
     "@expo/log-box" "^57.0.4"
     "@expo/metro-runtime" "^57.0.15"
     "@expo/schema-utils" "^57.0.2"
-    "@expo/ui" "^57.0.16"
+    "@expo/ui" "^57.0.17"
     "@radix-ui/react-slot" "^1.2.0"
     "@radix-ui/react-tabs" "^1.1.12"
     "@react-native-masked-view/masked-view" "^0.3.2"
@@ -5056,7 +5069,7 @@ expo-router@57.0.19:
     color "^4.2.3"
     debug "^4.3.4"
     escape-string-regexp "^4.0.0"
-    expo-glass-effect "^57.0.1"
+    expo-glass-effect "^57.0.2"
     expo-server "^57.0.3"
     expo-symbols "^57.0.2"
     fast-deep-equal "^3.1.3"
