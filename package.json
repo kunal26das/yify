@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.7.9",
-  "versionCode": 81,
+  "version": "1.8.0",
+  "versionCode": 82,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
