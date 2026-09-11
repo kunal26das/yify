@@ -5,6 +5,7 @@ import {
   HomeScreen,
     usePageMeta,
   useFeedViewModel,
+  useHomeViewModel,
   useMovieRepository,
   useShowRepository,
   useShowsViewModel,
@@ -13,8 +14,8 @@ import {
 
 export default function HomeRoute() {
   const movies = useMovieRepository();
-  const featured = useFeedViewModel(movies, {skipHero: true, pageSize: 6});
-  const feed = useFeedViewModel(movies, {skipHero: true, initialChip: 'new'});
+  const shelves = useHomeViewModel(movies);
+  const feed = useFeedViewModel(movies, {skipHero: true});
   const shows = useShowsViewModel(useShowRepository(), useTmdbRepository());
     usePageMeta({
         title: 'Yify — Discover Movies | Free on iPhone, Android & Web',
@@ -33,8 +34,8 @@ export default function HomeRoute() {
           <link rel="canonical" href={canonicalUrl('/')}/>
           <meta property="og:url" content={canonicalUrl('/')}/>
       </Head>
-      <HomeScreen featured={featured} feed={feed} shows={shows} />
-      <ScreenDisplay ready={!featured.loading && !feed.loading}/>
+      <HomeScreen shelves={shelves} feed={feed} shows={shows} />
+      <ScreenDisplay ready={!shelves.loading && !feed.loading}/>
     </>
   );
 }

@@ -234,7 +234,7 @@ export function MovieFilterModal({
     const groups = (
         <>
             <FilterChipGroup
-                title="Browse by"
+                title="Collections"
                 index={0}
                 options={COLLECTION_OPTIONS}
                 selectedValue={collectionValue(filters)}

@@ -4,10 +4,10 @@ const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
 const {activeFeedChipKey, chipFor, chipMatches, FEED_CHIPS} = loadTypeScript('presentation/movies/constants/feedChips.ts');
 
-test('unfiltered browse selects Latest while the existing all key remains Popular', () => {
+test('unfiltered browse selects New while All preserves its popularity ordering', () => {
     assert.equal(activeFeedChipKey({}), 'new');
-    assert.equal(chipFor('new').label, 'Latest');
-    assert.equal(chipFor('all').label, 'Popular');
+    assert.equal(chipFor('new').label, 'New');
+    assert.equal(chipFor('all').label, 'All');
     assert.equal(chipFor('all').query.sort_by, 'download_count');
     assert.equal(activeFeedChipKey({sort_by: 'download_count'}), 'all');
 });

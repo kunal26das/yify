@@ -10,7 +10,7 @@ export interface FeedChip {
 
 const ALL_CHIP: FeedChip = {
     key: 'all',
-    label: 'Popular',
+    label: 'All',
     query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
 };
 
@@ -26,7 +26,7 @@ export const FEED_CHIPS: readonly FeedChip[] = [
     ALL_CHIP,
     {
         key: 'new',
-        label: 'Latest',
+        label: 'New',
         query: {sort_by: SortBy.DateAdded, order_by: OrderBy.Desc},
     },
     {

@@ -23,7 +23,6 @@ import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {ChipBar} from './components/ChipBar';
-import {BrowseFilterBar} from './components/BrowseFilterBar';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
@@ -259,7 +258,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             isSkeleton(item) ? (
                 <PosterSkeleton width={itemWidth}/>
             ) : (
-                <MoviePosterItem movie={item} width={itemWidth} showCaption source="browse_grid"/>
+                <MoviePosterItem movie={item} width={itemWidth} source="browse_grid"/>
             ),
         [itemWidth]
     );
@@ -338,7 +337,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         {topBar}
                         {searchOverlay}
 
-                        {movies.length > 0 ? <ScrollProgress
+                        {movies.length > 0 && totalMovieCount != null ? <ScrollProgress
                             current={currentIndex}
                             total={totalMovieCount}
                             atTop={isAtTop}
@@ -346,7 +345,11 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             trailing={filtersControl}
                             bottomInset={insets.bottom}
                             visible={movies.length > 0}
-                        /> : null}
+                        /> : (
+                            <View pointerEvents="box-none" style={[styles.emptyFiltersControl, {bottom: insets.bottom + 16}]}>
+                                {filtersControl}
+                            </View>
+                        )}
 
                         <MovieFilterModal
                             visible={filterModalVisible}
@@ -385,16 +388,13 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     numColumns={numColumns}
                     columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
                     ListHeaderComponent={
-                        <View style={{paddingHorizontal: POSTER_GAP / 2}}>
-                            <BrowseFilterBar filters={filters} query={appliedQuery} resultCount={error ? undefined : totalMovieCount}
-                                loading={loading && movies.length === 0 || refreshing} onOpenFilters={openFilters} onReset={handleClearFilters}
-                                onChange={(next) => {
-                                    Analytics.filtersApplied({...next});
-                                    setPickedChip(null);
-                                    applyFilters(next);
-                                    scrollToTop();
-                                }}/>
-                        </View>
+                        totalMovieCount != null && movies.length > 0 ? (
+                            <Animated.View entering={enterFade()}>
+                                <ThemedText style={[Typography.videoMeta, styles.countLine, {color: colors.textMuted}]}>
+                                    About {totalMovieCount.toLocaleString()} results
+                                </ThemedText>
+                            </Animated.View>
+                        ) : null
                     }
                     ListEmptyComponent={
                         loading && !error ? (
@@ -517,6 +517,7 @@ const styles = StyleSheet.create({
     },
     filterBadgeText: {fontSize: 11, lineHeight: 14, fontWeight: '700'},
 
+    emptyFiltersControl: {position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 25},
     filtersCircle: {
         width: 46,
         height: 46,

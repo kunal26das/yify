@@ -1,272 +1,815 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {Link} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, Platform, RefreshControl, ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent} from 'react-native';
+import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Reanimated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {PressableScale} from '../components/motion';
-import {Screen} from '../components/screen';
+import {LinearGradient} from '../components/linear-gradient';
+import {PressableScale, enterFade, enterRise} from '../components/motion';
 import {ThemedText} from '../components/themed-text';
+import {Screen} from '../components/screen';
+import {ThemedView} from '../components/themed-view';
 import {WebAdvertisement} from '../components/WebAdvertisement';
-import {FontFamily, Radius, Spacing} from '../constants/theme';
-import {useSearchHistory} from '../di/DependenciesContext';
+import {FontFamily, Radius, Spacing, Typography} from '../constants/theme';
 import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {ChipBar} from './components/ChipBar';
+import {HeroBillboard} from './components/HeroBillboard';
 import {HomeFooter} from './components/HomeFooter';
 import {HoverCardHost} from './components/HoverCard';
-import {MoviePosterItem} from './components/MoviePosterItem';
-import {PosterSkeleton} from './components/PosterSkeleton';
+import {MovieRail} from './components/MovieRail';
+import {landscapeWidth} from './components/MovieLandscapeItem';
+import {LandscapeSkeleton, PosterSkeleton, SkeletonBlock} from './components/PosterSkeleton';
 import {ScrollProgress} from './components/ScrollProgress';
-import {ShowStrip} from './components/ShowStrip';
 import {useTopBarHeight} from './components/TopBar';
 import {TopBarSlot} from './components/TopBarSlot';
-import {POSTER_CAPTION_HEIGHT, POSTER_GAP} from './components/moviePosterLayout';
-import {useGoTo} from './constants/destinations';
+import {TopTenProvider} from './components/TopTenContext';
+import {VideoCard} from './components/VideoCard';
+import {POSTER_GAP} from './components/moviePosterLayout';
 import {FEED_CHIPS, chipFor} from './constants/feedChips';
+import {useGoTo} from './constants/destinations';
+import {useWatchlist} from './useWatchlist';
+import type {ShelfQuery, ShelfVariant} from './constants/homeShelves';
+import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import type {FeedViewModel} from './useFeedViewModel';
 import type {ShowsViewModel} from './useShowsViewModel';
-import {useWatchlist} from './useWatchlist';
+import {ShowStrip} from './components/ShowStrip';
+import {useHomeScrollVisibility} from './useHomeScrollVisibility';
 
-type HomeRow = {kind: 'movies'; key: string; movies: Movie[]; endIndex: number} | {kind: 'shows'; key: string};
+const CARD_MIN_WIDTH = 304;
+const SINGLE_COLUMN_MAX_WIDTH = 480;
+const COLUMN_GAP = 16;
+const ROW_GAP = 24;
+const THUMB_ASPECT = 16 / 9;
+const INITIAL_SKELETON_ROWS = 4;
+const PAGING_SKELETON_ROWS = 2;
+const FEED_SOURCE = 'home_feed';
 
-const QUICK_LINKS = [
-    {label: 'Latest', href: '/movies?sort_by=date_added&order_by=desc'},
-    {label: 'Popular', href: '/movies?sort_by=download_count&order_by=desc'},
-    {label: '4K', href: '/movies?quality=2160p&sort_by=download_count&order_by=desc'},
-    {label: 'Top rated', href: '/movies?sort_by=rating&order_by=desc&minimum_rating=7'},
-] as const;
+type Palette = ReturnType<typeof usePalette>['colors'];
 
-function CatalogLink({label, href, compact}: {label: string; href: string; compact?: string}) {
-    const {colors} = usePalette();
-    const {isPhone} = useResponsive();
-    return (
-        <Link href={href as never} asChild>
-            <PressableScale accessibilityRole="link" accessibilityLabel={label} contentStyle={styles.link}>
-                <ThemedText type="caption" style={{color: colors.accent}}>{isPhone && compact ? compact : label}</ThemedText>
-                <Ionicons name="arrow-forward" size={15} color={colors.accent}/>
-            </PressableScale>
-        </Link>
-    );
+type HomeRow =
+    | {kind: 'shelf'; key: string; shelf: ShelfState}
+    | {kind: 'watchlist'; key: string; movies: Movie[]}
+    | {kind: 'shows'; key: string}
+    | {kind: 'heading'; key: string}
+    | {kind: 'chips'; key: string}
+    | {kind: 'cards'; key: string; movies: Movie[]; endIndex: number};
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<HomeRow>);
+
+function buildBrowseHref(query: ShelfQuery): string {
+    const params = new URLSearchParams();
+    if (query.genre) params.set('genre', query.genre);
+    if (query.quality) params.set('quality', query.quality);
+    if (query.minimum_rating) params.set('minimum_rating', String(query.minimum_rating));
+    if (query.sort_by) params.set('sort_by', query.sort_by);
+    if (query.order_by) params.set('order_by', query.order_by);
+    const qs = params.toString();
+    return qs ? `/movies?${qs}` : '/movies';
 }
 
-function CatalogIntro() {
-    const {colors} = usePalette();
-    const {isPhone, gutter} = useResponsive();
-    const [query, setQuery] = useState('');
-    const [focused, setFocused] = useState(false);
-    const searchHistory = useSearchHistory();
-    const goTo = useGoTo();
-    const submit = () => {
-        const term = query.trim();
-        if (!term) {
-            goTo('/movies');
-            return;
-        }
-        searchHistory.remember(term);
-        Analytics.search(term);
-        goTo(`/movies?query=${encodeURIComponent(term)}`);
-    };
-    return (
-        <View style={[styles.intro, {paddingHorizontal: gutter}]}>
-            <ThemedText type="micro" style={[styles.eyebrow, {color: colors.accent}]}>YOUR NEXT GREAT WATCH</ThemedText>
-            <ThemedText accessibilityRole="header" type="display" style={[styles.introTitle, isPhone && styles.introTitlePhone]}>
-                A world of movies. Find yours.
-            </ThemedText>
-            <ThemedText style={[styles.introCopy, {color: colors.textMuted}]}>Explore trailers, ratings and where to watch.</ThemedText>
-            <View style={[styles.searchBox, {backgroundColor: colors.surfaceSunken, borderColor: focused ? colors.accent : colors.borderStrong}]}>
-                <Ionicons name="search-outline" size={21} color={colors.textMuted}/>
-                <TextInput value={query} onChangeText={setQuery} placeholder="Search movies…" placeholderTextColor={colors.textFaint}
-                    accessibilityLabel="Search the movie catalog" autoCapitalize="none" autoCorrect={false} returnKeyType="search"
-                    onSubmitEditing={submit} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-                    style={[styles.searchInput, {color: colors.text}]}/>
-                <PressableScale onPress={submit} accessibilityRole="button" accessibilityLabel="Search catalog"
-                    contentStyle={[styles.searchButton, {backgroundColor: colors.accentStrong}]}>
-                    <ThemedText type="caption" style={{color: colors.onAccent}}>Search</ThemedText>
-                </PressableScale>
-            </View>
-            <View style={styles.quickLinks}>{QUICK_LINKS.map(({label, href}) => <CatalogLink key={label} label={label} href={href}/>)}</View>
-        </View>
-    );
+function skeletonCount(width: number, posterWidth: number, gutter: number): number {
+    const available = Math.max(0, width - gutter * 2);
+    return Math.max(3, Math.ceil(available / (posterWidth + POSTER_GAP)) + 1);
 }
 
-function CatalogRetry({message, onRetry}: {message: string; onRetry: () => void}) {
-    const {colors} = usePalette();
-    return (
-        <View style={styles.retry}>
-            <ThemedText style={[styles.retryText, {color: colors.textMuted}]}>{message}</ThemedText>
-            <PressableScale onPress={onRetry} accessibilityRole="button" accessibilityLabel="Try again"
-                contentStyle={[styles.retryButton, {borderColor: colors.borderStrong}]}>
-                <Ionicons name="refresh" size={16} color={colors.accent}/>
-                <ThemedText type="caption" style={{color: colors.accent}}>Try again</ThemedText>
-            </PressableScale>
-        </View>
-    );
-}
-
-export function HomeScreen({featured, feed, shows}: {featured: FeedViewModel; feed: FeedViewModel; shows?: ShowsViewModel}) {
-    const {colors} = usePalette();
-    const {width, contentMaxWidth, isPhone, gutter} = useResponsive();
+export function HomeScreen({
+    shelves,
+    feed,
+    shows,
+}: {
+    shelves: HomeViewModel;
+    feed: FeedViewModel;
+    shows?: ShowsViewModel;
+}) {
     const insets = useSafeAreaInsets();
-    const topBarHeight = useTopBarHeight();
+    const {colors, scheme} = usePalette();
+    const {width, height, isPhone, isTablet, gutter} = useResponsive();
+    const {
+        heroMovies,
+        heroTrailers,
+        heroBackdrops,
+        requestHeroTrailer,
+        shelves: shelfStates,
+        loading: shelvesLoading,
+        refreshing: shelvesRefreshing,
+        error: shelvesError,
+        loadInitial: loadShelvesInitial,
+        loadShelf,
+        reload: reloadShelves,
+    } = shelves;
+    const {
+        chip,
+        setChip,
+        movies: feedMovies,
+        totalCount,
+        loading: feedLoading,
+        refreshing: feedRefreshing,
+        error: feedError,
+        hasMore,
+        loadInitial: loadFeedInitial,
+        loadMore,
+        reload: reloadFeed,
+    } = feed;
+
     const watchlist = useWatchlist();
+    const goTo = useGoTo();
+    const topBarHeight = useTopBarHeight();
+
     const listRef = useRef<FlatList<HomeRow>>(null);
-    const [atTop, setAtTop] = useState(true);
-    const [lastIndex, setLastIndex] = useState(0);
-    const gridVisible = useRef(false);
-    const lastRequestedCount = useRef(-1);
-    const innerWidth = Math.min(width, contentMaxWidth) - gutter * 2;
-    const columns = Math.max(2, Math.floor((innerWidth + POSTER_GAP) / (184 + POSTER_GAP)));
-    const posterWidth = Math.max(1, Math.floor((innerWidth + POSTER_GAP) / columns) - POSTER_GAP);
-    const popularWidth = isPhone ? Math.min(148, posterWidth) : posterWidth;
-    const contentPadding = gutter - POSTER_GAP / 2;
-    const {movies, chip, setChip, totalCount, loading, refreshing, error, hasMore, loadInitial, loadMore, reload} = feed;
-    const loadFeatured = featured.loadInitial;
-    const reloadFeatured = featured.reload;
-    const reloadShows = shows?.reload;
-    const hoverKey = useMemo(() => JSON.stringify([chip, featured.movies.map(movie => movie.id), movies.map(movie => movie.id)]), [chip, featured.movies, movies]);
+    const [scrollY] = useState(() => new Animated.Value(0));
+    const heroHeight = isPhone
+        ? Math.round(Math.min(height * 0.62, 560))
+        : Math.round(Math.min(height * 0.78, 624));
+    const {atTop, heroVisible} = useHomeScrollVisibility(scrollY, heroHeight);
+    const [gridVisible, setGridVisible] = useState(false);
+    const [lastGridIndex, setLastGridIndex] = useState(0);
+    const [chipsPinned, setChipsPinned] = useState(false);
+    const prevFeedLengthRef = useRef(0);
+    const lastRequestedCountRef = useRef(-1);
 
-    useEffect(() => {loadInitial();}, [loadInitial]);
-    useEffect(() => {loadFeatured();}, [loadFeatured]);
+    const onScroll = useMemo(
+        () =>
+            Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {
+                useNativeDriver: Platform.OS !== 'web',
+            }),
+        [scrollY]
+    );
 
-    const refresh = useCallback(() => {
-        lastRequestedCount.current = -1;
-        reloadFeatured();
-        reload();
-        reloadShows?.();
-    }, [reloadFeatured, reload, reloadShows]);
-    useReloadWhenOnline(refresh, !!error || !!featured.error);
+    useEffect(() => {
+        loadShelvesInitial();
+    }, [loadShelvesInitial]);
+
+    useEffect(() => {
+        loadFeedInitial();
+    }, [loadFeedInitial]);
+
+    const errorMessage = shelvesError ?? feedError;
+
+    useEffect(() => {
+        if (errorMessage) Analytics.loadError('home');
+    }, [errorMessage]);
+
+    useEffect(() => {
+        if (feedMovies.length < prevFeedLengthRef.current) setLastGridIndex(0);
+        prevFeedLengthRef.current = feedMovies.length;
+    }, [feedMovies.length]);
+
+    const topTenMovies = useMemo(
+        () => shelfStates.find((shelf) => shelf.key === 'top-10')?.movies ?? [],
+        [shelfStates]
+    );
+
+    const posterWidth = isPhone ? 128 : isTablet ? 144 : 160;
+    const skeletons = skeletonCount(width, posterWidth, gutter);
+
+    const columnsWidth = Math.max(0, width - gutter * 2);
+
+    const numColumns = useMemo(() => {
+        if (width < SINGLE_COLUMN_MAX_WIDTH) return 1;
+        return Math.max(2, Math.floor((columnsWidth + COLUMN_GAP) / (CARD_MIN_WIDTH + COLUMN_GAP)));
+    }, [width, columnsWidth]);
+
+    const cardWidth = Math.max(
+        1,
+        Math.floor((columnsWidth - COLUMN_GAP * (numColumns - 1)) / numColumns)
+    );
 
     const rows = useMemo<HomeRow[]>(() => {
-        const result: HomeRow[] = [];
-        for (let start = 0; start < movies.length; start += columns) {
-            const slice = movies.slice(start, start + columns);
-            result.push({kind: 'movies', key: `movies-${slice[0].id}`, movies: slice, endIndex: start + slice.length});
-            if (start === columns && (shows?.shows.length ?? 0) > 0) result.push({kind: 'shows', key: 'shows'});
+        const next: HomeRow[] = shelfStates.map((shelf) => ({
+            kind: 'shelf',
+            key: `shelf-${shelf.key}`,
+            shelf,
+        }));
+        if ((shows?.shows.length ?? 0) > 0) next.splice(1, 0, {kind: 'shows', key: 'shows-strip'});
+        if (watchlist.length > 0) next.push({kind: 'watchlist', key: 'watchlist', movies: watchlist});
+        next.push({kind: 'heading', key: 'browse-heading'});
+        next.push({kind: 'chips', key: 'browse-chips'});
+        for (let start = 0; start < feedMovies.length; start += numColumns) {
+            const slice = feedMovies.slice(start, start + numColumns);
+            next.push({
+                kind: 'cards',
+                key: `row-${slice[0].id}`,
+                movies: slice,
+                endIndex: start + slice.length,
+            });
         }
-        return result;
-    }, [movies, columns, shows?.shows]);
+        return next;
+    }, [shelfStates, watchlist, feedMovies, numColumns, shows?.shows.length]);
 
-    const selectChip = useCallback((key: string) => {
-        if (key === chip) return;
-        Analytics.feedChipSelect(key, 'home');
-        Analytics.filtersApplied({...chipFor(key).query});
-        lastRequestedCount.current = -1;
-        setLastIndex(0);
-        setChip(key);
-    }, [chip, setChip]);
 
-    const viewabilityConfig = useMemo(() => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}), []);
-    const onViewableItemsChanged = useCallback(({viewableItems}: {viewableItems: {item: HomeRow}[]}) => {
-        const end = viewableItems.reduce((max, {item}) => item.kind === 'movies' ? Math.max(max, item.endIndex) : max, 0);
-        gridVisible.current = end > 0;
-        if (end > 0) setLastIndex(end);
-    }, []);
-    const requestMore = useCallback(() => {
-        if (!hasMore || loading || error || movies.length === 0) return;
-        lastRequestedCount.current = movies.length;
-        Analytics.browseLoadMore(movies.length);
-        loadMore();
-    }, [hasMore, loading, error, movies.length, loadMore]);
-    const more = useCallback(() => {
-        if (!gridVisible.current || lastRequestedCount.current === movies.length) return;
-        requestMore();
-    }, [movies.length, requestMore]);
-    const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => setAtTop(event.nativeEvent.contentOffset.y <= 8), []);
-    const renderRow = useCallback(({item}: {item: HomeRow}) => item.kind === 'shows' ? (
-        <ShowStrip shows={shows?.shows ?? []} gutter={gutter} posterWidth={Math.min(posterWidth, 160)}/>
-    ) : (
-        <View style={[styles.posterRow, {paddingHorizontal: contentPadding}]}>
-            {item.movies.map((movie) => <MoviePosterItem key={movie.id} movie={movie} width={posterWidth} showCaption source="home_feed"/>)}
-        </View>
-    ), [shows?.shows, gutter, posterWidth, contentPadding]);
-
-    const skeletonGrid = (
-        <View style={[styles.skeletonGrid, {paddingHorizontal: contentPadding}]}>
-            {Array.from({length: columns * 2}, (_, i) => <View key={i} style={{paddingBottom: POSTER_CAPTION_HEIGHT}}><PosterSkeleton width={posterWidth}/></View>)}
-        </View>
+    const selectChip = useCallback(
+        (key: string) => {
+            if (key === chip) return;
+            lastRequestedCountRef.current = -1;
+            Analytics.feedChipSelect(key, 'home');
+            Analytics.filtersApplied({...chipFor(key).query});
+            setChip(key);
+        },
+        [chip, setChip]
     );
 
-    return (
-        <HoverCardHost resetKey={hoverKey}>
-            <Screen overlays={<>
-                <TopBarSlot/>
-                {lastIndex > 0 && movies.length > 0 ? <ScrollProgress current={Math.min(lastIndex, movies.length)} total={totalCount}
-                    atTop={atTop} onScrollToTop={() => {Analytics.scrollToTop(); listRef.current?.scrollToOffset({offset: 0, animated: true});}}
-                    bottomInset={insets.bottom} visible={!atTop}/> : null}
-            </>}>
-                <FlatList ref={listRef} data={rows} keyExtractor={(item) => item.key} renderItem={renderRow}
-                    style={[styles.list, {maxWidth: contentMaxWidth}]} contentContainerStyle={{paddingTop: topBarHeight, paddingBottom: insets.bottom + 80}}
-                    ListHeaderComponent={<>
-                        <CatalogIntro/>
-                        <View style={[styles.sectionHeading, {marginHorizontal: gutter, borderBottomColor: colors.border}]}>
-                            <View style={styles.headingLabel}><Ionicons name="star" size={19} color={colors.accent}/><ThemedText accessibilityRole="header" type="heading">Popular movies</ThemedText></View>
-                            <CatalogLink label="View all popular movies" compact="View all" href="/movies?sort_by=download_count&order_by=desc"/>
+    const handleEndReached = useCallback(() => {
+        if (!hasMore || feedLoading || feedError || feedMovies.length === 0) return;
+        if (!gridVisible) return;
+        if (lastRequestedCountRef.current === feedMovies.length) return;
+        lastRequestedCountRef.current = feedMovies.length;
+        Analytics.browseLoadMore(feedMovies.length);
+        loadMore();
+    }, [gridVisible, hasMore, feedLoading, feedError, feedMovies.length, loadMore]);
+
+    const handleRefresh = useCallback(() => {
+        lastRequestedCountRef.current = -1;
+        reloadShelves();
+        reloadFeed();
+    }, [reloadShelves, reloadFeed]);
+
+    const handleRetry = useCallback(() => {
+        lastRequestedCountRef.current = -1;
+        Analytics.retry('home');
+        reloadShelves();
+        reloadFeed();
+    }, [reloadShelves, reloadFeed]);
+
+    useReloadWhenOnline(handleRetry, !!shelvesError || !!feedError);
+
+    const handleScrollToTop = useCallback(() => {
+        Analytics.scrollToTop();
+        listRef.current?.scrollToOffset({offset: 0, animated: true});
+    }, []);
+
+    const viewabilityConfig = useMemo(
+        () => ({itemVisiblePercentThreshold: 10, minimumViewTime: 50}),
+        []
+    );
+
+    const onViewableItemsChanged = useCallback(
+        ({viewableItems}: {viewableItems: {item: HomeRow}[]}) => {
+            let end = -1;
+            let chipsVisible = false;
+            for (const token of viewableItems) {
+                const row = token.item;
+                if (!row) continue;
+                if (row.kind === 'chips') chipsVisible = true;
+                if (row.kind === 'cards' && row.endIndex > end) end = row.endIndex;
+            }
+            setGridVisible(end >= 0);
+            setChipsPinned(end >= 0 && !chipsVisible);
+            if (end >= 0) setLastGridIndex(end);
+        },
+        []
+    );
+
+    const renderRow = useCallback(
+        ({item}: {item: HomeRow}) => {
+            if (item.kind === 'shelf') {
+                return (
+                    <ShelfRow
+                        shelf={item.shelf}
+                        posterWidth={posterWidth}
+                        gutter={gutter}
+                        colors={colors}
+                        skeletons={skeletons}
+                        onLoad={loadShelf}
+                        onNavigate={goTo}
+                    />
+                );
+            }
+
+            if (item.kind === 'watchlist') {
+                return (
+                    <MovieRail
+                        title="Watchlist"
+                        movies={item.movies}
+                        variant="landscape"
+                        posterWidth={posterWidth}
+                        gutter={gutter}
+                        onSeeAll={() => {
+                            Analytics.shelfSeeAll('My List');
+                            goTo('/watchlist');
+                        }}
+                    />
+                );
+            }
+
+            if (item.kind === 'shows') {
+                return <ShowStrip shows={shows?.shows ?? []} gutter={gutter} posterWidth={posterWidth}/>;
+            }
+
+            if (item.kind === 'heading') {
+                return (
+                    <View style={[styles.headingRow, {paddingHorizontal: gutter}]}>
+                        <ThemedText type="heading" style={{color: colors.text}}>
+                            Browse all
+                        </ThemedText>
+                        <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                            Every title in the catalog, filtered your way
+                        </ThemedText>
+                    </View>
+                );
+            }
+
+            if (item.kind === 'chips') {
+                return (
+                    <View
+                        style={[
+                            styles.chipRow,
+                            {backgroundColor: colors.background},
+                        ]}
+                    >
+                        <View style={styles.chipRowInner}>
+                            <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
                         </View>
-                        {featured.loading && featured.movies.length === 0 ? (
-                            <View style={[styles.popularSkeleton, {paddingHorizontal: contentPadding}]}>{Array.from({length: 6}, (_, i) => <View key={i} style={{paddingBottom: POSTER_CAPTION_HEIGHT}}><PosterSkeleton width={popularWidth}/></View>)}</View>
-                        ) : featured.movies.length > 0 ? (
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: contentPadding}}>
-                                {featured.movies.map((movie) => <MoviePosterItem key={movie.id} movie={movie} width={popularWidth} showCaption source="home_popular"/>)}
-                            </ScrollView>
-                        ) : <CatalogRetry message={featured.error ? 'Popular movies couldn’t load.' : 'No popular movies yet.'} onRetry={reloadFeatured}/>}
-                        <View style={[styles.savedLinks, {paddingHorizontal: gutter}]}>
-                            <CatalogLink label={watchlist.length > 0 ? `Your watchlist · ${watchlist.length} saved` : 'Your watchlist'} href="/watchlist"/>
-                            <CatalogLink label="Explore TV shows" href="/shows"/>
-                        </View>
-                        <WebAdvertisement gutter={gutter}/>
-                        <View style={[styles.sectionHeading, {marginHorizontal: gutter, borderBottomColor: colors.border}]}>
-                            <View style={styles.catalogHeading}>
-                                <ThemedText accessibilityRole="header" type="heading">{chip === 'new' ? 'Latest additions' : `${chipFor(chip).label} movies`}</ThemedText>
-                                {totalCount !== null ? <ThemedText type="caption" style={{color: colors.textMuted}}>{totalCount.toLocaleString()} titles</ThemedText> : null}
-                            </View>
-                            <CatalogLink label="Browse all movies" compact="Browse all" href="/movies"/>
-                        </View>
-                        <ChipBar chips={FEED_CHIPS} active={chip} onSelect={selectChip} contentPadding={gutter}/>
-                    </>}
-                    ListEmptyComponent={loading ? skeletonGrid : <CatalogRetry message={error ? 'Movies couldn’t load.' : 'No movies in this category yet.'} onRetry={reload}/>}
-                    ListFooterComponent={<>
-                        {loading && movies.length > 0 && !refreshing ? skeletonGrid : null}
-                        {error && movies.length > 0 ? <CatalogRetry message="Couldn’t load more movies." onRetry={() => {lastRequestedCount.current = -1; loadMore();}}/> : null}
-                        {!loading && !error && hasMore && movies.length > 0 ? (
-                            <View style={styles.loadMore}><PressableScale onPress={requestMore} accessibilityRole="button" accessibilityLabel="Load more movies"
-                                contentStyle={[styles.retryButton, {borderColor: colors.borderStrong}]}><ThemedText type="caption" style={{color: colors.accent}}>Load more movies</ThemedText></PressableScale></View>
-                        ) : null}
-                        <HomeFooter/>
-                    </>}
-                    onViewableItemsChanged={onViewableItemsChanged} viewabilityConfig={viewabilityConfig} onEndReached={more} onEndReachedThreshold={0.5}
-                    onScroll={onScroll} scrollEventThrottle={64}
-                    refreshControl={<RefreshControl refreshing={refreshing || featured.refreshing} onRefresh={refresh} tintColor={colors.accent} colors={[colors.accent]} progressViewOffset={topBarHeight}/>}
-                    initialNumToRender={4} maxToRenderPerBatch={4} windowSize={Platform.OS === 'web' ? 13 : 9}
-                    keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}/>
+                    </View>
+                );
+            }
+
+            return (
+                <View style={[styles.cardRow, {paddingHorizontal: gutter}]}>
+                    {item.movies.map((movie) => (
+                        <VideoCard key={movie.id} movie={movie} width={cardWidth} source={FEED_SOURCE}/>
+                    ))}
+                </View>
+            );
+        },
+        [
+            posterWidth,
+            gutter,
+            colors,
+            skeletons,
+            loadShelf,
+            goTo,
+            chip,
+            selectChip,
+            cardWidth,
+            shows?.shows,
+        ]
+    );
+
+    const hoverResetKey = useMemo(() => JSON.stringify([chip, feedMovies.map(movie => movie.id)]), [chip, feedMovies]);
+
+    if (shelvesLoading && heroMovies.length === 0 && !shelvesError) {
+        return (
+            <Screen>
+                <HomeSkeleton
+                    heroHeight={heroHeight}
+                    posterWidth={posterWidth}
+                    gutter={gutter}
+                    colors={colors}
+                    skeletons={skeletons}
+                />
             </Screen>
-        </HoverCardHost>
+        );
+    }
+
+    if (shelvesError && heroMovies.length === 0) {
+        return (
+            <Screen>
+                <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
+                    <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
+                    <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
+                    <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
+                        {shelvesError}
+                    </ThemedText>
+                    <PressableScale
+                        onPress={handleRetry}
+                        accessibilityRole="button"
+                        accessibilityLabel="Try again"
+                        pressedScale={0.94}
+                        pressedOpacity={0.85}
+                        hoveredScale={1.03}
+                    >
+                        <View style={[styles.cta, {backgroundColor: colors.accentStrong}]}>
+                            <Ionicons name="refresh" size={18} color={colors.onAccent}/>
+                            <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>Try again</ThemedText>
+                        </View>
+                    </PressableScale>
+                </Reanimated.View>
+            </Screen>
+        );
+    }
+
+    const skeletonRows = feedLoading
+        ? feedMovies.length === 0
+            ? INITIAL_SKELETON_ROWS
+            : feedRefreshing
+                ? 0
+                : PAGING_SKELETON_ROWS
+        : 0;
+    const showEmptyFeed = !feedLoading && !feedError && feedMovies.length === 0;
+    const showProgress = gridVisible && feedMovies.length > 0;
+
+    return (
+        <TopTenProvider movies={topTenMovies}>
+            <HoverCardHost resetKey={hoverResetKey}>
+                <Screen
+                    overlays={
+                        <>
+                            {feedMovies.length > 0 ? (
+                                <ScrollProgress
+                                    current={Math.min(lastGridIndex, feedMovies.length)}
+                                    total={totalCount}
+                                    atTop={atTop}
+                                    onScrollToTop={handleScrollToTop}
+                                    bottomInset={insets.bottom}
+                                    visible={showProgress}
+                                />
+                            ) : null}
+                            <TopBarSlot
+                                below={
+                                    chipsPinned ? (
+                                        <View style={styles.chipRowInner}>
+                                            <ChipBar
+                                                chips={FEED_CHIPS}
+                                                active={chip}
+                                                onSelect={selectChip}
+                                                contentPadding={gutter}
+                                            />
+                                        </View>
+                                    ) : null
+                                }
+                            />
+                        </>
+                    }
+                >
+                    <AnimatedFlatList
+                        ref={listRef}
+                        data={rows}
+                        keyExtractor={(item) => item.key}
+                        renderItem={renderRow}
+                        onScroll={onScroll}
+                        scrollEventThrottle={16}
+                        showsVerticalScrollIndicator={false}
+                        ListHeaderComponent={
+                            <>
+                                {heroMovies.length > 0 ? (
+                                    <Animated.View
+                                        style={[
+                                            styles.heroWrap,
+                                            {
+                                                opacity: scrollY.interpolate({
+                                                    inputRange: [0, heroHeight * 0.75],
+                                                    outputRange: [1, 0],
+                                                    extrapolate: 'clamp',
+                                                }),
+                                                transform: [
+                                                    {
+                                                        scale: scrollY.interpolate({
+                                                            inputRange: [-heroHeight, 0, heroHeight],
+                                                            outputRange: [1.15, 1, 0.92],
+                                                            extrapolate: 'clamp',
+                                                        }),
+                                                    },
+                                                    {
+                                                        translateY: scrollY.interpolate({
+                                                            inputRange: [0, heroHeight],
+                                                            outputRange: [0, heroHeight * 0.22],
+                                                            extrapolate: 'clamp',
+                                                        }),
+                                                    },
+                                                ],
+                                            },
+                                        ]}
+                                    >
+                                        <HeroBillboard
+                                            visible={heroVisible}
+                                            movies={heroMovies}
+                                            width={width}
+                                            height={heroHeight}
+                                            trailers={heroTrailers}
+                                            backdrops={heroBackdrops}
+                                            onRequestTrailer={requestHeroTrailer}
+                                        />
+                                    </Animated.View>
+                                ) : null}
+                                <WebAdvertisement gutter={gutter}/>
+                            </>
+                        }
+                        ListFooterComponent={
+                            <>
+                                <View style={[styles.feedFooter, {paddingHorizontal: gutter}]}>
+                                    {Array.from({length: skeletonRows}).map((_, row) => (
+                                        <FeedSkeletonRow key={row} cardWidth={cardWidth} columns={numColumns}/>
+                                    ))}
+                                    {showEmptyFeed ? (
+                                        <Reanimated.View entering={enterFade()} style={styles.stateBox}>
+                                            <Ionicons name="film-outline" size={48} color={colors.textMuted}/>
+                                            <ThemedText style={[Typography.sectionTitle, {color: colors.text}]}>
+                                                Nothing to watch here
+                                            </ThemedText>
+                                            <ThemedText
+                                                style={[
+                                                    Typography.videoMeta,
+                                                    styles.stateMessage,
+                                                    {color: colors.textMuted},
+                                                ]}
+                                            >
+                                                Pick another category to keep browsing.
+                                            </ThemedText>
+                                        </Reanimated.View>
+                                    ) : null}
+                                    {feedError ? (
+                                        <FeedRetryRow
+                                            colors={colors}
+                                            onRetry={() => {
+                                                Analytics.retry('browse_more');
+                                                if (feedMovies.length === 0) reloadFeed();
+                                                else loadMore();
+                                            }}
+                                        />
+                                    ) : null}
+                                </View>
+                                <HomeFooter/>
+                            </>
+                        }
+                        onViewableItemsChanged={onViewableItemsChanged}
+                        viewabilityConfig={viewabilityConfig}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={0.5}
+                        contentContainerStyle={{
+                            paddingTop: topBarHeight,
+                            paddingBottom: insets.bottom + 96,
+                        }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={shelvesRefreshing || feedRefreshing}
+                                onRefresh={handleRefresh}
+                                tintColor={colors.accent}
+                                colors={[colors.accent]}
+                                progressViewOffset={topBarHeight}
+                            />
+                        }
+                        initialNumToRender={4}
+                        maxToRenderPerBatch={4}
+                        updateCellsBatchingPeriod={40}
+                        windowSize={Platform.OS === 'web' ? 21 : 9}
+                    />
+                </Screen>
+            </HoverCardHost>
+        </TopTenProvider>
+    );
+}
+
+function ShelfRow({
+                      shelf,
+                      posterWidth,
+                      gutter,
+                      colors,
+                      skeletons,
+                      onLoad,
+                      onNavigate,
+                  }: {
+    shelf: ShelfState;
+    posterWidth: number;
+    gutter: number;
+    colors: Palette;
+    skeletons: number;
+    onLoad: (key: string) => void;
+    onNavigate: (href: string) => void;
+}) {
+    useEffect(() => {
+        if (shelf.needsRequest) onLoad(shelf.key);
+    }, [shelf.needsRequest, shelf.key, onLoad]);
+
+    useEffect(() => {
+        if (shelf.status === 'loaded' && shelf.movies.length > 0) Analytics.shelfImpression(shelf.key);
+    }, [shelf.status, shelf.key, shelf.movies.length]);
+
+    if (shelf.status === 'empty' || shelf.status === 'error') return null;
+
+    if (shelf.status === 'loaded') {
+        return (
+            <MovieRail
+                title={shelf.title}
+                subtitle={shelf.subtitle}
+                movies={shelf.movies}
+                variant={shelf.variant}
+                markNew={shelf.markNew}
+                posterWidth={posterWidth}
+                gutter={gutter}
+                onSeeAll={() => {
+                    Analytics.shelfSeeAll(shelf.title);
+                    onNavigate(buildBrowseHref(shelf.query));
+                }}
+            />
+        );
+    }
+
+    return (
+        <ShelfSkeleton
+            title={shelf.title}
+            variant={shelf.variant}
+            posterWidth={posterWidth}
+            gutter={gutter}
+            colors={colors}
+            skeletons={skeletons}
+        />
+    );
+}
+
+function ShelfSkeleton({
+                           title,
+                           variant,
+                           posterWidth,
+                           gutter,
+                           colors,
+                           skeletons,
+                       }: {
+    title: string;
+    variant: ShelfVariant;
+    posterWidth: number;
+    gutter: number;
+    colors: Palette;
+    skeletons: number;
+}) {
+    const landscape = variant === 'landscape';
+    const count = landscape
+        ? Math.max(2, Math.ceil((skeletons * (posterWidth + POSTER_GAP)) / (landscapeWidth(posterWidth) + POSTER_GAP)))
+        : skeletons;
+
+    return (
+        <Reanimated.View entering={enterFade()} style={styles.skeletonRail}>
+            <ThemedText type="heading" style={[styles.shelfSkeletonTitle, {color: colors.text, marginLeft: gutter}]}>
+                {title}
+            </ThemedText>
+            <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
+                {Array.from({length: count}).map((_, i) =>
+                    landscape ? (
+                        <LandscapeSkeleton key={i} posterWidth={posterWidth}/>
+                    ) : (
+                        <PosterSkeleton key={i} width={posterWidth}/>
+                    )
+                )}
+            </View>
+        </Reanimated.View>
+    );
+}
+
+function HomeSkeleton({
+                          heroHeight,
+                          posterWidth,
+                          gutter,
+                          colors,
+                          skeletons,
+                      }: {
+    heroHeight: number;
+    posterWidth: number;
+    gutter: number;
+    colors: Palette;
+    skeletons: number;
+}) {
+    return (
+        <View>
+            <View style={{height: heroHeight}}>
+                <SkeletonBlock style={styles.heroSkeletonFill}/>
+                <View style={styles.heroSkeletonContent}>
+                    <SkeletonBlock style={styles.heroSkeletonTagline}/>
+                    <SkeletonBlock style={styles.heroSkeletonTitle}/>
+                    <SkeletonBlock style={styles.heroSkeletonMeta}/>
+                    <View style={styles.heroSkeletonCtaRow}>
+                        <SkeletonBlock style={styles.heroSkeletonCta}/>
+                        <SkeletonBlock style={styles.heroSkeletonCta}/>
+                        <SkeletonBlock style={styles.heroSkeletonCircle}/>
+                    </View>
+                </View>
+                <LinearGradient
+                    colors={['rgba(6,6,8,0)', colors.background]}
+                    bands={12}
+                    style={styles.meltFade}
+                    pointerEvents="none"
+                />
+            </View>
+            {[0, 1, 2].map((row) => (
+                <View key={row} style={styles.skeletonRail}>
+                    <View style={[styles.skeletonTitle, {backgroundColor: colors.surfaceSunken, marginLeft: gutter}]}/>
+                    <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
+                        {Array.from({length: skeletons}).map((_, i) => (
+                            <PosterSkeleton key={i} width={posterWidth}/>
+                        ))}
+                    </View>
+                </View>
+            ))}
+        </View>
+    );
+}
+
+function FeedSkeletonRow({cardWidth, columns}: {cardWidth: number; columns: number}) {
+    const thumbHeight = Math.round(cardWidth / THUMB_ASPECT);
+
+    return (
+        <View style={styles.skeletonCardRow}>
+            {Array.from({length: columns}).map((_, column) => (
+                <View key={column} style={{width: cardWidth}}>
+                    <SkeletonBlock style={{height: thumbHeight, borderRadius: Radius.card}}/>
+                    <SkeletonBlock style={styles.skeletonCardTitle}/>
+                    <SkeletonBlock style={styles.skeletonCardMeta}/>
+                </View>
+            ))}
+        </View>
+    );
+}
+
+function FeedRetryRow({colors, onRetry}: {colors: Palette; onRetry: () => void}) {
+    return (
+        <Reanimated.View entering={enterFade()} style={styles.retryRow}>
+            <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                Couldn&apos;t load more movies.
+            </ThemedText>
+            <PressableScale
+                onPress={onRetry}
+                accessibilityRole="button"
+                accessibilityLabel="Try again"
+                pressedScale={0.94}
+                pressedOpacity={0.85}
+                hoveredScale={1.03}
+            >
+                <View style={[styles.retryButton, {borderColor: colors.border}]}>
+                    <Ionicons name="refresh" size={16} color={colors.accent}/>
+                    <ThemedText style={[styles.ctaLabel, {color: colors.accent}]}>Try again</ThemedText>
+                </View>
+            </PressableScale>
+        </Reanimated.View>
     );
 }
 
 const styles = StyleSheet.create({
-    list: {flex: 1, width: '100%', alignSelf: 'center'},
-    intro: {alignItems: 'center', paddingTop: Spacing.xxl, paddingBottom: Spacing.xl},
-    eyebrow: {letterSpacing: 1.7, marginBottom: Spacing.sm},
-    introTitle: {fontSize: 38, lineHeight: 46, textAlign: 'center'},
-    introTitlePhone: {fontSize: 27, lineHeight: 34},
-    introCopy: {fontSize: 15, lineHeight: 22, marginTop: Spacing.sm, textAlign: 'center'},
-    searchBox: {width: '100%', maxWidth: 600, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: Radius.pill, paddingLeft: 16, paddingRight: 5, marginTop: Spacing.xl, gap: 10},
-    searchInput: {flex: 1, minWidth: 0, height: 50, fontSize: 16, fontFamily: FontFamily.regular, paddingVertical: 0},
-    searchButton: {minHeight: 40, borderRadius: Radius.pill, justifyContent: 'center', paddingHorizontal: 18},
-    quickLinks: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: Spacing.xl, marginTop: Spacing.sm},
-    link: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, minHeight: 44},
-    sectionHeading: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', columnGap: Spacing.md, paddingBottom: Spacing.sm, marginTop: Spacing.md, marginBottom: Spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth},
-    headingLabel: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
-    catalogHeading: {gap: 2},
-    posterRow: {flexDirection: 'row', paddingBottom: Spacing.md},
-    popularSkeleton: {flexDirection: 'row', overflow: 'hidden'},
-    skeletonGrid: {flexDirection: 'row', flexWrap: 'wrap'},
-    savedLinks: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.sm, marginTop: Spacing.sm, marginBottom: Spacing.sm},
-    retry: {alignItems: 'center', gap: Spacing.md, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.xl},
-    retryText: {textAlign: 'center', fontSize: 14},
-    retryButton: {borderWidth: 1, borderRadius: Radius.pill, minHeight: 44, paddingHorizontal: Spacing.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm},
-    loadMore: {alignItems: 'center', paddingVertical: Spacing.xl},
+    container: {flex: 1},
+
+    heroWrap: {marginBottom: Spacing.xl},
+    meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
+
+    headingRow: {
+        width: '100%',
+        alignSelf: 'center',
+        gap: Spacing.xs,
+        marginTop: Spacing.lg,
+        marginBottom: Spacing.sm,
+    },
+    chipRow: {},
+    chipRowInner: {width: '100%', alignSelf: 'center'},
+    cardRow: {
+        width: '100%',
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: COLUMN_GAP,
+        marginTop: ROW_GAP,
+    },
+    feedFooter: {width: '100%', alignSelf: 'center'},
+    skeletonCardRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: COLUMN_GAP,
+        marginTop: ROW_GAP,
+    },
+    skeletonCardTitle: {height: 14, width: '72%', borderRadius: 4, marginTop: Spacing.md},
+    skeletonCardMeta: {height: 11, width: '48%', borderRadius: 4, marginTop: Spacing.sm},
+
+    centered: {flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, gap: 6},
+    stateBox: {alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xxxl},
+    stateTitle: {marginTop: 12},
+    stateMessage: {fontSize: 14, lineHeight: 20, textAlign: 'center', maxWidth: 320},
+    cta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        borderRadius: Radius.pill,
+        paddingHorizontal: 22,
+        paddingVertical: 12,
+        marginTop: 20,
+    },
+    ctaLabel: {fontSize: 15, fontFamily: FontFamily.bold},
+
+    retryRow: {alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.xl},
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderRadius: Radius.pill,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.sm,
+    },
+
+    heroSkeletonFill: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
+    heroSkeletonContent: {
+        position: 'absolute',
+        left: Spacing.xl,
+        right: Spacing.xl,
+        bottom: Spacing.xxl + Spacing.sm,
+        gap: Spacing.md,
+    },
+    heroSkeletonTagline: {width: 140, height: 14, borderRadius: 4},
+    heroSkeletonTitle: {width: '75%', height: 34, borderRadius: 6},
+    heroSkeletonMeta: {width: '60%', height: 14, borderRadius: 4},
+    heroSkeletonCtaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6},
+    heroSkeletonCta: {flex: 1, height: 48, borderRadius: Radius.pill},
+    heroSkeletonCircle: {width: 48, height: 48, borderRadius: 24},
+
+    skeletonRail: {marginBottom: Spacing.xl},
+    skeletonTitle: {width: 160, height: 20, borderRadius: 6, marginBottom: Spacing.md},
+    shelfSkeletonTitle: {marginBottom: Spacing.md},
+    skeletonRow: {flexDirection: 'row', overflow: 'hidden'},
 });
