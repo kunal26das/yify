@@ -23,12 +23,20 @@ function appendUnseen(existing: Movie[], incoming: Movie[]): Movie[] {
 
 export interface FeedViewModelOptions {
     skipHero?: boolean;
+    initialChip?: string;
+    pageSize?: number;
 }
 
 export function useFeedViewModel(repository: MovieRepository, options?: FeedViewModelOptions) {
     const skipHero = options?.skipHero ?? false;
     const [hero, setHero] = useState<Movie[]>([]);
-    const [chip, setChipState] = useState(DEFAULT_CHIP_KEY);
+    const [chip, setChipState] = useState(() => chipFor(options?.initialChip ?? DEFAULT_CHIP_KEY).key);
+    const [pageSize] = useState(() => {
+        const requested = options?.pageSize;
+        return requested != null && Number.isFinite(requested)
+            ? Math.max(1, Math.min(API_MAX_LIMIT, Math.trunc(requested)))
+            : API_MAX_LIMIT;
+    });
     const [fetched, setFetched] = useState<Movie[]>([]);
     const [totalCount, setTotalCount] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -41,7 +49,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
     const loadingRef = useRef(false);
     const hasMoreRef = useRef(true);
     const pageRef = useRef(0);
-    const chipRef = useRef(DEFAULT_CHIP_KEY);
+    const chipRef = useRef(chip);
     const pendingChipRef = useRef<string | null>(null);
     const startedRef = useRef(false);
     const loadPageRef = useRef<((page: number, chipKey: string) => void) | null>(null);
@@ -80,7 +88,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
             try {
                 const result = await repository.listMovies({
                     page: pageToLoad,
-                    limit: API_MAX_LIMIT,
+                    limit: pageSize,
                     ...chipFor(chipKey).query,
                 });
                 if (chipKey !== chipRef.current) return;
@@ -92,6 +100,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
                 setHasMore(result.hasMore);
                 setTotalCount(Number.isFinite(result.movieCount) ? result.movieCount : null);
             } catch (e) {
+                if (chipKey !== chipRef.current) return;
                 setError(e instanceof Error ? e.message : 'Failed to load movies');
             } finally {
                 loadingRef.current = false;
@@ -104,7 +113,7 @@ export function useFeedViewModel(repository: MovieRepository, options?: FeedView
                 }
             }
         },
-        [repository]
+        [repository, pageSize]
     );
 
     useEffect(() => {

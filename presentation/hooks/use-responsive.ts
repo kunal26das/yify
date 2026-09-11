@@ -1,10 +1,24 @@
-import {useWindowDimensions} from 'react-native';
+import {useSyncExternalStore} from 'react';
+import {Platform, useWindowDimensions} from 'react-native';
 
 export type Breakpoint = 'phone' | 'tablet' | 'desktop' | 'wide';
 
 const TABLET_MIN = 600;
 const DESKTOP_MIN = 1024;
 const WIDE_MIN = 1440;
+const SERVER_DIMENSIONS = {width: 0, height: 0};
+
+function subscribe(): () => void {
+    return () => {};
+}
+
+function getSnapshot() {
+    return true;
+}
+
+function getServerSnapshot() {
+    return false;
+}
 
 export interface Responsive {
     width: number;
@@ -19,7 +33,9 @@ export interface Responsive {
 }
 
 export function useResponsive(): Responsive {
-    const {width, height} = useWindowDimensions();
+    const dimensions = useWindowDimensions();
+    const hydrated = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    const {width, height} = Platform.OS === 'web' && !hydrated ? SERVER_DIMENSIONS : dimensions;
 
     let breakpoint: Breakpoint = 'phone';
     if (width >= WIDE_MIN) breakpoint = 'wide';

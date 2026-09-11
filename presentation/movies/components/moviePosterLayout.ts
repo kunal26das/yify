@@ -4,6 +4,7 @@ import {POSTER_WIDTHS} from '@/domain';
 export const POSTER_MIN_WIDTH = 152;
 export const POSTER_ASPECT_RATIO = 2 / 3;
 export const POSTER_GAP = 16;
+export const POSTER_CAPTION_HEIGHT = 62;
 
 export function getPosterContainerStyle(width?: number, height?: number) {
     if (width != null) {

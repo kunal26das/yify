@@ -321,6 +321,13 @@
       "version": "1.7.7",
       "runtimeVersion": "1.7.7",
       "releasedAt": "2026-09-10T00:35:05.224Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.7.9",
+      "runtimeVersion": "1.7.9",
+      "releasedAt": "2026-09-11T07:02:50.160Z"
     }
   ]
 }

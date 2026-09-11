@@ -42,6 +42,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   const appliedFiltersRef = useRef(appliedFilters);
   const reloadRequiredRef = useRef(true);
   const pendingReloadRef = useRef<{ query: string; filters: MovieFilters } | null>(null);
+  const requestVersionRef = useRef(0);
   const loadMoviesRef = useRef<
     ((batch: number, query: string, activeFilters: MovieFilters) => void) | null
   >(null);
@@ -59,23 +60,24 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
 
   const loadMovies = useCallback(
     async (batch: number, query: string, activeFilters: MovieFilters) => {
-      if (loadingRef.current) {
-        if (batch === 1) pendingReloadRef.current = { query, filters: activeFilters };
-        return;
-      }
-      loadingRef.current = true;
-      setLoading(true);
-      if (batch === 1) setRefreshing(true);
-      setError(null);
-
       const trimmed = query.trim();
       if (batch === 1) {
+        requestVersionRef.current += 1;
         reloadRequiredRef.current = true;
         appliedQueryRef.current = trimmed;
         appliedFiltersRef.current = activeFilters;
         setAppliedQuery(trimmed);
         setAppliedFilters(activeFilters);
       }
+      const requestVersion = requestVersionRef.current;
+      if (loadingRef.current) {
+        if (batch === 1) pendingReloadRef.current = {query: trimmed, filters: activeFilters};
+        return;
+      }
+      loadingRef.current = true;
+      setLoading(true);
+      if (batch === 1) setRefreshing(true);
+      setError(null);
 
       try {
         const firstPage = (batch - 1) * PAGES_PER_BATCH + 1;
@@ -93,6 +95,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
             })
           )
         );
+        if (requestVersion !== requestVersionRef.current) return;
 
         const seen = new Set<number>();
         const fetched: Movie[] = [];
@@ -107,12 +110,17 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
         const last = results[results.length - 1];
         const complete = results.every((result) => result.movies.length > 0);
 
-        setMovies((prev) => (batch === 1 ? fetched : [...prev, ...fetched]));
+        setMovies((prev) => {
+          if (batch === 1) return fetched;
+          const existing = new Set(prev.map((movie) => movie.id));
+          return [...prev, ...fetched.filter((movie) => !existing.has(movie.id))];
+        });
         setPage(batch);
         setHasMore(complete && last.hasMore);
         setTotalMovieCount(results[0].movieCount);
         if (batch === 1) reloadRequiredRef.current = false;
       } catch (e) {
+        if (requestVersion !== requestVersionRef.current) return;
         setError(e instanceof Error ? e.message : 'Failed to load movies');
       } finally {
         loadingRef.current = false;
@@ -151,7 +159,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   );
 
   const submitSearch = useCallback(
-    (term: string, next: MovieFilters = DEFAULT_FILTERS) => {
+    (term: string, next: MovieFilters = appliedFiltersRef.current) => {
       cancelDebounce();
       setSearchQueryState(term);
       setFiltersState(next);

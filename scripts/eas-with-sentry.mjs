@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {projectRoot, runCommand, uploadEnvironment, uploadSourceMaps, validateSourceMaps} from './sentry-sourcemaps.mjs';
 import {completePlan, recordDeployment, saveReceipt, validatePlan, verifyPlannedSource, verifyWebExportRelease} from './sentry-release.mjs';
+import {checkLivePrivacy, requiresLivePrivacyCheck} from './check-live-privacy.mjs';
 
 function option(args, name, fallback) {
     let value = fallback;
@@ -17,7 +18,8 @@ function option(args, name, fallback) {
     return value;
 }
 
-export async function runEas(cli, args, {cwd = projectRoot, env = process.env, run = runCommand, upload = uploadSourceMaps, record = recordDeployment, verifySource = verifyPlannedSource} = {}) {
+export async function runEas(cli, args, {cwd = projectRoot, env = process.env, run = runCommand, upload = uploadSourceMaps, record = recordDeployment, verifySource = verifyPlannedSource, verifyPrivacy = checkLivePrivacy} = {}) {
+    if (requiresLivePrivacyCheck(args, cwd)) await verifyPrivacy({cwd});
     const mutation = !args.some((arg) => ['--help', '-h', '--dry-run'].includes(arg)) && ['update', 'deploy'].includes(args[0]);
     if (!mutation) return run(process.execPath, [cli, ...args], {cwd, env});
 

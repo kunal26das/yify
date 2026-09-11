@@ -9,7 +9,7 @@ import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {ThemedText} from '../../components/themed-text';
 import {Duration, PressableScale, enterFade, enterPop} from '../../components/motion';
-import {getPosterContainerStyle, posterRung} from './moviePosterLayout';
+import {getPosterContainerStyle, POSTER_ASPECT_RATIO, POSTER_CAPTION_HEIGHT, posterRung} from './moviePosterLayout';
 import {Analytics} from '@/presentation/analytics/events';
 import {useHoverCard} from './HoverCard';
 import {NewBadge} from './NewBadge';
@@ -35,12 +35,14 @@ export function MoviePosterItem({
   source = 'unknown',
   hideRankFlag = false,
   isNew = false,
+  showCaption = false,
 }: {
   movie: Movie;
   width?: number;
   source?: string;
   hideRankFlag?: boolean;
   isNew?: boolean;
+  showCaption?: boolean;
 }) {
   const { posterUrls } = movie;
   const {colors, scheme} = usePalette();
@@ -53,9 +55,11 @@ export function MoviePosterItem({
     const sourceUrl = posterUrls[rung];
 
   const hasRating = movie.rating > 0;
+  const containerStyle = getPosterContainerStyle(width,
+      showCaption && width != null ? width / POSTER_ASPECT_RATIO + POSTER_CAPTION_HEIGHT : undefined);
 
   return (
-    <View ref={nodeRef} style={getPosterContainerStyle(width)} collapsable={false}>
+    <View ref={nodeRef} style={showCaption && width == null ? {...containerStyle, aspectRatio: undefined} : containerStyle} collapsable={false}>
     <Link href={`/movie/${movie.id}`} asChild>
       <PressableScale
         accessibilityRole="link"
@@ -72,13 +76,14 @@ export function MoviePosterItem({
           if (!IS_WEB) return;
           if (hoverCard.enabled) hoverCard.close();
         }}
-        style={styles.pressable}
-        contentStyle={styles.pressable}
+        style={showCaption ? undefined : styles.pressable}
+        contentStyle={showCaption ? undefined : styles.pressable}
       >
         <Animated.View
             entering={enterFade()}
             style={[
               styles.card,
+              showCaption ? [styles.captionPoster, width != null && {width, height: width / POSTER_ASPECT_RATIO}] : styles.pressable,
               {
                 backgroundColor: colors.surfaceSunken,
                 borderColor: colors.border,
@@ -124,6 +129,17 @@ export function MoviePosterItem({
               <NewBadge style={styles.newBadge}/>
           ) : null}
         </Animated.View>
+        {showCaption ? (
+            <View style={styles.caption} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+              <ThemedText type="defaultSemiBold" numberOfLines={2} ellipsizeMode="tail"
+                          style={[styles.captionTitle, {color: colors.text}]}>
+                {movie.title}
+              </ThemedText>
+              <ThemedText numberOfLines={1} style={[styles.captionYear, {color: colors.textMuted}]}>
+                {movie.year > 0 ? movie.year : ''}
+              </ThemedText>
+            </View>
+        ) : null}
       </PressableScale>
     </Link>
     </View>
@@ -132,8 +148,11 @@ export function MoviePosterItem({
 
 const styles = StyleSheet.create({
   pressable: {flex: 1},
+  captionPoster: {flexShrink: 0, width: '100%', aspectRatio: POSTER_ASPECT_RATIO},
+  caption: {height: POSTER_CAPTION_HEIGHT, paddingTop: Spacing.sm, gap: 2},
+  captionTitle: {fontSize: 13, lineHeight: 18, height: 36},
+  captionYear: {fontSize: 12, lineHeight: 16, height: 16},
   card: {
-    flex: 1,
     borderRadius: POSTER_RADIUS,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',

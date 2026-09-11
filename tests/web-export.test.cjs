@@ -45,7 +45,7 @@ function fixture(t, server = false) {
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'],
         ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['preferences.html', 'Preferences'],
     ]) {
-        write(file, `<html><head><title>${title}</title><style>@font-face {}</style></head><body>${'Content '.repeat(600)}</body></html>`, htmlDirectory);
+        write(file, `<html><head><title>${title}</title><style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${'Content '.repeat(600)}</body></html>`, htmlDirectory);
     }
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) write(asset, '');
     for (const file of ['delete-account.html', 'delete-account/index.html']) write(file, '<body>Delete account</body>');
@@ -81,6 +81,17 @@ test('Hosting export checks prerendered server HTML and public client assets sep
     const result = f.check();
     assert.equal(result.status, 0, result.output);
 });
+
+for (const server of [false, true]) {
+    test(`${server ? 'Hosting' : 'Pages'} gate rejects static HTML that omits the icon font`, (t) => {
+        const f = fixture(t, server);
+        const page = path.join(f.htmlDirectory, 'index.html');
+        fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace('font-family: ionicons;', 'font-family: Body;'));
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /index\.html: icon font missing from static rendering/);
+    });
+}
 
 test('Hosting gate rejects legal directory copies without server redirects', (t) => {
     const f = fixture(t, true);

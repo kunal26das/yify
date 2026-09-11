@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, usePathname} from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
@@ -63,6 +64,7 @@ function RootLayout() {
 
 function AppShell() {
     const [fontsLoaded, fontError] = useFonts({
+        ...(Platform.OS === 'web' ? Ionicons.font : {}),
         HankenGrotesk_400Regular,
         HankenGrotesk_500Medium,
         HankenGrotesk_600SemiBold,

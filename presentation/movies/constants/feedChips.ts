@@ -10,7 +10,7 @@ export interface FeedChip {
 
 const ALL_CHIP: FeedChip = {
     key: 'all',
-    label: 'All',
+    label: 'Popular',
     query: {sort_by: SortBy.DownloadCount, order_by: OrderBy.Desc},
 };
 
@@ -26,7 +26,7 @@ export const FEED_CHIPS: readonly FeedChip[] = [
     ALL_CHIP,
     {
         key: 'new',
-        label: 'New',
+        label: 'Latest',
         query: {sort_by: SortBy.DateAdded, order_by: OrderBy.Desc},
     },
     {
@@ -49,4 +49,16 @@ export const FEED_CHIPS: readonly FeedChip[] = [
 
 export function chipFor(key: string): FeedChip {
     return FEED_CHIPS.find((chip) => chip.key === key) ?? ALL_CHIP;
+}
+
+export function chipMatches(query: ShelfQuery, applied: ShelfQuery): boolean {
+    return (query.genre ?? Genre.All) === (applied.genre ?? Genre.All)
+        && (query.quality ?? Quality.All) === (applied.quality ?? Quality.All)
+        && (query.minimum_rating ?? 0) === (applied.minimum_rating ?? 0)
+        && (query.sort_by ?? SortBy.DateAdded) === (applied.sort_by ?? SortBy.DateAdded)
+        && (query.order_by ?? OrderBy.Desc) === (applied.order_by ?? OrderBy.Desc);
+}
+
+export function activeFeedChipKey(applied: ShelfQuery): string {
+    return FEED_CHIPS.find((chip) => chipMatches(chip.query, applied))?.key ?? '';
 }

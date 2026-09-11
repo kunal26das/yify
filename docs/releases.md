@@ -29,6 +29,9 @@ both jobs. Expo continues the build and Play upload remotely; the console can th
 Follow the build and upload links in the output for their final status. Check those jobs before
 retrying to avoid creating a duplicate build.
 
+Before an Android production handoff, the EAS wrapper checks that both live privacy URLs return
+the policy. If the check fails, fix the hosted page before retrying the release.
+
 Update `package.json`'s `versionCode` for each new Play binary. The console synchronizes the
 checked-in Android version, runtime and channel before building. Review those changes afterward.
 A queued job is not recorded as a shipped release or used to unlock OTA updates. After confirming

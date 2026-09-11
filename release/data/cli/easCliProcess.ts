@@ -61,16 +61,15 @@ export function createReleaseCli(deps: {
             }
 
             const env = easEnv(sessionStore.read());
-            const usesUploadWrapper = args[0] === 'update';
-            const cliArgs = usesUploadWrapper
+            const usesWrapper = ['update', 'build', 'submit', 'build:submit'].includes(args[0]);
+            const cliArgs = usesWrapper
                 ? [path.join(repoRoot, 'scripts', 'eas-with-sentry.mjs'), cli, ...args]
                 : [cli, ...args];
             const child = spawn(nodeBinaryPath(), cliArgs, {
                 cwd: repoRoot,
                 env: {...env, TMPDIR: tmp, TMP: tmp, TEMP: tmp},
             });
-            // The OTA wrapper forwards graceful cancellation to EAS, with a bounded force-kill fallback.
-            const stopSignal = usesUploadWrapper ? 'SIGTERM' : 'SIGKILL';
+            const stopSignal = usesWrapper ? 'SIGTERM' : 'SIGKILL';
             cancellation.track(child, stopSignal);
 
             let idle: NodeJS.Timeout | undefined;

@@ -115,6 +115,9 @@ for (const [file, expectTitle] of ROUTES) {
     if (!html.includes('@font-face')) {
         failures.push(`${file}: no @font-face rules inlined — fonts will flash`);
     }
+    if (!/@font-face\s*\{[^}]*font-family:\s*(?:"ionicons"|'ionicons'|ionicons)\s*;/i.test(html)) {
+        failures.push(`${file}: icon font missing from static rendering — icons can cause a hydration mismatch`);
+    }
 }
 
 for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) {

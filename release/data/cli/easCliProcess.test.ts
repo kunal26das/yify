@@ -82,6 +82,18 @@ test('explicit retries zero never reruns a mutation after a transient network er
     assert.equal(f.children.length, 1);
 });
 
+test('store builds and submissions use the wrapper that checks live privacy before remote handoff', async (t) => {
+    const f = fixture(t);
+    for (const command of ['build', 'submit', 'build:submit']) {
+        const args = [command, '--platform', 'android', '--profile', 'production'];
+        const running = f.cli.run(args, () => {}, {retries: 0});
+        assert.match(f.spawnedArgs.at(-1)![0], /scripts\/eas-with-sentry\.mjs$/);
+        assert.deepEqual(f.spawnedArgs.at(-1)!.slice(2), args);
+        f.children.at(-1)!.emit('close', 0);
+        assert.deepEqual(await running, {ok: true, code: 0});
+    }
+});
+
 test('cancellation prevents default transient-error retries after the child finishes', async (t) => {
     const f = fixture(t);
     const running = f.cli.run(['build'], () => {}, {idleTimeoutMs: 0});
@@ -89,7 +101,7 @@ test('cancellation prevents default transient-error retries after the child fini
     f.cancellation.cancelActive();
     assert.deepEqual(await running, {ok: false, code: 130});
     assert.equal(f.children.length, 1);
-    assert.deepEqual(f.killSignals, ['SIGKILL']);
+    assert.deepEqual(f.killSignals, ['SIGTERM']);
 });
 
 test('cancellation while announcing a command prevents spawning the cloud mutation', async (t) => {

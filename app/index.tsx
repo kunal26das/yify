@@ -5,7 +5,6 @@ import {
   HomeScreen,
     usePageMeta,
   useFeedViewModel,
-  useHomeViewModel,
   useMovieRepository,
   useShowRepository,
   useShowsViewModel,
@@ -14,13 +13,13 @@ import {
 
 export default function HomeRoute() {
   const movies = useMovieRepository();
-  const shelves = useHomeViewModel(movies);
-  const feed = useFeedViewModel(movies, {skipHero: true});
+  const featured = useFeedViewModel(movies, {skipHero: true, pageSize: 6});
+  const feed = useFeedViewModel(movies, {skipHero: true, initialChip: 'new'});
   const shows = useShowsViewModel(useShowRepository(), useTmdbRepository());
     usePageMeta({
         title: 'Yify — Discover Movies | Free on iPhone, Android & Web',
         description:
-            'Browse a curated, Netflix-style home of movies — trailers, ratings and a personal list. Free on iPhone, Android and the web.',
+            'Discover popular and newly added movies, explore trailers and ratings, and find where to watch. Keep your favorites in a personal watchlist.',
         canonical: canonicalUrl('/'),
     });
   return (
@@ -29,13 +28,13 @@ export default function HomeRoute() {
         <title>Yify — Discover Movies | Free on iPhone, Android & Web</title>
         <meta
           name="description"
-          content="Browse a curated, Netflix-style home of movies — trailers, ratings and a personal list. Free on iPhone, Android and the web."
+          content="Discover popular and newly added movies, explore trailers and ratings, and find where to watch. Keep your favorites in a personal watchlist."
         />
           <link rel="canonical" href={canonicalUrl('/')}/>
           <meta property="og:url" content={canonicalUrl('/')}/>
       </Head>
-      <HomeScreen shelves={shelves} feed={feed} shows={shows} />
-      <ScreenDisplay ready={!shelves.loading && !feed.loading}/>
+      <HomeScreen featured={featured} feed={feed} shows={shows} />
+      <ScreenDisplay ready={!featured.loading && !feed.loading}/>
     </>
   );
 }

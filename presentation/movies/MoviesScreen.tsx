@@ -23,6 +23,7 @@ import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {ChipBar} from './components/ChipBar';
+import {BrowseFilterBar} from './components/BrowseFilterBar';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieFilterModal} from './components/MovieFilterModal';
 import {MoviePosterItem} from './components/MoviePosterItem';
@@ -32,7 +33,7 @@ import {SearchOverlay} from './components/SearchOverlay';
 import {useTopBarHeight} from './components/TopBar';
 import {TopBarSlot} from './components/TopBarSlot';
 import {POSTER_GAP, POSTER_MIN_WIDTH, posterRung} from './components/moviePosterLayout';
-import {FEED_CHIPS, chipFor} from './constants/feedChips';
+import {FEED_CHIPS, chipFor, chipMatches, activeFeedChipKey} from './constants/feedChips';
 import type {MovieFilters, MoviesViewModel} from './useMoviesViewModel';
 import {createPosterPrefetcher, posterPrefetchUrls} from './posterPrefetch';
 
@@ -49,25 +50,6 @@ const SCROLL_AT_TOP_THRESHOLD = 8;
 
 function isSkeleton(item: GridItem): item is SkeletonItem {
     return (item as SkeletonItem).__skeleton === true;
-}
-
-function hasSelector(filters: MovieFilters): boolean {
-    return filters.genre != null || filters.quality != null || filters.minimum_rating != null;
-}
-
-function chipMatches(query: MovieFilters, applied: MovieFilters): boolean {
-    if (query.genre !== applied.genre) return false;
-    if (query.quality !== applied.quality) return false;
-    if (query.minimum_rating !== applied.minimum_rating) return false;
-    if (hasSelector(query)) return true;
-    return query.sort_by === applied.sort_by && query.order_by === applied.order_by;
-}
-
-
-
-function activeChipKey(applied: MovieFilters): string {
-    if (Object.values(applied).every((value) => value == null)) return 'all';
-    return FEED_CHIPS.find((chip) => chipMatches(chip.query, applied))?.key ?? '';
 }
 
 export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
@@ -98,7 +80,11 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const topBarHeight = useTopBarHeight();
     const listRef = useRef<FlatList<GridItem>>(null);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
-    const [searchOverlayVisible, setSearchOverlayVisible] = useState(false);
+    const searchRequested = !!autoFocus && isPhone;
+    const [searchOverlayState, setSearchOverlay] = useState({requested: searchRequested, visible: searchRequested});
+    if (searchOverlayState.requested !== searchRequested) {
+        setSearchOverlay({requested: searchRequested, visible: searchRequested || searchOverlayState.visible});
+    }
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
     const [pickedChip, setPickedChip] = useState<string | null>(null);
@@ -119,7 +105,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const listTopPadding = topBarHeight + CHIP_ROW_HEIGHT + POSTER_GAP / 2;
     const listBottomPadding = insets.bottom + 96;
-    const derivedChip = activeChipKey(appliedFilters);
+    const derivedChip = activeFeedChipKey(appliedFilters);
     const activeChip =
         pickedChip && chipMatches(chipFor(pickedChip).query, appliedFilters) ? pickedChip : derivedChip;
 
@@ -139,10 +125,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     }, [error]);
 
     useReloadWhenOnline(loadInitial, !!error);
-
-    useEffect(() => {
-        if (autoFocus && isPhone) setSearchOverlayVisible(true);
-    }, [autoFocus, isPhone]);
 
     useEffect(() => {
         if (movies.length < prevMoviesLengthRef.current) setLastVisibleIndex(0);
@@ -208,11 +190,11 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     );
 
     const handleEndReached = useCallback(() => {
-        if (hasMore && !loading) {
+        if (hasMore && !loading && !error && movies.length > 0) {
             Analytics.browseLoadMore(movies.length);
             loadMore();
         }
-    }, [hasMore, loading, loadMore, movies.length]);
+    }, [hasMore, loading, error, loadMore, movies.length]);
 
     const handleRefresh = useCallback(() => {
         loadInitial();
@@ -262,9 +244,9 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
     const handleSearchSubmit = useCallback(
         (term: string) => {
             setPickedChip(null);
-            submitSearch(term);
+            submitSearch(term, filters);
         },
-        [submitSearch]
+        [submitSearch, filters]
     );
 
     const openFilters = useCallback(() => {
@@ -277,7 +259,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
             isSkeleton(item) ? (
                 <PosterSkeleton width={itemWidth}/>
             ) : (
-                <MoviePosterItem movie={item} width={itemWidth} source="browse_grid"/>
+                <MoviePosterItem movie={item} width={itemWidth} showCaption source="browse_grid"/>
             ),
         [itemWidth]
     );
@@ -308,9 +290,9 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const searchOverlay = (
         <SearchOverlay
-            visible={searchOverlayVisible}
+            visible={searchOverlayState.visible}
             initialQuery={searchQuery}
-            onClose={() => setSearchOverlayVisible(false)}
+            onClose={() => setSearchOverlay((current) => ({...current, visible: false}))}
             onSubmit={handleSearchSubmit}
         />
     );
@@ -345,71 +327,18 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         </PressableScale>
     );
 
-    if (loading && movies.length === 0 && !error) {
-        return (
-            <Screen overlays={<>{topBar}{searchOverlay}</>}>
-                <View
-                    style={[
-                        styles.skeletonScreen,
-                        {paddingHorizontal: contentPad},
-                        {paddingTop: listTopPadding},
-                        isLarge && {maxWidth: contentMaxWidth},
-                    ]}
-                >
-                    <View style={styles.skeletonGrid}>
-                        {Array.from({length: numColumns * 4}).map((_, index) => (
-                            <PosterSkeleton key={index} width={itemWidth}/>
-                        ))}
-                    </View>
-                </View>
-            </Screen>
-        );
-    }
-
-    if (error && movies.length === 0) {
-        return (
-            <Screen overlays={<>{topBar}{searchOverlay}</>}>
-                <View style={[styles.errorScreen, {paddingTop: listTopPadding + Spacing.xxxl}]}>
-                    <Animated.View entering={enterRise()} style={styles.stateBox}>
-                        <Ionicons name="cloud-offline-outline" size={48} color={colors.textFaint}/>
-                        <ThemedText style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
-                            Something went wrong
-                        </ThemedText>
-                        <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>
-                            {error}
-                        </ThemedText>
-                        <PressableScale
-                            onPress={() => {
-                                Analytics.retry('browse');
-                                loadInitial();
-                            }}
-                            accessibilityRole="button"
-                            pressedScale={0.95}
-                            pressedOpacity={0.85}
-                            contentStyle={[styles.stateAction, {backgroundColor: colors.accentStrong}]}
-                        >
-                            <Ionicons name="refresh" size={16} color={colors.onAccent}/>
-                            <ThemedText style={[styles.stateActionLabel, {color: colors.onAccent}]}>
-                                Try again
-                            </ThemedText>
-                        </PressableScale>
-                    </Animated.View>
-                </View>
-            </Screen>
-        );
-    }
-
     const currentIndex = Math.min(lastVisibleIndex + 1, movies.length);
+    const hoverResetKey = useMemo(() => JSON.stringify([searchQuery, filters, movies.map(movie => movie.id)]), [searchQuery, filters, movies]);
 
     return (
-        <HoverCardHost>
+        <HoverCardHost resetKey={hoverResetKey}>
             <Screen
                 overlays={
                     <>
                         {topBar}
                         {searchOverlay}
 
-                        <ScrollProgress
+                        {movies.length > 0 ? <ScrollProgress
                             current={currentIndex}
                             total={totalMovieCount}
                             atTop={isAtTop}
@@ -417,7 +346,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             trailing={filtersControl}
                             bottomInset={insets.bottom}
                             visible={movies.length > 0}
-                        />
+                        /> : null}
 
                         <MovieFilterModal
                             visible={filterModalVisible}
@@ -456,16 +385,32 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     numColumns={numColumns}
                     columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
                     ListHeaderComponent={
-                        totalMovieCount != null && movies.length > 0 ? (
-                            <Animated.View entering={enterFade()}>
-                                <ThemedText style={[Typography.videoMeta, styles.countLine, {color: colors.textMuted}]}>
-                                    About {totalMovieCount.toLocaleString()} results
-                                </ThemedText>
-                            </Animated.View>
-                        ) : null
+                        <View style={{paddingHorizontal: POSTER_GAP / 2}}>
+                            <BrowseFilterBar filters={filters} query={appliedQuery} resultCount={error ? undefined : totalMovieCount}
+                                loading={loading && movies.length === 0 || refreshing} onOpenFilters={openFilters} onReset={handleClearFilters}
+                                onChange={(next) => {
+                                    Analytics.filtersApplied({...next});
+                                    setPickedChip(null);
+                                    applyFilters(next);
+                                    scrollToTop();
+                                }}/>
+                        </View>
                     }
                     ListEmptyComponent={
-                        <Animated.View entering={enterRise()} style={styles.stateBox}>
+                        loading && !error ? (
+                            <View style={styles.skeletonGrid}>
+                                {Array.from({length: numColumns * 4}, (_, index) => <PosterSkeleton key={index} width={itemWidth}/>)}
+                            </View>
+                        ) : error ? (
+                            <View style={styles.stateBox}>
+                                <Ionicons name="cloud-offline-outline" size={48} color={colors.textFaint}/>
+                                <ThemedText type="heading">Movies couldn’t load</ThemedText>
+                                <PressableScale onPress={() => {Analytics.retry('browse'); loadInitial();}} accessibilityRole="button"
+                                    accessibilityLabel="Try again" contentStyle={[styles.stateOutlineAction, {borderColor: colors.border}]}>
+                                    <ThemedText style={[styles.stateActionLabel, {color: colors.accent}]}>Try again</ThemedText>
+                                </PressableScale>
+                            </View>
+                        ) : <Animated.View entering={enterRise()} style={styles.stateBox}>
                             <Ionicons name="search-outline" size={48} color={colors.textFaint}/>
                             <ThemedText style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
                                 No results found
@@ -490,7 +435,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         error && movies.length > 0 ? (
                             <Animated.View entering={enterFade()} style={styles.footer}>
                                 <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>
-                                    Couldn&apos;t load more results.
+                                    Couldn&apos;t update results. Showing the last loaded movies.
                                 </ThemedText>
                                 <PressableScale
                                     onPress={() => {

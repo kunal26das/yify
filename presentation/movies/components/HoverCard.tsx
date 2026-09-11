@@ -1,7 +1,7 @@
 import type {ReactNode} from 'react';
 import type {Movie} from '@/domain';
 
-export function HoverCardHost({children}: {children: ReactNode}) {
+export function HoverCardHost({children}: {children: ReactNode; resetKey?: string | number}) {
     return <>{children}</>;
 }
 

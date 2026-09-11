@@ -6,6 +6,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -14,12 +15,11 @@ import {
 import {Animated, Pressable, StyleSheet, View} from 'react-native';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {useToggleWatchlist} from '../useWatchlist';
+import {useIsInWatchlist, useToggleWatchlist} from '../useWatchlist';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
-import {useIsInWatchlist} from '../useWatchlist';
 import {useTopTenRank} from './TopTenContext';
 
 const OPEN_DELAY_MS = 480;
@@ -105,16 +105,15 @@ export function useHoverCard(): HoverCardController {
     return useContext(HoverCardContext);
 }
 
-export function HoverCardHost({children}: {children: ReactNode}) {
+export function HoverCardHost({children, resetKey}: {children: ReactNode; resetKey?: string | number}) {
     const {isDesktop} = useResponsive();
-    const [state, setState] = useState<HoverState | null>(null);
+    const scope = useMemo(() => ({resetKey, isDesktop}), [resetKey, isDesktop]);
+    const [snapshot, setSnapshot] = useState<{scope: object; value: HoverState} | null>(null);
+    const state = snapshot?.scope === scope && isDesktop ? snapshot.value : null;
+    const scopeRef = useRef<object | null>(scope);
     const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const openRef = useRef<HoverState | null>(null);
-    useEffect(() => {
-        openRef.current = state;
-    }, [state]);
-
     const clearTimers = useCallback(() => {
         if (openTimerRef.current) clearTimeout(openTimerRef.current);
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -122,45 +121,65 @@ export function HoverCardHost({children}: {children: ReactNode}) {
         closeTimerRef.current = null;
     }, []);
 
+    useLayoutEffect(() => {
+        scopeRef.current = scope;
+        clearTimers();
+        return () => {
+            scopeRef.current = null;
+            clearTimers();
+        };
+    }, [scope, clearTimers]);
+
+    useLayoutEffect(() => {
+        openRef.current = state;
+    }, [state]);
+
     const open = useCallback(
         (movie: Movie, anchor: unknown, source: string) => {
-            const node = anchor as {getBoundingClientRect?: () => DOMRect} | null;
+            if (!isDesktop || scopeRef.current !== scope) return;
+            const node = anchor as {getBoundingClientRect?: () => DOMRect; isConnected?: boolean} | null;
             if (!node?.getBoundingClientRect) return;
             if (openRef.current?.movie.id === movie.id) return;
             clearTimers();
             openTimerRef.current = setTimeout(() => {
+                if (scopeRef.current !== scope) return;
+                openTimerRef.current = null;
+                if (node.isConnected === false) return;
                 const r = node.getBoundingClientRect!();
                 if (r.width === 0) return;
                 const rect = {top: r.top, left: r.left, width: r.width, height: r.height};
-                setState({
+                setSnapshot({scope, value: {
                     movie,
                     rect,
                     card: cardLayoutFor(rect),
                     scroller: scrollableAncestor(node as unknown as Element),
-                });
+                }});
                 Analytics.posterHoverCard(movie, source);
             }, OPEN_DELAY_MS);
         },
-        [clearTimers]
+        [clearTimers, isDesktop, scope]
     );
 
     const close = useCallback(() => {
+        if (scopeRef.current !== scope) return;
         if (openTimerRef.current) clearTimeout(openTimerRef.current);
         openTimerRef.current = null;
-    }, []);
+    }, [scope]);
 
     useEffect(() => {
         if (!state) return;
         const onMove = (e: PointerEvent) => {
+            if (scopeRef.current !== scope) return;
             if (contains(state.rect, e.clientX, e.clientY)) return;
             if (contains(state.card, e.clientX, e.clientY)) return;
             if (closeTimerRef.current) return;
             closeTimerRef.current = setTimeout(() => {
                 closeTimerRef.current = null;
-                setState(null);
+                if (scopeRef.current === scope) setSnapshot(current => current?.value === state ? null : current);
             }, CLOSE_DELAY_MS);
         };
         const onMoveCancelsClose = (e: PointerEvent) => {
+            if (scopeRef.current !== scope) return;
             if (!closeTimerRef.current) return;
             if (contains(state.rect, e.clientX, e.clientY) || contains(state.card, e.clientX, e.clientY)) {
                 clearTimeout(closeTimerRef.current);
@@ -172,10 +191,12 @@ export function HoverCardHost({children}: {children: ReactNode}) {
             onMove(e);
         };
         const dismiss = () => {
+            if (scopeRef.current !== scope) return;
             clearTimers();
-            setState(null);
+            setSnapshot(null);
         };
         const onWheel = (e: WheelEvent) => {
+            if (scopeRef.current !== scope) return;
             if (contains(state.card, e.clientX, e.clientY, 0) && state.scroller) {
                 e.preventDefault();
                 state.scroller.scrollTop += e.deltaY;
@@ -193,7 +214,7 @@ export function HoverCardHost({children}: {children: ReactNode}) {
             document.removeEventListener('scroll', dismiss, true);
             window.removeEventListener('resize', dismiss);
         };
-    }, [state, clearTimers]);
+    }, [state, clearTimers, scope]);
 
     useEffect(() => clearTimers, [clearTimers]);
 
@@ -212,11 +233,11 @@ export function HoverCardHost({children}: {children: ReactNode}) {
                         layout={state.card}
                         onNavigate={() => {
                             clearTimers();
-                            setState(null);
+                            setSnapshot(null);
                         }}
                         onDismiss={() => {
                             clearTimers();
-                            setState(null);
+                            setSnapshot(null);
                         }}
                     />
                 </View>
@@ -240,7 +261,7 @@ function ExpandedCard({
     const rank = useTopTenRank(movie.id);
     const saved = useIsInWatchlist(movie.id);
     const toggleWatchlist = useToggleWatchlist();
-    const grow = useRef(new Animated.Value(0)).current;
+    const [grow] = useState(() => new Animated.Value(0));
 
     useEffect(() => {
         Animated.spring(grow, {toValue: 1, useNativeDriver: true, speed: 20, bounciness: 4}).start();

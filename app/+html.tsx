@@ -5,9 +5,8 @@ import {SITE_URL} from '@/presentation';
 const BASE_URL = process.env.EXPO_WEB_BASE_URL ?? '';
 const TITLE = 'Yify — Movie Discovery App for iPhone, Android & Web';
 const DESCRIPTION =
-    'Yify is a beautiful movie discovery app — browse a curated, Netflix-style home, ' +
-    'filter thousands of films, watch trailers and build your list. Free on iPhone, ' +
-    'Android and the web.';
+    'Discover popular and newly added movies, explore trailers and ratings, and find where to watch. ' +
+    'Keep your favorites in a personal watchlist.';
 const OG_IMAGE = `${SITE_URL}/og-card.png`;
 
 const JSON_LD = JSON.stringify({
