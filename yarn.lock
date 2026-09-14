@@ -5109,10 +5109,10 @@ expo-structured-headers@~57.0.0:
   resolved "https://registry.yarnpkg.com/expo-structured-headers/-/expo-structured-headers-57.0.0.tgz#6ea65c3089501e8718cd5aaa1f96fc6740033f0c"
   integrity sha512-//t9UNPbJSEysc2x4VKJG/u7Osvv5DYJWsET5bqt/B+qcD1by/JXvSQzX3Q/YAgA96xFPontrz6OAPLbO4JKEA==
 
-expo-symbols@57.0.2, expo-symbols@^57.0.2:
-  version "57.0.2"
-  resolved "https://registry.yarnpkg.com/expo-symbols/-/expo-symbols-57.0.2.tgz#b5b52f3902cc6f11ec2670c33b7d8a560c5426c3"
-  integrity sha512-qZ0iqOflm5lZGwRsQ5Y8sDksw3GAUKwHSX1bJBoocXf7gu14vafIXXYWte+JT9VfXAUGyKodJhLHP/GoOrcNWg==
+expo-symbols@57.0.3, expo-symbols@^57.0.2:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-symbols/-/expo-symbols-57.0.3.tgz#291f56d981d8271842aa0878b7e197c1793c1eef"
+  integrity sha512-uuK5yHLVR7kExUCrO/ItBvp/kp1maQ9Nkb6KvNy5ZUQnN0NMKwuhJ4GvbfS9N3ACmvCjTT4gKvg4yH5UuKIYNA==
   dependencies:
     "@expo-google-fonts/material-symbols" "^0.4.1"
     sf-symbols-typescript "^2.0.0"
