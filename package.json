@@ -52,7 +52,7 @@
     "@revenuecat/purchases-js": "1.59.0",
     "@sentry/react-native": "8.25.0",
     "error-stack-parser": "2.1.4",
-    "expo": "57.0.20",
+    "expo": "57.0.21",
     "expo-background-task": "57.0.16",
     "expo-blur": "57.0.2",
     "expo-build-properties": "57.0.17",
