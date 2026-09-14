@@ -26,6 +26,7 @@ export interface StoreFlowViewModel {
     channels: Channel[];
     version: string;
     error: string;
+    coverageWarning: string;
     existingSummary: string;
     allCovered: boolean;
     lines: LogLine[];
@@ -40,7 +41,7 @@ export interface StoreFlowViewModel {
     start: () => Promise<void>;
 }
 
-export function useStoreFlow(): StoreFlowViewModel {
+export function useStoreFlow(deps = {validateBinaries, releaseCoverage, runStoreRelease}): StoreFlowViewModel {
     const [step, setStep] = useState<StoreStep>('platforms');
     const [apk, setApk] = useState('');
     const [ipa, setIpa] = useState('');
@@ -48,6 +49,7 @@ export function useStoreFlow(): StoreFlowViewModel {
     const [channels, setChannels] = useState<Channel[]>([]);
     const [version, setVersion] = useState('');
     const [error, setError] = useState('');
+    const [coverageWarning, setCoverageWarning] = useState('');
     const [existingSummary, setExistingSummary] = useState('');
     const [allCovered, setAllCovered] = useState(false);
     const [lines, setLines] = useState<LogLine[]>([]);
@@ -73,39 +75,49 @@ export function useStoreFlow(): StoreFlowViewModel {
         setChannels(chosen);
         setStep('validating');
         setError('');
+        setCoverageWarning('');
         setExistingSummary('');
         setAllCovered(false);
+        setVersion('');
 
-        const v = await validateBinaries(apk.trim(), ipa.trim(), platforms, chosen);
-        if (!v.ok) {
-            setError(v.error);
-            setStep('confirm');
-            return;
-        }
-        setVersion(v.version);
-
-        const coverage = await releaseCoverage(platforms, chosen);
-        if (coverage.existing.length > 0) {
-            const byChannel = new Map<string, string[]>();
-            for (const e of coverage.existing) {
-                byChannel.set(e.channel, [
-                    ...(byChannel.get(e.channel) ?? []),
-                    e.platform,
-                ]);
+        try {
+            const v = await deps.validateBinaries(apk.trim(), ipa.trim(), platforms, chosen);
+            if (!v.ok) {
+                setError(v.error);
+                return;
             }
-            setExistingSummary(
-                Array.from(byChannel.entries())
-                    .map(([channel, plats]) => `${channel} (${plats.join(', ')})`)
-                    .join(', '),
-            );
-            setAllCovered(coverage.covered);
+            setVersion(v.version);
+
+            try {
+                const coverage = await deps.releaseCoverage(platforms, chosen);
+                if (coverage.existing.length > 0) {
+                    const byChannel = new Map<string, string[]>();
+                    for (const e of coverage.existing) {
+                        byChannel.set(e.channel, [
+                            ...(byChannel.get(e.channel) ?? []),
+                            e.platform,
+                        ]);
+                    }
+                    setExistingSummary(
+                        Array.from(byChannel.entries())
+                            .map(([channel, plats]) => `${channel} (${plats.join(', ')})`)
+                            .join(', '),
+                    );
+                    setAllCovered(coverage.covered);
+                }
+            } catch {
+                setCoverageWarning('Release history is unavailable. Release will prepare dependencies and check again before publishing.');
+            }
+        } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+        } finally {
+            setStep('confirm');
         }
-        setStep('confirm');
     };
 
     const start = async () => {
         setStep('running');
-        const res = await runStoreRelease(
+        const res = await deps.runStoreRelease(
             {
                 apkPath: apk.trim(),
                 ipaPath: ipa.trim(),
@@ -128,6 +140,7 @@ export function useStoreFlow(): StoreFlowViewModel {
         channels,
         version,
         error,
+        coverageWarning,
         existingSummary,
         allCovered,
         lines,
