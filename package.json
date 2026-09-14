@@ -83,7 +83,7 @@
     "expo-web-browser": "57.0.2",
     "firebase": "12.18.0",
     "jose": "6.2.12",
-    "react": "19.2.8",
+    "react": "19.3.0",
     "react-dom": "19.2.8",
     "react-native": "0.86.2",
     "react-native-gesture-handler": "3.2.1",
@@ -99,7 +99,7 @@
     "react-native-youtube-iframe": "2.4.1"
   },
   "devDependencies": {
-    "@types/react": "19.2.18",
+    "@types/react": "19.3.0",
     "electron": "44.3.0",
     "electron-builder": "26.15.3",
     "eslint": "9.39.3",
