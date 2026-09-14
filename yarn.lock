@@ -4942,10 +4942,10 @@ expo-haptics@57.0.2:
   resolved "https://registry.yarnpkg.com/expo-haptics/-/expo-haptics-57.0.2.tgz#137647e58f806cf78ae8d377e11aa15a66bf056a"
   integrity sha512-vPths6zTxxaGaemC7D1GKbw1iOnOAAL5oAcCFVSgVNWnuLCBefL1LkhRBaJsepiMXRh2y3vwPiXkPaf6d16blA==
 
-expo-image@57.0.4:
-  version "57.0.4"
-  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.4.tgz#092436fd4e62d8194b393e8c7cddbce31f4d86f8"
-  integrity sha512-DLVNjqIMLb71wh0F27kRv7nA9i4g80fvkVugiimVgGnO7Iot+gRSv5VhrFJCvX/OlSzbGQqd/3ktlEaPGFqP7g==
+expo-image@57.0.5:
+  version "57.0.5"
+  resolved "https://registry.yarnpkg.com/expo-image/-/expo-image-57.0.5.tgz#fafabb49e50fafc3795bb1d4d221cc5b6a1780b1"
+  integrity sha512-jOm5lofaIKXhQ7i0Hz3I5JuNULw/aghmpIPZXddwQcEtw8+wUhlozq3M7LbsOrcsBEapcG4jFs85DsfuFoz1tQ==
   dependencies:
     sf-symbols-typescript "^2.2.0"
 
