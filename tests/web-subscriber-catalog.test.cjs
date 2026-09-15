@@ -83,22 +83,61 @@ function fixture(options = {}) {
     };
 }
 
-test('only a signed-in ready account with a ready ad-removal hint attempts subscriber transport', async t => {
+test('unresolved auth and signed-out accounts never attempt subscriber transport', async t => {
     const requests = [];
     t.mock.method(globalThis, 'fetch', async (url, options) => {
         requests.push({url, options});
         return response(list());
     });
-    for (const options of [
-        {session: {ready: false}}, {session: {account: null}}, {state: {ready: false}},
-        {state: {adsRemoved: false}},
-    ]) {
+    for (const options of [{session: {ready: false}}, {session: {account: null}}, {session: {account: {uid: ''}}}]) {
         const f = fixture(options);
         assert.equal((await f.movies.listMovies({page: 1})).movies[0].title, 'Metadata');
         assert.equal(f.tokenRequests(), 0);
     }
     assert.ok(requests.every(request => request.url === `${publicBase}/movies?page=1&v=2` &&
         request.options.headers.Authorization === undefined));
+});
+
+test('server-approved owner access works without a purchase or an initialized purchase SDK', async t => {
+    const requests = [];
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        requests.push({url, options});
+        return response(envelope(details('Server-approved owner metadata')));
+    });
+    for (const state of [
+        {ready: false, available: false, adsRemoved: false, expiresAt: null},
+        {ready: true, available: true, adsRemoved: false, expiresAt: null},
+    ]) {
+        const f = fixture({state});
+        const result = await f.movies.getMovieDetails(42);
+        assert.equal(result.title, 'Server-approved owner metadata');
+        assert.equal(f.tokenRequests(), 1);
+        assert.doesNotMatch(JSON.stringify([result, f.diagnostics]), /private-upstream|urn:btih|"raw"|token-for/);
+    }
+    assert.ok(requests.every(({url, options}) => url === `${privateBase}/movie?id=42&v=2`
+        && options.headers.Authorization === 'Bearer token-for-account-a'));
+});
+
+test('an unpaid account uses public fallback and stable purchase refreshes preserve denial backoff', async t => {
+    let allowed = false;
+    const requests = [];
+    t.mock.method(globalThis, 'fetch', async url => {
+        requests.push(url);
+        if (url.startsWith(publicBase)) return response(details('Public metadata'));
+        return allowed ? response(envelope(details('Subscriber metadata')))
+            : Response.json({error: 'An active subscription is required'}, {status: 403});
+    });
+    const f = fixture({state: {ready: false, adsRemoved: false, expiresAt: null}});
+    assert.equal((await f.movies.getMovieDetails(42)).title, 'Public metadata');
+    f.state({ready: true, refreshing: true});
+    f.state({refreshing: false});
+    assert.equal((await f.movies.getMovieDetails(42)).title, 'Public metadata');
+    assert.deepEqual(requests, [`${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`]);
+    allowed = true;
+    f.state({adsRemoved: true, expiresAt: future});
+    assert.equal((await f.movies.getMovieDetails(42)).title, 'Subscriber metadata');
+    assert.equal(requests.at(-1), `${privateBase}/movie?id=42&v=2`);
+    assert.equal(f.tokenRequests(), 2);
 });
 
 test('lifetime, expired and ambiguous expiry hints require server approval and fall back on 403', async t => {
@@ -183,9 +222,9 @@ test('subscriber responses never enter the public cache or suppress future priva
         paths.push(url);
         return response(url.startsWith(privateBase) ? envelope(details('Subscriber metadata')) : details('Public metadata'));
     });
-    const f = fixture({state: {adsRemoved: false}});
+    const f = fixture({session: {account: null}});
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Public metadata');
-    f.state({adsRemoved: true});
+    f.session({account: {uid: 'account-a'}});
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Subscriber metadata');
     assert.equal((await f.movies.getMovieDetails(42)).title, 'Subscriber metadata');
     f.session({account: null});
@@ -419,12 +458,14 @@ test('identity changes during body parsing discard old metadata and permit a fre
     assert.equal(requests[2].options.headers.Authorization, 'Bearer token-for-account-b');
 });
 
-test('subscription revocation aborts and prevents private access even while the account is unchanged', async t => {
+test('subscription revocation aborts old requests and requires a new server decision for the same account', async t => {
     const fetched = deferred();
     const paths = [];
+    let privateCalls = 0;
     t.mock.method(globalThis, 'fetch', async (url, options) => {
         paths.push(url);
         if (url.startsWith(publicBase)) return response(details());
+        if (++privateCalls > 1) return Response.json({error: 'An active subscription is required'}, {status: 403});
         fetched.resolve(options.signal);
         return new Promise(() => {});
     });
@@ -435,7 +476,8 @@ test('subscription revocation aborts and prevents private access even while the 
     assert.equal(signal.aborted, true);
     assert.equal((await pending).id, 42);
     await f.movies.getMovieDetails(42);
-    assert.equal(paths.filter(url => url.startsWith(privateBase)).length, 1);
+    await f.movies.getMovieDetails(42);
+    assert.equal(paths.filter(url => url.startsWith(privateBase)).length, 2);
 });
 
 test('an expiry change cancels the old generation and requires a fresh server decision', async t => {
@@ -480,7 +522,7 @@ test('private parsing ignores the raw property entirely but rejects protected or
 
 test('public responses still reject a subscriber envelope rather than extracting its metadata', async t => {
     t.mock.method(globalThis, 'fetch', async () => response(envelope(details())));
-    const f = fixture({state: {adsRemoved: false}});
+    const f = fixture({session: {account: null}});
     await assert.rejects(f.movies.getMovieDetails(42), /catalog is unavailable/i);
 });
 

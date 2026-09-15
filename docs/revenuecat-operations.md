@@ -25,7 +25,9 @@ The subscriber catalog API separately requires a current production subscription
 (`apikeya111bdc6fb`, created 2026-09-11) has only `customer_information:subscriptions:read`.
 The existing product-setup key is unchanged. The server queries the Firebase-verified UID, including
 RevenueCat aliases; it does not trust the browser's supporter state or grant catalog access from a
-lifetime entitlement alone. [Deployment configuration](releases.md#web)
+lifetime entitlement alone. The separately configured owner can access the catalog using their
+verified Firebase identity without a subscription; this does not change RevenueCat entitlements
+or customer billing rules. [Deployment configuration](releases.md#web)
 
 [Targeting](https://app.revenuecat.com/projects/8b6ff243/targeting) has no rules. This is valid: RevenueCat returns the project's default offering when no targeting rule matches a placement. The app's `settings_supporter` and `post_ad_supporter` placements can use the existing offering without creating a new product or experiment. See [placements documentation](https://www.revenuecat.com/docs/tools/targeting/placements).
 

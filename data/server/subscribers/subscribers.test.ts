@@ -48,7 +48,7 @@ function request(value: string, headers = {}) {
 function fixture(options = {}) {
     const calls: {url: URL; init: RequestInit}[] = [];
     const authorize = createSubscriberAuthorizer({
-        firebaseProjectId: PROJECT, revenueCatApiKey: SECRET, revenueCatProductIds: PRODUCTS,
+        firebaseProjectId: PROJECT, ownerUid: '', revenueCatApiKey: SECRET, revenueCatProductIds: PRODUCTS,
         now: () => NOW,
         fetch: async (url: string, init: RequestInit) => {
             calls.push({url: new URL(url), init});
@@ -76,6 +76,127 @@ test('a signed Firebase identity plus a current production recurring subscriptio
     assert.equal(calls[1].url.searchParams.get('environment'), 'production');
     assert.equal(new Headers(calls[1].init.headers).get('Authorization'), `Bearer ${SECRET}`);
     assert.ok(calls.every(call => call.init.redirect === 'manual' && call.init.cache === 'no-store' && call.init.credentials === 'omit'));
+});
+
+test('the configured owner requires verified Firebase identity but no RevenueCat configuration or purchase', async () => {
+    const {authorize, calls} = fixture({ownerUid: UID, revenueCatApiKey: '', revenueCatProductIds: []});
+    assert.deepEqual(await authorize(request(await token()), new AbortController().signal), {uid: UID});
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url.hostname, 'www.googleapis.com');
+    assert.equal(new Headers(calls[0].init.headers).get('Authorization'), null);
+});
+
+test('an owner exemption does not change production monthly access for other customers', async () => {
+    for (const items of [[], [subscription({environment: 'sandbox'})], [subscription({product_id: 'prod-lifetime', ends_at: null})], [subscription()]]) {
+        const calls: URL[] = [];
+        const {authorize} = fixture({ownerUid: 'configured-owner', fetch: async (input: string) => {
+            const url = new URL(input);
+            calls.push(url);
+            return url.hostname === 'www.googleapis.com' ? Response.json({keys: [key]}) : response(items);
+        }});
+        const work = authorize(request(await token()), new AbortController().signal);
+        if (items[0]?.environment === 'production' && items[0]?.product_id === PRODUCTS[0]) {
+            assert.deepEqual(await work, {uid: UID});
+        } else {
+            await denies(work, 403);
+        }
+        assert.equal(calls.length, 2);
+        assert.equal(calls[1].pathname, `/v2/projects/8b6ff243/customers/${UID}/subscriptions`);
+        assert.equal(calls[1].searchParams.get('environment'), 'production');
+    }
+    const {authorize, calls} = fixture({ownerUid: 'configured-owner', revenueCatApiKey: '', revenueCatProductIds: []});
+    await denies(authorize(request(await token()), new AbortController().signal), 503);
+    assert.equal(calls.length, 1);
+});
+
+test('query parameters, headers and email cannot substitute another verified UID for the owner', async () => {
+    const calls: URL[] = [];
+    const {authorize} = fixture({ownerUid: UID, fetch: async (input: string) => {
+        const url = new URL(input);
+        calls.push(url);
+        return url.hostname === 'www.googleapis.com' ? Response.json({keys: [key]}) : response([]);
+    }});
+    const signed = await token({sub: 'ordinary-user', email: 'owner@example.test', email_verified: true, owner: true});
+    const req = new Request(`https://yify.expo.app/api/subscriber-catalog/movie?id=10&uid=${UID}&ownerUid=${UID}&owner=true`, {
+        headers: {Authorization: `Bearer ${signed}`, 'X-Owner-Uid': UID, 'X-RevenueCat-App-User-Id': UID},
+    });
+    await denies(authorize(req, new AbortController().signal), 403);
+    assert.equal(calls[1].pathname, '/v2/projects/8b6ff243/customers/ordinary-user/subscriptions');
+});
+
+test('owner claims with an invalid signature, project, expiry or algorithm cannot grant access', async () => {
+    const {authorize, calls} = fixture({ownerUid: UID, revenueCatApiKey: '', revenueCatProductIds: []});
+    const invalid = [
+        token({}, {alg: 'RS256', kid: key.kid}, other.privateKey),
+        token({iss: 'https://securetoken.google.com/other-project'}), token({aud: 'other-project'}),
+        token({exp: NOW / 1000}), token({auth_time: NOW / 1000 + 1}),
+        new SignJWT({sub: UID}).setProtectedHeader({alg: 'HS256', kid: key.kid}).sign(new Uint8Array(32).fill(1)),
+    ];
+    for (const signed of invalid) await denies(authorize(request(await signed), new AbortController().signal), 401);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url.hostname, 'www.googleapis.com');
+    await denies(authorize(new Request('https://yify.expo.app/api/subscriber-catalog/movie?id=10'), new AbortController().signal), 401);
+});
+
+test('server owner configuration is optional, reloads per request and never normalizes a different UID', async t => {
+    const previous = process.env.YIFY_SUBSCRIBER_OWNER_UID;
+    t.after(() => {
+        if (previous === undefined) delete process.env.YIFY_SUBSCRIBER_OWNER_UID;
+        else process.env.YIFY_SUBSCRIBER_OWNER_UID = previous;
+    });
+    const signed = await token();
+    const {authorize} = fixture({ownerUid: undefined, fetch: async (input: string) => new URL(input).hostname === 'www.googleapis.com'
+        ? Response.json({keys: [key]}, {headers: {'Cache-Control': 'max-age=60'}}) : response([])});
+    process.env.YIFY_SUBSCRIBER_OWNER_UID = UID;
+    assert.deepEqual(await authorize(request(signed), new AbortController().signal), {uid: UID});
+    for (const value of [undefined, '', '   ', 'another-user', UID.toUpperCase()]) {
+        if (value === undefined) delete process.env.YIFY_SUBSCRIBER_OWNER_UID;
+        else process.env.YIFY_SUBSCRIBER_OWNER_UID = value;
+        await denies(authorize(request(signed), new AbortController().signal), 403);
+    }
+    process.env.YIFY_SUBSCRIBER_OWNER_UID = UID;
+    const disabled = fixture({ownerUid: '', fetch: async (input: string) => new URL(input).hostname === 'www.googleapis.com'
+        ? Response.json({keys: [key]}) : response([])});
+    await denies(disabled.authorize(request(signed), new AbortController().signal), 403);
+});
+
+test('malformed owner configuration fails closed before identity or purchase lookups', async () => {
+    for (const ownerUid of ['.', '..', 'x'.repeat(129), ` ${UID}`, `${UID} `, `${UID}\nother`, `${UID}\u007f`, 7, []]) {
+        const {authorize, calls} = fixture({ownerUid});
+        await denies(authorize(request(await token()), new AbortController().signal), 503);
+        assert.equal(calls.length, 0);
+    }
+});
+
+test('owner access respects cancellation before, during and after loading signing keys', async () => {
+    const signed = await token();
+    const before = new AbortController();
+    before.abort();
+    const first = fixture({ownerUid: UID, revenueCatApiKey: '', revenueCatProductIds: []});
+    await denies(first.authorize(request(signed), before.signal), 503);
+    assert.equal(first.calls.length, 0);
+
+    const during = new AbortController();
+    let started: () => void = () => {};
+    const ready = new Promise<void>(resolve => { started = resolve; });
+    let seenSignal: AbortSignal | undefined;
+    const pending = fixture({ownerUid: UID, revenueCatApiKey: '', revenueCatProductIds: [], fetch: (_url: string, init: RequestInit) => new Promise((_, reject) => {
+        seenSignal = init.signal!;
+        seenSignal.addEventListener('abort', () => reject(new Error('Cancelled key lookup')), {once: true});
+        started();
+    })});
+    const work = pending.authorize(request(signed), during.signal);
+    await ready;
+    during.abort();
+    await denies(work, 503);
+    assert.equal(seenSignal?.aborted, true);
+
+    assert.deepEqual(await first.authorize(request(signed), new AbortController().signal), {uid: UID});
+    const cached = new AbortController();
+    const cachedWork = first.authorize(request(signed), cached.signal);
+    cached.abort();
+    await denies(cachedWork, 503);
+    assert.equal(first.calls.length, 1);
 });
 
 test('Google and RevenueCat redirects fail closed without following or forwarding credentials', async () => {
@@ -134,7 +255,8 @@ test('missing or invalid server configuration cannot fall back to client-visible
         {revenueCatProductIds: []}, {revenueCatProductIds: ['remove_ads_lifetime']}, {firebaseProjectId: 'https://evil.invalid'}]) {
         const {authorize, calls} = fixture(options);
         await denies(authorize(request(await token()), new AbortController().signal), 503);
-        assert.equal(calls.length, 0);
+        assert.equal(calls.length, 'firebaseProjectId' in options ? 0 : 1);
+        assert.ok(calls.every(call => call.url.hostname === 'www.googleapis.com'));
     }
 });
 

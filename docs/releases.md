@@ -127,10 +127,11 @@ omits hashes, torrent URLs and magnets; those remain in the verified subscriber'
 Requests without `v` retain the earlier response shape for already-open clients. Deploy the API
 with `v=2` support before publishing an updated Pages client.
 
-Signed-in subscribers use `/api/subscriber-catalog/[operation]`. Every request verifies the Firebase
-ID token and checks RevenueCat for a current production monthly subscription before fetching the
-catalog. Its response contains `metadata` for the UI and `raw.responses` with the original upstream
-JSON, visible in the browser's Network panel. Raw responses are never cached, saved in app storage,
+Signed-in accounts use `/api/subscriber-catalog/[operation]`. Every request verifies the Firebase
+ID token, then requires either the configured owner's exact UID or a RevenueCat-verified current
+production monthly subscription before fetching the catalog. Its response contains `metadata`
+for the UI and `raw.responses` with the original upstream JSON, visible in the browser's Network
+panel. Raw responses are never cached, saved in app storage,
 or included in diagnostics. Subscribers can still copy or share data they receive.
 
 Set these **sensitive**, server-only variables in the EAS `production` environment before deploying:
@@ -141,6 +142,10 @@ Do not prefix these with `EXPO_PUBLIC_`. Missing configuration fails closed and 
 back to public metadata. Both API bundles are required by the Hosting export check and excluded
 from Pages assets. See [Expo's Hosting environment-variable rules](https://docs.expo.dev/eas/environment-variables/usage/#using-environment-variables-with-eas-hosting).
 
+Set the optional sensitive `YIFY_SUBSCRIBER_OWNER_UID` to the owner's Firebase UID to grant that
+account access without a subscription. Leave it blank to disable the exception. This value stays
+on the server; email addresses, browser flags and RevenueCat test purchases do not grant owner access.
+
 Legacy lifetime, promotional and sandbox access does not qualify for this endpoint. Canceled
 subscriptions retain access through their paid period; RevenueCat-approved grace periods also
 qualify. Subscription checks are not cached. JWT verification caches only Google's public signing
@@ -150,7 +155,7 @@ erase responses already received or invalidate a copied token immediately.
 
 Open the browser Network panel before reloading, enable Keep log, and filter by `catalog`
 to see both public and subscriber requests. Select a fetch request and its Response tab.
-A `403` means the server found no qualifying subscription. The app's “supporter access”
+A `403` means the account is neither the configured owner nor a qualifying subscriber. The app's “supporter access”
 message also covers legacy lifetime and sandbox purchases, so it does not confirm eligibility
 for raw responses. Inspect the customer's production subscriptions in RevenueCat before changing access.
 

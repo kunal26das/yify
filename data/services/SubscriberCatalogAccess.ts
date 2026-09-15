@@ -90,8 +90,8 @@ export class SubscriberCatalogAccess {
     private readContext(): string | null {
         const session = this.auth.getSession();
         const state = this.purchases.getState();
-        if (!session.ready || !session.account?.uid || !state.ready || !state.adsRemoved) return null;
-        return JSON.stringify([session.account.uid, state.expiresAt]);
+        if (!session.ready || !session.account?.uid) return null;
+        return JSON.stringify([session.account.uid, state.adsRemoved, state.expiresAt]);
     }
 
     private refreshContext(): void {

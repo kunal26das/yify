@@ -7,8 +7,8 @@ export function useReloadOnCatalogAccess(reload: () => void, busy: boolean): voi
     const session = useAuth();
     const purchases = usePurchases();
     const focused = useIsFocused();
-    const access = session.ready && session.account && purchases.ready && purchases.adsRemoved
-        ? JSON.stringify([session.account.uid, purchases.expiresAt]) : null;
+    const access = session.ready && session.account?.uid
+        ? JSON.stringify([session.account.uid, purchases.adsRemoved, purchases.expiresAt]) : null;
     const previous = useRef(access);
     const pending = useRef<string | null>(null);
 
