@@ -86,7 +86,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.86.2",
-    "react-native-gesture-handler": "3.2.1",
+    "react-native-gesture-handler": "3.3.0",
     "react-native-google-mobile-ads": "16.3.4",
     "react-native-purchases": "10.9.1",
     "react-native-reanimated": "4.5.5",
