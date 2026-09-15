@@ -54,7 +54,7 @@ async function fixture(t, kind = 'details', options = {}) {
         const privateRequest = url.pathname.includes('/api/subscriber-catalog/');
         requests.push({url: url.href, private: privateRequest});
         if (!privateRequest) await options.blockPublic?.(url);
-        if (privateRequest && options.denied) return {ok: false, status: 403};
+        if (privateRequest && options.denied) return Response.json({error: 'An active subscription is required'}, {status: 403});
         const metadata = payload(url);
         return {ok: true, status: 200, json: async () => privateRequest
             ? {metadata, raw: {responses: [{private: true}]}} : metadata};
@@ -123,7 +123,45 @@ for (const kind of ['details', 'movies', 'home', 'feed', 'shows']) {
         await f.change({focus: true});
         assert.equal(f.requests.length, completed);
     });
+
+    test(`${kind} asks the server for owner access after sign-in without waiting for purchases`, async t => {
+        const f = await fixture(t, kind);
+        assert.equal(f.privateCount(), 0);
+        await f.change({auth: {account: {uid: 'server-approved-owner'}}});
+        assert.ok(f.privateCount() > 0);
+        const completed = f.requests.length;
+        await f.change({purchase: {ready: true, adsRemoved: false, expiresAt: null}});
+        await f.change({purchase: {refreshing: true}});
+        await f.change({purchase: {refreshing: false}});
+        assert.equal(f.requests.length, completed);
+    });
 }
+
+test('an already-signed-in owner loads privately even when the purchase SDK is unavailable', async t => {
+    const f = await fixture(t, 'details', {
+        session: {ready: true, account: {uid: 'server-approved-owner'}},
+        purchases: {ready: false, available: false, adsRemoved: false, expiresAt: null},
+    });
+    assert.equal(f.requests.length, 2);
+    assert.equal(f.privateCount(), 2);
+    assert.equal(f.value.details.id, 42);
+});
+
+test('an unpaid account falls back and purchase readiness alone does not repeat denied requests', async t => {
+    const f = await fixture(t, 'details', {denied: true});
+    await f.change({auth: {account: {uid: 'unpaid-account'}}});
+    assert.equal(f.privateCount(), 2);
+    assert.equal(f.value.details.id, 42);
+    const completed = f.requests.length;
+    await f.change({purchase: {ready: true, adsRemoved: false, expiresAt: null}});
+    await f.change({purchase: {refreshing: true}});
+    await f.change({purchase: {refreshing: false}});
+    await f.change({focus: false});
+    await f.change({focus: true});
+    assert.equal(f.requests.length, completed);
+    await f.change({purchase: {adsRemoved: true, expiresAt: '2099-01-01T00:00:00.000Z'}});
+    assert.equal(f.privateCount(), 4);
+});
 
 test('an already-ready subscriber makes only the initial private detail requests', async t => {
     const f = await fixture(t, 'details', {

@@ -22,6 +22,7 @@ const ROUTES = [
 const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
+    'YIFY_SUBSCRIBER_OWNER_UID',
     'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
     'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS',
     'https://api.revenuecat.com/v2/projects/',

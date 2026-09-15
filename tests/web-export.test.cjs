@@ -9,7 +9,7 @@ const {createRoutesManifest} = require('@expo/router-server/build/routes-manifes
 const root = path.dirname(require.resolve('../package.json'));
 const checker = path.join(root, 'scripts/check-web-export.mjs');
 const markers = ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
-const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
+const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_OWNER_UID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
     'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'https://api.revenuecat.com/v2/projects/',
     'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'];
 const apiRoutes = ['catalog', 'subscriber-catalog'].map(name => ({
