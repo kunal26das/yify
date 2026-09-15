@@ -58,11 +58,17 @@ export class SubscriberCatalogAccess {
                 headers: {Accept: 'application/json', Authorization: `Bearer ${token}`},
             }), controller.signal);
             if (!current()) return null;
-            if (PUBLIC_FALLBACK_STATUSES.has(response.status)) {
-                this.retryAt = Date.now() + ACCESS_BACKOFF_MS;
-                return null;
+            if (!response.ok) {
+                try {
+                    await abortable(response.text(), controller.signal);
+                } catch {}
+                if (!current()) return null;
+                if (PUBLIC_FALLBACK_STATUSES.has(response.status)) {
+                    this.retryAt = Date.now() + ACCESS_BACKOFF_MS;
+                    return null;
+                }
+                throw new Error('Subscriber catalog request failed.');
             }
-            if (!response.ok) throw new Error('Subscriber catalog request failed.');
             const envelope: unknown = await abortable(response.json(), controller.signal);
             if (!current()) return null;
             if (envelope === null || typeof envelope !== 'object' || Array.isArray(envelope) ||
