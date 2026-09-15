@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.1",
-  "versionCode": 83,
+  "version": "1.8.2",
+  "versionCode": 84,
   "private": true,
   "scripts": {
     "start": "NODE_OPTIONS=--max-old-space-size=8192 CI=false expo start",
@@ -52,7 +52,7 @@
     "@revenuecat/purchases-js": "1.59.0",
     "@sentry/react-native": "8.25.0",
     "error-stack-parser": "2.1.4",
-    "expo": "57.0.21",
+    "expo": "57.0.22",
     "expo-background-task": "57.0.17",
     "expo-blur": "57.0.3",
     "expo-build-properties": "57.0.17",
@@ -65,7 +65,7 @@
     "expo-image": "57.0.5",
     "expo-in-app-updates": "0.12.0",
     "expo-insights": "57.0.17",
-    "expo-keep-awake": "57.0.1",
+    "expo-keep-awake": "57.0.2",
     "expo-linking": "57.0.10",
     "expo-localization": "57.0.1",
     "expo-navigation-bar": "57.0.2",
