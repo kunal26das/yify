@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import {setTimeout as delay} from 'node:timers/promises';
 import type {InstallMode, LogLine, Workspace} from '../../domain/index.js';
 import {createCancellation} from '../process/cancellationRegistry.js';
 import {createInstaller} from './installerShell.js';
@@ -136,7 +137,7 @@ test('cancellation stops installer descendants before restoring dependencies', {
     assert.deepEqual(await f.install(), {ok: false, code: 130});
     assert.equal(f.read('node_modules/working.txt'), 'previous installation');
     assert.equal(f.read('yarn.lock'), 'original lock\n');
-    await setTimeout(850);
+    await delay(850);
     assert.equal(f.exists('escaped-write'), false);
     assert.equal(f.exists('node_modules/new.txt'), false);
     f.noBackup();
