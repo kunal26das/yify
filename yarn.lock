@@ -5029,10 +5029,10 @@ expo-network@57.0.2:
   resolved "https://registry.yarnpkg.com/expo-network/-/expo-network-57.0.2.tgz#d79914a260ee05dbf5420811e0ee55d390d41849"
   integrity sha512-BfK1kdftZcM6o9o1FAG7/y0l6vWX0n8td0M5lwkvaMeRXZ9LkRwOi9CQXwvsMTQGQiPwtQXgwiAze13cqjt75g==
 
-expo-notifications@57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.18.tgz#534a11161b28201e83f958c1d82a35702c85ff60"
-  integrity sha512-EUyFHeP7pakTYO3UkxnK3CvzgrNSfe+IOxcCa8dX6DuSxSvIOcIzaQ2sNZ4XsvzmJzZPxl3MHKql2QVigDmg8A==
+expo-notifications@57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-57.0.19.tgz#50c6c6d3b62cc45cf227a72920beb7701a5b52cf"
+  integrity sha512-JW/usGEwOxWzN8s0L7+j3FAoB39GtaZtpUGye2lPvcqYSkvewpZYkrC16P1JaCP09YRx0Q+qXPx5NUoUU8NsBA==
   dependencies:
     "@expo/image-utils" "^0.11.5"
     abort-controller "^3.0.0"
