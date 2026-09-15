@@ -84,7 +84,7 @@
     "firebase": "12.18.0",
     "jose": "6.2.12",
     "react": "19.3.0",
-    "react-dom": "19.2.8",
+    "react-dom": "19.3.0",
     "react-native": "0.86.2",
     "react-native-gesture-handler": "3.2.1",
     "react-native-google-mobile-ads": "16.3.4",
@@ -105,7 +105,7 @@
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.2",
     "eslint-import-resolver-typescript": "3.10.1",
-    "react-test-renderer": "19.2.8",
+    "react-test-renderer": "19.3.0",
     "typescript": "6.0.3"
   },
   "resolutions": {
