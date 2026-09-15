@@ -106,7 +106,7 @@ test('lifetime, expired and ambiguous expiry hints require server approval and f
     t.mock.method(globalThis, 'fetch', async (url, options) => {
         requests.push({url, options});
         return url.startsWith(privateBase)
-            ? {ok: false, status: 403, json: async () => assert.fail('denied subscriber body parsed')}
+            ? Response.json({error: 'An active subscription is required'}, {status: 403})
             : response(details('Public metadata'));
     });
     for (const expiresAt of [null, '2000-01-01T00:00:00Z', 'invalid', undefined]) {
@@ -217,15 +217,21 @@ test('public and subscriber requests both preserve torrent rows without exposing
 });
 
 for (const status of [401, 403, 503]) {
-    test(`${status} falls back to public metadata with bounded access retry and no error-body parsing`, async t => {
+    test(`${status} consumes the error body before public fallback with bounded access retry`, async t => {
         let now = 1_000;
         t.mock.method(Date, 'now', () => now);
         const paths = [];
+        const errors = [];
         t.mock.method(globalThis, 'fetch', async url => {
             paths.push(url);
-            return url.startsWith(privateBase)
-                ? {ok: false, status, json: async () => assert.fail('private error body parsed')}
-                : response(details());
+            if (url.startsWith(publicBase)) {
+                assert.ok(errors.at(-1).bodyUsed);
+                return response(details());
+            }
+            const denied = Response.json({error: 'An active subscription is required'}, {status});
+            t.mock.method(denied, 'json', async () => assert.fail('private error body parsed'));
+            errors.push(denied);
+            return denied;
         });
         const f = fixture();
         await f.movies.getMovieDetails(42);
@@ -240,8 +246,108 @@ for (const status of [401, 403, 503]) {
         f.session({account: {uid: 'account-b'}});
         await f.movies.getMovieDetails(42);
         assert.equal(paths.filter(url => url.startsWith(privateBase)).length, 4);
+        assert.ok(errors.every(error => error.bodyUsed));
+        assert.doesNotMatch(JSON.stringify(f.diagnostics), /active subscription|token-for/);
     });
 }
+
+test('a denied response finishes reading before public browsing resumes', async t => {
+    const reading = deferred();
+    let body;
+    let denied;
+    const paths = [];
+    t.mock.method(globalThis, 'fetch', async url => {
+        paths.push(url);
+        if (url.startsWith(publicBase)) return response(details());
+        denied = new Response(new ReadableStream({
+            start(controller) { body = controller; },
+            pull() { reading.resolve(); },
+        }, {highWaterMark: 0}), {status: 403});
+        return denied;
+    });
+    const f = fixture();
+    const pending = f.movies.getMovieDetails(42);
+    await reading.promise;
+    assert.equal(denied.bodyUsed, true);
+    assert.deepEqual(paths, [`${privateBase}/movie?id=42&v=2`]);
+    body.enqueue(new TextEncoder().encode('{"error":"An active subscription is required"}'));
+    body.close();
+    assert.equal((await pending).id, 42);
+    assert.deepEqual(paths, [`${privateBase}/movie?id=42&v=2`, `${publicBase}/movie?id=42&v=2`]);
+});
+
+test('malformed and unreadable denial bodies retain public fallback without exposing their contents', async t => {
+    for (const denied of [
+        new Response('private malformed denial body', {status: 403}),
+        new Response(new ReadableStream({start(controller) { controller.error(new Error('private body failure')); }}), {status: 503}),
+    ]) {
+        t.mock.method(globalThis, 'fetch', async url => url.startsWith(privateBase) ? denied : response(details()));
+        const f = fixture();
+        assert.equal((await f.movies.getMovieDetails(42)).id, 42);
+        assert.equal(denied.bodyUsed, true);
+        assert.doesNotMatch(JSON.stringify(f.diagnostics), /private|malformed|failure/);
+    }
+});
+
+test('sign-out interrupts an unfinished denial body without delaying public browsing or the next account', async t => {
+    const reading = deferred();
+    let body;
+    let signal;
+    let privateCalls = 0;
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (url.startsWith(publicBase)) return response(details('Public metadata'));
+        if (++privateCalls > 1) return response(envelope(details('Next account metadata')));
+        signal = options.signal;
+        return new Response(new ReadableStream({
+            start(controller) { body = controller; },
+            pull() { reading.resolve(); },
+        }, {highWaterMark: 0}), {status: 403});
+    });
+    const f = fixture();
+    const pending = f.movies.getMovieDetails(42);
+    await reading.promise;
+    f.session({account: null});
+    assert.equal(signal.aborted, true);
+    assert.equal((await pending).title, 'Public metadata');
+    f.session({account: {uid: 'account-b'}});
+    assert.equal((await f.movies.getMovieDetails(42)).title, 'Next account metadata');
+    body.close();
+    assert.equal(privateCalls, 2);
+});
+
+test('a stalled denial body is bounded by the request timeout and still falls back', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const reading = deferred();
+    let body;
+    let signal;
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        if (url.startsWith(publicBase)) return response(details());
+        signal = options.signal;
+        return new Response(new ReadableStream({
+            start(controller) { body = controller; },
+            pull() { reading.resolve(); },
+        }, {highWaterMark: 0}), {status: 503});
+    });
+    const f = fixture();
+    const pending = f.movies.getMovieDetails(42);
+    await reading.promise;
+    t.mock.timers.tick(30_000);
+    assert.equal((await pending).id, 42);
+    assert.equal(signal.aborted, true);
+    body.close();
+});
+
+test('rate-limited responses are consumed without bypassing the limit or exposing error bodies', async t => {
+    const limited = Response.json({error: 'private rate limit details'}, {status: 429});
+    const paths = [];
+    t.mock.method(globalThis, 'fetch', async url => { paths.push(url); return limited; });
+    const f = fixture();
+    await assert.rejects(f.movies.getMovieDetails(42), error =>
+        error.message === 'The catalog is unavailable. Please try again.');
+    assert.equal(limited.bodyUsed, true);
+    assert.deepEqual(paths, [`${privateBase}/movie?id=42&v=2`]);
+    assert.doesNotMatch(JSON.stringify(f.diagnostics), /private|rate limit/);
+});
 
 test('failed or missing Firebase tokens fall back without sending an Authorization header', async t => {
     const requests = [];
@@ -339,7 +445,7 @@ test('an expiry change cancels the old generation and requires a fresh server de
     t.mock.method(globalThis, 'fetch', async (url, options) => {
         requests.push(url);
         if (url.startsWith(publicBase)) return response(details('Public metadata'));
-        if (++privateCalls > 1) return {ok: false, status: 403};
+        if (++privateCalls > 1) return Response.json({error: 'An active subscription is required'}, {status: 403});
         fetched.resolve(options.signal);
         return new Promise(() => {});
     });
@@ -381,7 +487,7 @@ test('public responses still reject a subscriber envelope rather than extracting
 test('subscriber transport failures stay generic without falling back to raw origins or bypassing 429', async t => {
     const paths = [];
     for (const reply of [
-        async () => ({ok: false, status: 429, json: async () => assert.fail('error body parsed')}),
+        async () => Response.json({error: 'Too many catalog requests'}, {status: 429}),
         async () => { throw new Error('private upstream address or token'); },
         async () => ({ok: true, status: 200, json: async () => { throw new Error('private raw response'); }}),
     ]) {
