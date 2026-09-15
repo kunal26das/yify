@@ -10,6 +10,7 @@ type DropFile = File & { path?: string };
 export class StoreReleaseView {
     vm: StoreReleaseViewModel;
     #baseReady = false;
+    #coverageRevision = 0;
     constructor(vm: StoreReleaseViewModel) {
         this.vm = vm;
 
@@ -144,6 +145,7 @@ export class StoreReleaseView {
     }
 
     #onFilesChanged(): void {
+        this.#coverageRevision += 1;
         const wasValidated = !!this.vm.validatedVersion;
         this.vm.invalidate();
         this.#baseReady = false;
@@ -162,25 +164,31 @@ export class StoreReleaseView {
     }
 
     async #evaluateCoverage(): Promise<Coverage | null> {
+        const revision = ++this.#coverageRevision;
         const plats = this.#selectedPlatforms();
         const chans = this.#selectedChannels();
+        const validated = !!this.vm.validatedVersion && plats.length > 0 && chans.length > 0;
 
         let coverage: Coverage | null = null;
-        if (this.vm.validatedVersion && plats.length && chans.length) {
+        if (validated) {
             try {
                 coverage = await this.vm.releaseCoverage(plats, chans);
-            } catch (e) {
-                showToast(errMessage(e), 'bad');
+            } catch {
+                if (revision === this.#coverageRevision) {
+                    showToast('Release history is unavailable. Release will prepare dependencies and check again before publishing.', 'warn');
+                }
             }
         }
 
-        this.#baseReady = !!coverage && !coverage.covered;
+        if (revision !== this.#coverageRevision) return null;
+        this.#baseReady = validated && !coverage?.covered;
         if (!runState.busy)
             $<HTMLButtonElement>('#baseRunBtn').disabled = !this.#baseReady;
         return coverage;
     }
 
     async #validate(): Promise<void> {
+        const revision = ++this.#coverageRevision;
         this.vm.invalidate();
         this.#baseReady = false;
         $<HTMLButtonElement>('#baseRunBtn').disabled = true;
@@ -206,6 +214,10 @@ export class StoreReleaseView {
                     plats,
                     chans,
                 );
+                if (revision !== this.#coverageRevision) {
+                    this.vm.invalidate();
+                    return;
+                }
             } catch (e) {
                 showToast(errMessage(e), 'bad');
                 return;
@@ -217,12 +229,8 @@ export class StoreReleaseView {
 
             const coverage = await this.#evaluateCoverage();
             const v = 'v' + res.version;
-            if (!coverage) {
-                showToast(
-                    v + ' validated — pick at least one channel to continue.',
-                    'warn',
-                );
-            } else if (coverage.covered) {
+            if (!coverage) return;
+            if (coverage.covered) {
                 showToast(
                     v +
                     ' validated — this runtime version is already released on all ' +

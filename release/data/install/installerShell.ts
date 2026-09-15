@@ -23,60 +23,86 @@ export function createInstaller(deps: {
         return 'yarn install';
     }
 
-    function cleanInstall(
+    async function cleanInstall(
         onLine: OnLine,
         label?: string,
         mode: InstallMode = 'resolve',
     ): Promise<RunResult> {
-        return new Promise((resolve) => {
-            if (cancellation.isCancelling()) {
-                resolve({code: 130, ok: false});
-                return;
+        if (cancellation.isCancelling()) return {code: 130, ok: false};
+        const emit = (stream: 'stdout' | 'stderr' | 'system', text: string) => onLine({stream, text, label});
+        const modules = path.join(repoRoot, 'node_modules');
+        const lockfiles = ['yarn.lock', 'pnpm-lock.yaml', 'package-lock.json'];
+        const snapshots = new Map<string, Buffer | null>();
+        let backup: string | undefined;
+        let movedModules = false;
+        let started = false;
+        let result: RunResult = {code: 1, ok: false};
+        try {
+            for (const name of lockfiles) {
+                const file = path.join(repoRoot, name);
+                snapshots.set(file, fs.existsSync(file) ? await fs.promises.readFile(file) : null);
             }
-            const cmd = installCommand(mode);
-            const targets = mode === 'frozen' ? 'node_modules' : 'node_modules yarn.lock';
-            const full = `rm -rf ${targets} && ${cmd}`;
-            onLine({
-                stream: 'system',
-                text: `$ ${full}  (cwd: ${repoRoot})`,
-                label,
-            });
+            const backupRoot = path.join(repoRoot, '.expo');
+            await fs.promises.mkdir(backupRoot, {recursive: true});
+            backup = await fs.promises.mkdtemp(path.join(backupRoot, 'release-install-'));
+            try {
+                await fs.promises.rename(modules, path.join(backup, 'node_modules'));
+                movedModules = true;
+            } catch (error) {
+                if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+            }
 
-            const child = spawn('/bin/sh', ['-c', full], {
-                cwd: repoRoot,
-                env: process.env,
-            });
-            cancellation.track(child);
-
-            const pump = (
-                streamType: 'stdout' | 'stderr',
-                stream: NodeJS.ReadableStream | null,
-            ) =>
-                pumpLines(streamType, stream, {
-                    onLine: (s, text) => onLine({stream: s, text, label}),
+            if (cancellation.isCancelling()) result = {code: 130, ok: false};
+            else {
+                const cmd = installCommand(mode);
+                emit('system', `$ ${cmd}  (cwd: ${repoRoot})`);
+                const [command, ...args] = cmd.split(' ');
+                started = true;
+                result = await new Promise<RunResult>((resolve) => {
+                    const processGroup = process.platform !== 'win32';
+                    const child = spawn(command, args, {
+                        cwd: repoRoot,
+                        env: process.env,
+                        detached: processGroup,
+                        shell: process.platform === 'win32',
+                    });
+                    cancellation.track(child, 'SIGKILL', {processGroup});
+                    pumpLines('stdout', child.stdout, {onLine: emit});
+                    pumpLines('stderr', child.stderr, {onLine: emit});
+                    let failed = false;
+                    child.once('error', (error) => {
+                        failed = true;
+                        emit('stderr', `Could not start dependency installation: ${error.message}`);
+                    });
+                    child.once('close', (code) => {
+                        const exit = cancellation.isCancelling() ? 130 : code ?? 1;
+                        resolve({code: exit, ok: !failed && exit === 0});
+                    });
                 });
+            }
+        } catch (error) {
+            emit('stderr', `Dependency installation failed: ${(error as Error).message}`);
+        }
 
-            pump('stdout', child.stdout);
-            pump('stderr', child.stderr);
-
-            child.on('error', (err) => {
-                onLine({
-                    stream: 'stderr',
-                    text: `Failed to start clean install: ${err.message}`,
-                    label,
-                });
-                resolve({code: 1, ok: false});
-            });
-            child.on('close', (code) => {
-                const exit = code ?? 1;
-                onLine({
-                    stream: 'system',
-                    text: `clean install exited with code ${exit}`,
-                    label,
-                });
-                resolve({code: exit, ok: exit === 0});
-            });
-        });
+        try {
+            if (!result.ok && (movedModules || started)) {
+                await fs.promises.rm(modules, {recursive: true, force: true});
+                if (movedModules) await fs.promises.rename(path.join(backup!, 'node_modules'), modules);
+                for (const [file, content] of snapshots) {
+                    if (content === null) await fs.promises.rm(file, {force: true});
+                    else await fs.promises.writeFile(file, new Uint8Array(content));
+                }
+                emit('system', movedModules
+                    ? 'Installation failed. Previous dependencies and lockfiles restored.'
+                    : 'Installation failed. Partial dependencies removed; lockfiles restored.');
+            }
+            if (backup) await fs.promises.rm(backup, {recursive: true, force: true});
+        } catch (error) {
+            emit('stderr', `Could not finish dependency recovery: ${(error as Error).message}. Backup retained at ${backup}.`);
+            return {code: 1, ok: false};
+        }
+        emit('system', `Dependency installation exited with code ${result.code}.`);
+        return result;
     }
 
     return {installCommand, cleanInstall};

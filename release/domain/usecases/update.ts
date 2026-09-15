@@ -87,7 +87,7 @@ export function createUpdateUseCases(deps: {
 
             onLine({
                 stream: 'system',
-                text: 'Clean install before publishing (rm -rf node_modules && install)…',
+                text: 'Preparing update dependencies. The current installation will be restored if this fails…',
             });
             const inst = await installer.cleanInstall(onLine, undefined, 'frozen');
             if (!inst.ok) {

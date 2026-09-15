@@ -24,7 +24,9 @@ export function StoreConfirm({
             <Text color="green">✓ Release inputs validated for v{vm.version}</Text>
             <Text>Platforms: {vm.platforms.join(', ')}</Text>
             <Text>Channels: {vm.channels.join(', ')}</Text>
-            {vm.existingSummary ? (
+            {vm.coverageWarning ? (
+                <Text color="yellow">{vm.coverageWarning}</Text>
+            ) : vm.existingSummary ? (
                 <Text color="yellow">
                     ⚠ This runtime version is already released on: {vm.existingSummary}
                 </Text>
