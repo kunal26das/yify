@@ -4974,10 +4974,10 @@ expo-linking@57.0.10:
     expo-constants "~57.0.18"
     invariant "^2.2.4"
 
-expo-localization@57.0.1:
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/expo-localization/-/expo-localization-57.0.1.tgz#62d7a99f5d548bcf01bfd36d2411b47f38db9c48"
-  integrity sha512-8Ffl4UTbOsQeGT0v5fxMbyPHyPMPnhSPDFQJa8p9rjJrthFoAtNi+fL6Ssmrvf1/7dmPq1mVY52MEt0TMEfgjA==
+expo-localization@57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-localization/-/expo-localization-57.0.2.tgz#13caf8073eb37ff1f689b345bc131c3d49b246fd"
+  integrity sha512-sIKYH3Ivddoge568WY6j+Kp2MAAZzWWqEnY2bokLkJFwX366tGL1mEnoY2WUi/qHatFFPop2yqDdurzbhnnimQ==
   dependencies:
     rtl-detect "^1.0.2"
 
