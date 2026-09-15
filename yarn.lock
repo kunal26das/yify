@@ -4878,25 +4878,25 @@ expo-constants@57.0.18, expo-constants@~57.0.17:
   dependencies:
     "@expo/env" "~2.4.3"
 
-expo-dev-client@57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-57.0.18.tgz#35236d77ad99e9cac004a632a2db7a705b4fe61c"
-  integrity sha512-cT+6iO4rRoguIxeONAPHF2wbAlc002tZya2M3xHlc6EWKptjsAL2Vr+kagYdLH/4vtLX7XKhWvOzaBf+rQpRFg==
+expo-dev-client@57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-57.0.19.tgz#aefa665fcb736365ac161d4811723c8b4498b33e"
+  integrity sha512-7giMK6BLL685GECHem2UAQvS473ImZLi5l+Q5tq+XSyv6I9UNVPs0p07mKwgBzq8z7DR3d4nTl702ziFxTjO3Q==
   dependencies:
-    expo-dev-launcher "~57.0.19"
+    expo-dev-launcher "~57.0.20"
     expo-dev-menu "~57.0.18"
     expo-dev-menu-interface "~57.0.0"
-    expo-manifests "~57.0.1"
-    expo-updates-interface "~57.0.1"
+    expo-manifests "~57.0.2"
+    expo-updates-interface "~57.0.2"
 
-expo-dev-launcher@~57.0.19:
-  version "57.0.19"
-  resolved "https://registry.yarnpkg.com/expo-dev-launcher/-/expo-dev-launcher-57.0.19.tgz#85beedf25b77df2c7608dad01bef0ca394b1446b"
-  integrity sha512-IF/EJ3tcHqiyfBb5VtpAU3upBXRVTFVuVoWqEzrkZCesuMi35td4yQFvPtqXbMceaEErgFyiyxhW+L6AXVYapA==
+expo-dev-launcher@~57.0.20:
+  version "57.0.20"
+  resolved "https://registry.yarnpkg.com/expo-dev-launcher/-/expo-dev-launcher-57.0.20.tgz#1a268a13294223c9577d4d9fffba85792018773c"
+  integrity sha512-F6oAHaDn9j3L/gyMGE+OalriX6PHZWnZLxpN5jc6crTrp8f6hSwGhmsHpAvdOzijfMjyi3R2UkcISFsCIIQYFA==
   dependencies:
     "@expo/schema-utils" "^57.0.2"
     expo-dev-menu "~57.0.18"
-    expo-manifests "~57.0.1"
+    expo-manifests "~57.0.2"
 
 expo-dev-menu-interface@~57.0.0:
   version "57.0.0"
@@ -4961,10 +4961,10 @@ expo-insights@57.0.16:
   dependencies:
     expo-eas-client "~57.0.3"
 
-expo-json-utils@~57.0.1:
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/expo-json-utils/-/expo-json-utils-57.0.1.tgz#1635b80ccb124e2635765611957ac4e825880130"
-  integrity sha512-cgTe1NqzQdYs/WN+3nIY5IZg8s0pb0xaTUbhYvxQDn137GbwRfHoGM2se3m3Vsl4Qu+B9G4RPEK5WJDEU2Do7g==
+expo-json-utils@~57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-json-utils/-/expo-json-utils-57.0.2.tgz#913c4389e1b51a4429e13e09ea1923541ca79ef3"
+  integrity sha512-9kYZECLKE3pYZQs+kt3+ggY83Lfryog9/UEo3HJKGcHUZeKKtlFBIPFjI4LzREubsvjP7AsvG0FdEX9EquIoAQ==
 
 expo-keep-awake@57.0.1, expo-keep-awake@~57.0.1:
   version "57.0.1"
@@ -4986,12 +4986,12 @@ expo-localization@57.0.1:
   dependencies:
     rtl-detect "^1.0.2"
 
-expo-manifests@~57.0.1:
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-57.0.1.tgz#4596d35f82d65293570fcd8b636b51c5d9696dc4"
-  integrity sha512-qB/mDG2dYdl+EvUeQuqP8KFYCFgFCQjJYdWIHo8SFBgDzMYmdF286DFY2M1M9Okr99wkb5M4tgA3aCcwv3aEQA==
+expo-manifests@~57.0.1, expo-manifests@~57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-57.0.2.tgz#c8af35f2e0f3b45cef826ac5a39d02b0a7ed54ff"
+  integrity sha512-pPIIcKR73OShwlWMg8H90WRzKUd2krDdKlKAwuQV1FtUwE7H3hQEFw0ePFQY9yFoGMF/77ryYwNKfI5umMcCog==
   dependencies:
-    expo-json-utils "~57.0.1"
+    expo-json-utils "~57.0.2"
 
 expo-modules-autolinking@~57.0.12, expo-modules-autolinking@~57.0.13:
   version "57.0.13"
@@ -5132,10 +5132,10 @@ expo-task-manager@57.0.16, expo-task-manager@~57.0.16:
   dependencies:
     unimodules-app-loader "~57.0.1"
 
-expo-updates-interface@~57.0.1:
-  version "57.0.1"
-  resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-57.0.1.tgz#2ff8a65f9ec139743b9b29273e42f2888420db00"
-  integrity sha512-+LUWwJ0gf/TEKMVdQAw/Gjih4dvrk+URgy24X9qEGKuuMDZqjBRm9T4yQyBVALGL5TTdPUaB6ILxx3lshm3pwQ==
+expo-updates-interface@~57.0.1, expo-updates-interface@~57.0.2:
+  version "57.0.2"
+  resolved "https://registry.yarnpkg.com/expo-updates-interface/-/expo-updates-interface-57.0.2.tgz#b3d357aee2a618e6e38b275d7de9886776338fd3"
+  integrity sha512-x3SA5toiHZEkW+5oeNdUM1Rvt6M3ExegQsSwS3Z1+S9gn9utGYTGBkb8MBQivhjIZiRlQYDIhauxA8kySQEWtQ==
 
 expo-updates@57.0.21:
   version "57.0.21"
