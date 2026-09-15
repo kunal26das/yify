@@ -1143,10 +1143,18 @@
   resolved "https://registry.yarnpkg.com/@expo/sudo-prompt/-/sudo-prompt-9.3.2.tgz#0fd2813402a42988e49145cab220e25bea74b308"
   integrity sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==
 
-"@expo/ui@57.0.17", "@expo/ui@^57.0.17":
+"@expo/ui@57.0.17":
   version "57.0.17"
   resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.17.tgz#4a6f6bcb204b23aa03f7e71224380bec98da23ce"
   integrity sha512-cnenUTsfX78i/EfXhA81Zv48sOxRdIq4YWCggwgBiPoOyS8J5CP/6dGyKo26ZVtcIsogWR4aXywaripeRF+6Ng==
+  dependencies:
+    sf-symbols-typescript "^2.1.0"
+    vaul "^1.1.2"
+
+"@expo/ui@^57.0.18":
+  version "57.0.18"
+  resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.18.tgz#5897bbd15da8af0ea339ebefc962892fb7210db8"
+  integrity sha512-9RkA26v0FSyHlkQCyavZrT8EzsALfkNHIFO5uC+IsAxzWzItdOWdy6asjpg1yaCvBEGMYkP17FUZxluhVbeleA==
   dependencies:
     sf-symbols-typescript "^2.1.0"
     vaul "^1.1.2"
@@ -4927,10 +4935,15 @@ expo-font@57.0.4, expo-font@~57.0.4:
   dependencies:
     fontfaceobserver "^2.1.0"
 
-expo-glass-effect@57.0.2, expo-glass-effect@^57.0.2:
+expo-glass-effect@57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.2.tgz#88c4ac4d10a9c2c670b65842b91c9f9998d76502"
   integrity sha512-k2Dk0uCJrGYe8DWfvlMPmJ6w7uxCmJpoJckIcNDoUn27g75c5Kv3nUa88+T4+CpeVkixwY7iWrv46B5De20S9Q==
+
+expo-glass-effect@^57.0.3:
+  version "57.0.3"
+  resolved "https://registry.yarnpkg.com/expo-glass-effect/-/expo-glass-effect-57.0.3.tgz#acf0ba84733f5762b8f8b13819e6542faf627dbe"
+  integrity sha512-aTh2J5eCxf+rSRMBJTnP8Ib5/k8DYFVDuEX1xqesN9F9aqTXocwMv/aQRVBNUs/iogDWhHIJz2pN97IsrrTcoA==
 
 expo-haptics@57.0.3:
   version "57.0.3"
@@ -5035,15 +5048,15 @@ expo-notifications@57.0.18:
     expo-application "~57.0.3"
     expo-constants "~57.0.18"
 
-expo-router@57.0.20:
-  version "57.0.20"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.20.tgz#3805b1eb52f9167ed99bd63b630b5dc38b076288"
-  integrity sha512-pBY0Ek5opUgpUSdoX3bAmyd8mkGSeTIOEdIDdpSG/02owrrwpnaQuSn/XuwOtizoeFedAD3VgS5DDVSyQTdI7g==
+expo-router@57.0.21:
+  version "57.0.21"
+  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.21.tgz#2a7cde386f47725d6310b427b7fce84ccf41b140"
+  integrity sha512-r7UDLZU0gtVm8FW4nv2pxSl9TDhKlf2shcBbfp1T9STXJ3xYl9llLH701qQkICuXqqt3vGpOZ57GXC1ioVWg4g==
   dependencies:
     "@expo/log-box" "^57.0.4"
     "@expo/metro-runtime" "^57.0.15"
     "@expo/schema-utils" "^57.0.2"
-    "@expo/ui" "^57.0.17"
+    "@expo/ui" "^57.0.18"
     "@radix-ui/react-slot" "^1.2.0"
     "@radix-ui/react-tabs" "^1.1.12"
     "@react-native-masked-view/masked-view" "^0.3.2"
@@ -5051,12 +5064,12 @@ expo-router@57.0.20:
     color "^4.2.3"
     debug "^4.3.4"
     escape-string-regexp "^4.0.0"
-    expo-glass-effect "^57.0.2"
+    expo-glass-effect "^57.0.3"
     expo-server "^57.0.3"
-    expo-symbols "^57.0.2"
+    expo-symbols "^57.0.3"
     fast-deep-equal "^3.1.3"
     invariant "^2.2.4"
-    nanoid "^3.3.8"
+    nanoid "^3.3.18"
     query-string "^7.1.3"
     react-fast-compare "^3.2.2"
     react-is "^19.1.0"
@@ -5104,7 +5117,7 @@ expo-structured-headers@~57.0.1:
   resolved "https://registry.yarnpkg.com/expo-structured-headers/-/expo-structured-headers-57.0.1.tgz#fa1b00aa36480bdf6c41f138fe2b47e42da74dd8"
   integrity sha512-5VwmitVr2J716pOuHXWmEnHbZhZg63DBOZKH5tj0SR8Sps/3jSAf9wf9+UGTKcKgAxGf1PPwQ0lAQ2bG3RwjAg==
 
-expo-symbols@57.0.3, expo-symbols@^57.0.2:
+expo-symbols@57.0.3, expo-symbols@^57.0.3:
   version "57.0.3"
   resolved "https://registry.yarnpkg.com/expo-symbols/-/expo-symbols-57.0.3.tgz#291f56d981d8271842aa0878b7e197c1793c1eef"
   integrity sha512-uuK5yHLVR7kExUCrO/ItBvp/kp1maQ9Nkb6KvNy5ZUQnN0NMKwuhJ4GvbfS9N3ACmvCjTT4gKvg4yH5UuKIYNA==
@@ -7051,7 +7064,7 @@ multitars@^1.0.2:
   resolved "https://registry.yarnpkg.com/multitars/-/multitars-1.0.2.tgz#340f48eebdfe94cc4e7cf287dfcdeedb9f779003"
   integrity sha512-6GwVw5eLi9sThdtlS4PKwC7yRLaf45pYhIEzKBHdKxi+YOXGKFX8acIniH+Uh/+k9mS2lQOupTccjoe5r0/1IQ==
 
-nanoid@^3.3.1, nanoid@^3.3.18, nanoid@^3.3.8:
+nanoid@^3.3.1, nanoid@^3.3.18:
   version "3.3.18"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.18.tgz#f66a2de1199ffde0fcf21c8a5f13106b1c081913"
   integrity sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==
@@ -7669,12 +7682,7 @@ react-is@^18.0.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react-is@^19.1.0:
-  version "19.2.8"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.8.tgz#09826f9fbc187bc668e3e5c62edc001f804d5018"
-  integrity sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==
-
-react-is@^19.3.0:
+react-is@^19.1.0, react-is@^19.3.0:
   version "19.3.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.3.0.tgz#716028d67e9993d23a2d353c6d08a3c1ef2bbeb4"
   integrity sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==
