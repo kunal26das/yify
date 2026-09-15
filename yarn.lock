@@ -5112,10 +5112,10 @@ expo-symbols@57.0.3, expo-symbols@^57.0.2:
     "@expo-google-fonts/material-symbols" "^0.4.1"
     sf-symbols-typescript "^2.0.0"
 
-expo-system-ui@57.0.3:
-  version "57.0.3"
-  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.3.tgz#31517c381af6d435829aff2328bf1e1b3a19c749"
-  integrity sha512-3N3BoagGojEvQw0h7kL0Lvv2LrVjqEvODSNS+Nc9lj/kzaTaVx4K1HI8qqxeALMf5jui3rLP2b3Ai2pXotoNuA==
+expo-system-ui@57.0.4:
+  version "57.0.4"
+  resolved "https://registry.yarnpkg.com/expo-system-ui/-/expo-system-ui-57.0.4.tgz#e70154f9b9e2e2d28d94b6bfa05992e200ba6b6d"
+  integrity sha512-z//rxQJzhTNA1PcKrUtWmrd21jAS3nEDu1b0n8B/7LTTR933OcsZYP1HnbaZifuo2ZH/h7nce2Ow61WZ1Ig2bg==
   dependencies:
     "@react-native/normalize-colors" "0.86.3"
     debug "^4.3.2"
