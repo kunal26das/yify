@@ -5125,7 +5125,14 @@ expo-system-ui@57.0.4:
     "@react-native/normalize-colors" "0.86.3"
     debug "^4.3.2"
 
-expo-task-manager@57.0.18, expo-task-manager@~57.0.18:
+expo-task-manager@58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-58.0.0.tgz#7ef1562cd64effdf287312bd43887ee8ab5a2bb4"
+  integrity sha512-U8E6uIZsn8z/KjDd7x0oa7jH0iOsiVFn9hVnN67CSZ9iejyhHYcMGJyPenjSrdsjzlaU1J40Y5u63T4Xhy2cVg==
+  dependencies:
+    unimodules-app-loader "~58.0.0"
+
+expo-task-manager@~57.0.18:
   version "57.0.18"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.18.tgz#4b617467ead35e23815a2dca36c96f8d0e783c98"
   integrity sha512-tMWHgTLlF5CBC7Rl1rtdDpGxN+CWuV6g9R1hD/2WgAlqi2aZyVfgUzNX/1QmNPLSeXRKFApV5GXNyZRDwl2IgQ==
@@ -8893,6 +8900,11 @@ unimodules-app-loader@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-57.0.2.tgz#950a025d13c71c6202069447c10466dcba606001"
   integrity sha512-1Ja+r1VR556m1cTn4BBwAe0AQpX8mDobvN+6Kx12h0jqf0euHfvkPHg83ijuC7pWHff9vTOUc7qr5t8vnmnljg==
+
+unimodules-app-loader@~58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-58.0.0.tgz#94b7ef6c2b789a378760fcfada5e83d81359e219"
+  integrity sha512-J4+MQUFWMwTo1sUpp7B80be6MVtrg8IBAmsQEh1SGIZ/j7ywGgWNC1QbyA9adXUI/uHaDWng1pyiT3YHJ4sRvQ==
 
 universalify@^0.1.0:
   version "0.1.2"
