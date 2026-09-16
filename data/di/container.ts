@@ -33,6 +33,7 @@ export function createDependencies(): Dependencies {
     const analytics = new FirebaseAnalyticsSink();
     const diagnostics = new SentryDiagnostics();
     const appConfig = new RemoteAppConfig(diagnostics);
+    const network = new ExpoNetworkMonitor();
 
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();
@@ -62,6 +63,7 @@ export function createDependencies(): Dependencies {
     accountLink = new AccountLink({auth, purchases, accountSync, analytics});
 
     const ads = new AdMobAdGateway({
+        network,
         diagnostics,
         analytics,
         adRevenue: new RevenueCatAdRevenueSink(analytics, diagnostics),
@@ -79,7 +81,7 @@ export function createDependencies(): Dependencies {
         diagnostics,
         analytics,
         appConfig,
-        appUpdates: new ExpoAppUpdates(diagnostics),
+        appUpdates: new ExpoAppUpdates(diagnostics, network),
         auth,
         movies: catalog.movies,
         shows: catalog.shows,
@@ -91,7 +93,7 @@ export function createDependencies(): Dependencies {
         watchHistory,
         purchases,
         accountSync,
-        network: new ExpoNetworkMonitor(),
+        network,
         newMovies: new NewMoviesNotifierImpl(diagnostics),
         storeServices: new PlayStoreServices(),
         ads,

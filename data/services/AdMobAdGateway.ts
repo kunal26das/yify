@@ -21,6 +21,7 @@ import {
     type DiagnosticOutcome,
     type DiagnosticSpan,
     decideAd,
+    type NetworkMonitor,
     type PurchaseState,
 } from '@/domain';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
@@ -53,6 +54,7 @@ export interface AdMobAdGatewayOptions {
     adRevenue: AdRevenueSink;
     entitlement: () => PurchaseState;
     diagnostics?: Diagnostics;
+    network?: NetworkMonitor;
 }
 
 function adErrorCode(error: unknown): string {
@@ -69,8 +71,9 @@ function adErrorCode(error: unknown): string {
     return typeof code === 'string' ? known[code] ?? 'unknown' : 'unknown';
 }
 
-function finishAdFailure(span: DiagnosticSpan, error: unknown): void {
-    const errorCode = adErrorCode(error);
+function finishAdFailure(span: DiagnosticSpan, error: unknown, online = true): void {
+    const reportedCode = adErrorCode(error);
+    const errorCode = !online && reportedCode === 'internal_error' ? 'network_error' : reportedCode;
     if (errorCode === 'no_fill' || errorCode === 'network_error' || errorCode === 'app_not_foreground') {
         span.finish(errorCode === 'no_fill' ? 'empty' : 'unavailable', {error_code: errorCode});
     } else {
@@ -103,6 +106,16 @@ export class AdMobAdGateway implements AdGateway {
     constructor(options: AdMobAdGatewayOptions) {
         this.options = options;
         this.diagnostics = options.diagnostics ?? NOOP_DIAGNOSTICS;
+        if (this.supported) {
+            const resume = () => {
+                if (this.retryTimer == null) this.requestNext();
+            };
+            watchForeground(resume);
+            options.network?.subscribe(() => {
+                if (options.network?.isOnline() === false) this.clearRetry();
+                else resume();
+            });
+        }
     }
 
     init(): Promise<void> {
@@ -196,6 +209,7 @@ export class AdMobAdGateway implements AdGateway {
 
     private requestNext(): void {
         if (!this.initialized || !this.canRequestAds) return;
+        if (!isForeground() || this.options.network?.isOnline() === false) return;
         if (this.loading || this.loaded || this.showing) return;
         const unitId = this.resolveUnitId();
         this.clearRetry();
@@ -226,7 +240,7 @@ export class AdMobAdGateway implements AdGateway {
         const offError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
             if (loadFailed) return;
             loadFailed = true;
-            finishAdFailure(span, error);
+            finishAdFailure(span, error, this.options.network?.isOnline());
             this.loading = false;
             this.loaded = false;
             this.failures += 1;
@@ -402,6 +416,7 @@ export class AdMobAdGateway implements AdGateway {
 
     private scheduleRetry(): void {
         this.clearRetry();
+        if (!isForeground() || this.options.network?.isOnline() === false) return;
         const index = Math.min(Math.max(this.failures - 1, 0), LOAD_BACKOFF_MS.length - 1);
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
