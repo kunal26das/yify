@@ -9,5 +9,65 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     ignore:
+      - dependency-name: "@expo/log-box"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@expo/metro-runtime"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@expo/ui"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-config-expo"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-background-task"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-blur"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-build-properties"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-constants"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-dev-client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-font"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-glass-effect"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-haptics"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-image"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-insights"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-keep-awake"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-linking"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-localization"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-navigation-bar"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-network"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-notifications"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-router"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-splash-screen"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-sqlite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-status-bar"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-store-review"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-symbols"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-system-ui"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-task-manager"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-updates"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-web-browser"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "react-native-google-mobile-ads"
         versions: [">=16.4.0"]
