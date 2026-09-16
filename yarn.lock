@@ -4850,12 +4850,12 @@ expo-asset@~57.0.17:
     "@expo/image-utils" "^0.11.5"
     expo-constants "~57.0.18"
 
-expo-background-task@57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.18.tgz#fa84ca3a09ed7e73b82d144eaeb906f0b92ddf6d"
-  integrity sha512-jSQAQt+RWrELq171jhnt9JRmko9+s1kKDAsIRuClgEGkcalJH0RHVe2ZO6kSOGA4xPfNuMR9ekQd+pr2PO3IhQ==
+expo-background-task@58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-58.0.0.tgz#b035f0864648a622646d7233bf883836431ee496"
+  integrity sha512-3srtMNFyCqGTtDNmUAuZusZj1hMIl3dBmQZdci/GROoud4x7a36Ajrjvf9Y4VB47wjj41ltojEFEX+dClOXJMw==
   dependencies:
-    expo-task-manager "~57.0.18"
+    expo-task-manager "~58.0.0"
 
 expo-blur@57.0.3:
   version "57.0.3"
@@ -5125,12 +5125,19 @@ expo-system-ui@57.0.4:
     "@react-native/normalize-colors" "0.86.3"
     debug "^4.3.2"
 
-expo-task-manager@57.0.18, expo-task-manager@~57.0.18:
+expo-task-manager@57.0.18:
   version "57.0.18"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.18.tgz#4b617467ead35e23815a2dca36c96f8d0e783c98"
   integrity sha512-tMWHgTLlF5CBC7Rl1rtdDpGxN+CWuV6g9R1hD/2WgAlqi2aZyVfgUzNX/1QmNPLSeXRKFApV5GXNyZRDwl2IgQ==
   dependencies:
     unimodules-app-loader "~57.0.2"
+
+expo-task-manager@~58.0.0:
+  version "58.0.3"
+  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-58.0.3.tgz#859fac28662271594d882fcc3c315ba4a250bb7e"
+  integrity sha512-l726ecJfjY0GJQlV84aiNHeLtFHKlV70Ys88KHKJyFplArzyiLtgMpTEJ9KLSxlx9Fw/Fyzszb/1Tm4v2wOMTg==
+  dependencies:
+    unimodules-app-loader "~58.0.0"
 
 expo-updates-interface@~57.0.2:
   version "57.0.2"
@@ -8893,6 +8900,11 @@ unimodules-app-loader@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-57.0.2.tgz#950a025d13c71c6202069447c10466dcba606001"
   integrity sha512-1Ja+r1VR556m1cTn4BBwAe0AQpX8mDobvN+6Kx12h0jqf0euHfvkPHg83ijuC7pWHff9vTOUc7qr5t8vnmnljg==
+
+unimodules-app-loader@~58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/unimodules-app-loader/-/unimodules-app-loader-58.0.0.tgz#94b7ef6c2b789a378760fcfada5e83d81359e219"
+  integrity sha512-J4+MQUFWMwTo1sUpp7B80be6MVtrg8IBAmsQEh1SGIZ/j7ywGgWNC1QbyA9adXUI/uHaDWng1pyiT3YHJ4sRvQ==
 
 universalify@^0.1.0:
   version "0.1.2"
