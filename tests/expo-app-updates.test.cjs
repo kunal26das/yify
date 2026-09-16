@@ -37,12 +37,13 @@ function fixture(options = {}) {
         event: (...args) => events.push(args),
         capture: (...args) => failures.push(args),
         start: operation => {
-            const span = {operation, finish: outcome => {span.outcome = outcome;}, fail: error => {span.error = error;}};
+            const span = {operation, finish: outcome => {span.outcome = outcome;},
+                fail: (error, attributes) => {span.error = error; span.attributes = attributes;}};
             spans.push(span);
             return span;
         },
     };
-    const service = new ExpoAppUpdates(diagnostics);
+    const service = new ExpoAppUpdates(diagnostics, options.network);
     return {service, calls, events, failures, spans, reload, listeners,
         foreground: () => listeners.forEach(listener => listener('active'))};
 }
@@ -85,7 +86,7 @@ test('failed native reload restores the ready update and permits an explicit ret
     f.reload.reject(error);
     await settled();
     assert.deepEqual(f.service.getStatus(), {state: 'ready', progress: 1});
-    assert.deepEqual(f.failures, [[error, 'updates.reload', {provider: 'expo'}]]);
+    assert.deepEqual(f.failures, [[error, 'updates.reload', {provider: 'expo', error_code: 'unknown'}]]);
     f.service.restart();
     assert.equal(f.calls.reload, 2);
     await settled();
@@ -130,5 +131,62 @@ test('disabled updates and unconfigured channels do not make native update reque
         f.service.restart();
         await settled();
         assert.deepEqual(f.calls, {check: 0, fetch: 0, reload: 0});
+    }
+});
+
+test('confirmed offline updates wait for connectivity and retry once the network returns', async () => {
+    let online = false;
+    const listeners = new Set();
+    const network = {isOnline: () => online, subscribe: listener => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+    }};
+    const f = fixture({network});
+    f.service.start();
+    f.service.start();
+    f.foreground();
+    await settled();
+    assert.deepEqual(f.calls, {check: 0, fetch: 0, reload: 0});
+    assert.equal(listeners.size, 1);
+    assert.equal(f.events.at(-1)[1].reason, 'offline');
+    online = true;
+    listeners.forEach(listener => listener());
+    await settled();
+    assert.deepEqual(f.calls, {check: 1, fetch: 1, reload: 0});
+    assert.deepEqual(f.service.getStatus(), {state: 'ready', progress: 1});
+});
+
+test('native update check codes remain captured and distinguish configuration failures from generic check failures', async () => {
+    for (const code of ['ERR_UPDATES_CHECK', 'ERR_UPDATES_DISABLED', 'ERR_NOT_AVAILABLE_IN_DEV_CLIENT']) {
+        const error = Object.assign(new Error('Native failure'), {name: 'CodedError', code});
+        let rejected = true;
+        const f = fixture({
+            network: {isOnline: () => true, subscribe: () => () => {}},
+            check: async () => {
+                if (rejected) throw error;
+                return {isAvailable: true};
+            },
+        });
+        await f.service.sync();
+        assert.equal(f.spans[0].error, error);
+        assert.deepEqual(f.spans[0].attributes, {error_code: code});
+        assert.deepEqual(f.service.getStatus(), {state: 'idle', progress: 0});
+        rejected = false;
+        await f.service.sync();
+        assert.equal(f.calls.check, 2);
+        assert.equal(f.service.getStatus().state, 'ready');
+    }
+});
+
+test('unknown update failures remain captured without leaking arbitrary native codes into diagnostics', async () => {
+    for (const error of [
+        Object.assign(new Error('Native failure'), {name: 'CodedError', code: 'private@example.com'}),
+        new Error('Unknown update error'),
+        Object.defineProperty(new Error('Unreadable error'), 'code', {get: () => {throw new Error('Denied');}}),
+    ]) {
+        const f = fixture({check: async () => {throw error;}});
+        await assert.doesNotReject(f.service.sync());
+        assert.equal(f.spans[0].error, error);
+        assert.deepEqual(f.spans[0].attributes, {error_code: 'unknown'});
     }
 });

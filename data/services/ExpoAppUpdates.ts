@@ -1,13 +1,31 @@
 import {AppState} from 'react-native';
 import * as Updates from 'expo-updates';
 
-import {IDLE_UPDATE_STATUS, type AppUpdates, type Diagnostics, type UpdateStatus} from '@/domain';
+import {IDLE_UPDATE_STATUS, type AppUpdates, type Diagnostics, type NetworkMonitor, type UpdateStatus} from '@/domain';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 const ERROR_VISIBLE_MS = 6000;
+const UPDATE_ERROR_CODES = new Set([
+    'ERR_NOT_AVAILABLE_IN_DEV_CLIENT', 'ERR_UPDATES_CHECK', 'ERR_UPDATES_CONFIG_OVERRIDE',
+    'ERR_UPDATES_DISABLED', 'ERR_UPDATES_FETCH', 'ERR_UPDATES_READ_LOGS',
+    'ERR_UPDATES_RELOAD', 'ERR_UPDATES_RUNTIME_OVERRIDE', 'ERR_UPDATES_UNSUPPORTED_DIRECTIVE',
+]);
+
+function updateErrorCode(error: unknown): string {
+    try {
+        const code = error != null && typeof error === 'object'
+            ? (error as {code?: unknown}).code : undefined;
+        return typeof code === 'string' && UPDATE_ERROR_CODES.has(code) ? code : 'unknown';
+    } catch {
+        return 'unknown';
+    }
+}
 
 export class ExpoAppUpdates implements AppUpdates {
-    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+    constructor(
+        private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly network?: NetworkMonitor,
+    ) {}
     private status: UpdateStatus = IDLE_UPDATE_STATUS;
     private readonly listeners = new Set<() => void>();
     private syncing = false;
@@ -35,6 +53,9 @@ export class ExpoAppUpdates implements AppUpdates {
             if (next !== 'active') return;
             void this.sync();
         });
+        this.network?.subscribe(() => {
+            if (this.network?.isOnline()) void this.sync();
+        });
     }
 
     dismiss(): void {
@@ -49,12 +70,16 @@ export class ExpoAppUpdates implements AppUpdates {
         void Updates.reloadAsync().catch(error => {
             this.reloading = false;
             this.publish({state: 'ready', progress: 1});
-            this.diagnostics.capture(error, 'updates.reload', {provider: 'expo'});
+            this.diagnostics.capture(error, 'updates.reload', {provider: 'expo', error_code: updateErrorCode(error)});
         });
     }
 
     async sync(): Promise<void> {
         if (this.syncing || this.reloading || this.status.state === 'ready' || !Updates.isEnabled || !Updates.channel) return;
+        if (this.network?.isOnline() === false) {
+            this.diagnostics.event('updates.check', {provider: 'expo', outcome: 'unavailable', reason: 'offline'});
+            return;
+        }
         this.syncing = true;
         try {
             this.publish({state: 'checking', progress: 0});
@@ -73,7 +98,7 @@ export class ExpoAppUpdates implements AppUpdates {
                 this.downloadFailed = false;
                 this.publish(fetched.isNew ? {state: 'ready', progress: 1} : IDLE_UPDATE_STATUS);
             } catch (error) {
-                download.fail(error);
+                download.fail(error, {error_code: updateErrorCode(error)});
                 if (this.downloadFailed) {
                     this.publish(IDLE_UPDATE_STATUS);
                     return;
@@ -94,7 +119,7 @@ export class ExpoAppUpdates implements AppUpdates {
             span.finish(result.isAvailable ? 'ok' : 'empty');
             return result;
         } catch (error) {
-            span.fail(error);
+            span.fail(error, {error_code: updateErrorCode(error)});
             return null;
         }
     }
