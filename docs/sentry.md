@@ -1,7 +1,7 @@
 # Diagnostics
 
 Yify uses `@sentry/react-native` for JavaScript and native errors in Sentry project
-**kudos-labs / react-native**. Initialization runs before Expo Router in
+**kudos-labs / yify**. Initialization runs before Expo Router in
 [`entry.ts`](../entry.ts); development sessions and static web rendering do not send events.
 Existing Firebase Crashlytics remains enabled.
 

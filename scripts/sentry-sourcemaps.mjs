@@ -21,7 +21,7 @@ export function uploadEnvironment(cwd = projectRoot, inherited = process.env) {
     return {
         ...env,
         SENTRY_ORG: env.SENTRY_ORG || 'kudos-labs',
-        SENTRY_PROJECT: env.SENTRY_PROJECT || 'react-native',
+        SENTRY_PROJECT: env.SENTRY_PROJECT || 'yify',
         SENTRY_URL: env.SENTRY_URL || 'https://sentry.io/',
     };
 }
