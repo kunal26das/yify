@@ -147,7 +147,7 @@ function adsFixture({gatherConsent, getConsentInfo = async () => consentInfo(fal
                 },
             },
         },
-        '../datasources/platform/ForegroundWatcher': {},
+        '../datasources/platform/ForegroundWatcher': {isForeground: () => true, watchForeground: () => () => {}},
     });
     const gateway = new AdMobAdGateway({
         analytics: {trackEvent: (name, data) => calls.events.push({name, data})},
