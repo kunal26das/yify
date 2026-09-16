@@ -88,6 +88,7 @@ function fixture(t, options = {}) {
         PURCHASES_ERROR_CODE: {
             PURCHASE_CANCELLED_ERROR: 'cancelled', PRODUCT_ALREADY_PURCHASED_ERROR: 'already', PAYMENT_PENDING_ERROR: 'pending',
             PURCHASE_NOT_ALLOWED_ERROR: '3', NETWORK_ERROR: '10', OFFLINE_CONNECTION_ERROR: '35',
+            CONFIGURATION_ERROR: '23',
         },
     };
     const {RevenueCatPurchaseRepositoryImpl} = loadTypeScript('data/repositories/RevenueCatPurchaseRepositoryImpl.ts', {
@@ -646,4 +647,51 @@ test('temporary customer network failures retain verified access and recover thr
     assert.equal(f.repository.getState().ready, true);
     assert.equal(f.repository.getState().adsRemoved, true);
     assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'ok');
+});
+
+test('unavailable store configuration clears stale offers without repeatedly retrying a permanent failure', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let unavailable = false;
+    const failure = Object.assign(new Error('No products in this storefront'), {code: '23'});
+    const f = fixture(t, {diagnostics, infos: [['account-a', customer(true)]], offerings: () => {
+        if (unavailable) throw failure;
+        return offering();
+    }});
+    await f.ready('account-a');
+    const oldId = f.repository.getState().offers[0].id;
+    unavailable = true;
+    await f.repository.refresh();
+    assert.deepEqual(f.repository.getState().offers, []);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(await f.repository.purchase(oldId), false);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+    assert.deepEqual(operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
+        [['purchases.offerings', failure]]);
+    const attempts = f.calls.filter(([name]) => name === 'offers').length;
+    t.mock.timers.tick(300000);
+    await flush();
+    assert.equal(f.calls.filter(([name]) => name === 'offers').length, attempts);
+    unavailable = false;
+    await f.repository.refresh();
+    assert.equal(f.repository.getState().offers.length, 1);
+});
+
+test('initial store configuration failure remains observable and recovers on foreground refresh', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let unavailable = true;
+    const f = fixture(t, {diagnostics, offerings: () => {
+        if (unavailable) throw {code: '23'};
+        return offering();
+    }});
+    await f.ready();
+    assert.equal(f.repository.getState().ready, true);
+    assert.deepEqual(f.repository.getState().offers, []);
+    t.mock.timers.tick(300000);
+    await flush();
+    assert.equal(f.calls.filter(([name]) => name === 'offers').length, 1);
+    assert.equal(operations.filter(entry => entry.error).length, 1);
+    unavailable = false;
+    f.foreground[0]();
+    await flush();
+    assert.equal(f.repository.getState().offers.length, 1);
 });

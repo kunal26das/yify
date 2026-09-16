@@ -486,6 +486,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 span.finish('unavailable', {error_code: code});
                 return [];
             }
+            if (code === 'configuration') this.clearOffers(placement);
             if (code === 'network' || code === 'offline') span.finish('unavailable', {error_code: code});
             else span.fail(error, {error_code: code});
             throw error;
@@ -503,8 +504,11 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         try {
             await this.fetchOffers('settings_supporter', revision);
             return true;
-        } catch {
-            if (revision === this.revision) this.scheduleRetry('offerings');
+        } catch (error) {
+            if (revision === this.revision) {
+                if (diagnosticCode(error) === 'configuration') this.clearRetry();
+                else this.scheduleRetry('offerings');
+            }
             return false;
         }
     }
