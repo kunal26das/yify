@@ -4920,6 +4920,11 @@ expo-eas-client@~57.0.4:
   resolved "https://registry.yarnpkg.com/expo-eas-client/-/expo-eas-client-57.0.4.tgz#89573e317bd05d594d8185ea5a6d78b2c6ac2417"
   integrity sha512-VSPi6Kldu0EpPkC2e3bv3QNAUVDogbz1tTj7KgcdbsuUySt0hu24g4f1fJ/YjYzCw9G1l755x4QQctcX1j7UEA==
 
+expo-eas-client@~58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/expo-eas-client/-/expo-eas-client-58.0.0.tgz#9cffc6d9f1b9e69e6434940c98d9ccbea19c1615"
+  integrity sha512-++ZQtOtOsxyGlrgxuRMkbxCbl01RS/RYm7Flpnk2GO0VJxGMqY6nqEs+lEB8QNWZHqiJsSXLCcNhpKhEjtuxIQ==
+
 expo-file-system@~57.0.7:
   version "57.0.7"
   resolved "https://registry.yarnpkg.com/expo-file-system/-/expo-file-system-57.0.7.tgz#03c4587c0027f65f7e04d88796aefcfe74b03cae"
@@ -4954,12 +4959,12 @@ expo-in-app-updates@0.12.0:
   resolved "https://registry.yarnpkg.com/expo-in-app-updates/-/expo-in-app-updates-0.12.0.tgz#d32b86227f66e9c6d98f1110237f219d590b52dc"
   integrity sha512-RqqT0KEqZNbOk5Zxq+JQ7ph7mH/ZNfKOowPyZI8K2YnYBjjNIOyt5PlSZz5/JtmPsBGe6/oKiu1QY+4rGfY+Eg==
 
-expo-insights@57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-57.0.18.tgz#aab135f8ec10e8243bbe8c79252000884e2031a8"
-  integrity sha512-PxWvaH6NzWOS28Vn3ZPxbLV6l7JJYQuduqtGiHf9BNyM6NOi1r4/wXc2IQJuVmS9iJ1PMA6clEAoUXpiYOsuSQ==
+expo-insights@58.0.0:
+  version "58.0.0"
+  resolved "https://registry.yarnpkg.com/expo-insights/-/expo-insights-58.0.0.tgz#bd55d60e8e82f032f38c899e5c4a324bc053528c"
+  integrity sha512-wRaZiEFzEVt2Tn0kmeR/YHM2ePBg+IFLk6buyFci8p1VVavzWpK/OZTriAw049SFgnms/pR7aDmIhDXfvIE/xg==
   dependencies:
-    expo-eas-client "~57.0.4"
+    expo-eas-client "~58.0.0"
 
 expo-json-utils@~57.0.2:
   version "57.0.2"
