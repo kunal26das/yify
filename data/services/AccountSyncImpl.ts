@@ -1,4 +1,5 @@
 import {
+    AuthTokenError,
     type AccountSync,
     type LibraryRepository,
     encodeLibraryState,
@@ -206,12 +207,9 @@ export class AccountSyncImpl implements AccountSync {
     private async performDeleteRemote(): Promise<boolean> {
         const uid = this.currentUid;
         if (!uid) return true;
-        const token = await this.auth.getIdToken();
+        const token = await this.getSyncToken(uid);
         if (this.currentUid !== uid) return false;
-        if (!token) {
-            this.fail('denied', 'no id token available');
-            return false;
-        }
+        if (!token) return false;
         const result = await deleteSyncDocument(uid, token);
         if (this.currentUid !== uid) return false;
         if (!result.ok) {
@@ -308,6 +306,27 @@ export class AccountSyncImpl implements AccountSync {
         this.reportedFailure = failure;
         this.status.set({state: 'error', failure, detail});
         this.scheduleRetry();
+    }
+
+    private async getSyncToken(uid: string): Promise<string | null> {
+        try {
+            const token = await this.auth.getIdToken();
+            if (!token && this.currentUid === uid) this.fail('denied', 'Sign in again to sync your account.');
+            return token;
+        } catch (error) {
+            if (!(error instanceof AuthTokenError)) throw error;
+            if (this.currentUid === uid) {
+                const detail = error.failure === 'network'
+                    ? 'Waiting for a connection to sync your account.'
+                    : error.failure === 'denied' ? 'Sign in again to sync your account.'
+                        : 'Account authentication is unavailable. Retrying shortly.';
+                this.diagnosticSpan?.finish('unavailable', {error_code: error.failure, stage: 'authentication'});
+                this.reportedFailure = null;
+                this.status.set({state: 'error', failure: error.failure, detail});
+                this.scheduleRetry();
+            }
+            return null;
+        }
     }
 
     private succeed(trimmed: string | null): void {
@@ -451,12 +470,9 @@ export class AccountSyncImpl implements AccountSync {
         this.beginSync('sync.push');
         this.status.set({state: 'syncing'});
         try {
-            const token = await this.auth.getIdToken();
+            const token = await this.getSyncToken(uid);
             if (this.currentUid !== uid || this.paused) return;
-            if (!token) {
-                this.fail('denied', 'no id token available');
-                return;
-            }
+            if (!token) return;
             for (let attempt = 0; attempt < LIBRARY_WRITE_ATTEMPTS; attempt += 1) {
                 let precondition: SyncWritePrecondition | undefined;
                 if (this.libraryDirty) {
@@ -672,12 +688,9 @@ export class AccountSyncImpl implements AccountSync {
         this.status.set({state: 'syncing'});
         let merged = false;
         try {
-            const token = await this.auth.getIdToken();
+            const token = await this.getSyncToken(uid);
             if (this.currentUid !== uid || this.paused) return;
-            if (!token) {
-                this.fail('denied', 'no id token available');
-                return;
-            }
+            if (!token) return;
             const result = await fetchSyncDocument(uid, token);
             if (this.currentUid !== uid || this.paused) return;
             if (!result.ok) {

@@ -66,6 +66,7 @@ function fixture(t, options = {}) {
             calls.push(['customer', sdkUid]);
             return options.getCustomerInfo ? options.getCustomerInfo(sdkUid) : currentInfo();
         },
+        canMakePayments: async () => options.canMakePayments ? options.canMakePayments() : true,
         invalidateCustomerInfoCache: async () => { calls.push(['invalidate']); },
         getCurrentOfferingForPlacement: async (placement) => {
             calls.push(['offers', sdkUid, placement]);
@@ -86,6 +87,7 @@ function fixture(t, options = {}) {
         },
         PURCHASES_ERROR_CODE: {
             PURCHASE_CANCELLED_ERROR: 'cancelled', PRODUCT_ALREADY_PURCHASED_ERROR: 'already', PAYMENT_PENDING_ERROR: 'pending',
+            PURCHASE_NOT_ALLOWED_ERROR: '3', NETWORK_ERROR: '10', OFFLINE_CONNECTION_ERROR: '35',
         },
     };
     const {RevenueCatPurchaseRepositoryImpl} = loadTypeScript('data/repositories/RevenueCatPurchaseRepositoryImpl.ts', {
@@ -577,4 +579,71 @@ test('native offerings diagnostics capture a swallowed sync failure at its ownin
     assert.deepEqual(operations.filter(e => e.error).map(e => [e.operation, e.error]), [['purchases.offerings', failure]]);
     assert.equal(operations.find(e => e.operation === 'purchases.sync').outcome, 'error');
     assert.equal(f.repository.getState().ready, true);
+});
+
+test('unsupported device billing skips offering requests without retrying or losing a verified entitlement', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let supported = false;
+    const f = fixture(t, {diagnostics, canMakePayments: () => supported, infos: [['account-a', customer(true)]]});
+    await f.ready('account-a');
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.deepEqual(f.repository.getState().offers, []);
+    assert.equal(f.calls.some(([name]) => name === 'offers'), false);
+    assert.equal(operations.find(entry => entry.operation === 'purchases.offerings').outcome, 'unavailable');
+    assert.equal(operations.some(entry => entry.error), false);
+    const customerCalls = f.calls.filter(([name]) => name === 'customer').length;
+    t.mock.timers.tick(300000);
+    await flush();
+    assert.equal(f.calls.filter(([name]) => name === 'customer').length, customerCalls);
+    supported = true;
+    f.foreground[0]();
+    await flush();
+    assert.equal(f.repository.getState().offers.length, 1);
+    assert.equal(f.repository.getState().adsRemoved, true);
+});
+
+test('billing becoming unavailable after the capability check clears stale packages and stops automatic retries', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let restricted = false;
+    const f = fixture(t, {diagnostics, offerings: () => {
+        if (restricted) throw Object.assign(new Error('Billing unavailable'), {code: '3'});
+        return offering();
+    }});
+    await f.ready('account-a');
+    const oldId = f.repository.getState().offers[0].id;
+    restricted = true;
+    await f.repository.refresh();
+    assert.deepEqual(f.repository.getState().offers, []);
+    assert.equal(await f.repository.purchase(oldId), false);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+    assert.equal(operations.some(entry => entry.error), false);
+    const attempts = f.calls.filter(([name]) => name === 'offers').length;
+    t.mock.timers.tick(300000);
+    await flush();
+    assert.equal(f.calls.filter(([name]) => name === 'offers').length, attempts);
+    restricted = false;
+    await f.repository.refresh();
+    assert.equal(f.repository.getState().offers.length, 1);
+});
+
+test('temporary customer network failures retain verified access and recover through the existing backoff', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let offline = false;
+    const f = fixture(t, {diagnostics, getCustomerInfo: () => {
+        if (offline) throw Object.assign(new Error('No connection'), {code: '10'});
+        return customer(true);
+    }});
+    await f.ready();
+    offline = true;
+    await f.repository.refresh();
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(operations.some(entry => entry.error), false);
+    assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'unavailable');
+    offline = false;
+    t.mock.timers.tick(5000);
+    await flush();
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'ok');
 });

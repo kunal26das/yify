@@ -11,6 +11,7 @@ export type {ParentalGuide} from './entities/ParentalGuide';
 
 export type {Account, AuthSession} from './entities/Account';
 export {INITIAL_AUTH_SESSION} from './entities/Account';
+export {AuthTokenError} from './entities/AuthTokenError';
 export type {
   ThemePreference,
   BrowseDefaults,

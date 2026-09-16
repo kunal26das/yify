@@ -19,6 +19,7 @@ import {INITIAL_AUTH_SESSION, type Account, type AuthRepository, type AuthSessio
 import {getFirebaseApp} from '../datasources/firebase/FirebaseWebApp';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {createObservable} from './support/observable';
+import {createFirebaseIdTokenReader} from './support/readFirebaseIdToken';
 
 const POPUP_BLOCKED = new Set([
     'auth/popup-blocked',
@@ -68,7 +69,13 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
     private instance: Auth | null = null;
     private started = false;
 
-    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+    readonly getIdToken: () => Promise<string | null>;
+
+    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+        this.getIdToken = createFirebaseIdTokenReader(
+            () => this.getAuthInstance()?.currentUser, firebaseGetIdToken, diagnostics, diagnosticCode,
+        );
+    }
 
     init(): void {
         if (this.started || typeof window === 'undefined') return;
@@ -188,18 +195,6 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
         this.store.set({account: null});
         span.finish('ok');
         return true;
-    }
-
-    async getIdToken(): Promise<string | null> {
-        try {
-            const auth = this.getAuthInstance();
-            const user = auth?.currentUser;
-            if (user == null) return null;
-            return await firebaseGetIdToken(user);
-        } catch (error) {
-            this.diagnostics.capture(error, 'auth.token_refresh', {provider: 'google', error_code: diagnosticCode(error)});
-            return null;
-        }
     }
 
     private getAuthInstance(): Auth | null {
