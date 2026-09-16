@@ -12,6 +12,7 @@ export class ExpoAppUpdates implements AppUpdates {
     private readonly listeners = new Set<() => void>();
     private syncing = false;
     private started = false;
+    private reloading = false;
     private downloadFailed = false;
     private errorTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -32,10 +33,6 @@ export class ExpoAppUpdates implements AppUpdates {
         void this.sync();
         AppState.addEventListener('change', (next) => {
             if (next !== 'active') return;
-            if (this.status.state === 'ready') {
-                this.restart();
-                return;
-            }
             void this.sync();
         });
     }
@@ -45,14 +42,19 @@ export class ExpoAppUpdates implements AppUpdates {
     }
 
     restart(): void {
+        if (this.reloading || this.status.state !== 'ready') return;
+        this.reloading = true;
+        this.publish({state: 'installing', progress: 1});
         this.diagnostics.event('updates.reload', {provider: 'expo', outcome: 'pending'});
         void Updates.reloadAsync().catch(error => {
+            this.reloading = false;
+            this.publish({state: 'ready', progress: 1});
             this.diagnostics.capture(error, 'updates.reload', {provider: 'expo'});
         });
     }
 
     async sync(): Promise<void> {
-        if (this.syncing || !Updates.isEnabled || !Updates.channel) return;
+        if (this.syncing || this.reloading || this.status.state === 'ready' || !Updates.isEnabled || !Updates.channel) return;
         this.syncing = true;
         try {
             this.publish({state: 'checking', progress: 0});
