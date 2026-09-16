@@ -52,7 +52,7 @@ test('EZTV reuses recent pages but refreshes after one minute and isolates endpo
     assert.ok(requests[2].startsWith(baseUrl));
 });
 
-test('transient EZTV errors are shared while pending and a later request can retry', async (t) => {
+test('transient EZTV errors recover with one shared retry and cache the successful result', async (t) => {
     const {EztvApiDataSource} = loadTypeScript('data/datasources/EztvApiDataSource.ts');
     let requests = 0;
     t.mock.method(global, 'fetch', async () => {
@@ -63,8 +63,8 @@ test('transient EZTV errors are shared while pending and a later request can ret
     });
     const api = new EztvApiDataSource();
     const results = await Promise.allSettled([api.getTorrents({page: 1}), api.getTorrents({page: 1})]);
-    assert.equal(requests, 1);
-    assert.ok(results.every((result) => result.status === 'rejected' && result.reason.name === 'EztvUnavailableError'));
+    assert.equal(requests, 2);
+    assert.ok(results.every((result) => result.status === 'fulfilled'));
     await api.getTorrents({page: 1});
     assert.equal(requests, 2);
 });

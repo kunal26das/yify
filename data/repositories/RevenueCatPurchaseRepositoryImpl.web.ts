@@ -349,7 +349,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             span.finish('ok');
             return granted;
         } catch (error) {
-            span.fail(error, {stage, error_code: diagnosticCode(error)});
+            if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
+            const code = diagnosticCode(error);
+            if (code === 'network') span.finish('unavailable', {stage, error_code: code});
+            else span.fail(error, {stage, error_code: code});
             throw error;
         }
     }
@@ -431,7 +434,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             span.finish(offers.length ? 'ok' : 'empty');
             return offers;
         } catch (error) {
-            span.fail(error, {error_code: diagnosticCode(error)});
+            if (!this.isCurrent(revision)) { span.finish('skipped'); return []; }
+            const code = diagnosticCode(error);
+            if (code === 'network') span.finish('unavailable', {error_code: code});
+            else span.fail(error, {error_code: code});
             return [];
         }
     }

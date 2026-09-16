@@ -261,6 +261,18 @@ test('shipping configuration keeps replay off, and controlled native verificatio
     for (const key of ['showName', 'showEmail', 'isNameRequired', 'isEmailRequired', 'enableScreenshot', 'enableTakeScreenshot', 'enableShakeToReport']) assert.equal(feedback[key], false);
 });
 
+test('native crash diagnostics enrich the latest process crash without importing historical crashes', () => {
+    for (const environment of ['production', 'preview']) {
+        const native = createSentryOptions({native: true, environment});
+        assert.equal(native.enableTombstone, true);
+        assert.equal(native.enableHistoricalTombstoneReporting, false);
+        assert.notEqual(native.enableNdk, false);
+        const web = createSentryOptions({native: false, environment});
+        assert.equal(web.enableTombstone, false);
+        assert.equal(web.enableHistoricalTombstoneReporting, false);
+    }
+});
+
 test('error replay only starts for unhandled errors and skips routine handled failures', () => {
     assert.equal(shouldCaptureErrorReplay({exception: {values: [{mechanism: {handled: false}}]}}), true);
     assert.equal(shouldCaptureErrorReplay({exception: {values: [{mechanism: {handled: true}}]}}), false);

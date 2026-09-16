@@ -21,7 +21,9 @@ function syncFixture(t, options = {}) {
         theme: 'dark',
         browseDefaults: {sort_by: 'date_added', order_by: 'desc', quality: 'all', genre: 'all', minimum_rating: 0},
     };
+    const domain = loadTypeScript('domain/index.ts');
     const {AccountSyncImpl} = loadTypeScript('data/services/AccountSyncImpl.ts', {
+        '@/domain': domain,
         '../datasources/platform/ForegroundWatcher': {
             isForeground: () => true,
             watchForeground: (listener) => { foreground = listener; },
@@ -34,6 +36,7 @@ function syncFixture(t, options = {}) {
             fetchSyncDocument: async (uid) => {
                 calls.push(`read:${uid}`);
                 await options.beforeRead?.();
+                if (options.readFailure) return {ok: false, failure: options.readFailure, detail: 'Request rejected'};
                 return {ok: true, document: remote.get(uid) ?? {}};
             },
             writeSyncDocument: async (uid, token, patch) => {
@@ -58,7 +61,11 @@ function syncFixture(t, options = {}) {
             set: (key, value) => values.set(key, value),
             delete: (key) => values.delete(key),
         },
-        auth: {getIdToken: async () => options.getIdToken ? options.getIdToken() : 'test-token'},
+        auth: {getIdToken: async () => {
+            if (options.tokenFailure) throw new domain.AuthTokenError(options.tokenFailure);
+            return options.getIdToken ? options.getIdToken() : 'test-token';
+        }},
+        diagnostics: options.diagnostics,
         watchlist: {
             getAll: () => movies,
             applyRemote: (next) => { movies = next; },
@@ -229,4 +236,70 @@ test('failed remote deletion stays paused until the caller resumes normal sync',
     await flush();
     assert.ok(calls.slice(afterDelete).includes('read:account-a'));
     assert.equal(remote.has('account-a'), true);
+});
+
+function diagnosticsRecorder() {
+    const operations = [];
+    return {operations, diagnostics: {
+        start(operation) {
+            const entry = {operation};
+            operations.push(entry);
+            return {
+                finish(outcome, attributes) {
+                    if (!entry.outcome) Object.assign(entry, {outcome, attributes});
+                },
+                fail(error, attributes) {
+                    if (!entry.outcome) Object.assign(entry, {outcome: 'error', error, attributes});
+                },
+            };
+        },
+        event() {}, capture() {},
+    }};
+}
+
+test('offline authentication keeps sync pending without issuing a false Firestore permission error', async t => {
+    const {operations, diagnostics} = diagnosticsRecorder();
+    const options = {tokenFailure: 'network', diagnostics};
+    const {sync, calls, movies, remote} = syncFixture(t, options);
+    sync.setAccount('account-a');
+    await flush();
+    assert.equal(sync.getStatus().failure, 'network');
+    assert.equal(calls.length, 0);
+    assert.equal(movies()[0].id, 123);
+    assert.equal(operations.some(entry => entry.error), false);
+    assert.equal(operations[0].outcome, 'unavailable');
+    options.tokenFailure = null;
+    t.mock.timers.tick(1000);
+    await flush();
+    assert.equal(sync.getStatus().state, 'synced');
+    assert.ok(remote.has('account-a'));
+});
+
+test('a real Firestore denial remains reportable after a token denial recovers', async t => {
+    const {operations, diagnostics} = diagnosticsRecorder();
+    const options = {tokenFailure: 'denied', diagnostics, readFailure: 'denied'};
+    const {sync} = syncFixture(t, options);
+    sync.setAccount('account-a');
+    await flush();
+    assert.equal(sync.getStatus().failure, 'denied');
+    assert.equal(operations.some(entry => entry.error), false);
+    options.tokenFailure = null;
+    t.mock.timers.tick(1000);
+    await flush();
+    const failures = operations.filter(entry => entry.error);
+    assert.equal(failures.length, 1);
+    assert.equal(failures[0].operation, 'sync.pull');
+    assert.equal(failures[0].attributes.error_code, 'denied');
+});
+
+test('an offline deletion token does not delete remote data or escape as an unhandled rejection', async t => {
+    const options = {};
+    const {sync, remote} = syncFixture(t, options);
+    sync.setAccount('account-a');
+    await flush();
+    await sync.pause();
+    options.tokenFailure = 'network';
+    assert.equal(await sync.deleteRemote(), false);
+    assert.equal(sync.getStatus().failure, 'network');
+    assert.ok(remote.has('account-a'));
 });

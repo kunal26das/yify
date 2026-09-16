@@ -1,6 +1,7 @@
 import {ResponseCache} from './storage/ResponseCache';
 import type {Diagnostics} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
+import {requestJson} from './JsonRequest';
 
 export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -87,26 +88,11 @@ export class TmdbApiDataSource implements TmdbApi {
             cache => this.diagnostics.event('api.tmdb.cache', {provider: 'tmdb', cache}));
     }
 
-    private async fetchResponse<T>(url: string, operation: string): Promise<T> {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-        const span = this.diagnostics.start(operation, {provider: 'tmdb', method: 'GET', cache: 'miss'});
-        let status: number | undefined;
-        try {
-            const response = await fetch(url, {
-                signal: controller.signal,
-            });
-            status = response.status;
-            if (!response.ok) throw new Error(`TMDB error: ${response.status}`);
-            const body = (await response.json()) as T;
-            span.finish('ok', {status_code: status});
-            return body;
-        } catch (error) {
-            span.fail(error, {status_code: status});
-            throw error;
-        } finally {
-            clearTimeout(timeoutId);
-        }
+    private fetchResponse<T>(url: string, operation: string): Promise<T> {
+        return requestJson(url, {
+            diagnostics: this.diagnostics, operation, provider: 'tmdb', timeoutMs: REQUEST_TIMEOUT_MS,
+            parse: body => body as T,
+        });
     }
 
     async findByImdbId(imdbCode: string): Promise<TmdbFindResponse> {

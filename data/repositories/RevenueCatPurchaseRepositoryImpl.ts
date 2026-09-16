@@ -405,7 +405,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 return;
             } catch (error) {
                 if (revision !== this.revision) continue;
-                span.fail(error, {stage: 'customer', error_code: diagnosticCode(error)});
+                const code = diagnosticCode(error);
+                if (code === 'network' || code === 'offline') {
+                    span.finish('unavailable', {stage: 'customer', error_code: code});
+                } else {
+                    span.fail(error, {stage: 'customer', error_code: code});
+                }
                 this.scheduleRetry('customer');
                 return;
             }
@@ -455,11 +460,16 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async fetchOffers(placement: PurchasePlacement, revision: number): Promise<PurchaseOffer[]> {
         const span = this.diagnostics.start('purchases.offerings', {provider: 'revenuecat'});
         try {
+            const billingSupported = await Purchases.canMakePayments();
+            if (revision !== this.revision) { span.finish('skipped'); return []; }
+            if (!billingSupported) {
+                this.clearOffers(placement);
+                span.finish('unavailable', {error_code: 'purchase_not_allowed'});
+                return [];
+            }
             const offering = await Purchases.getCurrentOfferingForPlacement(placement);
             if (revision !== this.revision) { span.finish('skipped'); return []; }
-            for (const [id, entry] of this.packages) {
-                if (entry.offer.placement === placement) this.packages.delete(id);
-            }
+            this.clearOffers(placement);
             const offers = (offering?.availablePackages ?? []).map((pkg) => {
                 const offer = toOffer(pkg, offering!, placement, revision);
                 this.packages.set(offer.id, {pkg, offering: offering!, offer, revision});
@@ -469,17 +479,36 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             span.finish(offers.length ? 'ok' : 'empty');
             return offers;
         } catch (error) {
-            span.fail(error, {error_code: diagnosticCode(error)});
+            if (revision !== this.revision) { span.finish('skipped'); return []; }
+            const code = diagnosticCode(error);
+            if (code === 'purchase_not_allowed') {
+                this.clearOffers(placement);
+                span.finish('unavailable', {error_code: code});
+                return [];
+            }
+            if (code === 'configuration') this.clearOffers(placement);
+            if (code === 'network' || code === 'offline') span.finish('unavailable', {error_code: code});
+            else span.fail(error, {error_code: code});
             throw error;
         }
+    }
+
+    private clearOffers(placement: PurchasePlacement): void {
+        for (const [id, entry] of this.packages) {
+            if (entry.offer.placement === placement) this.packages.delete(id);
+        }
+        if (placement === 'settings_supporter') this.setState({offers: []});
     }
 
     private async loadOfferings(revision: number): Promise<boolean> {
         try {
             await this.fetchOffers('settings_supporter', revision);
             return true;
-        } catch {
-            if (revision === this.revision) this.scheduleRetry('offerings');
+        } catch (error) {
+            if (revision === this.revision) {
+                if (diagnosticCode(error) === 'configuration') this.clearRetry();
+                else this.scheduleRetry('offerings');
+            }
             return false;
         }
     }

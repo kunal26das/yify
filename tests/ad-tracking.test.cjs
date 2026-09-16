@@ -8,7 +8,7 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
-function fixture(t, {dev = false, show, diagnostics, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
+function fixture(t, {dev = false, show, diagnostics, online = true, foreground = true, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});
     const originalDev = global.__DEV__;
     global.__DEV__ = dev;
@@ -19,6 +19,8 @@ function fixture(t, {dev = false, show, diagnostics, entitlement = () => ({ready
     const ads = [];
     const tracked = [];
     const analytics = [];
+    const foregroundListeners = new Set();
+    const networkListeners = new Set();
     const {AdMobAdGateway} = loadTypeScript('data/services/AdMobAdGateway.ts', {
         'react-native': {Platform: {OS: 'android'}},
         'react-native-google-mobile-ads': {
@@ -55,16 +57,38 @@ function fixture(t, {dev = false, show, diagnostics, entitlement = () => ({ready
                 },
             },
         },
-        '../datasources/platform/ForegroundWatcher': {isForeground: () => true, watchForeground: () => () => {}},
+        '../datasources/platform/ForegroundWatcher': {
+            isForeground: () => foreground,
+            watchForeground: (listener) => {
+                foregroundListeners.add(listener);
+                return () => foregroundListeners.delete(listener);
+            },
+        },
     });
     const methods = ['trackLoaded', 'trackDisplayed', 'trackOpened', 'trackFailedToLoad', 'trackImpression'];
     const gateway = new AdMobAdGateway({
         diagnostics,
+        network: {
+            isOnline: () => online,
+            subscribe: (listener) => {
+                networkListeners.add(listener);
+                return () => networkListeners.delete(listener);
+            },
+        },
         analytics: {trackEvent: (name, data) => analytics.push({name, data})},
         adRevenue: Object.fromEntries(methods.map((method) => [method, (data) => tracked.push({method, data})])),
         entitlement,
     });
-    return {gateway, ads, tracked, analytics};
+    return {gateway, ads, tracked, analytics,
+        setOnline(value) {
+            online = value;
+            for (const listener of networkListeners) listener();
+        },
+        setForeground(value) {
+            foreground = value;
+            if (value) for (const listener of [...foregroundListeners]) listener();
+        },
+    };
 }
 
 test('preload tracking does not wait for identity, while showing waits for known entitlement', async (t) => {
@@ -313,4 +337,71 @@ test('background ad presentation is unavailable without reporting an exception',
     assert.equal(present.outcome, 'unavailable');
     assert.equal(present.error, undefined);
     assert.deepEqual(present.attributes, {error_code: 'app_not_foreground'});
+});
+
+test('offline initialization waits for connectivity before preloading and does not duplicate loads', async (t) => {
+    const {gateway, ads, setOnline} = fixture(t, {online: false});
+    await gateway.init();
+    t.mock.timers.tick(300000);
+    assert.equal(ads.length, 0);
+    setOnline(true);
+    setOnline(true);
+    assert.equal(ads.length, 1);
+});
+
+test('confirmed offline internal load failure waits for reconnection and retains failure tracking', async (t) => {
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads, tracked, setOnline} = fixture(t, {diagnostics});
+    await gateway.init();
+    setOnline(false);
+    ads[0].emit('error', {code: 'googleMobileAds/internal-error'});
+    const load = records.find(record => record.operation === 'ads.load');
+    assert.equal(load.outcome, 'unavailable');
+    assert.deepEqual(load.attributes, {error_code: 'network_error'});
+    assert.deepEqual(tracked.map(({method}) => method), ['trackFailedToLoad']);
+    t.mock.timers.tick(300000);
+    assert.equal(ads.length, 1);
+    setOnline(true);
+    assert.equal(ads.length, 2);
+});
+
+test('online internal failures and offline invalid requests still report real ad errors', async (t) => {
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads, setOnline} = fixture(t, {diagnostics});
+    await gateway.init();
+    ads[0].emit('error', {code: 'googleMobileAds/internal-error'});
+    assert.equal(records.at(-1).outcome, 'error');
+    assert.deepEqual(records.at(-1).attributes, {error_code: 'internal_error'});
+    t.mock.timers.tick(30000);
+    setOnline(false);
+    ads[1].emit('error', {code: 'googleMobileAds/invalid-request'});
+    assert.equal(records.at(-1).outcome, 'error');
+    assert.deepEqual(records.at(-1).attributes, {error_code: 'invalid_request'});
+});
+
+test('background retries pause and resume once in the foreground', async (t) => {
+    const {gateway, ads, setForeground} = fixture(t, {foreground: false});
+    await gateway.init();
+    assert.equal(ads.length, 0);
+    setForeground(true);
+    ads[0].emit('error', {code: 'googleMobileAds/no-fill'});
+    setForeground(false);
+    t.mock.timers.tick(30000);
+    assert.equal(ads.length, 1);
+    setForeground(true);
+    setForeground(true);
+    assert.equal(ads.length, 2);
+});
+
+test('going offline cancels an outstanding retry without foreground events bypassing backoff', async (t) => {
+    const {gateway, ads, setForeground, setOnline} = fixture(t);
+    await gateway.init();
+    ads[0].emit('error', {code: 'googleMobileAds/no-fill'});
+    setForeground(true);
+    assert.equal(ads.length, 1);
+    setOnline(false);
+    t.mock.timers.tick(300000);
+    assert.equal(ads.length, 1);
+    setOnline(true);
+    assert.equal(ads.length, 2);
 });

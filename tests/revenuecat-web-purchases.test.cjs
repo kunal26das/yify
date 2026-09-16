@@ -87,7 +87,7 @@ function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_
     else delete process.env.EXPO_PUBLIC_REVENUECAT_WEB_KEY;
     const {RevenueCatPurchaseRepositoryImpl} = loadTypeScript('data/repositories/RevenueCatPurchaseRepositoryImpl.web.ts', {
         '@revenuecat/purchases-js': {
-            ErrorCode: {UserCancelledError: 1, ProductAlreadyPurchasedError: 6, PaymentPendingError: 20},
+            ErrorCode: {UserCancelledError: 1, ProductAlreadyPurchasedError: 6, PaymentPendingError: 20, NetworkError: 10},
             ProductType: {Subscription: 'Subscription'},
             PurchasesError,
             Purchases: {
@@ -495,4 +495,24 @@ test('web offerings failures are reported once while the customer sync still com
     assert.deepEqual(operations.filter(e => e.error).map(e => [e.operation, e.error]), [['purchases.offerings', failure]]);
     assert.equal(f.repository.getState().ready, true);
     assert.equal(operations.find(e => e.operation === 'purchases.sync').outcome, 'ok');
+});
+
+test('web customer network outages keep verified entitlements and expose a recoverable unavailable operation', async () => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    let offline = false;
+    const f = fixture({diagnostics, overrides: {info: async () => {
+        if (offline) throw new f.PurchasesError(10);
+        return grantedInfo(true);
+    }}});
+    await f.repository.identify(null);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    offline = true;
+    await f.repository.refresh();
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(operations.some(entry => entry.error), false);
+    assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'unavailable');
+    offline = false;
+    await f.repository.refresh();
+    assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'ok');
+    assert.equal(f.calls.filter(call => call.method === 'configure').length, 1);
 });

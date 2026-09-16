@@ -14,6 +14,7 @@ import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-sign
 import {INITIAL_AUTH_SESSION, type Account, type AuthRepository, type AuthSession, type Diagnostics} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {createObservable} from './support/observable';
+import {createFirebaseIdTokenReader} from './support/readFirebaseIdToken';
 
 const FALLBACK_WEB_CLIENT_ID =
     '325235052319-09fsjb9phn2s764ja02qgmbdcg88b0in.apps.googleusercontent.com';
@@ -65,7 +66,13 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
     private started = false;
     private configured = false;
 
-    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+    readonly getIdToken: () => Promise<string | null>;
+
+    constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+        this.getIdToken = createFirebaseIdTokenReader(
+            () => getAuth().currentUser, firebaseGetIdToken, diagnostics, diagnosticCode,
+        );
+    }
 
     init(): void {
         if (this.started) return;
@@ -202,17 +209,6 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
             if (SILENT.has(code)) span.finish(code === statusCodes.IN_PROGRESS ? 'skipped' : 'cancelled');
             else span.fail(error, {error_code: diagnosticCode(error)});
             return false;
-        }
-    }
-
-    async getIdToken(): Promise<string | null> {
-        try {
-            const user = getAuth().currentUser;
-            if (user == null) return null;
-            return await firebaseGetIdToken(user);
-        } catch (error) {
-            this.diagnostics.capture(error, 'auth.token_refresh', {provider: 'google', error_code: diagnosticCode(error)});
-            return null;
         }
     }
 

@@ -31,7 +31,11 @@ function fixture(platform, t, options = {}) {
         getAuth: () => auth,
         onAuthStateChanged: (_auth, listener) => listener(auth.currentUser),
         deleteUser: async () => { calls.push('delete'); return options.delete?.(++deletions); },
-        getIdToken: async () => { if (options.tokenError) throw options.tokenError; return 'private-token'; },
+        getIdToken: async user => {
+            calls.push('token');
+            if (options.tokenError) throw options.tokenError;
+            return options.token ? options.token(user) : 'private-token';
+        },
         signOut: async () => { calls.push('firebase_sign_out'); if (options.signOutError) throw options.signOutError; },
     };
     let Repository;
@@ -82,10 +86,45 @@ function fixture(platform, t, options = {}) {
     }
     const repository = new Repository(diagnostics);
     repository.init();
-    return {repository, operations, options, calls};
+    return {repository, operations, options, calls, auth};
 }
 
 for (const platform of ['native', 'web']) {
+    test(`${platform} offline token refresh preserves the account and can recover without a false denial`, async t => {
+        const options = {tokenError: failure('auth/network-request-failed')};
+        const f = fixture(platform, t, options);
+        await assert.rejects(f.repository.getIdToken(), error => error.name === 'AuthTokenError' && error.failure === 'network');
+        assert.equal(f.repository.getSession().account.uid, account.uid);
+        assert.equal(f.operations.some(entry => entry.error), false);
+        assert.equal(f.operations.at(-1).operation, 'auth.token_refresh');
+        assert.equal(f.operations.at(-1).attributes.outcome, 'unavailable');
+        options.tokenError = null;
+        assert.equal(await f.repository.getIdToken(), 'private-token');
+    });
+
+    test(`${platform} revoked tokens retain their diagnostic error and classify authentication denial`, async t => {
+        const error = failure('auth/user-token-expired');
+        const f = fixture(platform, t, {tokenError: error});
+        await assert.rejects(f.repository.getIdToken(), caught => caught.name === 'AuthTokenError' && caught.failure === 'denied');
+        assert.deepEqual(f.operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
+            [['auth.token_refresh', error]]);
+    });
+
+    test(`${platform} concurrent token refreshes share one request and discard a signed-out account token`, async t => {
+        let resolve;
+        const pending = new Promise(done => { resolve = done; });
+        const f = fixture(platform, t, {token: () => pending});
+        const first = f.repository.getIdToken();
+        assert.equal(f.repository.getIdToken(), first);
+        await tick();
+        assert.equal(f.calls.filter(call => call === 'token').length, 1);
+        f.auth.currentUser = null;
+        resolve('stale-private-token');
+        assert.equal(await first, null);
+        assert.equal(await f.repository.getIdToken(), null);
+        assert.equal(f.operations.some(entry => entry.error), false);
+    });
+
     test(`${platform} auth diagnostics classify cancellation without an issue and bound unexpected error metadata`, async t => {
         const options = {signInError: failure(platform === 'native' ? 'cancelled' : 'auth/popup-closed-by-user')};
         const f = fixture(platform, t, options);

@@ -27,6 +27,8 @@ export function createSentryOptions({native, environment, replayEnabled = false}
         enableAutoConsoleLogs: false,
         enableMetrics: true,
         enableNativeFramesTracking: native,
+        enableTombstone: native,
+        enableHistoricalTombstoneReporting: false,
         ...(native && replayEnabled ? {replaysSessionSampleRate: 0, replaysOnErrorSampleRate: 0.1} : {}),
         integrations: [
             Sentry.breadcrumbsIntegration({console: false}),
