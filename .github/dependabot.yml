@@ -9,5 +9,11 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     ignore:
+      - dependency-name: "expo-*"
+        versions: [">=58.0.0"]
+      - dependency-name: "@expo/*"
+        versions: [">=58.0.0"]
+      - dependency-name: "eslint-config-expo"
+        versions: [">=58.0.0"]
       - dependency-name: "react-native-google-mobile-ads"
         versions: [">=16.4.0"]
