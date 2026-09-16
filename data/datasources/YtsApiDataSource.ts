@@ -8,6 +8,7 @@ import type {
 import {YtsEndpoint} from './YtsEndpoint';
 import type {Diagnostics} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
+import {requestJson} from './JsonRequest';
 
 export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
@@ -92,32 +93,17 @@ export interface YtsApi
         MovieParentalGuidesApi {
 }
 
-async function fetchWithTimeout<T extends { status: string; status_message?: string }>(
+function fetchWithTimeout<T extends { status: string; status_message?: string }>(
     url: string, diagnostics: Diagnostics, operation: string, fetcher: typeof fetch
 ): Promise<T> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  const span = diagnostics.start(operation, {provider: 'yts', method: 'GET', cache: 'miss'});
-  let status: number | undefined;
-
-  try {
-    const response = await fetcher(url, {signal: controller.signal});
-    status = response.status;
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-    const json = (await response.json()) as T;
-    if (json.status !== 'ok') {
-      throw new Error(json.status_message ?? 'Unknown API error');
-    }
-    span.finish('ok', {status_code: status});
-    return json;
-  } catch (error) {
-    span.fail(error, {status_code: status});
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return requestJson(url, {
+    diagnostics, operation, provider: 'yts', timeoutMs: REQUEST_TIMEOUT_MS, fetcher,
+    parse: body => {
+      const json = body as T;
+      if (json.status !== 'ok') throw new Error(json.status_message ?? 'Unknown API error');
+      return json;
+    },
+  });
 }
 
 export class YtsApiDataSource implements YtsApi {

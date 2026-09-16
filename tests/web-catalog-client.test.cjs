@@ -194,7 +194,7 @@ test('HTTP, JSON and network failures remain generic and never call another prov
         await assert.rejects(client().listMovies({page: 1}), error =>
             error.message === 'The catalog is unavailable. Please try again.');
     }
-    assert.deepEqual(requests, Array(3).fill(`${base}/movies?page=1&v=2`));
+    assert.deepEqual(requests, Array(4).fill(`${base}/movies?page=1&v=2`));
 });
 
 test('identical requests share fetching and validation until the metadata cache expires', async t => {

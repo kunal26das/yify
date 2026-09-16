@@ -5,6 +5,7 @@ import type {
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import type {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
 import {ResponseCache} from './storage/ResponseCache';
+import {requestJson, RequestTimeoutError} from './JsonRequest';
 
 type CatalogLocation = Pick<Location, 'origin' | 'hostname' | 'protocol'>;
 type CatalogEndpoint = 'movies' | 'movie' | 'suggestions' | 'parental-guides' | 'shows' | 'episodes';
@@ -264,28 +265,20 @@ export class WebCatalogClient {
     private publicRequest<T>(url: string, endpoint: CatalogEndpoint, parse: (value: unknown) => T): Promise<T> {
         const ttl = ['movies', 'shows', 'episodes'].includes(endpoint) ? LIST_TTL_MS : DETAILS_TTL_MS;
         return this.responses.getOrLoad(url, ttl, async () => {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-            const span = this.diagnostics.start(`api.catalog.${endpoint.replace('-', '_')}`, {provider: 'catalog'});
-            let status: number | undefined;
             try {
-                const response = await fetch(url, {signal: controller.signal, redirect: 'error',
-                    credentials: 'omit', headers: {Accept: 'application/json'}});
-                status = response.status;
-                if (!response.ok) throw new Error(`Catalog request failed (${status}).`);
-                const value: unknown = await response.json();
-                metadataOnly(value);
-                const result = parse(value);
-                span.finish('ok', {status_code: status});
-                return result;
-            } catch {
-                const error = new Error(controller.signal.aborted
+                return await requestJson(url, {
+                    diagnostics: this.diagnostics, operation: `api.catalog.${endpoint.replace('-', '_')}`,
+                    provider: 'catalog', timeoutMs: REQUEST_TIMEOUT_MS,
+                    init: {redirect: 'error', credentials: 'omit', headers: {Accept: 'application/json'}},
+                    parse: value => {
+                        metadataOnly(value);
+                        return parse(value);
+                    },
+                });
+            } catch (error) {
+                throw new Error(error instanceof RequestTimeoutError
                     ? 'The catalog request timed out. Please try again.'
                     : 'The catalog is unavailable. Please try again.');
-                span.fail(error, {status_code: status});
-                throw error;
-            } finally {
-                clearTimeout(timeout);
             }
         }, cache => this.diagnostics.event('api.catalog.cache', {provider: 'catalog', cache}));
     }
