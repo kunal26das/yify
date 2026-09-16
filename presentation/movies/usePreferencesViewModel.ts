@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import {useCallback, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {Platform} from 'react-native';
 import {Analytics} from '@/presentation/analytics/events';
 
@@ -50,7 +50,12 @@ export function usePreferencesViewModel() {
     const newMovies = useNewMoviesNotifier();
     const preferencesRepository = usePreferencesRepository();
     const watchlistRepository = useWatchlistRepository();
-    const [searchCount, setSearchCount] = useState(() => searchHistory.getRecent().length);
+    const [searchCount, setSearchCount] = useState(() =>
+        Platform.OS === 'web' ? 0 : searchHistory.getRecent().length
+    );
+    useEffect(() => {
+        setSearchCount(searchHistory.getRecent().length);
+    }, [searchHistory]);
 
     const appInfo = useMemo<AppInfo>(() => {
         const build =
