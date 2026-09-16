@@ -96,7 +96,7 @@
         {
           "url": "https://sentry.io/",
           "organization": "kudos-labs",
-          "project": "react-native",
+          "project": "yify",
           "experimental_android": {
             "enableAndroidGradlePlugin": true,
             "includeNativeSources": false,
