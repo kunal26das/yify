@@ -81,8 +81,9 @@ test('client snapshots use real initial dimensions and keep native rotation and 
     assert.equal(f.listeners.size, 1);
     for (const [width, height, breakpoint, contentMaxWidth, gutter] of [
         [844, 390, 'tablet', 844, 24],
-        [1200, 800, 'desktop', 1120, 32],
-        [1440, 900, 'wide', 1320, 32],
+        [1200, 800, 'desktop', 1200, 32],
+        [1440, 900, 'wide', 1440, 32],
+        [1920, 1080, 'wide', 1680, 32],
         [320, 568, 'phone', 320, 16],
     ]) {
         await act(async () => f.resize(width, height));

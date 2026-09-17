@@ -15,9 +15,8 @@ import {HankenGrotesk_500Medium} from '@expo-google-fonts/hanken-grotesk/500Medi
 import {HankenGrotesk_600SemiBold} from '@expo-google-fonts/hanken-grotesk/600SemiBold';
 import {HankenGrotesk_700Bold} from '@expo-google-fonts/hanken-grotesk/700Bold';
 import {HankenGrotesk_800ExtraBold} from '@expo-google-fonts/hanken-grotesk/800ExtraBold';
-import {Fraunces_600SemiBold} from '@expo-google-fonts/fraunces/600SemiBold';
-import {Fraunces_700Bold} from '@expo-google-fonts/fraunces/700Bold';
-import {Fraunces_900Black} from '@expo-google-fonts/fraunces/900Black';
+import {Lora_600SemiBold} from '@expo-google-fonts/lora/600SemiBold';
+import {Lora_700Bold} from '@expo-google-fonts/lora/700Bold';
 
 import {
     BlurTargetProvider,
@@ -70,9 +69,8 @@ function AppShell() {
         HankenGrotesk_600SemiBold,
         HankenGrotesk_700Bold,
         HankenGrotesk_800ExtraBold,
-        Fraunces_600SemiBold,
-        Fraunces_700Bold,
-        Fraunces_900Black,
+        Lora_600SemiBold,
+        Lora_700Bold,
     });
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();

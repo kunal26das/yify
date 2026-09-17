@@ -41,8 +41,8 @@
     "test:crashreporting": "yarn workspace @yify/crashreporting test"
   },
   "dependencies": {
-    "@expo-google-fonts/fraunces": "0.4.1",
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
+    "@expo-google-fonts/lora": "0.4.2",
     "@expo/log-box": "57.0.4",
     "@expo/metro-runtime": "57.0.15",
     "@expo/ui": "57.0.18",

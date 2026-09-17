@@ -57,7 +57,7 @@ export function ShowDetailsScreen(props: ShowDetailsProps) {
 function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
-    const {width, gutter, contentMaxWidth} = useResponsive();
+    const {width, gutter, contentMaxWidth, isPhone} = useResponsive();
     const recordHistory = useRecordHistory();
     const {historyPaused} = usePreferences();
     const recordedIdRef = useRef<string | null>(null);
@@ -243,7 +243,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
                             )}
                         </View>
                         <View style={styles.headerText}>
-                            <ThemedText style={[Typography.watchTitle, {color: colors.text}]} numberOfLines={3}>
+                            <ThemedText type="title" style={[styles.title, isPhone && styles.phoneTitle, {color: colors.text}]} numberOfLines={3}>
                                 {title}
                             </ThemedText>
                             <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
@@ -289,7 +289,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
 
                     <WatchProviders imdbCode={imdbCode} title={title} media="tv" pad={gutter}/>
 
-                    <ThemedText type="section" style={[styles.sectionHeading, {color: colors.text}]}>
+                    <ThemedText type="heading" style={[styles.sectionHeading, {color: colors.text}]}>
                         Episodes
                     </ThemedText>
 
@@ -332,7 +332,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
                                     pressedOpacity={0.7}
                                     contentStyle={[styles.seasonRow, {borderBottomColor: colors.border}]}
                                 >
-                                    <ThemedText style={[styles.seasonTitle, {color: colors.text}]}>
+                                    <ThemedText type="heading" style={[styles.seasonTitle, {color: colors.text}]}>
                                         {group.season > 0 ? `Season ${group.season}` : 'Other releases'}
                                     </ThemedText>
                                     <View style={styles.seasonRight}>
@@ -413,12 +413,14 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
 const styles = StyleSheet.create({
     container: {flex: 1},
     backdrop: {width: '100%', overflow: 'hidden'},
-    header: {flexDirection: 'row', gap: Spacing.lg, alignItems: 'flex-end'},
+    header: {flexDirection: 'row', gap: Spacing.xl, alignItems: 'flex-end'},
+    title: {fontSize: 32, lineHeight: 41, letterSpacing: -0.7},
+    phoneTitle: {fontSize: 24, lineHeight: 31, letterSpacing: -0.4},
     poster: {
         width: POSTER_WIDTH,
         height: Math.round(POSTER_WIDTH * 1.5),
         borderRadius: Radius.card,
-        borderWidth: StyleSheet.hairlineWidth,
+        borderWidth: 1,
         overflow: 'hidden',
     },
     ratingPill: {
@@ -441,28 +443,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerText: {flex: 1, gap: Spacing.xs, paddingBottom: Spacing.xs},
-    overviewBox: {marginTop: Spacing.lg, padding: Spacing.lg, borderRadius: Radius.card},
-    overview: {fontSize: 14, lineHeight: 21},
-    sectionHeading: {marginTop: Spacing.xl, marginBottom: Spacing.sm},
+    headerText: {flex: 1, gap: Spacing.sm, paddingBottom: Spacing.xs},
+    overviewBox: {marginTop: Spacing.xl, padding: Spacing.lg, borderRadius: Radius.card},
+    overview: {fontSize: 15, lineHeight: 25, maxWidth: 760},
+    sectionHeading: {fontSize: 24, lineHeight: 32, marginTop: Spacing.xxl, marginBottom: Spacing.md},
     seasonRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: Spacing.md,
-        borderBottomWidth: StyleSheet.hairlineWidth,
+        minHeight: 56,
+        paddingVertical: Spacing.lg,
+        borderBottomWidth: 1,
     },
-    seasonTitle: {fontSize: 15, fontWeight: '700'},
+    seasonTitle: {fontSize: 19, lineHeight: 27},
     seasonRight: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     loader: {marginTop: Spacing.lg},
     statusBox: {gap: Spacing.sm, marginTop: Spacing.md},
-    retry: {alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md},
+    retry: {alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', borderRadius: Radius.pill, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md},
     retryLabel: {fontSize: 14, fontFamily: FontFamily.bold},
     episode: {
         flexDirection: 'row',
         gap: Spacing.md,
-        paddingVertical: Spacing.md,
-        borderBottomWidth: StyleSheet.hairlineWidth,
+        minHeight: 64,
+        paddingVertical: Spacing.lg,
+        borderBottomWidth: 1,
         alignItems: 'center',
     },
     codePill: {borderRadius: Radius.sm, paddingHorizontal: 8, paddingVertical: 5},

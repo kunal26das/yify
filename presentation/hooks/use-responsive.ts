@@ -47,7 +47,7 @@ export function useResponsive(): Responsive {
     const isDesktop = breakpoint === 'desktop' || breakpoint === 'wide';
     const isLarge = !isPhone;
 
-    const contentMaxWidth = breakpoint === 'wide' ? 1320 : breakpoint === 'desktop' ? 1120 : width;
+    const contentMaxWidth = Math.min(width, 1680);
     const gutter = isPhone ? 16 : isTablet ? 24 : 32;
 
     return {

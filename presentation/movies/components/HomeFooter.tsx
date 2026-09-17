@@ -46,9 +46,9 @@ export function HomeFooter() {
                     key={link.label}
                     onPress={() => go(link)}
                     accessibilityRole="link"
-                    pressedScale={0.94}
+                    pressedScale={0.98}
                     pressedOpacity={0.6}
-                    hoveredScale={1.04}
+                    hoveredScale={1}
                     contentStyle={styles.linkHit}
                 >
                     <ThemedText style={[styles.link, {color: colors.textMuted}]}>{link.label}</ThemedText>
@@ -61,11 +61,11 @@ export function HomeFooter() {
         <View style={[styles.footer, {borderTopColor: colors.border, paddingHorizontal: gutter}]}>
             <View style={[styles.top, isPhone && styles.topPhone]}>
                 <Animated.View entering={enterRise()} style={styles.brand}>
-                    <ThemedText type="title" style={[styles.wordmark, {color: colors.accent}]}>
+                    <ThemedText type="title" style={[styles.wordmark, {color: colors.text}]}>
                         YIFY
                     </ThemedText>
                     <ThemedText style={[styles.tagline, {color: colors.textMuted}]}>
-                        A quieter way to browse the catalogue — trailers, ratings and a list you keep.
+                        Find your next film. Browse the catalogue, watch a trailer, and keep a list.
                     </ThemedText>
                     <View style={styles.store}>
                         <PlayStoreButton source="home_footer"/>
@@ -78,10 +78,10 @@ export function HomeFooter() {
                     {column('App', APP_LINKS, 2)}
                 </View>
             </View>
-            {Platform.OS === 'web' ? <View style={styles.legal}>
+            {Platform.OS === 'web' ? <View style={[styles.legal, {borderTopColor: colors.border}]}>
                 {LEGAL_LINKS.map(link => <a key={link.url} href={link.url}
                     onClick={() => Analytics.footerLink(link.label)}
-                    style={{color: colors.textMuted, textDecoration: 'none'}}>
+                    style={{color: colors.textMuted, textDecoration: 'none', minHeight: 44, display: 'flex', alignItems: 'center'}}>
                     <ThemedText style={[styles.link, {color: colors.textMuted}]}>{link.label}</ThemedText>
                 </a>)}
             </View> : null}
@@ -91,25 +91,25 @@ export function HomeFooter() {
 
 const styles = StyleSheet.create({
     footer: {
-        marginTop: Spacing.xl,
-        paddingTop: Spacing.xxl,
-        paddingBottom: Spacing.xl,
+        marginTop: Spacing.xxl,
+        paddingTop: Spacing.xxxl,
+        paddingBottom: Spacing.xxl,
         borderTopWidth: StyleSheet.hairlineWidth,
     },
-    top: {flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.xxl},
-    topPhone: {flexDirection: 'column', gap: Spacing.xl},
+    top: {flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.xxxl},
+    topPhone: {flexDirection: 'column', gap: Spacing.xxl},
 
-    brand: {flexShrink: 1, maxWidth: 380, gap: Spacing.sm},
-    wordmark: {fontSize: 22, letterSpacing: 1.5, fontFamily: FontFamily.displayExtra},
-    tagline: {fontSize: 13.5, lineHeight: 19, fontFamily: FontFamily.regular},
-    store: {marginTop: Spacing.sm},
+    brand: {flexShrink: 1, maxWidth: 320, gap: Spacing.md},
+    wordmark: {fontSize: 32, lineHeight: 42, letterSpacing: -1.5, fontFamily: FontFamily.displaySemibold},
+    tagline: {fontSize: 14, lineHeight: 22, fontFamily: FontFamily.regular},
+    store: {marginTop: Spacing.md},
 
     columns: {flexDirection: 'row', gap: Spacing.xxxl},
-    columnsPhone: {gap: Spacing.xl, justifyContent: 'space-between'},
-    column: {gap: 7},
-    columnTitle: {fontSize: 13, letterSpacing: 0.6, marginBottom: 2, fontFamily: FontFamily.bold},
-    link: {fontSize: 13.5, fontFamily: FontFamily.regular},
-    linkHit: {alignSelf: 'flex-start'},
-    legal: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xl, paddingTop: Spacing.xl},
+    columnsPhone: {gap: Spacing.lg, justifyContent: 'space-between'},
+    column: {flexShrink: 1},
+    columnTitle: {fontSize: 15, lineHeight: 22, marginBottom: Spacing.md, fontFamily: FontFamily.displaySemibold},
+    link: {fontSize: 13, lineHeight: 19, fontFamily: FontFamily.regular},
+    linkHit: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
+    legal: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xl, marginTop: Spacing.xxl, paddingTop: Spacing.lg, borderTopWidth: StyleSheet.hairlineWidth},
 
 });

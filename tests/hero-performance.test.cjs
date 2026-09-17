@@ -102,6 +102,11 @@ function timerFixture(t) {
             }
             now = end;
         },
+        async until(predicate, timeout = 60000) {
+            const end = now + timeout;
+            while (!predicate() && now < end) await this.advance(Math.min(100, end - now));
+            assert.ok(predicate(), 'expected condition before the timer deadline');
+        },
     };
 }
 
@@ -113,16 +118,17 @@ function movie(id) {
     };
 }
 
-async function mountHero(t, {visible = true, focused = true, foreground = 'active'} = {}) {
+async function mountHero(t, {visible = true, focused = true, foreground = 'active', autoplayTrailers = true, platform = 'web'} = {}) {
     const timers = timerFixture(t);
     const appState = appStateFixture(foreground);
     const Focus = React.createContext(true);
     const events = [];
     const requests = [];
     const scrolls = [];
+    const carouselScrolls = [];
     const video = {mounts: 0, unmounts: 0};
     const palette = {colors: {}, gradients: {accent: ['red', 'orange']}};
-    const preferences = {playback: {autoplayTrailers: true, trailerCaptions: false}};
+    const preferences = {playback: {autoplayTrailers, trailerCaptions: false}};
     const {HeroBillboard} = loadTypeScript('presentation/movies/components/HeroBillboard.tsx', {
         '@expo/vector-icons/Ionicons': 'Icon',
         'expo-image': {Image: 'Image'},
@@ -132,6 +138,7 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
         },
         'react-native': {
             View: 'View', Pressable: 'Pressable', ScrollView: 'ScrollView', AppState: appState,
+            Platform: {OS: platform},
             StyleSheet: {create: (styles) => styles, absoluteFill: {}, hairlineWidth: 1},
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 0, bottom: 0})},
@@ -143,7 +150,7 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
         '../../constants/theme': {FontFamily: {}, Radius: {}, Spacing: {xl: 16, xxl: 24, sm: 4}},
         '../../hooks/use-palette': {usePalette: () => palette},
         '../../hooks/use-preferences': {usePreferences: () => preferences},
-        '../../hooks/use-responsive': {useResponsive: () => ({isDesktop: false})},
+        '../../hooks/use-responsive': {useResponsive: () => ({isDesktop: false, gutter: 16, contentMaxWidth: 400})},
         '../../hooks/use-reduce-motion': {useReduceMotion: () => false},
         '../../components/linear-gradient': {LinearGradient: 'LinearGradient'},
         '../../components/themed-text': {ThemedText: 'Text'},
@@ -172,12 +179,15 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
     const element = () => React.createElement(Focus.Provider, {value: focused}, React.createElement(HeroBillboard, props));
     await act(async () => {
         renderer = create(element(), {createNodeMock: (node) =>
-            node.type === 'ScrollView' ? {scrollTo: (options) => scrolls.push(options)} : null,
+            node.type === 'ScrollView' ? {scrollTo: (options) => {
+                scrolls.push(options);
+                if (node.props.onMomentumScrollEnd) carouselScrolls.push(options);
+            }} : null,
         });
     });
     t.after(async () => { await act(async () => renderer.unmount()); });
     return {
-        timers, appState, events, requests, scrolls, video,
+        timers, appState, events, requests, scrolls, carouselScrolls, video,
         get players() { return renderer.root.findAllByType('YoutubePlayer'); },
         get layers() { return renderer.root.findAll((node) => node.type.name === 'HeroTrailerLayer'); },
         async update(next) {
@@ -194,6 +204,28 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
                 nativeEvent: {contentOffset: {x}},
             }));
         },
+        async beginDrag() {
+            await act(async () => renderer.root.findAllByType('ScrollView')[0].props.onScrollBeginDrag());
+        },
+        async endDrag() {
+            await act(async () => renderer.root.findAllByType('ScrollView')[0].props.onScrollEndDrag());
+        },
+        async nextMovie() {
+            await act(async () => renderer.root.findAllByType('PressableScale').find((node) =>
+                node.props.accessibilityLabel === 'Next featured movie'
+            ).props.onPress());
+        },
+        async rotate() {
+            const before = carouselScrolls.filter((scroll) => scroll.animated).length;
+            await timers.until(() => carouselScrolls.filter((scroll) => scroll.animated).length > before);
+        },
+        async resize(width) {
+            props = {...props, width};
+            await act(async () => renderer.update(element()));
+            await act(async () => renderer.root.findAllByType('ScrollView')[0].props.onLayout({
+                nativeEvent: {layout: {width}},
+            }));
+        },
         async unmount() { await act(async () => renderer.unmount()); },
     };
 }
@@ -208,15 +240,19 @@ test('home scroll changes React state only when top or hero visibility threshold
     await hook.emit(9);
     assert.deepEqual(hook.value, {atTop: false, heroVisible: true});
     assert.equal(hook.renders, initial + 1);
-    await hook.emit(299);
-    assert.equal(hook.renders, initial + 1);
     await hook.emit(300);
+    assert.equal(hook.value.heroVisible, true, 'crossing the former fade threshold must keep the hero active');
+    await hook.emit(328);
+    assert.equal(hook.value.heroVisible, true, 'the 72 px selector remains visible');
+    await hook.emit(399);
+    assert.equal(hook.renders, initial + 1);
+    assert.equal(hook.value.heroVisible, true, 'the last visible pixel keeps selector navigation active');
+    await hook.emit(400);
     assert.deepEqual(hook.value, {atTop: false, heroVisible: false});
     const offscreenRenders = hook.renders;
-    // Flush each event separately so React batching cannot mask redundant updates.
-    for (let offset = 301; offset <= 480; offset++) await hook.emit(offset);
+    for (let offset = 401; offset <= 580; offset++) await hook.emit(offset);
     assert.equal(hook.renders, offscreenRenders, '180 offscreen scroll events must cause zero renders');
-    await hook.emit(299);
+    await hook.emit(399);
     assert.deepEqual(hook.value, {atTop: false, heroVisible: true});
     await hook.emit(8);
     assert.deepEqual(hook.value, {atTop: true, heroVisible: true});
@@ -226,7 +262,7 @@ test('home scroll changes React state only when top or hero visibility threshold
 test('resizing rechecks the saved scroll offset and replaces then removes the listener', async (t) => {
     const scrollY = animatedValue();
     const hook = await mountVisibility(t, scrollY, 400);
-    await hook.emit(350);
+    await hook.emit(450);
     assert.equal(hook.value.heroVisible, false);
     await hook.resize(600);
     assert.deepEqual(hook.value, {atTop: false, heroVisible: true});
@@ -239,6 +275,23 @@ test('resizing rechecks the saved scroll offset and replaces then removes the li
     await hook.unmount();
     assert.equal(scrollY.listeners.size, 0);
     assert.deepEqual(scrollY.removed, ['1', '2', '3']);
+});
+
+test('the visible bottom selector still scrolls to the chosen movie after most of the hero leaves view', async (t) => {
+    const scrollY = animatedValue();
+    const hook = await mountVisibility(t, scrollY, 500);
+    await hook.emit(450);
+    const hero = await mountHero(t, {visible: hook.value.heroVisible});
+    const beforeSelection = hero.scrolls.length;
+    await hero.nextMovie();
+    assert.ok(
+        hero.scrolls.slice(beforeSelection).some((scroll) => scroll.x === 400),
+        'a selector click must move the carousel while its bottom controls remain visible'
+    );
+    assert.equal(hero.requests.at(-1), 2, 'the selected movie and its displayed slide must advance together');
+    await hook.emit(500);
+    await hero.update({visible: hook.value.heroVisible});
+    assert.equal(hero.timers.size, 0, 'preview work stops once the entire hero leaves view');
 });
 
 test('preview activity requires visibility, navigation focus, and foreground state and unsubscribes', async (t) => {
@@ -319,14 +372,13 @@ test('an initially hidden hero requests no details or impressions and starts onl
     assert.equal(hero.players[0].props.videoId, 'trailer-11');
 });
 
-test('hiding a playing hero removes its video and clears rotation, autoplay, settle and reposition timers', async (t) => {
+test('hiding a playing hero removes its video and clears all rotation and scroll timers', async (t) => {
     const hero = await mountHero(t);
-    await hero.timers.fireDelay(2400);
+    await hero.timers.until(() => hero.players.length === 1);
     assert.equal(hero.players.length, 1);
-    assert.deepEqual(hero.timers.delays, [30000]);
-    await hero.timers.fireDelay(30000);
+    await hero.rotate();
     await hero.scroll(0);
-    assert.deepEqual(hero.timers.delays, [90, 520, 30000]);
+    assert.ok(hero.timers.size > 0, 'an unfinished transition has pending work to cancel');
     await hero.update({visible: false});
     assert.equal(hero.layers.length, 0);
     assert.equal(hero.players.length, 0);
@@ -373,4 +425,96 @@ test('navigation blur and backgrounding stop hero previews until focus and foreg
     await hero.state('inactive');
     assert.equal(hero.players.length, 0);
     assert.equal(hero.timers.size, 0);
+});
+
+test('auto rotation still settles after changing from an ambient trailer to the next movie', async (t) => {
+    const hero = await mountHero(t);
+    await hero.timers.until(() => hero.players.length === 1);
+    await hero.rotate();
+    assert.deepEqual(hero.carouselScrolls.at(-1), {x: 400, animated: true});
+    await hero.scroll(245);
+    assert.equal(hero.players.length, 0, 'the previous trailer stops as the selected movie changes');
+    await hero.scroll(361);
+    const beforeSettle = hero.carouselScrolls.length;
+    await hero.timers.advance(1000);
+    assert.ok(hero.carouselScrolls.slice(beforeSettle).some((scroll) => scroll.x === 400 && !scroll.animated),
+        'the final incomplete scroll must still be corrected after the trailer mode resets');
+    assert.equal(hero.requests.at(-1), 2);
+});
+
+for (const stoppedAt of [373, 427]) {
+    test(`late web scroll stopping at ${stoppedAt} settles on the selected 400 px page`, async (t) => {
+        const hero = await mountHero(t, {autoplayTrailers: false});
+        await hero.rotate();
+        await hero.scroll(245);
+        await hero.timers.advance(1000);
+        await hero.scroll(stoppedAt);
+        const beforeSettle = hero.carouselScrolls.length;
+        await hero.timers.advance(1000);
+        assert.ok(hero.carouselScrolls.slice(beforeSettle).some((scroll) => scroll.x === 400 && !scroll.animated),
+            'a late final browser scroll event must not leave a partly visible adjacent slide');
+    });
+}
+
+test('resizing during an unfinished transition uses the new page width and cancels stale corrections', async (t) => {
+    const hero = await mountHero(t, {autoplayTrailers: false});
+    await hero.nextMovie();
+    await hero.scroll(275);
+    const beforeResize = hero.carouselScrolls.length;
+    await hero.resize(640);
+    await hero.timers.advance(1000);
+    const afterResize = hero.carouselScrolls.slice(beforeResize);
+    assert.ok(afterResize.some((scroll) => scroll.x === 640 && !scroll.animated),
+        'the selected movie stays aligned to the resized viewport');
+    assert.ok(afterResize.every((scroll) => scroll.x === 640),
+        'no pending correction may restore an offset measured at the old width');
+    assert.equal(hero.requests.at(-1), 2);
+});
+
+test('a second selector click replaces the unfinished first scroll target', async (t) => {
+    const hero = await mountHero(t, {autoplayTrailers: false});
+    await hero.update({movies: [movie(1), movie(2), movie(3)]});
+    await hero.nextMovie();
+    await hero.nextMovie();
+    assert.deepEqual(hero.carouselScrolls.at(-1), {x: 800, animated: true});
+    await hero.scroll(361);
+    const beforeSettle = hero.carouselScrolls.length;
+    await hero.timers.advance(1000);
+    const afterSettle = hero.carouselScrolls.slice(beforeSettle);
+    assert.ok(afterSettle.length > 0);
+    assert.ok(afterSettle.every((scroll) => scroll.x === 800 && !scroll.animated),
+        'late events from the first transition cannot restore its superseded page');
+    assert.equal(hero.requests.at(-1), 3);
+});
+
+test('a native drag can pause between pages without snapping until the finger is released', async (t) => {
+    const hero = await mountHero(t, {autoplayTrailers: false, platform: 'android'});
+    await hero.rotate();
+    await hero.beginDrag();
+    await hero.scroll(150);
+    const beforePause = hero.carouselScrolls.length;
+    await hero.timers.advance(1000);
+    assert.equal(hero.carouselScrolls.length, beforePause,
+        'the held gesture must not trigger a snap correction or an automatic slide change');
+    await hero.timers.advance(10000);
+    assert.equal(hero.carouselScrolls.length, beforePause,
+        'automatic rotation remains paused for the entire gesture');
+    await hero.endDrag();
+    await hero.timers.advance(1000);
+    assert.deepEqual(hero.carouselScrolls.at(-1), {x: 0, animated: false},
+        'release snaps to the nearest page instead of the cancelled automatic target');
+    assert.equal(hero.requests.at(-1), 1);
+});
+
+test('the looped last slide settles back to the exact first page without a stale correction', async (t) => {
+    const hero = await mountHero(t, {autoplayTrailers: false});
+    await hero.nextMovie();
+    await hero.scroll(400);
+    await hero.timers.advance(1000);
+    await hero.rotate();
+    assert.deepEqual(hero.carouselScrolls.at(-1), {x: 800, animated: true});
+    await hero.scroll(797);
+    await hero.timers.advance(1000);
+    assert.deepEqual(hero.carouselScrolls.at(-1), {x: 0, animated: false});
+    assert.equal(hero.requests.at(-1), 1);
 });

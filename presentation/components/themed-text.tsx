@@ -24,12 +24,12 @@ export type ThemedTextProps = TextProps & {
 const DISPLAY_TYPES = new Set<ThemedTextType>(['display', 'title', 'heading', 'subtitle']);
 
 const PRESET_FAMILY: Record<ThemedTextType, string> = {
-    display: FontFamily.displayExtra,
-    title: FontFamily.displayExtra,
-    heading: FontFamily.displayBold,
-    subtitle: FontFamily.displayBold,
+    display: FontFamily.displaySemibold,
+    title: FontFamily.displaySemibold,
+    heading: FontFamily.displaySemibold,
+    subtitle: FontFamily.displaySemibold,
     caption: FontFamily.medium,
-    section: FontFamily.bold,
+    section: FontFamily.displaySemibold,
     micro: FontFamily.bold,
     default: FontFamily.regular,
     defaultSemiBold: FontFamily.semibold,
@@ -52,7 +52,7 @@ function pickFamily(type: ThemedTextType, weight: TextStyle['fontWeight']): stri
 }
 
 export function ThemedText({style, lightColor, darkColor, type = 'default', ...rest}: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const color = useThemeColor({ light: lightColor, dark: darkColor }, type === 'link' ? 'accent' : 'text');
 
     const typeStyle =
         type === 'display'
@@ -75,8 +75,9 @@ export function ThemedText({style, lightColor, darkColor, type = 'default', ...r
                                         ? styles.link
                                         : styles.default;
 
-    const callerWeight = (StyleSheet.flatten(style) as TextStyle | undefined)?.fontWeight;
-    const family = callerWeight != null ? pickFamily(type, callerWeight) : PRESET_FAMILY[type];
+    const callerStyle = StyleSheet.flatten(style) as TextStyle | undefined;
+    const callerWeight = callerStyle?.fontWeight;
+    const family = callerStyle?.fontFamily ?? (callerWeight != null ? pickFamily(type, callerWeight) : PRESET_FAMILY[type]);
 
   return (
     <Text
@@ -106,7 +107,6 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 16,
-      color: '#BD5D3A',
       fontWeight: '600',
   },
 });

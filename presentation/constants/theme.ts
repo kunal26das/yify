@@ -1,31 +1,31 @@
 import { Platform } from 'react-native';
 
-const accentLight = '#BD5D3A';
-const accentDark = '#D97757';
-const accentStrong = '#B4501F';
+const accentLight = '#9C452B';
+const accentDark = '#E39A74';
+const accentStrong = '#9C452B';
 
 export const Colors = {
     light: {
-        text: '#0F0F0F',
-        background: '#FFFFFF',
+        text: '#241F19',
+        background: '#F3F0E9',
         tint: accentLight,
-        icon: '#606060',
-        tabIconDefault: '#606060',
+        icon: '#6E6557',
+        tabIconDefault: '#6E6557',
         tabIconSelected: accentLight,
 
-        textMuted: '#606060',
-        textFaint: '#767676',
-        surface: '#F9F9F9',
-        surfaceElevated: '#FFFFFF',
-        surfaceSunken: '#F2F2F2',
-        border: 'rgba(0, 0, 0, 0.10)',
-        borderStrong: 'rgba(0, 0, 0, 0.16)',
+        textMuted: '#6E6557',
+        textFaint: '#756B5D',
+        surface: '#FBFAF6',
+        surfaceElevated: '#FBFAF6',
+        surfaceSunken: '#EBE5DA',
+        border: '#D4CAB9',
+        borderStrong: '#B9AB95',
         accent: accentLight,
         accentStrong,
-        accentSecondary: '#C8895A',
-        accentSoft: 'rgba(189, 93, 58, 0.11)',
+        accentSecondary: '#9C6D38',
+        accentSoft: 'rgba(156, 69, 43, 0.09)',
         onAccent: '#FFFFFF',
-        rankNumeral: '#E5E5E5',
+        rankNumeral: '#D4CAB9',
         gold: '#C2891C',
         seed: '#2E7D32',
         peer: '#C0492F',
@@ -35,26 +35,26 @@ export const Colors = {
         scrim: 'rgba(0, 0, 0, 0.55)',
     },
     dark: {
-        text: '#F1F1F1',
-        background: '#0F0F0F',
+        text: '#EDE7DB',
+        background: '#1B1916',
         tint: accentDark,
-        icon: '#AAAAAA',
-        tabIconDefault: '#AAAAAA',
+        icon: '#B1A796',
+        tabIconDefault: '#B1A796',
         tabIconSelected: accentDark,
 
-        textMuted: '#AAAAAA',
-        textFaint: '#8A8A8A',
-        surface: '#212121',
-        surfaceElevated: '#272727',
-        surfaceSunken: '#181818',
-        border: 'rgba(255, 255, 255, 0.10)',
-        borderStrong: 'rgba(255, 255, 255, 0.18)',
+        textMuted: '#B1A796',
+        textFaint: '#A49986',
+        surface: '#24211D',
+        surfaceElevated: '#302B25',
+        surfaceSunken: '#211E1A',
+        border: '#443D33',
+        borderStrong: '#645A4B',
         accent: accentDark,
         accentStrong,
-        accentSecondary: '#E0A06B',
-        accentSoft: 'rgba(217, 119, 87, 0.18)',
+        accentSecondary: '#D8B58C',
+        accentSoft: 'rgba(227, 154, 116, 0.12)',
         onAccent: '#FFFFFF',
-        rankNumeral: '#3F3F3F',
+        rankNumeral: '#544A3C',
         gold: '#E6B450',
         seed: '#4CAF50',
         peer: '#E07A63',
@@ -69,11 +69,11 @@ export type Palette = Record<keyof (typeof Colors)['light'], string>;
 
 export const Gradients = {
     light: {
-        accent: ['#D97757', '#BD5D3A'] as const,
+        accent: ['#B85F40', '#9C452B'] as const,
         accentSubtle: ['rgba(217,119,87,0.14)', 'rgba(200,137,90,0.14)'] as const,
     },
     dark: {
-        accent: ['#E0A06B', '#D97757'] as const,
+        accent: ['#E39A74', '#BA7451'] as const,
         accentSubtle: ['rgba(217,119,87,0.13)', 'rgba(217,119,87,0.04)'] as const,
     },
 } as const;
@@ -103,24 +103,24 @@ export const FontFamily = {
     semibold: 'HankenGrotesk_600SemiBold',
     bold: 'HankenGrotesk_700Bold',
     extrabold: 'HankenGrotesk_800ExtraBold',
-    displaySemibold: 'Fraunces_600SemiBold',
-    displayBold: 'Fraunces_700Bold',
-    displayExtra: 'Fraunces_900Black',
+    displaySemibold: 'Lora_600SemiBold',
+    displayBold: 'Lora_700Bold',
+    displayExtra: 'Lora_700Bold',
 } as const;
 
 export const Typography = {
-    display: {fontSize: 30, lineHeight: 36, fontFamily: FontFamily.displayExtra, letterSpacing: -0.5},
-    title: {fontSize: 22, lineHeight: 28, fontFamily: FontFamily.displayExtra, letterSpacing: -0.3},
-    heading: {fontSize: 18, lineHeight: 24, fontFamily: FontFamily.displayBold, letterSpacing: -0.2},
-    subheading: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.displayBold},
+    display: {fontSize: 36, lineHeight: 44, fontFamily: FontFamily.displaySemibold, letterSpacing: -0.7},
+    title: {fontSize: 28, lineHeight: 36, fontFamily: FontFamily.displaySemibold, letterSpacing: -0.5},
+    heading: {fontSize: 22, lineHeight: 30, fontFamily: FontFamily.displaySemibold, letterSpacing: -0.3},
+    subheading: {fontSize: 18, lineHeight: 26, fontFamily: FontFamily.displaySemibold},
     body: {fontSize: 15, lineHeight: 22, fontFamily: FontFamily.regular},
     bodyStrong: {fontSize: 15, lineHeight: 22, fontFamily: FontFamily.semibold},
     caption: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium},
     micro: {fontSize: 11, lineHeight: 14, fontFamily: FontFamily.bold, letterSpacing: 0.4},
     videoTitle: {fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold},
     videoMeta: {fontSize: 12.5, lineHeight: 17, fontFamily: FontFamily.regular},
-    watchTitle: {fontSize: 20, lineHeight: 27, fontFamily: FontFamily.bold},
-    sectionTitle: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold},
+    watchTitle: {fontSize: 28, lineHeight: 36, fontFamily: FontFamily.displaySemibold},
+    sectionTitle: {fontSize: 20, lineHeight: 28, fontFamily: FontFamily.displaySemibold},
 } as const;
 
 export const Fonts = Platform.select({

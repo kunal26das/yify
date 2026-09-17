@@ -387,15 +387,6 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                     keyExtractor={keyExtractor}
                     numColumns={numColumns}
                     columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
-                    ListHeaderComponent={
-                        totalMovieCount != null && movies.length > 0 ? (
-                            <Animated.View entering={enterFade()}>
-                                <ThemedText style={[Typography.videoMeta, styles.countLine, {color: colors.textMuted}]}>
-                                    About {totalMovieCount.toLocaleString()} results
-                                </ThemedText>
-                            </Animated.View>
-                        ) : null
-                    }
                     ListEmptyComponent={
                         loading && !error ? (
                             <View style={styles.skeletonGrid}>
@@ -491,13 +482,6 @@ const styles = StyleSheet.create({
     list: {flex: 1},
     listContent: {flexGrow: 1},
     row: {flexDirection: 'row'},
-    countLine: {
-        fontWeight: '500',
-        paddingHorizontal: POSTER_GAP / 2,
-        paddingTop: Spacing.lg,
-        paddingBottom: Spacing.sm,
-    },
-
     chipRow: {},
     chipRowInner: {
         flex: 1,

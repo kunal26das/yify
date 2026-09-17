@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, Platform, StyleSheet, View} from 'react-native';
+import {FlatList, Platform, StyleSheet, useWindowDimensions, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
-import {FontFamily, Spacing} from '../../constants/theme';
+import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText, type ThemedTextType} from '../../components/themed-text';
@@ -12,6 +12,7 @@ import {MoviePosterItem} from './MoviePosterItem';
 import {MovieLandscapeItem, landscapeCellHeight, landscapeWidth} from './MovieLandscapeItem';
 import {Analytics} from '@/presentation/analytics/events';
 import {POSTER_GAP} from './moviePosterLayout';
+import {LandscapeSkeleton, PosterSkeleton} from './PosterSkeleton';
 
 export type RailVariant = 'standard' | 'ranked' | 'landscape';
 
@@ -25,6 +26,8 @@ interface MovieRailProps {
     onSeeAll?: () => void;
     markNew?: boolean;
     titleType?: ThemedTextType;
+    loading?: boolean;
+    skeletonCount?: number;
 }
 
 const IS_WEB = Platform.OS === 'web';
@@ -71,8 +74,11 @@ export function MovieRail({
                               onSeeAll,
                               markNew,
                               titleType = 'heading',
+                              loading = false,
+                              skeletonCount = 8,
                           }: MovieRailProps) {
     const {colors} = usePalette();
+    const {fontScale} = useWindowDimensions();
     const ranked = variant === 'ranked';
     const landscape = variant === 'landscape';
     const n = movies.length;
@@ -85,7 +91,7 @@ export function MovieRail({
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 
-    const posterHeight = landscape ? landscapeCellHeight(posterWidth) : posterWidth * 1.5;
+    const posterHeight = landscape ? landscapeCellHeight(posterWidth, fontScale) : posterWidth * 1.5;
 
     const data = movies;
 
@@ -234,7 +240,18 @@ export function MovieRail({
     );
 
     const trackEvents = IS_WEB;
-    const list = (
+    const placeholderCount = landscape
+        ? Math.max(2, Math.ceil((skeletonCount * (posterWidth + POSTER_GAP)) / (landscapeWidth(posterWidth) + POSTER_GAP)))
+        : skeletonCount;
+    const list = loading ? (
+        <View style={[styles.skeletonRow, {paddingHorizontal: gutter - POSTER_GAP / 2}]}>
+            {Array.from({length: placeholderCount}, (_, index) => landscape ? (
+                <LandscapeSkeleton key={index} posterWidth={posterWidth}/>
+            ) : (
+                <PosterSkeleton key={index} width={posterWidth}/>
+            ))}
+        </View>
+    ) : (
         <FlatList
             ref={listRef}
             data={data}
@@ -262,7 +279,7 @@ export function MovieRail({
         <View style={styles.rail}>
             <Animated.View entering={enterRise()} style={[styles.header, {paddingHorizontal: gutter}]}>
                 <View style={styles.headerText}>
-                    <ThemedText type={titleType}>{title}</ThemedText>
+                    <ThemedText type={titleType} style={styles.title}>{title}</ThemedText>
                     {subtitle ? (
                         <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>
                             {subtitle}
@@ -277,10 +294,10 @@ export function MovieRail({
                         accessibilityLabel={`See all ${title}`}
                         pressedScale={0.93}
                         pressedOpacity={0.6}
-                        hoveredScale={IS_WEB ? 1.06 : 1}
+                        hoveredScale={1}
                         contentStyle={styles.seeAll}
                     >
-                        <ThemedText style={[styles.seeAllLabel, {color: colors.accent}]}>View All</ThemedText>
+                        <ThemedText style={[styles.seeAllLabel, {color: colors.accent}]}>View all</ThemedText>
                         <Ionicons name="chevron-forward" size={15} color={colors.accent}/>
                     </PressableScale>
                 ) : null}
@@ -289,13 +306,13 @@ export function MovieRail({
             {IS_WEB ? (
                 <View ref={wrapRef} style={styles.listWrap}>
                     {list}
-                    {hovered && canLeft ? (
+                    {!loading && hovered && canLeft ? (
                         <RailHandle side="left" height={posterHeight} onPress={() => {
                             Analytics.railPage(title, 'back');
                             scrollByPage(-1);
                         }}/>
                     ) : null}
-                    {hovered && canRight ? (
+                    {!loading && hovered && canRight ? (
                         <RailHandle side="right" height={posterHeight} onPress={() => {
                             Analytics.railPage(title, 'forward');
                             scrollByPage(1);
@@ -318,7 +335,9 @@ function RailHandle({
     height: number;
     onPress: () => void;
 }) {
+    const {colors} = usePalette();
     const left = side === 'left';
+    const transparentBackground = `${colors.background}00`;
     return (
         <Animated.View
             entering={enterFade()}
@@ -336,12 +355,14 @@ function RailHandle({
                 contentStyle={styles.handleHit}
             >
                 <LinearGradient
-                    colors={left ? ['rgba(8,8,10,0.72)', 'rgba(8,8,10,0)'] : ['rgba(8,8,10,0)', 'rgba(8,8,10,0.72)']}
+                    colors={left ? [colors.background, transparentBackground] : [transparentBackground, colors.background]}
                     direction="horizontal"
                     style={StyleSheet.absoluteFill}
                     pointerEvents="none"
                 />
-                <Ionicons name={left ? 'chevron-back' : 'chevron-forward'} size={30} color="#fff"/>
+                <View style={[styles.handleIcon, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+                    <Ionicons name={left ? 'chevron-back' : 'chevron-forward'} size={26} color={colors.text}/>
+                </View>
             </PressableScale>
         </Animated.View>
     );
@@ -374,20 +395,22 @@ function RankedPoster({movie, rank, posterWidth, source}: {movie: Movie; rank: n
 }
 
 const styles = StyleSheet.create({
-    rail: {marginBottom: Spacing.xl},
+    rail: {marginBottom: Spacing.xxl},
     header: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: Spacing.md,
+        marginBottom: Spacing.lg,
         gap: Spacing.md,
     },
     headerText: {flexShrink: 1},
-    subtitle: {fontSize: 13, marginTop: 2, fontFamily: FontFamily.regular},
-    seeAll: {flexDirection: 'row', alignItems: 'center', gap: 1, paddingVertical: 2},
-    seeAllLabel: {fontSize: 14, fontWeight: '700'},
+    title: {fontSize: 24, lineHeight: 32, letterSpacing: -0.6, fontFamily: FontFamily.displaySemibold},
+    subtitle: {fontSize: 13, lineHeight: 19, marginTop: Spacing.xs, fontFamily: FontFamily.regular},
+    seeAll: {minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs},
+    seeAllLabel: {fontSize: 13, fontFamily: FontFamily.medium},
 
     listWrap: {position: 'relative'},
+    skeletonRow: {flexDirection: 'row', overflow: 'hidden'},
     handle: {
         position: 'absolute',
         top: 0,
@@ -400,6 +423,7 @@ const styles = StyleSheet.create({
     handleLeft: {left: 0},
     handleRight: {right: 0},
     handleHit: {flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'},
+    handleIcon: {width: 44, height: 44, borderRadius: Radius.pill, borderWidth: 1, justifyContent: 'center', alignItems: 'center'},
 
     rankedCell: {flexDirection: 'row', alignItems: 'flex-end'},
     numeralArea: {

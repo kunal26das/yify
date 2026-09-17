@@ -4,7 +4,7 @@ import {Duration, PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
 import {useHaptics} from '../../hooks/use-haptics';
-import {Radius, Spacing} from '../../constants/theme';
+import {FontFamily, Radius, Spacing} from '../../constants/theme';
 
 interface ChipBarProps {
     chips: readonly {key: string; label: string}[];
@@ -77,15 +77,15 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                                     haptics.select();
                                     onSelect(chip.key);
                                 }}
-                                pressedScale={0.94}
+                                pressedScale={0.98}
                                 pressedOpacity={0.85}
                                 contentStyle={[
                                     styles.chip,
                                     {
                                         backgroundColor: selected
-                                            ? colors.accentStrong
-                                            : colors.surfaceSunken,
-                                        borderColor: selected ? 'transparent' : colors.border,
+                                            ? colors.text
+                                            : colors.background,
+                                        borderColor: selected ? colors.text : colors.border,
                                         transitionProperty: ['backgroundColor', 'borderColor'],
                                         transitionDuration: Duration.fast,
                                     },
@@ -95,7 +95,7 @@ export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: 
                                     numberOfLines={1}
                                     style={[
                                         styles.chipLabel,
-                                        {color: selected ? colors.onAccent : colors.text},
+                                        {color: selected ? colors.background : colors.textMuted},
                                     ]}
                                 >
                                     {chip.label}
@@ -115,16 +115,16 @@ const styles = StyleSheet.create({
     content: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.md,
+        gap: Spacing.sm,
         paddingVertical: Spacing.md,
     },
     chip: {
-        height: 34,
-        borderRadius: Radius.pill,
+        height: 44,
+        borderRadius: Radius.sm,
         borderWidth: StyleSheet.hairlineWidth,
         paddingHorizontal: Spacing.lg,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    chipLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500'},
+    chipLabel: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium},
 });

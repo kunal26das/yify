@@ -72,12 +72,6 @@ function PlaylistHeader({
     const heading = (
         <View style={isPhone ? styles.headingOverlay : styles.headingBeside}>
             <ThemedText
-                type="title"
-                style={isPhone ? styles.onCoverTitle : {color: colors.text}}
-            >
-                Watchlist
-            </ThemedText>
-            <ThemedText
                 style={[
                     Typography.videoMeta,
                     isPhone ? styles.onCoverMeta : {color: colors.textMuted},
@@ -322,7 +316,7 @@ export function WatchlistScreen() {
                         <View style={[styles.header, {paddingHorizontal: POSTER_GAP / 2}]}>
                             {movies.length > 0 ? (
                                 <PlaylistHeader movies={movies} canPlayAll={queue.length > 0} onPlayAll={playAll}/>
-                            ) : <ThemedText type="title">Watchlist</ThemedText>}
+                            ) : null}
                             <WatchlistControls options={options} onChange={setOptions} genres={genres} collections={collections}
                                                onManageCollections={() => setManage({movie: null})} onPick={pickForMe} canPick={canPick}/>
                             <WatchlistStreamingControls streaming={streaming}/>
@@ -404,7 +398,6 @@ const styles = StyleSheet.create({
     },
     headingOverlay: {padding: Spacing.lg, alignItems: 'flex-start', gap: Spacing.xs},
     headingBeside: {flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: Spacing.xs},
-    onCoverTitle: {color: '#FFFFFF'},
     onCoverMeta: {color: 'rgba(255, 255, 255, 0.78)'},
     playAll: {
         flexDirection: 'row',

@@ -15,7 +15,7 @@ function GenreChip({label}: {label: string}) {
         <View
             style={[
                 styles.genreChip,
-                {backgroundColor: colors.surfaceElevated, borderColor: colors.border},
+                {backgroundColor: colors.surface, borderColor: colors.border},
             ]}
         >
             <ThemedText style={[styles.genreLabel, {color: colors.text}]} numberOfLines={1}>
@@ -67,13 +67,13 @@ export function DescriptionCard({
                         {hasRating ? (
                             <View style={styles.ratingGroup}>
                                 <Ionicons name="star" size={13} color={colors.gold}/>
-                                <ThemedText style={[styles.meta, {color: colors.text}]}>
+                                <ThemedText style={[styles.meta, {color: colors.textMuted}]}>
                                     {details.rating.toFixed(1)}
                                 </ThemedText>
                             </View>
                         ) : null}
                         {metaLine ? (
-                            <ThemedText style={[styles.meta, {color: colors.text}]}>
+                            <ThemedText style={[styles.meta, {color: colors.textMuted}]}>
                                 {hasRating ? `· ${metaLine}` : metaLine}
                             </ThemedText>
                         ) : null}
@@ -88,7 +88,7 @@ export function DescriptionCard({
                     </ThemedText>
                 ) : null}
                 {expanded ? null : (
-                    <ThemedText style={[styles.affordance, {color: colors.text}]}>...more</ThemedText>
+                    <ThemedText style={[styles.affordance, {color: colors.accent}]}>...more</ThemedText>
                 )}
             </PressableScale>
 
@@ -123,7 +123,7 @@ export function DescriptionCard({
                         pressedOpacity={0.75}
                         style={styles.showLess}
                     >
-                        <ThemedText style={[styles.affordance, {color: colors.text}]}>Show less</ThemedText>
+                        <ThemedText style={[styles.affordance, {color: colors.accent}]}>Show less</ThemedText>
                     </PressableScale>
                 </Animated.View>
             ) : null}
@@ -132,21 +132,21 @@ export function DescriptionCard({
 }
 
 const styles = StyleSheet.create({
-    card: {borderRadius: Radius.card, padding: Spacing.md, gap: Spacing.md},
-    stack: {gap: Spacing.sm},
+    card: {borderRadius: Radius.card, padding: Spacing.lg, gap: Spacing.lg},
+    stack: {gap: Spacing.md},
     metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6},
     ratingGroup: {flexDirection: 'row', alignItems: 'center', gap: 3},
-    meta: {fontSize: 13, lineHeight: 18, fontWeight: '700'},
-    description: {fontSize: 14, lineHeight: 20, fontWeight: '400'},
-    affordance: {fontSize: 13, lineHeight: 18, fontWeight: '700'},
-    showLess: {alignSelf: 'flex-start'},
+    meta: {fontSize: 12, lineHeight: 19, fontWeight: '500'},
+    description: {fontSize: 15, lineHeight: 25, fontWeight: '400'},
+    affordance: {fontSize: 13, lineHeight: 20, fontWeight: '600'},
+    showLess: {alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center'},
     genreRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm},
     genreChip: {
-        height: 32,
+        minHeight: 44,
         justifyContent: 'center',
         paddingHorizontal: Spacing.md,
         borderRadius: Radius.pill,
-        borderWidth: StyleSheet.hairlineWidth,
+        borderWidth: 1,
     },
     genreLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500', textTransform: 'capitalize'},
 });

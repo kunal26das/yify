@@ -28,7 +28,7 @@ import {useConfirm} from '../components/confirm-dialog';
 import {useToast} from '../components/toast';
 import {Duration, enterFade, enterRise, exitFade, PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
-import {ThemedText} from '../components/themed-text';
+import {ThemedText, type ThemedTextType} from '../components/themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {LEGAL_LINKS, openLegalPage, PRIVACY_POLICY_URL} from '../constants/legal';
 import {usePalette} from '../hooks/use-palette';
@@ -958,7 +958,7 @@ function SectionHeader({
             entering={enterRise(index)}
             style={[styles.sectionHeader, {paddingHorizontal: gutter}]}
         >
-            <ThemedText style={[styles.sectionTitle, {color: colors.textMuted}]}>{title}</ThemedText>
+            <ThemedText type="micro" style={[styles.sectionTitle, {color: colors.accent}]}>{title}</ThemedText>
         </Animated.View>
     );
 }
@@ -989,6 +989,7 @@ function Row({
                  icon,
                  leading,
                  title,
+                 titleType = 'default',
                  titleStyle,
                  subtitle,
                  subtitleStyle,
@@ -1003,6 +1004,7 @@ function Row({
     icon?: Glyph;
     leading?: React.ReactNode;
     title: string;
+    titleType?: ThemedTextType;
     titleStyle?: StyleProp<TextStyle>;
     subtitle?: string;
     subtitleStyle?: StyleProp<TextStyle>;
@@ -1015,16 +1017,16 @@ function Row({
     accessibilityState?: {expanded?: boolean; selected?: boolean; disabled?: boolean};
 }) {
     const content = (
-        <>
-            {leading ?? (icon ? <Ionicons name={icon} size={GLYPH_SIZE} color={colors.textMuted}/> : null)}
+        <View style={styles.rowContent}>
+            {leading ?? (icon ? <Ionicons name={icon} size={GLYPH_SIZE} color={colors.textMuted} style={subtitle ? styles.leadingIcon : undefined}/> : null)}
             <View style={styles.rowText}>
-                <ThemedText style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
+                <ThemedText type={titleType} style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
                 {subtitle ? (
                     <ThemedText style={[styles.subtitle, {color: colors.textMuted}, subtitleStyle]}>{subtitle}</ThemedText>
                 ) : null}
             </View>
             {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
-        </>
+        </View>
     );
 
     if (!onPress) {
@@ -1163,6 +1165,7 @@ function SettingsSection({
         <Group colors={colors} index={index} onLayout={onLayout}>
             <Row
                 title={title}
+                titleType="heading"
                 titleStyle={styles.sectionRowTitle}
                 colors={colors}
                 gutter={gutter}
@@ -1182,28 +1185,32 @@ function SettingsSection({
 
 
 const styles = StyleSheet.create({
-    sectionHeader: {paddingTop: Spacing.xl, paddingBottom: Spacing.sm},
-    sectionTitle: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.bold},
-    sectionRowTitle: {fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold},
+    sectionHeader: {paddingTop: Spacing.xxl, paddingBottom: Spacing.md},
+    sectionTitle: {fontSize: 11, lineHeight: 18, letterSpacing: 1.2, textTransform: 'uppercase'},
+    sectionRowTitle: {fontSize: 21, lineHeight: 29, fontFamily: FontFamily.displaySemibold, letterSpacing: -0.3},
 
-    group: {borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: Spacing.xs},
+    group: {borderBottomWidth: 1},
 
     row: {
+        justifyContent: 'center',
+        minHeight: 64,
+        paddingVertical: Spacing.md,
+    },
+    rowContent: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: GLYPH_GAP,
-        minHeight: 56,
-        paddingVertical: Spacing.sm,
     },
-    rowText: {flex: 1, gap: 1},
+    leadingIcon: {alignSelf: 'flex-start'},
+    rowText: {flex: 1, gap: Spacing.xs, justifyContent: 'center'},
     rowTitle: {fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold},
-    subtitle: {fontSize: 13, lineHeight: 18, fontFamily: FontFamily.regular},
+    subtitle: {fontSize: 13, lineHeight: 21, fontFamily: FontFamily.regular},
     trailing: {flexShrink: 0, alignItems: 'flex-end', justifyContent: 'center'},
-    value: {fontSize: 14, lineHeight: 19, fontFamily: FontFamily.medium},
+    value: {fontSize: 13, lineHeight: 20, fontFamily: FontFamily.medium},
     disclosure: {flexDirection: 'row', alignItems: 'center', gap: 4},
     avatar: {width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2},
 
-    options: {paddingBottom: Spacing.sm},
+    options: {paddingTop: Spacing.xs, paddingBottom: Spacing.md},
 
     notice: {flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingBottom: Spacing.sm},
     noticeText: {flex: 1},
@@ -1211,8 +1218,10 @@ const styles = StyleSheet.create({
     dangerButton: {
         paddingHorizontal: 16,
         paddingVertical: 8,
+        minHeight: 44,
+        justifyContent: 'center',
         borderRadius: Radius.pill,
-        borderWidth: StyleSheet.hairlineWidth,
+        borderWidth: 1,
     },
     dangerLabel: {fontSize: 14, fontFamily: FontFamily.bold},
 });

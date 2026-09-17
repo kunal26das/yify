@@ -1,7 +1,7 @@
 {
   "name": "Yify — Movie Discovery",
   "short_name": "Yify",
-  "description": "Browse a curated, Netflix-style home of movies — trailers, ratings and a personal list.",
+  "description": "Discover movies and shows, watch trailers, and keep a personal watchlist.",
   "id": "/",
   "start_url": "./",
   "scope": "./",
@@ -17,8 +17,8 @@
     "entertainment",
     "movies"
   ],
-  "background_color": "#0F0F0F",
-  "theme_color": "#D97757",
+  "background_color": "#F3F0E9",
+  "theme_color": "#9C452B",
   "icons": [
     {
       "src": "./icons/icon-192.png",

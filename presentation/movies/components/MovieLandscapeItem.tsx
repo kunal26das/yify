@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
-import {Platform, StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, useWindowDimensions, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
@@ -25,11 +25,9 @@ export function landscapeArtHeight(posterWidth: number): number {
     return Math.round(landscapeWidth(posterWidth) / ART_ASPECT);
 }
 
-export function landscapeCellHeight(posterWidth: number): number {
-    return landscapeArtHeight(posterWidth) + CAPTION_HEIGHT;
+export function landscapeCellHeight(posterWidth: number, fontScale = 1): number {
+    return landscapeArtHeight(posterWidth) + Spacing.md + 2 + (20 + 18) * fontScale;
 }
-
-const CAPTION_HEIGHT = 44;
 
 export function MovieLandscapeItem({
                                        movie,
@@ -42,7 +40,8 @@ export function MovieLandscapeItem({
     source?: string;
     isNew?: boolean;
 }) {
-    const {colors, scheme} = usePalette();
+    const {colors} = usePalette();
+    const {fontScale} = useWindowDimensions();
     const nodeRef = useRef<View>(null);
     const hoverCard = useHoverCard();
 
@@ -56,15 +55,15 @@ export function MovieLandscapeItem({
         .join(' • ');
 
     return (
-        <View ref={nodeRef} style={[styles.cell, {width, marginHorizontal: POSTER_GAP / 2}]} collapsable={false}>
+        <View ref={nodeRef} style={[styles.cell, {width, minHeight: landscapeCellHeight(posterWidth, fontScale), marginHorizontal: POSTER_GAP / 2}]} collapsable={false}>
             <Link href={`/movie/${movie.id}`} asChild>
                 <PressableScale
                     accessibilityRole="link"
                     accessibilityLabel={[movie.title, meta].filter(Boolean).join(', ')}
                     onPress={() => Analytics.movieOpen(movie, source)}
                     pressedScale={0.97}
-                    hoveredScale={IS_WEB ? 1.03 : 1}
-                    lift={IS_WEB ? 4 : 0}
+                    hoveredScale={IS_WEB ? 1.015 : 1}
+                    lift={IS_WEB ? 2 : 0}
                     duration={Duration.fast}
                     onHoverIn={() => {
                         if (!IS_WEB) return;
@@ -83,7 +82,6 @@ export function MovieLandscapeItem({
                                 height: artHeight,
                                 backgroundColor: colors.surfaceSunken,
                                 borderColor: colors.border,
-                                shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
                             },
                         ]}
                     >
@@ -142,10 +140,6 @@ const styles = StyleSheet.create({
         borderRadius: Radius.md,
         borderWidth: StyleSheet.hairlineWidth,
         overflow: 'hidden',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.16,
-        shadowRadius: 10,
-        elevation: 3,
     },
     playGlyph: {
         position: 'absolute',
@@ -170,11 +164,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: Radius.pill,
-        backgroundColor: 'rgba(8,8,12,0.66)',
+        backgroundColor: 'rgba(20,17,14,0.78)',
     },
-    ratingText: {fontSize: 10.5, fontFamily: FontFamily.extrabold},
+    ratingText: {fontSize: 11, lineHeight: 15, fontFamily: FontFamily.semibold},
     newBadge: {position: 'absolute', top: Spacing.sm, right: Spacing.sm},
 
-    title: {fontSize: 14, lineHeight: 19, marginTop: 8, fontFamily: FontFamily.semibold},
-    meta: {fontSize: 12, lineHeight: 16, marginTop: 1, fontFamily: FontFamily.regular},
+    title: {fontSize: 15, lineHeight: 20, marginTop: Spacing.md, fontFamily: FontFamily.semibold},
+    meta: {fontSize: 12, lineHeight: 18, marginTop: 2, fontFamily: FontFamily.regular},
 });

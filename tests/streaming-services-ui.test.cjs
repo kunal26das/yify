@@ -54,6 +54,12 @@ function fixture({initial = {}, getCatalog = async country => ({...catalog, coun
         '../../components/themed-text': {ThemedText: 'Text'},
         '../../components/toast': {useToast: () => message => calls.toasts.push(message)},
         '../../hooks/use-palette': {usePalette: () => ({colors: {}})},
+        './PickerSheet': {
+            PickerSheetInput: 'TextInput',
+            PickerSheet: ({onClose, listProps, footer}) => React.createElement('Modal', {onRequestClose: onClose},
+                React.createElement('PressableScale', {onPress: onClose, accessibilityRole: 'button', accessibilityLabel: 'Close'}),
+                React.createElement(FlatList, listProps), footer),
+        },
         '../../hooks/use-preferences': {usePreferences: () => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);}, () => preferences)},
         './watchRegion': {deviceRegion: () => 'IN'},

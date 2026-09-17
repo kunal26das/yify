@@ -1,30 +1,27 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {router} from 'expo-router';
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {type ComponentProps, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
     View,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
-import {Duration, PressableScale, enterFade, enterPop, enterRise} from '../../components/motion';
+import {Duration, PressableScale} from '../../components/motion';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {usePreferences} from '../../hooks/use-preferences';
 import {useResponsive} from '../../hooks/use-responsive';
-import {LinearGradient} from '../../components/linear-gradient';
 import {ThemedText} from '../../components/themed-text';
 import {Analytics} from '@/presentation/analytics/events';
 import {useToggleWatchlist} from '../useWatchlist';
 import {useIsInWatchlist} from '../useWatchlist';
 import {HeroTrailerLayer} from './HeroTrailerLayer';
-import {useTopTenRank} from './TopTenContext';
 import {Thumbnail} from './Thumbnail';
 import {thumbFor, thumbPlaceholder} from './format';
 import {useReduceMotion} from '../../hooks/use-reduce-motion';
@@ -34,6 +31,9 @@ const ROTATE_MS = 6500;
 const ROTATE_WITH_TRAILER_MS = 30000;
 const TRAILER_START_DELAY_MS = 2400;
 const SETTLE_MS = 520;
+const SCROLL_IDLE_MS = 140;
+const CONTROL_SIZE = 46;
+const SELECTOR_HEIGHT = CONTROL_SIZE + Spacing.sm;
 
 type Colors = ReturnType<typeof usePalette>['colors'];
 
@@ -59,15 +59,15 @@ export function HeroBillboard({
                                   onRequestTrailer,
                               }: HeroBillboardProps) {
     const {colors} = usePalette();
-    const {isDesktop} = useResponsive();
+    const {gutter} = useResponsive();
     const {playback} = usePreferences();
     const active = usePreviewActive(visible);
-    const insets = useSafeAreaInsets();
     const count = movies.length;
     const looped = count > 1;
 
     const [index, setIndex] = useState(0);
     const [measuredPage, setMeasuredPage] = useState(0);
+    const [contentHeights, setContentHeights] = useState<Record<string, number>>({});
     const [muted, setMuted] = useState(true);
     const [mode, setMode] = useState<'idle' | 'ambient' | 'feature'>('idle');
     const [trailerPlaying, setTrailerPlaying] = useState(false);
@@ -79,9 +79,33 @@ export function HeroBillboard({
     const trailerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingTargetRef = useRef<number | null>(null);
+    const draggingRef = useRef(false);
     const scheduleNextRef = useRef<() => void>(() => {});
+    const settleScrollRef = useRef<() => void>(() => {});
 
     const page = measuredPage > 0 ? measuredPage : width;
+    const split = page >= 760;
+    const pageGutter = gutter;
+    const innerWidth = Math.max(1, page - pageGutter * 2);
+    const gap = split ? (innerWidth >= 1000 ? 48 : 32) : 24;
+    const artWidth = split ? Math.round((innerWidth - gap) * 0.56) : innerWidth;
+    const artHeight = Math.round(artWidth * 9 / 16);
+    const copyWidth = split ? innerWidth - gap - artWidth : innerWidth;
+    const verticalPadding = split ? 40 : 20;
+    const bottomPadding = looped ? Spacing.sm : verticalPadding;
+    const selectorHeight = looped ? SELECTOR_HEIGHT : 0;
+    const measuredContentHeight = Math.max(0, ...movies.map((movie) => contentHeights[`${movie.id}:${copyWidth}`] ?? 0));
+    const contentHeight = measuredContentHeight || (split ? 340 : 280);
+    const slideHeight = Math.max(
+        height - selectorHeight,
+        verticalPadding + bottomPadding + (split ? Math.max(artHeight, contentHeight) : artHeight + gap + contentHeight)
+    );
+    const totalHeight = slideHeight + selectorHeight;
+    const measureContent = useCallback((movieId: number, measuredWidth: number, measuredHeight: number) => {
+        const key = `${movieId}:${measuredWidth}`;
+        const nextHeight = Math.ceil(measuredHeight);
+        setContentHeights((previous) => previous[key] === nextHeight ? previous : {...previous, [key]: nextHeight});
+    }, []);
 
     const activeMovie = movies[index];
     const activeTrailer = activeMovie
@@ -96,24 +120,38 @@ export function HeroBillboard({
         [looped, count]
     );
 
+    const setActive = useCallback(
+        (real: number) => {
+            if (real === indexRef.current || real < 0 || real >= count) return;
+            indexRef.current = real;
+            setIndex(real);
+        },
+        [count]
+    );
+
+    const clearSettling = useCallback(() => {
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+        idleTimerRef.current = null;
+        settleTimerRef.current = null;
+        pendingTargetRef.current = null;
+    }, []);
+
     const scrollToData = useCallback(
         (d: number, animated: boolean) => {
-            if (!active) return;
-            scrollRef.current?.scrollTo({x: d * page, animated});
-            if (!animated || page <= 0) return;
-            pendingTargetRef.current = d;
-            if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-            settleTimerRef.current = setTimeout(() => {
-                const target = pendingTargetRef.current;
-                pendingTargetRef.current = null;
-                if (target == null) return;
-                const settled = target * page;
-                if (Math.abs(scrollXRef.current - settled) <= 1) return;
-                scrollRef.current?.scrollTo({x: settled, animated: false});
-                scrollXRef.current = settled;
-            }, SETTLE_MS);
+            if (!active || page <= 0 || count === 0) return;
+            clearSettling();
+            const target = Math.max(0, Math.min(d, looped ? count : count - 1));
+            if (animated) {
+                pendingTargetRef.current = target;
+                settleTimerRef.current = setTimeout(() => settleScrollRef.current(), SETTLE_MS);
+            } else {
+                scrollXRef.current = target * page;
+                setActive(realForData(target));
+            }
+            scrollRef.current?.scrollTo({x: target * page, animated});
         },
-        [active, page]
+        [active, page, count, looped, clearSettling, setActive, realForData]
     );
 
     const clearAuto = useCallback(() => {
@@ -128,7 +166,7 @@ export function HeroBillboard({
 
     const scheduleNext = useCallback(() => {
         clearAuto();
-        if (!active || reduceMotion) return;
+        if (!active || draggingRef.current || reduceMotion) return;
         if (!looped || page <= 0) return;
         if (mode === 'feature') return;
         autoTimerRef.current = setTimeout(() => {
@@ -141,24 +179,31 @@ export function HeroBillboard({
         scheduleNextRef.current = scheduleNext;
     }, [scheduleNext]);
 
-    const setActive = useCallback(
-        (real: number) => {
-            if (real === indexRef.current || real < 0 || real >= count) return;
-            indexRef.current = real;
-            setIndex(real);
-        },
-        [count]
-    );
+    const settleScroll = useCallback(() => {
+        if (!active || draggingRef.current || page <= 0 || count === 0) return;
+        const node = Platform.OS === 'web'
+            ? scrollRef.current?.getScrollableNode?.() as {scrollLeft?: number} | null
+            : null;
+        const x = node?.scrollLeft ?? scrollXRef.current;
+        const target = Math.max(0, Math.min(pendingTargetRef.current ?? Math.round(x / page), looped ? count : count - 1));
+        const real = realForData(target);
+        clearSettling();
+        setActive(real);
+        if (target !== real || Math.abs(x - target * page) > 0.5) {
+            scrollToData(real, false);
+        }
+        scheduleNextRef.current();
+    }, [active, page, count, looped, realForData, clearSettling, setActive, scrollToData]);
 
-    const scheduleReposition = useCallback(() => {
-        if (!active) return;
+    useEffect(() => {
+        settleScrollRef.current = settleScroll;
+    }, [settleScroll]);
+
+    const scheduleSettle = useCallback(() => {
+        if (!active || draggingRef.current) return;
         if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-        idleTimerRef.current = setTimeout(() => {
-            if (looped && page > 0 && Math.abs(scrollXRef.current - count * page) < page * 0.04) {
-                scrollToData(0, false);
-            }
-        }, 90);
-    }, [active, looped, page, count, scrollToData]);
+        idleTimerRef.current = setTimeout(() => settleScrollRef.current(), SCROLL_IDLE_MS);
+    }, [active]);
 
     const onScroll = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -166,44 +211,50 @@ export function HeroBillboard({
             const x = e.nativeEvent.contentOffset.x;
             scrollXRef.current = x;
             setActive(realForData(Math.round(x / page)));
-            scheduleNext();
-            scheduleReposition();
+            if (!draggingRef.current) scheduleNext();
+            scheduleSettle();
         },
-        [active, page, setActive, realForData, scheduleNext, scheduleReposition]
+        [active, page, setActive, realForData, scheduleNext, scheduleSettle]
     );
 
     const onBeginDrag = useCallback(() => {
-        pendingTargetRef.current = null;
-        if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-    }, []);
+        draggingRef.current = true;
+        clearSettling();
+        clearAuto();
+    }, [clearSettling, clearAuto]);
+
+    const onEndDrag = useCallback(() => {
+        draggingRef.current = false;
+        scheduleSettle();
+    }, [scheduleSettle]);
 
     const onMomentumEnd = useCallback(
         (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-            if (page <= 0) return;
-            const x = e.nativeEvent.contentOffset.x;
-            const nearest = Math.round(x / page);
-            if (Math.abs(x - nearest * page) > 1) scrollToData(nearest, false);
+            draggingRef.current = false;
+            scrollXRef.current = e.nativeEvent.contentOffset.x;
+            settleScroll();
         },
-        [page, scrollToData]
+        [settleScroll]
     );
 
     const goTo = useCallback(
         (real: number) => {
-            scrollToData(real, true);
+            scrollToData(real, !reduceMotion);
             setActive(real);
         },
-        [scrollToData, setActive]
+        [scrollToData, setActive, reduceMotion]
     );
 
     useEffect(() => {
-        if (page > 0) scrollToData(indexRef.current, false);
+        draggingRef.current = false;
+        if (active && page > 0) scrollToData(Math.min(indexRef.current, count - 1), false);
+        return clearSettling;
+    }, [active, page, count, scrollToData, clearSettling]);
+
+    useEffect(() => {
         scheduleNext();
-        return () => {
-            clearAuto();
-            if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-            if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-        };
-    }, [page, scrollToData, scheduleNext, clearAuto]);
+        return clearAuto;
+    }, [scheduleNext, clearAuto]);
 
     useEffect(() => {
         setMode('idle');
@@ -215,7 +266,7 @@ export function HeroBillboard({
         }
         if (!activeMovie) return;
         onRequestTrailer?.(activeMovie.id);
-        if (!activeTrailer || !playback.autoplayTrailers) return;
+        if (!activeTrailer || !playback.autoplayTrailers || reduceMotion) return;
         trailerTimerRef.current = setTimeout(() => {
             setMode('ambient');
             Analytics.heroTrailerAutoplay(activeMovie);
@@ -223,7 +274,7 @@ export function HeroBillboard({
         return () => {
             if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         };
-    }, [active, activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers]);
+    }, [active, activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers, reduceMotion]);
 
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
@@ -258,7 +309,7 @@ export function HeroBillboard({
         <View
             style={[
                 styles.container,
-                {width, height, backgroundColor: colors.surfaceSunken},
+                {width, height: totalHeight, backgroundColor: colors.background},
                 rounded && styles.rounded,
             ]}
         >
@@ -266,192 +317,212 @@ export function HeroBillboard({
                 ref={scrollRef}
                 horizontal
                 pagingEnabled
-                style={{width, height}}
+                style={{width, height: slideHeight, flexGrow: 0}}
                 showsHorizontalScrollIndicator={false}
                 scrollEventThrottle={16}
                 onScroll={onScroll}
                 onMomentumScrollEnd={onMomentumEnd}
                 onScrollBeginDrag={onBeginDrag}
+                onScrollEndDrag={onEndDrag}
                 onLayout={(e) => setMeasuredPage(e.nativeEvent.layout.width)}
                 decelerationRate="fast"
-                scrollEnabled={mode !== 'feature'}
+                scrollEnabled={Platform.OS === 'web' || mode !== 'feature'}
             >
                 {data.map((movie, i) => (
                     <HeroSlide
                         key={`${movie.id}:${i}`}
                         movie={movie}
                         width={page}
-                        height={height}
+                        height={slideHeight}
+                        gutter={pageGutter}
+                        gap={gap}
+                        verticalPadding={verticalPadding}
+                        bottomPadding={bottomPadding}
+                        artWidth={artWidth}
+                        artHeight={artHeight}
+                        copyWidth={copyWidth}
+                        split={split}
                         colors={colors}
-                        near={Math.abs(i - index) <= 1}
+                        near={Math.abs(i - index) <= 1 || (looped && i === count && (index === 0 || index === count - 1))}
+                        selected={i === index}
                         trailerId={active && i === index && mode !== 'idle' ? activeTrailer ?? null : null}
+                        hasTrailer={!!(trailers?.[movie.id] ?? movie.ytTrailerCode)}
                         backdropUrl={backdrops?.[movie.id] ?? null}
                         feature={mode === 'feature'}
+                        trailerPlaying={trailerPlaying}
                         muted={muted}
                         captions={playback.trailerCaptions}
+                        reduceMotion={reduceMotion}
                         onPlay={onPlay}
+                        onToggleMute={toggleMute}
+                        onCloseTrailer={() => {
+                            setMode('idle');
+                            setTrailerPlaying(false);
+                        }}
                         onTrailerStarted={() => setTrailerPlaying(true)}
+                        onMeasureContent={measureContent}
                     />
                 ))}
             </ScrollView>
 
-            {active && mode !== 'idle' && activeTrailer && trailerPlaying ? (
-                <Animated.View
-                    entering={enterPop()}
-                    style={[styles.muteButton, isDesktop ? styles.muteButtonWide : {top: insets.top + 64}]}
-                >
-                    <PressableScale
-                        onPress={toggleMute}
-                        hitSlop={10}
-                        accessibilityRole="button"
-                        accessibilityLabel={muted ? 'Unmute trailer' : 'Mute trailer'}
-                        pressedScale={0.86}
-                        pressedOpacity={0.7}
-                        hoveredScale={1.1}
-                        style={styles.muteHit}
-                        contentStyle={styles.muteHit}
-                    >
-                        <Animated.View key={muted ? 'muted' : 'loud'} entering={enterPop()}>
-                            <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={18} color="#fff"/>
-                        </Animated.View>
-                    </PressableScale>
-                </Animated.View>
-            ) : null}
-
-            {looped && mode !== 'feature' ? (
-                !isDesktop ? (
-                    <View style={styles.dots} pointerEvents="box-none">
-                        {movies.map((m, i) => (
-                            <Pressable
-                                key={m.id}
-                                hitSlop={6}
-                                onPress={() => goTo(i)}
-                                accessibilityRole="button"
-                                accessibilityState={{selected: i === index}}
-                                accessibilityLabel={`Featured: ${m.title}`}
-                            >
-                                <Animated.View
-                                    style={[
-                                        styles.dot,
-                                        i === index ? styles.dotActive : styles.dotInactive,
-                                        {
-                                            transitionProperty: ['width', 'backgroundColor'],
-                                            transitionDuration: Duration.base,
-                                            transitionTimingFunction: 'ease-out',
-                                        },
-                                    ]}
-                                />
-                            </Pressable>
-                        ))}
-                    </View>
-                ) : (
-                    <HeroThumbStrip movies={movies} index={index} onSelect={goTo}/>
-                )
+            {looped ? (
+                <View style={[styles.selector, {marginHorizontal: pageGutter}]}>
+                    <HeroIconButton
+                        icon="chevron-back"
+                        label="Previous featured movie"
+                        colors={colors}
+                        reduceMotion={reduceMotion}
+                        onPress={() => goTo((index + count - 1) % count)}
+                    />
+                    <HeroThumbStrip movies={movies} index={index} colors={colors} reduceMotion={reduceMotion} onSelect={goTo}/>
+                    <HeroIconButton
+                        icon="chevron-forward"
+                        label="Next featured movie"
+                        colors={colors}
+                        reduceMotion={reduceMotion}
+                        onPress={() => goTo((index + 1) % count)}
+                    />
+                </View>
             ) : null}
         </View>
     );
 }
 
-const THUMB_WIDTH = 74;
-const THUMB_HEIGHT = Math.round((THUMB_WIDTH * 9) / 16);
+const THUMB_HEIGHT = CONTROL_SIZE;
+const THUMB_WIDTH = Math.round(THUMB_HEIGHT * 16 / 9);
 
 function HeroThumbStrip({
-                            movies,
-                            index,
-                            onSelect,
-                        }: {
+    movies,
+    index,
+    colors,
+    reduceMotion,
+    onSelect,
+}: {
     movies: Movie[];
     index: number;
+    colors: Colors;
+    reduceMotion: boolean;
     onSelect: (i: number) => void;
 }) {
     const scrollRef = useRef<ScrollView>(null);
+    const [focused, setFocused] = useState<number | null>(null);
 
     useEffect(() => {
         scrollRef.current?.scrollTo({
-            x: Math.max(0, (index - 2) * (THUMB_WIDTH + 8)),
-            animated: true,
+            x: Math.max(0, (index - 1) * (THUMB_WIDTH + 8)),
+            animated: !reduceMotion,
         });
-    }, [index]);
+    }, [index, reduceMotion]);
 
     return (
-        <View style={styles.thumbStrip} pointerEvents="box-none">
-            <ScrollView
-                ref={scrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.thumbRow}
-            >
-                {movies.map((m, i) => {
-                    const active = i === index;
-                    const art = thumbPlaceholder(m) ?? m.posterUrls[m.posterUrls.length - 1];
-                    return (
-                        <PressableScale
-                            key={m.id}
-                            onPress={() => onSelect(i)}
-                            accessibilityRole="button"
-                            accessibilityState={{selected: active}}
-                            accessibilityLabel={`Featured: ${m.title}`}
-                            pressedScale={0.93}
-                            pressedOpacity={0.8}
-                            hoveredScale={1.08}
-                            contentStyle={[
-                                styles.thumb,
-                                active ? styles.thumbActive : styles.thumbInactive,
-                                {
-                                    transitionProperty: ['borderColor', 'opacity'],
-                                    transitionDuration: Duration.base,
-                                },
-                            ]}
-                        >
-                            {art ? (
-                                <Image
-                                    source={{uri: art}}
-                                    style={StyleSheet.absoluteFill}
-                                    contentFit="cover"
-                                    transition={120}
-                                    cachePolicy="memory-disk"
-                                />
-                            ) : null}
-                        </PressableScale>
-                    );
-                })}
-            </ScrollView>
-        </View>
+        <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.thumbStrip}
+            contentContainerStyle={styles.thumbRow}
+        >
+            {movies.map((movie, i) => {
+                const selected = i === index;
+                const art = thumbPlaceholder(movie) ?? movie.posterUrls[movie.posterUrls.length - 1];
+                return (
+                    <PressableScale
+                        key={movie.id}
+                        onPress={() => onSelect(i)}
+                        onFocus={() => setFocused(i)}
+                        onBlur={() => setFocused(null)}
+                        accessibilityRole="button"
+                        accessibilityState={{selected}}
+                        accessibilityLabel={`Featured: ${movie.title}`}
+                        pressedScale={reduceMotion ? 1 : 0.96}
+                        pressedOpacity={0.8}
+                        duration={reduceMotion ? 0 : Duration.fast}
+                        style={styles.thumbHit}
+                        contentStyle={[
+                            styles.thumb,
+                            {
+                                backgroundColor: colors.surfaceSunken,
+                                borderColor: focused === i ? colors.text : selected ? colors.accent : colors.border,
+                                opacity: selected || focused === i ? 1 : 0.55,
+                            },
+                        ]}
+                    >
+                        {art ? (
+                            <Image
+                                source={{uri: art}}
+                                style={StyleSheet.absoluteFill}
+                                contentFit="cover"
+                                transition={reduceMotion ? 0 : 120}
+                                cachePolicy="memory-disk"
+                            />
+                        ) : null}
+                    </PressableScale>
+                );
+            })}
+        </ScrollView>
     );
 }
 
 function HeroSlide({
-                       movie,
-                       width,
-                       height,
-                       colors,
-                       near,
-                       trailerId,
-                       backdropUrl,
-                       feature,
-                       muted,
-                       captions,
-                       onPlay,
-                       onTrailerStarted,
-                   }: {
+    movie,
+    width,
+    height,
+    gutter,
+    gap,
+    verticalPadding,
+    bottomPadding,
+    artWidth,
+    artHeight,
+    copyWidth,
+    split,
+    colors,
+    near,
+    selected,
+    trailerId,
+    hasTrailer,
+    backdropUrl,
+    feature,
+    trailerPlaying,
+    muted,
+    captions,
+    reduceMotion,
+    onPlay,
+    onToggleMute,
+    onCloseTrailer,
+    onTrailerStarted,
+    onMeasureContent,
+}: {
     movie: Movie;
     width: number;
     height: number;
+    gutter: number;
+    gap: number;
+    verticalPadding: number;
+    bottomPadding: number;
+    artWidth: number;
+    artHeight: number;
+    copyWidth: number;
+    split: boolean;
     colors: Colors;
     near: boolean;
+    selected: boolean;
     trailerId: string | null;
+    hasTrailer: boolean;
     backdropUrl: string | null;
     feature: boolean;
+    trailerPlaying: boolean;
     muted: boolean;
     captions: boolean;
+    reduceMotion: boolean;
     onPlay: () => void;
+    onToggleMute: () => void;
+    onCloseTrailer: () => void;
     onTrailerStarted: () => void;
+    onMeasureContent: (movieId: number, measuredWidth: number, measuredHeight: number) => void;
 }) {
-    const rank = useTopTenRank(movie.id);
-    const {isDesktop} = useResponsive();
-    const {gradients} = usePalette();
     const saved = useIsInWatchlist(movie.id);
     const toggleWatchlist = useToggleWatchlist();
+    const [focused, setFocused] = useState<string | null>(null);
     const meta = [
         movie.year ? String(movie.year) : null,
         formatRuntime(movie.runtimeMinutes),
@@ -462,32 +533,33 @@ function HeroSlide({
     if (backdropUrl) bestArtRef.current = backdropUrl;
     else if (!bestArtRef.current) bestArtRef.current = thumbFor(movie) ?? null;
     const heroArt = bestArtRef.current;
+    const titleSize = split ? (copyWidth >= 430 ? 54 : 42) : 36;
 
     const openDetails = (source: string) => {
         Analytics.movieOpen(movie, source);
         router.push(`/movie/${movie.id}`);
     };
 
-    return (
-        <View style={[styles.slide, {width, height}]}>
+    const artwork = (
+        <View style={[styles.artwork, {width: artWidth, height: artHeight, backgroundColor: colors.surfaceSunken}]}>
             {heroArt ? (
                 <Image
                     source={near ? {uri: heroArt} : undefined}
                     style={StyleSheet.absoluteFill}
                     contentFit="cover"
-                    transition={260}
+                    transition={reduceMotion ? 0 : 260}
                     priority={near ? 'high' : undefined}
                     cachePolicy="memory-disk"
                 />
             ) : near ? (
-                <Thumbnail movie={movie} style={StyleSheet.absoluteFill} transition={260} priority="high"/>
+                <Thumbnail movie={movie} style={StyleSheet.absoluteFill} transition={reduceMotion ? 0 : 260} priority="high"/>
             ) : null}
 
             {trailerId ? (
                 <HeroTrailerLayer
                     videoId={trailerId}
-                    width={width}
-                    height={height}
+                    width={artWidth}
+                    height={artHeight}
                     muted={muted}
                     controls={feature}
                     captions={captions}
@@ -495,156 +567,208 @@ function HeroSlide({
                 />
             ) : null}
 
-            <LinearGradient
-                colors={['rgba(6,6,8,0.30)', 'rgba(6,6,8,0.10)', 'rgba(6,6,8,0.55)', 'rgba(6,6,8,0.94)']}
-                bands={16}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-            />
-            <LinearGradient
-                colors={['rgba(6,6,8,0.72)', 'rgba(6,6,8,0)']}
-                direction="horizontal"
-                bands={10}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-            />
-            <LinearGradient
-                colors={['rgba(6,6,8,0)', colors.background]}
-                bands={12}
-                style={styles.meltFade}
-                pointerEvents="none"
-            />
+            {trailerId && trailerPlaying ? (
+                <View style={styles.artControls} pointerEvents="box-none">
+                    {feature ? (
+                        <HeroIconButton
+                            icon="close"
+                            label="Close trailer"
+                            colors={colors}
+                            reduceMotion={reduceMotion}
+                            onImage
+                            onPress={onCloseTrailer}
+                        />
+                    ) : <View/>}
+                    <HeroIconButton
+                        icon={muted ? 'volume-mute' : 'volume-high'}
+                        label={muted ? 'Unmute trailer' : 'Mute trailer'}
+                        colors={colors}
+                        reduceMotion={reduceMotion}
+                        onImage
+                        onPress={onToggleMute}
+                    />
+                </View>
+            ) : null}
+        </View>
+    );
 
-            <View style={styles.content} pointerEvents="box-none">
-                <Pressable
-                    onPress={() => openDetails('hero_slide')}
-                    accessibilityRole="button"
-                    accessibilityLabel={`View ${movie.title}`}
+    const content = (
+        <View
+            style={[styles.content, {width: copyWidth}]}
+            onLayout={(event) => onMeasureContent(movie.id, copyWidth, event.nativeEvent.layout.height)}
+        >
+            <Pressable
+                onPress={() => openDetails('hero_slide')}
+                onFocus={() => setFocused('title')}
+                onBlur={() => setFocused(null)}
+                accessibilityRole="button"
+                accessibilityLabel={`View ${movie.title}`}
+                tabIndex={selected ? 0 : -1}
+                style={[styles.titleHit, {borderColor: focused === 'title' ? colors.accent : 'transparent'}]}
+            >
+                <ThemedText
+                    type="display"
+                    style={[styles.title, {color: colors.text, fontSize: titleSize, lineHeight: Math.round(titleSize * 1.14)}]}
+                    numberOfLines={split ? 3 : 2}
                 >
-                    <Animated.View entering={enterRise()}>
-                        <ThemedText style={[styles.tagline, {color: colors.gold}]} numberOfLines={1}>
-                            {taglineFor(movie, rank)}
+                    {movie.title}
+                </ThemedText>
+            </Pressable>
+
+            <View style={styles.metaRow}>
+                {movie.rating > 0 ? (
+                    <View style={styles.rating}>
+                        <Ionicons name="star" size={13} color={colors.accent}/>
+                        <ThemedText style={[styles.metaText, {color: colors.text, fontWeight: '600'}]}>
+                            {movie.rating.toFixed(1)}
                         </ThemedText>
-                    </Animated.View>
-
-                    <Animated.View entering={enterRise(1)}>
-                        <ThemedText type="display" style={styles.title} numberOfLines={2}>
-                            {movie.title}
-                        </ThemedText>
-                    </Animated.View>
-
-                    <Animated.View entering={enterRise(2)} style={styles.metaRow}>
-                        {movie.rating > 0 ? (
-                            <View style={styles.metaItem}>
-                                <Ionicons name="star" size={12} color={colors.gold}/>
-                                <ThemedText style={[styles.metaText, styles.metaRating]}>
-                                    {movie.rating.toFixed(1)}
-                                </ThemedText>
-                            </View>
-                        ) : null}
-                        {meta.map((m, i) => (
-                            <View key={m} style={styles.metaItem}>
-                                {(i > 0 || movie.rating > 0) ? <View style={styles.metaDot}/> : null}
-                                <ThemedText style={styles.metaText}>{m}</ThemedText>
-                            </View>
-                        ))}
-                        {movie.genres.slice(0, 2).map((g) => (
-                            <View key={g} style={styles.metaItem}>
-                                <View style={styles.metaDot}/>
-                                <ThemedText style={styles.metaText}>{g}</ThemedText>
-                            </View>
-                        ))}
-                    </Animated.View>
-
-                    {movie.summary ? (
-                        <Animated.View entering={enterRise(3)}>
-                            <ThemedText style={styles.summary} numberOfLines={2}>
-                                {movie.summary}
-                            </ThemedText>
-                        </Animated.View>
-                    ) : null}
-                </Pressable>
-
-                <Animated.View entering={enterFade(4)} style={[styles.ctaRow, isDesktop ? styles.ctaRowWide : null]}>
-                    {movie.ytTrailerCode ? (
-                        <PressableScale
-                            onPress={onPlay}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Play the ${movie.title} trailer`}
-                            pressedScale={0.95}
-                            pressedOpacity={0.85}
-                            hoveredScale={1.03}
-                            style={styles.ctaFlex}
-                        >
-                            <LinearGradient colors={gradients.accent} direction="horizontal" style={styles.playButton}>
-                                <Ionicons name="play" size={20} color="#fff"/>
-                                <ThemedText style={styles.playLabel} numberOfLines={1}>Play Trailer</ThemedText>
-                            </LinearGradient>
-                        </PressableScale>
-                    ) : null}
-
-                    <PressableScale
-                        onPress={() => {
-                            Analytics.heroMoreInfo(movie);
-                            openDetails('hero_more_info');
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={`More info about ${movie.title}`}
-                        pressedScale={0.95}
-                        pressedOpacity={0.85}
-                        hoveredScale={1.03}
-                        style={styles.ctaFlex}
-                    >
-                        <View style={styles.infoButton}>
-                            <Ionicons name="information-circle-outline" size={20} color="#fff"/>
-                            <ThemedText style={styles.infoLabel} numberOfLines={1}>More Info</ThemedText>
-                        </View>
-                    </PressableScale>
-
-                    <PressableScale
-                        onPress={() => {
-                            const added = toggleWatchlist(movie);
-                            if (added) Analytics.watchlistAdd(movie);
-                            else Analytics.watchlistRemove(movie);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                            saved ? `Remove ${movie.title} from Watchlist` : `Add ${movie.title} to Watchlist`
-                        }
-                        pressedScale={0.88}
-                        pressedOpacity={0.85}
-                        hoveredScale={1.08}
-                    >
-                        <Animated.View
-                            style={[
-                                styles.addButton,
-                                saved && {backgroundColor: colors.accent, borderColor: colors.accent},
-                                {
-                                    transitionProperty: ['backgroundColor', 'borderColor'],
-                                    transitionDuration: Duration.base,
-                                },
-                            ]}
-                        >
-                            <Animated.View key={saved ? 'saved' : 'unsaved'} entering={enterPop()}>
-                                <Ionicons
-                                    name={saved ? 'checkmark' : 'add'}
-                                    size={22}
-                                    color={saved ? colors.onAccent : '#fff'}
-                                />
-                            </Animated.View>
-                        </Animated.View>
-                    </PressableScale>
-                </Animated.View>
+                    </View>
+                ) : null}
+                {meta.map((item) => (
+                    <ThemedText key={item} style={[styles.metaText, {color: colors.textMuted}]}>{item}</ThemedText>
+                ))}
             </View>
+
+            {movie.genres.length > 0 ? (
+                <ThemedText style={[styles.genres, {color: colors.accent}]} numberOfLines={1}>
+                    {movie.genres.slice(0, 2).join(' / ')}
+                </ThemedText>
+            ) : null}
+
+            {movie.summary ? (
+                <ThemedText style={[styles.summary, {color: colors.textMuted}]} numberOfLines={3}>
+                    {movie.summary}
+                </ThemedText>
+            ) : null}
+
+            <View style={styles.ctaRow}>
+                {hasTrailer ? (
+                    <PressableScale
+                        onPress={onPlay}
+                        onFocus={() => setFocused('play')}
+                        onBlur={() => setFocused(null)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Play the ${movie.title} trailer`}
+                        tabIndex={selected ? 0 : -1}
+                        pressedScale={reduceMotion ? 1 : 0.97}
+                        pressedOpacity={0.85}
+                        duration={reduceMotion ? 0 : Duration.fast}
+                        style={styles.primaryHit}
+                        contentStyle={[
+                            styles.playButton,
+                            {backgroundColor: colors.accentStrong, borderColor: focused === 'play' ? colors.text : colors.accentStrong},
+                        ]}
+                    >
+                        <Ionicons name="play" size={16} color={colors.onAccent}/>
+                        <ThemedText style={[styles.buttonLabel, {color: colors.onAccent, fontWeight: '600'}]} numberOfLines={1}>
+                            Watch trailer
+                        </ThemedText>
+                    </PressableScale>
+                ) : null}
+
+                <PressableScale
+                    onPress={() => {
+                        Analytics.heroMoreInfo(movie);
+                        openDetails('hero_more_info');
+                    }}
+                    onFocus={() => setFocused('info')}
+                    onBlur={() => setFocused(null)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`More info about ${movie.title}`}
+                    tabIndex={selected ? 0 : -1}
+                    pressedScale={reduceMotion ? 1 : 0.97}
+                    pressedOpacity={0.7}
+                    duration={reduceMotion ? 0 : Duration.fast}
+                    contentStyle={[styles.infoButton, {borderColor: focused === 'info' ? colors.accent : 'transparent'}]}
+                >
+                    <ThemedText style={[styles.buttonLabel, {color: colors.text}]} numberOfLines={1}>More info</ThemedText>
+                </PressableScale>
+
+                <HeroIconButton
+                    icon={saved ? 'bookmark' : 'bookmark-outline'}
+                    label={saved ? `Remove ${movie.title} from Watchlist` : `Add ${movie.title} to Watchlist`}
+                    colors={colors}
+                    reduceMotion={reduceMotion}
+                    selected={saved}
+                    tabIndex={selected ? 0 : -1}
+                    onPress={() => {
+                        const added = toggleWatchlist(movie);
+                        if (added) Analytics.watchlistAdd(movie);
+                        else Analytics.watchlistRemove(movie);
+                    }}
+                />
+            </View>
+        </View>
+    );
+
+    return (
+        <View
+            aria-hidden={!selected}
+            accessibilityElementsHidden={!selected}
+            importantForAccessibility={selected ? 'auto' : 'no-hide-descendants'}
+            style={[
+                styles.slide,
+                {
+                    width,
+                    height,
+                    gap,
+                    paddingHorizontal: gutter,
+                    paddingTop: verticalPadding,
+                    paddingBottom: bottomPadding,
+                    flexDirection: split ? 'row' : 'column',
+                    alignItems: split ? 'center' : 'flex-start',
+                },
+            ]}
+        >
+            {split ? content : artwork}
+            {split ? artwork : content}
         </View>
     );
 }
 
-function taglineFor(movie: Movie, rank: number | null): string {
-    if (rank) return `#${rank} in Movies Today`;
-    if (movie.rating >= 8) return 'Critically acclaimed';
-    if (movie.genres.length > 0) return `Popular in ${movie.genres[0]}`;
-    return 'Featured today';
+function HeroIconButton({
+    icon,
+    label,
+    colors,
+    reduceMotion,
+    onPress,
+    onImage = false,
+    selected = false,
+    tabIndex,
+}: {
+    icon: ComponentProps<typeof Ionicons>['name'];
+    label: string;
+    colors: Colors;
+    reduceMotion: boolean;
+    onPress: () => void;
+    onImage?: boolean;
+    selected?: boolean;
+    tabIndex?: 0 | -1;
+}) {
+    const [focused, setFocused] = useState(false);
+    return (
+        <PressableScale
+            onPress={onPress}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{selected}}
+            tabIndex={tabIndex}
+            pressedScale={reduceMotion ? 1 : 0.94}
+            pressedOpacity={0.7}
+            duration={reduceMotion ? 0 : Duration.fast}
+            contentStyle={[
+                styles.iconButton,
+                {
+                    backgroundColor: onImage ? colors.scrim : selected ? colors.accentSoft : 'transparent',
+                    borderColor: focused ? colors.accent : onImage ? 'rgba(255,255,255,0.5)' : colors.borderStrong,
+                },
+            ]}
+        >
+            <Ionicons name={icon} size={19} color={onImage ? '#fff' : selected ? colors.accent : colors.text}/>
+        </PressableScale>
+    );
 }
 
 function formatRuntime(minutes: number): string | null {
@@ -658,101 +782,26 @@ function formatRuntime(minutes: number): string | null {
 const styles = StyleSheet.create({
     container: {overflow: 'hidden'},
     rounded: {borderRadius: Radius.xl},
-    slide: {justifyContent: 'flex-end', overflow: 'hidden'},
-    meltFade: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 96},
-
-    content: {paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xxl + Spacing.sm},
-
-    tagline: {fontSize: 14, marginBottom: 8, fontFamily: FontFamily.bold},
-
-    title: {color: '#fff', fontSize: 34, lineHeight: 38},
-    metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap', overflow: 'hidden', marginTop: 8},
-    metaItem: {flexDirection: 'row', alignItems: 'center', gap: 4},
-    metaDot: {width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.6)', marginHorizontal: 8},
-    metaText: {color: 'rgba(255,255,255,0.9)', fontSize: 13, fontFamily: FontFamily.semibold},
-    metaRating: {fontFamily: FontFamily.extrabold},
-    summary: {color: 'rgba(255,255,255,0.82)', fontSize: 14, lineHeight: 20, marginTop: 10, maxWidth: 560},
-
-    ctaRow: {flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18},
-    ctaFlex: {flex: 1},
-    ctaRowWide: {maxWidth: '42%'},
-    playButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        height: 48,
-        paddingHorizontal: 16,
-        borderRadius: Radius.pill,
-    },
-    playLabel: {fontSize: 16, color: '#fff', fontFamily: FontFamily.bold},
-    addButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(109,109,110,0.5)',
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: 'rgba(255,255,255,0.35)',
-    },
-    infoButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        height: 48,
-        paddingHorizontal: 16,
-        borderRadius: Radius.pill,
-        backgroundColor: 'rgba(109,109,110,0.65)',
-    },
-    infoLabel: {fontSize: 16, color: '#fff', fontFamily: FontFamily.bold},
-
-    muteButton: {
-        position: 'absolute',
-        right: Spacing.xl,
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.55)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(6,6,8,0.35)',
-        zIndex: 15,
-    },
-    muteButtonWide: {bottom: Spacing.xxl + THUMB_HEIGHT + 20},
-    muteHit: {flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center'},
-
-    thumbStrip: {
-        position: 'absolute',
-        right: 0,
-        bottom: Spacing.xxl + 8,
-        maxWidth: '52%',
-        zIndex: 12,
-    },
-    thumbRow: {flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: Spacing.xl},
-    thumb: {
-        width: THUMB_WIDTH,
-        height: THUMB_HEIGHT,
-        borderRadius: Radius.sm,
-        overflow: 'hidden',
-        backgroundColor: 'rgba(6,6,8,0.6)',
-    },
-    thumbActive: {borderWidth: 2, borderColor: '#fff'},
-    thumbInactive: {borderWidth: 2, borderColor: 'rgba(255,255,255,0.18)', opacity: 0.62},
-
-    dots: {
-        position: 'absolute',
-        bottom: Spacing.md,
-        left: 0,
-        right: 0,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 6,
-    },
-    dot: {width: 7, height: 7, borderRadius: 4},
-    dotActive: {backgroundColor: '#fff', width: 22},
-    dotInactive: {backgroundColor: 'rgba(255,255,255,0.45)'},
+    slide: {overflow: 'hidden', justifyContent: 'center'},
+    content: {flexShrink: 0},
+    artwork: {flexShrink: 0, overflow: 'hidden', borderRadius: Radius.lg},
+    artControls: {position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', justifyContent: 'space-between'},
+    titleHit: {borderWidth: 1, marginHorizontal: -1, padding: 0},
+    title: {fontFamily: FontFamily.displaySemibold, fontWeight: '500', letterSpacing: -1.1},
+    metaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: 14, rowGap: 4, marginTop: 16},
+    rating: {flexDirection: 'row', alignItems: 'center', gap: 5},
+    metaText: {fontSize: 13, lineHeight: 18},
+    genres: {fontSize: 13, lineHeight: 18, marginTop: 8},
+    summary: {fontSize: 15, lineHeight: 23, marginTop: 18, maxWidth: 520},
+    ctaRow: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 24},
+    primaryHit: {flexShrink: 0},
+    playButton: {minHeight: CONTROL_SIZE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16, borderRadius: Radius.md, borderWidth: 2},
+    infoButton: {minHeight: CONTROL_SIZE, justifyContent: 'center', paddingHorizontal: 10, borderRadius: Radius.md, borderWidth: 2},
+    buttonLabel: {fontSize: 14, lineHeight: 20},
+    iconButton: {width: CONTROL_SIZE, height: CONTROL_SIZE, borderRadius: Radius.md, borderWidth: 1, justifyContent: 'center', alignItems: 'center'},
+    selector: {height: SELECTOR_HEIGHT, flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
+    thumbStrip: {flex: 1},
+    thumbRow: {flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: 8},
+    thumbHit: {minHeight: CONTROL_SIZE, justifyContent: 'center'},
+    thumb: {width: THUMB_WIDTH, height: THUMB_HEIGHT, borderRadius: Radius.sm, borderWidth: 2, overflow: 'hidden'},
 });

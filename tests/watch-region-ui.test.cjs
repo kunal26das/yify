@@ -10,11 +10,13 @@ const labels = renderer => renderer.root.findAllByType('Text').map(nodeText).joi
 
 async function mount(t, repository, countryLocation = {requestCountry: async () => ({status: 'unavailable'})}) {
     const FlatList = props => React.createElement('FlatList', props,
+        props.ListHeaderComponent,
         props.data.length ? props.data.map((item, index) => React.cloneElement(props.renderItem({item, index}),
             {key: props.keyExtractor(item)})) : props.ListEmptyComponent);
     const {WatchRegionPicker} = loadTypeScript('presentation/movies/components/WatchRegionPicker.tsx', {
         'react-native': {View: 'View', TextInput: 'TextInput', Modal: 'Modal', Pressable: 'Pressable',
             KeyboardAvoidingView: 'KeyboardAvoidingView', ActivityIndicator: 'Loading', FlatList,
+            useWindowDimensions: () => ({width: 360, height: 640}),
             Platform: {OS: 'web', select: options => options.web ?? options.default},
             StyleSheet: {create: value => value, absoluteFill: {}, hairlineWidth: 1}},
         '@expo/vector-icons/Ionicons': 'Icon',
@@ -23,6 +25,11 @@ async function mount(t, repository, countryLocation = {requestCountry: async () 
         '../../components/motion': {PressableScale: 'PressableScale'},
         '../../components/themed-text': {ThemedText: 'Text'},
         '../../hooks/use-palette': {usePalette: () => ({colors: {}})},
+        './PickerSheet': {
+            PickerSheetInput: 'TextInput',
+            PickerSheet: ({onClose, listProps, footer}) => React.createElement('Modal', {onRequestClose: onClose},
+                React.createElement(FlatList, listProps), footer),
+        },
     });
     const calls = {selected: [], closed: 0};
     let renderer;
@@ -81,7 +88,7 @@ test('location is requested only on tap and saves a supported country', async t 
         return {status: 'ready', country: 'US'};
     }});
     assert.equal(requests, 0);
-    assert.match(labels(renderer), /Approximate location is shared with BigDataCloud/);
+    assert.doesNotMatch(labels(renderer), /Finds your country once|BigDataCloud/);
     await act(async () => locateButton(renderer).props.onPress());
     assert.equal(requests, 1);
     assert.deepEqual(calls, {selected: ['US'], closed: 1});

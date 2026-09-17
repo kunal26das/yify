@@ -4,12 +4,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {LiquidGlassView} from '../../components/liquid-glass-view';
 import {ThemedText} from '../../components/themed-text';
 import {PressableScale} from '../../components/motion';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
-import {Radius, Spacing} from '../../constants/theme';
+import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {Analytics} from '@/presentation/analytics/events';
 import {DESTINATIONS, navKeyForPath, useGoTo, type NavKey} from '../constants/destinations';
 import {SearchOverlay} from './SearchOverlay';
@@ -17,11 +16,12 @@ import {useTopBarSlot} from './TopBarSlot';
 import {useSearchHistory} from '../../di/DependenciesContext';
 import {useAuth} from '../../hooks/use-auth';
 
-export const TOP_BAR_ROW_HEIGHT = 56;
+export const TOP_BAR_ROW_HEIGHT = 64;
 
-const SEARCH_PILL_HEIGHT = 40;
-const SEARCH_PILL_MAX_WIDTH = 560;
-const SEARCH_BUTTON_WIDTH = 62;
+const STACKED_NAV_HEIGHT = 44;
+const SEARCH_PILL_HEIGHT = 44;
+const SEARCH_PILL_MAX_WIDTH = 400;
+const SEARCH_BUTTON_WIDTH = 44;
 const PREFERENCES_HREF = '/preferences';
 
 interface NavLink {
@@ -35,12 +35,18 @@ const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter(
     (destination) => destination.key !== 'home' && destination.key !== 'history'
 );
 
+function usesStackedNavigation(width: number): boolean {
+    return width > 0 && width < 380;
+}
+
 export function TopBar() {
     const {below, searchValue, onSearchSubmit, showSearch = true} = useTopBarSlot();
     const active = navKeyForPath(usePathname());
     const insets = useSafeAreaInsets();
-    const {colors, scheme} = usePalette();
-    const {isPhone, gutter} = useResponsive();
+    const {colors} = usePalette();
+    const {width, isPhone, gutter} = useResponsive();
+    const compact = width < 900;
+    const stacked = usesStackedNavigation(width);
     const goTo = useGoTo();
     const [query, setQuery] = useState(searchValue ?? '');
     const [searchFocused, setSearchFocused] = useState(false);
@@ -97,15 +103,16 @@ export function TopBar() {
                 hitSlop={6}
                 accessibilityRole="link"
                 accessibilityState={{selected}}
-                pressedScale={0.94}
+                pressedScale={0.98}
                 pressedOpacity={0.6}
+                style={stacked ? styles.stackedLinkHit : undefined}
                 contentStyle={styles.link}
             >
                 <ThemedText
                     numberOfLines={1}
                     style={[
                         styles.linkLabel,
-                        selected ? {color: colors.text, fontWeight: '700'} : {color: colors.textMuted},
+                        selected ? {color: colors.text, fontWeight: '600'} : {color: colors.textMuted},
                     ]}
                 >
                     {link.label}
@@ -127,9 +134,9 @@ export function TopBar() {
             accessibilityRole="link"
             accessibilityLabel="Preferences"
             accessibilityState={{selected: active === 'preferences'}}
-            pressedScale={0.86}
+            pressedScale={0.94}
             pressedOpacity={0.6}
-            hoveredScale={1.08}
+            hoveredScale={1}
             contentStyle={styles.iconButton}
         >
             {account?.photoUrl ? (
@@ -162,9 +169,8 @@ export function TopBar() {
             style={[
                 styles.searchPill,
                 {
-                    backgroundColor: colors.surfaceSunken,
+                    backgroundColor: colors.surface,
                     borderColor: searchFocused ? colors.accent : colors.border,
-                    borderWidth: searchFocused ? 2 : 1,
                 },
             ]}
         >
@@ -179,7 +185,7 @@ export function TopBar() {
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
                 onSubmitEditing={() => submitQuery(query)}
-                placeholder="Search"
+                placeholder="Search movies"
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -197,9 +203,9 @@ export function TopBar() {
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel="Clear search"
-                    pressedScale={0.85}
+                    pressedScale={0.94}
                     pressedOpacity={0.6}
-                    hoveredScale={1.12}
+                    hoveredScale={1}
                     contentStyle={styles.clearButton}
                 >
                     <Ionicons name="close" size={18} color={colors.textMuted}/>
@@ -213,7 +219,7 @@ export function TopBar() {
                 pressedOpacity={0.6}
                 style={[
                     styles.searchButton,
-                    {backgroundColor: colors.surface, borderLeftColor: colors.border},
+                    {backgroundColor: colors.surfaceSunken, borderLeftColor: colors.border},
                 ]}
             >
                 <Ionicons name="search" size={18} color={colors.textMuted}/>
@@ -222,39 +228,35 @@ export function TopBar() {
     );
 
     return (
-        <View style={[styles.bar, {paddingTop: insets.top}]}>
-            <LiquidGlassView
-                tint={scheme === 'dark' ? 'dark' : 'light'}
-                fallbackBackgroundColor={
-                    scheme === 'dark' ? 'rgba(15,15,15,0.82)' : 'rgba(255,255,255,0.86)'
-                }
-                style={StyleSheet.absoluteFill}
-            />
-            <View style={[styles.row, {paddingHorizontal: gutter}]}>
+        <View style={[styles.bar, {paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.border}]}>
+            <View style={[styles.row, isPhone && styles.rowPhone, {paddingHorizontal: gutter}]}>
                 <PressableScale
                     onPress={() => navigate('home', '/')}
                     accessibilityRole="link"
                     accessibilityLabel="Yify home"
-                    pressedScale={0.92}
+                    pressedScale={0.97}
                     pressedOpacity={0.7}
-                    hoveredScale={1.04}
+                    hoveredScale={1}
+                    style={isPhone && !stacked ? styles.brandNavGap : undefined}
+                    contentStyle={styles.brandHit}
                 >
-                    <ThemedText type="title" style={[styles.wordmark, {color: colors.accent}]}>
+                    <ThemedText type="title" style={[styles.wordmark, isPhone && styles.wordmarkPhone, {color: colors.text}]}>
                         YIFY
                     </ThemedText>
                 </PressableScale>
 
-                {isPhone ? (
+                {compact ? (
                     <>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.links}
-                            style={styles.phoneLinks}
-                        >
-                            {NAV_LINKS.map(renderLink)}
-                        </ScrollView>
-                        <View style={styles.spacer}/>
+                        {stacked ? <View style={styles.spacer}/> : (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={[styles.links, styles.linksCompact]}
+                                style={styles.phoneLinks}
+                            >
+                                {NAV_LINKS.map(renderLink)}
+                            </ScrollView>
+                        )}
                         <View style={styles.actions}>
                             {showSearch ? (
                                 <PressableScale
@@ -262,7 +264,7 @@ export function TopBar() {
                                     hitSlop={6}
                                     accessibilityRole="button"
                                     accessibilityLabel="Search"
-                                    pressedScale={0.86}
+                                    pressedScale={0.94}
                                     pressedOpacity={0.6}
                                     contentStyle={styles.iconButton}
                                 >
@@ -281,6 +283,12 @@ export function TopBar() {
                 )}
             </View>
 
+            {stacked ? (
+                <View style={[styles.stackedLinks, {paddingHorizontal: gutter}]}>
+                    {NAV_LINKS.map(renderLink)}
+                </View>
+            ) : null}
+
             {below}
 
             {showSearch ? (
@@ -297,7 +305,8 @@ export function TopBar() {
 
 export function useTopBarHeight(): number {
     const insets = useSafeAreaInsets();
-    return insets.top + TOP_BAR_ROW_HEIGHT;
+    const {width} = useResponsive();
+    return insets.top + TOP_BAR_ROW_HEIGHT + (usesStackedNavigation(width) ? STACKED_NAV_HEIGHT : 0);
 }
 
 const styles = StyleSheet.create({
@@ -307,28 +316,38 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 30,
+        borderBottomWidth: StyleSheet.hairlineWidth,
     },
     row: {
         height: TOP_BAR_ROW_HEIGHT,
+        width: '100%',
+        alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: Spacing.lg,
+        gap: Spacing.xl,
     },
+    rowPhone: {gap: Spacing.sm},
+    brandNavGap: {marginRight: Spacing.lg},
+    brandHit: {minHeight: 44, justifyContent: 'center'},
     wordmark: {
-        fontSize: 20,
-        lineHeight: 26,
-        letterSpacing: 0.6,
+        fontSize: 27,
+        lineHeight: 34,
+        letterSpacing: -1.3,
         ...Platform.select({web: {cursor: 'pointer'}, default: {}}),
     },
-    links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
-    phoneLinks: {flexGrow: 0, flexShrink: 1},
-    link: {alignItems: 'center', justifyContent: 'center', paddingVertical: 6, flexShrink: 0},
-    linkLabel: {fontSize: 14.5, lineHeight: 20},
-    underline: {position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderRadius: 1},
-    searchArea: {flex: 1, alignItems: 'center', paddingHorizontal: Spacing.md},
+    wordmarkPhone: {fontSize: 23, lineHeight: 30, letterSpacing: -1},
+    links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
+    linksCompact: {gap: Spacing.md},
+    stackedLinks: {height: STACKED_NAV_HEIGHT, flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
+    stackedLinkHit: {flex: 1},
     spacer: {flex: 1},
-    actions: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs},
-    iconButton: {width: 40, height: 40, alignItems: 'center', justifyContent: 'center'},
+    phoneLinks: {flex: 1, minWidth: 0},
+    link: {minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.sm, flexShrink: 0},
+    linkLabel: {fontSize: 14, lineHeight: 20},
+    underline: {position: 'absolute', left: 0, right: 0, bottom: 2, height: 2},
+    searchArea: {flex: 1, minWidth: 0, alignItems: 'flex-end'},
+    actions: {flexDirection: 'row', alignItems: 'center', flexShrink: 0},
+    iconButton: {width: 44, height: 44, alignItems: 'center', justifyContent: 'center'},
     avatar: {width: 26, height: 26, borderRadius: 13, borderWidth: 1.5},
     searchPill: {
         width: '100%',
@@ -342,12 +361,14 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         flex: 1,
+        minWidth: 0,
         height: '100%',
-        fontSize: 15,
+        fontSize: 14,
+        fontFamily: FontFamily.regular,
         paddingLeft: Spacing.lg,
         paddingRight: Spacing.sm,
     },
-    clearButton: {width: 32, height: 32, alignItems: 'center', justifyContent: 'center'},
+    clearButton: {width: 44, height: 44, alignItems: 'center', justifyContent: 'center'},
     searchButton: {
         width: SEARCH_BUTTON_WIDTH,
         alignSelf: 'stretch',

@@ -39,8 +39,8 @@ export default function Root({children}: PropsWithChildren) {
                 <meta name="description" content={DESCRIPTION} />
                 <link rel="manifest" href={`${BASE_URL}/manifest.json`}/>
                 <link rel="apple-touch-icon" sizes="180x180" href={`${BASE_URL}/icons/apple-touch-icon.png`}/>
-                <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"/>
-                <meta name="theme-color" content="#0F0F0F" media="(prefers-color-scheme: dark)"/>
+                <meta name="theme-color" content="#F3F0E9" media="(prefers-color-scheme: light)"/>
+                <meta name="theme-color" content="#1B1916" media="(prefers-color-scheme: dark)"/>
                 <meta name="apple-mobile-web-app-title" content="Yify"/>
                 <meta name="apple-mobile-web-app-capable" content="yes"/>
                 <meta name="mobile-web-app-capable" content="yes"/>

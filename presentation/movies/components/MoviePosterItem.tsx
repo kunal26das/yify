@@ -43,7 +43,7 @@ export function MoviePosterItem({
   isNew?: boolean;
 }) {
   const { posterUrls } = movie;
-  const {colors, scheme} = usePalette();
+  const {colors} = usePalette();
   const nodeRef = useRef<View>(null);
   const hoverCard = useHoverCard();
   const rank = useTopTenRank(movie.id);
@@ -61,8 +61,8 @@ export function MoviePosterItem({
         accessibilityRole="link"
         accessibilityLabel={posterAccessibilityLabel(movie, rank)}
         onPress={() => Analytics.movieOpen(movie, source)}
-        hoveredScale={IS_WEB ? 1.03 : 1}
-        lift={IS_WEB ? 5 : 0}
+        hoveredScale={IS_WEB ? 1.015 : 1}
+        lift={IS_WEB ? 2 : 0}
         duration={Duration.fast}
         onHoverIn={() => {
           if (!IS_WEB) return;
@@ -82,7 +82,6 @@ export function MoviePosterItem({
               {
                 backgroundColor: colors.surfaceSunken,
                 borderColor: colors.border,
-                shadowColor: scheme === 'dark' ? '#000' : '#2A2019',
               },
             ]}
         >
@@ -117,8 +116,8 @@ export function MoviePosterItem({
           ) : null}
 
           {rank && !hideRankFlag ? (
-              <Animated.View entering={enterPop(2)} style={styles.rankFlag}>
-                <ThemedText style={styles.rankFlagText}>TOP{'\n'}10</ThemedText>
+              <Animated.View entering={enterPop(2)} style={[styles.rankFlag, {backgroundColor: colors.accentStrong}]}>
+                <ThemedText style={[styles.rankFlagText, {color: colors.onAccent}]}>Top{'\n'}10</ThemedText>
               </Animated.View>
           ) : isNew ? (
               <NewBadge style={styles.newBadge}/>
@@ -137,29 +136,26 @@ const styles = StyleSheet.create({
     borderRadius: POSTER_RADIUS,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    elevation: 3,
   },
   fallback: {alignItems: 'center', justifyContent: 'center', padding: Spacing.sm},
   fallbackTitle: {fontSize: 12, lineHeight: 16, textAlign: 'center', fontFamily: FontFamily.semibold},
   ratingBadge: {
     position: 'absolute',
     zIndex: 10,
-    top: Spacing.xs,
-    left: Spacing.xs,
+    top: Spacing.sm,
+    left: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     borderRadius: Radius.pill,
-    backgroundColor: 'rgba(8,8,12,0.6)',
+    backgroundColor: 'rgba(20,17,14,0.78)',
   },
   ratingText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: FontFamily.semibold,
   },
   newBadge: {position: 'absolute', zIndex: 10, top: Spacing.sm, right: Spacing.sm},
   rankFlag: {
@@ -167,17 +163,14 @@ const styles = StyleSheet.create({
     zIndex: 10,
     top: 0,
     right: Spacing.sm,
-    backgroundColor: '#E11D2E',
     paddingHorizontal: 5,
     paddingVertical: 4,
     borderBottomLeftRadius: 3,
     borderBottomRightRadius: 3,
   },
   rankFlagText: {
-    color: '#fff',
-    fontSize: 8,
-    lineHeight: 9,
-    letterSpacing: 0.6,
+    fontSize: 9,
+    lineHeight: 11,
     textAlign: 'center',
     fontFamily: FontFamily.extrabold,
   },

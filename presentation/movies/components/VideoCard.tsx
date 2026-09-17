@@ -63,15 +63,14 @@ export function VideoCard({
                 <Animated.View
                     style={[
                         styles.thumb,
-                        {height: thumbHeight, backgroundColor: colors.surfaceSunken},
-                        IS_WEB
-                            ? {
-                                borderRadius: hovered ? 0 : Radius.card,
-                                transitionProperty: 'borderRadius',
-                                transitionDuration: Duration.fast,
-                                transitionTimingFunction: 'ease-out',
-                            }
-                            : styles.thumbRadius,
+                        {
+                            height: thumbHeight,
+                            backgroundColor: colors.surfaceSunken,
+                            borderColor: hovered ? colors.accent : colors.border,
+                            transitionProperty: 'borderColor',
+                            transitionDuration: Duration.fast,
+                            transitionTimingFunction: 'ease-out',
+                        },
                     ]}
                 >
                     <Thumbnail movie={movie} style={StyleSheet.absoluteFill}/>
@@ -81,7 +80,7 @@ export function VideoCard({
                 <View style={styles.info}>
                     <ThemedText
                         numberOfLines={2}
-                        style={[Typography.videoTitle, styles.titleWeight, {color: colors.text}]}
+                        style={[Typography.videoTitle, {color: colors.text}]}
                     >
                         {movie.title}
                     </ThemedText>
@@ -103,10 +102,8 @@ export function VideoCard({
 }
 
 const styles = StyleSheet.create({
-    thumb: {width: '100%', overflow: 'hidden'},
-    thumbRadius: {borderRadius: Radius.card},
+    thumb: {width: '100%', overflow: 'hidden', borderRadius: Radius.card, borderWidth: 1},
     info: {paddingTop: Spacing.md},
-    titleWeight: {fontWeight: '600'},
-    metaRow: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: 3},
+    metaRow: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: Spacing.xs},
     metaText: {flex: 1},
 });

@@ -26,10 +26,10 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
                     style={styles.offerContainer}
                     disabled={!url} onPress={url ? () => onOpen(url) : undefined} accessibilityRole={url ? 'link' : 'text'}
                     accessibilityLabel={`${url ? 'View options for ' : ''}${offer.serviceName}, ${streamingOfferLabel(offer)}${mine ? ', your service' : ''}`}
-                    contentStyle={[styles.offer, {backgroundColor: mine ? colors.accentSoft : colors.surfaceSunken,
+                    contentStyle={[styles.offer, {backgroundColor: mine ? colors.accentSoft : colors.surface,
                         borderColor: mine ? colors.accent : colors.border}]}>
                     <View style={styles.heading}>
-                        <ThemedText style={styles.name}>{offer.serviceName}</ThemedText>
+                        <ThemedText type="subtitle" style={styles.name}>{offer.serviceName}</ThemedText>
                         {url ? <Ionicons name="open-outline" size={17} color={colors.textMuted}/> : null}
                     </View>
                     <ThemedText style={[styles.meta, {color: colors.textMuted}]}>{streamingOfferLabel(offer)}</ThemedText>
@@ -46,14 +46,14 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
 }
 
 const styles = StyleSheet.create({
-    content: {gap: Spacing.sm},
-    row: {flexDirection: 'row', gap: Spacing.sm, alignItems: 'stretch'},
+    content: {gap: Spacing.xs},
+    row: {flexDirection: 'row', gap: Spacing.md, alignItems: 'stretch'},
     offerContainer: {alignSelf: 'stretch'},
-    offer: {flexGrow: 1, minWidth: 150, maxWidth: 280, minHeight: 64, padding: Spacing.md, gap: Spacing.xs,
-        borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card},
+    offer: {flexGrow: 1, minWidth: 172, maxWidth: 280, minHeight: 112, padding: Spacing.lg, gap: Spacing.sm,
+        borderWidth: 1, borderRadius: Radius.card},
     heading: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
-    name: {fontSize: 14, fontWeight: '600', flexShrink: 1},
-    meta: {fontSize: 12, lineHeight: 17},
+    name: {fontSize: 18, lineHeight: 25, letterSpacing: -0.2, flexShrink: 1},
+    meta: {fontSize: 12, lineHeight: 19},
     action: {marginTop: 'auto'},
     attribution: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
 });

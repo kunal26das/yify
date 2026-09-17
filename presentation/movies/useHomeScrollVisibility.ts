@@ -2,7 +2,6 @@ import {useEffect, useRef, useState} from 'react';
 import type {Animated} from 'react-native';
 
 const AT_TOP_THRESHOLD = 8;
-const HERO_FADE_END = 0.75;
 
 export function useHomeScrollVisibility(scrollY: Animated.Value, heroHeight: number) {
     const [visibility, setVisibility] = useState({atTop: true, heroVisible: true});
@@ -13,7 +12,7 @@ export function useHomeScrollVisibility(scrollY: Animated.Value, heroHeight: num
         const update = ({value}: {value: number}) => {
             offset.current = value;
             const atTop = value <= AT_TOP_THRESHOLD;
-            const heroVisible = value < heroHeight * HERO_FADE_END;
+            const heroVisible = value < heroHeight;
             if (current.current.atTop === atTop && current.current.heroVisible === heroVisible) return;
             current.current = {atTop, heroVisible};
             setVisibility(current.current);

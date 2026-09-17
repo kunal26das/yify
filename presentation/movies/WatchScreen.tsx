@@ -444,6 +444,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                     <ScrollView
                         style={styles.fill}
                         showsVerticalScrollIndicator={false}
+                        nativeID={`movie-scroll-${details.id}`}
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                         refreshControl={
@@ -484,6 +485,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                         <ScrollView
                             style={styles.fill}
                             showsVerticalScrollIndicator={false}
+                            nativeID={`movie-scroll-${details.id}`}
                             onScroll={handleScroll}
                             scrollEventThrottle={16}
                             refreshControl={
@@ -548,10 +550,12 @@ function Headline({
                 accessibilityState={{expanded}}
                 pressedScale={1}
                 pressedOpacity={0.75}
+                contentStyle={styles.headlineTitle}
             >
                 <ThemedText
+                    type="title"
                     numberOfLines={expanded ? undefined : 2}
-                    style={[Typography.watchTitle, {color: colors.text}]}
+                    style={[styles.title, {color: colors.text}]}
                 >
                     {expanded ? details.titleLong || details.title : details.title}
                 </ThemedText>
@@ -571,7 +575,7 @@ function Headline({
 function SectionHeading({title}: {title: string}) {
     const {colors} = usePalette();
     return (
-        <ThemedText style={[Typography.sectionTitle, styles.sectionHeading, {color: colors.text}]}>
+        <ThemedText type="heading" style={[styles.sectionHeading, {color: colors.text}]}>
             {title}
         </ThemedText>
     );
@@ -777,7 +781,7 @@ function TorrentCard({
             pressedOpacity={0.85}
             contentStyle={[
                 styles.torrentCard,
-                {width, backgroundColor: colors.surfaceSunken, borderColor: colors.border},
+                {width, backgroundColor: colors.surface, borderColor: colors.border},
             ]}
         >
             <View style={styles.torrentTop}>
@@ -852,7 +856,7 @@ const styles = StyleSheet.create({
     fill: {flex: 1},
     row: {flex: 1, flexDirection: 'row'},
     columnGap: {width: COLUMN_GAP},
-    stack: {gap: Spacing.md},
+    stack: {gap: Spacing.lg},
     centered: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.xl},
 
     errorBox: {alignItems: 'center', maxWidth: 360},
@@ -862,6 +866,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
+        minHeight: 44,
         borderRadius: Radius.pill,
         paddingHorizontal: 22,
         paddingVertical: 12,
@@ -875,12 +880,14 @@ const styles = StyleSheet.create({
     backdropScrim: {backgroundColor: 'rgba(0, 0, 0, 0.55)'},
     backdropLabel: {fontSize: 14, lineHeight: 19, fontWeight: '600'},
 
-    headline: {gap: 2},
-    headlineMeta: {marginTop: 2},
+    headline: {gap: Spacing.sm, paddingTop: Spacing.sm},
+    headlineTitle: {minHeight: 44, justifyContent: 'center'},
+    title: {fontSize: 30, lineHeight: 39, letterSpacing: -0.7},
+    headlineMeta: {fontSize: 13, lineHeight: 20},
 
-    section: {gap: Spacing.sm, marginTop: Spacing.sm},
-    upNextSection: {gap: Spacing.sm},
-    sectionHeading: {marginBottom: 2},
+    section: {gap: Spacing.lg, marginTop: Spacing.lg},
+    upNextSection: {gap: Spacing.lg},
+    sectionHeading: {fontSize: 22, lineHeight: 30, letterSpacing: -0.4},
     upNextColumn: {width: RIGHT_COLUMN_WIDTH},
     upNextList: {gap: Spacing.md},
     relatedRail: {marginTop: Spacing.sm, marginBottom: -Spacing.md},
@@ -901,8 +908,8 @@ const styles = StyleSheet.create({
     torrentGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: TORRENT_GAP},
     torrentCard: {
         borderRadius: Radius.card,
-        borderWidth: StyleSheet.hairlineWidth,
-        padding: Spacing.md,
+        borderWidth: 1,
+        padding: Spacing.lg,
         gap: Spacing.sm,
     },
     torrentTop: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},

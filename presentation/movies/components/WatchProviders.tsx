@@ -62,11 +62,11 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
     return (
         <Animated.View entering={enterFade()} style={styles.section}>
             <View style={styles.heading}>
-                <ThemedText type="section" style={{color: colors.text}}>Where to watch</ThemedText>
+                <ThemedText type="heading" style={[styles.title, {color: colors.text}]}>Where to watch</ThemedText>
                 <PressableScale onPress={() => setPickingCountry(true)} accessibilityRole="button"
                     accessibilityLabel={`Change viewing country, currently ${countryName(region)}`}
                     contentStyle={styles.country}>
-                    <ThemedText style={{color: colors.accent}}>{countryName(region)}</ThemedText>
+                    <ThemedText style={[styles.countryLabel, {color: colors.accent}]}>{countryName(region)}</ThemedText>
                     <Ionicons name="chevron-down" size={14} color={colors.accent}/>
                 </PressableScale>
             </View>
@@ -74,7 +74,7 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
                 accessibilityLabel="Loading viewing options"/> : current.status === 'unavailable' ? (
                 <View style={styles.message}>
                     <ThemedText style={{color: colors.textMuted}}>Viewing options couldn’t be loaded.</ThemedText>
-                    <PressableScale onPress={() => setAttempt(value => value + 1)} accessibilityRole="button">
+                    <PressableScale onPress={() => setAttempt(value => value + 1)} accessibilityRole="button" contentStyle={styles.retry}>
                         <ThemedText style={{color: colors.accent}}>Try again</ThemedText>
                     </PressableScale>
                 </View>
@@ -96,10 +96,13 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
 }
 
 const styles = StyleSheet.create({
-    section: {gap: Spacing.sm, marginTop: Spacing.sm},
+    section: {gap: Spacing.md, marginTop: Spacing.lg},
     heading: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm},
+    title: {fontSize: 22, lineHeight: 30, letterSpacing: -0.4},
     country: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44},
+    countryLabel: {fontSize: 13, lineHeight: 20},
     attribution: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
     message: {gap: Spacing.sm},
+    retry: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
     loading: {alignSelf: 'flex-start', paddingVertical: Spacing.sm},
 });

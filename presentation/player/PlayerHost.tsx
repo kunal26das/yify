@@ -12,6 +12,7 @@ import {useResponsive} from '../hooks/use-responsive';
 import {useTopBarHeight} from '../movies/components/TopBar';
 import {MiniBar} from './MiniBar';
 import {PlayerSurface} from './PlayerSurface';
+import {PlayerScrollBridge} from './PlayerScrollBridge';
 import {usePlayer, usePlayerInternal, type PlayerRect} from './PlayerContext';
 import {useDocumentPip} from './useDocumentPip';
 import {useKeyboardShortcuts} from './useKeyboardShortcuts';
@@ -179,20 +180,27 @@ export function PlayerHost(): ReactElement | null {
                     pointerEvents={mini ? 'none' : 'auto'}
                     ref={pip.hostRef}
                 >
-                    <PlayerSurface
-                        ref={surfaceRef}
-                        videoId={video.videoId}
+                    <PlayerScrollBridge
+                        active={mode === 'inline' && !pip.active}
+                        targetId={`movie-scroll-${video.movieId}`}
                         width={baseWidth}
                         height={baseHeight}
-                        muted={muted}
-                        playing={playing}
-                        captions={playback.trailerCaptions}
-                        onStateChange={reportPlaying}
-                        onReady={reportReady}
-                        onPlaybackState={reportState}
-                        onError={reportError}
-                        onEnded={reportEnded}
-                    />
+                    >
+                        <PlayerSurface
+                            ref={surfaceRef}
+                            videoId={video.videoId}
+                            width={baseWidth}
+                            height={baseHeight}
+                            muted={muted}
+                            playing={playing}
+                            captions={playback.trailerCaptions}
+                            onStateChange={reportPlaying}
+                            onReady={reportReady}
+                            onPlaybackState={reportState}
+                            onError={reportError}
+                            onEnded={reportEnded}
+                        />
+                    </PlayerScrollBridge>
                 </Animated.View>
 
                 {mini ? (
