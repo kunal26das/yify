@@ -69,7 +69,7 @@ test('offer and visible attribution links open their corresponding destination',
     const attribution = renderer.root.findAllByType('PressableScale').find(node =>
         node.props.accessibilityLabel === 'Streaming availability by JustWatch');
     assert.equal(attribution.props.accessibilityRole, 'link');
-    assert.match(nodeText(attribution), /Availability by JustWatch/);
+    assert.match(nodeText(attribution), /JustWatch ↗/);
     await act(async () => attribution.props.onPress());
     assert.deepEqual(opened, [item.url, 'https://www.justwatch.com']);
 });

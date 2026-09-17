@@ -63,7 +63,7 @@ test('TV viewing options request availability once with media and show the provi
     assert.deepEqual(calls, [['tt1234567', 'IN', 'tv']]);
     assert.match(labels(renderer), /Where to watch India/);
     assert.match(labels(renderer), /Regional service Free View options Regional service Buy View options/);
-    assert.match(labels(renderer), /Availability by JustWatch/);
+    assert.match(labels(renderer), /JustWatch ↗/);
     const link = renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel === 'View options for Regional service, Free');
     await act(async () => link.props.onPress());
     assert.deepEqual(opened, [url]);

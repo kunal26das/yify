@@ -86,6 +86,8 @@ function sanitizeAttributes(input: Record<string, unknown> | undefined): Attribu
 function sanitizeText(value: string): string {
     return value
         .replace(/https?:\/\/[^\s<>"')]+/gi, url => httpOrigin(url) ?? '[url]')
+        .replace(/\b(?:coords|coordinates)\b["']?\s*[:=]\s*\[[^\]]*\]/gi, '[location]')
+        .replace(/\b(?:latitude|longitude|lat|lon|lng)\b["']?\s*[:=]\s*["']?[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?["']?/gi, '[location]')
         .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
         .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+/gi, '[credential]')
         .replace(/\b(?:token|api[_-]?key|password|secret|authorization|query_term|query|search|email|user[_-]?id|account[_-]?id)\s*[:=]\s*[^\s,;]+/gi, '[private]')

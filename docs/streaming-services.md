@@ -2,6 +2,12 @@
 
 Users save their streaming services separately for each viewing country. These preferences sync with their Yify account; they do not connect or verify a streaming account. Selecting a service does not grant access to its catalogue or start playback.
 
+The country picker offers optional, one-time location detection after the user taps “Use current location” and grants permission. Manual selection and the device-region setting remain available if permission is denied, detection times out or the detected country is unsupported. No location request runs on app launch or in the background. Only the resulting country preference is saved and synced.
+
+Android requests approximate foreground location; iOS defaults to reduced accuracy. Native builds use the operating system’s reverse geocoder. Web uses browser geolocation with high accuracy disabled, rounds coordinates to two decimal places and sends them directly to BigDataCloud’s client-side reverse-geocoding endpoint. It sends no account credentials and does not fall back to IP lookup after a denial. The picker explains this sharing before requesting permission. Coordinates are not persisted or sent to Yify analytics or diagnostics. Closing the picker or choosing manually cancels the lookup; late results cannot change the preference.
+
+The native location module requires a new store build with runtime 1.8.4; it cannot be delivered to older binaries by OTA alone. Web geolocation requires HTTPS (or localhost) and a same-origin geolocation Permissions-Policy.
+
 ## Data and links
 
 The feature reuses Yify's existing TMDB integration and its JustWatch availability data. No separate availability-provider account, server secret or monthly request allowance is introduced. TMDB's commercial-use licensing must still be verified: its standard free API is for non-commercial use with attribution, and revenue-generating apps require a commercial agreement.

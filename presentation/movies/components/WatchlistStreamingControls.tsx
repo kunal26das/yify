@@ -38,7 +38,7 @@ export function WatchlistStreamingControls({streaming}: {streaming: WatchlistStr
             accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}
             onPress={() => {void openStreamingLink('https://www.justwatch.com')
                 .catch(() => toast('The website could not be opened.', 'alert-circle-outline'));}}>
-            <ThemedText type="caption" style={{color: colors.textMuted}}>Availability by JustWatch ↗</ThemedText>
+            <ThemedText type="caption" style={{color: colors.textMuted}}>JustWatch ↗</ThemedText>
         </PressableScale> : null}
     </View>;
 }

@@ -191,7 +191,7 @@ test('the service catalog visibly credits its source and handles an attribution 
     const f = fixture({openLink: async () => {throw new Error('no browser');}});
     const renderer = await mount(t, f);
     await press(renderer, /^My streaming services/);
-    assert.match(labels(renderer), /Services by JustWatch/);
+    assert.match(labels(renderer), /JustWatch ↗/);
     const attribution = control(renderer, 'Streaming services by JustWatch');
     assert.equal(attribution.props.accessibilityRole, 'link');
     assert.equal(renderer.root.findByType('FlatList').findAll(node =>

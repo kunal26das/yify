@@ -23,6 +23,7 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
                 const mine = streamingOfferSelected(offer, selected);
                 const url = offer.url;
                 return <PressableScale key={`${offer.selectionId}:${offer.type}:${index}`}
+                    style={styles.offerContainer}
                     disabled={!url} onPress={url ? () => onOpen(url) : undefined} accessibilityRole={url ? 'link' : 'text'}
                     accessibilityLabel={`${url ? 'View options for ' : ''}${offer.serviceName}, ${streamingOfferLabel(offer)}${mine ? ', your service' : ''}`}
                     contentStyle={[styles.offer, {backgroundColor: mine ? colors.accentSoft : colors.surfaceSunken,
@@ -33,13 +34,13 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
                     </View>
                     <ThemedText style={[styles.meta, {color: colors.textMuted}]}>{streamingOfferLabel(offer)}</ThemedText>
                     {mine ? <ThemedText style={[styles.meta, {color: colors.accent}]}>Your service</ThemedText> : null}
-                    {url ? <ThemedText style={[styles.meta, {color: colors.accent}]}>View options</ThemedText> : null}
+                    {url ? <ThemedText style={[styles.meta, styles.action, {color: colors.accent}]}>View options</ThemedText> : null}
                 </PressableScale>;
             })}
         </ScrollView>
         <PressableScale onPress={() => onOpen('https://www.justwatch.com')}
             accessibilityRole="link" accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}>
-            <ThemedText style={[styles.meta, {color: colors.textMuted}]}>Availability by JustWatch ↗</ThemedText>
+            <ThemedText style={[styles.meta, {color: colors.textMuted}]}>JustWatch ↗</ThemedText>
         </PressableScale>
     </View>;
 }
@@ -47,10 +48,12 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
 const styles = StyleSheet.create({
     content: {gap: Spacing.sm},
     row: {flexDirection: 'row', gap: Spacing.sm, alignItems: 'stretch'},
-    offer: {minWidth: 150, maxWidth: 280, minHeight: 64, padding: Spacing.md, gap: Spacing.xs,
+    offerContainer: {alignSelf: 'stretch'},
+    offer: {flexGrow: 1, minWidth: 150, maxWidth: 280, minHeight: 64, padding: Spacing.md, gap: Spacing.xs,
         borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card},
     heading: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     name: {fontSize: 14, fontWeight: '600', flexShrink: 1},
     meta: {fontSize: 12, lineHeight: 17},
+    action: {marginTop: 'auto'},
     attribution: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
 });

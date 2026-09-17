@@ -20,6 +20,7 @@ import type {NewMoviesNotifier} from './services/NewMoviesNotifier';
 import type {StoreServices} from './services/StoreServices';
 import type {Diagnostics} from './services/Diagnostics';
 import type {DisplayAds} from './services/DisplayAds';
+import type {CountryLocation} from './services/CountryLocation';
 
 export interface Dependencies {
     diagnostics: Diagnostics;
@@ -31,6 +32,7 @@ export interface Dependencies {
     shows: ShowRepository;
     tmdb: TmdbRepository;
     streaming: StreamingRepository;
+    countryLocation: CountryLocation;
     searchHistory: SearchHistoryRepository;
     preferences: PreferencesRepository;
     watchlist: WatchlistRepository;

@@ -87,7 +87,7 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
             )}
             {!current?.offers.length ? <PressableScale onPress={() => void open('https://www.justwatch.com')}
                 accessibilityRole="link" accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}>
-                <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch ↗</ThemedText>
+                <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>JustWatch ↗</ThemedText>
             </PressableScale> : null}
             {pickingCountry ? <WatchRegionPicker selected={preferences.watchRegion ?? null} automatic={automatic}
                 onSelect={code => preferencesRepository.setWatchRegion(code)} onClose={() => setPickingCountry(false)}/> : null}

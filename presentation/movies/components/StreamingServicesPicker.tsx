@@ -153,7 +153,7 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
                             {catalog?.status === 'ready' ? <PressableScale
                                 onPress={() => void openAttribution()} accessibilityRole="link"
                                 accessibilityLabel="Streaming services by JustWatch" contentStyle={styles.attribution}>
-                                <ThemedText type="caption" style={{color: colors.textMuted}}>Services by JustWatch ↗</ThemedText>
+                                <ThemedText type="caption" style={{color: colors.textMuted}}>JustWatch ↗</ThemedText>
                             </PressableScale> : null}
                         </View>
                         <PressableScale onPress={onClose} accessibilityRole="button"

@@ -200,6 +200,58 @@ test('error messages scrub credentials, email addresses and query-bearing URLs w
     assert.equal(result.exception.values[0].value, 'GET https://api.test failed for [email] [credential] [private]');
 });
 
+test('geocoding coordinates never survive automatic network telemetry or inherited error context', () => {
+    const latitude = 12.34567;
+    const longitude = -76.54321;
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
+    const body = {latitude, longitude, locality: 'Private locality', countryCode: 'IN'};
+    const breadcrumb = {category: 'fetch', type: 'http', message: `GET ${url}`, data: {
+        url, method: 'GET', status_code: 200, request_body: body, response_body: body, latitude, longitude,
+    }};
+    const span = {op: 'http.client', description: `GET ${url}`, start_timestamp: 100, timestamp: 101,
+        data: {'http.method': 'GET', 'url.full': url, 'http.response.status_code': 200, body, latitude, longitude}};
+    const error = sanitizeErrorEvent({message: `Geocoding failed: ${url}`, request: {
+        url, method: 'GET', query_string: `latitude=${latitude}&longitude=${longitude}`, data: body,
+    }, breadcrumbs: [breadcrumb], extra: body, contexts: {location: body},
+        exception: {values: [{type: 'Error', value: `Request failed for ${url}`}]} });
+    const transaction = sanitizeTransaction({type: 'transaction', transaction: `GET ${url}`,
+        contexts: {trace: {op: 'http.client', data: span.data}}, spans: [span], breadcrumbs: [breadcrumb]});
+    const attributes = {'diagnostics.operation': 'location.detect', 'diagnostics.outcome': 'failed',
+        latitude, longitude, 'geo.latitude': latitude, 'geo.longitude': longitude, coordinates: [latitude, longitude], url};
+    const outputs = [error, transaction, sanitizeBreadcrumb(breadcrumb), sanitizeSpan(span),
+        sanitizeDiagnosticAttributes(attributes), sanitizeLog({message: 'location.detect', level: 'error', attributes}),
+        sanitizeMetric({name: 'yify.operation.count', type: 'counter', value: 1, attributes})];
+    for (const output of outputs) {
+        const serialized = JSON.stringify(output);
+        for (const sensitive of [String(latitude), String(longitude), 'Private locality', 'reverse-geocode-client']) {
+            assert.equal(serialized.includes(sensitive), false, serialized);
+        }
+    }
+    assert.equal(error.request.url, 'https://api.bigdatacloud.net');
+    assert.equal(transaction.spans[0].data['http.response.status_code'], 200);
+    assert.equal(transaction.spans[0].timestamp, 101);
+});
+
+test('raw coordinate fields and arrays are scrubbed from exception and message text', () => {
+    for (const coordinates of [
+        'latitude=12.34567&longitude=-76.54321',
+        '{"latitude":12.34567,"longitude":-76.54321}',
+        "{'Lat': '12.34567', 'LNG': '-76.54321'}",
+        'lat: +1.234567e1 lon: -7.654321e1',
+        'coordinates: [12.34567, -76.54321]',
+        '{"coords":[12.34567,-76.54321]}',
+    ]) {
+        const message = `Geocoding failed: ${coordinates}`;
+        const result = sanitizeErrorEvent({message, exception: {values: [{type: 'Error', value: message}]}});
+        assert.equal(/\d/.test(result.message), false, result.message);
+        assert.equal(/\d/.test(result.exception.values[0].value), false, result.exception.values[0].value);
+        assert.match(result.message, /^Geocoding failed:/);
+        assert.match(result.message, /\[location\]/);
+    }
+    const message = 'Location permission denied; request timed out after 10000ms';
+    assert.equal(sanitizeErrorEvent({message}).message, message);
+});
+
 test('transaction and span hooks remove URL paths, route parameters, payloads and links while preserving timing', () => {
     const span = {
         span_id: '1234567890abcdef', trace_id: 'ce7863641f384926b0d97a915ae854bd',

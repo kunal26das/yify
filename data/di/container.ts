@@ -24,6 +24,7 @@ import {ExpoNetworkMonitor} from '../services/ExpoNetworkMonitor';
 import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
 import {SentryDiagnostics} from '../services/SentryDiagnostics';
+import {CountryLocationImpl} from '../services/CountryLocationImpl';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -89,6 +90,7 @@ export function createDependencies(): Dependencies {
         shows: catalog.shows,
         tmdb,
         streaming: new StreamingRepositoryImpl(tmdb, new PersistentCache('streaming'), diagnostics),
+        countryLocation: new CountryLocationImpl(),
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,
         watchlist,

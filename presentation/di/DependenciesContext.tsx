@@ -6,6 +6,7 @@ import type {
     AppUpdates,
     AuthRepository,
     Dependencies,
+    CountryLocation,
     Diagnostics,
     DisplayAds,
     MovieRepository,
@@ -64,6 +65,10 @@ export function useTmdbRepository(): TmdbRepository {
 
 export function useStreamingRepository(): StreamingRepository {
     return useDependencies().streaming;
+}
+
+export function useCountryLocation(): CountryLocation {
+    return useDependencies().countryLocation;
 }
 
 export function useAppConfig(): AppConfig {

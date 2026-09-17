@@ -4,6 +4,8 @@ export {POSTER_WIDTHS} from './entities/Movie';
 export type {Show, ShowEpisode} from './entities/Show';
 export type {WatchProvider, WatchAvailability, WatchOffer, WatchRegion} from './entities/WatchProvider';
 export type {WatchService} from './entities/WatchService';
+export type {CountryLocationResult} from './entities/CountryLocationResult';
+export type {CountryLocation} from './services/CountryLocation';
 export type {StreamingService, StreamingCountry, StreamingCatalog, StreamingOffer, StreamingOfferType, StreamingAvailability, StreamingSelections} from './entities/Streaming';
 export type {StreamingRepository} from './repositories/StreamingRepository';
 export {safeStreamingUrl, streamingOfferSelected, hasSelectedStreamingOffer, streamingOfferLabel} from './policies/streaming';

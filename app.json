@@ -13,7 +13,8 @@
         "applinks:yify.expo.app"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationDefaultAccuracyReduced": true
       },
       "icon": {
         "light": "./assets/images/icon.png",
@@ -33,7 +34,9 @@
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
       "intentFilters": [
         {
@@ -71,7 +74,7 @@
           "headers": {
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "strict-origin-when-cross-origin",
-            "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+            "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)"
           }
         }
       ],
@@ -118,6 +121,19 @@
       "./plugins/withGwpAsan",
       "expo-updates",
       "expo-localization",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Use your location once to find streaming services available in your country.",
+          "locationAlwaysPermission": false,
+          "locationAlwaysAndWhenInUsePermission": false,
+          "motionUsagePermission": false,
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false,
+          "isAndroidMotionActivityEnabled": false
+        }
+      ],
       [
         "expo-navigation-bar",
         {

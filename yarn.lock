@@ -4987,6 +4987,13 @@ expo-localization@57.0.2:
   dependencies:
     rtl-detect "^1.0.2"
 
+expo-location@57.0.17:
+  version "57.0.17"
+  resolved "https://registry.yarnpkg.com/expo-location/-/expo-location-57.0.17.tgz#f2993964d53256f637ad92f9e154e312f02b304a"
+  integrity sha512-FomaFHdPSeEKOZWAyIKBPwAld9nU/gnX5dwJ/PnMjRP+n68TswVplGC4gBYIA7pt/zcjF5w1QTxpvqUtPDaXBQ==
+  dependencies:
+    "@expo/image-utils" "^0.11.5"
+
 expo-manifests@~57.0.2:
   version "57.0.2"
   resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-57.0.2.tgz#c8af35f2e0f3b45cef826ac5a39d02b0a7ed54ff"
