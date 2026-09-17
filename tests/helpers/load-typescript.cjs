@@ -28,6 +28,8 @@ function loadTypeScript(file, mocks = {}) {
                 );
                 if (dependency) return load(dependency);
             }
+            const dependency = nativeRequire.resolve(specifier);
+            if (/\.tsx?$/.test(dependency)) return load(dependency);
             return nativeRequire(specifier);
         };
         const {outputText} = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {

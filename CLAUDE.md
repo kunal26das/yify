@@ -8,7 +8,7 @@ Yify is an Expo / React Native app (iOS, Android, web, Electron desktop) over th
 
 | Task | Command |
 | --- | --- |
-| Typecheck | `npx tsc --noEmit` |
+| Typecheck | `yarn typecheck` |
 | Tests | `yarn test` |
 | Single test file | `node --test domain/policies/syncMerge.test.ts` |
 | Single test by name | `node --test --test-name-pattern="tombstone" 'domain/**/*.test.ts'` |
@@ -21,6 +21,9 @@ Yify is an Expo / React Native app (iOS, Android, web, Electron desktop) over th
 | Release console | `yarn release` |
 
 `yarn` is the package manager (`yarn.lock` is committed; CI uses `--frozen-lockfile`).
+`crashreporting/` is the `@yify/crashreporting` Yarn workspace. Install once at the root;
+`yarn test` and `yarn typecheck` include the package. Keep its dependencies in its own manifest
+and use the package name when importing it from the app.
 
 ### `yarn lint` is currently broken
 

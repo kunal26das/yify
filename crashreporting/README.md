@@ -13,15 +13,19 @@ Sentry React Native 8.26.0. Other SDK versions need integration verification.
 `index.ts` is the public API. `src/bridge.ts` wires the injected SDKs; the other source files contain
 grouping, global fatal handling, Sentry capture and nonfatal forwarding. `tests/` is self-contained.
 
+This directory is the `@yify/crashreporting` Yarn workspace. Install from the repository root;
+the app and this package share the root `yarn.lock`.
+
 ```sh
-cd crashreporting
-yarn install
-yarn test
-yarn typecheck
+yarn install --frozen-lockfile
+yarn workspace @yify/crashreporting test
+yarn workspace @yify/crashreporting typecheck
 ```
 
-Copy this directory into another React Native project and install its declared dependency, or add
-it as a local package with `yarn add file:./crashreporting`. The package ships
+The root `yarn test` and `yarn typecheck` commands include this workspace.
+
+To reuse it elsewhere, copy this directory into another React Native project and register it as
+a workspace, or install it as a local package with `yarn add --exact file:./crashreporting`. The package ships
 TypeScript source for Metro. It is private and has not been published to a registry.
 
 ## Connect a native host
@@ -33,7 +37,7 @@ Native's original handler before that import installs Firebase's handler. Use a 
 development and a separate `.web.ts` host for browsers.
 
 ```ts
-import {createCrashReportingBridge} from './crashreporting';
+import {createCrashReportingBridge} from '@yify/crashreporting';
 
 export const crashReporting = createCrashReportingBridge({
     errorUtils: ErrorUtils,

@@ -30,7 +30,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: yarn typecheck
 
       - name: Tests
         run: yarn test
