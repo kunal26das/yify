@@ -2,7 +2,7 @@ import * as Updates from 'expo-updates';
 import {
     createCrashReportingBridge, createNoopCrashReportingBridge,
     type ExceptionsManagerLike, type SentryReporter,
-} from '../modules/react-native-crash-reporting';
+} from '../crashreporting';
 
 const bridge = __DEV__ ? createNoopCrashReportingBridge() : createCrashReportingBridge({
     errorUtils: ErrorUtils,

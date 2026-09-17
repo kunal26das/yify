@@ -4,7 +4,7 @@ const path = require('node:path');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
-const {installCrashlyticsHandler: installModuleHandler} = loadTypeScript('modules/react-native-crash-reporting/index.ts');
+const {installCrashlyticsHandler: installModuleHandler} = loadTypeScript('crashreporting/index.ts');
 const repoRoot = path.resolve(__dirname, '..');
 const errorAt = (column, {message = 'Playback failed', caller = 800} = {}) => ({
     name: 'TypeError',

@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
-const {createSentryCrashlyticsMirror} = loadTypeScript('modules/react-native-crash-reporting/index.ts');
+const {createSentryCrashlyticsMirror} = loadTypeScript('crashreporting/index.ts');
 const {sanitizeErrorEvent} = loadTypeScript('instrumentation/sentry-privacy.ts');
 const id = value => value.toString(16).padStart(32, '0');
 const eventAt = (column = 100, eventId = 1, mechanism = {type: 'generic', handled: true}) => ({

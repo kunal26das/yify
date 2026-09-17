@@ -14,25 +14,26 @@ Sentry React Native 8.26.0. Other SDK versions need integration verification.
 grouping, global fatal handling, Sentry capture and nonfatal forwarding. `tests/` is self-contained.
 
 ```sh
-cd modules/react-native-crash-reporting
+cd crashreporting
 yarn install
 yarn test
 yarn typecheck
 ```
 
 Copy this directory into another React Native project and install its declared dependency, or add
-it as a local package with `yarn add file:./modules/react-native-crash-reporting`. The package ships
+it as a local package with `yarn add file:./crashreporting`. The package ships
 TypeScript source for Metro. It is private and has not been published to a registry.
 
 ## Connect a native host
 
-Create the bridge exactly once per JavaScript runtime, before importing any code that loads Firebase
+Create a host file named `crashsetup.ts` and initialize the bridge exactly once per JavaScript runtime,
+before importing any code that loads Firebase
 Crashlytics. Its loader must perform the first runtime import of the SDK: the module captures React
 Native's original handler before that import installs Firebase's handler. Use a no-op host in
 development and a separate `.web.ts` host for browsers.
 
 ```ts
-import {createCrashReportingBridge} from './modules/react-native-crash-reporting';
+import {createCrashReportingBridge} from './crashreporting';
 
 export const crashReporting = createCrashReportingBridge({
     errorUtils: ErrorUtils,
@@ -55,7 +56,7 @@ is your application's filter and can return `null` to discard an event.
 
 ```ts
 import * as Sentry from '@sentry/react-native';
-import {crashReporting} from './crash-reporting';
+import {crashReporting} from './crashsetup';
 import {sanitizeErrorEvent} from './your-privacy-filter';
 
 Sentry.init({

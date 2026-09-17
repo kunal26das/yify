@@ -22,7 +22,7 @@
     "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
-    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts' 'tests/**/*.test.cjs' 'modules/*/tests/*.test.cjs'",
+    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts' 'tests/**/*.test.cjs' 'crashreporting/tests/*.test.cjs'",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",
     "build:dev:ios": "bash scripts/eas.sh build --platform ios --profile development",
@@ -34,7 +34,7 @@
     "deploy:hosting": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
     "deploy:hosting:prod": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
     "release": "cd release && yarn gui",
-    "test:crash-reporting": "yarn --cwd modules/react-native-crash-reporting test"
+    "test:crashreporting": "yarn --cwd crashreporting test"
   },
   "dependencies": {
     "@expo-google-fonts/fraunces": "0.4.1",
