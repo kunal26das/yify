@@ -108,8 +108,27 @@ coverage; include all issue states and align the time range.
 
 The forwarding/coordinator change uses SDKs already present in supported binaries and adds no native
 dependency. Tests cover caught errors, promise rejection mechanisms, A/B/A grouping, privacy,
-duplicate event IDs, disabled collection, and failed/hung Sentry uploads. Verify the new paths in a
-release-mode Staging build before publishing; automated tests alone do not prove dashboard delivery.
+duplicate event IDs, disabled collection, and failed/hung Sentry uploads.
+
+Controlled Android verification passed on 18 September 2026 (IST), using a local release-mode
+Staging build of 1.8.4 (86) on an Android 17 emulator. All five test events appeared in both
+dashboards: one handled exception, one unhandled promise rejection, and fatal crashes A, B, A.
+The handled exception and rejection remained nonfatal in Firebase. Fatal
+[A](https://console.firebase.google.com/project/yify-2da67/crashlytics/app/android:io.github.kunal26das.yify/issues/897901a9e6144ab5441e7ebd6ea12d2c)
+had two events; fatal
+[B](https://console.firebase.google.com/project/yify-2da67/crashlytics/app/android:io.github.kunal26das.yify/issues/b782f794897b845e9a4ba5d11a4adf6b)
+was a separate issue with one event. Sentry recorded A in
+[YIFY-18](https://kudos-labs.sentry.io/issues/7738794643/) (one handled and two fatal events),
+the rejection in [YIFY-19](https://kudos-labs.sentry.io/issues/7738795799/), and B in
+[YIFY-1A](https://kudos-labs.sentry.io/issues/7738798622/). Firebase's first fatal A report carried
+the matching Sentry event ID `4292dffc798144bc91d5e19d1a6b7387`, the global-handler mechanism,
+runtime 1.8.4 and Staging channel. Sentry resolved the test stack to its original TypeScript lines.
+
+The fixture existed only in an isolated temporary checkout, with automatic OTA checks disabled;
+no verification route or deliberate crash was added to distributed source. The local build skipped
+only the stalled Firebase NDK-symbol upload task, so this check does not verify NDK symbol delivery.
+iOS and web exports and all 886 automated tests passed; iOS device delivery still needs verification.
+No production build or OTA was published as part of this check.
 
 References: [Crashlytics nonfatal reporting and limits](https://firebase.google.com/docs/crashlytics/android/customize-crash-reports),
 [React Native Firebase Crashlytics](https://rnfirebase.io/crashlytics/usage),
