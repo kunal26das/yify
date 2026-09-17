@@ -77,7 +77,7 @@ test('TMDB title and provider lookups deduplicate in flight and reuse decoded re
     t.mock.method(global, 'fetch', async () => {
         requests += 1;
         await response.promise;
-        return {ok: true, json: async () => { parses += 1; return {id: 123}; }};
+        return {ok: true, json: async () => { parses += 1; return {id: 123, movie_results: [], results: {}}; }};
     });
     const api = new TmdbApiDataSource(async () => 'test-key');
     const pending = [api.findByImdbId('tt123'), api.findByImdbId('tt123')];

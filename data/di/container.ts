@@ -40,6 +40,7 @@ export function createDependencies(): Dependencies {
         await appConfig.ready();
         return appConfig.getTmdbApiKey();
     }, undefined, diagnostics);
+    const tmdb = new TmdbRepositoryImpl(tmdbApi);
 
     const auth = new FirebaseAuthRepositoryImpl(diagnostics);
     const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
@@ -86,8 +87,8 @@ export function createDependencies(): Dependencies {
         auth,
         movies: catalog.movies,
         shows: catalog.shows,
-        tmdb: new TmdbRepositoryImpl(tmdbApi),
-        streaming: new StreamingRepositoryImpl(new PersistentCache('streaming'), diagnostics),
+        tmdb,
+        streaming: new StreamingRepositoryImpl(tmdb, new PersistentCache('streaming'), diagnostics),
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,
         watchlist,

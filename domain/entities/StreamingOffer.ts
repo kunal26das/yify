@@ -1,4 +1,4 @@
-export type StreamingOfferType = 'subscription' | 'addon' | 'free' | 'rent' | 'buy';
+export type StreamingOfferType = 'subscription' | 'addon' | 'free' | 'ads' | 'rent' | 'buy';
 
 export interface StreamingOffer {
     serviceId: string;
@@ -6,7 +6,7 @@ export interface StreamingOffer {
     selectionId: string;
     addonName?: string;
     type: StreamingOfferType;
-    url: string;
+    url?: string;
     price?: string;
     quality?: string;
 }

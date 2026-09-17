@@ -44,13 +44,13 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
 
     useEffect(() => {
         let active = true;
-        void repository.getCatalog().then(result => {
+        void repository.getCatalog(country).then(result => {
             if (active) setCatalog(result);
         }).catch(() => {
             if (active) setCatalog({status: 'unavailable', countries: []});
         });
         return () => { active = false; };
-    }, [repository, attempt]);
+    }, [repository, country, attempt]);
 
     const currentCountry = catalog?.countries.find(item => item.code === country);
     const unavailable = catalog?.status === 'unavailable';
@@ -79,7 +79,7 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
 
     const openAttribution = async () => {
         try {
-            await openStreamingLink('https://www.movieofthenight.com/about/api');
+            await openStreamingLink('https://www.justwatch.com');
         } catch {
             toast('Couldn’t open the availability source. Please try again.');
         }
@@ -152,8 +152,8 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
                             <ThemedText type="caption" style={{color: colors.textMuted}}>{selected.length} added</ThemedText>
                             {catalog?.status === 'ready' ? <PressableScale
                                 onPress={() => void openAttribution()} accessibilityRole="link"
-                                accessibilityLabel="Streaming services by Movie of the Night" contentStyle={styles.attribution}>
-                                <ThemedText type="caption" style={{color: colors.textMuted}}>Services by Movie of the Night ↗</ThemedText>
+                                accessibilityLabel="Streaming services by JustWatch" contentStyle={styles.attribution}>
+                                <ThemedText type="caption" style={{color: colors.textMuted}}>Services by JustWatch ↗</ThemedText>
                             </PressableScale> : null}
                         </View>
                         <PressableScale onPress={onClose} accessibilityRole="button"

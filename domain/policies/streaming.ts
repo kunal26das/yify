@@ -14,7 +14,7 @@ export function safeStreamingUrl(value: unknown): string | undefined {
 }
 
 export function streamingOfferSelected(offer: StreamingOffer, services: readonly string[]): boolean {
-    return ['subscription', 'addon', 'free'].includes(offer.type) && services.includes(offer.selectionId);
+    return ['subscription', 'addon', 'free', 'ads'].includes(offer.type) && services.includes(offer.selectionId);
 }
 
 export function hasSelectedStreamingOffer(availability: StreamingAvailability | null | undefined,
@@ -28,6 +28,7 @@ export function streamingOfferLabel(offer: StreamingOffer): string {
         case 'subscription': return 'Subscription';
         case 'addon': return `Extra channel${offer.addonName ? ` · ${offer.addonName}` : ''}`;
         case 'free': return 'Free';
+        case 'ads': return 'Free with ads';
         case 'rent': return `Rent${offer.price ? ` · ${offer.price}` : ''}`;
         case 'buy': return `Buy${offer.price ? ` · ${offer.price}` : ''}`;
     }

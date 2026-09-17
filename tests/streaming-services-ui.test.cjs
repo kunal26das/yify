@@ -22,10 +22,10 @@ const catalog = {
     ],
 };
 
-function fixture({initial = {}, getCatalog = async () => catalog, openLink = async () => {}} = {}) {
+function fixture({initial = {}, getCatalog = async country => ({...catalog, countries: catalog.countries.filter(item => item.code === country)}), openLink = async () => {}} = {}) {
     let preferences = {watchRegion: null, streamingServices: {}, ...initial};
     const listeners = new Set();
-    const calls = {catalog: 0, selections: [], links: [], toasts: []};
+    const calls = {catalog: 0, countries: [], selections: [], links: [], toasts: []};
     const notify = () => listeners.forEach(listener => listener());
     const repository = {
         setWatchRegion: watchRegion => {preferences = {...preferences, watchRegion}; notify();},
@@ -35,7 +35,7 @@ function fixture({initial = {}, getCatalog = async () => catalog, openLink = asy
             notify();
         },
     };
-    const streaming = {getCatalog: async () => {calls.catalog++; return getCatalog();}};
+    const streaming = {getCatalog: async country => {calls.catalog++; calls.countries.push(country); return getCatalog(country);}};
     const FlatList = props => React.createElement('FlatList', props,
         props.ListHeaderComponent,
         props.data.length ? props.data.map((item, index) => React.cloneElement(props.renderItem({item, index}),
@@ -93,6 +93,7 @@ test('service preferences load only on demand and keep each country’s choices 
     assert.match(labels(renderer), /My streaming services Add your services India/);
     await press(renderer, /^My streaming services/);
     assert.equal(f.calls.catalog, 1);
+    assert.deepEqual(f.calls.countries, ['IN']);
     await press(renderer, 'Netflix');
     assert.deepEqual(f.preferences().streamingServices, {US: ['hulu'], IN: ['netflix']});
     assert.equal(control(renderer, 'Netflix').props.accessibilityState.checked, true);
@@ -103,6 +104,7 @@ test('service preferences load only on demand and keep each country’s choices 
     await act(async () => {picker.props.onSelect('US'); picker.props.onClose();});
     await press(renderer, /^My streaming services, 1 added for United States/);
     assert.equal(control(renderer, 'Hulu').props.accessibilityState.checked, true);
+    assert.deepEqual(f.calls.countries, ['IN', 'US']);
     assert.equal(control(renderer, 'Netflix').props.accessibilityState.checked, false);
     await press(renderer, 'Netflix');
     assert.deepEqual(f.preferences().streamingServices, {US: ['hulu', 'netflix'], IN: ['netflix']});
@@ -189,12 +191,12 @@ test('the service catalog visibly credits its source and handles an attribution 
     const f = fixture({openLink: async () => {throw new Error('no browser');}});
     const renderer = await mount(t, f);
     await press(renderer, /^My streaming services/);
-    assert.match(labels(renderer), /Services by Movie of the Night/);
-    const attribution = control(renderer, 'Streaming services by Movie of the Night');
+    assert.match(labels(renderer), /Services by JustWatch/);
+    const attribution = control(renderer, 'Streaming services by JustWatch');
     assert.equal(attribution.props.accessibilityRole, 'link');
     assert.equal(renderer.root.findByType('FlatList').findAll(node =>
-        node.props.accessibilityLabel === 'Streaming services by Movie of the Night').length, 0);
-    await press(renderer, 'Streaming services by Movie of the Night');
-    assert.deepEqual(f.calls.links, ['https://www.movieofthenight.com/about/api']);
+        node.props.accessibilityLabel === 'Streaming services by JustWatch').length, 0);
+    await press(renderer, 'Streaming services by JustWatch');
+    assert.deepEqual(f.calls.links, ['https://www.justwatch.com']);
     assert.deepEqual(f.calls.toasts, ['Couldn’t open the availability source. Please try again.']);
 });

@@ -35,10 +35,10 @@ export function WatchlistStreamingControls({streaming}: {streaming: WatchlistStr
             Availability cannot be checked for {streaming.missingIdCount} {streaming.missingIdCount === 1 ? 'title' : 'titles'}.
         </ThemedText> : null}
         {streaming.checkedCount > 0 ? <PressableScale accessibilityRole="link"
-            accessibilityLabel="Streaming availability by Movie of the Night" contentStyle={styles.attribution}
-            onPress={() => {void openStreamingLink('https://www.movieofthenight.com/about/api')
+            accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}
+            onPress={() => {void openStreamingLink('https://www.justwatch.com')
                 .catch(() => toast('The website could not be opened.', 'alert-circle-outline'));}}>
-            <ThemedText type="caption" style={{color: colors.textMuted}}>Availability by Movie of the Night ↗</ThemedText>
+            <ThemedText type="caption" style={{color: colors.textMuted}}>Availability by JustWatch ↗</ThemedText>
         </PressableScale> : null}
     </View>;
 }

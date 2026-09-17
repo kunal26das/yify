@@ -1,35 +1,32 @@
 # Streaming services
 
-Users save services and extra channels separately for each viewing country. These choices sync with their Yify account; they do not connect or verify a streaming account. Official apps and websites keep responsibility for sign-in, profiles and playback access.
+Users save their streaming services separately for each viewing country. These preferences sync with their Yify account; they do not connect or verify a streaming account. Selecting a service does not grant access to its catalogue or start playback.
 
-Android and iOS open HTTPS title links through the operating system, with a browser fallback if opening fails. Web opens the official title page in a separate tab without an opener. Provider-specific app launching still needs device verification; an HTTPS title link does not guarantee native app launch or autoplay.
+## Data and links
 
-## Data and configuration
+The feature reuses Yify's existing TMDB integration and its JustWatch availability data. No separate availability-provider account, server secret or monthly request allowance is introduced. TMDB's commercial-use licensing must still be verified: its standard free API is for non-commercial use with attribution, and revenue-generating apps require a commercial agreement.
 
-The Streaming Availability API supplies supported countries, services, add-ons and title offers. Configure `YIFY_STREAMING_API_KEY` as a sensitive, server-only EAS Hosting environment variable. Never prefix it with `EXPO_PUBLIC_`, put it in Remote Config, or include it in a client build. Native apps and both web deployments call the public Yify API; only the server calls the provider.
+`getCatalog(country)` loads supported countries and requests provider choices for the selected country lazily. Movie and TV provider lists supply the choices; coverage comes from TMDB rather than a fixed country or service list. Extra channels are selectable when TMDB exposes them as distinct providers. Its provider list does not supply a structured relationship between a channel and its parent service.
 
-- `GET /api/streaming/countries`
-- `GET /api/streaming/title?imdbId=tt0068646&country=US`
+Title lookups resolve the IMDb identifier through TMDB and read the selected country's subscription, free, ad-supported, rental and purchase offers. Missing configuration or a failed request means unavailable, not an empty successful result. Countries outside the returned coverage remain distinguishable from titles with no reported offers.
 
-Missing credentials, timeouts and quota errors return unavailable. They do not mean there are no offers. Countries outside the provider's live coverage remain selectable through existing regional viewing options, but direct links and service-based matching report the coverage gap. Existing TMDB/JustWatch viewing options remain a fallback. Their commercial licensing must be confirmed independently.
+TMDB does not provide direct streaming-service deep links. Viewing links open the returned regional TMDB watch page, where users can follow the available provider links. This does not promise a provider app launch or autoplay. Show JustWatch attribution with availability data and retain TMDB's required attribution.
 
-Coverage comes from the authenticated `/v4/countries` response, not a hard-coded service or country list. The public provider sample used in validation contains 65 countries; it is not evidence of a configured production account or complete coverage of every Yify market. Compare the activated account's coverage with the required release markets before advertising universal coverage. Additional licensed sources may be needed.
+## Requests and caching
 
-## Requests and quotas
+Streaming catalogues and title results are cached on the client for up to 24 hours, and identical requests are coalesced. Provider lists are loaded for the selected country rather than fetched for every country. Watchlist scrolling makes no availability requests; an explicit check handles at most 20 unique titles with two concurrent lookups.
 
-The provider's free commercial plan currently permits 1,000 upstream requests per month. Its hard quota prevents overage charges. Verify current pricing before activation or a paid upgrade.
+The existing TMDB request layer applies timeouts and does not automatically retry HTTP 429 responses. TMDB still applies traffic limits: its documentation describes an approximate upper limit of 40 requests per second, subject to change. The documented limit is not an unlimited-use promise. No new monthly allowance is added by this feature, and existing account or commercial-contract conditions still apply.
 
-Country data is cached for seven days on the server, and title data for 24 hours. Successful public responses use CDN caching; title cache lifetime is bounded by its original check time. Clients persist recent title results for up to 24 hours and coalesce identical requests. Watchlist scrolling makes no availability requests. An explicit check handles at most 20 unique titles with two concurrent requests.
+The watchlist's “On my services” filter matches selected services with subscription, free or ad-supported offers. Rentals and purchases do not match merely because the service is selected. Unchecked and unavailable titles remain distinguishable; opening viewing options never marks a title watched.
 
-`YIFY_STREAMING_UPSTREAM_REQUESTS_PER_DAY` defaults to 25 per server instance. This and admission limits are best-effort protections, not a distributed monthly quota. Cold starts or multiple instances can exceed that local budget. Monitor the provider's actual monthly usage; a paid production rollout should use an appropriate plan and shared durable cache/budget if needed.
-
-The watchlist's “On my services” filter only matches explicit subscription/free offers or an explicitly selected extra channel. Rentals and purchases never match merely because the base service was selected. Unchecked and unavailable titles remain distinguishable; a link click never marks a film watched.
+Requests use the app's existing direct TMDB connection. TMDB receives requested title identifiers and country filters where applicable, plus ordinary connection information such as the user's IP address. These requests do not include Yify account credentials or streaming-service credentials. The selected country is also included when opening the regional watch page.
 
 ## Release checks
 
-1. Activate the API account and configure the server secret; deploy the API before clients using it.
-2. Verify live country/service coverage, attribution, several supported-country title responses and unsupported/error states.
-3. Check Android and iOS installed-app and browser fallback behavior, and web title-page opening. Include login/profile prompts, extra channels and unavailable regional titles.
-4. Verify service preferences survive restart and sync, including country changes and switching Yify accounts.
+1. Verify the existing TMDB configuration, commercial license and TMDB/JustWatch attribution.
+2. Check country-specific provider choices, several movie and TV titles, and unsupported/error states.
+3. Verify regional TMDB watch-page opening on web, Android and iOS.
+4. Verify preferences survive restart and sync, including country changes and switching Yify accounts.
 
-Sources: [pricing](https://www.movieofthenight.com/about/api/pricing), [terms](https://developers.movieofthenight.com/terms-and-conditions), [country API](https://docs.movieofthenight.com/resource/countries), [official schema](https://github.com/movieofthenight/streaming-availability-api/blob/main/openapi.yaml).
+Sources: [TMDB licensing and attribution](https://developer.themoviedb.org/docs/faq), [traffic limits](https://developer.themoviedb.org/docs/rate-limiting), [supported countries](https://developer.themoviedb.org/reference/watch-providers-available-regions), [provider lists](https://developer.themoviedb.org/reference/watch-providers-movie-list), [availability and link limitations](https://developer.themoviedb.org/reference/movie-watch-providers).

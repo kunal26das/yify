@@ -44,7 +44,8 @@ test('a country with no offers remains distinct from a failed availability reque
 test('failed title lookups can be retried instead of looking like an unsupported title', async () => {
     const repository = new TmdbRepositoryImpl({findByImdbId: async () => {throw new Error('offline');}});
     await assert.rejects(repository.findByImdbCode('tt1234567'), /offline/);
-    assert.equal(await new TmdbRepositoryImpl({findByImdbId: async () => ({})}).findByImdbCode('tt1234567'), null);
+    assert.equal(await new TmdbRepositoryImpl({findByImdbId: async () => ({movie_results: [], tv_results: []})}).findByImdbCode('tt1234567'), null);
+    await assert.rejects(new TmdbRepositoryImpl({findByImdbId: async () => ({})}).findByImdbCode('tt1234567'), /Invalid TMDB/);
 });
 
 test('supported countries come from the provider API and are validated, deduplicated, and sorted', async () => {

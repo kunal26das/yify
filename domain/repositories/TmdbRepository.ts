@@ -1,4 +1,5 @@
 import type {WatchAvailability, WatchRegion} from '../entities/WatchProvider';
+import type {WatchService} from '../entities/WatchService';
 
 export type TitleMedia = 'movie' | 'tv';
 
@@ -16,6 +17,8 @@ export interface TmdbRepository {
     findByImdbCode(imdbCode: string): Promise<TitleArtwork | null>;
 
     getWatchRegions(): Promise<WatchRegion[]>;
+
+    getWatchServices(region: string): Promise<WatchService[]>;
 
     getWatchAvailability(
         tmdbId: number,

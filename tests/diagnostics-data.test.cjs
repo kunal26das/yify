@@ -28,7 +28,7 @@ for (const provider of ['yts', 'tmdb', 'eztv']) {
         t.mock.method(global, 'fetch', async () => {
             requests++;
             await pending;
-            return {ok: true, status: 200, json: async () => ({status: 'ok', torrents: []})};
+            return {ok: true, status: 200, json: async () => ({status: 'ok', torrents: [], movie_results: []})};
         });
         let read;
         if (provider === 'yts') {

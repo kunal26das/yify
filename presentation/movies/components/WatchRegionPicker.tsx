@@ -3,7 +3,7 @@ import {ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pres
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {WatchRegion} from '@/domain';
-import {useStreamingRepository, useTmdbRepository} from '../../di/DependenciesContext';
+import {useTmdbRepository} from '../../di/DependenciesContext';
 import {PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing} from '../../constants/theme';
@@ -26,23 +26,19 @@ export function WatchRegionPicker({selected, automatic, onSelect, onClose}: {
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
     const repository = useTmdbRepository();
-    const streaming = useStreamingRepository();
     const [query, setQuery] = useState('');
     const [attempt, setAttempt] = useState(0);
     const [result, setResult] = useState<{regions: WatchRegion[]; failed: boolean} | null>(null);
 
     useEffect(() => {
         let active = true;
-        void Promise.allSettled([repository.getWatchRegions(), streaming.getCatalog()]).then(([legacy, direct]) => {
-            const regions = new Map<string, WatchRegion>();
-            if (legacy.status === 'fulfilled') for (const region of legacy.value) regions.set(region.code, region);
-            if (direct.status === 'fulfilled' && direct.value.status === 'ready') {
-                for (const region of direct.value.countries) regions.set(region.code, {code: region.code, name: region.name});
-            }
-            if (active) setResult({regions: [...regions.values()].sort((a, b) => a.name.localeCompare(b.name)), failed: !regions.size});
+        void repository.getWatchRegions().then(regions => {
+            if (active) setResult({regions: [...regions].sort((a, b) => a.name.localeCompare(b.name)), failed: !regions.length});
+        }).catch(() => {
+            if (active) setResult({regions: [], failed: true});
         });
         return () => { active = false; };
-    }, [repository, streaming, attempt]);
+    }, [repository, attempt]);
 
     const regions = useMemo(() => {
         const search = query.trim().toLocaleLowerCase();

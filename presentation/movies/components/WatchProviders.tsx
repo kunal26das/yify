@@ -1,36 +1,24 @@
 import {useEffect, useMemo, useState} from 'react';
-import {ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {Image} from 'expo-image';
-import * as WebBrowser from 'expo-web-browser';
 import {deviceRegion} from './watchRegion';
 import Animated from 'react-native-reanimated';
-import type {MovieDetails, StreamingAvailability, TitleMedia, WatchAvailability, WatchProvider} from '@/domain';
-import {usePreferencesRepository, useStreamingRepository, useTmdbRepository} from '../../di/DependenciesContext';
+import type {MovieDetails, StreamingAvailability, TitleMedia} from '@/domain';
+import {usePreferencesRepository, useStreamingRepository} from '../../di/DependenciesContext';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
-import {Radius, Spacing, Typography} from '../../constants/theme';
+import {Spacing, Typography} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {usePreferences} from '../../hooks/use-preferences';
 import {useToast} from '../../components/toast';
-import {providerUrl} from './providerLinks';
 import {countryName, WatchRegionPicker} from './WatchRegionPicker';
 import {StreamingOffers} from './StreamingOffers';
 import {openStreamingLink} from './openStreamingLink';
 
-const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
-    stream: 'Stream',
-    free: 'Free',
-    ads: 'With ads',
-    rent: 'Rent',
-    buy: 'Buy',
-};
-
 export {deviceRegion} from './watchRegion';
 
-
-export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
+export function WatchProviders({details, imdbCode, media, pad = 0}: {
     details?: Pick<MovieDetails, 'id' | 'imdbCode' | 'title'>;
     imdbCode?: string;
     title?: string;
@@ -40,77 +28,33 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
     const {colors} = usePalette();
     const preferences = usePreferences();
     const preferencesRepository = usePreferencesRepository();
-    const repository = useTmdbRepository();
     const streaming = useStreamingRepository();
     const toast = useToast();
     const automatic = useMemo(() => deviceRegion(), []);
     const region = preferences.watchRegion ?? automatic;
     const identity = details?.imdbCode ?? imdbCode;
-    const displayTitle = details?.title ?? title ?? '';
     const [pickingCountry, setPickingCountry] = useState(false);
     const [attempt, setAttempt] = useState(0);
     const key = `${identity}:${media ?? 'auto'}:${region}:${attempt}`;
-    const [result, setResult] = useState<{
-        key: string;
-        status: 'ready' | 'error';
-        availability: WatchAvailability | null;
-    } | null>(null);
-    const current = result?.key === key ? result : null;
-    const availability = current?.availability;
-    const [directResult, setDirectResult] = useState<{key: string; value: StreamingAvailability} | null>(null);
-    const direct = directResult?.key === key ? directResult.value : null;
-    const directOffers = direct?.status === 'ready' ? direct.offers : [];
+    const [result, setResult] = useState<{key: string; value: StreamingAvailability} | null>(null);
+    const current = result?.key === key ? result.value : null;
     const selected = preferences.streamingServices?.[region] ?? [];
 
     useEffect(() => {
         let active = true;
         if (!identity) return;
-        void streaming.getAvailability(identity, region).then(value => {
-            if (active) setDirectResult({key, value});
+        void streaming.getAvailability(identity, region, media).then(value => {
+            if (active) setResult({key, value: value.country === region ? value
+                : {country: region, status: 'unavailable', offers: []}});
         }).catch(() => {
-            if (active) setDirectResult({key, value: {country: region, status: 'unavailable', offers: []}});
+            if (active) setResult({key, value: {country: region, status: 'unavailable', offers: []}});
         });
         return () => {active = false;};
-    }, [identity, key, region, streaming]);
+    }, [identity, key, media, region, streaming]);
 
-    const openDirect = async (url: string) => {
+    const open = async (url: string) => {
         if (details) Analytics.watchProviderOpen(details.id, region);
-        try {await openStreamingLink(url);} catch {toast('Couldn’t open the streaming service. Please try again.');}
-    };
-
-    useEffect(() => {
-        let active = true;
-        if (!identity) return;
-
-        void (async () => {
-            try {
-                const artwork = await repository.findByImdbCode(identity);
-                if (!active) return;
-                if (!artwork || (media && artwork.media !== media)) {
-                    setResult({key, status: 'ready', availability: null});
-                    return;
-                }
-                const found = await repository.getWatchAvailability(artwork.tmdbId, artwork.media, region);
-                if (active) setResult({key, status: 'ready', availability: found});
-            } catch {
-                if (active) setResult({key, status: 'error', availability: null});
-            }
-        })();
-
-        return () => {
-            active = false;
-        };
-    }, [identity, key, media, region, repository]);
-
-    const open = async (url: string | undefined) => {
-        if (!url) return;
-        if (details) Analytics.watchProviderOpen(details.id, region);
-        try {
-            if (Platform.OS === 'web') await Linking.openURL(url);
-            else await WebBrowser.openBrowserAsync(url, {enableBarCollapsing: true});
-        } catch {
-            toast('Couldn’t open viewing options. Please try again.');
-        }
+        try {await openStreamingLink(url);} catch {toast('Couldn’t open viewing options. Please try again.');}
     };
 
     if (!identity) return null;
@@ -126,73 +70,25 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
                     <Ionicons name="chevron-down" size={14} color={colors.accent}/>
                 </PressableScale>
             </View>
-            {directOffers.length ? <StreamingOffers offers={directOffers} selected={selected}
-                onOpen={url => void openDirect(url)} pad={pad}/> : !current || (!direct && !availability?.providers.length)
-                    ? <ActivityIndicator style={styles.loading} color={colors.accent}/> : current.status === 'error'
-                        || (direct?.status === 'unavailable' && !availability?.providers.length) ? (
+            {!current ? <ActivityIndicator style={styles.loading} color={colors.accent}
+                accessibilityLabel="Loading viewing options"/> : current.status === 'unavailable' ? (
                 <View style={styles.message}>
                     <ThemedText style={{color: colors.textMuted}}>Viewing options couldn’t be loaded.</ThemedText>
                     <PressableScale onPress={() => setAttempt(value => value + 1)} accessibilityRole="button">
                         <ThemedText style={{color: colors.accent}}>Try again</ThemedText>
                     </PressableScale>
                 </View>
-            ) : direct?.status === 'unsupported-country' && !availability?.providers.length ? (
+            ) : current.status === 'unsupported-country' ? (
                 <ThemedText style={{color: colors.textMuted}}>Streaming availability isn’t covered for {countryName(region)} yet.</ThemedText>
-            ) : !availability?.providers.length ? (
+            ) : current.offers.length ? (
+                <StreamingOffers offers={current.offers} selected={selected} onOpen={url => void open(url)} pad={pad}/>
+            ) : (
                 <ThemedText style={{color: colors.textMuted}}>No viewing options listed for {countryName(region)}.</ThemedText>
-            ) : <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{marginHorizontal: -pad}}
-                contentContainerStyle={[styles.row, {paddingHorizontal: pad}]}
-            >
-                {availability.providers.map((provider) => {
-                    const url = availability.url ?? providerUrl(provider.id, displayTitle);
-                    return (
-                    <PressableScale
-                        key={`${provider.offer}-${provider.id}`}
-                        onPress={url ? () => void open(url) : undefined}
-                        accessibilityRole={url ? 'link' : 'text'}
-                        accessibilityLabel={`${OFFER_LABEL[provider.offer]} on ${provider.name}${url ? ', view options' : ''}`}
-                        pressedScale={0.96}
-                        pressedOpacity={0.85}
-                        contentStyle={[
-                            styles.provider,
-                            {backgroundColor: colors.surfaceSunken, borderColor: colors.border},
-                        ]}
-                    >
-                        {provider.logoUrl ? (
-                            <Image
-                                source={{uri: provider.logoUrl}}
-                                style={styles.logo}
-                                contentFit="contain"
-                                transition={140}
-                                cachePolicy="memory-disk"
-                            />
-                        ) : null}
-                        <View style={styles.providerText}>
-                            <ThemedText numberOfLines={1} style={[styles.name, {color: colors.text}]}>
-                                {provider.name}
-                            </ThemedText>
-                            <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
-                                {OFFER_LABEL[provider.offer]}
-                            </ThemedText>
-                        </View>
-                    </PressableScale>
-                    );
-                })}
-            </ScrollView>}
-            {!direct && current ? <ActivityIndicator size="small" style={styles.loading} color={colors.accent}
-                accessibilityLabel="Checking direct streaming links"/> : null}
-            {direct?.status === 'unsupported-country' && availability?.providers.length ? <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
-                Direct streaming links aren’t covered for {countryName(region)} yet.
-            </ThemedText> : null}
-            <View style={styles.footer}>
-                {!directOffers.length ? <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch</ThemedText> : null}
-                {availability?.url ? <PressableScale onPress={() => void open(availability.url)} accessibilityRole="link">
-                    <ThemedText style={[Typography.videoMeta, {color: colors.accent}]}>View all options ↗</ThemedText>
-                </PressableScale> : null}
-            </View>
+            )}
+            {!current?.offers.length ? <PressableScale onPress={() => void open('https://www.justwatch.com')}
+                accessibilityRole="link" accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}>
+                <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch ↗</ThemedText>
+            </PressableScale> : null}
             {pickingCountry ? <WatchRegionPicker selected={preferences.watchRegion ?? null} automatic={automatic}
                 onSelect={code => preferencesRepository.setWatchRegion(code)} onClose={() => setPickingCountry(false)}/> : null}
         </Animated.View>
@@ -201,22 +97,9 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
 
 const styles = StyleSheet.create({
     section: {gap: Spacing.sm, marginTop: Spacing.sm},
-    row: {flexDirection: 'row', gap: Spacing.sm, alignItems: 'center'},
-    provider: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.sm,
-        paddingRight: Spacing.md,
-        borderRadius: Radius.card,
-        borderWidth: StyleSheet.hairlineWidth,
-        overflow: 'hidden',
-    },
-    logo: {width: 40, height: 40},
-    providerText: {gap: 1},
-    name: {fontSize: 14, fontWeight: '600'},
     heading: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.sm},
     country: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, minHeight: 44},
-    footer: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: Spacing.sm},
+    attribution: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
     message: {gap: Spacing.sm},
     loading: {alignSelf: 'flex-start', paddingVertical: Spacing.sm},
 });

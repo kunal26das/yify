@@ -21,24 +21,25 @@ export function StreamingOffers({offers, selected, onOpen, pad = 0}: {
             contentContainerStyle={[styles.row, {paddingHorizontal: pad}]}>
             {sorted.map((offer, index) => {
                 const mine = streamingOfferSelected(offer, selected);
-                const action = offer.type === 'rent' ? 'Rent' : offer.type === 'buy' ? 'Buy' : 'Watch';
+                const url = offer.url;
                 return <PressableScale key={`${offer.selectionId}:${offer.type}:${index}`}
-                    onPress={() => onOpen(offer.url)} accessibilityRole="link"
-                    accessibilityLabel={`${action} on ${offer.serviceName}, ${streamingOfferLabel(offer)}${mine ? ', your service' : ''}`}
+                    disabled={!url} onPress={url ? () => onOpen(url) : undefined} accessibilityRole={url ? 'link' : 'text'}
+                    accessibilityLabel={`${url ? 'View options for ' : ''}${offer.serviceName}, ${streamingOfferLabel(offer)}${mine ? ', your service' : ''}`}
                     contentStyle={[styles.offer, {backgroundColor: mine ? colors.accentSoft : colors.surfaceSunken,
                         borderColor: mine ? colors.accent : colors.border}]}>
                     <View style={styles.heading}>
                         <ThemedText style={styles.name}>{offer.serviceName}</ThemedText>
-                        <Ionicons name="open-outline" size={17} color={colors.textMuted}/>
+                        {url ? <Ionicons name="open-outline" size={17} color={colors.textMuted}/> : null}
                     </View>
                     <ThemedText style={[styles.meta, {color: colors.textMuted}]}>{streamingOfferLabel(offer)}</ThemedText>
                     {mine ? <ThemedText style={[styles.meta, {color: colors.accent}]}>Your service</ThemedText> : null}
+                    {url ? <ThemedText style={[styles.meta, {color: colors.accent}]}>View options</ThemedText> : null}
                 </PressableScale>;
             })}
         </ScrollView>
-        <PressableScale onPress={() => onOpen('https://www.movieofthenight.com/about/api')}
-            accessibilityRole="link" accessibilityLabel="Streaming availability by Movie of the Night">
-            <ThemedText style={[styles.meta, {color: colors.textMuted}]}>Availability by Movie of the Night ↗</ThemedText>
+        <PressableScale onPress={() => onOpen('https://www.justwatch.com')}
+            accessibilityRole="link" accessibilityLabel="Streaming availability by JustWatch" contentStyle={styles.attribution}>
+            <ThemedText style={[styles.meta, {color: colors.textMuted}]}>Availability by JustWatch ↗</ThemedText>
         </PressableScale>
     </View>;
 }
@@ -51,4 +52,5 @@ const styles = StyleSheet.create({
     heading: {flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     name: {fontSize: 14, fontWeight: '600', flexShrink: 1},
     meta: {fontSize: 12, lineHeight: 17},
+    attribution: {minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start'},
 });
