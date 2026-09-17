@@ -11,8 +11,10 @@ const deferred = () => {
 };
 const position = {coords: {latitude: 19.07609, longitude: 72.877426}};
 
-function native(overrides = {}) {
+function native(overrides = {}, {installed = true, importError} = {}) {
     const calls = [];
+    const imports = [];
+    const nativeModules = [];
     const location = {
         Accuracy: {Low: 2},
         getForegroundPermissionsAsync: async () => ({granted: true}),
@@ -26,8 +28,19 @@ function native(overrides = {}) {
         const original = location[name];
         location[name] = (...args) => { calls.push([name, ...args]); return original(...args); };
     }
-    const {CountryLocationImpl} = loadTypeScript('data/services/CountryLocationImpl.ts', {'expo-location': location});
-    return {service: new CountryLocationImpl(), calls};
+    const mocks = {
+        expo: {requireOptionalNativeModule: (name) => {
+            nativeModules.push(name);
+            return installed ? {} : null;
+        }},
+        get 'expo-location'() {
+            imports.push('expo-location');
+            if (importError) throw importError;
+            return location;
+        },
+    };
+    const {CountryLocationImpl} = loadTypeScript('data/services/CountryLocationImpl.ts', mocks);
+    return {service: new CountryLocationImpl(), calls, imports, nativeModules};
 }
 
 function web(t, geolocation, fetch = async () => ({ok: true, json: async () => ({countryCode: 'IN'})})) {
@@ -46,14 +59,43 @@ function web(t, geolocation, fetch = async () => ({ok: true, json: async () => (
 }
 
 test('native location is requested only on demand, with coarse accuracy, and returns only the country', async () => {
-    const {service, calls} = native();
+    const {service, calls, imports, nativeModules} = native();
     assert.deepEqual(calls, []);
+    assert.deepEqual(imports, []);
+    assert.deepEqual(nativeModules, []);
     assert.deepEqual(await service.requestCountry(), {status: 'ready', country: 'IN'});
+    assert.deepEqual(imports, ['expo-location']);
+    assert.deepEqual(nativeModules, ['ExpoLocation']);
     assert.deepEqual(calls, [
         ['getForegroundPermissionsAsync'],
         ['getCurrentPositionAsync', {accuracy: 2, mayShowUserSettingsDialog: false}],
         ['reverseGeocodeAsync', {latitude: position.coords.latitude, longitude: position.coords.longitude}],
     ]);
+});
+
+test('older native binaries start without ExpoLocation and keep country lookup unavailable without loading its SDK', async () => {
+    const {service, calls, imports, nativeModules} = native({}, {
+        installed: false,
+        importError: new Error("Cannot find native module 'ExpoLocation'"),
+    });
+    assert.deepEqual(nativeModules, []);
+    assert.deepEqual(imports, []);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        assert.deepEqual(await service.requestCountry(), {status: 'unavailable'});
+    }
+    assert.deepEqual(nativeModules, ['ExpoLocation', 'ExpoLocation']);
+    assert.deepEqual(imports, []);
+    assert.deepEqual(calls, []);
+});
+
+test('a native location SDK initialization failure does not crash startup or reject country lookup', async () => {
+    const {service, calls, imports} = native({}, {
+        importError: new Error("Cannot find native module 'ExpoLocation'"),
+    });
+    assert.deepEqual(imports, []);
+    assert.deepEqual(await service.requestCountry(), {status: 'unavailable'});
+    assert.deepEqual(imports, ['expo-location']);
+    assert.deepEqual(calls, []);
 });
 
 test('native denied permission never requests coordinates or geocoding and does not repeat a blocked prompt', async () => {
