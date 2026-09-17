@@ -1,4 +1,4 @@
-import * as Location from 'expo-location';
+import {requireOptionalNativeModule} from 'expo';
 
 import type {CountryLocation, CountryLocationResult} from '@/domain';
 import {CountryLocationRequest, locationCountry, validLocationCoordinates} from './countryLocationRequest';
@@ -11,6 +11,9 @@ export class CountryLocationImpl implements CountryLocation {
     }
 
     private async locate(signal: AbortSignal): Promise<CountryLocationResult> {
+        if (signal.aborted || !requireOptionalNativeModule('ExpoLocation')) return {status: 'unavailable'};
+        const Location = await import('expo-location');
+        if (signal.aborted) return {status: 'unavailable'};
         let permission = await Location.getForegroundPermissionsAsync();
         if (signal.aborted) return {status: 'unavailable'};
         if (!permission.granted && permission.canAskAgain !== false) {
