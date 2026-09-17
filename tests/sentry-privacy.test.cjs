@@ -115,7 +115,7 @@ test('monitoring initializes in release app runtimes with the correct environmen
             loadTypeScript('instrumentation/sentry.ts', {
                 'react-native': {Platform: {OS: platform}},
                 'expo-updates': {channel},
-                './crashlytics': {correlateSentryCrash() {}, mirrorSentryException() {}, setCrashlyticsSentryReporter() {}},
+                './crashlytics': {mirrorSentryException() {}, connectCrashReportingSentry() {}},
                 '@sentry/react-native': {
                     ...sdkMock,
                     init: options => calls.push(options),

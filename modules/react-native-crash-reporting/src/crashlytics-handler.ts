@@ -1,19 +1,5 @@
 import {createCrashlyticsError} from './crashlytics-error';
-
-type ErrorHandler = (error: unknown, isFatal?: boolean) => unknown;
-
-interface ErrorUtilsLike {
-    getGlobalHandler(): ErrorHandler;
-    setGlobalHandler(handler: ErrorHandler): void;
-}
-
-interface CrashlyticsClient {
-    readonly isCrashlyticsCollectionEnabled: boolean;
-}
-
-export interface ExceptionsManagerLike {
-    handleException(error: unknown, isFatal: boolean): unknown;
-}
+import type {CrashlyticsClient, ErrorHandler, ErrorUtilsLike, ExceptionsManagerLike} from './types';
 
 export function installCrashlyticsHandler<T extends CrashlyticsClient>(
     errorUtils: ErrorUtilsLike,
@@ -21,6 +7,7 @@ export function installCrashlyticsHandler<T extends CrashlyticsClient>(
     recordNonFatal: (client: T, error: Error) => void,
     exceptionsManager?: ExceptionsManagerLike,
     reportToSentry?: (error: unknown, isFatal: boolean) => void | Promise<void>,
+    normalizeError: (error: unknown) => Error = createCrashlyticsError,
 ): void {
     const originalHandler = errorUtils.getGlobalHandler();
     let forwardingToOriginal = 0;
@@ -53,13 +40,13 @@ export function installCrashlyticsHandler<T extends CrashlyticsClient>(
         }
         if (isFatal !== true) {
             try {
-                recordNonFatal(client, createCrashlyticsError(error));
+                recordNonFatal(client, normalizeError(error));
             } catch {}
             return forwardToOriginal(error, isFatal);
         }
         try {
             if (firebaseHandler !== originalHandler) {
-                await firebaseHandler(createCrashlyticsError(error), true);
+                await firebaseHandler(normalizeError(error), true);
             }
         } catch {}
         finally {

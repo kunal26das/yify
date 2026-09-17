@@ -2,8 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
-const {createSentryGlobalErrorReporter} = loadTypeScript('instrumentation/sentry-global.ts');
-const {installCrashlyticsHandler} = loadTypeScript('instrumentation/crashlytics-handler.ts');
+const {createSentryGlobalErrorReporter, installCrashlyticsHandler} = loadTypeScript('index.ts');
 
 test('uncaught React render errors keep component locations in Sentry without mutating the original', async () => {
     const error = {
@@ -35,7 +34,7 @@ test('global reporting preserves the original exception and its true fatal class
         await reporter(error, fatal);
         assert.deepEqual(calls[0], ['capture', error, {
             originalException: error,
-            mechanism: {type: 'yify.react_native.global', handled: !fatal},
+            mechanism: {type: 'react_native.crash_bridge.global', handled: !fatal},
             captureContext: {level: fatal ? 'fatal' : 'error'},
         }]);
         assert.ok(calls.some(call => call[0] === 'correlate' && call[1] === 'event-id'));

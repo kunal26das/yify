@@ -1,3 +1,2 @@
-export function setCrashlyticsSentryReporter(): void {}
-export async function correlateSentryCrash(): Promise<void> {}
+export function connectCrashReportingSentry(): void {}
 export async function mirrorSentryException(): Promise<void> {}

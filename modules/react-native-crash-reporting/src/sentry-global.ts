@@ -1,12 +1,6 @@
-import type {ReactNativeOptions} from '@sentry/react-native';
 import ErrorStackParser from 'error-stack-parser';
-
-type EventHint = Parameters<NonNullable<ReactNativeOptions['beforeSend']>>[1];
-
-interface SentryReporter {
-    captureException(error: unknown, hint: EventHint): string;
-    flush(timeout: number): PromiseLike<boolean>;
-}
+import {GLOBAL_MECHANISM} from './constants';
+import type {SentryReporter} from './types';
 
 function errorWithComponentStack(error: unknown): unknown {
     try {
@@ -29,13 +23,14 @@ export function createSentryGlobalErrorReporter(
     sentry: SentryReporter,
     correlate: (eventId: string) => void | Promise<void>,
     timeout = 2000,
+    globalMechanism = GLOBAL_MECHANISM,
 ): (error: unknown, isFatal: boolean) => Promise<void> {
     return async (error, isFatal) => {
         let timer: ReturnType<typeof setTimeout> | undefined;
         try {
             const eventId = sentry.captureException(errorWithComponentStack(error), {
                 originalException: error,
-                mechanism: {type: 'yify.react_native.global', handled: !isFatal},
+                mechanism: {type: globalMechanism, handled: !isFatal},
                 captureContext: {level: isFatal ? 'fatal' : 'error'},
             });
             const pending = Promise.allSettled([

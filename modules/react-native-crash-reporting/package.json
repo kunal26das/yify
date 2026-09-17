@@ -1,0 +1,19 @@
+{
+  "name": "@yify/react-native-crash-reporting",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-injected React Native crash reporting between Sentry and Firebase Crashlytics",
+  "main": "index.ts",
+  "types": "index.ts",
+  "files": ["index.ts", "src", "README.md"],
+  "scripts": {
+    "test": "node --test 'tests/*.test.cjs'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "error-stack-parser": "2.1.4"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

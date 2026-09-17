@@ -2,8 +2,7 @@ import * as Sentry from '@sentry/react-native';
 import * as Updates from 'expo-updates';
 import {Platform} from 'react-native';
 import {createSentryOptions} from './sentry-config';
-import {correlateSentryCrash, mirrorSentryException, setCrashlyticsSentryReporter} from './crashlytics';
-import {createSentryGlobalErrorReporter} from './sentry-global';
+import {connectCrashReportingSentry, mirrorSentryException} from './crashlytics';
 
 if (!__DEV__ && (Platform.OS !== 'web' || typeof window !== 'undefined')) {
     const native = Platform.OS === 'android' || Platform.OS === 'ios';
@@ -14,5 +13,5 @@ if (!__DEV__ && (Platform.OS !== 'web' || typeof window !== 'undefined')) {
             ? process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT === 'preview'
             : Updates.channel === 'Staging') ? 'preview' : 'production',
     }));
-    if (native) setCrashlyticsSentryReporter(createSentryGlobalErrorReporter(Sentry, correlateSentryCrash));
+    if (native) connectCrashReportingSentry(Sentry);
 }

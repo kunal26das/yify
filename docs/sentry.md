@@ -45,6 +45,15 @@ Current Remote Config values are endpoints and keys, not feature switches.
 
 ## Firebase fatal JavaScript crashes
 
+The reusable implementation lives in
+[`modules/react-native-crash-reporting`](../modules/react-native-crash-reporting/README.md), with its
+own public API, dependency manifest, tests and TypeScript configuration. It imports no Yify, Expo,
+Firebase or Sentry code; SDKs and handlers are injected. `instrumentation/crashlytics.ts` is the thin
+Yify host that supplies lazy SDK loading, Expo metadata and the existing grouping/mechanism names.
+`instrumentation/sentry.ts` connects Sentry after initialization, and `sentry-config.ts` applies the
+application's privacy filter before mirroring. The web adapter stays inert. Run the module alone
+with `yarn test:crash-reporting`; its README explains copying it into another project.
+
 Crashlytics initializes before Sentry and Expo Router. The application owns the native
 global JavaScript error handler: it captures the error in Sentry and allows up to two seconds
 for flushing, then invokes Firebase's fatal handler even if Sentry fails or never responds.

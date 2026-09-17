@@ -1,11 +1,12 @@
-import type {ErrorEvent, Exception, ReactNativeOptions, StackFrame} from '@sentry/react-native';
 import {createCrashlyticsError} from './crashlytics-error';
-
-type EventHint = Parameters<NonNullable<ReactNativeOptions['beforeSend']>>[1];
+import {GLOBAL_MECHANISM} from './constants';
+import type {CrashEvent, CrashException, CrashFrame} from './types';
 
 interface MirrorOptions {
     recordError(error: Error, metadata: Record<string, string>): void | Promise<void>;
     isEnabled(): boolean;
+    normalizeError?: (error: unknown) => Error;
+    globalMechanism?: string;
 }
 
 const EVENT_HISTORY_LIMIT = 128;
@@ -21,18 +22,18 @@ function isJavaScript(platform: string | undefined): boolean {
     return platform === undefined || platform === 'javascript';
 }
 
-function exceptionFrames(exception: Exception): StackFrame[] {
+function exceptionFrames(exception: CrashException): CrashFrame[] {
     return (exception.stacktrace?.frames ?? []).filter(frame => isJavaScript(frame.platform));
 }
 
-function sourceException(event: ErrorEvent): Exception | undefined {
+function sourceException(event: CrashEvent, globalMechanism: string): CrashException | undefined {
     const exceptions = event.exception?.values ?? [];
-    if (exceptions.some(exception => exception.mechanism?.type === 'yify.react_native.global')) return undefined;
+    if (exceptions.some(exception => exception.mechanism?.type === globalMechanism)) return undefined;
     return [...exceptions].reverse().find(exception =>
         !exception.stacktrace?.frames?.length || exceptionFrames(exception).length > 0);
 }
 
-function sourceError(exception: Exception): Error {
+function sourceError(exception: CrashException, normalizeError: (error: unknown) => Error): Error {
     const name = exception.type || 'Error';
     const message = exception.value ?? 'JavaScript exception';
     const frames = exceptionFrames(exception).reverse().map(frame => {
@@ -42,10 +43,10 @@ function sourceError(exception: Exception): Error {
         const column = Number.isSafeInteger(frame.colno) && frame.colno! >= 0 ? frame.colno : 0;
         return `    at ${fn} (${location}:${line}:${column})`;
     });
-    return createCrashlyticsError({name, message, stack: [`${name}: ${message}`, ...frames].join('\n')});
+    return normalizeError({name, message, stack: [`${name}: ${message}`, ...frames].join('\n')});
 }
 
-function eventMetadata(event: ErrorEvent, exception: Exception): Record<string, string> {
+function eventMetadata(event: CrashEvent, exception: CrashException): Record<string, string> {
     const result: Record<string, string> = {};
     const values = {
         sentry_event_id: safeValue(event.event_id, eventIdPattern),
@@ -63,19 +64,20 @@ function eventMetadata(event: ErrorEvent, exception: Exception): Record<string, 
     return result;
 }
 
-export function createSentryCrashlyticsMirror({recordError, isEnabled}: MirrorOptions):
-    (event: ErrorEvent, hint: EventHint) => Promise<void> {
+export function createSentryCrashlyticsMirror({recordError, isEnabled,
+    normalizeError = createCrashlyticsError, globalMechanism = GLOBAL_MECHANISM}: MirrorOptions):
+    (event: CrashEvent, hint?: unknown) => Promise<void> {
     const recorded = new Map<string, Promise<void>>();
     return async (event, _hint) => {
         try {
             if (!isEnabled() || event.type !== undefined || !isJavaScript(event.platform)) return;
-            const exception = sourceException(event);
+            const exception = sourceException(event, globalMechanism);
             if (!exception) return;
             const metadata = eventMetadata(event, exception);
             const id = metadata.sentry_event_id;
             const existing = id ? recorded.get(id) : undefined;
             if (existing) return await existing;
-            const error = sourceError(exception);
+            const error = sourceError(exception, normalizeError);
             const delivery = Promise.resolve().then(() => recordError(error, metadata)).catch(() => {
                 if (id && recorded.get(id) === delivery) recorded.delete(id);
             });
