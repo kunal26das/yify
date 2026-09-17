@@ -114,6 +114,33 @@ The published AdSense message, `Yify web consent`, also uses the self-hosted pri
 
 An anonymous local-browser check after removing the lifetime package showed only the monthly `$1.00` Web subscription with automatic renewal disclosure. Purchase controls correctly required sign-in. The dialog scrolled to reload, account-purchase checks, access refresh and policy controls, while its close control remained available. No sign-in, purchase or restore transaction was performed during this check. Displayed prices are a verification snapshot, not a replacement for SDK-provided localized pricing.
 
+## Web advertising
+
+On 18 September 2026, AdSense listed both `yify.expo.app` and `kunal26das.github.io` as
+`Getting ready`; the Expo review was requested on 10 September at 11:02 IST. Account setup
+was complete. Google must approve the sites before live ads can serve. Do not remove and
+resubmit a site while its review is pending.
+
+The existing `Yify web content` display unit (`8399492432`) matches the app's publisher
+`ca-pub-2292299294214510`. Auto ads are off; the app requests its manual homepage placement
+only after purchase readiness resolves and ad-free supporter access is absent. The inspected
+browser account had active supporter access, so no Google ad script or placement was expected.
+`Yify web consent` remained published for two sites in Privacy & messaging.
+
+Both production origins serve the correct publisher record at `/ads.txt` with HTTP 200.
+The Expo endpoint also returned it for requests using Google's advertising crawler user agents.
+AdSense still showed Expo's ads.txt status as `Not found` from 10 September; GitHub's was
+`Authorized`. Recheck Google's crawler status after it updates, and verify a real non-subscriber
+ad response once approval reaches `Ready`. Current checks do not establish live ad fill.
+
+Failed script loads now expire from the page's loader cache, so a later fresh placement can
+recover after a network error or timeout. Existing placements never retry automatically, and
+successful script loads remain shared. Tests cover both recovery paths, supporter exclusion,
+empty responses, and placement cleanup.
+
+References: [AdSense site statuses](https://support.google.com/adsense/answer/12170222?hl=en)
+and [connecting a site](https://support.google.com/adsense/answer/7584263?hl=en).
+
 ## Remaining operational checks
 
 - Verify the next legitimate Android purchase reaches both the RevenueCat Firebase integration log and Google Analytics exactly once, without the previous duplicate automatic `in_app_purchase` revenue.

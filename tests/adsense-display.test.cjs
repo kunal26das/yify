@@ -232,6 +232,21 @@ test('different slots and adapter instances share one script without sharing req
     second();
 });
 
+test('a successful script stays cached after the original placement is removed', async t => {
+    const f = fixture(t);
+    const first = f.attach();
+    await flush();
+    await f.loaded();
+    first();
+    const nextContainer = f.addContainer('next-slot');
+    const second = f.attach('next-slot');
+    await flush();
+    assert.equal(f.calls.scripts.length, 1);
+    assert.equal(f.calls.pushes, 2);
+    assert.equal(nextContainer.children.length, 1);
+    second();
+});
+
 test('immediate effect cleanup issues no script or ad request', async t => {
     const f = fixture(t);
     f.attach()();
@@ -362,6 +377,30 @@ for (const failure of ['error', 'timeout']) {
         await flush();
         assert.equal(f.calls.scripts.length, 1);
         dispose();
+    });
+
+    test(`a fresh placement can recover after a script ${failure}`, async t => {
+        const f = fixture(t);
+        const first = f.attach();
+        await flush();
+        if (failure === 'error') f.calls.scripts[0].emit('error');
+        else t.mock.timers.tick(15000);
+        await flush();
+        assert.equal(f.states.at(-1), 'blocked');
+        assert.equal(f.calls.pushes, 0);
+        first();
+        const nextContainer = f.addContainer('next-slot');
+        const second = f.attach('next-slot');
+        await flush();
+        assert.equal(f.calls.scripts.length, 2);
+        f.calls.scripts[1].emit('load');
+        await flush();
+        assert.equal(f.calls.pushes, 1);
+        assert.equal(nextContainer.children.length, 1);
+        assert.equal(f.states.at(-1), 'loading');
+        nextContainer.children[0].setAttribute('data-ad-status', 'filled');
+        assert.equal(f.states.at(-1), 'filled');
+        second();
     });
 }
 

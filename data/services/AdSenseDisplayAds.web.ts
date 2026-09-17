@@ -48,6 +48,9 @@ function loadScript(document: Document): Promise<boolean> {
         }
     });
     scriptLoads.set(document, result);
+    void result.then((loaded) => {
+        if (!loaded && scriptLoads.get(document) === result) scriptLoads.delete(document);
+    });
     return result;
 }
 
