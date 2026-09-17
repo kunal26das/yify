@@ -23,6 +23,8 @@ export interface PreferencesRepository {
 
     setWatchRegion(region: string | null): void;
 
+    setStreamingServices(country: string, serviceIds: string[]): void;
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void;
 
     setPlaybackPreferences(playback: PlaybackPreferences): void;

@@ -30,6 +30,9 @@ import {useRemoveFromWatchlist, useWatchlist} from './useWatchlist';
 import {useLibrary} from './useLibrary';
 import {WatchlistControls} from './components/WatchlistControls';
 import {WatchlistActionsSheet} from './components/WatchlistActionsSheet';
+import {useWatchlistStreaming} from './useWatchlistStreaming';
+import {WatchlistStreamingControls} from './components/WatchlistStreamingControls';
+import {WatchlistStreamingBadge} from './components/WatchlistStreamingBadge';
 
 const COVER_ASPECT = 16 / 9;
 const COVER_WIDTH_WIDE = 360;
@@ -181,7 +184,9 @@ export function WatchlistScreen() {
     const collections = useMemo(() => liveLibraryCollections(libraryState), [libraryState]);
     const options = useMemo(() => viewOptions.collectionId && !collections.some((collection) => collection.id === viewOptions.collectionId)
         ? {...viewOptions, collectionId: undefined} : viewOptions, [collections, viewOptions]);
-    const visible = useMemo(() => selectWatchlistMovies(movies, libraryState, options), [movies, libraryState, options]);
+    const filtered = useMemo(() => selectWatchlistMovies(movies, libraryState, options), [movies, libraryState, options]);
+    const streaming = useWatchlistStreaming(filtered);
+    const visible = streaming.visible;
     const canPick = visible.some((movie) => !libraryMovieWatched(libraryState, movie.id));
     const genres = useMemo(() => [...new Set(movies.flatMap((movie) => movie.genres))].sort(), [movies]);
     const player = usePlayer();
@@ -206,9 +211,9 @@ export function WatchlistScreen() {
     }, [goTo, player, queue]);
 
     const pickForMe = useCallback(() => {
-        const choice = pickWatchlistMovie(movies, libraryState, options);
+        const choice = pickWatchlistMovie(visible, libraryState, options);
         if (choice) goTo(`/movie/${choice.id}`);
-    }, [goTo, movies, libraryState, options]);
+    }, [goTo, visible, libraryState, options]);
 
     const toggleWatched = useCallback((movie: Movie) => {
         try {
@@ -280,10 +285,14 @@ export function WatchlistScreen() {
     }, []);
 
     const renderItem = useCallback(
-        ({item}: {item: Movie}) => <SavedPoster movie={item} width={itemWidth}
+        ({item}: {item: Movie}) => <View style={{width: itemWidth + POSTER_GAP}}>
+            <SavedPoster movie={item} width={itemWidth}
                                                    watched={libraryMovieWatched(libraryState, item.id)}
-                                                   onManage={(movie) => setManage({movie})} onToggleWatched={toggleWatched}/>,
-        [itemWidth, libraryState, toggleWatched]
+                                                   onManage={(movie) => setManage({movie})} onToggleWatched={toggleWatched}/>
+            <WatchlistStreamingBadge availability={streaming.availability[item.imdbCode]} country={streaming.country}
+                services={streaming.services} validId={/^tt\d{5,12}$/.test(item.imdbCode)}/>
+        </View>,
+        [itemWidth, libraryState, toggleWatched, streaming.availability, streaming.country, streaming.services]
     );
 
     return (
@@ -316,6 +325,7 @@ export function WatchlistScreen() {
                             ) : <ThemedText type="title">Watchlist</ThemedText>}
                             <WatchlistControls options={options} onChange={setOptions} genres={genres} collections={collections}
                                                onManageCollections={() => setManage({movie: null})} onPick={pickForMe} canPick={canPick}/>
+                            <WatchlistStreamingControls streaming={streaming}/>
                             {visible.length !== movies.length ? (
                                 <ThemedText accessibilityLiveRegion="polite" style={[styles.results, {color: colors.textMuted}]}>
                                     {visible.length} of {movies.length} titles
@@ -327,14 +337,18 @@ export function WatchlistScreen() {
                         <Animated.View entering={enterRise()} style={styles.empty}>
                             <Ionicons name={movies.length === 0 ? 'bookmark-outline' : 'search-outline'} size={42} color={colors.textFaint}/>
                             <ThemedText type="heading" style={styles.emptyTitle}>
-                                {movies.length === 0 ? 'Your list is empty' : 'No matching titles'}
+                                {movies.length === 0 ? 'Your list is empty' : streaming.filterActive ? 'No checked matches yet' : 'No matching titles'}
                             </ThemedText>
                             <ThemedText style={[styles.emptyBody, {color: colors.textMuted}]}>
-                                {movies.length === 0 ? 'Open any movie and tap Save to keep it here.' : 'Try another search or change your filters.'}
+                                {movies.length === 0 ? 'Open any movie and tap Save to keep it here.'
+                                    : streaming.filterActive && streaming.uncheckedCount + streaming.failedCount > 0
+                                        ? 'Check availability above, or turn off On my services to see all saved titles.'
+                                        : 'Try another search or change your filters.'}
                             </ThemedText>
                             <PressableScale onPress={() => {
                                 if (movies.length > 0) {
                                     setOptions({status: 'all', sort: 'saved'});
+                                    streaming.setOnlySelected(false);
                                     return;
                                 }
                                 Analytics.browseAllOpen('my_list_empty');

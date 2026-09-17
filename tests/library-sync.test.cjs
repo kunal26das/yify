@@ -42,9 +42,9 @@ function fixture(t, options = {}) {
             deleteSyncDocument: async uid => {remote.delete(uid); return {ok: true};},
         },
     });
-    let movies = [];
-    let history = {entries: [], removed: {}, clearedAt: 0};
-    const preferences = new PreferencesRepositoryImpl(memoryStore());
+    let movies = options.movies ?? [];
+    let history = options.history ?? {entries: [], removed: {}, clearedAt: 0};
+    const preferences = new PreferencesRepositoryImpl(options.preferencesStore ?? memoryStore());
     const sync = new AccountSyncImpl({
         store, library, auth: {getIdToken: async () => 'test-token'},
         watchlist: {getAll: () => movies, applyRemote: value => {movies = value;}, subscribe: () => () => {}},
@@ -52,7 +52,8 @@ function fixture(t, options = {}) {
         preferences,
     });
     sync.start();
-    return {sync, library, libraryStore, store, remote, revisions, patches, preferences};
+    return {sync, library, libraryStore, store, remote, revisions, patches, preferences,
+        movies: () => movies, history: () => history};
 }
 
 function remoteState(id, value, at) {
@@ -244,6 +245,168 @@ test('an older client omitting country preference is repaired in cloud after a n
     assert.equal(preferences.getPreferences().watchRegion, 'IN');
     assert.equal(JSON.parse(remote.get('a').preferences).watchRegion, 'IN');
     assert.equal(sync.getStatus().pendingChanges, false);
+});
+
+test('an older client preference update preserves and republishes streaming selections', async t => {
+    const {preferences, sync, remote} = fixture(t);
+    preferences.setStreamingServices('IN', ['hotstar']);
+    preferences.setStreamingServices('US', ['netflix', 'prime:hbo']);
+    sync.setAccount('a');
+    await flush();
+    const older = {...JSON.parse(remote.get('a').preferences), theme: 'light'};
+    delete older.streamingServices;
+    remote.set('a', {...remote.get('a'), preferences: JSON.stringify(older), preferencesUpdatedAt: Date.now() + 1000});
+    sync.syncNow();
+    await flush();
+    const expected = {IN: ['hotstar'], US: ['netflix', 'prime:hbo']};
+    assert.equal(preferences.getPreferences().theme, 'light');
+    assert.deepEqual(preferences.getPreferences().streamingServices, expected);
+    assert.deepEqual(JSON.parse(remote.get('a').preferences).streamingServices, expected);
+    assert.equal(sync.getStatus().pendingChanges, false);
+});
+
+test('newer remote streaming selections propagate and explicit empty selections remain cleared', async t => {
+    const {preferences, sync, remote} = fixture(t);
+    preferences.setStreamingServices('US', ['netflix']);
+    sync.setAccount('a');
+    await flush();
+    for (const [index, streamingServices] of [{GB: ['bbc']}, {}].entries()) {
+        const update = {...JSON.parse(remote.get('a').preferences), streamingServices};
+        remote.set('a', {...remote.get('a'), preferences: JSON.stringify(update), preferencesUpdatedAt: Date.now() + (index + 1) * 1000});
+        sync.syncNow();
+        await flush();
+        assert.deepEqual(preferences.getPreferences().streamingServices, streamingServices);
+        assert.deepEqual(JSON.parse(remote.get('a').preferences).streamingServices, streamingServices);
+    }
+});
+
+test('malformed remote streaming selections preserve and repair the same account choices', async t => {
+    const {preferences, sync, remote} = fixture(t);
+    preferences.setStreamingServices('US', ['netflix']);
+    sync.setAccount('a');
+    await flush();
+    const update = {...JSON.parse(remote.get('a').preferences), streamingServices: {US: null}, theme: 'light'};
+    remote.set('a', {...remote.get('a'), preferences: JSON.stringify(update), preferencesUpdatedAt: Date.now() + 1000});
+    sync.syncNow();
+    await flush();
+    assert.equal(preferences.getPreferences().theme, 'light');
+    assert.deepEqual(preferences.getPreferences().streamingServices, {US: ['netflix']});
+    assert.deepEqual(JSON.parse(remote.get('a').preferences).streamingServices, {US: ['netflix']});
+});
+
+test('switching accounts with older or missing preference payloads never uploads previous streaming choices', async t => {
+    const {preferences, sync, remote} = fixture(t);
+    preferences.setStreamingServices('US', ['netflix']);
+    sync.setAccount('a');
+    await flush();
+    remote.set('b', {preferences: JSON.stringify({theme: 'light'}), preferencesUpdatedAt: Date.now() + 1000});
+    sync.setAccount('b');
+    await flush();
+    assert.deepEqual(preferences.getPreferences().streamingServices, {});
+    preferences.setStreamingServices('GB', ['bbc']);
+    t.mock.timers.tick(1500);
+    await flush();
+    assert.deepEqual(JSON.parse(remote.get('b').preferences).streamingServices, {GB: ['bbc']});
+    assert.deepEqual(JSON.parse(remote.get('a').preferences).streamingServices, {US: ['netflix']});
+    sync.setAccount('c');
+    await flush();
+    assert.deepEqual(preferences.getPreferences().streamingServices, {});
+    preferences.setTheme('light');
+    t.mock.timers.tick(1500);
+    await flush();
+    assert.deepEqual(JSON.parse(remote.get('c').preferences).streamingServices, {});
+});
+
+for (const ownPreferences of [false, true]) {
+    test(`switching accounts before the initial merge keeps the next account ${ownPreferences ? 'own' : 'default'} streaming preferences`, async t => {
+        let finish;
+        const firstRead = new Promise(resolve => {finish = resolve;});
+        const f = fixture(t, {beforeRead: uid => uid === 'a' ? firstRead : undefined, movies: [{id: 111}],
+            history: {entries: [{key: 'movie:111', title: 'First account title', watchedAt: 100}], removed: {}, clearedAt: 0}});
+        f.preferences.setStreamingServices('US', ['netflix']);
+        f.library.setWatched(111, true);
+        const expected = ownPreferences ? {GB: ['bbc']} : {};
+        f.remote.set('b', {
+            watchlist: JSON.stringify({items: [{id: 222}], marks: {}}),
+            history: JSON.stringify({entries: [{key: 'movie:222', title: 'Second account title', watchedAt: 200}], removed: {}, clearedAt: 0}),
+            ...(ownPreferences ? {preferences: JSON.stringify({theme: 'light', streamingServices: expected}), preferencesUpdatedAt: 1} : {}),
+        });
+        f.sync.setAccount('a');
+        await flush();
+        assert.equal(f.store.getString('linkedUid'), undefined);
+        f.sync.setAccount('b');
+        finish();
+        await flush();
+        f.sync.syncNow();
+        await flush();
+        assert.deepEqual(f.preferences.getPreferences().streamingServices, expected);
+        assert.equal(f.preferences.getPreferences().theme, ownPreferences ? 'light' : 'dark');
+        assert.deepEqual(f.movies().map(movie => movie.id), [222]);
+        assert.deepEqual(f.history().entries.map(entry => entry.key), ['movie:222']);
+        assert.equal(f.library.isWatched(111), false);
+        assert.equal(f.patches.some(({uid}) => uid === 'a'), false);
+        f.preferences.setNotificationsEnabled(false);
+        f.preferences.setHistoryPaused(true);
+        t.mock.timers.tick(1500);
+        await flush();
+        assert.deepEqual(JSON.parse(f.remote.get('b').preferences).streamingServices, expected);
+        assert.deepEqual(JSON.parse(f.remote.get('b').watchlist).items.map(movie => movie.id), [222]);
+        assert.deepEqual(JSON.parse(f.remote.get('b').history).entries.map(entry => entry.key), ['movie:222']);
+    });
+}
+
+test('first anonymous preferences and library still import into the first account', async t => {
+    const f = fixture(t, {movies: [{id: 111}]});
+    f.preferences.setStreamingServices('US', ['netflix']);
+    f.library.setWatched(111, true);
+    f.remote.set('a', {watchlist: JSON.stringify({items: [{id: 222}], marks: {}})});
+    f.sync.setAccount('a');
+    await flush();
+    assert.deepEqual(JSON.parse(f.remote.get('a').preferences).streamingServices, {US: ['netflix']});
+    assert.deepEqual(new Set(f.movies().map(movie => movie.id)), new Set([111, 222]));
+    assert.equal(f.library.isWatched(111), true);
+});
+
+test('signing out before the first merge retains local choices for the same account without uploading while signed out', async t => {
+    let finish;
+    const firstRead = new Promise(resolve => {finish = resolve;});
+    const f = fixture(t, {beforeRead: () => firstRead});
+    f.preferences.setStreamingServices('US', ['netflix']);
+    f.sync.setAccount('a');
+    await flush();
+    f.sync.setAccount(null);
+    finish();
+    await flush();
+    f.preferences.setStreamingServices('GB', ['bbc']);
+    t.mock.timers.tick(30_000);
+    await flush();
+    assert.equal(f.patches.length, 0);
+    f.sync.setAccount('a');
+    await flush();
+    assert.deepEqual(JSON.parse(f.remote.get('a').preferences).streamingServices, {GB: ['bbc'], US: ['netflix']});
+});
+
+test('restart after an interrupted first account pull still isolates the next account preferences', async t => {
+    let finish;
+    const firstRead = new Promise(resolve => {finish = resolve;});
+    const preferencesStore = memoryStore();
+    const original = fixture(t, {preferencesStore, beforeRead: () => firstRead});
+    original.preferences.setStreamingServices('US', ['netflix']);
+    original.sync.setAccount('a');
+    await flush();
+    const paused = original.sync.pause();
+    finish();
+    await paused;
+    assert.equal(original.store.getString('linkedUid'), undefined);
+    const restarted = fixture(t, {skipTimers: true, store: original.store,
+        libraryStore: original.libraryStore, preferencesStore, remote: original.remote});
+    restarted.sync.setAccount('b');
+    await flush();
+    assert.deepEqual(restarted.preferences.getPreferences().streamingServices, {});
+    restarted.preferences.setHistoryPaused(true);
+    t.mock.timers.tick(1500);
+    await flush();
+    assert.deepEqual(JSON.parse(restarted.remote.get('b').preferences).streamingServices, {});
 });
 
 test('a failed account replacement never uploads the previous account library after storage recovers', async t => {

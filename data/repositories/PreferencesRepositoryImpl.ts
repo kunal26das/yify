@@ -16,6 +16,7 @@ import {
     readSection,
     type SectionGuards,
     SortBy,
+    type StreamingSelections,
     type SyncedPreferences,
     type ThemePreference,
 } from '@/domain';
@@ -25,6 +26,10 @@ const NOTIFICATIONS_KEY = 'notifications';
 const CONFIRM_WATCHLIST_REMOVAL_KEY = 'confirmWatchlistRemoval';
 const HISTORY_PAUSED_KEY = 'historyPaused';
 const WATCH_REGION_KEY = 'watchRegion';
+const STREAMING_SERVICES_KEY = 'streamingServices';
+const MAX_STREAMING_COUNTRIES = 250;
+const MAX_STREAMING_SERVICES_PER_COUNTRY = 64;
+const MAX_STREAMING_SELECTION_CHARS = 2800;
 const BROWSE_DEFAULTS_KEY = 'browseDefaults';
 const PLAYBACK_KEY = 'playback';
 const NOTIFY_KEY = 'notify';
@@ -35,6 +40,31 @@ function isThemePreference(value: unknown): value is ThemePreference {
 
 function isWatchRegion(value: unknown): value is string | null {
     return value === null || (typeof value === 'string' && /^[A-Z]{2}$/.test(value));
+}
+
+function parseStreamingSelections(value: unknown): StreamingSelections | undefined {
+    if (value == null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const entries = Object.entries(value);
+    if (entries.length > MAX_STREAMING_COUNTRIES) return undefined;
+    const selections: StreamingSelections = {};
+    for (const [country, services] of entries.sort(([a], [b]) => a.localeCompare(b))) {
+        if (!/^[A-Z]{2}$/.test(country) || !Array.isArray(services)) return undefined;
+        if (services.length > MAX_STREAMING_SERVICES_PER_COUNTRY || services.some(service =>
+            typeof service !== 'string' || service.length > 128 || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(service)
+        )) return undefined;
+        const ids = [...new Set<string>(services)].sort();
+        if (ids.length > 0) selections[country] = ids;
+    }
+    return JSON.stringify(selections).length <= MAX_STREAMING_SELECTION_CHARS ? selections : undefined;
+}
+
+function parseLocalStreamingSelections(raw: string | undefined): StreamingSelections {
+    if (!raw) return {};
+    try {
+        return parseStreamingSelections(JSON.parse(raw)) ?? {};
+    } catch {
+        return {};
+    }
 }
 
 function isHour(value: unknown): boolean {
@@ -104,9 +134,10 @@ function parseLocalSection<T>(raw: string | undefined, guards: SectionGuards<T>,
 export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
     try {
         const parsed = JSON.parse(raw) as Partial<SyncedPreferences>;
-        if (typeof parsed !== 'object' || parsed == null) return null;
+        if (typeof parsed !== 'object' || parsed == null || Array.isArray(parsed)) return null;
         const playback = readSection<PlaybackPreferences>(parsed.playback, PLAYBACK_GUARDS);
         const notify = readSection<NotificationPreferences>(parsed.notify, NOTIFY_GUARDS);
+        const streamingServices = parseStreamingSelections(parsed.streamingServices);
         return {
             theme: isThemePreference(parsed.theme) ? parsed.theme : DEFAULT_PREFERENCES.theme,
             ...(typeof parsed.confirmWatchlistRemoval === 'boolean'
@@ -116,6 +147,7 @@ export function parseSyncedPreferences(raw: string): SyncedPreferences | null {
                 ? {historyPaused: parsed.historyPaused}
                 : {}),
             ...(isWatchRegion(parsed.watchRegion) ? {watchRegion: parsed.watchRegion} : {}),
+            ...(streamingServices ? {streamingServices} : {}),
             browseDefaults: parseBrowseDefaults(
                 parsed.browseDefaults ? JSON.stringify(parsed.browseDefaults) : undefined
             ),
@@ -181,6 +213,14 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         this.write({...this.read(), watchRegion});
     }
 
+    setStreamingServices(country: string, serviceIds: string[]): void {
+        if (!/^[A-Z]{2}$/.test(country)) return;
+        const current = this.read();
+        const streamingServices = parseStreamingSelections({...current.streamingServices, [country]: serviceIds});
+        if (!streamingServices || JSON.stringify(streamingServices) === JSON.stringify(current.streamingServices)) return;
+        this.write({...current, streamingServices});
+    }
+
     setBrowseDefaults(browseDefaults: BrowseDefaults): void {
         this.write({...this.read(), browseDefaults});
     }
@@ -200,6 +240,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             confirmWatchlistRemoval: current.confirmWatchlistRemoval,
             historyPaused: current.historyPaused,
             watchRegion: current.watchRegion,
+            streamingServices: parseStreamingSelections(current.streamingServices) ?? {},
             browseDefaults: current.browseDefaults,
             playback: {...current.playback},
             notify: {...current.notify},
@@ -212,6 +253,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
             confirmWatchlistRemoval: DEFAULT_PREFERENCES.confirmWatchlistRemoval,
             historyPaused: DEFAULT_PREFERENCES.historyPaused,
             watchRegion: DEFAULT_PREFERENCES.watchRegion,
+            streamingServices: {},
             browseDefaults: DEFAULT_BROWSE_DEFAULTS,
             playback: {...DEFAULT_PLAYBACK_PREFERENCES},
             notify: {...DEFAULT_NOTIFICATION_PREFERENCES},
@@ -227,6 +269,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
                 next.confirmWatchlistRemoval ?? current.confirmWatchlistRemoval,
             historyPaused: next.historyPaused ?? current.historyPaused,
             watchRegion: isWatchRegion(next.watchRegion) ? next.watchRegion : current.watchRegion,
+            streamingServices: parseStreamingSelections(next.streamingServices) ?? current.streamingServices,
             browseDefaults: next.browseDefaults,
             playback: mergeSection(current.playback, next.playback),
             notify: mergeSection(current.notify, next.notify),
@@ -252,6 +295,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
                 this.store.getString(CONFIRM_WATCHLIST_REMOVAL_KEY) !== 'false',
             historyPaused: this.store.getString(HISTORY_PAUSED_KEY) === 'true',
             watchRegion: isWatchRegion(watchRegion) ? watchRegion : null,
+            streamingServices: parseLocalStreamingSelections(this.store.getString(STREAMING_SERVICES_KEY)),
             playback: parseLocalSection(
                 this.store.getString(PLAYBACK_KEY),
                 PLAYBACK_GUARDS,
@@ -276,6 +320,7 @@ export class PreferencesRepositoryImpl implements PreferencesRepository {
         );
         this.store.set(HISTORY_PAUSED_KEY, next.historyPaused ? 'true' : 'false');
         this.store.set(WATCH_REGION_KEY, next.watchRegion ?? '');
+        this.store.set(STREAMING_SERVICES_KEY, JSON.stringify(next.streamingServices));
         this.store.set(BROWSE_DEFAULTS_KEY, JSON.stringify(next.browseDefaults));
         this.store.set(PLAYBACK_KEY, JSON.stringify(next.playback));
         this.store.set(NOTIFY_KEY, JSON.stringify(next.notify));

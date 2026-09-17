@@ -5,6 +5,7 @@ import {TmdbApiDataSource} from '../datasources/TmdbApiDataSource';
 import {FirebaseAnalyticsSink} from '../datasources/analytics/FirebaseAnalyticsSink';
 import {PersistentCache} from '../datasources/storage/PersistentCache';
 import {TmdbRepositoryImpl} from '../repositories/TmdbRepositoryImpl';
+import {StreamingRepositoryImpl} from '../repositories/StreamingRepositoryImpl';
 import {FirebaseAuthRepositoryImpl} from '../repositories/FirebaseAuthRepositoryImpl';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
 import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
@@ -86,6 +87,7 @@ export function createDependencies(): Dependencies {
         movies: catalog.movies,
         shows: catalog.shows,
         tmdb: new TmdbRepositoryImpl(tmdbApi),
+        streaming: new StreamingRepositoryImpl(new PersistentCache('streaming'), diagnostics),
         searchHistory: new SearchHistoryRepositoryImpl(new PersistentCache('search')),
         preferences,
         watchlist,

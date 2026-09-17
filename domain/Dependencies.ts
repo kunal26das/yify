@@ -6,6 +6,7 @@ import type {PurchaseRepository} from './repositories/PurchaseRepository';
 import type {SearchHistoryRepository} from './repositories/SearchHistoryRepository';
 import type {ShowRepository} from './repositories/ShowRepository';
 import type {TmdbRepository} from './repositories/TmdbRepository';
+import type {StreamingRepository} from './repositories/StreamingRepository';
 import type {WatchHistoryRepository} from './repositories/WatchHistoryRepository';
 import type {WatchlistRepository} from './repositories/WatchlistRepository';
 import type {AccountSync} from './services/AccountSync';
@@ -29,6 +30,7 @@ export interface Dependencies {
     movies: MovieRepository;
     shows: ShowRepository;
     tmdb: TmdbRepository;
+    streaming: StreamingRepository;
     searchHistory: SearchHistoryRepository;
     preferences: PreferencesRepository;
     watchlist: WatchlistRepository;

@@ -10,10 +10,11 @@ const nodeText = node => typeof node === 'string' ? node : node.children?.map(no
 const labels = renderer => renderer.root.findAllByType('Text').map(nodeText).join(' ');
 const deferred = () => {let resolve; const promise = new Promise(done => {resolve = done;}); return {promise, resolve};};
 
-function setup(repository) {
+function setup(repository, streamingOverride) {
     const listeners = new Set();
     let preference = {watchRegion: null};
     const opened = [];
+    const streaming = streamingOverride ?? {getAvailability: async (_id, country) => ({country, status: 'ready', offers: []})};
     const preferences = {setWatchRegion: code => {preference = {watchRegion: code}; listeners.forEach(listener => listener());}};
     const {WatchProviders} = loadTypeScript('presentation/movies/components/WatchProviders.tsx', {
         'react-native': {View: 'View', ScrollView: 'ScrollView', ActivityIndicator: 'Loading',
@@ -23,7 +24,8 @@ function setup(repository) {
         'expo-web-browser': {openBrowserAsync: async url => opened.push(url)},
         'expo-localization': {getLocales: () => [{regionCode: 'IN'}]},
         'react-native-reanimated': {__esModule: true, default: {View: 'AnimatedView'}},
-        '../../di/DependenciesContext': {useTmdbRepository: () => repository, usePreferencesRepository: () => preferences},
+        '../../di/DependenciesContext': {useTmdbRepository: () => repository, usePreferencesRepository: () => preferences,
+            useStreamingRepository: () => streaming},
         '../../hooks/use-preferences': {usePreferences: () => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);}, () => preference)},
         '../../hooks/use-palette': {usePalette: () => ({colors: {}})},
@@ -88,4 +90,20 @@ test('changing country hides old offers immediately and ignores a late previous-
     const country = renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel?.startsWith('Change viewing country'));
     await act(async () => country.props.onPress());
     assert.equal(renderer.root.findByType('CountryPicker').props.selected, 'US');
+});
+
+test('an empty fallback never hides an unfinished or failed direct lookup', async t => {
+    const pending = deferred();
+    let result = pending.promise;
+    const {WatchProviders} = setup({findByImdbCode: async () => ({tmdbId: 42, media: 'tv'}),
+        getWatchAvailability: async () => ({region: 'IN', providers: []})}, {getAvailability: () => result});
+    const renderer = await mount(t, WatchProviders);
+    assert.doesNotMatch(labels(renderer), /No viewing options/);
+    await act(async () => pending.resolve({country: 'IN', status: 'unavailable', offers: []}));
+    assert.match(labels(renderer), /Viewing options couldn’t be loaded/);
+    assert.doesNotMatch(labels(renderer), /No viewing options/);
+    result = Promise.resolve({country: 'IN', status: 'ready', offers: []});
+    const retry = renderer.root.findAllByType('PressableScale').find(node => nodeText(node) === 'Try again');
+    await act(async () => retry.props.onPress());
+    assert.match(labels(renderer), /No viewing options listed/);
 });

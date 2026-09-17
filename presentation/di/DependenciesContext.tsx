@@ -18,6 +18,7 @@ import type {
     ShowRepository,
     SupporterNudge,
     TmdbRepository,
+    StreamingRepository,
     WatchHistoryRepository,
     WatchlistRepository,
 } from '@/domain';
@@ -59,6 +60,10 @@ export function useShowRepository(): ShowRepository {
 
 export function useTmdbRepository(): TmdbRepository {
     return useDependencies().tmdb;
+}
+
+export function useStreamingRepository(): StreamingRepository {
+    return useDependencies().streaming;
 }
 
 export function useAppConfig(): AppConfig {

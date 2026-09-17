@@ -45,6 +45,7 @@ import {useGoTo} from './constants/destinations';
 import * as WebBrowser from 'expo-web-browser';
 import {openPlayStore, PlayStoreButton} from './components/PlayStoreButton';
 import {ChipBar} from './components/ChipBar';
+import {MyStreamingServices} from './components/MyStreamingServices';
 import {useTopBarHeight} from './components/TopBar';
 import {type PreferencesViewModel, usePreferencesViewModel} from './usePreferencesViewModel';
 import {useAuth} from '../hooks/use-auth';
@@ -339,6 +340,10 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             setOpen(null);
                         }}
                     />
+                </Group>
+
+                <Group colors={colors} index={2}>
+                    <MyStreamingServices style={{paddingHorizontal: gutter}}/>
                 </Group>
 
                 <SettingsSection

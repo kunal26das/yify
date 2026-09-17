@@ -23,10 +23,10 @@ function store() {
     return {getString: key => values.get(key), set: (key, value) => values.set(key, value)};
 }
 
-function fixture(isPhone = false) {
+function fixture(isPhone = false, options = {}) {
     const library = new LibraryRepositoryImpl(store(), () => 100);
     const watchlist = new WatchlistRepositoryImpl(store());
-    watchlist.applyRemote(movies);
+    watchlist.applyRemote(options.movies ?? movies);
     library.setWatched(2, true);
     const calls = {navigation: [], playback: [], analytics: [], confirmations: []};
     const player = {open: item => calls.playback.push(['open', item]), setQueue: items => calls.playback.push(['queue', items])};
@@ -50,7 +50,11 @@ function fixture(isPhone = false) {
         '../components/screen': {Screen: ({children, overlays}) => React.createElement('Screen', null, children, overlays)},
         '../components/linear-gradient': {LinearGradient: 'LinearGradient'},
         '../components/toast': {useToast: () => noop},
-        '../di/DependenciesContext': {useLibraryRepository: () => library, useWatchlistRepository: () => watchlist},
+        '../di/DependenciesContext': {useLibraryRepository: () => library, useWatchlistRepository: () => watchlist,
+            useStreamingRepository: () => options.streaming ?? {getCachedAvailability: () => null, getAvailability: async () => ({country: 'US', status: 'ready', offers: []})}},
+        './components/watchRegion': {deviceRegion: () => 'US'},
+        './MyStreamingServices': {MyStreamingServices: 'MyStreamingServices'},
+        './openStreamingLink': {openStreamingLink: async () => {}},
         '../player/PlayerContext': {usePlayer: () => player},
         './components/HoverCard': {HoverCardHost: 'HoverCardHost'},
         './components/MoviePosterItem': {MoviePosterItem: 'Poster'},
@@ -70,7 +74,7 @@ function fixture(isPhone = false) {
         mocks[`${prefix}components/confirm-dialog`] = {useConfirm: () => confirm};
         mocks[`${prefix}hooks/use-palette`] = {usePalette: () => palette};
         mocks[`${prefix}hooks/use-responsive`] = {useResponsive: () => responsive};
-        mocks[`${prefix}hooks/use-preferences`] = {usePreferences: () => ({confirmWatchlistRemoval: true})};
+        mocks[`${prefix}hooks/use-preferences`] = {usePreferences: () => ({confirmWatchlistRemoval: true, watchRegion: 'US', streamingServices: options.selections ?? {}})};
     }
     const {WatchlistScreen} = loadTypeScript('presentation/movies/WatchlistScreen.tsx', mocks);
     return {Screen: WatchlistScreen, library, watchlist, calls};
@@ -202,4 +206,22 @@ test('closing collection management discards an unfinished editor and its valida
     await press(renderer, 'New collection');
     assert.equal(renderer.root.findAllByType('TextInput').find(node => node.props.accessibilityLabel === 'Collection name').props.value, '');
     assert.deepEqual(domain.liveLibraryCollections(f.library.getState()), []);
+});
+
+test('On my services filters the grid and Pick for me opens only an available title', async t => {
+    const f = fixture(false, {
+        movies: movies.map(movie => ({...movie, imdbCode: `tt1000${movie.id}`})),
+        selections: {US: ['netflix']},
+        streaming: {getCachedAvailability: id => ({country: 'US', status: 'ready', offers: [
+            {serviceId: 'netflix', selectionId: 'netflix', serviceName: 'Netflix', type: id === 'tt10003' ? 'subscription' : 'rent'},
+        ]}), getAvailability: async () => {throw new Error('Unexpected availability request');}},
+    });
+    const renderer = await mount(t, f);
+    assert.deepEqual(ids(renderer), [1, 2, 3]);
+    await press(renderer, 'On my services');
+    assert.deepEqual(ids(renderer), [3]);
+    await press(renderer, 'Pick for me');
+    assert.deepEqual(f.calls.navigation, ['/movie/3']);
+    await press(renderer, 'On my services');
+    assert.deepEqual(ids(renderer), [1, 2, 3]);
 });

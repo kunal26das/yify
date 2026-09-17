@@ -19,12 +19,15 @@ const ROUTES = [
     ['history.html', 'History'],
     ['preferences.html', 'Preferences'],
 ];
-const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]'];
+const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]', '/api/streaming/[operation]'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
     'YIFY_SUBSCRIBER_OWNER_UID',
     'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
     'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS',
+    'YIFY_STREAMING_API_KEY',
+    'YIFY_STREAMING_UPSTREAM_REQUESTS_PER_DAY',
+    'https://api.movieofthenight.com/v4/',
     'https://api.revenuecat.com/v2/projects/',
     'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
 ];
@@ -66,7 +69,7 @@ if (serverOutput) {
     }
 }
 
-for (const serverPath of ['_expo/functions', '_expo/routes.json', 'api/catalog', 'api/subscriber-catalog',
+for (const serverPath of ['_expo/functions', '_expo/routes.json', 'api/catalog', 'api/subscriber-catalog', 'api/streaming',
     ...(serverOutput ? [] : ['server', 'client'])]) {
     if (existsSync(join(dir, serverPath))) {
         failures.push(`${serverPath}: server output must not be published as ${serverOutput ? 'public client assets' : 'a static site'}`);

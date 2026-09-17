@@ -3,10 +3,10 @@ import {ActivityIndicator, Linking, Platform, ScrollView, StyleSheet, View} from
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
-import * as Localization from 'expo-localization';
+import {deviceRegion} from './watchRegion';
 import Animated from 'react-native-reanimated';
-import type {MovieDetails, TitleMedia, WatchAvailability, WatchProvider} from '@/domain';
-import {usePreferencesRepository, useTmdbRepository} from '../../di/DependenciesContext';
+import type {MovieDetails, StreamingAvailability, TitleMedia, WatchAvailability, WatchProvider} from '@/domain';
+import {usePreferencesRepository, useStreamingRepository, useTmdbRepository} from '../../di/DependenciesContext';
 import {Analytics} from '@/presentation/analytics/events';
 import {PressableScale, enterFade} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
@@ -16,6 +16,8 @@ import {usePreferences} from '../../hooks/use-preferences';
 import {useToast} from '../../components/toast';
 import {providerUrl} from './providerLinks';
 import {countryName, WatchRegionPicker} from './WatchRegionPicker';
+import {StreamingOffers} from './StreamingOffers';
+import {openStreamingLink} from './openStreamingLink';
 
 const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     stream: 'Stream',
@@ -25,45 +27,8 @@ const OFFER_LABEL: Record<WatchProvider['offer'], string> = {
     buy: 'Buy',
 };
 
-const ZONE_REGION: Record<string, string> = {
-    Kolkata: 'IN', Calcutta: 'IN', Colombo: 'LK', Karachi: 'PK', Dhaka: 'BD', Kathmandu: 'NP',
-    London: 'GB', Dublin: 'IE', Paris: 'FR', Berlin: 'DE', Madrid: 'ES', Rome: 'IT',
-    Amsterdam: 'NL', Brussels: 'BE', Lisbon: 'PT', Zurich: 'CH', Vienna: 'AT', Stockholm: 'SE',
-    Oslo: 'NO', Copenhagen: 'DK', Helsinki: 'FI', Warsaw: 'PL', Prague: 'CZ', Moscow: 'RU',
-    Istanbul: 'TR', Athens: 'GR', Dubai: 'AE', Riyadh: 'SA', Doha: 'QA', Jerusalem: 'IL',
-    Tokyo: 'JP', Seoul: 'KR', Shanghai: 'CN', Hong_Kong: 'HK', Taipei: 'TW', Singapore: 'SG',
-    Bangkok: 'TH', Jakarta: 'ID', Manila: 'PH', Kuala_Lumpur: 'MY', Ho_Chi_Minh: 'VN',
-    Sydney: 'AU', Melbourne: 'AU', Brisbane: 'AU', Perth: 'AU', Auckland: 'NZ',
-    Toronto: 'CA', Vancouver: 'CA', Montreal: 'CA', Mexico_City: 'MX',
-    Sao_Paulo: 'BR', Buenos_Aires: 'AR', Santiago: 'CL', Bogota: 'CO', Lima: 'PE',
-    Johannesburg: 'ZA', Lagos: 'NG', Nairobi: 'KE', Cairo: 'EG', Casablanca: 'MA',
-};
+export {deviceRegion} from './watchRegion';
 
-export function deviceRegion(): string {
-    try {
-        const region = Localization.getLocales()[0]?.regionCode;
-        if (region && /^[A-Z]{2}$/.test(region.toUpperCase())) return region.toUpperCase();
-    } catch {
-    }
-    try {
-        const locale =
-            Platform.OS === 'web' && typeof navigator !== 'undefined'
-                ? navigator.language
-                : new Intl.DateTimeFormat().resolvedOptions().locale;
-        const region = locale ? new Intl.Locale(locale).region : undefined;
-        if (region && /^[A-Z]{2}$/.test(region.toUpperCase())) return region.toUpperCase();
-    } catch {
-    }
-    try {
-        const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const city = zone?.split('/').pop();
-        if (city && ZONE_REGION[city]) return ZONE_REGION[city];
-        if (zone?.startsWith('America/')) return 'US';
-        if (zone?.startsWith('Europe/')) return 'GB';
-    } catch {
-    }
-    return 'US';
-}
 
 export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
     details?: Pick<MovieDetails, 'id' | 'imdbCode' | 'title'>;
@@ -76,6 +41,7 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
     const preferences = usePreferences();
     const preferencesRepository = usePreferencesRepository();
     const repository = useTmdbRepository();
+    const streaming = useStreamingRepository();
     const toast = useToast();
     const automatic = useMemo(() => deviceRegion(), []);
     const region = preferences.watchRegion ?? automatic;
@@ -91,6 +57,26 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
     } | null>(null);
     const current = result?.key === key ? result : null;
     const availability = current?.availability;
+    const [directResult, setDirectResult] = useState<{key: string; value: StreamingAvailability} | null>(null);
+    const direct = directResult?.key === key ? directResult.value : null;
+    const directOffers = direct?.status === 'ready' ? direct.offers : [];
+    const selected = preferences.streamingServices?.[region] ?? [];
+
+    useEffect(() => {
+        let active = true;
+        if (!identity) return;
+        void streaming.getAvailability(identity, region).then(value => {
+            if (active) setDirectResult({key, value});
+        }).catch(() => {
+            if (active) setDirectResult({key, value: {country: region, status: 'unavailable', offers: []}});
+        });
+        return () => {active = false;};
+    }, [identity, key, region, streaming]);
+
+    const openDirect = async (url: string) => {
+        if (details) Analytics.watchProviderOpen(details.id, region);
+        try {await openStreamingLink(url);} catch {toast('Couldn’t open the streaming service. Please try again.');}
+    };
 
     useEffect(() => {
         let active = true;
@@ -140,13 +126,18 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
                     <Ionicons name="chevron-down" size={14} color={colors.accent}/>
                 </PressableScale>
             </View>
-            {!current ? <ActivityIndicator style={styles.loading} color={colors.accent}/> : current.status === 'error' ? (
+            {directOffers.length ? <StreamingOffers offers={directOffers} selected={selected}
+                onOpen={url => void openDirect(url)} pad={pad}/> : !current || (!direct && !availability?.providers.length)
+                    ? <ActivityIndicator style={styles.loading} color={colors.accent}/> : current.status === 'error'
+                        || (direct?.status === 'unavailable' && !availability?.providers.length) ? (
                 <View style={styles.message}>
                     <ThemedText style={{color: colors.textMuted}}>Viewing options couldn’t be loaded.</ThemedText>
                     <PressableScale onPress={() => setAttempt(value => value + 1)} accessibilityRole="button">
                         <ThemedText style={{color: colors.accent}}>Try again</ThemedText>
                     </PressableScale>
                 </View>
+            ) : direct?.status === 'unsupported-country' && !availability?.providers.length ? (
+                <ThemedText style={{color: colors.textMuted}}>Streaming availability isn’t covered for {countryName(region)} yet.</ThemedText>
             ) : !availability?.providers.length ? (
                 <ThemedText style={{color: colors.textMuted}}>No viewing options listed for {countryName(region)}.</ThemedText>
             ) : <ScrollView
@@ -191,8 +182,13 @@ export function WatchProviders({details, imdbCode, title, media, pad = 0}: {
                     );
                 })}
             </ScrollView>}
+            {!direct && current ? <ActivityIndicator size="small" style={styles.loading} color={colors.accent}
+                accessibilityLabel="Checking direct streaming links"/> : null}
+            {direct?.status === 'unsupported-country' && availability?.providers.length ? <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
+                Direct streaming links aren’t covered for {countryName(region)} yet.
+            </ThemedText> : null}
             <View style={styles.footer}>
-                <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch</ThemedText>
+                {!directOffers.length ? <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>Availability by JustWatch</ThemedText> : null}
                 {availability?.url ? <PressableScale onPress={() => void open(availability.url)} accessibilityRole="link">
                     <ThemedText style={[Typography.videoMeta, {color: colors.accent}]}>View all options ↗</ThemedText>
                 </PressableScale> : null}

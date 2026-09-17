@@ -405,6 +405,7 @@ export class AccountSyncImpl implements AccountSync {
                 transition = {uid: parsed.uid, state: parsed.state};
             }
             const previousUid = this.store.getString(LIBRARY_UID_KEY) ?? this.store.getString(LINKED_UID_KEY);
+            if (previousUid && !this.store.getString(LINKED_UID_KEY)) this.store.set(LINKED_UID_KEY, previousUid);
             if (!transition && (!previousUid || previousUid === uid)) {
                 const state = encodeLibraryState(this.library.getState());
                 this.store.set(libraryAccountKey(uid), state);
@@ -655,8 +656,11 @@ export class AccountSyncImpl implements AccountSync {
             return;
         }
         const resolution = resolveSection(mode, remoteAt, localAt);
-        const preserveWatchRegion = mode !== 'remote-wins' && remotePreferences.watchRegion === undefined &&
-            this.preferences.getSynced().watchRegion != null;
+        const currentPreferences = this.preferences.getSynced();
+        const preserveNewPreferences = mode !== 'remote-wins' && (
+            (remotePreferences.watchRegion === undefined && currentPreferences.watchRegion != null) ||
+            (remotePreferences.streamingServices === undefined && Object.keys(currentPreferences.streamingServices ?? {}).length > 0)
+        );
         if (resolution === 'apply-remote') {
             this.applyRemote(() => {
                 if (mode === 'remote-wins') {
@@ -666,11 +670,11 @@ export class AccountSyncImpl implements AccountSync {
             });
             this.lastPreferencesPayload = JSON.stringify(this.preferences.getSynced());
             this.store.set(PREFERENCES_AT_KEY, String(remoteAt));
-            this.preferencesDirty = preserveWatchRegion;
-            if (preserveWatchRegion) this.preferencesRevision += 1;
+            this.preferencesDirty = preserveNewPreferences;
+            if (preserveNewPreferences) this.preferencesRevision += 1;
             return;
         }
-        if (resolution === 'push-local' || preserveWatchRegion) {
+        if (resolution === 'push-local' || preserveNewPreferences) {
             this.preferencesDirty = true;
             this.preferencesRevision += 1;
         }
