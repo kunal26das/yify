@@ -96,7 +96,11 @@ The dedicated credential was created in the [production Android stream](https://
 
 The installed app's Firebase linkage supplies the real native `$firebaseAppInstanceId` subscriber attribute. A Web GA client ID must not be substituted for this value. The current RevenueCat instructions document Android/iOS analytics streams; the dashboard's Web fields alone do not establish supported Web identity matching. Web purchases remain tracked in RevenueCat independently.
 
-Purchase-event delivery has **not yet been verified**: RevenueCat's Integration Events table was empty after setup, and no purchase or synthetic production event was generated. Verify the next legitimate Android purchase in RevenueCat's integration event log and Google Analytics. A `204` response alone does not prove Google processed an event, especially if the app-instance ID is invalid. Sandbox forwarding remains off to avoid mixing test events into the production Analytics stream.
+Purchase-event delivery was verified on 18 September 2026: RevenueCat recorded one production monthly subscription for $1.03 on 16 September at 07:01 UTC and a matching Firebase integration event marked Sent. Firebase reported one `purchase` event for $1.03 and a separate automatic `in_app_purchase` event for $1.04, producing $2.07 in purchase revenue. Ad revenue was $0.00.
+
+On 18 September, Yify's Android app was unlinked only from the Google Analytics product within [Firebase's Google Play integration](https://console.firebase.google.com/project/yify-2da67/settings/integrations/playlink). The saved Google Analytics purchase-data switch is off; App Distribution and Crashlytics remain enabled with one linked app each. RevenueCat remains the source of purchase revenue sent to Firebase. Keep this direct Play purchase feed off to prevent duplicate revenue; retain the app's Firebase Analytics SDK and RevenueCat app-instance-ID association. This configuration change requires no app build and does not correct historical totals. Verify the next legitimate purchase is counted once after the change; no purchase or synthetic production event was generated for verification.
+
+Google documents that removing the Play link stops purchase/subscription ingestion and that product links can be managed independently. See [Google Play analytics ingestion](https://support.google.com/analytics/answer/11548051?hl=en) and [per-product Firebase unlinking](https://support.google.com/firebase/answer/6392038?hl=en). Sandbox forwarding remains off to avoid mixing test events into the production Analytics stream.
 
 Reference: [RevenueCat Firebase integration](https://www.revenuecat.com/docs/integrations/third-party-integrations/firebase-integration).
 
@@ -112,7 +116,7 @@ An anonymous local-browser check after removing the lifetime package showed only
 
 ## Remaining operational checks
 
-- Verify the next legitimate Android purchase reaches both the RevenueCat Firebase integration log and Google Analytics; configuration is saved, but delivery has not yet been observed.
+- Verify the next legitimate Android purchase reaches both the RevenueCat Firebase integration log and Google Analytics exactly once, without the previous duplicate automatic `in_app_purchase` revenue.
 - If native iOS purchases are intended, configure the real RevenueCat iOS app and App Store products/credentials; Android and Web setup does not establish iOS readiness.
 - Validate purchase, restore and subscription-management behavior with the appropriate existing test accounts. Do not use the successful RTDN test or observed ad events as evidence that a new purchase was exercised.
 - Add targeting rules or experiments only for a deliberate product decision; existing default-offering fallback already supports both app placements.
