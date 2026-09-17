@@ -10,10 +10,11 @@ import {
     shouldCaptureErrorReplay,
 } from './sentry-privacy';
 
-export function createSentryOptions({native, environment, replayEnabled = false}: {
+export function createSentryOptions({native, environment, replayEnabled = false, mirrorException}: {
     native: boolean;
     environment: 'production' | 'preview';
     replayEnabled?: boolean;
+    mirrorException?: (event: Sentry.ErrorEvent, hint: Parameters<NonNullable<Sentry.ReactNativeOptions['beforeSend']>>[1]) => void | Promise<void>;
 }): Sentry.ReactNativeOptions {
     return {
         dsn: 'https://ab0c10fbe49dc5a4e4f0c9ab3c7a0386@o4512058491338752.ingest.us.sentry.io/4512058497695744',
@@ -32,6 +33,7 @@ export function createSentryOptions({native, environment, replayEnabled = false}
         ...(native && replayEnabled ? {replaysSessionSampleRate: 0, replaysOnErrorSampleRate: 0.1} : {}),
         integrations: [
             Sentry.breadcrumbsIntegration({console: false}),
+            ...(native ? [Sentry.reactNativeErrorHandlersIntegration({onerror: false})] : []),
             Sentry.expoRouterIntegration({enableTimeToInitialDisplay: native, useDispatchedActionData: false}),
             Sentry.feedbackIntegration({
                 formTitle: 'Report a problem',
@@ -66,7 +68,11 @@ export function createSentryOptions({native, environment, replayEnabled = false}
             })] : []),
         ],
         beforeBreadcrumb: sanitizeBreadcrumb,
-        beforeSend: sanitizeErrorEvent,
+        beforeSend: async (event, hint) => {
+            const clean = sanitizeErrorEvent(event);
+            try { if (native) await mirrorException?.(clean, hint); } catch {}
+            return clean;
+        },
         beforeSendTransaction: sanitizeTransaction,
         beforeSendSpan: sanitizeSpan,
         beforeSendLog: sanitizeLog,

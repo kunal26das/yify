@@ -25,7 +25,7 @@ async function signatureOf(error) {
     return signature[0];
 }
 
-function handlerHarness({enabled = true, sdkHandler, recordNonFatal} = {}) {
+function handlerHarness({enabled = true, sdkHandler, recordNonFatal, reportToSentry} = {}) {
     const events = [];
     const original = (error, fatal) => events.push({kind: 'original', error, fatal});
     let current = original;
@@ -43,7 +43,7 @@ function handlerHarness({enabled = true, sdkHandler, recordNonFatal} = {}) {
     };
     installCrashlyticsHandler(errorUtils, createCrashlytics, recordNonFatal || ((instance, error) => {
         events.push({kind: 'nonfatal', client: instance, error});
-    }));
+    }), undefined, reportToSentry);
     return {client, events, errorUtils, original, invoke: (...args) => current(...args)};
 }
 
@@ -279,7 +279,7 @@ test('the collection preference is read when a crash occurs, including changes a
     assert.deepEqual(harness.events.map(event => event.kind), ['sdk', 'original']);
 });
 
-test('failed Firebase initialization restores the original handler even after a partial SDK install', async () => {
+test('failed Firebase initialization preserves Sentry reporting and the original handler after a partial SDK install', async () => {
     const calls = [];
     const original = (error, fatal) => calls.push({error, fatal});
     let current = original;
@@ -290,11 +290,34 @@ test('failed Firebase initialization restores the original handler even after a 
     assert.doesNotThrow(() => installCrashlyticsHandler(errorUtils, () => {
         current = () => { throw new Error('Partially initialized SDK'); };
         throw new Error('No Firebase app');
-    }, () => { throw new Error('Must never record'); }));
-    assert.equal(current, original);
+    }, () => { throw new Error('Must never record'); }, undefined,
+    (error, fatal) => calls.push({kind: 'sentry', error, fatal})));
     const error = errorAt(100);
     await current(error, true);
-    assert.deepEqual(calls, [{error, fatal: true}]);
+    assert.deepEqual(calls, [{kind: 'sentry', error, fatal: true}, {error, fatal: true}]);
+});
+
+test('a rejected Sentry reporter cannot prevent either Firebase path or React Native fallback', async () => {
+    for (const fatal of [true, false]) {
+        const captured = [];
+        const harness = handlerHarness({reportToSentry: async (error, isFatal) => {
+            captured.push({error, isFatal});
+            throw new Error('Sentry unavailable');
+        }});
+        const error = errorAt(100);
+        await harness.invoke(error, fatal);
+        assert.deepEqual(captured, [{error, isFatal: fatal}]);
+        assert.deepEqual(harness.events.map(event => event.kind), ['initialize', fatal ? 'sdk' : 'nonfatal', 'original']);
+    }
+});
+
+test('Sentry still receives global errors when Firebase collection is disabled', async () => {
+    const captured = [];
+    const harness = handlerHarness({enabled: false, reportToSentry: async (...args) => captured.push(args)});
+    const error = errorAt(100);
+    await harness.invoke(error, true);
+    assert.deepEqual(captured, [[error, true]]);
+    assert.deepEqual(harness.events.map(event => event.kind), ['initialize', 'original']);
 });
 
 test('a reentrant fatal report cannot recursively invoke the terminal RNFB handler', async () => {

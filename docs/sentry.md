@@ -45,10 +45,13 @@ Current Remote Config values are endpoints and keys, not feature switches.
 
 ## Firebase fatal JavaScript crashes
 
-Crashlytics initializes before Sentry and Expo Router. Sentry captures and flushes an
-uncaught error, then the Firebase handler records its JavaScript stack as fatal and
-terminates the failed app. Disabling Firebase's handler chaining avoids a second generic
-React Native exception. A guard keeps recoverable errors nonfatal.
+Crashlytics initializes before Sentry and Expo Router. The application owns the native
+global JavaScript error handler: it captures the error in Sentry and allows up to two seconds
+for flushing, then invokes Firebase's fatal handler even if Sentry fails or never responds.
+Firebase records the JavaScript stack with its React Native fatal marker and terminates the
+failed app. Disabling Firebase's handler chaining avoids a second generic React Native
+exception. A guard keeps recoverable errors nonfatal. Sentry's native `onerror` handler is
+disabled to prevent it from replacing this coordinator; its promise rejection tracking remains enabled.
 The Firebase SDK is loaded synchronously inside the installer, after saving React Native's
 handler: importing it at module scope installs its own handler too early.
 React Native 0.86 sends uncaught render errors directly to `ExceptionsManager`, so its fatal
@@ -73,6 +76,44 @@ This A/B/A result was verified against Firebase on Android on 2026-09-10. Signat
 the available stack locations; rebuilt bundles can move those locations between releases.
 Firebase retains bundle positions; Sentry's uploaded maps provide original TypeScript locations.
 Runtime, update ID and channel are attached as Firebase custom keys.
+
+The sanitized Sentry `beforeSend` hook also submits native JavaScript exception events to
+Crashlytics through `recordError`. This covers caught Expo Router boundary errors, operation
+diagnostics, manually captured exceptions and Hermes promise rejections. These stay nonfatal;
+setting a Sentry level to fatal does not manufacture an application crash. Events owned by the
+global handler are excluded from this mirror, and a bounded event-ID history prevents duplicate
+submissions without dropping repeated occurrences at the same source location. Native exceptions,
+transactions, logs, feedback and web events are excluded. Firebase metadata failures cannot prevent
+error recording, and metadata writes have a 500 ms deadline.
+
+Sentry frames are reversed into ordinary JavaScript stack order before the existing grouping
+normalizer runs. The mirror uses sanitized event fields rather than the original hint's raw error.
+The global Sentry path preserves React component stacks when the normal error stack lacks source
+locations. Sentry event ID, release, environment and mechanism are attached as best-effort Firebase
+custom keys. These are session-wide keys, so concurrent errors can overwrite correlation metadata;
+they are never included in the issue grouping signature.
+
+This is forward collection, not a historical Sentry import. Crashlytics supports native applications,
+not the browser/Electron renderer, and keeps only the latest eight recorded nonfatal exceptions.
+Native signals and Android ANRs are collected independently by the native SDKs, not by JavaScript
+`beforeSend`; their detection rules and delivery timing differ. Reports can require an app relaunch.
+Exact event counts and identical issue grouping across both products are not guaranteed.
+
+On 18 September 2026, a production ANR was matched across
+[Sentry YIFY-15](https://kudos-labs.sentry.io/issues/7738168148/) and
+[Firebase](https://console.firebase.google.com/project/yify-2da67/crashlytics/app/android:io.github.kunal26das.yify/issues/69d72314e416ff47ef5d9d70e9e4c4b7):
+version 1.8.3 (85), Android 11, 17 September at 15:11:49 UTC. The Firebase dashboard had an
+`Event type = Crashes` filter hiding ANRs and nonfatal reports. Clear that filter when comparing
+coverage; include all issue states and align the time range.
+
+The forwarding/coordinator change uses SDKs already present in supported binaries and adds no native
+dependency. Tests cover caught errors, promise rejection mechanisms, A/B/A grouping, privacy,
+duplicate event IDs, disabled collection, and failed/hung Sentry uploads. Verify the new paths in a
+release-mode Staging build before publishing; automated tests alone do not prove dashboard delivery.
+
+References: [Crashlytics nonfatal reporting and limits](https://firebase.google.com/docs/crashlytics/android/customize-crash-reports),
+[React Native Firebase Crashlytics](https://rnfirebase.io/crashlytics/usage),
+[Sentry native event handling](https://sentry.zendesk.com/hc/en-us/articles/26323481356443-How-to-filter-native-events-in-React-Native-SDK).
 
 The Firebase configuration change first ships in **1.7.7 / Android 79** and requires a new
 binary. Do not publish this handler to older runtimes through OTA. Native crashes continue

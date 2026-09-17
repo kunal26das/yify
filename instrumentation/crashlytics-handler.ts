@@ -20,6 +20,7 @@ export function installCrashlyticsHandler<T extends CrashlyticsClient>(
     createCrashlytics: () => T,
     recordNonFatal: (client: T, error: Error) => void,
     exceptionsManager?: ExceptionsManagerLike,
+    reportToSentry?: (error: unknown, isFatal: boolean) => void | Promise<void>,
 ): void {
     const originalHandler = errorUtils.getGlobalHandler();
     let forwardingToOriginal = 0;
@@ -31,26 +32,31 @@ export function installCrashlyticsHandler<T extends CrashlyticsClient>(
             forwardingToOriginal -= 1;
         }
     };
-    let client: T;
+    let client: T | undefined;
     try {
         client = createCrashlytics();
     } catch {
         errorUtils.setGlobalHandler(originalHandler);
-        return;
     }
     const firebaseHandler = errorUtils.getGlobalHandler();
     let handlingFatal = false;
 
     errorUtils.setGlobalHandler(async (error, isFatal) => {
-        if (!client.isCrashlyticsCollectionEnabled) return forwardToOriginal(error, isFatal);
+        if (isFatal === true && handlingFatal) return;
+        if (isFatal === true) handlingFatal = true;
+        try {
+            await reportToSentry?.(error, isFatal === true);
+        } catch {}
+        if (!client?.isCrashlyticsCollectionEnabled) {
+            if (isFatal === true) handlingFatal = false;
+            return forwardToOriginal(error, isFatal);
+        }
         if (isFatal !== true) {
             try {
                 recordNonFatal(client, createCrashlyticsError(error));
             } catch {}
             return forwardToOriginal(error, isFatal);
         }
-        if (handlingFatal) return;
-        handlingFatal = true;
         try {
             if (firebaseHandler !== originalHandler) {
                 await firebaseHandler(createCrashlyticsError(error), true);

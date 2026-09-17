@@ -9,11 +9,33 @@ const {
 
 const sdkMock = {
     breadcrumbsIntegration: options => ({name: 'Breadcrumbs', options}),
+    reactNativeErrorHandlersIntegration: options => ({name: 'ReactNativeErrorHandlers', options}),
     expoRouterIntegration: options => ({name: 'ExpoRouter', options}),
     mobileReplayIntegration: options => ({name: 'MobileReplay', options}),
     feedbackIntegration: options => ({name: 'MobileFeedback', options}),
 };
 const {createSentryOptions} = loadTypeScript('instrumentation/sentry-config.ts', {'@sentry/react-native': sdkMock});
+
+test('native errors are sanitized before mirroring and mirror failures cannot stop Sentry delivery', async () => {
+    const raw = {event_id: 'a'.repeat(32), exception: {values: [{type: 'Error', value: 'user private@example.com failed'}]}};
+    const hints = {originalException: new Error('raw private@example.com')};
+    const forwarded = [];
+    const native = createSentryOptions({native: true, environment: 'production', mirrorException: async (event, hint) => {
+        forwarded.push({event, hint});
+        throw new Error('Firebase unavailable');
+    }});
+    const result = await native.beforeSend(raw, hints);
+    assert.equal(forwarded.length, 1);
+    assert.equal(forwarded[0].event, result);
+    assert.equal(forwarded[0].hint, hints);
+    assert.equal(JSON.stringify(result).includes('private@example.com'), false);
+    const web = createSentryOptions({native: false, environment: 'production', mirrorException: () => {
+        forwarded.push('unexpected web call');
+    }});
+    assert.deepEqual(await web.beforeSend(raw, hints), result);
+    assert.equal(forwarded.length, 1);
+    assert.equal(raw.exception.values[0].value, 'user private@example.com failed');
+});
 
 test('error request keeps the service origin and method without account paths or credentials', () => {
     const event = {
@@ -93,6 +115,7 @@ test('monitoring initializes in release app runtimes with the correct environmen
             loadTypeScript('instrumentation/sentry.ts', {
                 'react-native': {Platform: {OS: platform}},
                 'expo-updates': {channel},
+                './crashlytics': {correlateSentryCrash() {}, mirrorSentryException() {}, setCrashlyticsSentryReporter() {}},
                 '@sentry/react-native': {
                     ...sdkMock,
                     init: options => calls.push(options),
@@ -111,7 +134,9 @@ test('monitoring initializes in release app runtimes with the correct environmen
                 assert.equal(calls[0].replaysSessionSampleRate, undefined);
                 assert.equal(calls[0].replaysOnErrorSampleRate, undefined);
                 assert.deepEqual(calls[0].tracePropagationTargets, []);
-                assert.equal(calls[0].beforeSend.name, 'sanitizeErrorEvent');
+                assert.equal(typeof calls[0].beforeSend, 'function');
+                assert.deepEqual(calls[0].integrations.find(integration => integration.name === 'ReactNativeErrorHandlers')?.options,
+                    platform === 'web' ? undefined : {onerror: false});
                 assert.equal(calls[0].beforeSendTransaction.name, 'sanitizeTransaction');
                 assert.equal(calls[0].beforeSendSpan.name, 'sanitizeSpan');
                 assert.equal(calls[0].beforeSendLog.name, 'sanitizeLog');
