@@ -94,13 +94,14 @@ test('location is requested only on tap and saves a supported country', async t 
     assert.deepEqual(calls, {selected: ['US'], closed: 1});
 });
 
-test('denied, timeout and unsupported location preserve manual country selection', async t => {
-    for (const result of [{status: 'denied'}, {status: 'timeout'}, {status: 'ready', country: 'FR'}]) {
+test('unavailable, denied, timeout and unsupported location preserve manual country selection', async t => {
+    for (const result of [{status: 'unavailable'}, {status: 'denied'}, {status: 'timeout'}, {status: 'ready', country: 'FR'}]) {
         const {renderer, calls} = await mount(t, countryRepository, {requestCountry: async () => result});
         await act(async () => locateButton(renderer).props.onPress());
         assert.deepEqual(calls, {selected: [], closed: 0});
         assert.match(labels(renderer), result.status === 'denied' ? /Location access is off/
-            : result.status === 'timeout' ? /took too long/ : /isn’t supported in France/);
+            : result.status === 'timeout' ? /took too long/
+                : result.status === 'unavailable' ? /couldn’t be detected/ : /isn’t supported in France/);
         assert.equal(locateButton(renderer).props.disabled, false);
         const manual = renderer.root.findAllByType('PressableScale').find(node => nodeText(node) === 'India');
         await act(async () => manual.props.onPress());
