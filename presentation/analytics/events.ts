@@ -22,6 +22,11 @@ function movieParams(movie: Pick<Movie, 'id' | 'title'>) {
 export const Analytics = {
     screenView: trackScreenView,
 
+    journal: (action: 'opened' | 'entry_saved' | 'entry_deleted' | 'insights_opened' | 'upgrade_opened') => {
+        if (!['opened', 'entry_saved', 'entry_deleted', 'insights_opened', 'upgrade_opened'].includes(action)) return;
+        try {trackEvent('journal_action', {action, app_platform: Platform.OS});} catch {}
+    },
+
     subscriptionFunnel: (event: SubscriptionFunnelEvent, country?: string | null) =>
         trackSubscriptionFunnel(sink, event, {platform: Platform.OS, country}),
 

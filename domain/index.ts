@@ -182,3 +182,8 @@ export {selectWatchlistMovies, pickWatchlistMovie} from './policies/watchlistVie
 export type {WatchlistViewOptions, WatchlistSort, WatchlistStatus} from './policies/watchlistView';
 export {movieNotificationTarget} from './policies/movieNotificationTarget';
 export type {MovieNotificationTarget} from './policies/movieNotificationTarget';
+export type {JournalMovie, JournalEntry, JournalData, JournalInput, JournalSnapshot} from './entities/Journal';
+export type {JournalRepository} from './repositories/JournalRepository';
+export {journalInsights} from './policies/journalInsights';
+export type {JournalInsights} from './policies/journalInsights';
+export {journalToday, projectJournalMovie, validateJournalInput, JOURNAL_MAX_NOTE_LENGTH} from './policies/journal';

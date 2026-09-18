@@ -2,7 +2,7 @@ import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useS
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {AuthSession, PurchaseOffer, PurchasePlacement} from '@/domain';
-import {useAdGateway, useAuthRepository, usePurchaseRepository} from '../di/DependenciesContext';
+import {useAuthRepository, usePurchaseRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
 import {usePurchases} from '../hooks/use-purchases';
 import {usePalette} from '../hooks/use-palette';
@@ -49,7 +49,6 @@ function SupporterPaywall({request, onClose}: {request: Request; onClose: () => 
 function SupporterPaywallContent({request, onClose, session}: {request: Request; onClose: () => void; session: AuthSession}) {
     const purchases = usePurchaseRepository();
     const auth = useAuthRepository();
-    const ads = useAdGateway();
     const state = usePurchases();
     const {colors} = usePalette();
     const {watchRegion} = usePreferences();
@@ -186,8 +185,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
                 </View>
                 <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
                     <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{state.adsRemoved ? supporterStatus(state)
-                        : ads.supported ? 'Support an independent app and turn off Yify ads on every device signed into your account. YouTube may still show its own ads in trailers.'
-                            : 'Support an independent app. Your support follows your Yify account across devices and includes removal of Yify ads where they are shown. YouTube ads are separate.'}</ThemedText>
+                        : 'Get monthly and all-time viewing insights, plus no Yify ads. Your journal stays free. Supporter access follows your Yify account across devices. YouTube ads are separate.'}</ThemedText>
                     {!state.adsRemoved && (state.expiresAt || state.billingIssue) ? <ThemedText style={styles.copy}>{supporterStatus(state)}</ThemedText> : null}
                     {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading supporter options"/> : null}
                     {!state.ready ? <ThemedText style={styles.copy}>{state.available

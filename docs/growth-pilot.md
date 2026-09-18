@@ -4,6 +4,7 @@ The long-term target is 10,000 active monthly subscribers. The first checkpoint 
 
 ## First delivery
 
+- [Movie journal and supporter insights](journal.md): the first usable paid-benefit experiment. Journal logging and editing stay free; supporter access adds personal viewing summaries alongside ad removal. This feature does not wait for availability-alert permissions or a new streaming API.
 - [Subscription funnel](subscription-funnel.md): measure service selection, saved-title activation, viewing-option opens, actual offer exposure and checkout outcomes. RevenueCat remains the source for payments and renewals, avoiding duplicate Firebase purchase revenue.
 - [Availability-alert pilot](availability-alerts.md): optional alerts when a saved, unwatched movie becomes available on a selected service in the user's viewing country. Start with at most 20 consenting, eligible monthly subscribers and 20 movies each. The pilot remains disabled pending data rights and real-device delivery validation.
 
@@ -15,4 +16,4 @@ The long-term target is 10,000 active monthly subscribers. The first checkpoint 
 4. Review after a complete monthly renewal cycle. Expand only if alerts provide useful matches, permission/opt-out behavior is reliable, and subscribers keep the feature enabled. Sparse alerts may reflect catalog availability, so review eligible saved-title coverage alongside engagement.
 5. Use measured net subscription contribution and observed retention to set an acquisition ceiling before approving a specific paid campaign. Count ad/creator spend and associated fees in subscriber acquisition cost. Start with one small experiment; the ₹25,000 ceiling is not a spending target. Scaling requires evidence of a sustainable payback period, not installs or clicks alone.
 
-Keep prices, legal/data costs and acquisition economics in a dated review using actual receipts. Do not infer monthly profit or future retention from this code change. The next operational steps are data-rights confirmation, analytics configuration and push setup; the code does not enable or purchase these automatically.
+Keep prices, data costs and acquisition economics in a dated review using actual receipts. Do not infer monthly profit or future retention from this code change. Measure journal use and insight-to-checkout interest first. Data-rights confirmation and push setup remain separate prerequisites for the disabled availability-alert pilot; the code does not enable or purchase these automatically.

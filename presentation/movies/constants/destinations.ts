@@ -26,6 +26,7 @@ export function destinationHref(key: DestinationKey): string {
 export type NavKey = DestinationKey | 'preferences';
 
 export function navKeyForPath(pathname: string): NavKey | undefined {
+    if (pathname === '/journal') return 'watchlist';
     if (pathname === '/preferences' || pathname === '/history') return 'preferences';
     if (pathname === '/shows' || pathname.startsWith('/show/')) return 'shows';
     return DESTINATIONS.find((destination) => destination.href === pathname)?.key;

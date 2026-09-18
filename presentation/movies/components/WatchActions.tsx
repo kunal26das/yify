@@ -2,14 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {ScrollView, StyleSheet, View} from 'react-native';
 import type {MovieDetails} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
-import {useToggleWatchlist} from '../useWatchlist';
+import {useToggleWatchlist, useIsInWatchlist} from '../useWatchlist';
 import {PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {useHaptics} from '../../hooks/use-haptics';
 import {formatCompact} from './format';
-import {useIsInWatchlist} from '../useWatchlist';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -35,11 +34,13 @@ export function WatchActions({
     details,
     onShare,
     onDownload,
+    onLogWatch,
     pad = 0,
 }: {
     details: MovieDetails;
     onShare: () => void;
     onDownload: () => void;
+    onLogWatch?: () => void;
     pad?: number;
 }) {
     const {colors} = usePalette();
@@ -83,6 +84,11 @@ export function WatchActions({
                     fill={saved ? colors.accentSoft : colors.surfaceSunken}
                 />
             </PressableScale>
+
+            {onLogWatch ? <PressableScale onPress={onLogWatch} accessibilityRole="button"
+                accessibilityLabel="Log a watch" pressedScale={0.95} pressedOpacity={0.85}>
+                <Pill icon="book-outline" label="Log a watch" tint={colors.text} fill={colors.surfaceSunken}/>
+            </PressableScale> : null}
 
             <PressableScale
                 onPress={onShare}

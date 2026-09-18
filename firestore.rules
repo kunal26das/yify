@@ -40,6 +40,25 @@ service cloud.firestore {
       allow delete: if isOwner(uid);
     }
 
+    match /journals/{uid} {
+      function validJournal() {
+        return request.resource.data.keys().hasOnly(['payload', 'updatedAt', 'deleting'])
+          && request.resource.data.keys().hasAll(['payload', 'updatedAt', 'deleting'])
+          && request.resource.data.payload is string
+          && request.resource.data.payload.toUtf8().size() <= 400000
+          && request.resource.data.updatedAt is int
+          && request.resource.data.updatedAt > 0
+          && request.resource.data.deleting is bool
+          && (!request.resource.data.deleting
+              || request.resource.data.payload == '{"version":1,"clearedAt":0,"entries":{}}');
+      }
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && validJournal();
+      allow update: if isOwner(uid) && !resource.data.deleting && validJournal();
+      // Deletion is an empty immutable marker: stale devices cannot recreate private entries.
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
