@@ -38,6 +38,22 @@ test('Firestore rules allow owner deletion while preserving access and payload r
     await updateDoc(ownDoc, {watchlistUpdatedAt: 2});
     await updateDoc(ownDoc, {library: '{}', libraryUpdatedAt: 3});
     await updateDoc(ownDoc, {watchlist: '[1]'});
+    await updateDoc(ownDoc, {availabilityAlerts: '{"version":1,"devices":[]}'});
+    await updateDoc(ownDoc, {availabilityAlerts: 'x'.repeat(16000)});
+    await updateDoc(ownDoc, {availabilityAlerts: '{"version":1,"devices":[]}'});
+    await assert.rejects(updateDoc(ownDoc, {availabilityAlerts: 'x'.repeat(16001)}), denied);
+    await assert.rejects(updateDoc(ownDoc, {availabilityAlerts: {devices: []}}), denied);
+    await assert.rejects(updateDoc(doc(other, 'users/owner'), {availabilityAlerts: '{}'}), denied);
+    await assert.rejects(updateDoc(doc(anonymous, 'users/owner'), {availabilityAlerts: '{}'}), denied);
+    await assert.rejects(getDoc(doc(other, 'users/owner')), denied);
+    await assert.rejects(getDoc(doc(anonymous, 'users/owner')), denied);
+    await assert.rejects(setDoc(doc(owner, 'availabilityAlertState/owner'), {sent: true}), denied);
+    await assert.rejects(getDoc(doc(owner, 'availabilityAlertState/owner')), denied);
+    for (const client of [owner, other, anonymous]) {
+        await assert.rejects(getDoc(doc(client, 'availabilityAlertState/_cache')), denied);
+        await assert.rejects(setDoc(doc(client, 'availabilityAlertState/_cache'), {payload: '{}'}), denied);
+        await assert.rejects(deleteDoc(doc(client, 'availabilityAlertState/owner')), denied);
+    }
     assert.equal((await getDoc(ownDoc)).data().library, '{}');
     await assert.rejects(updateDoc(ownDoc, {library: 'x'.repeat(300001)}), denied);
     await assert.rejects(updateDoc(ownDoc, {libraryUpdatedAt: 'invalid'}), denied);
@@ -67,6 +83,17 @@ test('Firestore rules allow owner deletion while preserving access and payload r
     assert.equal(stale.ok, false);
     assert.equal((await stale.json()).error.status, 'FAILED_PRECONDITION');
     assert.equal((await getDoc(ownDoc)).data().library, '{"watched":{"1":true}}');
+    const enrollmentVersion = (await (await fetch(restUrl, {headers})).json()).updateTime;
+    const enrollment = JSON.stringify({version: 1, devices: [{id: '01234567-89ab-cdef', kind: 'expo',
+        token: 'ExponentPushToken[fakerules012345]', country: 'IN', timeZone: 'Asia/Kolkata', updatedAt: 1}]});
+    const enroll = currentDocument => fetch(commitUrl, {method: 'POST', headers,
+        body: JSON.stringify({writes: [{update: {name: 'projects/demo-yify-rules/databases/(default)/documents/users/owner',
+            fields: {availabilityAlerts: {stringValue: enrollment}}},
+            updateMask: {fieldPaths: ['availabilityAlerts']}, currentDocument}]})});
+    assert.equal((await enroll({updateTime: enrollmentVersion})).ok, true);
+    assert.equal((await getDoc(ownDoc)).data().library, '{"watched":{"1":true}}');
+    assert.equal((await getDoc(ownDoc)).data().watchlist, '[1]');
+    assert.equal((await enroll({updateTime: enrollmentVersion})).ok, false);
     await deleteDoc(ownDoc);
     assert.equal((await getDoc(ownDoc)).exists(), false);
     assert.equal((await commit('{}', {exists: false})).ok, true);

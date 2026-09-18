@@ -15,7 +15,8 @@ service cloud.firestore {
                'history',
                'historyUpdatedAt',
                'library',
-               'libraryUpdatedAt'
+               'libraryUpdatedAt',
+               'availabilityAlerts'
              ])
              && (!('watchlist' in data)
                  || (data.watchlist is string && data.watchlist.size() <= 500000))
@@ -25,6 +26,8 @@ service cloud.firestore {
                  || (data.history is string && data.history.size() <= 150000))
              && (!('library' in data)
                  || (data.library is string && data.library.size() <= 300000))
+             && (!('availabilityAlerts' in data)
+                 || (data.availabilityAlerts is string && data.availabilityAlerts.size() <= 16000))
              && (!('libraryUpdatedAt' in data) || data.libraryUpdatedAt is int)
              && (!('watchlistUpdatedAt' in data) || data.watchlistUpdatedAt is int)
              && (!('preferencesUpdatedAt' in data) || data.preferencesUpdatedAt is int)

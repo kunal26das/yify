@@ -11,6 +11,7 @@ import {
 import {
     INITIAL_PURCHASE_STATE,
     REMOVE_ADS_ENTITLEMENT,
+    trackSubscriptionFunnel,
     type Account,
     type AnalyticsSink,
     type Diagnostics,
@@ -20,6 +21,7 @@ import {
     type PurchasePlacement,
     type PurchaseRepository,
     type PurchaseState,
+    type SubscriptionFunnelEvent,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {createObservable} from './support/observable';
@@ -64,6 +66,7 @@ interface OfferedPackage {
     pkg: Package;
     offering: Offering;
     placement: PurchasePlacement;
+    offer: PurchaseOffer;
 }
 
 interface PendingWork<T> {
@@ -90,7 +93,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private reportedAdsRemoved: boolean | undefined;
     private observingForeground = false;
 
-    constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+    constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly viewingCountry: () => string | null = () => null) {
         this.analytics = analytics;
         this.cache = cache;
         // The old unscoped ads_removed flag cannot establish who owns a purchase.
@@ -219,9 +223,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         const offer = this.packages.get(offerId);
         if (!offer) {
             this.setState({failure: 'offer_unavailable'});
-            this.analytics.trackEvent('remove_ads_purchase_failed', {
-                package_id: offerId, reason: 'offer_unavailable',
-            });
+            this.trackFunnel({step: 'checkout_finished', outcome: 'offer_unavailable'});
             this.diagnostics.event('purchases.purchase', {outcome: 'unavailable'});
             return false;
         }
@@ -234,13 +236,13 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 span.finish('unavailable');
                 return false;
             }
-            this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
+            this.trackFunnel({step: 'checkout_started', offer: offer.offer});
             try {
                 const {customerInfo} = await this.sdk!.purchase({rcPackage: offer.pkg});
                 if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
                 const purchased = this.applyCustomerInfo(customerInfo);
                 this.setState({purchasing: null, failure: purchased ? null : 'not_granted'});
-                this.analytics.trackEvent('remove_ads_purchase_done', {package_id: offerId, granted: purchased});
+                this.trackFunnel({step: 'checkout_finished', offer: offer.offer, outcome: purchased ? 'granted' : 'not_granted'});
                 span.finish(purchased ? 'ok' : 'empty');
                 return purchased;
             } catch (error) {
@@ -249,7 +251,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 if (reason === 'unknown') span.fail(error, {error_code: diagnosticCode(error)});
                 else span.finish(reason === 'cancelled' ? 'cancelled' : reason === 'pending' ? 'pending' : 'skipped', {error_code: reason});
                 this.setState({purchasing: null, failure: reason});
-                this.analytics.trackEvent('remove_ads_purchase_failed', {package_id: offerId, reason});
+                this.trackFunnel({step: 'checkout_finished', offer: offer.offer, outcome: reason});
                 return false;
             }
         });
@@ -313,6 +315,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         window.addEventListener('focus', refreshWhenVisible);
         window.addEventListener('online', refreshWhenVisible);
         if (typeof document !== 'undefined') document.addEventListener('visibilitychange', refreshWhenVisible);
+    }
+
+    private trackFunnel(event: SubscriptionFunnelEvent): void {
+        try {
+            trackSubscriptionFunnel(this.analytics, event, {platform: 'web', country: this.viewingCountry()});
+        } catch {}
     }
 
     private isCurrent(revision: number): boolean {
@@ -427,8 +435,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             }
             const offers = (offering?.availablePackages ?? []).map((pkg): PurchaseOffer => {
                 const id = JSON.stringify([offering!.identifier, pkg.identifier, placement, revision]);
-                this.packages.set(id, {pkg, offering: offering!, placement});
-                return {
+                const offer: PurchaseOffer = {
                     id,
                     title: pkg.webBillingProduct.title,
                     priceLabel: pkg.webBillingProduct.currentPrice.formattedPrice,
@@ -438,6 +445,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                     offeringId: offering!.identifier,
                     placement,
                 };
+                this.packages.set(id, {pkg, offering: offering!, placement, offer});
+                return offer;
             });
             if (placement === SETTINGS_PLACEMENT) this.setState({offers});
             span.finish(offers.length ? 'ok' : 'empty');

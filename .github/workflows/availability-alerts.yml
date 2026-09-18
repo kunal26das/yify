@@ -1,0 +1,78 @@
+name: Availability alert pilot
+
+on:
+  pull_request:
+    paths: ['domain/availability/**', 'scripts/availability-alerts/**', '.github/workflows/availability-alerts.yml']
+  push:
+    branches: [main]
+    paths: ['domain/availability/**', 'scripts/availability-alerts/**', '.github/workflows/availability-alerts.yml']
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      live:
+        description: Send to the explicitly enabled, licensed pilot allowlist
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: availability-alerts-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: >-
+      github.event_name != 'schedule' ||
+      (vars.AVAILABILITY_ALERTS_PILOT_ENABLED == 'true' && vars.TMDB_COMMERCIAL_LICENSE_CONFIRMED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - run: node --test domain/availability/pilot.test.ts scripts/availability-alerts/worker.test.mjs
+      - run: node scripts/availability-alerts/run.mjs --dry-run
+
+  pilot:
+    needs: verify
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.live)) &&
+      vars.AVAILABILITY_ALERTS_PILOT_ENABLED == 'true' &&
+      vars.TMDB_COMMERCIAL_LICENSE_CONFIRMED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: availability-alerts
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+      - id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.AVAILABILITY_ALERTS_WIF_PROVIDER }}
+          service_account: ${{ vars.AVAILABILITY_ALERTS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_lifetime: 1800s
+          create_credentials_file: false
+          export_environment_variables: false
+      - name: Check saved-title availability and send eligible digests
+        run: node scripts/availability-alerts/run.mjs --live
+        env:
+          AVAILABILITY_ALERTS_PILOT_ENABLED: ${{ vars.AVAILABILITY_ALERTS_PILOT_ENABLED }}
+          TMDB_COMMERCIAL_LICENSE_CONFIRMED: ${{ vars.TMDB_COMMERCIAL_LICENSE_CONFIRMED }}
+          AVAILABILITY_ALERTS_PILOT_UIDS: ${{ secrets.AVAILABILITY_ALERTS_PILOT_UIDS }}
+          GOOGLE_CLOUD_PROJECT: yify-2da67
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          TMDB_READ_ACCESS_TOKEN: ${{ secrets.TMDB_READ_ACCESS_TOKEN }}
+          YIFY_SUBSCRIBER_REVENUECAT_API_KEY: ${{ secrets.YIFY_SUBSCRIBER_REVENUECAT_API_KEY }}
+          YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS: ${{ vars.YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS }}
+          EXPO_PUSH_ACCESS_TOKEN: ${{ secrets.EXPO_PUSH_ACCESS_TOKEN }}

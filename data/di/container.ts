@@ -1,4 +1,5 @@
 import {LibraryRepositoryImpl} from '../repositories/LibraryRepositoryImpl';
+import {Platform} from 'react-native';
 import type {Dependencies} from '@/domain';
 import {createCatalogRepositories} from './catalogRepositories';
 import {TmdbApiDataSource} from '../datasources/TmdbApiDataSource';
@@ -25,6 +26,11 @@ import {NewMoviesNotifierImpl} from '../services/NewMoviesNotifierImpl';
 import {AccountLink} from '../services/AccountLink';
 import {SentryDiagnostics} from '../services/SentryDiagnostics';
 import {CountryLocationImpl} from '../services/CountryLocationImpl';
+import {AvailabilityAlertsImpl} from '../services/AvailabilityAlertsImpl';
+import {AvailabilityPushImpl} from '../services/AvailabilityPush';
+import {FirestoreAvailabilityEnrollment} from '../datasources/AvailabilityEnrollment';
+import {availabilityPilotAccess} from '../services/availabilityAccess';
+import {watchForeground} from '../datasources/platform/ForegroundWatcher';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -46,11 +52,12 @@ export function createDependencies(): Dependencies {
     const auth = new FirebaseAuthRepositoryImpl(diagnostics);
     const preferences = new PreferencesRepositoryImpl(new PersistentCache('settings'));
     const library = new LibraryRepositoryImpl(new PersistentCache('library'));
-    const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'));
+    const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'), analytics,
+        () => ({platform: Platform.OS, country: preferences.getPreferences().watchRegion}));
     const watchHistory = new WatchHistoryRepositoryImpl(new PersistentCache('history'));
     const purchases = new RevenueCatPurchaseRepositoryImpl(
         analytics,
-        new PersistentCache('purchases'), diagnostics,
+        new PersistentCache('purchases'), diagnostics, () => preferences.getPreferences().watchRegion,
     );
     const catalog = createCatalogRepositories(appConfig, diagnostics, auth, purchases);
     const accountSync = new AccountSyncImpl({
@@ -104,6 +111,16 @@ export function createDependencies(): Dependencies {
         ads,
         displayAds: new AdSenseDisplayAds(purchases),
         supporterNudge,
+        availabilityAlerts: new AvailabilityAlertsImpl({
+            configured: process.env.EXPO_PUBLIC_AVAILABILITY_ALERTS_PILOT === 'true',
+            auth, preferences, push: new AvailabilityPushImpl(),
+            enrollment: new FirestoreAvailabilityEnrollment(), store: new PersistentCache('availability-alerts'),
+            access: availabilityPilotAccess,
+            onRefresh: listener => {
+                watchForeground(listener);
+                network.subscribe(() => {if (network.isOnline()) listener();});
+            },
+        }),
     };
 
     return instance;
