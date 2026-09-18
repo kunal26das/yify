@@ -45,9 +45,14 @@ function fixture(t, server = false) {
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'],
         ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['preferences.html', 'Preferences'],
     ]) {
-        write(file, `<html><head><title>${title}</title><style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${'Content '.repeat(600)}</body></html>`, htmlDirectory);
+        const robots = ['watchlist.html', 'history.html', 'preferences.html'].includes(file)
+            ? '<meta name="robots" content="noindex,follow">' : '';
+        const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
+        write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
     }
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) write(asset, '');
+    write('sitemap.xml', '<urlset><url><loc>https://yify.expo.app/guide/</loc></url></urlset>');
+    for (const file of ['guide.html', 'guide/index.html']) write(file, '<main><h1>How Yify works</h1><p>Read trailers and compare regional viewing options.</p><a href="/movies">Movies</a><a href="/shows">Shows</a></main>');
     for (const file of ['delete-account.html', 'delete-account/index.html']) write(file, '<body>Delete account</body>');
     for (const [name, title] of [['privacy', 'Privacy Policy'], ['terms', 'Terms &amp; Conditions']]) {
         for (const file of [`${name}.html`, `${name}/index.html`]) write(file, `<h1>${title}</h1><a href="mailto:kunal26das@gmail.com">Contact</a>`);
@@ -98,7 +103,7 @@ test('Hosting gate rejects legal directory copies without server redirects', (t)
     f.write('_expo/routes.json', JSON.stringify({apiRoutes}), f.serverDirectory);
     const result = f.check();
     assert.equal(result.status, 1);
-    for (const name of ['privacy', 'terms', 'delete-account']) {
+    for (const name of ['privacy', 'terms', 'delete-account', 'guide']) {
         for (const source of [`/${name}`, `/${name}/`]) {
             assert.ok(result.output.includes(`${source}: missing permanent Hosting redirect`));
         }
@@ -120,8 +125,8 @@ test('Hosting gate requires trailing-slash matching, standalone targets and both
 });
 
 test('Expo generates narrow Hosting redirects for both forms of each legal URL', () => {
-    assert.equal(legalRedirects.length, 3);
-    for (const name of ['privacy', 'terms', 'delete-account']) {
+    assert.equal(legalRedirects.length, 4);
+    for (const name of ['privacy', 'terms', 'delete-account', 'guide']) {
         for (const source of [`/${name}`, `/${name}/`]) {
             const redirect = legalRedirects.find(route => new RegExp(route.namedRegex).test(source));
             assert.equal(redirect?.page, `https://yify.expo.app/${name}.html`);
@@ -147,7 +152,7 @@ test('Hosting redirects preserve the native configuration and existing router se
     assert.deepEqual(hostingPlugins.map(plugin => {
         if (!Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
         const {redirects, ...options} = plugin[1];
-        assert.equal(redirects.length, 3);
+        assert.equal(redirects.length, 4);
         return [plugin[0], options];
     }), nativePlugins);
 });
@@ -271,4 +276,63 @@ test('only the explicit Hosting export selects server output', () => {
         assert.equal(result.status, 0, result.stderr);
         assert.deepEqual(JSON.parse(result.stdout), {output: expected, baseUrl});
     }
+});
+
+for (const server of [false, true]) {
+    test(`${server ? 'Hosting' : 'Pages'} gate rejects navigation that is only a role without a real href`, t => {
+        const f = fixture(t, server);
+        const page = path.join(f.htmlDirectory, 'index.html');
+        fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replaceAll('<a href="/movies">movies</a>', '<div role="link">movies</div>'));
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /index\.html: missing crawlable anchor to \/movies/);
+    });
+
+    test(`${server ? 'Hosting' : 'Pages'} gate accepts base-path navigation and rejects missing guide links`, t => {
+        const f = fixture(t, server);
+        const page = path.join(f.htmlDirectory, 'index.html');
+        const html = fs.readFileSync(page, 'utf8').replaceAll('href="/', 'href="/yify/');
+        fs.writeFileSync(page, html);
+        assert.equal(f.check().status, 0, f.check().output);
+        fs.writeFileSync(page, html.replace('<a href="/yify/guide/">guide/</a>', 'How Yify works'));
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /index\.html: missing crawlable anchor to \/guide/);
+    });
+}
+
+test('export gate requires utility noindex, public indexing, and a truthful initial catalogue state', t => {
+    const f = fixture(t);
+    for (const [file, replace, expected] of [
+        ['preferences.html', html => html.replace('noindex,follow', 'index,follow'), /preferences\.html: utility page must use noindex,follow/],
+        ['shows.html', html => html.replace('</head>', '<meta name="robots" content="noindex,follow"></head>'), /shows\.html: public discovery page must not be noindex/],
+        ['movies.html', html => html.replace('</body>', 'No results found</body>'), /movies\.html: initial catalogue HTML must show loading/],
+    ]) {
+        const path = require('node:path').join(f.htmlDirectory, file);
+        const html = fs.readFileSync(path, 'utf8');
+        fs.writeFileSync(path, replace(html));
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, expected);
+        fs.writeFileSync(path, html);
+    }
+});
+
+test('sitemap includes the public guide and excludes personal utility pages', t => {
+    const f = fixture(t);
+    f.write('sitemap.xml', '<urlset><loc>https://yify.expo.app/watchlist</loc><loc>https://yify.expo.app/preferences/</loc><loc>https://yify.expo.app/history</loc></urlset>');
+    const result = f.check();
+    assert.equal(result.status, 1);
+    for (const route of ['watchlist', 'history', 'preferences']) assert.ok(result.output.includes(`private utility route ${route}`));
+    assert.match(result.output, /public guide is missing/);
+});
+
+test('guide copies must stay identical and remain readable without app scripts', t => {
+    const f = fixture(t);
+    f.write('guide.html', '<h1>Changed guide</h1><script src="app.js"></script>');
+    const result = f.check();
+    assert.equal(result.status, 1);
+    assert.match(result.output, /guide\.html: public guide must contain readable main content/);
+    assert.match(result.output, /public guide must remain readable without app scripts/);
+    assert.match(result.output, /guide content and resolved links must stay identical/);
 });

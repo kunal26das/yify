@@ -68,6 +68,25 @@ function deferred() {
     return {promise, resolve, reject};
 }
 
+test('the initial catalogue stays loading until the first request confirms its results', async t => {
+    const pending = deferred();
+    const requests = [];
+    const hook = await mount({listMovies: params => {
+        requests.push(params);
+        return pending.promise;
+    }}, t);
+    assert.equal(hook.value.loading, true);
+    assert.equal(hook.value.totalMovieCount, null);
+    assert.deepEqual(hook.value.movies, []);
+    await hook.run(model => model.loadInitial());
+    assert.equal(requests.length, 2);
+    assert.equal(hook.value.loading, true);
+    await hook.run(() => pending.resolve({movies: [], movieCount: 0, hasMore: false}));
+    assert.equal(hook.value.loading, false);
+    assert.equal(hook.value.totalMovieCount, 0);
+    assert.deepEqual(hook.value.movies, []);
+});
+
 for (const previousFails of [false, true]) {
     test(`rapid filters and search preserve the latest combined intent while ignoring an old ${previousFails ? 'failure' : 'success'}`, async t => {
         const old = deferred();

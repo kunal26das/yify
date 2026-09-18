@@ -19,6 +19,7 @@ const ROUTES = [
     ['history.html', 'History'],
     ['preferences.html', 'Preferences'],
 ];
+const UTILITY_ROUTES = ['watchlist', 'history', 'preferences'];
 const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
@@ -46,7 +47,7 @@ if (serverOutput) {
                 throw new Error(`${page} bundle is missing or outside the server directory`);
             }
         }
-        for (const page of ['privacy', 'terms', 'delete-account']) {
+        for (const page of ['privacy', 'terms', 'delete-account', 'guide']) {
             for (const source of [`/${page}`, `/${page}/`]) {
                 const redirect = Array.isArray(manifest.redirects) ? manifest.redirects.find((entry) => {
                     try {
@@ -57,7 +58,7 @@ if (serverOutput) {
                 }) : undefined;
                 if (redirect?.page !== `https://yify.expo.app/${page}.html` || !redirect.permanent ||
                     (redirect.methods && !['GET', 'HEAD'].every((method) => redirect.methods.includes(method)))) {
-                    failures.push(`${source}: missing permanent Hosting redirect to its standalone legal HTML page`);
+                    failures.push(`${source}: missing permanent Hosting redirect to its standalone HTML page`);
                 }
             }
         }
@@ -94,6 +95,18 @@ for (const bundle of bundles) {
     }
 }
 
+function linkedPaths(html, page = '/') {
+    return [...html.matchAll(/<a\b[^>]*\bhref=(['"])(.*?)\1[^>]*>/gi)].flatMap((match) => {
+        try {
+            const url = new URL(match[2].replaceAll('&amp;', '&'), `https://yify.expo.app${page}`);
+            if (!['https://yify.expo.app', 'https://kunal26das.github.io'].includes(url.origin)) return [];
+            return [url.pathname.replace(/^\/yify(?=\/|$)/, '').replace(/\/$/, '') || '/'];
+        } catch {
+            return [];
+        }
+    });
+}
+
 for (const [file, expectTitle] of ROUTES) {
     const path = join(htmlDirectory, file);
     if (!existsSync(path)) {
@@ -119,10 +132,59 @@ for (const [file, expectTitle] of ROUTES) {
     if (!/@font-face\s*\{[^}]*font-family:\s*(?:"ionicons"|'ionicons'|ionicons)\s*;/i.test(html)) {
         failures.push(`${file}: icon font missing from static rendering — icons can cause a hydration mismatch`);
     }
+    const paths = linkedPaths(body);
+    for (const href of ['/movies', '/shows', ...(file === 'index.html' ? ['/guide', '/privacy', '/terms'] : [])]) {
+        if (!paths.includes(href)) failures.push(`${file}: missing crawlable anchor to ${href}`);
+    }
+    const robots = [...html.matchAll(/<meta\b[^>]*>/gi)].filter(([tag]) => /\bname=['"]robots['"]/i.test(tag))
+        .map(([tag]) => tag.match(/\bcontent=['"]([^'"]*)['"]/i)?.[1]?.replace(/\s/g, '').toLowerCase());
+    if (UTILITY_ROUTES.some((route) => file === `${route}.html`)) {
+        if (!robots.includes('noindex,follow')) failures.push(`${file}: utility page must use noindex,follow`);
+    } else if (robots.some((value) => value?.split(',').includes('noindex'))) {
+        failures.push(`${file}: public discovery page must not be noindex`);
+    }
+    if (file === 'movies.html' && body.includes('No results found')) {
+        failures.push(`${file}: initial catalogue HTML must show loading instead of a false empty result`);
+    }
 }
 
 for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) {
     if (!existsSync(join(dir, asset))) failures.push(`${asset}: missing from the export`);
+}
+
+if (existsSync(join(dir, 'sitemap.xml'))) {
+    const sitemap = readFileSync(join(dir, 'sitemap.xml'), 'utf8');
+    for (const route of UTILITY_ROUTES) {
+        if (new RegExp(`<loc>[^<]*/${route}/?</loc>`).test(sitemap)) {
+            failures.push(`sitemap.xml: private utility route ${route} must not be listed`);
+        }
+    }
+    if (!sitemap.includes('<loc>https://yify.expo.app/guide/</loc>')) {
+        failures.push('sitemap.xml: public guide is missing');
+    }
+}
+
+const guidePages = ['guide/index.html', 'guide.html'];
+const normalizedGuides = [];
+for (const page of guidePages) {
+    const path = join(dir, page);
+    if (!existsSync(path)) {
+        failures.push(`${page}: missing public guide`);
+        continue;
+    }
+    const html = readFileSync(path, 'utf8');
+    if (!/<h1\b[^>]*>[^<]+<\/h1>/i.test(html) || !/<main\b/i.test(html) || !/<p\b[^>]*>[^<]+/i.test(html)) {
+        failures.push(`${page}: public guide must contain readable main content`);
+    }
+    if (/<script\b/i.test(html)) failures.push(`${page}: public guide must remain readable without app scripts`);
+    for (const href of ['/movies', '/shows']) {
+        if (!linkedPaths(html, `/yify/${page}`).includes(href)) failures.push(`${page}: missing crawlable anchor to ${href}`);
+    }
+    normalizedGuides.push(html.replace(/href="(\.\.?\/[^"\r\n]*)"/g, (_attribute, href) =>
+        `href="${new URL(href, `https://guide.yify.invalid/yify/${page}`).href}"`));
+}
+if (normalizedGuides.length === guidePages.length && normalizedGuides[0] !== normalizedGuides[1]) {
+    failures.push(`${guidePages.join(' and ')} have drifted — their guide content and resolved links must stay identical`);
 }
 
 const DELETION_PAGES = ['delete-account.html', join('delete-account', 'index.html')];

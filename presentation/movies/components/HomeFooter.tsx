@@ -1,7 +1,8 @@
 import {Platform, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {Analytics} from '@/presentation/analytics/events';
-import {PressableScale, enterRise} from '../../components/motion';
+import {enterRise} from '../../components/motion';
+import {NavigationLink} from '../../components/navigation-link';
 import {ThemedText} from '../../components/themed-text';
 import {FontFamily, Spacing} from '../../constants/theme';
 import {LEGAL_LINKS} from '../../constants/legal';
@@ -42,9 +43,10 @@ export function HomeFooter() {
         <Animated.View entering={enterRise(index + 1)} style={styles.column} key={title}>
             <ThemedText style={[styles.columnTitle, {color: colors.text}]}>{title}</ThemedText>
             {links.map((link) => (
-                <PressableScale
+                <NavigationLink
                     key={link.label}
-                    onPress={() => go(link)}
+                    href={link.href}
+                    onNavigate={() => go(link)}
                     accessibilityRole="link"
                     pressedScale={0.98}
                     pressedOpacity={0.6}
@@ -52,7 +54,7 @@ export function HomeFooter() {
                     contentStyle={styles.linkHit}
                 >
                     <ThemedText style={[styles.link, {color: colors.textMuted}]}>{link.label}</ThemedText>
-                </PressableScale>
+                </NavigationLink>
             ))}
         </Animated.View>
     );
@@ -65,7 +67,7 @@ export function HomeFooter() {
                         YIFY
                     </ThemedText>
                     <ThemedText style={[styles.tagline, {color: colors.textMuted}]}>
-                        Find your next film. Browse the catalogue, watch a trailer, and keep a list.
+                        Explore films through trailers and ratings, and save a personal watchlist. Find where to watch in your country with links to streaming services.
                     </ThemedText>
                     <View style={styles.store}>
                         <PlayStoreButton source="home_footer"/>
@@ -79,6 +81,11 @@ export function HomeFooter() {
                 </View>
             </View>
             {Platform.OS === 'web' ? <View style={[styles.legal, {borderTopColor: colors.border}]}>
+                <a href={`${process.env.EXPO_BASE_URL ?? ''}/guide/`}
+                    onClick={() => Analytics.footerLink('How Yify works')}
+                    style={{color: colors.textMuted, textDecoration: 'none', minHeight: 44, display: 'flex', alignItems: 'center'}}>
+                    <ThemedText style={[styles.link, {color: colors.textMuted}]}>How Yify works</ThemedText>
+                </a>
                 {LEGAL_LINKS.map(link => <a key={link.url} href={link.url}
                     onClick={() => Analytics.footerLink(link.label)}
                     style={{color: colors.textMuted, textDecoration: 'none', minHeight: 44, display: 'flex', alignItems: 'center'}}>

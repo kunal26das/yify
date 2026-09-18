@@ -6,6 +6,7 @@ import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ThemedText} from '../../components/themed-text';
 import {PressableScale} from '../../components/motion';
+import {NavigationLink} from '../../components/navigation-link';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
@@ -97,9 +98,10 @@ export function TopBar() {
     const renderLink = (link: NavLink) => {
         const selected = link.key === active;
         return (
-            <PressableScale
+            <NavigationLink
                 key={link.key}
-                onPress={() => navigate(link.key, link.href)}
+                href={link.href}
+                onNavigate={() => navigate(link.key, link.href)}
                 hitSlop={6}
                 accessibilityRole="link"
                 accessibilityState={{selected}}
@@ -123,13 +125,14 @@ export function TopBar() {
                         {backgroundColor: selected ? colors.accent : 'transparent'},
                     ]}
                 />
-            </PressableScale>
+            </NavigationLink>
         );
     };
 
     const preferencesButton = (
-        <PressableScale
-            onPress={() => navigate('preferences', PREFERENCES_HREF)}
+        <NavigationLink
+            href={PREFERENCES_HREF}
+            onNavigate={() => navigate('preferences', PREFERENCES_HREF)}
             hitSlop={6}
             accessibilityRole="link"
             accessibilityLabel="Preferences"
@@ -161,7 +164,7 @@ export function TopBar() {
                     color={active === 'preferences' ? colors.accent : colors.textMuted}
                 />
             )}
-        </PressableScale>
+        </NavigationLink>
     );
 
     const searchPill = (
@@ -230,8 +233,9 @@ export function TopBar() {
     return (
         <View style={[styles.bar, {paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.border}]}>
             <View style={[styles.row, isPhone && styles.rowPhone, {paddingHorizontal: gutter}]}>
-                <PressableScale
-                    onPress={() => navigate('home', '/')}
+                <NavigationLink
+                    href="/"
+                    onNavigate={() => navigate('home', '/')}
                     accessibilityRole="link"
                     accessibilityLabel="Yify home"
                     pressedScale={0.97}
@@ -243,7 +247,7 @@ export function TopBar() {
                     <ThemedText type="title" style={[styles.wordmark, isPhone && styles.wordmarkPhone, {color: colors.text}]}>
                         YIFY
                     </ThemedText>
-                </PressableScale>
+                </NavigationLink>
 
                 {compact ? (
                     <>

@@ -60,7 +60,17 @@ export default function Root({children}: PropsWithChildren) {
                 <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON_LD}} />
                 <ScrollViewStyleReset />
             </head>
-            <body>{children}</body>
+            <body>
+                <noscript>
+                    <style>{'html,body{height:auto;overflow:auto}#root{display:none}'}</style>
+                    <div style={{padding: 24, fontFamily: 'sans-serif', lineHeight: 1.6}}>
+                        Yify’s interactive catalogue needs JavaScript. You can still read{' '}
+                        <a href={`${BASE_URL}/guide/`}>how Yify works</a> and our{' '}
+                        <a href={`${BASE_URL}/privacy/`}>privacy policy</a>.
+                    </div>
+                </noscript>
+                {children}
+            </body>
         </html>
     );
 }
