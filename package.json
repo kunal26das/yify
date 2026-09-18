@@ -57,7 +57,7 @@
     "@revenuecat/purchases-js": "1.60.1",
     "@sentry/react-native": "8.26.0",
     "@yify/crashreporting": "0.1.0",
-    "expo": "57.0.22",
+    "expo": "57.0.23",
     "expo-background-task": "57.0.18",
     "expo-blur": "57.0.3",
     "expo-build-properties": "57.0.20",
