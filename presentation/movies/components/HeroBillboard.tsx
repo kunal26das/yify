@@ -92,7 +92,7 @@ export function HeroBillboard({
     const artHeight = Math.round(artWidth * 9 / 16);
     const copyWidth = split ? innerWidth - gap - artWidth : innerWidth;
     const verticalPadding = split ? 40 : 20;
-    const bottomPadding = looped ? Spacing.sm : verticalPadding;
+    const bottomPadding = split && looped ? Spacing.sm : verticalPadding;
     const selectorHeight = looped ? SELECTOR_HEIGHT : 0;
     const measuredContentHeight = Math.max(0, ...movies.map((movie) => contentHeights[`${movie.id}:${copyWidth}`] ?? 0));
     const contentHeight = measuredContentHeight || (split ? 340 : 280);
@@ -593,10 +593,7 @@ function HeroSlide({
     );
 
     const content = (
-        <View
-            style={[styles.content, {width: copyWidth}]}
-            onLayout={(event) => onMeasureContent(movie.id, copyWidth, event.nativeEvent.layout.height)}
-        >
+        <View style={[styles.content, {width: copyWidth}]}>
             <Pressable
                 onPress={() => openDetails('hero_slide')}
                 onFocus={() => setFocused('title')}
@@ -641,7 +638,10 @@ function HeroSlide({
                 </ThemedText>
             ) : null}
 
-            <View style={styles.ctaRow}>
+            <View
+                style={styles.ctaRow}
+                onLayout={({nativeEvent: {layout}}) => onMeasureContent(movie.id, copyWidth, layout.y + layout.height)}
+            >
                 {hasTrailer ? (
                     <PressableScale
                         onPress={onPlay}
@@ -717,6 +717,7 @@ function HeroSlide({
                     paddingBottom: bottomPadding,
                     flexDirection: split ? 'row' : 'column',
                     alignItems: split ? 'center' : 'flex-start',
+                    justifyContent: split ? 'center' : 'flex-start',
                 },
             ]}
         >
@@ -782,7 +783,7 @@ function formatRuntime(minutes: number): string | null {
 const styles = StyleSheet.create({
     container: {overflow: 'hidden'},
     rounded: {borderRadius: Radius.xl},
-    slide: {overflow: 'hidden', justifyContent: 'center'},
+    slide: {overflow: 'hidden'},
     content: {flexShrink: 0},
     artwork: {flexShrink: 0, overflow: 'hidden', borderRadius: Radius.lg},
     artControls: {position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', justifyContent: 'space-between'},
