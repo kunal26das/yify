@@ -1,11 +1,13 @@
 import {useEffect} from 'react';
 import {setStyle} from 'expo-navigation-bar';
-import {useColorScheme} from '../hooks/use-color-scheme';
+import {setBackgroundColorAsync} from 'expo-system-ui';
+import {usePalette} from '../hooks/use-palette';
 
 export function SystemBars(): null {
-    const scheme = useColorScheme();
+    const {scheme, colors} = usePalette();
     useEffect(() => {
         setStyle(scheme === 'dark' ? 'dark' : 'light');
-    }, [scheme]);
+        void setBackgroundColorAsync(colors.background).catch(() => {});
+    }, [scheme, colors.background]);
     return null;
 }

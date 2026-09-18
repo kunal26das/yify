@@ -310,7 +310,10 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
         <Screen>
             <ScrollView
                 ref={scrollRef}
+                style={Platform.OS !== 'web' && {backgroundColor: colors.background}}
+                endFillColor={colors.background}
                 contentContainerStyle={{
+                    backgroundColor: Platform.OS !== 'web' ? colors.background : undefined,
                     paddingTop: navHeight,
                     paddingBottom: insets.bottom + 48,
                     maxWidth: contentMaxWidth,
@@ -347,10 +350,6 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             setOpen(null);
                         }}
                     />
-                </Group>
-
-                <Group colors={colors} index={2}>
-                    <MyStreamingServices style={{paddingHorizontal: gutter}}/>
                 </Group>
 
                 <SettingsSection
@@ -872,22 +871,6 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                     <SyncRow colors={colors} gutter={gutter}/>
-                    <Row
-                        icon="trash-outline"
-                        title="Delete account"
-                        subtitle="Removes your account and everything synced to it."
-                        colors={colors}
-                        gutter={gutter}
-                        onPress={deleting ? undefined : confirmDelete}
-                        accessibilityLabel="Delete account"
-                        trailing={
-                            deleting ? (
-                                <ActivityIndicator color={colors.accent}/>
-                            ) : (
-                                <ThemedText style={[styles.value, {color: colors.peer}]}>Delete</ThemedText>
-                            )
-                        }
-                    />
                     </>
                 ) : (
                     <Row
@@ -929,6 +912,25 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     accessibilityLabel="History"
                     trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}
                 />
+                <MyStreamingServices style={{paddingHorizontal: gutter}}/>
+                {account ? (
+                    <Row
+                        icon="trash-outline"
+                        title="Delete account"
+                        subtitle="Removes your account and everything synced to it."
+                        colors={colors}
+                        gutter={gutter}
+                        onPress={deleting ? undefined : confirmDelete}
+                        accessibilityLabel="Delete account"
+                        trailing={
+                            deleting ? (
+                                <ActivityIndicator color={colors.accent}/>
+                            ) : (
+                                <ThemedText style={[styles.value, {color: colors.peer}]}>Delete</ThemedText>
+                            )
+                        }
+                    />
+                ) : null}
             </Group>
         </>
     );
