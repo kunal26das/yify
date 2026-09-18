@@ -17,7 +17,9 @@ import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
-import {Genre, movieHistoryEntry} from '@/domain';
+import {Genre, movieHistoryEntry, projectJournalMovie} from '@/domain';
+import {JournalEditor} from '../journal/JournalEditor';
+import {useAuth} from '../hooks/use-auth';
 import {Analytics} from '@/presentation/analytics/events';
 import {canonicalUrl} from '../constants/site';
 import {useToast} from '../components/toast';
@@ -112,6 +114,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const goTo = useGoTo();
     const recordHistory = useRecordHistory();
     const {historyPaused} = usePreferences();
+    const session = useAuth();
+    const [loggingMovieId, setLoggingMovieId] = useState<number | null>(null);
 
     const [titleExpanded, setTitleExpanded] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -359,7 +363,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                 expanded={titleExpanded}
                 onToggle={() => setTitleExpanded((value) => !value)}
             />
-            <WatchActions details={details} onShare={handleShare} onDownload={handleDownload} pad={pad}/>
+            <WatchActions details={details} onShare={handleShare} onDownload={handleDownload}
+                onLogWatch={() => setLoggingMovieId(details.id)} pad={pad}/>
             <DescriptionCard details={details} onGenrePress={handleGenre}/>
             <WatchProviders details={details} pad={pad}/>
         </>
@@ -417,6 +422,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
 
     const overlays = (
         <>
+            <JournalEditor key={session.account?.uid ?? 'anonymous'} visible={loggingMovieId === details.id}
+                movie={projectJournalMovie(details)} onClose={() => setLoggingMovieId(null)}/>
             {reserved}
             {dragStrip}
             {lightboxIndex != null ? (

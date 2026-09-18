@@ -19,6 +19,7 @@ interface WatchlistActionsSheetProps {
     onClose: () => void;
     onRemove: (movie: Movie) => void;
     onSelectCollection: (id: string) => void;
+    onLogWatch?: (movie: Movie) => void;
 }
 
 export function WatchlistActionsSheet(props: WatchlistActionsSheetProps) {
@@ -29,7 +30,7 @@ export function WatchlistActionsSheet(props: WatchlistActionsSheetProps) {
     );
 }
 
-function WatchlistActionsContent({movie, library, state, onClose, onRemove, onSelectCollection}: WatchlistActionsSheetProps) {
+function WatchlistActionsContent({movie, library, state, onClose, onRemove, onSelectCollection, onLogWatch}: WatchlistActionsSheetProps) {
     const {colors} = usePalette();
     const confirm = useConfirm();
     const toast = useToast();
@@ -86,6 +87,8 @@ function WatchlistActionsContent({movie, library, state, onClose, onRemove, onSe
 
     return (
         <>
+            {movie && onLogWatch ? <WatchlistControlButton label="Log a watch" icon="book-outline"
+                onPress={() => onLogWatch(movie)}/> : null}
             {movie ? (
                 <WatchlistControlButton label={watched ? 'Mark as to watch' : 'Mark as watched'}
                                         icon={watched ? 'checkmark-circle' : 'checkmark-circle-outline'} active={watched}

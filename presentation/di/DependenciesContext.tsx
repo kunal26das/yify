@@ -11,6 +11,7 @@ import type {
     DisplayAds,
     MovieRepository,
     LibraryRepository,
+    JournalRepository,
     NetworkMonitor,
     NewMoviesNotifier,
     PreferencesRepository,
@@ -85,6 +86,12 @@ export function usePreferencesRepository(): PreferencesRepository {
 
 export function useWatchlistRepository(): WatchlistRepository {
     return useDependencies().watchlist;
+}
+
+export function useJournalRepository(): JournalRepository {
+    const journal = useDependencies().journal;
+    if (!journal) throw new Error('JournalRepository is missing from DependenciesProvider');
+    return journal;
 }
 
 export function useWatchHistoryRepository(): WatchHistoryRepository {

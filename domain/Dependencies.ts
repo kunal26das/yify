@@ -22,6 +22,7 @@ import type {Diagnostics} from './services/Diagnostics';
 import type {DisplayAds} from './services/DisplayAds';
 import type {CountryLocation} from './services/CountryLocation';
 import type {AvailabilityAlerts} from './services/AvailabilityAlerts';
+import type {JournalRepository} from './repositories/JournalRepository';
 
 export interface Dependencies {
     diagnostics: Diagnostics;
@@ -48,4 +49,5 @@ export interface Dependencies {
     displayAds: DisplayAds;
     supporterNudge: SupporterNudge;
     availabilityAlerts?: AvailabilityAlerts;
+    journal?: JournalRepository;
 }

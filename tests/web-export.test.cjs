@@ -43,9 +43,9 @@ function fixture(t, server = false) {
     };
     for (const [file, title] of [
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'],
-        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['preferences.html', 'Preferences'],
+        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'],
     ]) {
-        const robots = ['watchlist.html', 'history.html', 'preferences.html'].includes(file)
+        const robots = ['watchlist.html', 'history.html', 'journal.html', 'preferences.html'].includes(file)
             ? '<meta name="robots" content="noindex,follow">' : '';
         const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
         write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
@@ -320,10 +320,10 @@ test('export gate requires utility noindex, public indexing, and a truthful init
 
 test('sitemap includes the public guide and excludes personal utility pages', t => {
     const f = fixture(t);
-    f.write('sitemap.xml', '<urlset><loc>https://yify.expo.app/watchlist</loc><loc>https://yify.expo.app/preferences/</loc><loc>https://yify.expo.app/history</loc></urlset>');
+    f.write('sitemap.xml', '<urlset><loc>https://yify.expo.app/watchlist</loc><loc>https://yify.expo.app/preferences/</loc><loc>https://yify.expo.app/history</loc><loc>https://yify.expo.app/journal</loc></urlset>');
     const result = f.check();
     assert.equal(result.status, 1);
-    for (const route of ['watchlist', 'history', 'preferences']) assert.ok(result.output.includes(`private utility route ${route}`));
+    for (const route of ['watchlist', 'history', 'journal', 'preferences']) assert.ok(result.output.includes(`private utility route ${route}`));
     assert.match(result.output, /public guide is missing/);
 });
 

@@ -21,4 +21,5 @@ export function bootstrap(dependencies: Dependencies): void {
     dependencies.watchlist.subscribe(refreshMovieNotificationContent);
     dependencies.library.subscribe(refreshMovieNotificationContent);
     dependencies.availabilityAlerts?.start();
+    dependencies.journal?.start();
 }

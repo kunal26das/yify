@@ -34,6 +34,27 @@ test('Firestore rules allow owner deletion while preserving access and payload r
     const ownDoc = doc(owner, 'users/owner');
     const denied = (error) => error.code === 'permission-denied';
 
+    const journalDoc = doc(owner, 'journals/owner');
+    await setDoc(journalDoc, {payload: '{"version":1,"entries":{},"clearedAt":0}', updatedAt: 1, deleting: false});
+    assert.equal((await getDoc(journalDoc)).data().updatedAt, 1);
+    await updateDoc(journalDoc, {payload: 'x'.repeat(400000), updatedAt: 2});
+    await assert.rejects(updateDoc(journalDoc, {payload: 'x'.repeat(400001)}), denied);
+    await assert.rejects(updateDoc(journalDoc, {payload: '界'.repeat(133334)}), denied);
+    await assert.rejects(updateDoc(journalDoc, {payload: {note: 'private'}}), denied);
+    await assert.rejects(updateDoc(journalDoc, {updatedAt: 'invalid'}), denied);
+    await assert.rejects(updateDoc(journalDoc, {unexpected: true}), denied);
+    for (const client of [other, anonymous]) {
+        await assert.rejects(getDoc(doc(client, 'journals/owner')), denied);
+        await assert.rejects(setDoc(doc(client, 'journals/owner'), {payload: '{}', updatedAt: 1, deleting: false}), denied);
+        await assert.rejects(deleteDoc(doc(client, 'journals/owner')), denied);
+    }
+    await assert.rejects(updateDoc(journalDoc, {deleting: true}), denied);
+    await updateDoc(journalDoc, {payload: '{"version":1,"clearedAt":0,"entries":{}}', deleting: true});
+    await assert.rejects(updateDoc(journalDoc, {payload: 'old private notes', deleting: false}), denied);
+    await assert.rejects(setDoc(journalDoc, {payload: '{}', updatedAt: 3, deleting: false}), denied);
+    await assert.rejects(deleteDoc(journalDoc), denied);
+    assert.equal((await getDoc(journalDoc)).data().payload, '{"version":1,"clearedAt":0,"entries":{}}');
+
     await setDoc(ownDoc, {watchlist: '[]', watchlistUpdatedAt: 1});
     await updateDoc(ownDoc, {watchlistUpdatedAt: 2});
     await updateDoc(ownDoc, {library: '{}', libraryUpdatedAt: 3});
