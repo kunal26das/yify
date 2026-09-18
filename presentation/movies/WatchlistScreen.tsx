@@ -5,7 +5,7 @@ import {FlatList, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {libraryMovieWatched, liveLibraryCollections, pickWatchlistMovie, selectWatchlistMovies, type Movie, type WatchlistViewOptions} from '@/domain';
+import {libraryMovieWatched, liveLibraryCollections, pickWatchlistMovie, projectJournalMovie, selectWatchlistMovies, type Movie, type WatchlistViewOptions} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
 import {LinearGradient} from '../components/linear-gradient';
 import {useConfirm} from '../components/confirm-dialog';
@@ -28,11 +28,13 @@ import {POSTER_GAP, POSTER_MIN_WIDTH} from './components/moviePosterLayout';
 import {useGoTo} from './constants/destinations';
 import {useRemoveFromWatchlist, useWatchlist} from './useWatchlist';
 import {useLibrary} from './useLibrary';
-import {WatchlistControls} from './components/WatchlistControls';
+import {WatchlistControls, WatchlistControlButton} from './components/WatchlistControls';
 import {WatchlistActionsSheet} from './components/WatchlistActionsSheet';
 import {useWatchlistStreaming} from './useWatchlistStreaming';
 import {WatchlistStreamingControls} from './components/WatchlistStreamingControls';
 import {WatchlistStreamingBadge} from './components/WatchlistStreamingBadge';
+import {JournalEditor} from '../journal/JournalEditor';
+import {useAuth} from '../hooks/use-auth';
 
 const COVER_ASPECT = 16 / 9;
 const COVER_WIDTH_WIDE = 360;
@@ -174,6 +176,8 @@ export function WatchlistScreen() {
     const toast = useToast();
     const [viewOptions, setOptions] = useState<WatchlistViewOptions>({status: 'all', sort: 'saved'});
     const [manage, setManage] = useState<{movie: Movie | null} | null>(null);
+    const session = useAuth();
+    const [journalMovie, setJournalMovie] = useState<Movie | null>(null);
     const closeManage = useCallback(() => setManage(null), []);
     const collections = useMemo(() => liveLibraryCollections(libraryState), [libraryState]);
     const options = useMemo(() => viewOptions.collectionId && !collections.some((collection) => collection.id === viewOptions.collectionId)
@@ -319,6 +323,9 @@ export function WatchlistScreen() {
                             ) : null}
                             <WatchlistControls options={options} onChange={setOptions} genres={genres} collections={collections}
                                                onManageCollections={() => setManage({movie: null})} onPick={pickForMe} canPick={canPick}/>
+                            <View style={{alignItems: 'flex-start'}}>
+                                <WatchlistControlButton label="Movie journal" icon="book-outline" onPress={() => goTo('/journal')}/>
+                            </View>
                             <WatchlistStreamingControls streaming={streaming}/>
                             {visible.length !== movies.length ? (
                                 <ThemedText accessibilityLiveRegion="polite" style={[styles.results, {color: colors.textMuted}]}>
@@ -374,7 +381,10 @@ export function WatchlistScreen() {
                 />
                 <WatchlistActionsSheet visible={manage != null} movie={manage?.movie ?? null}
                                        library={library} state={libraryState} onClose={closeManage} onRemove={remove}
+                                       onLogWatch={movie => {setManage(null); setJournalMovie(movie);}}
                                        onSelectCollection={(collectionId) => setOptions((current) => ({...current, collectionId}))}/>
+                <JournalEditor key={session.account?.uid ?? 'anonymous'} visible={journalMovie != null}
+                    movie={journalMovie ? projectJournalMovie(journalMovie) : null} onClose={() => setJournalMovie(null)}/>
 
             </Screen>
         </HoverCardHost>

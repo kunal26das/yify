@@ -66,6 +66,7 @@ function syncFixture(t, options = {}) {
             return options.getIdToken ? options.getIdToken() : 'test-token';
         }},
         diagnostics: options.diagnostics,
+        journal: options.journal,
         watchlist: {
             getAll: () => movies,
             applyRemote: (next) => { movies = next; },
@@ -122,6 +123,39 @@ test('account deletion drains an active upload and blocks foreground and poll re
     await flush();
     assert.equal(remote.has('account-a'), false);
     assert.deepEqual(calls, afterDelete);
+});
+
+test('account deletion drains journal writes and deletes journal before the account document', async t => {
+    const drain = deferred();
+    const events = [];
+    const journal = {pause: () => {events.push('pause-journal'); return drain.promise;},
+        resume: () => events.push('resume-journal'), deleteRemote: async () => {events.push('delete-journal'); return true;}};
+    const {sync, calls} = syncFixture(t, {journal});
+    sync.setAccount('account-a');
+    await flush();
+    let done = false;
+    const pause = sync.pause().then(() => {done = true;});
+    await flush();
+    assert.equal(done, false);
+    drain.resolve();
+    await pause;
+    assert.equal(await sync.deleteRemote(), true);
+    assert.deepEqual(events, ['pause-journal', 'delete-journal']);
+    assert.ok(calls.includes('delete:account-a'));
+    sync.resume();
+    assert.equal(events.at(-1), 'resume-journal');
+});
+
+test('a failed journal deletion prevents deletion of the account sync document', async t => {
+    const journal = {pause: async () => {}, resume() {}, deleteRemote: async () => false};
+    const {sync, calls, remote} = syncFixture(t, {journal});
+    sync.setAccount('account-a');
+    await flush();
+    await sync.pause();
+    assert.equal(await sync.deleteRemote(), false);
+    assert.equal(calls.includes('delete:account-a'), false);
+    assert.ok(remote.has('account-a'));
+    assert.equal(sync.getStatus().failure, 'network');
 });
 
 test('cancelled auth deletion can resume and restore sync for the original account', async (t) => {

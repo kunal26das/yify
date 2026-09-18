@@ -52,6 +52,7 @@ import {isForeground, watchForeground} from '../datasources/platform/ForegroundW
 import {parseSyncedPreferences} from '../repositories/PreferencesRepositoryImpl';
 import {createObservable} from '../repositories/support/observable';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import type {JournalRepository} from '@/domain/repositories/JournalRepository';
 
 const LINKED_UID_KEY = 'linkedUid';
 const LIBRARY_UID_KEY = 'libraryUid';
@@ -75,6 +76,7 @@ interface AccountSyncDeps {
     watchHistory: WatchHistoryRepository;
     preferences: PreferencesRepository;
     diagnostics?: Diagnostics;
+    journal?: JournalRepository;
 }
 
 export class AccountSyncImpl implements AccountSync {
@@ -85,6 +87,7 @@ export class AccountSyncImpl implements AccountSync {
     private readonly watchHistory: WatchHistoryRepository;
     private readonly preferences: PreferencesRepository;
     private readonly diagnostics: Diagnostics;
+    private readonly journal?: JournalRepository;
     private diagnosticSpan: DiagnosticSpan | null = null;
     private reportedFailure: SyncFailure | null = null;
     private readonly status = createObservable<SyncStatus>(IDLE_SYNC_STATUS);
@@ -114,7 +117,7 @@ export class AccountSyncImpl implements AccountSync {
     private trackedIds: number[] = [];
     private lastPreferencesPayload: string | null = null;
 
-    constructor({store, auth, watchlist, library, watchHistory, preferences, diagnostics = NOOP_DIAGNOSTICS}: AccountSyncDeps) {
+    constructor({store, auth, watchlist, library, watchHistory, preferences, journal, diagnostics = NOOP_DIAGNOSTICS}: AccountSyncDeps) {
         this.store = store;
         this.auth = auth;
         this.watchlist = watchlist;
@@ -122,6 +125,7 @@ export class AccountSyncImpl implements AccountSync {
         this.watchHistory = watchHistory;
         this.preferences = preferences;
         this.diagnostics = diagnostics;
+        this.journal = journal;
     }
 
     start(): void {
@@ -181,11 +185,14 @@ export class AccountSyncImpl implements AccountSync {
         this.paused = true;
         this.cancelPush();
         this.cancelRetry();
+        const journalPaused = this.journal?.pause();
         await this.runningDone;
+        await journalPaused;
     }
 
     resume(): void {
         this.paused = false;
+        this.journal?.resume();
         this.syncNow();
     }
 
@@ -210,6 +217,11 @@ export class AccountSyncImpl implements AccountSync {
         const token = await this.getSyncToken(uid);
         if (this.currentUid !== uid) return false;
         if (!token) return false;
+        if (this.journal && !await this.journal.deleteRemote()) {
+            this.fail('network', 'Your journal could not be deleted. Reconnect and try again.');
+            return false;
+        }
+        if (this.currentUid !== uid) return false;
         const result = await deleteSyncDocument(uid, token);
         if (this.currentUid !== uid) return false;
         if (!result.ok) {

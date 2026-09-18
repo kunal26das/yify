@@ -17,9 +17,10 @@ const ROUTES = [
     ['shows.html', 'Shows'],
     ['watchlist.html', 'Watchlist'],
     ['history.html', 'History'],
+    ['journal.html', 'Journal'],
     ['preferences.html', 'Preferences'],
 ];
-const UTILITY_ROUTES = ['watchlist', 'history', 'preferences'];
+const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences'];
 const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]', '/api/availability-alerts/status'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',

@@ -39,7 +39,7 @@ function mocks(platform = 'web') {
             BottomSheetBackdrop: 'BottomSheetBackdrop', BottomSheetModal: 'BottomSheetModal',
             BottomSheetView: 'BottomSheetView',
         },
-        '@/domain': {Genre: {All: 'all'}, movieHistoryEntry: noop, showHistoryEntry: noop},
+        '@/domain': {Genre: {All: 'all'}, movieHistoryEntry: noop, showHistoryEntry: noop, projectJournalMovie: movie => movie},
         '@/presentation/analytics/events': {Analytics: new Proxy({}, {get: () => noop})},
         '../components/screen': {
             Screen: ({children, overlays}) => React.createElement('Screen', null, children, overlays),
@@ -50,6 +50,8 @@ function mocks(platform = 'web') {
             usePlayer: () => ({video: null, open: noop, minimize: noop, setInlineRect: noop, setQueue: noop}),
         },
         '../player/use-ad-break': {useAdBreak: () => noop},
+        '../journal/JournalEditor': {JournalEditor: 'JournalEditor'},
+        '../hooks/use-auth': {useAuth: () => ({ready: true, account: null})},
         '../hooks/use-reload-on-catalog-access': {useReloadOnCatalogAccess: noop},
         './components/shareLink': {shareLink: noop},
         './components/DescriptionCard': {DescriptionCard: 'DescriptionCard'},

@@ -846,7 +846,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
         confirm({
             title: 'Delete account?',
             message:
-                'This permanently deletes your account and the watchlist, history and settings synced to it. Titles saved on this device stay until you clear them.',
+                'This permanently deletes your account, private movie journal, and the watchlist, history and settings synced to it. Other titles saved on this device stay until you clear them.',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             icon: 'trash-outline',
@@ -974,7 +974,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                     title={state.adsRemoved ? 'Your Yify support' : 'Support Yify'}
                     subtitle={state.adsRemoved
                         ? supporterStatus(state)
-                        : 'See supporter plans, restore purchases, and manage your access.'}
+                        : 'Viewing insights and no Yify ads. Manage your access.'}
                     colors={colors}
                     gutter={gutter}
                     onPress={() => showSupporter('settings_supporter')}

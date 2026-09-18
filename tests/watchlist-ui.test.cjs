@@ -39,6 +39,8 @@ function fixture(isPhone = false, options = {}) {
         props.data.length ? props.data.map((item, index) => React.cloneElement(props.renderItem({item, index}), {key: item.id})) : props.ListEmptyComponent));
     const mocks = {
         '@/domain': domain,
+        '../journal/JournalEditor': {JournalEditor: 'JournalEditor'},
+        '../hooks/use-auth': {useAuth: () => ({ready: true, account: null})},
         'react-native': {FlatList, View: 'View', TextInput: 'TextInput', ScrollView: 'ScrollView',
             Platform: {OS: 'web', select: options => options.web ?? options.default},
             PixelRatio: {get: () => 1}, StyleSheet: {create: value => value, absoluteFill: {}, hairlineWidth: 1}},

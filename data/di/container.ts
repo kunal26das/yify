@@ -31,6 +31,7 @@ import {AvailabilityPushImpl} from '../services/AvailabilityPush';
 import {FirestoreAvailabilityEnrollment} from '../datasources/AvailabilityEnrollment';
 import {availabilityPilotAccess} from '../services/availabilityAccess';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
+import {JournalRepositoryImpl} from '../repositories/JournalRepositoryImpl';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -55,6 +56,7 @@ export function createDependencies(): Dependencies {
     const watchlist = new WatchlistRepositoryImpl(new PersistentCache('watchlist'), analytics,
         () => ({platform: Platform.OS, country: preferences.getPreferences().watchRegion}));
     const watchHistory = new WatchHistoryRepositoryImpl(new PersistentCache('history'));
+    const journal = new JournalRepositoryImpl({auth, store: new PersistentCache('journal'), network});
     const purchases = new RevenueCatPurchaseRepositoryImpl(
         analytics,
         new PersistentCache('purchases'), diagnostics, () => preferences.getPreferences().watchRegion,
@@ -66,6 +68,7 @@ export function createDependencies(): Dependencies {
         auth,
         watchlist,
         library,
+        journal,
         watchHistory,
         preferences,
     });
@@ -102,6 +105,7 @@ export function createDependencies(): Dependencies {
         preferences,
         watchlist,
         library,
+        journal,
         watchHistory,
         purchases,
         accountSync,

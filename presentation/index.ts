@@ -125,3 +125,4 @@ export type {Responsive, Breakpoint} from './hooks/use-responsive';
 export {SITE_URL, canonicalUrl} from './constants/site';
 export {Colors, Fonts, FontFamily, Gradients, Spacing, Radius, Typography} from './constants/theme';
 export type {Palette} from './constants/theme';
+export {JournalScreen} from './journal/JournalScreen';
