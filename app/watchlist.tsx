@@ -6,11 +6,13 @@ export default function WatchlistRoute() {
         title: 'Watchlist — Yify',
         description: 'The movies you saved to watch later on Yify.',
         canonical: canonicalUrl('watchlist'),
+        robots: 'noindex,follow',
     });
   return (
     <>
       <Head>
         <title>Watchlist — Yify</title>
+                <meta name="robots" content="noindex,follow"/>
         <meta name="description" content="The movies you saved to watch later on Yify." />
           <link rel="canonical" href={canonicalUrl('watchlist')}/>
           <meta property="og:url" content={canonicalUrl('watchlist')}/>

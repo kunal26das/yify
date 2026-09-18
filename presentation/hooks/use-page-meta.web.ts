@@ -1,4 +1,5 @@
-import {useEffect} from 'react';
+import {useCallback} from 'react';
+import {useFocusEffect} from 'expo-router';
 
 export interface PageMeta {
     title: string;
@@ -6,6 +7,7 @@ export interface PageMeta {
     canonical?: string | null;
     image?: string | null;
     type?: string;
+    robots?: 'index,follow' | 'noindex,follow';
 }
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string | null | undefined): void {
@@ -40,12 +42,13 @@ function upsertCanonical(href: string | null | undefined): void {
     document.head.appendChild(node);
 }
 
-export function usePageMeta({title, description, canonical, image, type}: PageMeta): void {
-    useEffect(() => {
+export function usePageMeta({title, description, canonical, image, type, robots = 'index,follow'}: PageMeta): void {
+    useFocusEffect(useCallback(() => {
         if (typeof document === 'undefined') return;
         document.title = title;
         upsertMeta('property', 'og:title', title);
         upsertMeta('name', 'twitter:title', title);
+        upsertMeta('name', 'robots', robots);
         if (description) {
             upsertMeta('name', 'description', description);
             upsertMeta('property', 'og:description', description);
@@ -58,5 +61,5 @@ export function usePageMeta({title, description, canonical, image, type}: PageMe
         }
         upsertCanonical(canonical);
         upsertMeta('property', 'og:url', canonical);
-    }, [title, description, canonical, image, type]);
+    }, [title, description, canonical, image, type, robots]));
 }

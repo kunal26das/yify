@@ -13,14 +13,14 @@ export default function ShowsRoute() {
   const viewModel = useShowsViewModel(useShowRepository(), useTmdbRepository());
     usePageMeta({
         title: 'Shows — Yify',
-        description: 'Series and episode browsing is coming soon to Yify.',
+        description: 'Explore TV shows and browse their episodes on Yify.',
         canonical: canonicalUrl('shows'),
     });
   return (
     <>
       <Head>
         <title>Shows — Yify</title>
-        <meta name="description" content="Series and episode browsing is coming soon to Yify." />
+        <meta name="description" content="Explore TV shows and browse their episodes on Yify." />
           <link rel="canonical" href={canonicalUrl('shows')}/>
           <meta property="og:url" content={canonicalUrl('shows')}/>
       </Head>

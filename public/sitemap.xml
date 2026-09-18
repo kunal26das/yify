@@ -16,19 +16,9 @@
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://yify.expo.app/watchlist</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.5</priority>
-    </url>
-    <url>
-        <loc>https://yify.expo.app/history</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.4</priority>
-    </url>
-    <url>
-        <loc>https://yify.expo.app/preferences</loc>
+        <loc>https://yify.expo.app/guide/</loc>
         <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
+        <priority>0.6</priority>
     </url>
     <url>
         <loc>https://yify.expo.app/privacy/</loc>

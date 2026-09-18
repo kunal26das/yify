@@ -26,7 +26,7 @@ export function useMoviesViewModel(repository: MovieRepository, options?: UseMov
   const [totalMovieCount, setTotalMovieCount] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQueryState] = useState(options?.initialQuery ?? '');

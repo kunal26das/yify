@@ -6,11 +6,13 @@ export default function HistoryRoute() {
         title: 'History — Yify',
         description: 'The movies and shows you opened on Yify.',
         canonical: canonicalUrl('history'),
+        robots: 'noindex,follow',
     });
     return (
         <>
             <Head>
                 <title>History — Yify</title>
+                <meta name="robots" content="noindex,follow"/>
                 <meta name="description" content="The movies and shows you opened on Yify."/>
                 <link rel="canonical" href={canonicalUrl('history')}/>
                 <meta property="og:url" content={canonicalUrl('history')}/>

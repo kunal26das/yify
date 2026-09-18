@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useEffect, useMemo, useState} from 'react';
-import {Animated, FlatList, Platform, RefreshControl, StyleSheet, View} from 'react-native';
+import {Animated, FlatList, Platform, RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Reanimated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
@@ -184,8 +184,7 @@ export function HomeScreen({
     }
 
     if (shelvesError && heroMovies.length === 0) {
-        return (
-            <Screen>
+        const message = (
                 <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
                     <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
@@ -206,8 +205,13 @@ export function HomeScreen({
                         </View>
                     </PressableScale>
                 </Reanimated.View>
-            </Screen>
         );
+        return <Screen>{Platform.OS === 'web' ? (
+            <ScrollView contentContainerStyle={{flexGrow: 1}}>
+                {message}
+                <HomeFooter/>
+            </ScrollView>
+        ) : message}</Screen>;
     }
 
     return (
@@ -344,7 +348,7 @@ function HomeSkeleton({
         </View>
     );
     const artwork = <SkeletonBlock style={{width: artWidth, height: Math.round(artWidth * 9 / 16), borderRadius: Radius.sm}}/>;
-    return (
+    const content = (
         <View style={{paddingTop: topBarHeight}}>
             <View style={{minHeight: heroHeight, paddingHorizontal: gutter, paddingVertical: split ? 40 : 20, gap, flexDirection: split ? 'row' : 'column', alignItems: split ? 'center' : 'flex-start', marginBottom: Spacing.xxl}}>
                 {split ? copy : artwork}
@@ -367,8 +371,10 @@ function HomeSkeleton({
                     }}
                 />
             ))}
+            {Platform.OS === 'web' ? <HomeFooter/> : null}
         </View>
     );
+    return Platform.OS === 'web' ? <ScrollView>{content}</ScrollView> : content;
 }
 
 const styles = StyleSheet.create({

@@ -23,7 +23,7 @@ module.exports = {
                 ...plugin[1],
                 redirects: [
                     ...(plugin[1].redirects ?? []),
-                    ...['privacy', 'terms', 'delete-account'].map((page) => ({
+                    ...['privacy', 'terms', 'delete-account', 'guide'].map((page) => ({
                         source: `/${page}`,
                         destination: `https://yify.expo.app/${page}.html`,
                         permanent: true,
