@@ -10,6 +10,7 @@ import Purchases, {
 import {
     INITIAL_PURCHASE_STATE,
     REMOVE_ADS_ENTITLEMENT,
+    trackSubscriptionFunnel,
     type Account,
     type AnalyticsSink,
     type Diagnostics,
@@ -19,6 +20,7 @@ import {
     type PurchasePlacement,
     type PurchaseRepository,
     type PurchaseState,
+    type SubscriptionFunnelEvent,
 } from '@/domain';
 import {getAnalyticsInstanceId} from '../datasources/analytics/FirebaseAnalyticsSink';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
@@ -130,7 +132,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private linkedRevision = -1;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+    constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly viewingCountry: () => string | null = () => null) {
         this.analytics = analytics;
         this.cache = cache;
         // The legacy unscoped cache cannot identify which customer owned the entitlement.
@@ -223,10 +226,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         const entry = this.packages.get(offerId);
         if (!this.store.get().ready || entry == null || entry.revision !== this.revision) {
             this.setState({failure: 'offer_unavailable'});
-            this.analytics.trackEvent('remove_ads_purchase_failed', {
-                package_id: offerId,
-                reason: 'offer_unavailable',
-            });
+            this.trackFunnel({step: 'checkout_finished', outcome: 'offer_unavailable'});
             this.diagnostics.event('purchases.purchase', {outcome: 'unavailable'});
             return Promise.resolve(false);
         }
@@ -241,17 +241,14 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 span.finish('unavailable');
                 return false;
             }
-            this.analytics.trackEvent('remove_ads_purchase_start', {package_id: offerId});
+            this.trackFunnel({step: 'checkout_started', offer: entry.offer});
             try {
                 const {customerInfo} = await Purchases.purchasePackage(entry.pkg);
                 if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const purchased = hasRemoveAds(customerInfo);
                 this.applyCustomerInfo(customerInfo, uid!);
                 this.setState({failure: purchased ? null : 'not_granted'});
-                this.analytics.trackEvent('remove_ads_purchase_done', {
-                    package_id: offerId,
-                    granted: purchased,
-                });
+                this.trackFunnel({step: 'checkout_finished', offer: entry.offer, outcome: purchased ? 'granted' : 'not_granted'});
                 span.finish(purchased ? 'ok' : 'empty');
                 return purchased;
             } catch (error) {
@@ -260,7 +257,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 if (reason === 'unknown') span.fail(error, {error_code: diagnosticCode(error)});
                 else span.finish(reason === 'cancelled' ? 'cancelled' : reason === 'pending' ? 'pending' : 'skipped', {error_code: reason});
                 this.setState({failure: reason});
-                this.analytics.trackEvent('remove_ads_purchase_failed', {package_id: offerId, reason});
+                this.trackFunnel({step: 'checkout_finished', offer: entry.offer, outcome: reason});
                 return false;
             }
         });
@@ -300,6 +297,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 return false;
             }
         });
+    }
+
+    private trackFunnel(event: SubscriptionFunnelEvent): void {
+        try {
+            trackSubscriptionFunnel(this.analytics, event, {platform: Platform.OS, country: this.viewingCountry()});
+        } catch {}
     }
 
     private enqueue<T>(work: () => Promise<T>): Promise<T> {

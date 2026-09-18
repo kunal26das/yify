@@ -106,7 +106,7 @@ function fixture(t, options = {}) {
         setUserProperty: (...args) => { calls.push(['property', ...args]); },
     }, {
         getString: (key) => cache.get(key), set: (key, value) => cache.set(key, value), delete: (key) => cache.delete(key),
-    }, options.diagnostics);
+    }, options.diagnostics, () => options.country ?? null);
     return {repository, calls, listeners, foreground, infos, cache, defaultOffering,
         uid: () => sdkUid,
         ready: async (uid = null) => {
@@ -694,4 +694,26 @@ test('initial store configuration failure remains observable and recovers on for
     f.foreground[0]();
     await flush();
     assert.equal(f.repository.getState().offers.length, 1);
+});
+
+test('native checkout emits one attributed non-revenue funnel per coalesced attempt and no renewal on refresh', async t => {
+    const pending = deferred();
+    const f = fixture(t, {country: 'IN', purchase: () => pending.promise});
+    await f.ready('private-account');
+    const [offer] = await f.repository.getOffers('post_ad_supporter');
+    const first = f.repository.purchase(offer.id);
+    const second = f.repository.purchase(offer.id);
+    pending.resolve({customerInfo: customer(true)});
+    assert.deepEqual(await Promise.all([first, second]), [true, true]);
+    await f.repository.refresh();
+    await f.repository.restore();
+    const events = f.calls.filter(([kind, name]) => kind === 'analytics' && name.startsWith('remove_ads_purchase'));
+    assert.deepEqual(events.map(([, name]) => name), ['remove_ads_purchase_start', 'remove_ads_purchase_done']);
+    for (const [, , params] of events) {
+        assert.equal(params.placement, 'post_ad_supporter');
+        assert.equal(params.app_platform, 'android');
+        assert.equal(params.viewing_country, 'IN');
+        assert.equal(params.plan_kind, 'monthly');
+    }
+    assert.doesNotMatch(JSON.stringify(events), /private|package_id|price|currency|revenue|transaction|renewal/);
 });

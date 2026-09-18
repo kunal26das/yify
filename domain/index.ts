@@ -6,6 +6,7 @@ export type {WatchProvider, WatchAvailability, WatchOffer, WatchRegion} from './
 export type {WatchService} from './entities/WatchService';
 export type {CountryLocationResult} from './entities/CountryLocationResult';
 export type {CountryLocation} from './services/CountryLocation';
+export type {AvailabilityAlerts, AvailabilityAlertState, AvailabilityPush} from './services/AvailabilityAlerts';
 export type {StreamingService, StreamingCountry, StreamingCatalog, StreamingOffer, StreamingOfferType, StreamingAvailability, StreamingSelections} from './entities/Streaming';
 export type {StreamingRepository} from './repositories/StreamingRepository';
 export {safeStreamingUrl, streamingOfferSelected, hasSelectedStreamingOffer, streamingOfferLabel} from './policies/streaming';
@@ -151,6 +152,8 @@ export type {
 } from './policies/syncMerge';
 
 export type {AnalyticsSink, AnalyticsParams} from './services/AnalyticsSink';
+export {trackSubscriptionFunnel} from './policies/subscriptionFunnel';
+export type {SubscriptionFunnelContext, SubscriptionFunnelEvent} from './policies/subscriptionFunnel';
 export type {Diagnostics, DiagnosticSpan, DiagnosticOutcome, DiagnosticAttributes} from './services/Diagnostics';
 export type {AppConfig} from './services/AppConfig';
 export type {AppUpdates} from './services/AppUpdates';

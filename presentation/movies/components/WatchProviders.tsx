@@ -54,7 +54,12 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
 
     const open = async (url: string) => {
         if (details) Analytics.watchProviderOpen(details.id, region);
-        try {await openStreamingLink(url);} catch {toast('Couldn’t open viewing options. Please try again.');}
+        try {
+            await openStreamingLink(url);
+            if (current?.offers.some(offer => offer.url === url)) {
+                Analytics.subscriptionFunnel({step: 'watch_option_opened', mediaType: media === 'tv' ? 'show' : 'movie', source: 'details'}, region);
+            }
+        } catch {toast('Couldn’t open viewing options. Please try again.');}
     };
 
     if (!identity) return null;

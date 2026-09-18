@@ -1,6 +1,6 @@
 import {useEffect, useRef} from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, usePathname} from 'expo-router';
+import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, useGlobalSearchParams, usePathname} from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
@@ -37,6 +37,7 @@ import {
 import {bootstrap, createDependencies} from '@/data';
 import {Analytics, installAnalyticsSink} from '@/presentation/analytics/events';
 import {movieNotificationTarget} from '@/domain';
+import {availabilityNotificationOpen} from '@/domain/policies/availabilityNotificationOpen';
 
 const dependencies = createDependencies();
 installAnalyticsSink(dependencies.analytics);
@@ -47,7 +48,7 @@ function handleNotificationData(data: unknown) {
     if (!target) return;
     Analytics.notificationOpen(target.movieId, target.kind);
     if (target.movieId) router.push(`/movie/${target.movieId}`);
-    else router.push('/movies');
+    else router.push(target.kind === 'availability' ? '/watchlist' : '/movies');
 }
 
 const DESKTOP_TOP_INSET = 48;
@@ -85,6 +86,25 @@ function AppShell() {
     }, [lastResponse, navReady]);
 
     const pathname = usePathname();
+    const {notification_kind: notificationKind, notification_event: notificationEvent} = useGlobalSearchParams();
+    useEffect(() => {
+        if (Platform.OS !== 'web' || !navReady || typeof window === 'undefined') return;
+        const target = availabilityNotificationOpen(pathname, notificationKind, notificationEvent);
+        if (!target) return;
+        let handled = handledNotification.current === target.eventId;
+        try {
+            const raw = JSON.parse(window.sessionStorage.getItem('availability-opened') || '[]');
+            const recent = Array.isArray(raw) ? raw.filter(value => typeof value === 'string').slice(-100) : [];
+            handled ||= recent.includes(target.eventId);
+            if (!handled) window.sessionStorage.setItem('availability-opened', JSON.stringify([...recent, target.eventId].slice(-100)));
+        } catch { /* Private browsing can disable session storage; the ref still guards rerenders. */ }
+        handledNotification.current = target.eventId;
+        if (!handled) Analytics.notificationOpen(target.movieId, 'availability');
+        const url = new URL(window.location.href);
+        url.searchParams.delete('notification_kind');
+        url.searchParams.delete('notification_event');
+        window.history.replaceState(window.history.state, '', url.toString());
+    }, [navReady, pathname, notificationKind, notificationEvent]);
     useEffect(() => {
         Analytics.screenView(pathname);
     }, [pathname]);

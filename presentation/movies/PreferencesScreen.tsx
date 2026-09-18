@@ -53,6 +53,7 @@ import {usePurchases} from '../hooks/use-purchases';
 import {useSupporterPaywall} from '../purchases/supporter-paywall';
 import {supporterStatus} from '../purchases/offer-copy';
 import {useSyncStatus} from '../hooks/use-sync-status';
+import {useAvailabilityAlertSettings} from '../hooks/use-availability-alerts';
 import {
     useAccountSync,
     useAdGateway,
@@ -163,6 +164,7 @@ function labelOf(
 export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel} = {}) {
     const fallback = usePreferencesViewModel();
     const vm = viewModel ?? fallback;
+    const availabilityAlerts = useAvailabilityAlertSettings();
 
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
@@ -407,7 +409,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     <Row
                         icon="notifications-outline"
                         title="Movie notifications"
-                        subtitle={Platform.OS === 'web' ? 'Browser alerts work while Yify is open.' : undefined}
+                        subtitle={Platform.OS === 'web' ? 'Daily picks need an open Yify tab.' : undefined}
                         colors={colors}
                         gutter={gutter}
                         trailing={
@@ -419,6 +421,23 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             />
                         }
                     />
+                    {availabilityAlerts.available || availabilityAlerts.enabled || availabilityAlerts.error ? (
+                        <Row icon="tv-outline" title="Watchlist availability"
+                            subtitle={availabilityAlerts.error ?? (availabilityAlerts.hasServices
+                                ? 'Pilot · Alerts for up to 20 saved movies on your services. One update a day.'
+                                : 'Choose your streaming services under Account first.')}
+                            colors={colors} gutter={gutter}
+                            trailing={availabilityAlerts.error && !availabilityAlerts.enabled ? (
+                                <PressableScale onPress={() => void availabilityAlerts.retry()} disabled={availabilityAlerts.pending}
+                                    accessibilityRole="button" accessibilityLabel="Retry availability alerts">
+                                    <ThemedText style={[styles.value, {color: colors.accent}]}>Retry</ThemedText>
+                                </PressableScale>
+                            ) : <Switch value={availabilityAlerts.enabled}
+                                disabled={availabilityAlerts.pending || (!availabilityAlerts.enabled && (!availabilityAlerts.available || !vm.notifications || !availabilityAlerts.hasServices))}
+                                onValueChange={value => void availabilityAlerts.toggle(value)}
+                                accessibilityLabel="Watchlist availability alerts on this device"
+                                {...switchColors(colors, availabilityAlerts.enabled)}/>} />
+                    ) : null}
                     {vm.notifications && (vm.permissionBlocked || vm.permissionStatus === 'unavailable' || vm.notificationError) ? (
                         <Animated.View
                             entering={enterRise()}

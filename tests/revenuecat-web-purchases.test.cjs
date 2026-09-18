@@ -36,7 +36,7 @@ const deferred = () => {
 };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key', diagnostics} = {}) {
+function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key', diagnostics, country} = {}) {
     const calls = [];
     const events = [];
     const properties = [];
@@ -105,7 +105,7 @@ function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_
     const repository = new RevenueCatPurchaseRepositoryImpl({
         trackEvent: (name, params) => events.push({name, params}),
         setUserProperty: (name, value) => properties.push({name, value}),
-    }, store, diagnostics);
+    }, store, diagnostics, () => country ?? null);
     return {repository, calls, events, properties, values, sdk, PurchasesError};
 }
 
@@ -574,4 +574,31 @@ test('reconnect while a browser tab is hidden waits for visibility and coalesces
     pending.resolve(grantedInfo(true));
     await tick();
     assert.equal(f.repository.getState().adsRemoved, true);
+});
+
+test('web checkout enriches one coalesced funnel without logging payments, identity or renewals', async () => {
+    const pending = deferred();
+    const monthly = pkg('$rc_monthly', 'private plan');
+    monthly.webBillingProduct.productType = 'Subscription';
+    monthly.webBillingProduct.normalPeriodDuration = 'P1M';
+    const f = fixture({country: 'gb', overrides: {
+        offers: () => offering('private-offering', [monthly]), purchase: () => pending.promise,
+    }});
+    await f.repository.identify(account('private-account'));
+    const [offer] = await f.repository.getOffers('post_ad_supporter');
+    const first = f.repository.purchase(offer.id);
+    const second = f.repository.purchase(offer.id);
+    pending.resolve({customerInfo: grantedInfo(true)});
+    assert.deepEqual(await Promise.all([first, second]), [true, true]);
+    await f.repository.refresh();
+    await f.repository.restore();
+    const events = f.events.filter(event => event.name.startsWith('remove_ads_purchase'));
+    assert.deepEqual(events.map(event => event.name), ['remove_ads_purchase_start', 'remove_ads_purchase_done']);
+    for (const {params} of events) {
+        assert.equal(params.placement, 'post_ad_supporter');
+        assert.equal(params.app_platform, 'web');
+        assert.equal(params.viewing_country, 'GB');
+        assert.equal(params.plan_kind, 'monthly');
+    }
+    assert.doesNotMatch(JSON.stringify(events), /private|package_id|price|currency|revenue|transaction|renewal/);
 });
