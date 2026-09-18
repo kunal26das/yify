@@ -34,7 +34,7 @@ async function fixture(t, options = {}) {
     const state = observable({...INITIAL_PURCHASE_STATE, available: true, ready: true, ...options.state});
     const session = observable({ready: true, signingIn: false, available: true, account: user('A'), error: null, ...options.session});
     let offers = options.offers ?? [plan()];
-    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], links: [], browsers: []};
+    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], funnel: [], links: [], browsers: []};
     const purchases = {
         getState: state.get,
         subscribe: state.subscribe,
@@ -73,8 +73,12 @@ async function fixture(t, options = {}) {
         '../hooks/use-purchases': {usePurchases: () => React.useSyncExternalStore(state.subscribe, state.get)},
         '../hooks/use-auth': {useAuth: () => React.useSyncExternalStore(session.subscribe, session.get)},
         '../hooks/use-palette': {usePalette: () => ({colors})},
+        '../hooks/use-preferences': {usePreferences: () => ({watchRegion: options.country ?? 'IN'})},
         '../components/themed-text': {ThemedText: 'Text'},
-        '../analytics/events': {Analytics: {supporterPrompt: placement => calls.prompts.push(placement)}},
+        '../analytics/events': {Analytics: {subscriptionFunnel: (event, country) => {
+            calls.funnel.push({event, country});
+            if (event.step === 'paywall_view') calls.prompts.push(event.placement === 'settings_supporter' ? 'settings' : 'post_ad');
+        }}},
     });
     let show;
     function Probe() { show = useSupporterPaywall(); return null; }
@@ -176,6 +180,8 @@ test('active access shows manage and restore actions without recording a sales i
     assert.match(f.text(), /access continues until/);
     assert.equal(f.pressable('Continue · $2.99'), undefined);
     assert.deepEqual(f.calls.impressions, []);
+    assert.equal(f.calls.funnel.some(({event}) => event.step === 'offers_visible'), false);
+    assert.equal(f.calls.funnel.find(({event}) => event.step === 'paywall_view').event.supporter, true);
     await f.press('Manage billing or cancel');
     assert.deepEqual(f.calls.links, ['https://billing.example.test/manage']);
     assert.ok(f.pressable('Restore purchases'));
@@ -326,4 +332,23 @@ test('small windows bound the scrolling content and retain an accessible close c
     const close = f.pressable('Close supporter options');
     assert.ok(flattenStyle(close.props.style).minHeight >= 44);
     assert.equal(f.renderer.root.findAllByProps({accessibilityRole: 'header'}).length, 1);
+});
+
+test('paywall funnel measures actual visibility, ready offers and one explicit close with viewing country', async t => {
+    const loading = deferred();
+    const f = await fixture(t, {country: 'GB', getOffers: () => loading.promise});
+    await f.open('post_ad_supporter');
+    assert.deepEqual(f.calls.funnel, []);
+    await f.show();
+    await f.show();
+    assert.deepEqual(f.calls.funnel, [{event: {
+        step: 'paywall_view', placement: 'post_ad_supporter', signedIn: true, supporter: false,
+    }, country: 'GB'}]);
+    await act(async () => loading.resolve([plan()]));
+    await f.press('Reload plans');
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'offers_visible').length, 1);
+    const close = f.pressable('Close supporter options').props.onPress;
+    await act(async () => {close(); close();});
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_closed').length, 1);
+    assert.equal(f.calls.funnel.every(({country}) => country === 'GB'), true);
 });

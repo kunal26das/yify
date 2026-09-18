@@ -8,6 +8,7 @@ import {ThemedText} from '../../components/themed-text';
 import {Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {PickerSheet, PickerSheetInput} from './PickerSheet';
+import {Analytics} from '../../analytics/events';
 
 export function countryName(code: string): string {
     try {
@@ -56,9 +57,10 @@ export function WatchRegionPicker({selected, automatic, onSelect, onClose}: {
         onClose();
     };
 
-    const choose = (code: string | null) => {
+    const choose = (code: string | null, method: 'manual' | 'location' = 'manual') => {
         locationRequest.current?.abort();
         onSelect(code);
+        Analytics.subscriptionFunnel({step: 'streaming_country_selected', method}, code ?? automatic);
         onClose();
     };
 
@@ -73,7 +75,7 @@ export function WatchRegionPicker({selected, automatic, onSelect, onClose}: {
             if (request.signal.aborted) return;
             if (location.status === 'ready') {
                 if (result.regions.some(region => region.code === location.country)) {
-                    choose(location.country);
+                    choose(location.country, 'location');
                 } else {
                     setLocationMessage(`Streaming availability isn’t supported in ${countryName(location.country)} yet. Choose a country below.`);
                 }

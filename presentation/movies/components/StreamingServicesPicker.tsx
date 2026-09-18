@@ -11,6 +11,7 @@ import {usePalette} from '../../hooks/use-palette';
 import {countryName} from './WatchRegionPicker';
 import {openStreamingLink} from './openStreamingLink';
 import {PickerSheet, PickerSheetInput} from './PickerSheet';
+import {Analytics} from '../../analytics/events';
 
 interface ServiceOption extends StreamingService {
     unavailable?: boolean;
@@ -61,7 +62,9 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
     }, [currentCountry, query, selected]);
 
     const toggle = (id: string) => {
-        onSelect(selectedIds.has(id) ? selected.filter(item => item !== id) : [...selected, id]);
+        const next = selectedIds.has(id) ? selected.filter(item => item !== id) : [...selected, id];
+        onSelect(next);
+        Analytics.subscriptionFunnel({step: 'streaming_services_saved', selectedCount: next.length}, country);
     };
 
     const openAttribution = async () => {

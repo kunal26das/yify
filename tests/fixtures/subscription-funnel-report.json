@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "dimensions": [
+      {"apiName": "customEvent:app_platform"},
+      {"apiName": "customEvent:viewing_country"},
+      {"apiName": "customEvent:funnel_version"},
+      {"apiName": "customEvent:placement"}
+    ]
+  },
+  "pages": [{
+    "dimensionHeaders": [
+      {"name": "date"},
+      {"name": "customEvent:app_platform"},
+      {"name": "customEvent:viewing_country"},
+      {"name": "eventName"},
+      {"name": "customEvent:placement"}
+    ],
+    "metricHeaders": [{"name": "eventCount"}, {"name": "totalUsers"}],
+    "rowCount": 3,
+    "metadata": {"timeZone": "Asia/Kolkata"},
+    "rows": [
+      {"dimensionValues": [{"value": "20260919"}, {"value": "android"}, {"value": "IN"}, {"value": "supporter_offers_visible"}, {"value": "settings_supporter"}], "metricValues": [{"value": "12"}, {"value": "8"}]},
+      {"dimensionValues": [{"value": "20260919"}, {"value": "android"}, {"value": "IN"}, {"value": "remove_ads_purchase_start"}, {"value": "settings_supporter"}], "metricValues": [{"value": "3"}, {"value": "2"}]},
+      {"dimensionValues": [{"value": "20260919"}, {"value": "web"}, {"value": "US"}, {"value": "watchlist_activation"}, {"value": "(not set)"}], "metricValues": [{"value": "5"}, {"value": "3"}]}
+    ]
+  }]
+}

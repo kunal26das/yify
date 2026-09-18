@@ -25,7 +25,7 @@
     "desktop:build:all": "yarn export:desktop && electron-builder --mac --win --linux",
     "lint": "expo lint app data domain presentation",
     "prebuild": "expo prebuild",
-    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts' 'tests/**/*.test.cjs' && yarn test:crashreporting",
+    "test": "node --test 'domain/**/*.test.ts' 'data/**/*.test.ts' 'presentation/player/youtubeWebView.test.ts' 'tests/**/*.test.cjs' 'scripts/availability-alerts/worker.test.mjs' && yarn test:crashreporting",
     "typecheck": "tsc --noEmit && yarn workspace @yify/crashreporting typecheck",
     "eas": "bash scripts/eas.sh",
     "build:dev:android": "bash scripts/eas.sh build --platform android --profile development",

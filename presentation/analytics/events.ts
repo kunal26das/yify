@@ -1,4 +1,5 @@
-import type {AnalyticsSink, Movie, Torrent} from '@/domain';
+import {Platform} from 'react-native';
+import {trackSubscriptionFunnel, type AnalyticsSink, type Movie, type SubscriptionFunnelEvent, type Torrent} from '@/domain';
 
 let sink: AnalyticsSink | null = null;
 
@@ -20,6 +21,9 @@ function movieParams(movie: Pick<Movie, 'id' | 'title'>) {
 
 export const Analytics = {
     screenView: trackScreenView,
+
+    subscriptionFunnel: (event: SubscriptionFunnelEvent, country?: string | null) =>
+        trackSubscriptionFunnel(sink, event, {platform: Platform.OS, country}),
 
     heroImpression: (movie: Movie, index: number) =>
         trackEvent('hero_impression', {...movieParams(movie), hero_index: index}),
@@ -108,11 +112,10 @@ export const Analytics = {
     accountDeleteFailed: (reason: 'sync' | 'auth') =>
         trackEvent('account_delete_failed', {reason}),
 
-    supporterPrompt: (source: string) => trackEvent('supporter_prompt', {source}),
     supporterNudgeDeclined: (source: string) => trackEvent('supporter_nudge_declined', {source}),
     coffeeOpen: (source: string) => trackEvent('coffee_open', {source}),
 
-    notificationOpen: (movieId?: number, kind: 'daily-pick' | 'new-release' = 'new-release') =>
+    notificationOpen: (movieId?: number, kind: 'daily-pick' | 'new-release' | 'availability' = 'new-release') =>
         trackEvent('notification_open', {notification_kind: kind, ...(movieId ? {movie_id: movieId} : {})}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>
         trackEvent('retry', {source}),

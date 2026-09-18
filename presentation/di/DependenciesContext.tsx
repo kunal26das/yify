@@ -130,3 +130,7 @@ export function useAccountSync(): AccountSync {
 export function useLibraryRepository(): LibraryRepository {
     return useDependencies().library;
 }
+
+export function useAvailabilityAlerts() {
+    return useDependencies().availabilityAlerts;
+}

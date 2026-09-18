@@ -6,6 +6,7 @@ import {useAdGateway, useAuthRepository, usePurchaseRepository} from '../di/Depe
 import {useAuth} from '../hooks/use-auth';
 import {usePurchases} from '../hooks/use-purchases';
 import {usePalette} from '../hooks/use-palette';
+import {usePreferences} from '../hooks/use-preferences';
 import {ThemedText} from '../components/themed-text';
 import {Analytics} from '../analytics/events';
 import {offerDisclosure, purchaseFailureMessage, safeManagementURL, supporterStatus} from './offer-copy';
@@ -51,6 +52,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
     const ads = useAdGateway();
     const state = usePurchases();
     const {colors} = usePalette();
+    const {watchRegion} = usePreferences();
     const insets = useSafeAreaInsets();
     const {height} = useWindowDimensions();
     const [reload, setReload] = useState(0);
@@ -65,6 +67,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
     const operation = useRef(false);
     const mounted = useRef(true);
     const tracked = useRef(new Set<string>());
+    const offersTracked = useRef(false);
     const prompted = useRef(false);
     const closed = useRef(false);
     const busy = acting || state.purchasing != null || state.restoring || session.signingIn;
@@ -85,17 +88,23 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
 
     useEffect(() => {
         if (!visible || loading || !state.ready || state.adsRemoved) return;
+        if (offers.length > 0 && !offersTracked.current) {
+            offersTracked.current = true;
+            Analytics.subscriptionFunnel({step: 'offers_visible', placement: request.placement, offerCount: offers.length}, watchRegion);
+        }
         for (const offer of offers) {
             const offering = offer.offeringId ?? offer.id;
             if (tracked.current.has(offering)) continue;
             tracked.current.add(offering);
             purchases.trackPaywallImpression(offer.id);
         }
-    }, [offers, purchases, state.adsRemoved, state.ready, visible, loading]);
+    }, [offers, purchases, state.adsRemoved, state.ready, visible, loading, request.placement, watchRegion]);
 
     const close = () => {
         if (busy || operation.current || closed.current) return;
         closed.current = true;
+        Analytics.subscriptionFunnel({step: 'paywall_closed', placement: request.placement,
+            supporter: purchases.getState().adsRemoved}, watchRegion);
         onClose();
         request.onClose?.(purchases.getState().adsRemoved);
     };
@@ -161,7 +170,8 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
         setVisible(true);
         if (!prompted.current) {
             prompted.current = true;
-            Analytics.supporterPrompt(request.placement === 'settings_supporter' ? 'settings' : 'post_ad');
+            Analytics.subscriptionFunnel({step: 'paywall_view', placement: request.placement,
+                signedIn: session.account != null, supporter: state.adsRemoved}, watchRegion);
         }
     }}>
         <View style={[styles.scrim, {backgroundColor: colors.scrim, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16}]}>

@@ -1,6 +1,7 @@
-import type {KeyValueStore, Movie, WatchlistRepository} from '@/domain';
+import {trackSubscriptionFunnel, type AnalyticsSink, type KeyValueStore, type Movie, type SubscriptionFunnelContext, type WatchlistRepository} from '@/domain';
 
 const KEY = 'items';
+const MILESTONES_KEY = 'funnel_saved_milestones_v1';
 
 function toWatchlistMovie(m: Movie): Movie {
     return {
@@ -28,7 +29,8 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
     private snapshot: Movie[] | null = null;
     private ids = new Set<number>();
 
-    constructor(store: KeyValueStore) {
+    constructor(store: KeyValueStore, private readonly analytics?: AnalyticsSink,
+        private readonly funnelContext: () => SubscriptionFunnelContext = () => ({platform: 'other'})) {
         this.store = store;
     }
 
@@ -45,6 +47,7 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
         const items = this.read();
         if (this.ids.has(movie.id)) return;
         this.write([toWatchlistMovie(movie), ...items]);
+        this.trackMilestones(items.length, items.length + 1);
     }
 
     remove(id: number): void {
@@ -76,6 +79,20 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
         return () => {
             this.listeners.delete(listener);
         };
+    }
+
+    private trackMilestones(before: number, after: number): void {
+        if (!this.analytics) return;
+        try {
+            const saved: unknown = JSON.parse(this.store.getString(MILESTONES_KEY) ?? '[]');
+            const recorded = new Set(Array.isArray(saved) ? saved.filter(value => value === 1 || value === 3) : []);
+            for (const milestone of [1, 3] as const) {
+                if (before >= milestone || after < milestone || recorded.has(milestone)) continue;
+                recorded.add(milestone);
+                this.store.set(MILESTONES_KEY, JSON.stringify([...recorded]));
+                trackSubscriptionFunnel(this.analytics, {step: 'watchlist_milestone', milestone}, this.funnelContext());
+            }
+        } catch {}
     }
 
     private read(): Movie[] {

@@ -10,11 +10,11 @@ const root = path.dirname(require.resolve('../package.json'));
 const checker = path.join(root, 'scripts/check-web-export.mjs');
 const markers = ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
 const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_OWNER_UID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
-    'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'https://api.revenuecat.com/v2/projects/',
+    'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'AVAILABILITY_ALERTS_PILOT_UIDS', 'TMDB_COMMERCIAL_LICENSE_CONFIRMED', 'https://api.revenuecat.com/v2/projects/',
     'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'];
 const apiRoutes = ['catalog', 'subscriber-catalog'].map(name => ({
     page: `/api/${name}/[operation]`, file: `_expo/functions/api/${name}/[operation]+api.js`,
-}));
+})).concat([{page: '/api/availability-alerts/status', file: '_expo/functions/api/availability-alerts/status+api.js'}]);
 
 function expoConfig(output, baseUrl = '') {
     const env = {...process.env, EXPO_WEB_BASE_URL: baseUrl};
@@ -50,7 +50,7 @@ function fixture(t, server = false) {
         const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
         write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
     }
-    for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css']) write(asset, '');
+    for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css', 'availability-worker.js']) write(asset, '');
     write('sitemap.xml', '<urlset><url><loc>https://yify.expo.app/guide/</loc></url></urlset>');
     for (const file of ['guide.html', 'guide/index.html']) write(file, '<main><h1>How Yify works</h1><p>Read trailers and compare regional viewing options.</p><a href="/movies">Movies</a><a href="/shows">Shows</a></main>');
     for (const file of ['delete-account.html', 'delete-account/index.html']) write(file, '<body>Delete account</body>');
@@ -207,7 +207,7 @@ for (const server of [false, true]) {
     test(`${server ? 'Hosting' : 'Pages'} export excludes subscriber server artifacts from public assets`, (t) => {
         const f = fixture(t, server);
         for (const file of ['_expo/functions/api/subscriber-catalog/[operation]+api.js', '_expo/routes.json',
-            'api/subscriber-catalog/[operation]+api.js']) {
+            'api/subscriber-catalog/[operation]+api.js', 'api/availability-alerts/status+api.js']) {
             f.write(file, 'server implementation');
             const result = f.check();
             assert.equal(result.status, 1);

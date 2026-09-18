@@ -11,6 +11,11 @@ test('legacy digest alerts retain a useful catalog destination', () => {
     assert.deepEqual(movieNotificationTarget({count: 5}), {count: 5, kind: 'new-release'});
 });
 
+test('availability alerts preserve their distinct click kind for movie and digest destinations', () => {
+    assert.deepEqual(movieNotificationTarget({movieId: 42, kind: 'availability'}), {movieId: 42, kind: 'availability'});
+    assert.deepEqual(movieNotificationTarget({count: 2, kind: 'availability'}), {count: 2, kind: 'availability'});
+});
+
 test('invalid notification payloads cannot create malformed routes', () => {
     for (const data of [null, undefined, '', [], {}, {movieId: -1}, {movieId: 0}, {movieId: NaN},
         {movieId: Infinity}, {movieId: 1.2}, {movieId: '42'}, {movieId: '../../preferences'},

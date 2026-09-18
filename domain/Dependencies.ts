@@ -21,6 +21,7 @@ import type {StoreServices} from './services/StoreServices';
 import type {Diagnostics} from './services/Diagnostics';
 import type {DisplayAds} from './services/DisplayAds';
 import type {CountryLocation} from './services/CountryLocation';
+import type {AvailabilityAlerts} from './services/AvailabilityAlerts';
 
 export interface Dependencies {
     diagnostics: Diagnostics;
@@ -46,4 +47,5 @@ export interface Dependencies {
     ads: AdGateway;
     displayAds: DisplayAds;
     supporterNudge: SupporterNudge;
+    availabilityAlerts?: AvailabilityAlerts;
 }
