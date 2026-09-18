@@ -27,7 +27,7 @@ async function fixture(t, options = {}) {
         '../di/DependenciesContext': {useStreamingRepository: () => repository},
         '../hooks/use-preferences': {usePreferences: () => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);}, () => preferences)},
-        './components/watchRegion': {deviceRegion: () => 'US'},
+        './components/watchRegion': {useDeviceRegion: () => 'US'},
     });
     let current;
     const Probe = ({items}) => {current = useWatchlistStreaming(items); return null;};

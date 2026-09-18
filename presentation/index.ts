@@ -80,6 +80,7 @@ export { LiquidGlassView, LiquidGlassGroup, isNativeLiquidGlass } from './compon
 export {LinearGradient} from './components/linear-gradient';
 export { UpdateSnackbar } from './components/update-snackbar';
 export { ConfirmProvider, useConfirm } from './components/confirm-dialog';
+export {OverlayProvider} from './components/overlay-provider';
 export {ToastProvider, useToast} from './components/toast';
 export type { ConfirmRequest } from './components/confirm-dialog';
 export { ThemedText } from './components/themed-text';

@@ -22,7 +22,7 @@ function fixture(provider, diagnostics) {
         const {YtsApiDataSource} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
         const source = new YtsApiDataSource(undefined, diagnostics);
         return {read: () => source.listMovies({page: 1}), timeout: 15_000,
-            body: {status: 'ok', data: {movies: []}}};
+            body: {status: 'ok', data: {movies: [], movie_count: 0, page_number: 1, limit: 20}}};
     }
     if (provider === 'eztv') {
         const {EztvApiDataSource} = loadTypeScript('data/datasources/EztvApiDataSource.ts');
@@ -134,8 +134,8 @@ test('transient HTTP recovery keeps one deadline and only reports the final atte
 
 test('retries are bounded and respect authentication failures and Retry-After', async () => {
     const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
-    for (const [status, retryAfter, expected] of [[502, false, 2], [503, false, 2], [504, false, 2],
-        [503, true, 1], [400, false, 1], [401, false, 1], [403, false, 1], [429, false, 1]]) {
+    for (const [status, retryAfter, expected] of [[500, false, 2], [502, false, 2], [503, false, 2], [504, false, 2],
+        [503, true, 1], [400, false, 1], [401, false, 1], [403, false, 1], [429, false, 1], [451, false, 1]]) {
         const {diagnostics, records} = recorder();
         let calls = 0;
         await assert.rejects(requestJson('https://private.example', {
@@ -151,6 +151,132 @@ test('retries are bounded and respect authentication failures and Retry-After', 
         assert.equal(records[0].outcome, 'error');
         assert.equal(records[0].data.status_code, status);
         assert.equal(records[0].data.retry_count, expected - 1);
+    }
+});
+
+test('a truncated JSON response is retried once and only the recovered result is cached', async t => {
+    const {diagnostics, records} = recorder();
+    const {read, body} = fixture('yts', diagnostics);
+    let calls = 0;
+    t.mock.method(globalThis, 'fetch', async (_url, init) => {
+        calls++;
+        assert.equal(init.method, 'GET');
+        return calls === 1 ? new Response('{"status":"ok","data":', {status: 200})
+            : Response.json(body);
+    });
+    const results = await Promise.all([read(), read()]);
+    assert.deepEqual(results, [body, body]);
+    await read();
+    assert.equal(calls, 2);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].outcome, 'ok');
+    assert.equal(records[0].data.retry_count, 1);
+});
+
+test('repeated invalid JSON stays visible with safe decode diagnostics and can be retried later', async t => {
+    const {diagnostics, records} = recorder();
+    const {read, body} = fixture('yts', diagnostics);
+    let calls = 0;
+    t.mock.method(globalThis, 'fetch', async () => ++calls <= 2
+        ? new Response('<html>private upstream page</html>', {status: 200}) : Response.json(body));
+    await assert.rejects(read(), {name: 'SyntaxError'});
+    assert.equal(calls, 2);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].outcome, 'error');
+    assert.equal(records[0].data.error_code, 'invalid_json');
+    assert.equal(records[0].data.stage, 'decode');
+    assert.equal(records[0].data.status_code, 200);
+    assert.equal(records[0].data.retry_count, 1);
+    assert.doesNotMatch(JSON.stringify(records[0].data), /private|html/);
+    await read();
+    assert.equal(calls, 3);
+});
+
+test('JSON recovery respects Retry-After and the total request deadline', async t => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    t.mock.timers.enable({apis: ['setTimeout']});
+    for (const retryAfter of [false, true]) {
+        const {diagnostics, records} = recorder();
+        let calls = 0;
+        let decode;
+        const pending = new Promise((_, reject) => { decode = reject; });
+        const work = requestJson('https://private.example', {
+            diagnostics, operation: 'api.yts.list_movies', provider: 'yts', timeoutMs: 100,
+            fetcher: async () => {
+                calls++;
+                return {ok: true, status: 200, headers: new Headers(retryAfter ? {'Retry-After': '60'} : {}),
+                    json: () => calls === 1 ? pending : new Promise(() => {})};
+            },
+            parse: body => body,
+        });
+        const failed = assert.rejects(work, {name: retryAfter ? 'SyntaxError' : 'TimeoutError'});
+        await flush();
+        t.mock.timers.tick(80);
+        decode(new SyntaxError('Incomplete JSON'));
+        await flush();
+        assert.equal(calls, retryAfter ? 1 : 2);
+        if (!retryAfter) t.mock.timers.tick(20);
+        await failed;
+        assert.equal(records.length, 1);
+        assert.equal(records[0].outcome, retryAfter ? 'error' : 'timeout');
+    }
+});
+
+test('recognized browser transport failures get one bounded retry without hiding persistent failures', async () => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const recovers of [true, false]) {
+        const {diagnostics, records} = recorder();
+        const failure = new TypeError('Failed to fetch');
+        let calls = 0;
+        const work = requestJson('https://private.example', {
+            diagnostics, operation: 'api.tmdb.find', provider: 'tmdb', timeoutMs: 100,
+            fetcher: async () => {
+                if (++calls === 1 || !recovers) throw failure;
+                return Response.json({movie_results: []});
+            }, parse: body => body,
+        });
+        if (recovers) await work;
+        else await assert.rejects(work, error => error === failure);
+        assert.equal(calls, 2);
+        assert.equal(records.length, 1);
+        assert.equal(records[0].outcome, recovers ? 'ok' : 'error');
+        if (!recovers) {
+            assert.equal(records[0].error, failure);
+            assert.equal(records[0].data.error_code, 'network_error');
+        }
+    }
+});
+
+test('unknown native and programming errors are neither retried nor suppressed', async () => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const failure of [new TypeError('Invalid URL'), Object.assign(new Error('private native response'), {code: 'ERR_UNEXPECTED'})]) {
+        const {diagnostics, records} = recorder();
+        let calls = 0;
+        await assert.rejects(requestJson('https://private.example', {
+            diagnostics, operation: 'api.yts.list_movies', provider: 'yts', timeoutMs: 100,
+            fetcher: async () => { calls++; throw failure; }, parse: body => body,
+        }), error => error === failure);
+        assert.equal(calls, 1);
+        assert.equal(records[0].error, failure);
+        assert.equal(records[0].outcome, 'error');
+        assert.equal(records[0].data.error_code, failure.code ?? 'request_failed');
+    }
+});
+
+test('caller cancellation is recorded separately from an expired request deadline', async () => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const failure of [new DOMException('Request aborted', 'AbortError'),
+        Object.assign(new Error('Request cancelled'), {code: 'ERR_FETCH_REQUEST_CANCELED'})]) {
+        const {diagnostics, records} = recorder();
+        let calls = 0;
+        await assert.rejects(requestJson('https://private.example', {
+            diagnostics, operation: 'api.eztv.torrents', provider: 'eztv', timeoutMs: 100,
+            fetcher: async () => { calls++; throw failure; }, parse: body => body,
+        }), error => error === failure);
+        assert.equal(calls, 1);
+        assert.equal(records[0].outcome, 'cancelled');
+        assert.equal(records[0].data.error_code, 'request_cancelled');
+        assert.equal(records[0].error, undefined);
     }
 });
 

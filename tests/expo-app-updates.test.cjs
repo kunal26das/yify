@@ -17,11 +17,12 @@ function fixture(options = {}) {
     const failures = [];
     const spans = [];
     const reload = options.reload ?? deferred();
+    const appState = {currentState: options.appState ?? 'active', addEventListener: (_event, listener) => {
+        listeners.add(listener);
+        return {remove: () => listeners.delete(listener)};
+    }};
     const {ExpoAppUpdates} = loadTypeScript('data/services/ExpoAppUpdates.ts', {
-        'react-native': {AppState: {addEventListener: (_event, listener) => {
-            listeners.add(listener);
-            return {remove: () => listeners.delete(listener)};
-        }}},
+        'react-native': {AppState: appState},
         'expo-updates': {
             isEnabled: options.enabled ?? true,
             channel: options.channel ?? 'Production',
@@ -29,7 +30,7 @@ function fixture(options = {}) {
                 calls.check += 1;
                 return options.check ? options.check() : {isAvailable: true};
             },
-            fetchUpdateAsync: async () => {calls.fetch += 1; return {isNew: true};},
+            fetchUpdateAsync: async () => {calls.fetch += 1; return options.fetch ? options.fetch() : {isNew: true};},
             reloadAsync: () => {calls.reload += 1; return reload.promise;},
         },
     });
@@ -37,15 +38,19 @@ function fixture(options = {}) {
         event: (...args) => events.push(args),
         capture: (...args) => failures.push(args),
         start: operation => {
-            const span = {operation, finish: outcome => {span.outcome = outcome;},
+            const span = {operation, finish: (outcome, attributes) => {span.outcome = outcome; span.attributes = attributes;},
                 fail: (error, attributes) => {span.error = error; span.attributes = attributes;}};
             spans.push(span);
             return span;
         },
     };
     const service = new ExpoAppUpdates(diagnostics, options.network);
-    return {service, calls, events, failures, spans, reload, listeners,
-        foreground: () => listeners.forEach(listener => listener('active'))};
+    const changeState = state => {
+        appState.currentState = state;
+        listeners.forEach(listener => listener(state));
+    };
+    return {service, calls, events, failures, spans, reload, listeners, changeState,
+        foreground: () => changeState('active')};
 }
 
 test('a downloaded update stays ready when returning from a native dialog or foregrounding repeatedly', async () => {
@@ -188,5 +193,76 @@ test('unknown update failures remain captured without leaking arbitrary native c
         await assert.doesNotReject(f.service.sync());
         assert.equal(f.spans[0].error, error);
         assert.deepEqual(f.spans[0].attributes, {error_code: 'unknown'});
+    }
+});
+
+test('background startup and connectivity changes defer update work until the app is active', async () => {
+    const listeners = new Set();
+    const f = fixture({appState: 'background', network: {
+        isOnline: () => true,
+        subscribe: listener => {listeners.add(listener); return () => listeners.delete(listener);},
+    }});
+    f.service.start();
+    listeners.forEach(listener => listener());
+    await settled();
+    assert.equal(f.calls.check, 0);
+    f.foreground();
+    await settled();
+    assert.deepEqual(f.calls, {check: 1, fetch: 1, reload: 0});
+});
+
+test('backgrounding during a check defers downloading and recovers on foreground', async () => {
+    const pending = deferred();
+    const f = fixture({check: () => pending.promise});
+    f.service.start();
+    f.changeState('background');
+    pending.resolve({isAvailable: true});
+    await settled();
+    assert.equal(f.calls.fetch, 0);
+    assert.equal(f.service.getStatus().state, 'idle');
+    f.foreground();
+    await settled();
+    assert.equal(f.calls.fetch, 1);
+    assert.equal(f.service.getStatus().state, 'ready');
+});
+
+test('connectivity loss during download waits for network recovery without a spurious failure banner', async () => {
+    let online = true;
+    let pending = deferred();
+    const listeners = new Set();
+    const f = fixture({fetch: () => pending.promise, network: {
+        isOnline: () => online,
+        subscribe: listener => {listeners.add(listener); return () => listeners.delete(listener);},
+    }});
+    f.service.start();
+    await settled();
+    online = false;
+    pending.reject(Object.assign(new Error('Request interrupted'), {code: 'ERR_UPDATES_FETCH'}));
+    await settled();
+    const span = f.spans.find(entry => entry.operation === 'updates.download');
+    assert.equal(span.error, undefined);
+    assert.equal(span.outcome, 'unavailable');
+    assert.equal(span.attributes.reason, 'offline');
+    assert.equal(f.service.getStatus().state, 'idle');
+    pending = deferred();
+    online = true;
+    listeners.forEach(listener => listener());
+    await settled();
+    pending.resolve({isNew: true});
+    await settled();
+    assert.equal(f.service.getStatus().state, 'ready');
+});
+
+test('backgrounding never hides unexplained native failures or configuration defects', async () => {
+    for (const code of ['ERR_UPDATES_CHECK', 'ERR_UPDATES_DISABLED', 'ERR_UPDATES_UNSUPPORTED_DIRECTIVE']) {
+        const pending = deferred();
+        const f = fixture({check: () => pending.promise});
+        f.service.start();
+        f.changeState('background');
+        const error = Object.assign(new Error('Native failure'), {code});
+        pending.reject(error);
+        await settled();
+        assert.equal(f.spans[0].error, error);
+        assert.deepEqual(f.spans[0].attributes, {error_code: code, reason: 'background'});
     }
 });

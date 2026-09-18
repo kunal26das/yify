@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useEffect, useRef, type ReactNode} from 'react';
-import {Modal, Pressable, ScrollView, StyleSheet, TextInput, View, type GestureResponderEvent, type TextInputProps} from 'react-native';
+import {Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, type GestureResponderEvent, type TextInputProps} from 'react-native';
 import {BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput, type BottomSheetBackdropProps} from '@gorhom/bottom-sheet';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {PressableScale} from '../../components/motion';
@@ -14,7 +14,7 @@ const SNAP_POINTS = ['72%'];
 
 export function WatchlistSheetInput(props: TextInputProps) {
     const {isLarge} = useResponsive();
-    return isLarge ? <TextInput {...props}/> : <BottomSheetTextInput {...props}/>;
+    return isLarge || Platform.OS === 'web' ? <TextInput {...props}/> : <BottomSheetTextInput {...props}/>;
 }
 
 export function WatchlistSheet({visible, title, onClose, children}: {

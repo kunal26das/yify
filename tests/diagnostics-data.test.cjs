@@ -28,7 +28,8 @@ for (const provider of ['yts', 'tmdb', 'eztv']) {
         t.mock.method(global, 'fetch', async () => {
             requests++;
             await pending;
-            return {ok: true, status: 200, json: async () => ({status: 'ok', torrents: [], movie_results: []})};
+            return {ok: true, status: 200, json: async () => ({status: 'ok',
+                data: {movies: [], movie_count: 0, page_number: 1, limit: 20}, torrents: [], movie_results: []})};
         });
         let read;
         if (provider === 'yts') {
@@ -81,7 +82,7 @@ test('OTA check failures remain recoverable while recording the owning operation
     const failure = new Error('native private message');
     const {diagnostics, spans} = recorder();
     const {ExpoAppUpdates} = loadTypeScript('data/services/ExpoAppUpdates.ts', {
-        'react-native': {AppState: {addEventListener() {}}},
+        'react-native': {AppState: {currentState: 'active', addEventListener() {}}},
         'expo-updates': {isEnabled: true, channel: 'production', checkForUpdateAsync: async () => { throw failure; }},
     });
     const updates = new ExpoAppUpdates(diagnostics);

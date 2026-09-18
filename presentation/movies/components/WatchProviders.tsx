@@ -1,7 +1,7 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {deviceRegion} from './watchRegion';
+import {useDeviceRegion} from './watchRegion';
 import Animated from 'react-native-reanimated';
 import type {MovieDetails, StreamingAvailability, TitleMedia} from '@/domain';
 import {usePreferencesRepository, useStreamingRepository} from '../../di/DependenciesContext';
@@ -30,7 +30,7 @@ export function WatchProviders({details, imdbCode, media, pad = 0}: {
     const preferencesRepository = usePreferencesRepository();
     const streaming = useStreamingRepository();
     const toast = useToast();
-    const automatic = useMemo(() => deviceRegion(), []);
+    const automatic = useDeviceRegion();
     const region = preferences.watchRegion ?? automatic;
     const identity = details?.imdbCode ?? imdbCode;
     const [pickingCountry, setPickingCountry] = useState(false);

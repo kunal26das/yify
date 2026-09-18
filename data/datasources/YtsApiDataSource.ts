@@ -8,7 +8,7 @@ import type {
 import {YtsEndpoint} from './YtsEndpoint';
 import type {Diagnostics} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
-import {requestJson} from './JsonRequest';
+import {InvalidResponseError, requestJson} from './JsonRequest';
 
 export const DEFAULT_BASE_URL = 'https://movies-api.accel.li/api/v2';
 
@@ -93,16 +93,37 @@ export interface YtsApi
         MovieParentalGuidesApi {
 }
 
-function fetchWithTimeout<T extends { status: string; status_message?: string }>(
-    url: string, diagnostics: Diagnostics, operation: string, fetcher: typeof fetch
+function record(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function parseYtsResponse<T extends YtsApiResponse<unknown>>(body: unknown, endpoint: YtsEndpoint): T {
+  if (!record(body) || !['ok', 'error'].includes(String(body.status))) throw new InvalidResponseError();
+  if (body.status === 'error') throw new InvalidResponseError('upstream_rejected');
+  if (!record(body.data)) throw new InvalidResponseError();
+  const data = body.data;
+  if (endpoint === YtsEndpoint.ListMovies && (!Number.isSafeInteger(data.movie_count) || Number(data.movie_count) < 0
+      || !Number.isSafeInteger(data.page_number) || Number(data.page_number) < 1
+      || !Number.isSafeInteger(data.limit) || Number(data.limit) < 1)) throw new InvalidResponseError();
+  if (endpoint === YtsEndpoint.MovieDetails && !record(data.movie)) throw new InvalidResponseError();
+  const movies = endpoint === YtsEndpoint.MovieDetails ? [data.movie] : data.movies;
+  if (movies !== undefined && (!Array.isArray(movies) || movies.some(movie => !record(movie)
+      || !Number.isSafeInteger(movie.id) || Number(movie.id) < 1 || typeof movie.title !== 'string'
+      || (movie.genres != null && !Array.isArray(movie.genres))
+      || (movie.cast != null && !Array.isArray(movie.cast))
+      || (movie.torrents != null && !Array.isArray(movie.torrents))))) throw new InvalidResponseError();
+  if (data.parental_guides !== undefined && (!Array.isArray(data.parental_guides)
+      || data.parental_guides.some(guide => !record(guide) || typeof guide.type !== 'string'
+          || typeof guide.parental_guide_text !== 'string'))) throw new InvalidResponseError();
+  return body as unknown as T;
+}
+
+function fetchWithTimeout<T extends YtsApiResponse<unknown>>(
+    url: string, diagnostics: Diagnostics, operation: string, fetcher: typeof fetch, endpoint: YtsEndpoint,
 ): Promise<T> {
   return requestJson(url, {
     diagnostics, operation, provider: 'yts', timeoutMs: REQUEST_TIMEOUT_MS, fetcher,
-    parse: body => {
-      const json = body as T;
-      if (json.status !== 'ok') throw new Error(json.status_message ?? 'Unknown API error');
-      return json;
-    },
+    parse: body => parseYtsResponse<T>(body, endpoint),
   });
 }
 
@@ -196,7 +217,7 @@ export class YtsApiDataSource implements YtsApi {
     }
 
     const operation = `api.yts.${endpoint.replace('.json', '')}`;
-    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation, this.options.fetch ?? fetch).catch((error) => {
+    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation, this.options.fetch ?? fetch, endpoint).catch((error) => {
       if (ttlMs > 0) responseCache.delete(url);
       throw error;
     });

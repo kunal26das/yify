@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useState} from 'react';
 import {StyleSheet, type StyleProp, View, type ViewStyle} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {usePreferencesRepository} from '../../di/DependenciesContext';
@@ -9,13 +9,13 @@ import {usePalette} from '../../hooks/use-palette';
 import {usePreferences} from '../../hooks/use-preferences';
 import {StreamingServicesPicker} from './StreamingServicesPicker';
 import {countryName, WatchRegionPicker} from './WatchRegionPicker';
-import {deviceRegion} from './watchRegion';
+import {useDeviceRegion} from './watchRegion';
 
 export function MyStreamingServices({style}: {style?: StyleProp<ViewStyle>} = {}) {
     const {colors} = usePalette();
     const preferences = usePreferences();
     const repository = usePreferencesRepository();
-    const automatic = useMemo(() => deviceRegion(), []);
+    const automatic = useDeviceRegion();
     const country = preferences.watchRegion ?? automatic;
     const selected = preferences.streamingServices[country] ?? [];
     const [pickingCountry, setPickingCountry] = useState(false);
