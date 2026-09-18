@@ -311,22 +311,24 @@ export class AccountSyncImpl implements AccountSync {
     private async getSyncToken(uid: string): Promise<string | null> {
         try {
             const token = await this.auth.getIdToken();
-            if (!token && this.currentUid === uid) this.fail('denied', 'Sign in again to sync your account.');
+            if (!token && this.currentUid === uid) this.authenticationUnavailable('denied');
             return token;
         } catch (error) {
             if (!(error instanceof AuthTokenError)) throw error;
-            if (this.currentUid === uid) {
-                const detail = error.failure === 'network'
-                    ? 'Waiting for a connection to sync your account.'
-                    : error.failure === 'denied' ? 'Sign in again to sync your account.'
-                        : 'Account authentication is unavailable. Retrying shortly.';
-                this.diagnosticSpan?.finish('unavailable', {error_code: error.failure, stage: 'authentication'});
-                this.reportedFailure = null;
-                this.status.set({state: 'error', failure: error.failure, detail});
-                this.scheduleRetry();
-            }
+            if (this.currentUid === uid) this.authenticationUnavailable(error.failure);
             return null;
         }
+    }
+
+    private authenticationUnavailable(failure: SyncFailure): void {
+        const detail = failure === 'network'
+            ? 'Waiting for a connection to sync your account.'
+            : failure === 'denied' ? 'Sign in again to sync your account.'
+                : 'Account authentication is unavailable. Retrying shortly.';
+        this.diagnosticSpan?.finish('unavailable', {error_code: failure, stage: 'authentication'});
+        this.reportedFailure = null;
+        this.status.set({state: 'error', failure, detail});
+        this.scheduleRetry();
     }
 
     private succeed(trimmed: string | null): void {

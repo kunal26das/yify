@@ -311,6 +311,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             if (typeof document === 'undefined' || document.visibilityState === 'visible') void this.refresh();
         };
         window.addEventListener('focus', refreshWhenVisible);
+        window.addEventListener('online', refreshWhenVisible);
         if (typeof document !== 'undefined') document.addEventListener('visibilitychange', refreshWhenVisible);
     }
 
@@ -327,6 +328,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async synchronize(revision: number): Promise<boolean> {
         if (!this.isCurrent(revision)) return false;
         const span = this.diagnostics.start('purchases.sync', {provider: 'revenuecat'});
+        if (window.navigator?.onLine === false) {
+            span.finish('unavailable', {error_code: 'network', stage: 'customer'});
+            throw new Error('Purchase verification needs a connection');
+        }
         let stage = 'configure';
         try {
             const userId = this.desiredUserId!;
@@ -410,6 +415,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async loadOffers(placement: PurchasePlacement, revision: number): Promise<PurchaseOffer[]> {
         if (!this.isCurrent(revision)) return [];
         const span = this.diagnostics.start('purchases.offerings', {provider: 'revenuecat'});
+        if (window.navigator?.onLine === false) {
+            span.finish('unavailable', {error_code: 'network'});
+            return [];
+        }
         try {
             const offering = await this.sdk!.getCurrentOfferingForPlacement(placement);
             if (!this.isCurrent(revision)) { span.finish('skipped'); return []; }

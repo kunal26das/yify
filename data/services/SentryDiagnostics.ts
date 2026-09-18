@@ -14,7 +14,7 @@ function field(error: unknown, key: string): unknown {
         ? (error as Record<string, unknown>)[key] : undefined);
 }
 
-function attributes(input?: DiagnosticAttributes): Record<string, string | number | boolean> {
+function attributes(input?: Record<string, unknown>): Record<string, string | number | boolean> {
     return safely(() => Object.fromEntries(Object.entries(sanitizeDiagnosticAttributes(input))
         .map(([key, value]) => [key.startsWith('diagnostics.') ? key : `diagnostics.${key}`, value]))) ?? {};
 }
@@ -102,7 +102,11 @@ export class SentryDiagnostics implements Diagnostics {
         if (!safely(() => isDiagnosticOperation(operation))) return undefined;
         const object = error != null && typeof error === 'object' ? error : undefined;
         if (object && this.captured.has(object)) return this.captured.get(object);
-        const data: Record<string, string | number | boolean> = {...attributes(input), 'diagnostics.operation': operation};
+        const data: Record<string, string | number | boolean> = {
+            ...attributes({error_code: field(error, 'code')}),
+            ...attributes(input),
+            'diagnostics.operation': operation,
+        };
         const id = safely(() => this.sdk.captureException(handledError(error, operation, data), {
             level: 'error', fingerprint: ['{{ default }}', operation],
             tags: {'diagnostics.operation': operation}, contexts: {diagnostics: data},

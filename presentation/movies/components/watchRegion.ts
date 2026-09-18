@@ -1,3 +1,4 @@
+import {useSyncExternalStore} from 'react';
 import {Platform} from 'react-native';
 import * as Localization from 'expo-localization';
 
@@ -39,4 +40,16 @@ export function deviceRegion(): string {
     } catch {
     }
     return 'US';
+}
+
+function subscribe() {
+    return () => {};
+}
+
+function serverRegion() {
+    return Platform.OS === 'web' ? 'US' : deviceRegion();
+}
+
+export function useDeviceRegion(): string {
+    return useSyncExternalStore(subscribe, deviceRegion, serverRegion);
 }

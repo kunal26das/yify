@@ -2,7 +2,7 @@ import type {EztvTorrentsResponse} from '../models';
 import {ResponseCache} from './storage/ResponseCache';
 import type {Diagnostics} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
-import {requestJson} from './JsonRequest';
+import {InvalidResponseError, requestJson} from './JsonRequest';
 
 export const EZTV_BASE_URL = 'https://eztvx.to/api';
 
@@ -26,6 +26,21 @@ export class EztvUnavailableError extends Error {
         super(cause instanceof Error ? cause.message : 'EZTV is unreachable');
         this.name = 'EztvUnavailableError';
     }
+}
+
+export function parseEztvResponse(body: unknown): EztvTorrentsResponse {
+    if (body == null || typeof body !== 'object' || Array.isArray(body)) throw new InvalidResponseError();
+    const response = body as Record<string, unknown>;
+    if (response.torrents == null) {
+        if (response.torrents_count !== 0) throw new InvalidResponseError();
+    } else if (!Array.isArray(response.torrents) || response.torrents.some(item => {
+        if (item == null || typeof item !== 'object' || Array.isArray(item)) return true;
+        const torrent = item as Record<string, unknown>;
+        return !Number.isSafeInteger(torrent.id) || Number(torrent.id) < 1
+            || typeof torrent.title !== 'string'
+            || (torrent.imdb_id != null && typeof torrent.imdb_id !== 'string');
+    })) throw new InvalidResponseError();
+    return body as EztvTorrentsResponse;
 }
 
 export class EztvApiDataSource implements EztvApi {
@@ -56,7 +71,7 @@ export class EztvApiDataSource implements EztvApi {
             return await requestJson(url, {
                 diagnostics: this.diagnostics, operation: 'api.eztv.torrents', provider: 'eztv',
                 timeoutMs: REQUEST_TIMEOUT_MS, fetcher: this.fetcher,
-                parse: body => body as EztvTorrentsResponse,
+                parse: parseEztvResponse,
             });
         } catch (error) {
             throw new EztvUnavailableError(error);
