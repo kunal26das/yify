@@ -53,6 +53,7 @@ export interface ConfirmRequest {
 type ConfirmFn = (request: ConfirmRequest) => void;
 
 const ConfirmContext = createContext<ConfirmFn | null>(null);
+const ConfirmDialogContext = createContext<{request: ConfirmRequest | null; onClose: () => void} | null>(null);
 
 export function useConfirm(): ConfirmFn {
     const confirm = useContext(ConfirmContext);
@@ -70,12 +71,21 @@ export function ConfirmProvider({children}: {children: ReactNode}) {
         setRequest(null);
     }, [pathname]);
 
+    const dialog = useMemo(() => ({request, onClose: close}), [request, close]);
+
     return (
         <ConfirmContext.Provider value={confirm}>
-            {children}
-            <ConfirmDialog request={request} onClose={close}/>
+            <ConfirmDialogContext.Provider value={dialog}>
+                {children}
+            </ConfirmDialogContext.Provider>
         </ConfirmContext.Provider>
     );
+}
+
+export function ConfirmDialogHost() {
+    const dialog = useContext(ConfirmDialogContext);
+    if (!dialog) throw new Error('ConfirmDialogHost must be used inside ConfirmProvider');
+    return <ConfirmDialog {...dialog}/>;
 }
 
 function ConfirmDialog({request, onClose}: {request: ConfirmRequest | null; onClose: () => void}) {

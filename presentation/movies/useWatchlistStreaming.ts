@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {hasSelectedStreamingOffer, type Movie, type StreamingAvailability} from '@/domain';
 import {useStreamingRepository} from '../di/DependenciesContext';
 import {usePreferences} from '../hooks/use-preferences';
-import {deviceRegion} from './components/watchRegion';
+import {useDeviceRegion} from './components/watchRegion';
 
 const BATCH_SIZE = 20;
 const CONCURRENCY = 2;
@@ -18,7 +18,7 @@ interface Results {
 export function useWatchlistStreaming(movies: Movie[]) {
     const repository = useStreamingRepository();
     const preferences = usePreferences();
-    const automatic = useMemo(() => deviceRegion(), []);
+    const automatic = useDeviceRegion();
     const country = preferences.watchRegion ?? automatic;
     const services = preferences.streamingServices[country] ?? [];
     const [onlySelected, setOnlySelected] = useState(false);

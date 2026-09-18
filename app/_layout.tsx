@@ -6,7 +6,6 @@ import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
 import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {Platform, StyleSheet, View} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
 import {useFonts} from 'expo-font';
@@ -22,14 +21,13 @@ import {
     BlurTargetProvider,
     BlurTargetSurface,
     Colors,
-    ConfirmProvider,
     DependenciesProvider,
     OfflineBanner,
+    OverlayProvider,
     PlayerHost,
     PlayerProvider,
     SystemBars,
     SupporterProvider,
-    ToastProvider,
     TopBar,
     UpdateSnackbar,
     useColorScheme,
@@ -120,9 +118,8 @@ function AppShell() {
     const content = (
         <ThemeProvider value={theme}>
             <ReducedMotionConfig mode={ReduceMotion.System}/>
-            <ConfirmProvider>
+            <OverlayProvider>
                 <SupporterProvider>
-                <ToastProvider>
                 <PlayerProvider>
                     <BlurTargetProvider>
                         <View style={styles.flex}>
@@ -134,9 +131,8 @@ function AppShell() {
                     </BlurTargetProvider>
                     <PlayerHost/>
                 </PlayerProvider>
-                </ToastProvider>
                 </SupporterProvider>
-            </ConfirmProvider>
+            </OverlayProvider>
             <OfflineBanner/>
             <UpdateSnackbar/>
             <StatusBar style={scheme === 'dark' ? 'light' : 'dark'}/>
@@ -147,7 +143,6 @@ function AppShell() {
     return (
         <GestureHandlerRootView style={styles.flex}>
             <SafeAreaProvider>
-                <BottomSheetModalProvider>
                 {isMacDesktop ? (
                     <SafeAreaInsetsContext.Provider
                         value={{top: DESKTOP_TOP_INSET, left: 0, right: 0, bottom: 0}}
@@ -157,7 +152,6 @@ function AppShell() {
                 ) : (
                     content
                 )}
-                </BottomSheetModalProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>
     );

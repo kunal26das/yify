@@ -76,6 +76,7 @@ export class ExpoAppUpdates implements AppUpdates {
 
     async sync(): Promise<void> {
         if (this.syncing || this.reloading || this.status.state === 'ready' || !Updates.isEnabled || !Updates.channel) return;
+        if (AppState.currentState !== 'active') return;
         if (this.network?.isOnline() === false) {
             this.diagnostics.event('updates.check', {provider: 'expo', outcome: 'unavailable', reason: 'offline'});
             return;
@@ -89,6 +90,10 @@ export class ExpoAppUpdates implements AppUpdates {
                 this.publish(IDLE_UPDATE_STATUS);
                 return;
             }
+            if (AppState.currentState !== 'active' || this.network?.isOnline() === false) {
+                this.publish(IDLE_UPDATE_STATUS);
+                return;
+            }
 
             this.publish({state: 'downloading', progress: 0});
             const download = this.diagnostics.start('updates.download', {provider: 'expo'});
@@ -98,7 +103,11 @@ export class ExpoAppUpdates implements AppUpdates {
                 this.downloadFailed = false;
                 this.publish(fetched.isNew ? {state: 'ready', progress: 1} : IDLE_UPDATE_STATUS);
             } catch (error) {
-                download.fail(error, {error_code: updateErrorCode(error)});
+                this.finishFailure(download, error);
+                if (AppState.currentState !== 'active' || this.network?.isOnline() === false) {
+                    this.publish(IDLE_UPDATE_STATUS);
+                    return;
+                }
                 if (this.downloadFailed) {
                     this.publish(IDLE_UPDATE_STATUS);
                     return;
@@ -119,9 +128,18 @@ export class ExpoAppUpdates implements AppUpdates {
             span.finish(result.isAvailable ? 'ok' : 'empty');
             return result;
         } catch (error) {
-            span.fail(error, {error_code: updateErrorCode(error)});
+            this.finishFailure(span, error);
             return null;
         }
+    }
+
+    private finishFailure(span: ReturnType<Diagnostics['start']>, error: unknown): void {
+        const code = updateErrorCode(error);
+        const interrupted = code === 'ERR_UPDATES_CHECK' || code === 'ERR_UPDATES_FETCH';
+        const reason = this.network?.isOnline() === false ? 'offline' :
+            AppState.currentState !== 'active' ? 'background' : undefined;
+        if (interrupted && reason === 'offline') span.finish('unavailable', {error_code: code, reason});
+        else span.fail(error, {error_code: code, ...(reason ? {reason} : {})});
     }
 
     private publish(next: UpdateStatus): void {

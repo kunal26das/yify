@@ -132,3 +132,19 @@ test('feedback reports availability and handles SDK errors without inventing a s
     const {NOOP_DIAGNOSTICS} = loadTypeScript('data/services/NoopDiagnostics.ts');
     assert.equal(await NOOP_DIAGNOSTICS.showFeedback(), false);
 });
+
+test('native error codes survive redaction while unsafe values and getters remain private', () => {
+    const {diagnostics, calls} = fixture();
+    diagnostics.capture(Object.assign(new Error('private network detail'), {code: 'ERR_NETWORK'}), 'api.yts.list_movies');
+    assert.equal(calls.captures[0].error.message, 'api.yts.list_movies failed (ERR_NETWORK)');
+    assert.equal(calls.captures[0].options.contexts.diagnostics['diagnostics.error_code'], 'ERR_NETWORK');
+    diagnostics.capture(Object.assign(new Error('original'), {code: 'ERR_UNKNOWN'}), 'api.yts.list_movies', {error_code: 'network'});
+    assert.equal(calls.captures[1].error.message, 'api.yts.list_movies failed (network)');
+    for (const code of ['https://private.example/token', 'secret@example.com', {token: 'private'}, 123]) {
+        diagnostics.capture(Object.assign(new Error('private'), {code}), 'api.yts.list_movies');
+        assert.equal(calls.captures.at(-1).error.message, 'api.yts.list_movies failed');
+    }
+    const hostile = Object.defineProperty(new Error('private'), 'code', {get() { throw new Error('private'); }});
+    assert.doesNotThrow(() => diagnostics.capture(hostile, 'api.yts.list_movies'));
+    assert.equal(calls.captures.at(-1).error.message, 'api.yts.list_movies failed');
+});

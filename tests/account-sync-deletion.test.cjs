@@ -303,3 +303,22 @@ test('an offline deletion token does not delete remote data or escape as an unha
     assert.equal(sync.getStatus().failure, 'network');
     assert.ok(remote.has('account-a'));
 });
+
+test('a temporarily missing identity token waits for authentication without reporting a Firestore denial', async t => {
+    const {operations, diagnostics} = diagnosticsRecorder();
+    let token = null;
+    const {sync, calls, movies} = syncFixture(t, {diagnostics, getIdToken: () => token});
+    sync.setAccount('account-a');
+    await flush();
+    assert.equal(calls.length, 0);
+    assert.equal(movies()[0].id, 123);
+    assert.equal(sync.getStatus().failure, 'denied');
+    assert.equal(operations.some(entry => entry.error), false);
+    assert.equal(operations[0].outcome, 'unavailable');
+    assert.equal(operations[0].attributes.stage, 'authentication');
+    token = 'current-user-token';
+    t.mock.timers.tick(1000);
+    await flush();
+    assert.equal(sync.getStatus().state, 'synced');
+    assert.ok(calls.includes('read:account-a'));
+});

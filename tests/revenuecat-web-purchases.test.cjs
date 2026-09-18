@@ -427,7 +427,7 @@ test('returning to the visible page refreshes customer details once and hidden p
     const f = fixture();
     await f.repository.identify(null);
     await f.repository.init();
-    assert.equal(listeners.size, 2);
+    assert.equal(listeners.size, 3);
     listeners.get('focus')();
     listeners.get('visibilitychange')();
     await tick();
@@ -515,4 +515,63 @@ test('web customer network outages keep verified entitlements and expose a recov
     await f.repository.refresh();
     assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'ok');
     assert.equal(f.calls.filter(call => call.method === 'configure').length, 1);
+});
+
+test('an offline browser retains cached access and automatically verifies it when connectivity returns', async () => {
+    const listeners = new Map();
+    global.window = {
+        navigator: {onLine: false},
+        addEventListener: (name, listener) => listeners.set(name, listener),
+    };
+    const {diagnostics, operations} = diagnosticRecorder();
+    const values = new Map([
+        ['app_user_id', '$RCAnonymousID:cached'],
+        [cacheKey('$RCAnonymousID:cached'), JSON.stringify({adsRemoved: true, expiresAt: null})],
+    ]);
+    const f = fixture({diagnostics, values});
+    await f.repository.identify(null);
+    assert.equal(f.calls.length, 0);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(f.repository.getState().ready, false);
+    assert.equal(operations.some(entry => entry.error), false);
+    assert.equal(await f.repository.restore(), false);
+    assert.equal(f.repository.getState().failure, 'restore_failed');
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.equal(f.calls.length, 0);
+    global.window.navigator.onLine = true;
+    listeners.get('online')();
+    await tick();
+    assert.equal(f.calls.filter(call => call.method === 'configure').length, 1);
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(f.repository.getState().adsRemoved, false);
+});
+
+test('reconnect while a browser tab is hidden waits for visibility and coalesces refresh events', async () => {
+    const listeners = new Map();
+    global.window = {
+        navigator: {onLine: true},
+        addEventListener: (name, listener) => listeners.set(name, listener),
+    };
+    global.document = {
+        visibilityState: 'hidden',
+        addEventListener: (name, listener) => listeners.set(name, listener),
+    };
+    const pending = deferred();
+    let wait = false;
+    const f = fixture({overrides: {info: () => wait ? pending.promise : grantedInfo()}});
+    await f.repository.identify(null);
+    const baseline = f.calls.length;
+    listeners.get('online')();
+    await tick();
+    assert.equal(f.calls.length, baseline);
+    wait = true;
+    global.document.visibilityState = 'visible';
+    listeners.get('visibilitychange')();
+    listeners.get('online')();
+    listeners.get('focus')();
+    await tick();
+    assert.equal(f.calls.filter(call => call.method === 'info').length, 2);
+    pending.resolve(grantedInfo(true));
+    await tick();
+    assert.equal(f.repository.getState().adsRemoved, true);
 });

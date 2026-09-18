@@ -62,7 +62,7 @@ function fixture({initial = {}, getCatalog = async country => ({...catalog, coun
         },
         '../../hooks/use-preferences': {usePreferences: () => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);}, () => preferences)},
-        './watchRegion': {deviceRegion: () => 'IN'},
+        './watchRegion': {useDeviceRegion: () => 'IN'},
         './openStreamingLink': {openStreamingLink: async url => {calls.links.push(url); await openLink(url);}},
         './WatchRegionPicker': {countryName: code => ({IN: 'India', US: 'United States', NL: 'Netherlands', FR: 'France'}[code] ?? code),
             WatchRegionPicker: 'CountryPicker'},

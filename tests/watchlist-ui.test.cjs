@@ -52,7 +52,7 @@ function fixture(isPhone = false, options = {}) {
         '../components/toast': {useToast: () => noop},
         '../di/DependenciesContext': {useLibraryRepository: () => library, useWatchlistRepository: () => watchlist,
             useStreamingRepository: () => options.streaming ?? {getCachedAvailability: () => null, getAvailability: async () => ({country: 'US', status: 'ready', offers: []})}},
-        './components/watchRegion': {deviceRegion: () => 'US'},
+        './components/watchRegion': {useDeviceRegion: () => 'US'},
         './MyStreamingServices': {MyStreamingServices: 'MyStreamingServices'},
         './openStreamingLink': {openStreamingLink: async () => {}},
         '../player/PlayerContext': {usePlayer: () => player},
