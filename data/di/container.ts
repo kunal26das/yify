@@ -99,7 +99,7 @@ export function createDependencies(): Dependencies {
         purchases,
         accountSync,
         network,
-        newMovies: new NewMoviesNotifierImpl(diagnostics),
+        newMovies: new NewMoviesNotifierImpl(diagnostics, analytics),
         storeServices: new PlayStoreServices(),
         ads,
         displayAds: new AdSenseDisplayAds(purchases),

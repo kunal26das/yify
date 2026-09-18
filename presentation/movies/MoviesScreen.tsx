@@ -197,7 +197,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
 
     const handleRefresh = useCallback(() => {
         loadInitial();
-        void newMovies.check(true);
+        void newMovies.check(true).catch(() => {});
     }, [loadInitial, newMovies]);
 
     const handleChipSelect = useCallback(

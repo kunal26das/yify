@@ -1,53 +1,23 @@
 import * as BackgroundTask from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
+import {AppState, Platform} from 'react-native';
 
-import type {Diagnostics, Movie, NewMoviesNotifier, NotificationPreferences, Preferences} from '@/domain';
-import {
-    DEFAULT_NOTIFICATION_PREFERENCES,
-    NOTIFICATION_BURST_LIMIT,
-    Quality,
-    buildNotificationBatch,
-    filterNotifiableMovies,
-    notificationQuerySignature,
-    quietHoursEndAt,
-    selectNewMovies,
-} from '@/domain';
-
-import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
+import type {AnalyticsSink, Diagnostics, NewMoviesNotifier, Preferences, Quality} from '@/domain';
+import {isWithinQuietHours} from '@/domain';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
+import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
+import {LibraryRepositoryImpl} from '../repositories/LibraryRepositoryImpl';
 import {PersistentCache} from '../datasources/storage/PersistentCache';
 import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
 import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
 import {RemoteAppConfig} from './RemoteAppConfig';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import {MovieNotificationCoordinator} from './MovieNotificationCoordinator';
 
 let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
-
-const PAGE_SIZE = 50;
-
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
-
-Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-    }),
-});
-
-const DAILY_INTERVAL_MINUTES = 24 * 60;
-
-const cache = new SeenMoviesRepositoryImpl(new PersistentCache('new-movies'));
-
-function localDateKey(date: Date): string {
-    const y = date.getFullYear();
-    const m = `${date.getMonth() + 1}`.padStart(2, '0');
-    const d = `${date.getDate()}`.padStart(2, '0');
-    return `${y}-${m}-${d}`;
-}
-
+const CHANNEL = 'movie-recommendations';
 const appConfig = new RemoteAppConfig();
 const settingsStore = new PersistentCache('settings');
 
@@ -55,156 +25,163 @@ function currentPreferences(): Preferences {
     return new PreferencesRepositoryImpl(settingsStore).getPreferences();
 }
 
-async function fetchFirstPage(quality: Quality): Promise<Movie[]> {
-    await appConfig.ready();
-    const repository = new MovieRepositoryImpl(
-        new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics)
-    );
-    const result = await repository.listMovies({
-        page: 1,
-        limit: PAGE_SIZE,
-        quality,
+async function ensureChannel(): Promise<void> {
+    if (Platform.OS !== 'android') return;
+    await Notifications.setNotificationChannelAsync(CHANNEL, {
+        name: 'Movie recommendations',
+        importance: Notifications.AndroidImportance.DEFAULT,
+        sound: null,
+        enableVibrate: false,
     });
-    return result.movies;
 }
 
-async function notifyNewMovies(
-    newMovies: Movie[],
-    notify: NotificationPreferences,
-    now: Date
-): Promise<void> {
-    const deferUntil = notify.quietHours
-        ? quietHoursEndAt(now, notify.quietStartHour, notify.quietEndHour)
-        : null;
-    const trigger: Notifications.NotificationTriggerInput = deferUntil
-        ? {type: Notifications.SchedulableTriggerInputTypes.DATE, date: deferUntil}
-        : null;
-    const batch = buildNotificationBatch(newMovies, notify.perTitle, NOTIFICATION_BURST_LIMIT);
-    for (const content of batch) {
-        await Notifications.scheduleNotificationAsync({content, trigger});
-    }
+export async function notificationPermissionStatus(): Promise<'granted' | 'undetermined' | 'denied'> {
+    const permissions = await Notifications.getPermissionsAsync();
+    if (permissions.granted || permissions.status === 'granted' ||
+        permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL ||
+        permissions.ios?.status === Notifications.IosAuthorizationStatus.EPHEMERAL) return 'granted';
+    return permissions.status === 'denied' ? 'denied' : 'undetermined';
 }
-
-export function publishNotificationSettings(_preferences: Preferences): void {}
 
 export async function hasNotificationPermission(): Promise<boolean> {
-    const {status} = await Notifications.getPermissionsAsync();
-    return status === 'granted';
+    return await notificationPermissionStatus() === 'granted';
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
-    const {status, canAskAgain} = await Notifications.getPermissionsAsync();
-    if (status === 'granted') return true;
-    if (!canAskAgain) return false;
-    const {status: next} = await Notifications.requestPermissionsAsync();
-    return next === 'granted';
+    await ensureChannel();
+    if (await hasNotificationPermission()) return true;
+    const permissions = await Notifications.getPermissionsAsync();
+    if (!permissions.canAskAgain) return false;
+    await Notifications.requestPermissionsAsync({ios: {allowAlert: true, allowBadge: false, allowSound: false}});
+    return hasNotificationPermission();
+}
+
+function owned(request: Notifications.NotificationRequest): boolean {
+    if (/^yify-(daily-pick|new-movies):/.test(request.identifier)) return true;
+    const data = request.content.data;
+    return (request.content.title === 'New movie added' || /^\d+ new movies$/.test(request.content.title ?? '')) &&
+        (typeof data?.movieId === 'number' || typeof data?.count === 'number');
+}
+
+async function fetchMovies(quality: Quality) {
+    await appConfig.ready();
+    const repository = new MovieRepositoryImpl(new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics));
+    return (await repository.listMovies({page: 1, limit: 50, quality})).movies;
+}
+
+const coordinator = new MovieNotificationCoordinator({
+    store: new PersistentCache('new-movies'),
+    preferences: currentPreferences,
+    fetchMovies,
+    watchlist: () => new WatchlistRepositoryImpl(new PersistentCache('watchlist')).getAll(),
+    watched: () => new LibraryRepositoryImpl(new PersistentCache('library')),
+    delivery: {
+        hasPermission: hasNotificationPermission,
+        pending: async () => (await Notifications.getAllScheduledNotificationsAsync()).filter(owned).map(item => item.identifier),
+        cancel: id => Notifications.cancelScheduledNotificationAsync(id),
+        schedule: async item => {
+            await ensureChannel();
+            await Notifications.scheduleNotificationAsync({
+                identifier: item.identifier,
+                content: {...item.content, sound: false},
+                trigger: item.date
+                    ? {type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.date, channelId: CHANNEL}
+                    : {channelId: CHANNEL},
+            });
+        },
+    },
+});
+
+Notifications.setNotificationHandler({
+    handleNotification: async notification => {
+        const preferences = currentPreferences();
+        const notify = preferences.notify;
+        const daily = notification.request.content.data?.kind === 'daily-pick';
+        const show = preferences.notifications && !(daily && AppState.currentState === 'active') &&
+            !(notify.quietHours && isWithinQuietHours(new Date(), notify.quietStartHour, notify.quietEndHour));
+        return {shouldShowBanner: show, shouldShowList: show, shouldPlaySound: false, shouldSetBadge: false};
+    },
+});
+
+let settingsSignature: string | undefined;
+let foregroundBound = false;
+let registration = Promise.resolve();
+
+async function syncRegistration(): Promise<void> {
+    const next = registration.catch(() => {}).then(async () => {
+        const enabled = currentPreferences().notifications && await hasNotificationPermission();
+        const registered = await TaskManager.isTaskRegisteredAsync(NEW_MOVIES_TASK);
+        if (!enabled) {
+            if (registered) await BackgroundTask.unregisterTaskAsync(NEW_MOVIES_TASK);
+            return;
+        }
+        if (await BackgroundTask.getStatusAsync() === BackgroundTask.BackgroundTaskStatus.Restricted) return;
+        if (!registered) await BackgroundTask.registerTaskAsync(NEW_MOVIES_TASK, {minimumInterval: 12 * 60});
+    });
+    registration = next;
+    return next;
+}
+
+function reportFailure(error: unknown): void {
+    diagnostics.capture(error, 'notifications.register');
+}
+
+export function publishNotificationSettings(preferences: Preferences): void {
+    const signature = JSON.stringify({enabled: preferences.notifications, ...preferences.notify});
+    if (signature === settingsSignature) return;
+    settingsSignature = signature;
+    coordinator.invalidate();
+    void coordinator.refresh().catch(reportFailure);
+    void syncRegistration().catch(reportFailure);
+}
+
+export function refreshMovieNotificationContent(): void {
+    coordinator.invalidate();
+    void coordinator.refresh().catch(reportFailure);
 }
 
 export async function checkForNewMovies(force = false): Promise<number> {
     const span = diagnostics.start('notifications.check', {forced: force});
     try {
-        const result = await performCheck(force);
-        span.finish(result > 0 ? 'ok' : 'empty');
-        return result;
+        const count = await coordinator.check(force);
+        span.finish(count > 0 ? 'ok' : 'empty');
+        return count;
     } catch (error) {
         span.fail(error);
         throw error;
     }
 }
 
-async function performCheck(force: boolean): Promise<number> {
-    const preferences = currentPreferences();
-    if (!preferences.notifications) return 0;
-    const notify = preferences.notify;
-
-    const now = new Date();
-    const today = localDateKey(now);
-    if (!force && cache.getLastRunDate() === today) {
-        return 0;
-    }
-
-    const signature = notificationQuerySignature(notify.quality);
-    const knownSignature =
-        cache.getQuerySignature() ??
-        notificationQuerySignature(DEFAULT_NOTIFICATION_PREFERENCES.quality);
-    if (knownSignature !== signature) {
-        cache.setSeenIds([]);
-    }
-    cache.setQuerySignature(signature);
-
-    const movies = await fetchFirstPage(notify.quality);
-    const cachedIds = cache.getSeenIds();
-
-    cache.setLastRunDate(today);
-
-    if (cachedIds.size === 0) {
-        cache.setSeenIds(movies.map((m) => m.id));
-        return 0;
-    }
-
-    const fresh = selectNewMovies(cachedIds, movies);
-    cache.setSeenIds(movies.map((m) => m.id));
-
-    const matched = filterNotifiableMovies(fresh, {
-        minimumRating: notify.minimumRating,
-        genre: notify.genre,
-    });
-    if (matched.length === 0) return 0;
-
-    await notifyNewMovies(matched, notify, now);
-    return matched.length;
-}
-
 TaskManager.defineTask(NEW_MOVIES_TASK, async () => {
     try {
         await checkForNewMovies();
         return BackgroundTask.BackgroundTaskResult.Success;
-    } catch (e) {
-        console.warn('[new-movies] background check failed', e);
+    } catch {
         return BackgroundTask.BackgroundTaskResult.Failed;
     }
 });
 
 export async function registerNewMoviesTask(): Promise<void> {
-    const span = diagnostics.start('notifications.register', {provider: 'expo'});
-    try {
-        const status2 = await BackgroundTask.getStatusAsync();
-        if (status2 === BackgroundTask.BackgroundTaskStatus.Restricted) {
-            span.finish('unavailable');
-            return;
-        }
-
-        const isRegistered = await TaskManager.isTaskRegisteredAsync(NEW_MOVIES_TASK);
-        if (!isRegistered) {
-            await BackgroundTask.registerTaskAsync(NEW_MOVIES_TASK, {
-                minimumInterval: DAILY_INTERVAL_MINUTES,
-            });
-        }
-        span.finish();
-    } catch (e) {
-        span.fail(e);
-        console.warn('[new-movies] failed to register background task', e);
+    if (!foregroundBound) {
+        foregroundBound = true;
+        AppState.addEventListener('change', state => {
+            if (state !== 'active') return;
+            void coordinator.refresh(true).catch(reportFailure);
+            void syncRegistration().catch(reportFailure);
+        });
     }
+    await coordinator.refresh(AppState.currentState === 'active');
+    await syncRegistration();
 }
 
 export class NewMoviesNotifierImpl implements NewMoviesNotifier {
-    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS) {
+    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS, _tracking?: AnalyticsSink) {
         diagnostics = implementation;
     }
 
-    hasPermission(): Promise<boolean> {
-        return hasNotificationPermission();
-    }
-
-    requestPermission(): Promise<boolean> {
-        return requestNotificationPermission();
-    }
-
-    register(): Promise<void> {
-        return registerNewMoviesTask();
-    }
-
-    check(force = false): Promise<number> {
-        return checkForNewMovies(force);
-    }
+    hasPermission() { return hasNotificationPermission(); }
+    permissionStatus() { return notificationPermissionStatus(); }
+    requestPermission() { return requestNotificationPermission(); }
+    register() { return registerNewMoviesTask(); }
+    check(force = false) { return checkForNewMovies(force); }
 }

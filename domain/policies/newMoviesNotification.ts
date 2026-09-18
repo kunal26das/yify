@@ -7,7 +7,7 @@ export function selectNewMovies(cachedIds: Set<number>, movies: Movie[]): Movie[
 export interface NewMoviesNotification {
     title: string;
     body: string;
-    data: { movieId: number } | { count: number };
+    data: { movieId: number; kind?: 'daily-pick'; dateKey?: string } | { count: number };
 }
 
 export function buildNotificationContent(newMovies: Movie[]): NewMoviesNotification {

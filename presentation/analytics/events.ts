@@ -112,7 +112,8 @@ export const Analytics = {
     supporterNudgeDeclined: (source: string) => trackEvent('supporter_nudge_declined', {source}),
     coffeeOpen: (source: string) => trackEvent('coffee_open', {source}),
 
-    notificationOpen: (movieId: number) => trackEvent('notification_open', {movie_id: movieId}),
+    notificationOpen: (movieId?: number, kind: 'daily-pick' | 'new-release' = 'new-release') =>
+        trackEvent('notification_open', {notification_kind: kind, ...(movieId ? {movie_id: movieId} : {})}),
     retry: (source: 'home' | 'browse' | 'browse_more' | 'details' | 'shows') =>
         trackEvent('retry', {source}),
     loadError: (source: 'home' | 'browse' | 'details' | 'shows') => trackEvent('load_error', {source}),

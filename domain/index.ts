@@ -71,6 +71,8 @@ export {
   NOTIFICATION_BURST_LIMIT,
 } from './policies/newMoviesNotification';
 export type {NewMoviesNotification, NewMoviesFilter} from './policies/newMoviesNotification';
+export {buildDailyMoviePicks, localNotificationDateKey} from './policies/dailyMoviePicks';
+export type {DailyMoviePick, DailyMoviePicksInput} from './policies/dailyMoviePicks';
 export {readSection, mergeSection} from './policies/preferencesMerge';
 export type {SectionGuards} from './policies/preferencesMerge';
 export {decideAd} from './policies/adGating';
@@ -175,3 +177,5 @@ export type {LibraryRepository} from './repositories/LibraryRepository';
 export {emptyLibraryState, normalizeLibraryState, parseLibraryState, mergeLibraryState, encodeLibraryState, sameLibraryState, liveLibraryCollections, libraryMovieWatched, libraryCollectionContains, libraryLatestTimestamp, normalizeCollectionName, LIBRARY_MAX_COLLECTIONS, LIBRARY_MAX_COLLECTION_RECORDS, LIBRARY_MAX_MARKS, LIBRARY_NAME_LIMIT, LIBRARY_MAX_PAYLOAD_CHARS} from './policies/libraryMerge';
 export {selectWatchlistMovies, pickWatchlistMovie} from './policies/watchlistView';
 export type {WatchlistViewOptions, WatchlistSort, WatchlistStatus} from './policies/watchlistView';
+export {movieNotificationTarget} from './policies/movieNotificationTarget';
+export type {MovieNotificationTarget} from './policies/movieNotificationTarget';
