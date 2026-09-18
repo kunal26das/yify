@@ -13,7 +13,7 @@ function fixture(platform = 'web') {
     const history = {getRecent: () => recent, clear: () => {recent = [];}};
     const {usePreferencesViewModel} = loadTypeScript('presentation/movies/usePreferencesViewModel.ts', {
         'expo-constants': {expoConfig: {version: '1.8.3'}},
-        'react-native': {Platform: {OS: platform}},
+        'react-native': {Platform: {OS: platform}, AppState: {addEventListener: () => ({remove() {}})}},
         '@/presentation/analytics/events': {Analytics: {settingChanged: () => {}}},
         '../di/DependenciesContext': {
             useSearchHistory: () => history,

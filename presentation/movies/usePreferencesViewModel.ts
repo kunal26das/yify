@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
-import {useCallback, useEffect, useMemo, useState} from 'react';
-import {Platform} from 'react-native';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {AppState, Platform} from 'react-native';
 import {Analytics} from '@/presentation/analytics/events';
 
 import type {
@@ -31,6 +31,8 @@ const PLAYBACK_EVENTS: Record<keyof PlaybackPreferences, string> = {
 };
 
 const NOTIFY_EVENTS: Record<keyof NotificationPreferences, string> = {
+    dailyPicks: 'notifications_daily_picks',
+    dailyHour: 'notifications_daily_hour',
     quality: 'notifications_quality',
     minimumRating: 'notifications_minimum_rating',
     genre: 'notifications_genre',
@@ -44,7 +46,9 @@ export function usePreferencesViewModel() {
     const preferences: Preferences = usePreferences();
     const watchlist = useWatchlist();
 
-    const [permissionBlocked, setPermissionBlocked] = useState(false);
+    const [permissionStatus, setPermissionStatus] = useState<'granted' | 'undetermined' | 'denied' | 'unavailable' | null>(null);
+    const [notificationError, setNotificationError] = useState<string | null>(null);
+    const permissionRead = useRef(0);
     const [listCleared, setListCleared] = useState(false);
     const searchHistory = useSearchHistory();
     const newMovies = useNewMoviesNotifier();
@@ -56,6 +60,29 @@ export function usePreferencesViewModel() {
     useEffect(() => {
         setSearchCount(searchHistory.getRecent().length);
     }, [searchHistory]);
+
+    useEffect(() => {
+        let active = true;
+        const refreshPermission = async () => {
+            const read = ++permissionRead.current;
+            try {
+                const status = newMovies.permissionStatus
+                    ? await newMovies.permissionStatus()
+                    : await newMovies.hasPermission() ? 'granted' : 'undetermined';
+                if (active && read === permissionRead.current) setPermissionStatus(status);
+            } catch {
+            }
+        };
+        void refreshPermission();
+        const subscription = AppState.addEventListener('change', state => {
+            if (state === 'active') void refreshPermission();
+        });
+        return () => {
+            active = false;
+            permissionRead.current += 1;
+            subscription.remove();
+        };
+    }, [newMovies]);
 
     const appInfo = useMemo<AppInfo>(() => {
         const build =
@@ -104,13 +131,21 @@ export function usePreferencesViewModel() {
     const toggleNotifications = useCallback(async (next: boolean) => {
         Analytics.settingChanged('notifications', String(next));
         preferencesRepository.setNotificationsEnabled(next);
-        if (!next) {
-            setPermissionBlocked(false);
-            return;
+        setNotificationError(null);
+        const read = ++permissionRead.current;
+        if (!next) return;
+        try {
+            const granted = await newMovies.requestPermission();
+            const status = granted ? 'granted' : newMovies.permissionStatus
+                ? await newMovies.permissionStatus()
+                : 'undetermined';
+            if (read === permissionRead.current) setPermissionStatus(status);
+            if (granted && preferencesRepository.areNotificationsEnabled()) await newMovies.register();
+        } catch {
+            if (read === permissionRead.current) {
+                setNotificationError('Could not enable alerts. Please try again.');
+            }
         }
-        const granted = await newMovies.requestPermission();
-        setPermissionBlocked(!granted);
-        if (granted) void newMovies.register();
     }, [preferencesRepository, newMovies]);
 
     const toggleConfirmWatchlistRemoval = useCallback((next: boolean) => {
@@ -137,7 +172,9 @@ export function usePreferencesViewModel() {
         playback: preferences.playback,
         notify: preferences.notify,
         confirmWatchlistRemoval: preferences.confirmWatchlistRemoval,
-        permissionBlocked,
+        permissionBlocked: permissionStatus === 'denied',
+        permissionStatus,
+        notificationError,
         watchlistCount: watchlist.length,
         searchHistoryCount: searchCount,
         listCleared,

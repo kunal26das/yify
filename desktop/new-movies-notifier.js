@@ -10,6 +10,9 @@ const BURST_LIMIT = 5;
 
 const DEFAULT_SETTINGS = {
     enabled: true,
+    dailyPicks: false,
+    dailyHour: 19,
+    rendererDailyDelivery: false,
     quality: '2160p',
     minimumRating: 0,
     genre: '',
@@ -128,7 +131,7 @@ async function checkForNewMovies(onClick, force = false) {
     if (!Notification.isSupported()) return 0;
 
     const settings = readSettings();
-    if (!settings.enabled) return 0;
+    if (!settings.enabled || (settings.dailyPicks && settings.rendererDailyDelivery)) return 0;
 
     const now = new Date();
     const today = localDateKey(now);

@@ -83,6 +83,8 @@ const PLAYBACK_GUARDS: SectionGuards<PlaybackPreferences> = {
 };
 
 const NOTIFY_GUARDS: SectionGuards<NotificationPreferences> = {
+    dailyPicks: (value) => typeof value === 'boolean',
+    dailyHour: isHour,
     quality: (value) => isMember(value, Quality),
     minimumRating: (value) =>
         typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 10,

@@ -75,7 +75,7 @@ function switchColors(colors: Colors, on: boolean): React.ComponentProps<typeof 
     } as React.ComponentProps<typeof Switch>;
 }
 type Glyph = keyof typeof Ionicons.glyphMap;
-type NotifyDisclosureKey = 'quality' | 'minimumRating' | 'genre' | 'quietStartHour' | 'quietEndHour';
+type NotifyDisclosureKey = 'dailyHour' | 'quality' | 'minimumRating' | 'genre' | 'quietStartHour' | 'quietEndHour';
 type DisclosureKey = 'theme' | `browse.${keyof BrowseDefaults}` | `notify.${NotifyDisclosureKey}`;
 
 interface OptionRow<K> {
@@ -235,6 +235,11 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
         vm.setNotificationPreference('quietHours', next);
     };
 
+    const onToggleDailyPicks = (next: boolean) => {
+        if (!next) closeIfOpen(['notify.dailyHour']);
+        vm.setNotificationPreference('dailyPicks', next);
+    };
+
     const toggleSection = (key: SectionKey) => {
         const next = sections[key] !== true;
         if (next) pending.current = key;
@@ -287,9 +292,11 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
         ? 'Off'
         : notifyBlocked
           ? 'Blocked'
-          : vm.notify.quality === Quality.All
-            ? 'On'
-            : `On \u00b7 ${labelOf(QUALITY_OPTIONS, vm.notify.quality)}`;
+          : vm.notify.dailyPicks
+            ? `Daily \u00b7 ${labelOf(HOUR_OPTIONS, vm.notify.dailyHour)}`
+            : vm.notify.quality === Quality.All
+              ? 'On'
+              : `On \u00b7 ${labelOf(QUALITY_OPTIONS, vm.notify.quality)}`;
 
     const searchSummary =
         vm.searchHistoryCount === 0 ? 'None' : `${vm.searchHistoryCount} recent`;
@@ -400,34 +407,82 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 >
                     <Row
                         icon="notifications-outline"
-                        title="New releases"
-                        subtitle="A daily check for titles added since you last looked."
+                        title="Movie notifications"
+                        subtitle={Platform.OS === 'web' ? 'Browser alerts work while Yify is open.' : undefined}
                         colors={colors}
                         gutter={gutter}
                         trailing={
                             <Switch
                                 value={vm.notifications}
                                 onValueChange={onToggleNotifications}
-                                accessibilityLabel="New releases"
+                                accessibilityLabel="Movie notifications"
                                 {...switchColors(colors, vm.notifications)}
                             />
                         }
                     />
-                    {vm.notifications && vm.permissionBlocked ? (
+                    {vm.notifications && (vm.permissionBlocked || vm.permissionStatus === 'unavailable' || vm.notificationError) ? (
                         <Animated.View
                             entering={enterRise()}
                             style={[styles.notice, {paddingLeft: gutter + GLYPH_SIZE + GLYPH_GAP, paddingRight: gutter}]}
                         >
                             <Ionicons name="warning-outline" size={15} color={colors.gold}/>
                             <ThemedText style={[styles.subtitle, styles.noticeText, {color: colors.textMuted}]}>
-                                {Platform.OS === 'web'
-                                    ? 'Your browser is blocking notifications for this site. Allow them in its site settings and this will start working.'
-                                    : 'Notifications are turned off for Yify in your device settings. Allow them there and this will start working.'}
+                                {vm.notificationError ?? (vm.permissionStatus === 'unavailable'
+                                    ? `Notifications are unavailable ${Platform.OS === 'web' ? 'in this browser' : 'on this device'}.`
+                                    : Platform.OS === 'web'
+                                      ? 'Allow notifications in your browser’s site settings.'
+                                      : 'Allow notifications for Yify in your device settings.')}
                             </ThemedText>
                         </Animated.View>
                     ) : null}
+                    {vm.notifications && (vm.permissionStatus === 'undetermined' || vm.notificationError) ? (
+                        <View style={{paddingLeft: gutter + GLYPH_SIZE + GLYPH_GAP, paddingRight: gutter, paddingBottom: Spacing.md}}>
+                            <PressableScale
+                                onPress={() => void vm.toggleNotifications(true)}
+                                accessibilityRole="button"
+                                accessibilityLabel={vm.notificationError ? 'Retry alerts' : 'Allow notifications'}
+                                contentStyle={[styles.permissionAction, {borderColor: colors.border}]}
+                            >
+                                <ThemedText style={[styles.value, {color: colors.text}]}>
+                                    {vm.notificationError ? 'Retry alerts' : 'Allow notifications'}
+                                </ThemedText>
+                            </PressableScale>
+                        </View>
+                    ) : null}
                     {vm.notifications ? (
                         <Animated.View entering={enterRise()} exiting={exitFade}>
+                            <Row
+                                icon="sparkles-outline"
+                                title="Daily picks"
+                                subtitle="One film a day from your watchlist or the catalogue."
+                                colors={colors}
+                                gutter={gutter}
+                                trailing={
+                                    <Switch
+                                        value={vm.notify.dailyPicks}
+                                        onValueChange={onToggleDailyPicks}
+                                        accessibilityLabel="Daily picks"
+                                        {...switchColors(colors, vm.notify.dailyPicks)}
+                                    />
+                                }
+                            />
+                            {vm.notify.dailyPicks ? (
+                                <ChoiceRow
+                                    icon="time-outline"
+                                    title="Delivery time"
+                                    value={vm.notify.dailyHour}
+                                    options={HOUR_OPTIONS}
+                                    expanded={open === 'notify.dailyHour'}
+                                    colors={colors}
+                                    gutter={gutter}
+                                    accessibilityLabel="Daily pick delivery time"
+                                    onToggle={() => toggleGroup('notify.dailyHour')}
+                                    onSelect={(value) => {
+                                        vm.setNotificationPreference('dailyHour', Number(value));
+                                        setOpen(null);
+                                    }}
+                                />
+                            ) : null}
                             {NOTIFY_ROWS.map((row) => (
                                 <ChoiceRow
                                     key={row.key}
@@ -452,11 +507,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             <Row
                                 icon="moon-outline"
                                 title="Quiet hours"
-                                subtitle={
-                                    Platform.OS === 'web'
-                                        ? 'Hold alerts overnight. They arrive the next time you open Yify after the window.'
-                                        : 'Hold alerts overnight and deliver them when the window ends.'
-                                }
+                                subtitle="Keep alerts outside your quiet hours."
                                 colors={colors}
                                 gutter={gutter}
                                 trailing={
@@ -492,7 +543,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                                     ))}
                                 </Animated.View>
                             ) : null}
-                            <Row
+                            {!vm.notify.dailyPicks ? <Row
                                 icon="list-outline"
                                 title="One alert per title"
                                 subtitle="A separate notification for each new title instead of one summary."
@@ -508,7 +559,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                                         {...switchColors(colors, vm.notify.perTitle)}
                                     />
                                 }
-                            />
+                            /> : null}
                         </Animated.View>
                     ) : null}
                 </SettingsSection>
@@ -1214,6 +1265,14 @@ const styles = StyleSheet.create({
 
     notice: {flexDirection: 'row', alignItems: 'flex-start', gap: 7, paddingBottom: Spacing.sm},
     noticeText: {flex: 1},
+    permissionAction: {
+        alignSelf: 'flex-start',
+        minHeight: 44,
+        justifyContent: 'center',
+        paddingHorizontal: Spacing.md,
+        borderRadius: Radius.pill,
+        borderWidth: 1,
+    },
 
     dangerButton: {
         paddingHorizontal: 16,

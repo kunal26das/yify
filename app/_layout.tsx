@@ -1,4 +1,4 @@
-import {useEffect} from 'react';
+import {useEffect, useRef} from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, usePathname} from 'expo-router';
 import * as Sentry from '@sentry/react-native';
@@ -38,17 +38,18 @@ import {
 } from '@/presentation';
 import {bootstrap, createDependencies} from '@/data';
 import {Analytics, installAnalyticsSink} from '@/presentation/analytics/events';
+import {movieNotificationTarget} from '@/domain';
 
 const dependencies = createDependencies();
 installAnalyticsSink(dependencies.analytics);
 bootstrap(dependencies);
 
 function handleNotificationData(data: unknown) {
-    const movieId = (data as { movieId?: number } | null)?.movieId;
-    if (typeof movieId === 'number') {
-        Analytics.notificationOpen(movieId);
-        router.push(`/movie/${movieId}`);
-    }
+    const target = movieNotificationTarget(data);
+    if (!target) return;
+    Analytics.notificationOpen(target.movieId, target.kind);
+    if (target.movieId) router.push(`/movie/${target.movieId}`);
+    else router.push('/movies');
 }
 
 const DESKTOP_TOP_INSET = 48;
@@ -75,9 +76,14 @@ function AppShell() {
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = fontsLoaded || !!fontError;
+    const handledNotification = useRef<string | null>(null);
     useEffect(() => {
         if (!lastResponse || !navReady) return;
+        const identifier = lastResponse.notification.request.identifier;
+        if (handledNotification.current === identifier) return;
+        handledNotification.current = identifier;
         handleNotificationData(lastResponse.notification.request.content.data);
+        void Notifications.clearLastNotificationResponseAsync().catch(() => {});
     }, [lastResponse, navReady]);
 
     const pathname = usePathname();
