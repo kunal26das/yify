@@ -31,9 +31,16 @@ export interface NyaaRecord {
     description?: string;
 }
 
+export class NyaaFeedError extends Error {
+    constructor(readonly code: 'invalid_feed' | 'http_error' | 'response_type' | 'fetch_failed' | 'read_failed', readonly upstreamStatus?: number) {
+        super('Anime releases are temporarily unavailable.');
+        this.name = 'NyaaFeedError';
+    }
+}
+
 function invalid(): never {
     // Never include provider-controlled text in an exception or diagnostic.
-    throw new Error('Anime releases are temporarily unavailable.');
+    throw new NyaaFeedError('invalid_feed');
 }
 
 function children(parent: Node): Element[] {
@@ -159,7 +166,7 @@ async function wait(ms: number, signal: AbortSignal): Promise<void> {
 async function readFeed(response: Response, signal: AbortSignal): Promise<string> {
     if (!response.ok || response.redirected) {
         void response.body?.cancel().catch(() => {});
-        return invalid();
+        throw new NyaaFeedError('http_error', response.status);
     }
     const length = response.headers.get('content-length');
     if (length && (!/^\d+$/.test(length) || Number(length) > NYAA_MAX_BYTES)) {
@@ -169,7 +176,7 @@ async function readFeed(response: Response, signal: AbortSignal): Promise<string
     const type = response.headers.get('content-type')?.split(';')[0].trim().toLowerCase();
     if (type && !['application/rss+xml', 'application/xml', 'text/xml'].includes(type)) {
         void response.body?.cancel().catch(() => {});
-        return invalid();
+        throw new NyaaFeedError('response_type', response.status);
     }
     if (!response.body) return invalid();
     const reader = response.body.getReader();
@@ -223,10 +230,15 @@ export function createNyaaTransport(options: {
                 try {
                     assertCatalogActive(controller.signal);
                     const response = await cancelled(fetcher(url, {
-                        headers: {Accept: 'application/rss+xml, application/xml, text/xml'},
-                        redirect: 'error', cache: 'no-store', signal: controller.signal,
-                    }), controller.signal);
-                    const xml = await readFeed(response, controller.signal);
+                        // The Request.cache option is unavailable on older Workers compatibility dates.
+                        headers: {Accept: 'application/rss+xml, application/xml, text/xml', 'Cache-Control': 'no-store'},
+                        redirect: 'error', signal: controller.signal,
+                    }), controller.signal).catch(() => { assertCatalogActive(controller.signal); throw new NyaaFeedError('fetch_failed'); });
+                    const xml = await readFeed(response, controller.signal).catch(error => {
+                        assertCatalogActive(controller.signal);
+                        if (error instanceof NyaaFeedError) throw error;
+                        throw new NyaaFeedError('read_failed');
+                    });
                     assertCatalogActive(controller.signal);
                     return parseNyaaFeed(xml, params.category ?? 'all');
                 } finally { clearTimeout(timer); }
