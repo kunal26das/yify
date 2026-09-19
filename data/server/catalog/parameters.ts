@@ -1,4 +1,6 @@
 import type {Genre, ListMoviesParams, ListShowsParams, OrderBy, Quality, SortBy} from '@/domain';
+import type {AnimeCategory} from '../../../domain/entities/AnimeRelease';
+import type {ListAnimeParams} from '../../../domain/repositories/AnimeRepository';
 
 const MOVIE_PARAMETERS = ['page', 'limit', 'query', 'quality', 'minimum_rating', 'genre', 'sort_by', 'order_by'];
 const QUALITIES = ['', '480p', '720p', '1080p', '1080p.x265', '2160p', '3D'];
@@ -12,6 +14,7 @@ export type CatalogRequest = (
     | {operation: 'movie' | 'suggestions' | 'parental-guides'; id: number}
     | {operation: 'shows'; params: ListShowsParams}
     | {operation: 'episodes'; imdbId: string}
+    | {operation: 'anime'; params: ListAnimeParams}
 ) & {version: 1 | 2};
 
 function integer(value: string | null, maximum: number, fallback?: number): number {
@@ -37,6 +40,7 @@ function imdb(value: string | null): string {
 
 export function parseCatalogRequest(operation: string, params: URLSearchParams): CatalogRequest {
     const allowed = operation === 'movies' ? MOVIE_PARAMETERS
+        : operation === 'anime' ? ['query', 'category']
         : operation === 'shows' ? ['page', 'limit', 'imdbId']
             : operation === 'episodes' ? ['imdbId']
                 : ['movie', 'suggestions', 'parental-guides'].includes(operation) ? ['id'] : null;
@@ -45,6 +49,14 @@ export function parseCatalogRequest(operation: string, params: URLSearchParams):
     const requestedVersion = params.get('v');
     if (requestedVersion !== null && requestedVersion !== '2') throw new InvalidCatalogRequest();
     const version = requestedVersion === '2' ? 2 : 1;
+    if (operation === 'anime') {
+        const query = params.get('query');
+        if (query !== null && (query.length > 200 || /[\u0000-\u001f\u007f]/.test(query))) throw new InvalidCatalogRequest();
+        return {operation, version, params: {
+            query: query?.trim() || undefined,
+            category: choice<AnimeCategory>(params.get('category'), ['all', 'english', 'non-english', 'raw', 'music-video']),
+        }};
+    }
     if (operation === 'movies') {
         const query = params.get('query');
         if (query !== null && (query.length > 200 || /[\u0000-\u001f\u007f]/.test(query))) throw new InvalidCatalogRequest();

@@ -2,6 +2,7 @@ import {createContext, type ReactNode, useContext} from 'react';
 import type {
     AccountSync,
     AdGateway,
+    AnimeRepository,
     AppConfig,
     AppUpdates,
     AuthRepository,
@@ -58,6 +59,12 @@ export function useMovieRepository(): MovieRepository {
 
 export function useShowRepository(): ShowRepository {
     return useDependencies().shows;
+}
+
+export function useAnimeRepository(): AnimeRepository {
+    const anime = useDependencies().anime;
+    if (!anime) throw new Error('AnimeRepository is missing from DependenciesProvider');
+    return anime;
 }
 
 export function useTmdbRepository(): TmdbRepository {

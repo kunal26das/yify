@@ -37,7 +37,7 @@ const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter(
 );
 
 function usesStackedNavigation(width: number): boolean {
-    return width > 0 && width < 380;
+    return width > 0 && width < 520;
 }
 
 export function TopBar() {

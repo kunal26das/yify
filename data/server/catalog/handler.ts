@@ -1,4 +1,5 @@
 import type {MovieRepository, ShowRepository} from '@/domain';
+import type {AnimeRepository} from '../../../domain/repositories/AnimeRepository';
 import {InvalidCatalogRequest, parseCatalogRequest} from './parameters';
 import type {CatalogRequest} from './parameters';
 import {assertCatalogActive} from './cancellation';
@@ -6,13 +7,14 @@ import {createCatalogAdmission} from './admission';
 import type {CatalogAdmission} from './admission';
 import {SubscriberAccessError} from '../subscribers/errors';
 import {
-    projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
+    projectAnimeList, projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
 } from './projections';
 import type {CatalogProjectionOptions} from './projections';
 
 export interface CatalogRepositories {
     movies: MovieRepository;
     shows: ShowRepository;
+    anime?: AnimeRepository;
 }
 
 interface CatalogHandlerOptions {
@@ -31,6 +33,10 @@ async function execute(request: CatalogRequest, repositories: CatalogRepositorie
         case 'parental-guides': return projectParentalGuides(await repositories.movies.getMovieParentalGuides(request.id));
         case 'shows': return projectShowList(await repositories.shows.listShows(request.params), options);
         case 'episodes': return projectEpisodes(await repositories.shows.listEpisodes(request.imdbId), options);
+        case 'anime': {
+            if (!repositories.anime) throw new Error('Anime releases are unavailable');
+            return projectAnimeList(await repositories.anime.listAnime(request.params));
+        }
     }
 }
 
@@ -111,7 +117,8 @@ export function createCatalogHandler(
         void work.then(permit.release, permit.release);
         try {
             const result = await Promise.race([work, cancelled]);
-            if (!privateResponse && (parsed.operation !== 'movies' || !parsed.params.query)) {
+            // Nyaa marks its RSS no-store; do not introduce a CDN or browser cache for it.
+            if (!privateResponse && parsed.operation !== 'anime' && (parsed.operation !== 'movies' || !parsed.params.query)) {
                 headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             }
             return respond(result, 200);

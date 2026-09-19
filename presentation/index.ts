@@ -3,6 +3,7 @@ export {
   useDiagnostics,
   useMovieRepository,
   useShowRepository,
+  useAnimeRepository,
   useTmdbRepository,
   useAppConfig,
   useSearchHistory,

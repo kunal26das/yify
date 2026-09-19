@@ -8,7 +8,7 @@ const {createRoutesManifest} = require('@expo/router-server/build/routes-manifes
 
 const root = path.dirname(require.resolve('../package.json'));
 const checker = path.join(root, 'scripts/check-web-export.mjs');
-const markers = ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
+const markers = ['movies-api.accel.li', 'eztvx.to', 'nyaa.si', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih'];
 const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_OWNER_UID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
     'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'AVAILABILITY_ALERTS_PILOT_UIDS', 'TMDB_COMMERCIAL_LICENSE_CONFIRMED', 'https://api.revenuecat.com/v2/projects/',
     'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'];
@@ -42,12 +42,12 @@ function fixture(t, server = false) {
         fs.writeFileSync(file, contents);
     };
     for (const [file, title] of [
-        ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'],
+        ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'], ['anime.html', 'Anime'],
         ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'],
     ]) {
         const robots = ['watchlist.html', 'history.html', 'journal.html', 'preferences.html'].includes(file)
             ? '<meta name="robots" content="noindex,follow">' : '';
-        const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
+        const links = ['movies', 'shows', 'anime', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
         write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
     }
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css', 'availability-worker.js']) write(asset, '');

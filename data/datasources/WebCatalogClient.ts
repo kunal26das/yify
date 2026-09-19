@@ -1,17 +1,18 @@
 import type {
-    CastMember, Diagnostics, ListMoviesParams, ListMoviesResult, ListShowsParams,
+    AnimeRelease, CastMember, Diagnostics, ListAnimeParams, ListAnimeResult, ListMoviesParams, ListMoviesResult, ListShowsParams,
     ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode, Torrent,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import type {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
 import {ResponseCache} from './storage/ResponseCache';
-import {requestJson, RequestTimeoutError} from './JsonRequest';
+import {requestJson, RequestCancelledError, RequestTimeoutError} from './JsonRequest';
 
 type CatalogLocation = Pick<Location, 'origin' | 'hostname' | 'protocol'>;
-type CatalogEndpoint = 'movies' | 'movie' | 'suggestions' | 'parental-guides' | 'shows' | 'episodes';
+type CatalogEndpoint = 'movies' | 'movie' | 'suggestions' | 'parental-guides' | 'shows' | 'episodes' | 'anime';
 type Query = Record<string, string | number | undefined>;
 
 const CANONICAL_ORIGIN = 'https://yify.expo.app';
+export const CANONICAL_CATALOG_BASE_URL = `${CANONICAL_ORIGIN}/api/catalog`;
 const REQUEST_TIMEOUT_MS = 30_000;
 const LIST_TTL_MS = 60_000;
 const DETAILS_TTL_MS = 10 * 60_000;
@@ -198,12 +199,49 @@ function show(value: unknown): Show {
     };
 }
 
+function animeText(value: unknown, maxLength: number): string {
+    const result = text(value);
+    if (!result.trim() || result.length > maxLength || /[\u0000-\u001f\u007f]/.test(result)) return invalid();
+    return result;
+}
+
+function animeRelease(value: unknown): AnimeRelease {
+    const item = object(value);
+    const id = text(item.id);
+    if (!/^nyaa:[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id.slice(5)))) return invalid();
+    const category = text(item.category);
+    if (!['english', 'non-english', 'raw', 'music-video'].includes(category)) return invalid();
+    const uploadedAt = date(item.uploadedAt);
+    if (uploadedAt.toISOString() !== item.uploadedAt) return invalid();
+    return {
+        id: id as AnimeRelease['id'],
+        title: animeText(item.title, 500),
+        category: category as AnimeRelease['category'],
+        uploadedAt,
+        size: animeText(item.size, 40),
+        seeds: integer(item.seeds),
+        peers: integer(item.peers),
+        downloadCount: integer(item.downloadCount),
+    };
+}
+
+function animeResult(value: unknown): ListAnimeResult {
+    const result = object(value);
+    const limit = integer(result.limit, 1);
+    if (Object.hasOwn(result, 'raw') || limit > 100 || !Array.isArray(result.releases) ||
+        result.releases.length > limit) return invalid();
+    const releases = result.releases.map(animeRelease);
+    if (new Set(releases.map(release => release.id)).size !== releases.length) return invalid();
+    return {releases, limit};
+}
+
 export class WebCatalogClient {
     private readonly responses = new ResponseCache();
 
     constructor(
         private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
         private readonly subscriberAccess?: SubscriberCatalogAccess,
+        private readonly baseUrl?: string,
     ) {}
 
     listMovies(params: ListMoviesParams): Promise<ListMoviesResult> {
@@ -245,30 +283,40 @@ export class WebCatalogClient {
         return this.request('episodes', {imdbId}, value => array(value, episode));
     }
 
-    private request<T>(endpoint: CatalogEndpoint, query: Query, parse: (value: unknown) => T): Promise<T> {
+    listAnime(params: ListAnimeParams, signal?: AbortSignal): Promise<ListAnimeResult> {
+        return this.request('anime', {query: params.query, category: params.category}, animeResult, signal);
+    }
+
+    private request<T>(endpoint: CatalogEndpoint, query: Query, parse: (value: unknown) => T, signal?: AbortSignal): Promise<T> {
+        if (signal?.aborted) return Promise.reject(new RequestCancelledError());
         const params = new URLSearchParams();
         for (const [key, value] of Object.entries(query)) {
             if (value !== undefined && value !== '') params.set(key, String(value));
         }
         params.set('v', '2');
-        const url = `${webCatalogBaseUrl()}/${endpoint}?${params}`;
+        const url = `${this.baseUrl ?? webCatalogBaseUrl()}/${endpoint}?${params}`;
         if (this.subscriberAccess) {
             const subscriberUrl = url.replace('/api/catalog/', '/api/subscriber-catalog/');
             return this.subscriberAccess.load(subscriberUrl, value => {
                 metadataOnly(value);
                 return parse(value);
-            }).then(result => result === null ? this.publicRequest(url, endpoint, parse) : result.value);
+            }, signal).then(result => {
+                if (signal?.aborted) throw new RequestCancelledError();
+                return result === null ? this.publicRequest(url, endpoint, parse, signal) : result.value;
+            });
         }
-        return this.publicRequest(url, endpoint, parse);
+        return this.publicRequest(url, endpoint, parse, signal);
     }
 
-    private publicRequest<T>(url: string, endpoint: CatalogEndpoint, parse: (value: unknown) => T): Promise<T> {
-        const ttl = ['movies', 'shows', 'episodes'].includes(endpoint) ? LIST_TTL_MS : DETAILS_TTL_MS;
-        return this.responses.getOrLoad(url, ttl, async () => {
+    private publicRequest<T>(url: string, endpoint: CatalogEndpoint, parse: (value: unknown) => T, signal?: AbortSignal): Promise<T> {
+        // Anime refreshes must fetch a new no-store feed; concurrent requests still share pending work.
+        const ttl = endpoint === 'anime' ? 0 : ['movies', 'shows', 'episodes'].includes(endpoint) ? LIST_TTL_MS : DETAILS_TTL_MS;
+        const load = async () => {
             try {
                 return await requestJson(url, {
                     diagnostics: this.diagnostics, operation: `api.catalog.${endpoint.replace('-', '_')}`,
                     provider: 'catalog', timeoutMs: REQUEST_TIMEOUT_MS,
+                    signal,
                     init: {redirect: 'error', credentials: 'omit', headers: {Accept: 'application/json'}},
                     parse: value => {
                         metadataOnly(value);
@@ -276,10 +324,14 @@ export class WebCatalogClient {
                     },
                 });
             } catch (error) {
+                if (signal?.aborted) throw new RequestCancelledError();
                 throw new Error(error instanceof RequestTimeoutError
                     ? 'The catalog request timed out. Please try again.'
                     : 'The catalog is unavailable. Please try again.');
             }
-        }, cache => this.diagnostics.event('api.catalog.cache', {provider: 'catalog', cache}));
+        };
+        // Independently cancellable callers must not inherit another caller's signal or cached request.
+        return signal ? load() : this.responses.getOrLoad(url, ttl, load,
+            cache => this.diagnostics.event('api.catalog.cache', {provider: 'catalog', cache}));
     }
 }
