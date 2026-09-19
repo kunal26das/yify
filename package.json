@@ -54,7 +54,7 @@
     "@react-native-firebase/crashlytics": "24.1.1",
     "@react-native-firebase/remote-config": "24.1.1",
     "@react-native-google-signin/google-signin": "16.1.5",
-    "@revenuecat/purchases-js": "1.62.0",
+    "@revenuecat/purchases-js": "1.62.1",
     "@sentry/react-native": "8.26.0",
     "@xmldom/xmldom": "0.8.15",
     "@yify/crashreporting": "0.1.0",
