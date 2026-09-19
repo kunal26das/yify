@@ -1,4 +1,5 @@
 import type {AuthRepository, PurchaseRepository} from '@/domain';
+import {RequestCancelledError} from '../datasources/JsonRequest';
 
 const ACCESS_BACKOFF_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -25,19 +26,25 @@ export class SubscriberCatalogAccess {
         purchases.subscribe(() => this.refreshContext());
     }
 
-    async load<T>(url: string, parse: (metadata: unknown) => T): Promise<{value: T} | null> {
+    async load<T>(url: string, parse: (metadata: unknown) => T, signal?: AbortSignal): Promise<{value: T} | null> {
+        if (signal?.aborted) throw new RequestCancelledError();
         this.refreshContext();
         const context = this.context;
         if (context === null || this.retryAt > Date.now()) return null;
         const generation = this.generation;
         const controller = new AbortController();
+        const cancel = () => controller.abort();
+        signal?.addEventListener('abort', cancel, {once: true});
+        if (signal?.aborted) cancel();
         this.active.add(controller);
         const current = () => {
+            if (signal?.aborted) throw new RequestCancelledError();
             this.refreshContext();
             return this.context === context && this.generation === generation;
         };
         const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         try {
+            if (signal?.aborted) throw new RequestCancelledError();
             let token: string | null;
             try {
                 token = await abortable(this.auth.getIdToken(), controller.signal);
@@ -77,12 +84,14 @@ export class SubscriberCatalogAccess {
             if (!current()) return null;
             return {value};
         } catch {
+            if (signal?.aborted) throw new RequestCancelledError();
             if (!current()) return null;
             throw new Error(controller.signal.aborted
                 ? 'The catalog request timed out. Please try again.'
                 : 'The catalog is unavailable. Please try again.');
         } finally {
             clearTimeout(timeout);
+            signal?.removeEventListener('abort', cancel);
             this.active.delete(controller);
         }
     }

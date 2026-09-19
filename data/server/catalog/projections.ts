@@ -1,6 +1,8 @@
 import type {
     CastMember, ListMoviesResult, ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode, Torrent,
 } from '@/domain';
+import type {AnimeRelease} from '../../../domain/entities/AnimeRelease';
+import type {ListAnimeResult} from '../../../domain/repositories/AnimeRepository';
 
 export interface CatalogProjectionOptions {
     includeTorrentMetadata?: boolean;
@@ -213,3 +215,24 @@ export function projectShowList(value: ListShowsResult, options: CatalogProjecti
 export const projectSuggestions = (value: Movie[]) => list<Movie>(value, projectMovie, 50);
 export const projectParentalGuides = (value: ParentalGuide[]) => list<ParentalGuide>(value, projectParentalGuide, 100);
 export const projectEpisodes = (value: ShowEpisode[], options: CatalogProjectionOptions = {}) => list<ShowEpisode>(value, episode => projectEpisode(episode, options), 300);
+
+export function projectAnimeList(value: ListAnimeResult) {
+    const integer = (input: unknown) => typeof input === 'number' && Number.isSafeInteger(input) && input >= 0 ? input : 0;
+    const seen = new Set<string>();
+    const releases = (Array.isArray(value.releases) ? value.releases : []).slice(0, 75).filter((release: AnimeRelease) => {
+        if (!release || !/^nyaa:[1-9]\d{0,14}$/.test(release.id) || seen.has(release.id)
+            || !['english', 'non-english', 'raw', 'music-video'].includes(release.category)) return false;
+        seen.add(release.id);
+        return true;
+    }).map((release: AnimeRelease) => ({
+        id: release.id,
+        title: text(release.title, 500).replace(/\s+/g, ' ').trim(),
+        category: release.category,
+        uploadedAt: release.uploadedAt.toISOString(),
+        size: text(release.size, 40),
+        seeds: integer(release.seeds),
+        peers: integer(release.peers),
+        downloadCount: integer(release.downloadCount),
+    })).filter(release => release.title && release.size);
+    return {releases, limit: 75};
+}

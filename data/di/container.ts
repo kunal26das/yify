@@ -98,6 +98,7 @@ export function createDependencies(): Dependencies {
         auth,
         movies: catalog.movies,
         shows: catalog.shows,
+        anime: catalog.anime,
         tmdb,
         streaming: new StreamingRepositoryImpl(tmdb, new PersistentCache('streaming'), diagnostics),
         countryLocation: new CountryLocationImpl(),

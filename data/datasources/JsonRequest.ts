@@ -11,6 +11,13 @@ export class RequestTimeoutError extends Error {
     }
 }
 
+export class RequestCancelledError extends Error {
+    constructor() {
+        super('The catalog request was cancelled.');
+        this.name = 'AbortError';
+    }
+}
+
 export class HttpResponseError extends Error {
     constructor(readonly status: number) {
         super(`Request failed (${status}).`);
@@ -46,6 +53,7 @@ interface JsonRequestOptions<T> {
     timeoutMs: number;
     fetcher?: typeof fetch;
     init?: Omit<RequestInit, 'signal' | 'method'>;
+    signal?: AbortSignal;
     parse: (body: unknown) => T;
 }
 
@@ -56,6 +64,7 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
     let errorCode: string | undefined;
     let retryCount = 0;
     let expired = false;
+    let interrupted = false;
     let completed = false;
     let controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -67,8 +76,19 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
             controller.abort();
         }, options.timeoutMs);
     });
+    const cancellationError = new RequestCancelledError();
+    let rejectCancellation: (error: RequestCancelledError) => void = () => {};
+    const cancellation = new Promise<never>((_, reject) => { rejectCancellation = reject; });
+    const cancel = () => {
+        interrupted = true;
+        rejectCancellation(cancellationError);
+        controller.abort();
+    };
+    options.signal?.addEventListener('abort', cancel, {once: true});
+    if (options.signal?.aborted) cancel();
     const work = async () => {
         for (;;) {
+            if (interrupted) throw cancellationError;
             status = undefined;
             stage = 'fetch';
             errorCode = undefined;
@@ -76,7 +96,7 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
             try {
                 response = await (options.fetcher ?? fetch)(url, {...options.init, method: 'GET', signal: controller.signal});
             } catch (error) {
-                if (!expired && retryCount === 0 && isNetworkFailure(error)) {
+                if (!expired && !interrupted && retryCount === 0 && isNetworkFailure(error)) {
                     controller.abort();
                     controller = new AbortController();
                     retryCount++;
@@ -85,6 +105,7 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
                 errorCode = requestErrorCode(error) ?? (isNetworkFailure(error) ? 'network_error' : 'request_failed');
                 throw error;
             }
+            if (interrupted) throw cancellationError;
             if (expired) throw timeoutError;
             status = response.status;
             stage = 'response';
@@ -105,7 +126,7 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
             } catch (error) {
                 errorCode = error instanceof SyntaxError ? 'invalid_json'
                     : requestErrorCode(error) ?? (isNetworkFailure(error) ? 'network_error' : 'body_failed');
-                if (!expired && retryCount === 0 && (error instanceof SyntaxError || isNetworkFailure(error))
+                if (!expired && !interrupted && retryCount === 0 && (error instanceof SyntaxError || isNetworkFailure(error))
                     && !response.headers?.has('Retry-After')) {
                     controller.abort();
                     controller = new AbortController();
@@ -114,19 +135,24 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
                 }
                 throw error;
             }
+            if (interrupted) throw cancellationError;
             if (expired) throw timeoutError;
             stage = 'validate';
             return options.parse(body);
         }
     };
     try {
-        const result = await Promise.race([work(), deadline]);
+        const result = await Promise.race([work(), deadline, cancellation]);
         completed = true;
         span.finish('ok', {status_code: status, retry_count: retryCount});
         return result;
     } catch (error) {
         const attributes = {status_code: status, retry_count: retryCount, stage,
             error_code: errorCode ?? (error instanceof InvalidResponseError ? error.code : 'validation_failed')};
+        if (interrupted) {
+            span.finish('cancelled', {...attributes, error_code: 'request_cancelled'});
+            throw cancellationError;
+        }
         if (expired) {
             span.finish('timeout', {...attributes, error_code: 'request_timeout'});
             throw timeoutError;
@@ -139,6 +165,7 @@ export async function requestJson<T>(url: string, options: JsonRequestOptions<T>
         throw error;
     } finally {
         if (timer !== undefined) clearTimeout(timer);
+        options.signal?.removeEventListener('abort', cancel);
         if (!completed) controller.abort();
     }
 }

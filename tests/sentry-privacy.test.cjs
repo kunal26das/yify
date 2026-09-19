@@ -173,6 +173,7 @@ test('navigation keeps structural route names and strips every concrete paramete
     }
     assert.equal(sanitizeRoute('/show/tt123456?user=private'), '/show/[imdbId]');
     assert.equal(sanitizeRoute('/preferences?search=private'), '/preferences');
+    assert.equal(sanitizeRoute('/anime?query=private'), '/anime');
     assert.equal(sanitizeRoute('/users/private-uid'), undefined);
     const result = sanitizeBreadcrumb({category: 'navigation', message: 'private search', data: {
         from: '/movie/123', to: '/show/tt123456?private=query', params: {id: 123},

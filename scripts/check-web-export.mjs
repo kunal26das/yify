@@ -15,6 +15,7 @@ const ROUTES = [
     ['index.html', 'Yify'],
     ['movies.html', 'Browse Movies'],
     ['shows.html', 'Shows'],
+    ['anime.html', 'Anime'],
     ['watchlist.html', 'Watchlist'],
     ['history.html', 'History'],
     ['journal.html', 'Journal'],
@@ -90,7 +91,7 @@ const bundles = clientFiles(dir);
 if (!bundles.length) failures.push('client JavaScript bundles: missing from the export');
 for (const bundle of bundles) {
     const source = readFileSync(bundle, 'utf8');
-    for (const marker of ['movies-api.accel.li', 'eztvx.to', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih']) {
+    for (const marker of ['movies-api.accel.li', 'eztvx.to', 'nyaa.si', 'list_movies.json', 'get-torrents', 'magnet:?', 'xt=urn:btih']) {
         if (source.includes(marker)) failures.push(`${relative(dir, bundle)}: forbidden browser catalog data marker ${marker}`);
     }
     for (const marker of SERVER_ONLY_MARKERS) {
@@ -136,7 +137,7 @@ for (const [file, expectTitle] of ROUTES) {
         failures.push(`${file}: icon font missing from static rendering — icons can cause a hydration mismatch`);
     }
     const paths = linkedPaths(body);
-    for (const href of ['/movies', '/shows', ...(file === 'index.html' ? ['/guide', '/privacy', '/terms'] : [])]) {
+    for (const href of ['/movies', '/shows', '/anime', ...(file === 'index.html' ? ['/guide', '/privacy', '/terms'] : [])]) {
         if (!paths.includes(href)) failures.push(`${file}: missing crawlable anchor to ${href}`);
     }
     const robots = [...html.matchAll(/<meta\b[^>]*>/gi)].filter(([tag]) => /\bname=['"]robots['"]/i.test(tag))
