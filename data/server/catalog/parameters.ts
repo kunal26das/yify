@@ -15,6 +15,7 @@ export type CatalogRequest = (
     | {operation: 'shows'; params: ListShowsParams}
     | {operation: 'episodes'; imdbId: string}
     | {operation: 'anime'; params: ListAnimeParams}
+    | {operation: 'access'}
 ) & {version: 1 | 2};
 
 function integer(value: string | null, maximum: number, fallback?: number): number {
@@ -40,6 +41,7 @@ function imdb(value: string | null): string {
 
 export function parseCatalogRequest(operation: string, params: URLSearchParams): CatalogRequest {
     const allowed = operation === 'movies' ? MOVIE_PARAMETERS
+        : operation === 'access' ? []
         : operation === 'anime' ? ['query', 'category']
         : operation === 'shows' ? ['page', 'limit', 'imdbId']
             : operation === 'episodes' ? ['imdbId']
@@ -49,6 +51,7 @@ export function parseCatalogRequest(operation: string, params: URLSearchParams):
     const requestedVersion = params.get('v');
     if (requestedVersion !== null && requestedVersion !== '2') throw new InvalidCatalogRequest();
     const version = requestedVersion === '2' ? 2 : 1;
+    if (operation === 'access') return {operation, version};
     if (operation === 'anime') {
         const query = params.get('query');
         if (query !== null && (query.length > 200 || /[\u0000-\u001f\u007f]/.test(query))) throw new InvalidCatalogRequest();

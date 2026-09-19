@@ -29,7 +29,8 @@ function item(id = 42, category = '1_2', title = '[Example] Moonlight Bakery - 0
 const feed = (...items: string[]) => `<rss xmlns:nyaa="https://nyaa.si/xmlns/nyaa" version="2.0"><channel>
     <title>Example feed</title><link>https://nyaa.si/</link>${items.join('')}</channel></rss>`;
 const response = (xml = feed(item())) => new Response(xml, {headers: {'content-type': 'application/rss+xml; charset=utf-8', 'cache-control': 'no-store'}});
-const request = (query = '', signal?: AbortSignal) => new Request(`https://yify.expo.app/api/catalog/anime?${query}`, {signal});
+const request = (query = '', signal?: AbortSignal) => new Request(`https://yify.expo.app/api/subscriber-catalog/anime?${query}`, {signal});
+const subscriber = {authorize: async () => ({uid: 'verified'})};
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
@@ -253,34 +254,32 @@ test('a source cooldown also prevents already queued paced requests from fetchin
     assert.equal(calls, 1);
 });
 
-test('public and authorized subscriber APIs return safe 429 diagnostics and Retry-After during source cooldown', async () => {
-    for (const privateResponse of [false, true]) {
-        let calls = 0;
-        let authorized = 0;
-        const sourceFetch = async () => {
-            calls++;
-            return new Response('PRIVATE_SOURCE_BODY https://private-upstream.invalid/?token=PRIVATE_TOKEN', {
-                status: 429, headers: {'Retry-After': '120'},
-            });
-        };
-        const handler = createCatalogHandler((signal: AbortSignal, onResponse?: (body: unknown) => void) =>
-            createCatalogRepositories({}, {signal, onResponse, fetch: sourceFetch}),
-        privateResponse ? {subscriber: {authorize: async () => {authorized++; return {uid: 'verified'}; }}} : {});
-        for (const query of ['', 'query=another&category=english']) {
-            const result = await handler(request(query), 'anime');
-            assert.equal(result.status, 429);
-            assert.equal(result.headers.get('X-Catalog-Error-Code'), 'anime_rate_limited');
-            assert.equal(result.headers.get('X-Catalog-Upstream-Status'), '429');
-            const waitSeconds = Number(result.headers.get('Retry-After'));
-            assert.ok(waitSeconds > 0 && waitSeconds <= 120);
-            assert.equal(result.headers.get('Cache-Control'), privateResponse ? 'private, no-store' : 'no-store');
-            const body = await result.json();
-            assert.deepEqual(body, {error: 'Anime uploads are temporarily unavailable. Please try again later.'});
-            assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]), /PRIVATE_|private-upstream|"raw"/);
-        }
-        assert.equal(calls, 1);
-        assert.equal(authorized, privateResponse ? 2 : 0);
+test('authorized subscriber API returns safe 429 diagnostics and Retry-After during source cooldown', async () => {
+    let calls = 0;
+    let authorized = 0;
+    const sourceFetch = async () => {
+        calls++;
+        return new Response('PRIVATE_SOURCE_BODY https://private-upstream.invalid/?token=PRIVATE_TOKEN', {
+            status: 429, headers: {'Retry-After': '120'},
+        });
+    };
+    const handler = createCatalogHandler((signal: AbortSignal, onResponse?: (body: unknown) => void) =>
+        createCatalogRepositories({}, {signal, onResponse, fetch: sourceFetch}),
+    {subscriber: {authorize: async () => {authorized++; return {uid: 'verified'}; }}});
+    for (const query of ['', 'query=another&category=english']) {
+        const result = await handler(request(query), 'anime');
+        assert.equal(result.status, 429);
+        assert.equal(result.headers.get('X-Catalog-Error-Code'), 'anime_rate_limited');
+        assert.equal(result.headers.get('X-Catalog-Upstream-Status'), '429');
+        const waitSeconds = Number(result.headers.get('Retry-After'));
+        assert.ok(waitSeconds > 0 && waitSeconds <= 120);
+        assert.equal(result.headers.get('Cache-Control'), 'private, no-store');
+        const body = await result.json();
+        assert.deepEqual(body, {error: 'Anime uploads are temporarily unavailable. Please try again later.'});
+        assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]), /PRIVATE_|private-upstream|"raw"/);
     }
+    assert.equal(calls, 1);
+    assert.equal(authorized, 2);
 });
 
 test('one cancelled reader cannot cancel a shared request for another reader', async () => {
@@ -356,7 +355,7 @@ test('HTML, redirects, HTTP failures, invalid UTF-8 and oversized streamed RSS a
     assert.equal(cancelled, true);
 });
 
-test('public Anime diagnostics expose only known transport classifications and validated upstream status', async () => {
+test('subscriber Anime diagnostics expose only known transport classifications and validated upstream status', async () => {
     const secret = 'PRIVATE_UPSTREAM_DETAIL https://upstream.invalid/?token=private-token';
     const cases: {code: string; status: string | null; fetch: () => Promise<Response>}[] = [
         {code: 'http_error', status: '503', fetch: async () => new Response(secret, {status: 503})},
@@ -369,12 +368,12 @@ test('public Anime diagnostics expose only known transport classifications and v
     ];
     for (const entry of cases) {
         const handler = createCatalogHandler((signal: AbortSignal) =>
-            createCatalogRepositories({}, {signal, fetch: entry.fetch}));
+            createCatalogRepositories({}, {signal, fetch: entry.fetch}), {subscriber});
         const result = await handler(request(), 'anime');
         assert.equal(result.status, 502);
         assert.equal(result.headers.get('X-Catalog-Error-Code'), `anime_${entry.code}`);
         assert.equal(result.headers.get('X-Catalog-Upstream-Status'), entry.status);
-        assert.equal(result.headers.get('Cache-Control'), 'no-store');
+        assert.equal(result.headers.get('Cache-Control'), 'private, no-store');
         const body = await result.json();
         assert.deepEqual(body, {error: 'Catalog is temporarily unavailable'});
         assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]),
@@ -393,7 +392,7 @@ test('non-typed or spoofed errors cannot inject Anime diagnostic headers or publ
     ]) {
         const handler = createCatalogHandler({movies: {}, shows: {}, anime: {
             async listAnime() { throw failure; },
-        }});
+        }}, {subscriber});
         const result = await handler(request(), 'anime');
         assert.equal(result.status, 502);
         assert.equal(result.headers.has('X-Catalog-Error-Code'), false);
@@ -418,7 +417,7 @@ test('fetch runtime classification exposes only fixed codes without source error
         const handler = createCatalogHandler((signal: AbortSignal) => createCatalogRepositories({}, {
             signal,
             fetch: async () => { throw new TypeError(`${message}: ${privateUrl}`); },
-        }));
+        }), {subscriber});
         const result = await handler(request(), 'anime');
         assert.equal(result.status, 502);
         assert.equal(result.headers.get('X-Catalog-Error-Code'), `anime_${code}`);
@@ -461,19 +460,16 @@ test('request validation rejects paging, arbitrary upstream URLs and unbounded s
     assert.equal(calls, 0);
 });
 
-test('public anime responses contain only sanitized metadata, even with a claimed subscriber header', async () => {
-    const handler = createCatalogHandler((signal: AbortSignal, capture: unknown) => {
-        assert.equal(capture, undefined);
-        return createCatalogRepositories({}, {signal, fetch: async () => response()});
-    });
-    const result = await handler(new Request(request('category=english&query=Moon&v=2'), {headers: {Authorization: 'Bearer claim'}}), 'anime');
-    assert.equal(result.status, 200);
-    assert.equal(result.headers.get('cache-control'), 'no-store');
-    const body = await result.json();
-    assert.equal(body.limit, 75);
-    assert.equal(body.releases[0].id, 'nyaa:42');
-    assert.equal(body.raw, undefined);
-    assert.doesNotMatch(JSON.stringify(body), /012345|\.torrent|infoHash|description|https:/);
+test('public anime requests cannot initialize the source, even with a claimed subscriber header', async () => {
+    let created = 0;
+    const handler = createCatalogHandler(() => { created++; throw new Error('Unexpected source access'); });
+    for (const headers of [{}, {Authorization: 'Bearer claim'}]) {
+        const result = await handler(new Request('https://yify.expo.app/api/catalog/anime?category=english&query=Moon&v=2', {headers}), 'anime');
+        assert.equal(result.status, 403);
+        assert.equal(result.headers.get('cache-control'), 'no-store');
+        assert.deepEqual(await result.json(), {error: 'An active subscription is required'});
+    }
+    assert.equal(created, 0);
 });
 
 test('subscriber anime capture starts after authorization and returns the matching structured originals', async () => {

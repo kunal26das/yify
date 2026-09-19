@@ -189,3 +189,4 @@ export type {JournalInsights} from './policies/journalInsights';
 export {journalToday, projectJournalMovie, validateJournalInput, JOURNAL_MAX_NOTE_LENGTH} from './policies/journal';
 export type {AnimeCategory, AnimeRelease} from './entities/AnimeRelease';
 export type {AnimeRepository, ListAnimeParams, ListAnimeResult} from './repositories/AnimeRepository';
+export type {SubscriberAccess, SubscriberAccessState} from './services/SubscriberAccess';

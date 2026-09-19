@@ -302,9 +302,11 @@ export class WebCatalogClient {
                 return parse(value);
             }, signal).then(result => {
                 if (signal?.aborted) throw new RequestCancelledError();
+                if (endpoint === 'anime' && result === null) throw new Error('An active subscription is required to browse Anime.');
                 return result === null ? this.publicRequest(url, endpoint, parse, signal) : result.value;
             });
         }
+        if (endpoint === 'anime') return Promise.reject(new Error('An active subscription is required to browse Anime.'));
         return this.publicRequest(url, endpoint, parse, signal);
     }
 

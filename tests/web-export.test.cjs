@@ -45,9 +45,10 @@ function fixture(t, server = false) {
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'], ['anime.html', 'Anime'],
         ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'],
     ]) {
-        const robots = ['watchlist.html', 'history.html', 'journal.html', 'preferences.html'].includes(file)
-            ? '<meta name="robots" content="noindex,follow">' : '';
-        const links = ['movies', 'shows', 'anime', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
+        const robots = file === 'anime.html' ? '<meta name="robots" content="noindex,nofollow">'
+            : ['watchlist.html', 'history.html', 'journal.html', 'preferences.html'].includes(file)
+                ? '<meta name="robots" content="noindex,follow">' : '';
+        const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
         write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
     }
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css', 'availability-worker.js']) write(asset, '');
@@ -88,6 +89,44 @@ test('Hosting export checks prerendered server HTML and public client assets sep
 });
 
 for (const server of [false, true]) {
+    test(`${server ? 'Hosting' : 'Pages'} export keeps Anime built but out of anonymous navigation and public guides`, t => {
+        const f = fixture(t, server);
+        assert.equal(f.check().status, 0, f.check().output);
+        const page = path.join(f.htmlDirectory, 'index.html');
+        const html = fs.readFileSync(page, 'utf8');
+        for (const href of ['/anime', '/yify/anime/', '/anime.html']) {
+            fs.writeFileSync(page, html.replace('</body>', `<a href="${href}">Anime</a></body>`));
+            const result = f.check();
+            assert.equal(result.status, 1);
+            assert.match(result.output, /index\.html: anonymous navigation must not link to paid route anime/);
+        }
+        fs.writeFileSync(page, html);
+        for (const guide of ['guide.html', 'guide/index.html']) {
+            const guidePath = path.join(f.client, guide);
+            fs.appendFileSync(guidePath, `<a href="${guide.includes('/') ? '../' : './'}anime">Anime</a>`);
+        }
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /guide\.html: public guide must not link to paid route anime/);
+        assert.match(result.output, /guide\/index\.html: public guide must not link to paid route anime/);
+    });
+
+    test(`${server ? 'Hosting' : 'Pages'} export requires a non-indexed Anime route with the correct page title`, t => {
+        const f = fixture(t, server);
+        const page = path.join(f.htmlDirectory, 'anime.html');
+        const html = fs.readFileSync(page, 'utf8');
+        for (const robots of ['noindex,follow', 'index,nofollow', 'index,follow', '']) {
+            fs.writeFileSync(page, html.replace('noindex,nofollow', robots));
+            const result = f.check();
+            assert.equal(result.status, 1);
+            assert.match(result.output, /anime\.html: paid page must use noindex,nofollow/);
+        }
+        fs.writeFileSync(page, html.replace('<title>Anime</title>', '<title>Shows</title>'));
+        assert.match(f.check().output, /anime\.html: first <title> is "Shows", expected it to contain "Anime"/);
+        fs.unlinkSync(page);
+        assert.match(f.check().output, /anime\.html: missing from the export/);
+    });
+
     test(`${server ? 'Hosting' : 'Pages'} gate rejects static HTML that omits the icon font`, (t) => {
         const f = fixture(t, server);
         const page = path.join(f.htmlDirectory, 'index.html');
@@ -325,6 +364,16 @@ test('sitemap includes the public guide and excludes personal utility pages', t 
     assert.equal(result.status, 1);
     for (const route of ['watchlist', 'history', 'journal', 'preferences']) assert.ok(result.output.includes(`private utility route ${route}`));
     assert.match(result.output, /public guide is missing/);
+});
+
+test('sitemap excludes every public URL form of the paid Anime page', t => {
+    const f = fixture(t);
+    for (const route of ['anime', 'anime/', 'anime.html']) {
+        f.write('sitemap.xml', `<urlset><loc>https://yify.expo.app/guide/</loc><loc>https://yify.expo.app/${route}</loc></urlset>`);
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /sitemap\.xml: paid route anime must not be listed/);
+    }
 });
 
 test('guide copies must stay identical and remain readable without app scripts', t => {

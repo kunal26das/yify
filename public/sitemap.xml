@@ -21,11 +21,6 @@
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://yify.expo.app/anime</loc>
-        <changefreq>daily</changefreq>
-        <priority>0.6</priority>
-    </url>
-    <url>
         <loc>https://yify.expo.app/privacy/</loc>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>

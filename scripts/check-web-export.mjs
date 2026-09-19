@@ -22,6 +22,7 @@ const ROUTES = [
     ['preferences.html', 'Preferences'],
 ];
 const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences'];
+const PAID_ROUTES = ['anime'];
 const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]', '/api/availability-alerts/status'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
@@ -137,12 +138,19 @@ for (const [file, expectTitle] of ROUTES) {
         failures.push(`${file}: icon font missing from static rendering — icons can cause a hydration mismatch`);
     }
     const paths = linkedPaths(body);
-    for (const href of ['/movies', '/shows', '/anime', ...(file === 'index.html' ? ['/guide', '/privacy', '/terms'] : [])]) {
+    for (const href of ['/movies', '/shows', ...(file === 'index.html' ? ['/guide', '/privacy', '/terms'] : [])]) {
         if (!paths.includes(href)) failures.push(`${file}: missing crawlable anchor to ${href}`);
+    }
+    for (const route of PAID_ROUTES) {
+        if (paths.some((path) => path === `/${route}` || path === `/${route}.html`)) {
+            failures.push(`${file}: anonymous navigation must not link to paid route ${route}`);
+        }
     }
     const robots = [...html.matchAll(/<meta\b[^>]*>/gi)].filter(([tag]) => /\bname=['"]robots['"]/i.test(tag))
         .map(([tag]) => tag.match(/\bcontent=['"]([^'"]*)['"]/i)?.[1]?.replace(/\s/g, '').toLowerCase());
-    if (UTILITY_ROUTES.some((route) => file === `${route}.html`)) {
+    if (PAID_ROUTES.some((route) => file === `${route}.html`)) {
+        if (!robots.includes('noindex,nofollow')) failures.push(`${file}: paid page must use noindex,nofollow`);
+    } else if (UTILITY_ROUTES.some((route) => file === `${route}.html`)) {
         if (!robots.includes('noindex,follow')) failures.push(`${file}: utility page must use noindex,follow`);
     } else if (robots.some((value) => value?.split(',').includes('noindex'))) {
         failures.push(`${file}: public discovery page must not be noindex`);
@@ -161,6 +169,11 @@ if (existsSync(join(dir, 'sitemap.xml'))) {
     for (const route of UTILITY_ROUTES) {
         if (new RegExp(`<loc>[^<]*/${route}/?</loc>`).test(sitemap)) {
             failures.push(`sitemap.xml: private utility route ${route} must not be listed`);
+        }
+    }
+    for (const route of PAID_ROUTES) {
+        if (new RegExp(`<loc>[^<]*/${route}(?:/|\\.html)?</loc>`).test(sitemap)) {
+            failures.push(`sitemap.xml: paid route ${route} must not be listed`);
         }
     }
     if (!sitemap.includes('<loc>https://yify.expo.app/guide/</loc>')) {
@@ -183,6 +196,11 @@ for (const page of guidePages) {
     if (/<script\b/i.test(html)) failures.push(`${page}: public guide must remain readable without app scripts`);
     for (const href of ['/movies', '/shows']) {
         if (!linkedPaths(html, `/yify/${page}`).includes(href)) failures.push(`${page}: missing crawlable anchor to ${href}`);
+    }
+    for (const route of PAID_ROUTES) {
+        if (linkedPaths(html, `/yify/${page}`).some((path) => path === `/${route}` || path === `/${route}.html`)) {
+            failures.push(`${page}: public guide must not link to paid route ${route}`);
+        }
     }
     normalizedGuides.push(html.replace(/href="(\.\.?\/[^"\r\n]*)"/g, (_attribute, href) =>
         `href="${new URL(href, `https://guide.yify.invalid/yify/${page}`).href}"`));
