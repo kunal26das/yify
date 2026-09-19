@@ -244,7 +244,8 @@ export function createNyaaTransport(options: {
                     const response = await cancelled(fetcher(url, {
                         // The Request.cache option is unavailable on older Workers compatibility dates.
                         headers: {Accept: 'application/rss+xml, application/xml, text/xml', 'Cache-Control': 'no-store'},
-                        redirect: 'error', signal: controller.signal,
+                        // Workers supports manual redirects; readFeed rejects every non-2xx response.
+                        redirect: 'manual', signal: controller.signal,
                     }), controller.signal).catch(error => { assertCatalogActive(controller.signal); throw fetchFailure(error); });
                     const xml = await readFeed(response, controller.signal).catch(error => {
                         assertCatalogActive(controller.signal);
