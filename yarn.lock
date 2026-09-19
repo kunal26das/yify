@@ -4980,10 +4980,10 @@ expo-localization@57.0.2:
   dependencies:
     rtl-detect "^1.0.2"
 
-expo-location@57.0.17:
-  version "57.0.17"
-  resolved "https://registry.yarnpkg.com/expo-location/-/expo-location-57.0.17.tgz#f2993964d53256f637ad92f9e154e312f02b304a"
-  integrity sha512-FomaFHdPSeEKOZWAyIKBPwAld9nU/gnX5dwJ/PnMjRP+n68TswVplGC4gBYIA7pt/zcjF5w1QTxpvqUtPDaXBQ==
+expo-location@57.0.18:
+  version "57.0.18"
+  resolved "https://registry.yarnpkg.com/expo-location/-/expo-location-57.0.18.tgz#f45dc53b26ad458f42fc03eef611303c7a3c3f95"
+  integrity sha512-NRrXdNJjAbxtjVrXrWPpYSH0pefp9edwluU7Xy2bZrETP0+Wy8UuzgVEjWqo/8tLsF8Cgm503eE8gS+V2S31+Q==
   dependencies:
     "@expo/image-utils" "^0.11.5"
 
