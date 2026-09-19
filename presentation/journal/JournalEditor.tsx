@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {JOURNAL_MAX_NOTE_LENGTH, journalToday, validateJournalInput, type JournalEntry, type JournalMovie} from '@/domain';
 import {Analytics} from '../analytics/events';
@@ -17,15 +17,20 @@ interface Props {
     movie: JournalMovie | null;
     entry?: JournalEntry | null;
     onClose: () => void;
+    onSaved?: (kind: 'created' | 'updated') => void;
 }
 
 export function JournalEditor(props: Props) {
-    const session = useAuth();
     if (!props.visible || !props.movie) return null;
     return <WatchlistSheet visible title={props.entry ? 'Edit journal entry' : 'Log a movie'} onClose={props.onClose}>
-        {session.ready && session.account ? <JournalDraft key={`${session.account.uid}:${props.entry?.id ?? 'new'}:${props.movie.id}`}
-            movie={props.movie} entry={props.entry} onClose={props.onClose}/> : <JournalSignIn/>}
+        <JournalEditorContent movie={props.movie} entry={props.entry} onClose={props.onClose} onSaved={props.onSaved}/>
     </WatchlistSheet>;
+}
+
+export function JournalEditorContent(props: Omit<Props, 'visible' | 'movie'> & {movie: JournalMovie}) {
+    const session = useAuth();
+    return session.ready && session.account ? <JournalDraft key={`${session.account.uid}:${props.entry?.id ?? 'new'}:${props.movie.id}`}
+        movie={props.movie} entry={props.entry} onClose={props.onClose} onSaved={props.onSaved}/> : <JournalSignIn/>;
 }
 
 function JournalSignIn() {
@@ -53,16 +58,23 @@ function JournalSignIn() {
     </View>;
 }
 
-function JournalDraft({movie, entry, onClose}: Omit<Props, 'visible' | 'movie'> & {movie: JournalMovie}) {
+function JournalDraft({movie, entry, onClose, onSaved}: Omit<Props, 'visible' | 'movie'> & {movie: JournalMovie}) {
     const {colors} = usePalette();
     const repository = useJournalRepository();
     const snapshot = useJournal();
+    const session = useAuth();
+    const auth = useAuthRepository();
+    const saved = useRef(false);
+    const active = useRef(true);
+    useEffect(() => {active.current = true; return () => {active.current = false;};}, []);
     const [watchedOn, setWatchedOn] = useState(() => entry?.watchedOn ?? journalToday());
     const [rating, setRating] = useState<number | null>(entry?.rating ?? null);
     const [note, setNote] = useState(entry?.note ?? '');
     const [error, setError] = useState('');
     const save = () => {
-        if (!snapshot.ready) return;
+        const uid = session.account?.uid;
+        const current = auth.getSession();
+        if (!active.current || !snapshot.ready || saved.current || !uid || !current.ready || current.account?.uid !== uid) return;
         let input;
         try {
             input = validateJournalInput({id: entry?.id, movie, watchedOn, rating, note});
@@ -76,8 +88,10 @@ function JournalDraft({movie, entry, onClose}: Omit<Props, 'visible' | 'movie'> 
             setError(journalErrorMessage(failure, 'Your entry could not be saved. Try again.'));
             return;
         }
-        Analytics.journal('entry_saved');
+        saved.current = true;
+        Analytics.journal(entry ? 'entry_updated' : 'entry_created');
         onClose();
+        onSaved?.(entry ? 'updated' : 'created');
     };
     const inputStyle = [styles.input, {color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceSunken}];
     return <View style={styles.form}>

@@ -7,6 +7,8 @@ const path = require('node:path');
 const script = import('../scripts/subscription-funnel-report.mjs');
 const fixturePath = path.join(__dirname, 'fixtures/subscription-funnel-report.json');
 const fixture = JSON.parse(readFileSync(fixturePath, 'utf8'));
+const journalFixturePath = path.join(__dirname, 'fixtures/journal-funnel-report.json');
+const journalFixture = JSON.parse(readFileSync(journalFixturePath, 'utf8'));
 const dateRange = {startDate: '2026-09-01', endDate: '2026-09-30'};
 
 test('report keeps event counts separate from per-row users and never invents totals or conversion', async () => {
@@ -107,4 +109,137 @@ test('date defaults use completed UTC dates and invalid dates fail without echoi
         {startDate: '2026-08-22', endDate: '2026-09-18'});
     assert.throws(() => reportDateRange('private@example.test', '2026-09-30'), error => !error.message.includes('private'));
     assert.throws(() => reportDateRange('2026-02-30', '2026-09-30'), /valid/);
+});
+
+test('journal query includes actions without filtering them through funnel_version or viewing country', async () => {
+    const {buildJournalReportPlan, collectJournalReport} = await script;
+    const plan = buildJournalReportPlan(journalFixture.metadata, dateRange);
+    assert.deepEqual(plan.request.dimensions.map(({name}) => name),
+        ['date', 'customEvent:app_platform', 'countryId', 'eventName', 'customEvent:action']);
+    assert.deepEqual(plan.request.dimensionFilter,
+        {filter: {fieldName: 'eventName', inListFilter: {values: ['journal_action'], caseSensitive: true}}});
+    assert.doesNotMatch(JSON.stringify(plan.request), /funnel_version|viewing_country/);
+    assert.equal(plan.request.limit, 10000);
+    const report = await collectJournalReport({metadata: journalFixture.metadata, dateRange, source: 'offline_fixture',
+        readPage: async () => journalFixture.journalPages[0]});
+    assert.equal(report.versionFilter, null);
+    assert.equal(report.countryMeaning, 'ga4_activity_country');
+    assert.equal(report.actionBreakdown, 'available');
+    assert.deepEqual(report.rows[2], {date: '2026-09-20', platform: 'android', country: 'IN', eventName: 'journal_action',
+        action: 'entry_created', eventCount: 4, eventUsers: 3});
+    assert.match(report.interpretation.firstEntry, /Not calculated/);
+    assert.match(report.interpretation.laterDayUse, /Not calculated/);
+    assert.match(report.interpretation.eventUsers, /do not sum/);
+    assert.ok(report.warnings.some(warning => /entry_saved combines creates and edits/.test(warning)));
+    assert.equal('conversionRate' in report, false);
+    assert.equal('totalUsers' in report, false);
+});
+
+test('unregistered action reports aggregate activity with an explicit unknown breakdown, not fabricated actions', async () => {
+    const {buildJournalReportPlan, collectJournalReport} = await script;
+    const metadata = {dimensions: [{apiName: 'customEvent:funnel_version'}]};
+    const plan = buildJournalReportPlan(metadata, dateRange);
+    const report = await collectJournalReport({metadata, dateRange, readPage: async () => ({
+        dimensionHeaders: plan.request.dimensions, metricHeaders: plan.request.metrics, rowCount: 1,
+        rows: [{dimensionValues: [{value: '20260920'}, {value: 'ANDROID'}, {value: 'IN'}, {value: 'journal_action'}],
+            metricValues: [{value: '30'}, {value: '10'}]}],
+    })});
+    assert.equal(report.actionDimension, null);
+    assert.equal(report.actionBreakdown, 'unknown');
+    assert.equal(report.unobservedActions, null);
+    assert.equal(report.rows[0].action, 'unknown');
+    assert.equal(report.rows[0].eventCount, 30);
+    assert.equal(report.rows[0].eventUsers, 10);
+    assert.ok(report.warnings.some(warning => /action is not registered/.test(warning)));
+    assert.ok(!report.warnings.some(warning => /legacy prompt/.test(warning)));
+    assert.ok(!plan.request.dimensions.some(({name}) => name === 'customEvent:action'));
+});
+
+test('journal values never echo unknown actions, personal notes, identifiers or extra source fields', async () => {
+    const {buildJournalReportPlan, normalizeReportPage, collectJournalReport} = await script;
+    const page = structuredClone(journalFixture.journalPages[0]);
+    page.rows = [page.rows[0]]; page.rowCount = 1;
+    page.rows[0].dimensionValues[1].value = 'PRIVATE_PLATFORM';
+    page.rows[0].dimensionValues[2].value = 'PRIVATE_COUNTRY';
+    page.rows[0].dimensionValues[4].value = 'PRIVATE_NOTE with personal@example.test';
+    page.rows[0].accountId = 'PRIVATE_UID';
+    const plan = buildJournalReportPlan(journalFixture.metadata, dateRange);
+    const normalized = normalizeReportPage(page, plan);
+    assert.equal(normalized[0].action, 'unknown');
+    assert.doesNotMatch(JSON.stringify(normalized), /PRIVATE_|personal@example/);
+    const report = await collectJournalReport({metadata: journalFixture.metadata, dateRange, readPage: async () => page});
+    assert.ok(report.warnings.some(warning => /missing or unrecognized/.test(warning)));
+    assert.doesNotMatch(JSON.stringify(report), /PRIVATE_|personal@example/);
+    page.rows[0].dimensionValues[3].value = 'supporter_offers_visible';
+    assert.throws(() => normalizeReportPage(page, plan), /unexpected event/);
+    page.rows[0].dimensionValues[3].value = 'journal_action';
+    page.rows[0].metricValues[0].value = '-1';
+    assert.throws(() => normalizeReportPage(page, plan), /invalid count/);
+    assert.throws(() => normalizeReportPage({...page, rows: 'PRIVATE_ROW'}, plan), error =>
+        /invalid or oversized/.test(error.message) && !error.message.includes('PRIVATE_ROW'));
+});
+
+test('journal pagination fails closed on truncation, changed counts and excessive pages', async () => {
+    const {collectJournalReport, buildJournalReportPlan, normalizeReportPage} = await script;
+    const first = {...journalFixture.journalPages[0], rowCount: 2, rows: journalFixture.journalPages[0].rows.slice(0, 1)};
+    const last = {...first, rows: journalFixture.journalPages[0].rows.slice(1, 2)};
+    const offsets = [];
+    const report = await collectJournalReport({metadata: journalFixture.metadata, dateRange, readPage: async request => {
+        offsets.push(request.offset); return request.offset === 0 ? first : last;
+    }});
+    assert.deepEqual(offsets, [0, 1]);
+    assert.equal(report.rows.length, 2);
+    await assert.rejects(collectJournalReport({metadata: journalFixture.metadata, dateRange,
+        readPage: async request => request.offset === 0 ? first : {...last, rowCount: 3}}), /changed during pagination/);
+    await assert.rejects(collectJournalReport({metadata: journalFixture.metadata, dateRange,
+        readPage: async () => ({...first, rows: []})}), /incomplete/);
+    await assert.rejects(collectJournalReport({metadata: journalFixture.metadata, dateRange,
+        readPage: async () => ({...first, rowCount: 100001})}), /row limit/);
+    assert.throws(() => normalizeReportPage({...first, rows: Array(10001).fill(first.rows[0])},
+        buildJournalReportPlan(journalFixture.metadata, dateRange)), /oversized/);
+});
+
+test('journal report retains privacy, sampling and data-loss warnings instead of claiming missing actions are zero', async () => {
+    const {collectJournalReport} = await script;
+    const report = await collectJournalReport({metadata: journalFixture.metadata, dateRange, readPage: async () => ({
+        ...journalFixture.journalPages[0], rows: [], rowCount: 0,
+        metadata: {subjectToThresholding: true, dataLossFromOtherRow: true, samplingMetadatas: [{}], timeZone: 'PRIVATE invalid'},
+    })});
+    assert.ok(report.warnings.some(warning => /not confirmed zeros/.test(warning)));
+    assert.ok(report.warnings.some(warning => /not complete/.test(warning)));
+    assert.ok(report.warnings.some(warning => /estimates/.test(warning)));
+    assert.equal(report.timezone, null);
+    assert.doesNotMatch(JSON.stringify(report), /PRIVATE/);
+});
+
+test('journal paywall placement is preserved in the existing funnel report', async () => {
+    const {collectReport} = await script;
+    const report = await collectReport({metadata: journalFixture.metadata, dateRange, readPage: async () => journalFixture.pages[0]});
+    assert.equal(report.rows[0].placement, 'journal_insights');
+    assert.equal(report.rows[1].placement, 'journal_insights');
+    assert.equal(report.versionFilter, 1);
+    assert.equal(report.actionBreakdown, undefined);
+});
+
+test('offline CLI can output separate journal and funnel reports without combining users or requiring credentials', () => {
+    const run = report => spawnSync(process.execPath, ['scripts/subscription-funnel-report.mjs', '--report', report,
+        '--fixture', journalFixturePath, '--from', '2026-09-01', '--to', '2026-09-30'],
+    {cwd: path.join(__dirname, '..'), env: {...process.env, GA4_ACCESS_TOKEN: ''}, encoding: 'utf8'});
+    const journal = run('journal');
+    assert.equal(journal.status, 0, journal.stderr);
+    const journalResult = JSON.parse(journal.stdout);
+    assert.equal(journalResult.source, 'offline_fixture');
+    assert.equal(journalResult.report, 'journal');
+    assert.equal(journalResult.rows.length, 8);
+    const combined = run('all');
+    assert.equal(combined.status, 0, combined.stderr);
+    const result = JSON.parse(combined.stdout);
+    assert.equal(result.source, 'offline_fixture');
+    assert.equal(result.reports.funnel.versionFilter, 1);
+    assert.deepEqual(result.reports.journal, journalResult);
+    assert.equal('rows' in result, false);
+    assert.equal('totalUsers' in result, false);
+    const invalid = run('PRIVATE_REPORT_VALUE');
+    assert.equal(invalid.status, 1);
+    assert.doesNotMatch(invalid.stderr, /PRIVATE_REPORT_VALUE/);
 });

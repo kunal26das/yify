@@ -17,11 +17,12 @@ export function WatchlistSheetInput(props: TextInputProps) {
     return isLarge || Platform.OS === 'web' ? <TextInput {...props}/> : <BottomSheetTextInput {...props}/>;
 }
 
-export function WatchlistSheet({visible, title, onClose, children}: {
+export function WatchlistSheet({visible, title, onClose, children, contentKey}: {
     visible: boolean;
     title: string;
     onClose: () => void;
     children: ReactNode;
+    contentKey?: string;
 }) {
     const {colors} = usePalette();
     const {isLarge} = useResponsive();
@@ -71,7 +72,7 @@ export function WatchlistSheet({visible, title, onClose, children}: {
                     <Pressable style={[styles.dialog, {backgroundColor: colors.surfaceElevated}]}
                                onPress={(event: GestureResponderEvent) => event.stopPropagation()}>
                         {header}
-                        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
+                        <ScrollView key={contentKey} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
                             {children}
                         </ScrollView>
                     </Pressable>
@@ -89,7 +90,7 @@ export function WatchlistSheet({visible, title, onClose, children}: {
                           backgroundStyle={{backgroundColor: colors.surfaceElevated}}
                           handleIndicatorStyle={{backgroundColor: colors.borderStrong}}>
             {header}
-            <BottomSheetScrollView keyboardShouldPersistTaps="handled"
+            <BottomSheetScrollView key={contentKey} keyboardShouldPersistTaps="handled"
                                    contentContainerStyle={[styles.body, {paddingBottom: insets.bottom + Spacing.xl}]}>
                 {children}
             </BottomSheetScrollView>

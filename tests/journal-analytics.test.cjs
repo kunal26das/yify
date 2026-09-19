@@ -8,11 +8,11 @@ test('journal analytics only emit allowlisted actions, never journal contents', 
     });
     const events = [];
     installAnalyticsSink({trackEvent: (name, params) => events.push({name, params})});
-    for (const action of ['opened', 'entry_saved', 'entry_deleted', 'insights_opened', 'upgrade_opened']) {
+    for (const action of ['opened', 'picker_opened', 'entry_created', 'entry_updated', 'entry_saved', 'entry_deleted', 'insights_opened', 'upgrade_opened']) {
         Analytics.journal(action, {note: 'private note', rating: 9, movie: {title: 'private title'}, watchedOn: '2026-09-19'});
     }
     for (const action of ['private note', null, {note: 'private note'}]) Analytics.journal(action);
-    assert.equal(events.length, 5);
+    assert.equal(events.length, 8);
     for (const event of events) {
         assert.equal(event.name, 'journal_action');
         assert.deepEqual(Object.keys(event.params).sort(), ['action', 'app_platform']);

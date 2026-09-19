@@ -77,7 +77,8 @@ async function fixture(t, options = {}) {
         '../components/themed-text': {ThemedText: 'Text'},
         '../analytics/events': {Analytics: {subscriptionFunnel: (event, country) => {
             calls.funnel.push({event, country});
-            if (event.step === 'paywall_view') calls.prompts.push(event.placement === 'settings_supporter' ? 'settings' : 'post_ad');
+            if (event.step === 'paywall_view') calls.prompts.push(event.placement === 'journal_insights' ? 'journal'
+                : event.placement === 'settings_supporter' ? 'settings' : 'post_ad');
         }}},
     });
     let show;
@@ -168,6 +169,24 @@ test('each offering is attributed once and an excluded placement has no impressi
     assert.match(f.text(), /plans are unavailable/);
     assert.equal(f.pressable('Continue · $2.99'), undefined);
     assert.deepEqual(f.calls.impressions, ['one', 'two']);
+});
+
+test('Journal paywall keeps its placement for loading, visibility and purchase while preserving sign-in gating', async t => {
+    const journal = plan('journal-monthly', 'supporter', {placement: 'journal_insights'});
+    const f = await fixture(t, {offers: [journal], session: {account: null}});
+    await f.open('journal_insights');
+    await f.show();
+    assert.deepEqual(f.calls.offers, ['journal_insights']);
+    assert.deepEqual(f.calls.prompts, ['journal']);
+    assert.deepEqual(f.calls.impressions, ['journal-monthly']);
+    assert.equal(f.calls.funnel.every(({event}) => event.placement === 'journal_insights'), true);
+    assert.equal(f.pressable('Continue · $2.99').props.disabled, true);
+    assert.deepEqual(f.calls.purchase, []);
+    await f.update(null, {account: user('A')});
+    await f.show();
+    await f.press('Continue · $2.99');
+    assert.deepEqual(f.calls.purchase, ['journal-monthly']);
+    assert.equal(f.calls.offers.every(placement => placement === 'journal_insights'), true);
 });
 
 test('active access shows manage and restore actions without recording a sales impression', async t => {

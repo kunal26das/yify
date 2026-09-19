@@ -31,6 +31,30 @@ test('checkout events preserve existing event names and safe placement without m
     assert.doesNotMatch(JSON.stringify(f.events), /private|price|revenue|currency|transaction|email|uid|renewal/);
 });
 
+test('Journal purchase attribution uses a bounded journal source through the existing funnel', () => {
+    const f = fixture();
+    const placement = 'journal_insights';
+    const offer = {placement, recurring: true, billingPeriod: 'P1M'};
+    for (const event of [
+        {step: 'paywall_view', placement, signedIn: true, supporter: false},
+        {step: 'offers_visible', placement, offerCount: 1},
+        {step: 'checkout_started', offer},
+        {step: 'checkout_finished', offer, outcome: 'granted'},
+        {step: 'checkout_finished', offer, outcome: 'cancelled'},
+        {step: 'paywall_closed', placement, supporter: true},
+    ]) trackSubscriptionFunnel(f.analytics, event, f.context());
+    assert.deepEqual(f.events.map(event => event.name), [
+        'supporter_prompt', 'supporter_offers_visible', 'remove_ads_purchase_start',
+        'remove_ads_purchase_done', 'remove_ads_purchase_failed', 'supporter_paywall_closed',
+    ]);
+    assert.equal(f.events.every(event => event.params.placement === placement), true);
+    assert.equal(f.events[0].params.source, 'journal');
+    assert.doesNotMatch(JSON.stringify(f.events), /post_ad|price|currency|revenue|transaction|renewal/);
+    trackSubscriptionFunnel(f.analytics, {step: 'paywall_view', placement: 'private source', signedIn: false}, f.context());
+    assert.equal(f.events.at(-1).params.placement, 'unknown');
+    assert.equal(f.events.at(-1).params.source, 'unknown');
+});
+
 test('runtime metadata is allowlisted and malformed payloads cannot leak or fabricate funnel events', () => {
     const f = fixture();
     trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', outcome: 'private server message',

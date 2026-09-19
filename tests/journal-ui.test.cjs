@@ -21,11 +21,12 @@ async function fixture(t, options = {}) {
     const session = observable({ready: true, account: {uid: 'alice'}, signingIn: false, available: true, error: null, ...options.session});
     const purchase = observable({ready: true, adsRemoved: false, ...options.purchase});
     const snapshot = observable({ready: true, entries: [entry], syncing: false, error: null, ...options.snapshot});
-    const calls = {saved: [], removed: [], events: [], paywalls: [], links: [], signIn: 0, closed: 0, retries: 0, confirms: []};
+    const calls = {saved: [], removed: [], events: [], paywalls: [], links: [], searches: [], confirmations: [], signIn: 0, closed: 0, retries: 0, confirms: []};
     const repository = {
         save(input) {if (options.saveError) throw new Error(typeof options.saveError === 'string' ? options.saveError : 'private server details'); calls.saved.push(input); return input.id ?? 'new-entry';},
         remove(id) {calls.removed.push(id);}, retrySync() {calls.retries++;},
     };
+    const moviesRepository = {listMovies: params => {calls.searches.push(params); return options.search?.(params) ?? Promise.resolve({movies: [], hasMore: false});}};
     const hook = state => React.useSyncExternalStore(state.subscribe, state.get);
     const colors = new Proxy({}, {get: () => '#123456'});
     const mocks = {
@@ -46,6 +47,7 @@ async function fixture(t, options = {}) {
         '../components/screen': {Screen: ({children, overlays}) => React.createElement('Screen', null, children, overlays)},
         '../components/themed-text': {ThemedText: 'Text'},
         '../di/DependenciesContext': {useJournalRepository: () => repository,
+            useMovieRepository: () => moviesRepository,
             useAuthRepository: () => ({getSession: session.get, async signIn() {calls.signIn++; return false;}})},
         '../hooks/use-auth': {useAuth: () => hook(session)},
         '../hooks/use-journal': {useJournal: () => hook(snapshot)},
@@ -54,6 +56,7 @@ async function fixture(t, options = {}) {
         '../hooks/use-responsive': {useResponsive: () => ({width: 360, contentMaxWidth: 360, gutter: 16, isPhone: true})},
         '../movies/components/TopBar': {useTopBarHeight: () => 64},
         '../movies/constants/destinations': {useGoTo: () => value => calls.links.push(value)},
+        '../movies/useWatchlist': {useWatchlist: () => options.savedMovies ?? []},
         '../purchases/supporter-paywall': {useSupporterPaywall: () => value => calls.paywalls.push(value)},
         '../movies/components/WatchlistSheet': {
             WatchlistSheet: ({children, visible}) => visible ? React.createElement('Sheet', null, children) : null,
@@ -62,7 +65,7 @@ async function fixture(t, options = {}) {
     };
     const Component = options.editor ? loadTypeScript('presentation/journal/JournalEditor.tsx', mocks).JournalEditor
         : loadTypeScript('presentation/journal/JournalScreen.tsx', mocks).JournalScreen;
-    let props = options.editor ? {visible: true, movie, onClose: () => calls.closed++, ...options.props} : {};
+    let props = options.editor ? {visible: true, movie, onClose: () => calls.closed++, onSaved: kind => calls.confirmations.push(kind), ...options.props} : {};
     let renderer;
     await act(async () => {renderer = create(React.createElement(Component, props));});
     t.after(async () => {await act(async () => renderer.unmount());});
@@ -90,7 +93,7 @@ test('free accounts can read, edit and delete; only explicit insights upgrade op
     assert.deepEqual(f.calls.paywalls, []);
     assert.doesNotMatch(f.text(), /Watches logged|Your highest rated/);
     await f.press('Explore supporter access');
-    assert.deepEqual(f.calls.paywalls, ['settings_supporter']);
+    assert.deepEqual(f.calls.paywalls, ['journal_insights']);
     assert.deepEqual(f.calls.events, ['opened', 'entry_deleted', 'insights_opened', 'upgrade_opened']);
 });
 
@@ -149,7 +152,8 @@ test('editor accepts half-star ratings and private notes without sending content
     await f.press('3.5 stars'); await f.change('Private note', 'Personal memory');
     await f.press('Save entry');
     assert.deepEqual(f.calls.saved[0], {id: undefined, movie, watchedOn: '2024-02-29', rating: 7, note: 'Personal memory'});
-    assert.equal(f.calls.closed, 1); assert.deepEqual(f.calls.events, ['entry_saved']);
+    assert.equal(f.calls.closed, 1); assert.deepEqual(f.calls.events, ['entry_created']);
+    assert.deepEqual(f.calls.confirmations, ['created']);
 });
 
 test('a guest movie logging action offers sign-in and preserves the selected movie afterwards', async t => {
@@ -183,6 +187,7 @@ test('oversized notes and storage failures retain the draft and show safe errors
     await f.change('Private note', 'keep this draft'); await f.press('Save entry');
     assert.match(f.text(), /could not be saved/); assert.doesNotMatch(f.text(), /private server/);
     assert.equal(f.calls.closed, 0); assert.deepEqual(f.calls.events, []);
+    assert.deepEqual(f.calls.confirmations, []);
     assert.equal(f.renderer.root.findAllByType('Input').find(node => node.props.accessibilityLabel === 'Private note').props.value, 'keep this draft');
 });
 
@@ -193,6 +198,8 @@ test('closing and reopening the editor clears canceled drafts; edits preserve th
     const note = f.renderer.root.findAllByType('Input').find(node => node.props.accessibilityLabel === 'Private note');
     assert.equal(note.props.value, entry.note);
     await f.press('Save changes'); assert.equal(f.calls.saved[0].id, entry.id);
+    assert.deepEqual(f.calls.events, ['entry_updated']);
+    assert.deepEqual(f.calls.confirmations, ['updated']);
 });
 
 test('sync failures stay visible and offer a retry without locking existing journal entries', async t => {
@@ -228,4 +235,89 @@ test('an account-deleted journal shows the deletion state without a loading spin
     assert.match(editor.text(), /removed by an account deletion request/);
     assert.equal(editor.button('Save entry').props.disabled, true);
     assert.equal(editor.button('Retry journal sync'), undefined);
+});
+
+test('an empty journal logs a saved movie and confirms success without automatically opening a paywall', async t => {
+    const f = await fixture(t, {snapshot: {entries: []}, savedMovies: [movie]});
+    await f.press('Log your first movie');
+    assert.match(f.text(), /Saved movies/);
+    assert.deepEqual(f.calls.searches, []);
+    await f.press('Log A private favorite (2024)');
+    assert.ok(f.button('Save entry'));
+    assert.deepEqual(f.calls.saved, []);
+    await f.press('3.5 stars'); await f.change('Private note', 'My private memory');
+    await f.press('Save entry');
+    assert.equal(f.calls.saved[0].movie.id, movie.id);
+    assert.equal(f.calls.saved[0].note, 'My private memory');
+    assert.equal(f.renderer.root.findAllByType('Input').length, 0);
+    assert.match(f.text(), /Saved to your journal/);
+    assert.deepEqual(f.calls.paywalls, []);
+    assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created']);
+    await f.press('View insights');
+    assert.match(f.text(), /editing stay free/);
+    assert.deepEqual(f.calls.paywalls, []);
+    await f.press('Explore supporter access');
+    assert.deepEqual(f.calls.paywalls, ['journal_insights']);
+    assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created', 'insights_opened', 'upgrade_opened']);
+});
+
+test('editing reports an update and never counts as a new journal entry', async t => {
+    const f = await fixture(t);
+    await f.press('Edit entry');
+    await f.change('Private note', 'An updated private memory');
+    await f.press('Save changes');
+    assert.match(f.text(), /Changes saved/);
+    assert.equal(f.calls.saved[0].id, entry.id);
+    assert.deepEqual(f.calls.events, ['opened', 'entry_updated']);
+    assert.deepEqual(f.calls.paywalls, []);
+});
+
+test('repeated save events create one entry and one success confirmation', async t => {
+    const f = await fixture(t, {editor: true});
+    const save = f.button('Save entry').props.onPress;
+    await act(async () => {save(); save();});
+    assert.equal(f.calls.saved.length, 1);
+    assert.equal(f.calls.closed, 1);
+    assert.deepEqual(f.calls.events, ['entry_created']);
+    assert.deepEqual(f.calls.confirmations, ['created']);
+});
+
+test('an account switch invalidates old movie selections, pending results, and draft save callbacks', async t => {
+    let resolveSearch;
+    const f = await fixture(t, {snapshot: {entries: []}, savedMovies: [movie],
+        search: () => new Promise(resolve => {resolveSearch = resolve;})});
+    await f.press('Log a movie');
+    const choose = f.button('Log A private favorite (2024)').props.onPress;
+    await f.change('Search movies for your journal', 'private query');
+    await f.press('Search journal movies');
+    await f.update(f.session, {account: {uid: 'bob'}});
+    await act(async () => {choose(); resolveSearch({movies: [{...movie, title: 'Old private result'}], hasMore: false});});
+    assert.equal(f.renderer.root.findAllByType('Input').length, 0);
+    assert.doesNotMatch(f.text(), /Old private result/);
+    assert.deepEqual(f.calls.saved, []);
+
+    const editor = await fixture(t, {editor: true});
+    await editor.change('Private note', 'Alice private draft');
+    const save = editor.button('Save entry').props.onPress;
+    await editor.update(editor.session, {account: {uid: 'bob'}});
+    await act(async () => save());
+    assert.deepEqual(editor.calls.saved, []);
+    assert.deepEqual(editor.calls.events, []);
+    assert.equal(editor.renderer.root.findAllByType('Input').find(node => node.props.accessibilityLabel === 'Private note').props.value, '');
+    await editor.update(editor.session, {account: {uid: 'alice'}});
+    await act(async () => save());
+    assert.deepEqual(editor.calls.saved, [], 'the old draft stays invalid after returning to the original account');
+});
+
+test('movie search stays explicit inside the journal and successful results can be logged', async t => {
+    const f = await fixture(t, {snapshot: {entries: []}, search: async () => ({movies: [movie], hasMore: false})});
+    await f.press('Log a movie');
+    await f.change('Search movies for your journal', 'A private favorite');
+    assert.deepEqual(f.calls.searches, []);
+    await f.press('Search journal movies');
+    assert.deepEqual(f.calls.searches, [{page: 1, limit: 20, query: 'A private favorite'}]);
+    await f.press('Log A private favorite (2024)');
+    await f.press('Save entry');
+    assert.equal(f.calls.saved[0].movie.id, movie.id);
+    assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created']);
 });

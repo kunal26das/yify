@@ -1,0 +1,35 @@
+{
+  "description": "Fictional journal experiment data for offline validation; not a live baseline.",
+  "metadata": {"dimensions":[{"apiName":"customEvent:app_platform"},{"apiName":"customEvent:viewing_country"},{"apiName":"customEvent:funnel_version"},{"apiName":"customEvent:placement"},{"apiName":"customEvent:action"}]},
+  "pages": [
+    {
+      "dimensionHeaders": [{"name":"date"},{"name":"customEvent:app_platform"},{"name":"customEvent:viewing_country"},{"name":"eventName"},{"name":"customEvent:placement"}],
+      "metricHeaders": [{"name":"eventCount"},{"name":"totalUsers"}],
+      "rowCount": 3,
+      "metadata": {"timeZone":"Asia/Kolkata"},
+      "rows": [
+        {"dimensionValues":[{"value":"20260919"},{"value":"android"},{"value":"IN"},{"value":"supporter_offers_visible"},{"value":"journal_insights"}],"metricValues":[{"value":"12"},{"value":"8"}]},
+        {"dimensionValues":[{"value":"20260919"},{"value":"android"},{"value":"IN"},{"value":"remove_ads_purchase_start"},{"value":"journal_insights"}],"metricValues":[{"value":"3"},{"value":"2"}]},
+        {"dimensionValues":[{"value":"20260919"},{"value":"web"},{"value":"US"},{"value":"watchlist_activation"},{"value":"(not set)"}],"metricValues":[{"value":"5"},{"value":"3"}]}
+      ]
+    }
+  ],
+  "journalPages": [
+    {
+      "dimensionHeaders": [{"name":"date"},{"name":"customEvent:app_platform"},{"name":"countryId"},{"name":"eventName"},{"name":"customEvent:action"}],
+      "metricHeaders": [{"name":"eventCount"},{"name":"totalUsers"}],
+      "rowCount": 8,
+      "metadata": {"timeZone":"Asia/Kolkata"},
+      "rows": [
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"opened"}],"metricValues":[{"value":"2"},{"value":"1"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"picker_opened"}],"metricValues":[{"value":"3"},{"value":"2"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"entry_created"}],"metricValues":[{"value":"4"},{"value":"3"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"entry_updated"}],"metricValues":[{"value":"5"},{"value":"4"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"entry_saved"}],"metricValues":[{"value":"6"},{"value":"5"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"entry_deleted"}],"metricValues":[{"value":"7"},{"value":"6"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"insights_opened"}],"metricValues":[{"value":"8"},{"value":"7"}]},
+        {"dimensionValues":[{"value":"20260920"},{"value":"android"},{"value":"IN"},{"value":"journal_action"},{"value":"upgrade_opened"}],"metricValues":[{"value":"9"},{"value":"8"}]}
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 export const REMOVE_ADS_ENTITLEMENT = 'remove_ads';
 
-export type PurchasePlacement = 'settings_supporter' | 'post_ad_supporter';
+export type PurchasePlacement = 'settings_supporter' | 'post_ad_supporter' | 'journal_insights';
 
 export interface PurchaseOffer {
     id: string;
