@@ -32,10 +32,24 @@ export interface NyaaRecord {
 }
 
 export class NyaaFeedError extends Error {
-    constructor(readonly code: 'invalid_feed' | 'http_error' | 'response_type' | 'fetch_failed' | 'fetch_redirect' | 'fetch_cache' | 'fetch_context' | 'fetch_dns' | 'fetch_network' | 'fetch_runtime' | 'read_failed', readonly upstreamStatus?: number) {
+    constructor(readonly code: 'invalid_feed' | 'http_error' | 'rate_limited' | 'response_type' | 'fetch_failed' | 'fetch_redirect' | 'fetch_cache' | 'fetch_context' | 'fetch_dns' | 'fetch_network' | 'fetch_runtime' | 'read_failed', readonly upstreamStatus?: number, readonly retryAfterSeconds?: number) {
         super('Anime releases are temporarily unavailable.');
         this.name = 'NyaaFeedError';
     }
+}
+
+export function nyaaRetryAfterSeconds(value: string | null, now: number): number {
+    const header = value?.trim();
+    if (!header || header.length > 128) return 60;
+    if (/^\d+$/.test(header)) {
+        const seconds = Number(header);
+        return Number.isSafeInteger(seconds) ? seconds : 60;
+    }
+    // Only the HTTP-date format is accepted; permissive date parsing can treat bad headers as dates.
+    if (!/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(header)) return 60;
+    const until = Date.parse(header);
+    if (!Number.isFinite(until) || new Date(until).toUTCString() !== header) return 60;
+    return Math.max(0, Math.ceil((until - now) / 1000));
 }
 
 function fetchFailure(error: unknown): NyaaFeedError {
@@ -175,7 +189,11 @@ async function wait(ms: number, signal: AbortSignal): Promise<void> {
     finally { if (timer !== undefined) clearTimeout(timer); }
 }
 
-async function readFeed(response: Response, signal: AbortSignal): Promise<string> {
+async function readFeed(response: Response, signal: AbortSignal, now: number): Promise<string> {
+    if (response.status === 429) {
+        void response.body?.cancel().catch(() => {});
+        throw new NyaaFeedError('rate_limited', 429, nyaaRetryAfterSeconds(response.headers.get('retry-after'), now));
+    }
     if (!response.ok || response.redirected) {
         void response.body?.cancel().catch(() => {});
         throw new NyaaFeedError('http_error', response.status);
@@ -224,16 +242,24 @@ export function createNyaaTransport(options: {
     const now = options.now ?? Date.now;
     const pending = new Map<string, PendingFeed>();
     let nextStart = 0;
+    let rateLimitedUntil = 0;
+    const assertOutsideCooldown = () => {
+        const seconds = Math.ceil((rateLimitedUntil - now()) / 1000);
+        if (seconds > 0) throw new NyaaFeedError('rate_limited', 429, seconds);
+    };
     let queue: Promise<void> = Promise.resolve();
     return {async load(params, signal) {
         assertCatalogActive(signal);
         const url = nyaaFeedUrl(params);
+        assertOutsideCooldown();
         let current = pending.get(url);
         if (!current || current.controller.signal.aborted) {
             const controller = new AbortController();
             const start = queue.then(async () => {
+                assertOutsideCooldown();
                 await wait(Math.max(0, nextStart - now()), controller.signal);
                 assertCatalogActive(controller.signal);
+                assertOutsideCooldown();
                 nextStart = now() + spacingMs;
             });
             queue = start.catch(() => {});
@@ -241,19 +267,26 @@ export function createNyaaTransport(options: {
                 const timer = setTimeout(() => controller.abort(), timeoutMs);
                 try {
                     assertCatalogActive(controller.signal);
+                    assertOutsideCooldown();
                     const response = await cancelled(fetcher(url, {
                         // The Request.cache option is unavailable on older Workers compatibility dates.
                         headers: {Accept: 'application/rss+xml, application/xml, text/xml', 'Cache-Control': 'no-store'},
                         // Workers supports manual redirects; readFeed rejects every non-2xx response.
                         redirect: 'manual', signal: controller.signal,
                     }), controller.signal).catch(error => { assertCatalogActive(controller.signal); throw fetchFailure(error); });
-                    const xml = await readFeed(response, controller.signal).catch(error => {
+                    const xml = await readFeed(response, controller.signal, now()).catch(error => {
                         assertCatalogActive(controller.signal);
                         if (error instanceof NyaaFeedError) throw error;
                         throw new NyaaFeedError('read_failed');
                     });
                     assertCatalogActive(controller.signal);
                     return parseNyaaFeed(xml, params.category ?? 'all');
+                } catch (error) {
+                    if (error instanceof NyaaFeedError && error.code === 'rate_limited') {
+                        // Keep the source's full cooldown, including waits longer than a minute.
+                        rateLimitedUntil = Math.max(rateLimitedUntil, now() + (error.retryAfterSeconds ?? 60) * 1000);
+                    }
+                    throw error;
                 } finally { clearTimeout(timer); }
             });
             current = {controller, promise, readers: 0};

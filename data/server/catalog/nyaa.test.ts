@@ -6,7 +6,7 @@ import {test} from 'node:test';
 const require = createRequire(import.meta.url);
 const {loadTypeScript} = require('../../../tests/helpers/load-typescript.cjs');
 const nyaa = loadTypeScript('data/server/catalog/nyaa.ts');
-const {parseNyaaFeed, nyaaFeedUrl, createNyaaTransport, NyaaAnimeRepository, NyaaFeedError, NYAA_MAX_BYTES} = nyaa;
+const {parseNyaaFeed, nyaaFeedUrl, nyaaRetryAfterSeconds, createNyaaTransport, NyaaAnimeRepository, NyaaFeedError, NYAA_MAX_BYTES} = nyaa;
 const {SubscriberAccessError} = loadTypeScript('data/server/subscribers/errors.ts');
 const {createCatalogHandler} = loadTypeScript('data/server/catalog/handler.ts', {
     '../subscribers/errors': {SubscriberAccessError}, './nyaa': nyaa,
@@ -167,6 +167,120 @@ test('requests for different searches are paced instead of hitting RSS together'
     t.mock.timers.tick(30);
     await second;
     assert.equal(calls, 2);
+});
+
+test('Retry-After accepts bounded numeric values and valid HTTP dates without shortening long waits', () => {
+    const now = Date.UTC(2026, 8, 19, 0, 0, 0, 250);
+    assert.equal(nyaaRetryAfterSeconds('0', now), 0);
+    assert.equal(nyaaRetryAfterSeconds(' 00120 ', now), 120);
+    assert.equal(nyaaRetryAfterSeconds('86400', now), 86400);
+    assert.equal(nyaaRetryAfterSeconds(new Date(now + 86_400_000).toUTCString(), now), 86400);
+    assert.equal(nyaaRetryAfterSeconds(new Date(now + 2000).toUTCString(), now), 2);
+    assert.equal(nyaaRetryAfterSeconds(new Date(now - 2000).toUTCString(), now), 0);
+    for (const header of [null, '', '   ', '-1', '+1', '1.5', 'Infinity', 'unavailable',
+        '9007199254740992', '9'.repeat(129), '2026-09-20T00:00:00.000Z',
+        'Sat, 31 Feb 2026 00:00:00 GMT', 'Fri, 19 Sep 2026 00:00:00 GMT']) {
+        assert.equal(nyaaRetryAfterSeconds(header, now), 60);
+    }
+});
+
+test('source rate limits suppress every query until the full cooldown expires, then fetching resumes uncached', async () => {
+    let now = 1000;
+    let calls = 0;
+    const transport = createNyaaTransport({spacingMs: 0, now: () => now, fetch: async () => {
+        calls++;
+        return calls === 1 ? new Response('PRIVATE_SOURCE_BODY', {status: 429, headers: {'Retry-After': '3600'}}) : response();
+    }});
+    await assert.rejects(transport.load({query: 'first'}), failure => {
+        assert.equal(failure instanceof NyaaFeedError, true);
+        assert.equal(failure.code, 'rate_limited');
+        assert.equal(failure.upstreamStatus, 429);
+        assert.equal(failure.retryAfterSeconds, 3600);
+        assert.doesNotMatch(failure.message, /PRIVATE_SOURCE_BODY/);
+        return true;
+    });
+    now += 1000;
+    for (const params of [{query: 'first'}, {query: 'another'}, {category: 'raw'}, {}]) {
+        await assert.rejects(transport.load(params), {code: 'rate_limited', retryAfterSeconds: 3599});
+    }
+    assert.equal(calls, 1);
+    now += 3_599_000;
+    assert.equal((await transport.load({category: 'english'})).releases.length, 1);
+    assert.equal(calls, 2);
+    await transport.load({category: 'english'});
+    assert.equal(calls, 3, 'successful RSS remains uncached after rate-limit recovery');
+});
+
+test('missing or invalid Retry-After creates a one-minute cooldown shared by all feed queries', async () => {
+    for (const header of [undefined, 'not-a-time', '-300']) {
+        let now = 1000;
+        let calls = 0;
+        const transport = createNyaaTransport({spacingMs: 0, now: () => now, fetch: async () => {
+            calls++;
+            return calls === 1 ? new Response('unavailable', {status: 429,
+                headers: header === undefined ? {} : {'Retry-After': header}}) : response();
+        }});
+        await assert.rejects(transport.load({}), {code: 'rate_limited', retryAfterSeconds: 60});
+        now += 59_000;
+        await assert.rejects(transport.load({query: 'new search'}), {code: 'rate_limited', retryAfterSeconds: 1});
+        assert.equal(calls, 1);
+        now += 1000;
+        await transport.load({query: 'new search'});
+        assert.equal(calls, 2);
+    }
+});
+
+test('a source cooldown also prevents already queued paced requests from fetching', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    let now = 1000;
+    let calls = 0;
+    const upstream = deferred<Response>();
+    const transport = createNyaaTransport({spacingMs: 5000, now: () => now, fetch: async () => {
+        calls++;
+        return upstream.promise;
+    }});
+    const first = assert.rejects(transport.load({query: 'first'}), {code: 'rate_limited', retryAfterSeconds: 120});
+    await nextTurn();
+    assert.equal(calls, 1);
+    const second = assert.rejects(transport.load({query: 'second'}), {code: 'rate_limited', retryAfterSeconds: 115});
+    const third = assert.rejects(transport.load({query: 'third'}), {code: 'rate_limited', retryAfterSeconds: 115});
+    await nextTurn();
+    upstream.resolve(new Response('PRIVATE_SOURCE_BODY', {status: 429, headers: {'Retry-After': '120'}}));
+    await first;
+    now += 5000;
+    t.mock.timers.tick(5000);
+    await Promise.all([second, third]);
+    assert.equal(calls, 1);
+});
+
+test('public and authorized subscriber APIs return safe 429 diagnostics and Retry-After during source cooldown', async () => {
+    for (const privateResponse of [false, true]) {
+        let calls = 0;
+        let authorized = 0;
+        const sourceFetch = async () => {
+            calls++;
+            return new Response('PRIVATE_SOURCE_BODY https://private-upstream.invalid/?token=PRIVATE_TOKEN', {
+                status: 429, headers: {'Retry-After': '120'},
+            });
+        };
+        const handler = createCatalogHandler((signal: AbortSignal, onResponse?: (body: unknown) => void) =>
+            createCatalogRepositories({}, {signal, onResponse, fetch: sourceFetch}),
+        privateResponse ? {subscriber: {authorize: async () => {authorized++; return {uid: 'verified'}; }}} : {});
+        for (const query of ['', 'query=another&category=english']) {
+            const result = await handler(request(query), 'anime');
+            assert.equal(result.status, 429);
+            assert.equal(result.headers.get('X-Catalog-Error-Code'), 'anime_rate_limited');
+            assert.equal(result.headers.get('X-Catalog-Upstream-Status'), '429');
+            const waitSeconds = Number(result.headers.get('Retry-After'));
+            assert.ok(waitSeconds > 0 && waitSeconds <= 120);
+            assert.equal(result.headers.get('Cache-Control'), privateResponse ? 'private, no-store' : 'no-store');
+            const body = await result.json();
+            assert.deepEqual(body, {error: 'Anime uploads are temporarily unavailable. Please try again later.'});
+            assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]), /PRIVATE_|private-upstream|"raw"/);
+        }
+        assert.equal(calls, 1);
+        assert.equal(authorized, privateResponse ? 2 : 0);
+    }
 });
 
 test('one cancelled reader cannot cancel a shared request for another reader', async () => {
