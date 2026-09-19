@@ -19,6 +19,7 @@ import type {
     PurchaseRepository,
     SearchHistoryRepository,
     ShowRepository,
+    SubscriberAccess,
     SupporterNudge,
     TmdbRepository,
     StreamingRepository,
@@ -65,6 +66,16 @@ export function useAnimeRepository(): AnimeRepository {
     const anime = useDependencies().anime;
     if (!anime) throw new Error('AnimeRepository is missing from DependenciesProvider');
     return anime;
+}
+
+const NO_SUBSCRIBER_ACCESS: SubscriberAccess = {
+    getState: () => 'denied',
+    subscribe: () => () => {},
+    refresh: async () => {},
+};
+
+export function useSubscriberAccessService(): SubscriberAccess {
+    return useDependencies().subscriberAccess ?? NO_SUBSCRIBER_ACCESS;
 }
 
 export function useTmdbRepository(): TmdbRepository {

@@ -89,6 +89,96 @@ function privateHeaders(response: Response): void {
     assert.equal(response.headers.get('Access-Control-Allow-Credentials'), null);
 }
 
+test('subscriber access verifies authorization without constructing catalog repositories', async () => {
+    let authorized = 0;
+    let created = 0;
+    let released = 0;
+    const handler = createCatalogHandler(() => { created++; throw new Error('Unexpected source access'); }, {
+        subscriber: {authorize: async (request: Request, signal: AbortSignal) => {
+            assert.equal(request.headers.get('Authorization'), 'Bearer verified-token');
+            assert.equal(signal.aborted, false);
+            authorized++;
+            return {uid: 'verified-account'};
+        }},
+        admission: {acquire() { return {allowed: true, release() { released++; }}; }},
+    });
+    for (const query of ['', 'v=2']) {
+        const response = await handler(request('access', query, {headers: {Authorization: 'Bearer verified-token'}}), 'access');
+        assert.equal(response.status, 200);
+        privateHeaders(response);
+        assert.deepEqual(await response.json(), {metadata: {allowed: true}, raw: {responses: []}});
+    }
+    assert.equal(authorized, 2);
+    assert.equal(created, 0);
+    assert.equal(released, 2);
+});
+
+for (const status of [401, 403, 503]) {
+    test(`subscriber access preserves authorization status ${status} without reaching the source`, async () => {
+        let created = 0;
+        const handler = createCatalogHandler(() => { created++; throw new Error('Unexpected source access'); }, {
+            subscriber: {authorize: async () => {
+                const failure = new SubscriberAccessError(status);
+                failure.message = 'PRIVATE_AUTH_DETAIL';
+                throw failure;
+            }},
+        });
+        const response = await handler(request('access', 'v=2'), 'access');
+        assert.equal(response.status, status);
+        privateHeaders(response);
+        const body = await response.json();
+        assert.equal(body.metadata, undefined);
+        assert.equal(body.raw, undefined);
+        assert.doesNotMatch(JSON.stringify(body), /PRIVATE_AUTH_DETAIL/);
+        assert.equal(created, 0);
+    });
+}
+
+test('public access and anime routes deny caller claims before admission or repository access', async () => {
+    let created = 0;
+    let acquired = 0;
+    const handler = createCatalogHandler(() => { created++; throw new Error('Unexpected source access'); }, {
+        admission: {acquire() { acquired++; throw new Error('Unexpected admission'); }},
+    });
+    for (const operation of ['access', 'anime']) {
+        for (const headers of [{}, {Authorization: 'Bearer claimed-owner-or-subscriber'}]) {
+            const response = await handler(new Request(`https://yify.expo.app/api/catalog/${operation}?v=2`, {headers}), operation);
+            assert.equal(response.status, 403);
+            assert.equal(response.headers.get('Cache-Control'), 'no-store');
+            assert.deepEqual(await response.json(), {error: 'An active subscription is required'});
+        }
+    }
+    assert.equal(created, 0);
+    assert.equal(acquired, 0);
+});
+
+test('protected routes retain preflight and validate access parameters before authorization', async () => {
+    let authorized = 0;
+    const handler = createCatalogHandler(() => { throw new Error('Unexpected source access'); }, {
+        subscriber: {authorize: async () => { authorized++; return {uid: 'verified-account'}; }},
+    });
+    for (const operation of ['access', 'anime']) {
+        const response = await handler(request(operation, 'v=2', {method: 'OPTIONS', headers: {
+            'Access-Control-Request-Method': 'GET', 'Access-Control-Request-Headers': 'Authorization, Accept',
+        }}), operation);
+        assert.equal(response.status, 204);
+        assert.equal(response.headers.get('Access-Control-Allow-Headers'), 'Accept, Content-Type, Authorization');
+        privateHeaders(response);
+    }
+    for (const query of ['id=1', 'query=anime', 'allowed=true', 'v=3', 'v=2&v=2']) {
+        assert.equal((await handler(request('access', query), 'access')).status, 400);
+    }
+    assert.equal((await handler(request('access', '', {method: 'POST'}), 'access')).status, 405);
+    assert.equal(authorized, 0);
+    const publicHandler = createCatalogHandler(() => { throw new Error('Unexpected source access'); });
+    for (const operation of ['access', 'anime']) {
+        const response = await publicHandler(new Request(`https://yify.expo.app/api/catalog/${operation}`, {
+            method: 'OPTIONS', headers: {'Access-Control-Request-Method': 'GET'},
+        }), operation);
+        assert.equal(response.status, 204);
+    }
+});
+
 for (const [operation, query] of [
     ['movies', 'page=1&limit=20'], ['movie', 'id=10'], ['suggestions', 'id=10'],
     ['parental-guides', 'id=10'], ['shows', 'page=1'], ['episodes', 'imdbId=1234567'],

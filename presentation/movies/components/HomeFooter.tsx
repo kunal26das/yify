@@ -8,6 +8,7 @@ import {FontFamily, Spacing} from '../../constants/theme';
 import {LEGAL_LINKS} from '../../constants/legal';
 import {usePalette} from '../../hooks/use-palette';
 import {useResponsive} from '../../hooks/use-responsive';
+import {useSubscriberAccess} from '../../hooks/use-subscriber-access';
 import {DESTINATIONS, useGoTo} from '../constants/destinations';
 import {PlayStoreButton} from './PlayStoreButton';
 
@@ -30,6 +31,8 @@ const GENRE_LINKS: readonly FooterLink[] = [
 const APP_LINKS: readonly FooterLink[] = [{label: 'Preferences', href: '/preferences'}];
 
 export function HomeFooter() {
+    const {status: subscriberAccess} = useSubscriberAccess();
+    const browseLinks = BROWSE_LINKS.filter(link => link.href !== '/anime' || subscriberAccess === 'allowed');
     const {colors} = usePalette();
     const {isPhone, gutter} = useResponsive();
     const goTo = useGoTo();
@@ -75,7 +78,7 @@ export function HomeFooter() {
                 </Animated.View>
 
                 <View style={[styles.columns, isPhone && styles.columnsPhone]}>
-                    {column('Browse', BROWSE_LINKS, 0)}
+                    {column('Browse', browseLinks, 0)}
                     {column('Genres', GENRE_LINKS, 1)}
                     {column('App', APP_LINKS, 2)}
                 </View>

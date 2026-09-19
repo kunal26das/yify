@@ -26,7 +26,7 @@ interface CatalogHandlerOptions {
 
 class CatalogTimeout extends Error {}
 
-async function execute(request: CatalogRequest, repositories: CatalogRepositories, options: CatalogProjectionOptions): Promise<unknown> {
+async function execute(request: Exclude<CatalogRequest, {operation: 'access'}>, repositories: CatalogRepositories, options: CatalogProjectionOptions): Promise<unknown> {
     switch (request.operation) {
         case 'movies': return projectMovieList(await repositories.movies.listMovies(request.params));
         case 'movie': return projectMovieDetails(await repositories.movies.getMovieDetails(request.id), options);
@@ -86,6 +86,10 @@ export function createCatalogHandler(
             return new Response(null, {status: 204, headers});
         }
 
+        if (!privateResponse && (parsed.operation === 'anime' || parsed.operation === 'access')) {
+            return respond({error: 'An active subscription is required'}, 403);
+        }
+
         const permit = admission.acquire(request, parsed);
         if (!permit.allowed) {
             headers.set('Retry-After', String(permit.retryAfter));
@@ -106,6 +110,7 @@ export function createCatalogHandler(
             assertCatalogActive(controller.signal);
             if (options.subscriber) await options.subscriber.authorize(request, controller.signal);
             assertCatalogActive(controller.signal);
+            if (parsed.operation === 'access') return {metadata: {allowed: true}, raw: {responses: []}};
             const responses: unknown[] = [];
             const onResponse = privateResponse ? (body: unknown) => { responses.push(body); } : undefined;
             const source = typeof repositories === 'function' ? repositories(controller.signal, onResponse) : repositories;

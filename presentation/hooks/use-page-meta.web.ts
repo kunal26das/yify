@@ -7,7 +7,7 @@ export interface PageMeta {
     canonical?: string | null;
     image?: string | null;
     type?: string;
-    robots?: 'index,follow' | 'noindex,follow';
+    robots?: 'index,follow' | 'noindex,follow' | 'noindex,nofollow';
 }
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string | null | undefined): void {
