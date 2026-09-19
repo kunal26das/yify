@@ -32,10 +32,22 @@ export interface NyaaRecord {
 }
 
 export class NyaaFeedError extends Error {
-    constructor(readonly code: 'invalid_feed' | 'http_error' | 'response_type' | 'fetch_failed' | 'read_failed', readonly upstreamStatus?: number) {
+    constructor(readonly code: 'invalid_feed' | 'http_error' | 'response_type' | 'fetch_failed' | 'fetch_redirect' | 'fetch_cache' | 'fetch_context' | 'fetch_dns' | 'fetch_network' | 'fetch_runtime' | 'read_failed', readonly upstreamStatus?: number) {
         super('Anime releases are temporarily unavailable.');
         this.name = 'NyaaFeedError';
     }
+}
+
+function fetchFailure(error: unknown): NyaaFeedError {
+    const message = error instanceof Error ? error.message : '';
+    // Map known runtime failures to fixed codes without returning source text, URLs or query data.
+    if (/redirect/i.test(message)) return new NyaaFeedError('fetch_redirect');
+    if (/cache/i.test(message)) return new NyaaFeedError('fetch_cache');
+    if (/I\/O|different request/i.test(message)) return new NyaaFeedError('fetch_context');
+    if (/DNS|resolv/i.test(message)) return new NyaaFeedError('fetch_dns');
+    if (/network|connection|TLS|SSL|certificate/i.test(message)) return new NyaaFeedError('fetch_network');
+    if (/illegal invocation|unsupported|not implemented/i.test(message)) return new NyaaFeedError('fetch_runtime');
+    return new NyaaFeedError('fetch_failed');
 }
 
 function invalid(): never {
@@ -233,7 +245,7 @@ export function createNyaaTransport(options: {
                         // The Request.cache option is unavailable on older Workers compatibility dates.
                         headers: {Accept: 'application/rss+xml, application/xml, text/xml', 'Cache-Control': 'no-store'},
                         redirect: 'error', signal: controller.signal,
-                    }), controller.signal).catch(() => { assertCatalogActive(controller.signal); throw new NyaaFeedError('fetch_failed'); });
+                    }), controller.signal).catch(error => { assertCatalogActive(controller.signal); throw fetchFailure(error); });
                     const xml = await readFeed(response, controller.signal).catch(error => {
                         assertCatalogActive(controller.signal);
                         if (error instanceof NyaaFeedError) throw error;
