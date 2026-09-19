@@ -1,4 +1,5 @@
 import {DOMParser} from '@xmldom/xmldom';
+import type {Document, Element, Node} from '@xmldom/xmldom';
 import type {AnimeCategory, AnimeRelease} from '../../../domain/entities/AnimeRelease';
 import type {AnimeRepository, ListAnimeParams, ListAnimeResult} from '../../../domain/repositories/AnimeRepository';
 import {assertCatalogActive} from './cancellation';
@@ -113,16 +114,15 @@ export function parseNyaaFeed(xml: string, category: AnimeCategory = 'all'): {re
     if (typeof xml !== 'string' || !xml.trim() || xml.length > NYAA_MAX_BYTES
         || new TextEncoder().encode(xml).byteLength > NYAA_MAX_BYTES || /<!\s*(?:DOCTYPE|ENTITY)\b/i.test(xml)
         || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(xml)) return invalid();
-    let hadError = false;
-    const onError = () => { hadError = true; };
     let document: Document;
     try {
-        document = new DOMParser({errorHandler: {warning: onError, error: onError, fatalError: onError}})
+        // Reject warnings as well as errors instead of accepting the parser's repaired XML.
+        document = new DOMParser({onError: invalid})
             .parseFromString(xml, 'application/xml');
     } catch { return invalid(); }
     const roots = children(document);
     const root = document.documentElement;
-    if (hadError || document.doctype || roots.length !== 1 || !root || !isElement(root, 'rss')
+    if (document.doctype || roots.length !== 1 || !root || !isElement(root, 'rss')
         || root.getAttribute('version') !== '2.0') return invalid();
     const channels = children(root);
     if (channels.length !== 1 || !isElement(channels[0], 'channel')) return invalid();
