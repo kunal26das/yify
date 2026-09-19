@@ -5,10 +5,13 @@ import {test} from 'node:test';
 
 const require = createRequire(import.meta.url);
 const {loadTypeScript} = require('../../../tests/helpers/load-typescript.cjs');
-const {parseNyaaFeed, nyaaFeedUrl, createNyaaTransport, NyaaAnimeRepository, NYAA_MAX_BYTES} = loadTypeScript('data/server/catalog/nyaa.ts');
+const nyaa = loadTypeScript('data/server/catalog/nyaa.ts');
+const {parseNyaaFeed, nyaaFeedUrl, createNyaaTransport, NyaaAnimeRepository, NyaaFeedError, NYAA_MAX_BYTES} = nyaa;
 const {SubscriberAccessError} = loadTypeScript('data/server/subscribers/errors.ts');
-const {createCatalogHandler} = loadTypeScript('data/server/catalog/handler.ts', {'../subscribers/errors': {SubscriberAccessError}});
-const {createCatalogRepositories} = loadTypeScript('data/server/catalog/repositories.ts');
+const {createCatalogHandler} = loadTypeScript('data/server/catalog/handler.ts', {
+    '../subscribers/errors': {SubscriberAccessError}, './nyaa': nyaa,
+});
+const {createCatalogRepositories} = loadTypeScript('data/server/catalog/repositories.ts', {'./nyaa': nyaa});
 const {projectAnimeList} = loadTypeScript('data/server/catalog/projections.ts');
 const HASH = '0123456789abcdef0123456789abcdef01234567';
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -134,8 +137,9 @@ test('RSS transport coalesces only pending work and never stores completed feed 
     const transport = createNyaaTransport({spacingMs: 0, fetch: async (url: string, init: RequestInit) => {
         calls++;
         assert.equal(url, 'https://nyaa.si/?page=rss&c=1_0');
-        assert.equal(init.redirect, 'error');
+        assert.equal(init.redirect, 'manual');
         assert.equal(init.cache, undefined);
+        assert.equal(Object.hasOwn(init, 'cache'), false);
         assert.equal((init.headers as Record<string, string>)['Cache-Control'], 'no-store');
         assert.ok(init.signal instanceof AbortSignal);
         return calls === 1 ? wait.promise : response();
@@ -227,6 +231,7 @@ test('HTML, redirects, HTTP failures, invalid UTF-8 and oversized streamed RSS a
     }), {headers: {'content-type': 'application/rss+xml'}});
     for (const upstream of [
         new Response('<html/>', {headers: {'content-type': 'text/html'}}), redirected,
+        new Response(null, {status: 302, headers: {Location: 'https://unexpected.invalid/feed'}}),
         new Response('temporarily unavailable', {status: 503}),
         new Response(new Uint8Array([0xff]), {headers: {'content-type': 'application/rss+xml'}}),
         new Response('x', {headers: {'content-length': String(NYAA_MAX_BYTES + 1)}}), oversized,
@@ -235,6 +240,101 @@ test('HTML, redirects, HTTP failures, invalid UTF-8 and oversized streamed RSS a
         await assert.rejects(transport.load({}));
     }
     assert.equal(cancelled, true);
+});
+
+test('public Anime diagnostics expose only known transport classifications and validated upstream status', async () => {
+    const secret = 'PRIVATE_UPSTREAM_DETAIL https://upstream.invalid/?token=private-token';
+    const cases: {code: string; status: string | null; fetch: () => Promise<Response>}[] = [
+        {code: 'http_error', status: '503', fetch: async () => new Response(secret, {status: 503})},
+        {code: 'response_type', status: '200', fetch: async () => new Response(secret, {headers: {'content-type': 'text/html'}})},
+        {code: 'invalid_feed', status: null, fetch: async () => response(`<rss>${secret}</rss>`)},
+        {code: 'fetch_failed', status: null, fetch: async () => { throw new Error(secret); }},
+        {code: 'read_failed', status: null, fetch: async () => new Response(new ReadableStream({
+            start(controller) { controller.error(new Error(secret)); },
+        }), {headers: {'content-type': 'application/rss+xml'}})},
+    ];
+    for (const entry of cases) {
+        const handler = createCatalogHandler((signal: AbortSignal) =>
+            createCatalogRepositories({}, {signal, fetch: entry.fetch}));
+        const result = await handler(request(), 'anime');
+        assert.equal(result.status, 502);
+        assert.equal(result.headers.get('X-Catalog-Error-Code'), `anime_${entry.code}`);
+        assert.equal(result.headers.get('X-Catalog-Upstream-Status'), entry.status);
+        assert.equal(result.headers.get('Cache-Control'), 'no-store');
+        const body = await result.json();
+        assert.deepEqual(body, {error: 'Catalog is temporarily unavailable'});
+        assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]),
+            /PRIVATE_UPSTREAM_DETAIL|upstream\.invalid|private-token/);
+    }
+});
+
+test('non-typed or spoofed errors cannot inject Anime diagnostic headers or public details', async () => {
+    for (const failure of [
+        new Error('PRIVATE_ERROR_MESSAGE'),
+        Object.assign(new Error('PRIVATE_ERROR_MESSAGE'), {
+            name: 'NyaaFeedError', code: 'PRIVATE_ERROR_CODE', upstreamStatus: 'PRIVATE_STATUS',
+        }),
+        {name: 'NyaaFeedError', code: 'PRIVATE_ERROR_CODE', message: 'PRIVATE_ERROR_MESSAGE', upstreamStatus: 503},
+        'PRIVATE_ERROR_MESSAGE',
+    ]) {
+        const handler = createCatalogHandler({movies: {}, shows: {}, anime: {
+            async listAnime() { throw failure; },
+        }});
+        const result = await handler(request(), 'anime');
+        assert.equal(result.status, 502);
+        assert.equal(result.headers.has('X-Catalog-Error-Code'), false);
+        assert.equal(result.headers.has('X-Catalog-Upstream-Status'), false);
+        const body = await result.json();
+        assert.deepEqual(body, {error: 'Catalog is temporarily unavailable'});
+        assert.doesNotMatch(JSON.stringify([Object.fromEntries(result.headers), body]), /PRIVATE_/);
+    }
+});
+
+test('fetch runtime classification exposes only fixed codes without source error messages', async () => {
+    const privateUrl = 'https://private-upstream.invalid/?token=PRIVATE_TOKEN';
+    for (const [message, code] of [
+        ['Redirect encountered with redirect mode error', 'fetch_redirect'],
+        ['Unsupported cache option', 'fetch_cache'],
+        ['I/O cannot be performed on behalf of a different request', 'fetch_context'],
+        ['DNS resolution failed', 'fetch_dns'],
+        ['TLS connection failed with an invalid certificate', 'fetch_network'],
+        ['Illegal invocation', 'fetch_runtime'],
+        ['Unknown upstream failure', 'fetch_failed'],
+    ]) {
+        const handler = createCatalogHandler((signal: AbortSignal) => createCatalogRepositories({}, {
+            signal,
+            fetch: async () => { throw new TypeError(`${message}: ${privateUrl}`); },
+        }));
+        const result = await handler(request(), 'anime');
+        assert.equal(result.status, 502);
+        assert.equal(result.headers.get('X-Catalog-Error-Code'), `anime_${code}`);
+        assert.equal(result.headers.has('X-Catalog-Upstream-Status'), false);
+        const body = await result.json();
+        assert.deepEqual(body, {error: 'Catalog is temporarily unavailable'});
+        const publicResponse = JSON.stringify([Object.fromEntries(result.headers), body]);
+        assert.equal(publicResponse.includes(message), false);
+        assert.doesNotMatch(publicResponse, /private-upstream|PRIVATE_TOKEN/);
+    }
+    for (const error of ['redirect cache DNS PRIVATE_TOKEN', {message: 'network PRIVATE_TOKEN'}]) {
+        const transport = createNyaaTransport({spacingMs: 0, fetch: async () => { throw error; }});
+        await assert.rejects(transport.load({}), failure => {
+            assert.equal(failure instanceof NyaaFeedError, true);
+            assert.equal(failure.code, 'fetch_failed');
+            assert.doesNotMatch(failure.message, /PRIVATE_TOKEN|redirect|network/);
+            return true;
+        });
+    }
+});
+
+test('typed Nyaa failures do not add Anime diagnostics to other catalog operations', async () => {
+    const handler = createCatalogHandler({movies: {
+        async getMovieDetails() { throw new NyaaFeedError('http_error', 503); },
+    }, shows: {}});
+    const result = await handler(new Request('https://yify.expo.app/api/catalog/movie?id=42'), 'movie');
+    assert.equal(result.status, 502);
+    assert.equal(result.headers.has('X-Catalog-Error-Code'), false);
+    assert.equal(result.headers.has('X-Catalog-Upstream-Status'), false);
+    assert.deepEqual(await result.json(), {error: 'Catalog is temporarily unavailable'});
 });
 
 test('request validation rejects paging, arbitrary upstream URLs and unbounded search before repository access', async () => {
