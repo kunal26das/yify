@@ -19,6 +19,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CastMember, Movie, MovieDetails, Torrent} from '@/domain';
 import {Genre, movieHistoryEntry, projectJournalMovie} from '@/domain';
 import {JournalEditor} from '../journal/JournalEditor';
+import {JournalSavedNotice} from '../journal/JournalSavedNotice';
 import {useAuth} from '../hooks/use-auth';
 import {Analytics} from '@/presentation/analytics/events';
 import {canonicalUrl} from '../constants/site';
@@ -116,6 +117,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const {historyPaused} = usePreferences();
     const session = useAuth();
     const [loggingMovieId, setLoggingMovieId] = useState<number | null>(null);
+    const [journalSaved, setJournalSaved] = useState<{uid: string; movieId: number} | null>(null);
 
     const [titleExpanded, setTitleExpanded] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -364,7 +366,10 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
                 onToggle={() => setTitleExpanded((value) => !value)}
             />
             <WatchActions details={details} onShare={handleShare} onDownload={handleDownload}
-                onLogWatch={() => setLoggingMovieId(details.id)} pad={pad}/>
+                onLogWatch={() => {setJournalSaved(null); setLoggingMovieId(details.id);}} pad={pad}/>
+            {journalSaved?.uid === session.account?.uid && journalSaved?.movieId === details.id ? <View style={{paddingHorizontal: pad, paddingBottom: Spacing.md}}>
+                <JournalSavedNotice actionLabel="Open journal" onPress={() => goTo('/journal')}/>
+            </View> : null}
             <DescriptionCard details={details} onGenrePress={handleGenre}/>
             <WatchProviders details={details} pad={pad}/>
         </>
@@ -423,7 +428,8 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
     const overlays = (
         <>
             <JournalEditor key={session.account?.uid ?? 'anonymous'} visible={loggingMovieId === details.id}
-                movie={projectJournalMovie(details)} onClose={() => setLoggingMovieId(null)}/>
+                movie={projectJournalMovie(details)} onClose={() => setLoggingMovieId(null)}
+                onSaved={() => {if (session.account) setJournalSaved({uid: session.account.uid, movieId: details.id});}}/>
             {reserved}
             {dragStrip}
             {lightboxIndex != null ? (

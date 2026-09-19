@@ -22,6 +22,10 @@ The checkout and prompt event names are retained from the existing implementatio
 
 All funnel events carry `app_platform`. `viewing_country` is included when a valid two-letter country is supplied; it describes viewing preferences, not billing country. The allowlisted payload excludes names, emails, account IDs, title IDs/names, package IDs, provider credentials, amounts and arbitrary error text. Existing unrelated analytics are unchanged.
 
+Journal activity uses the separate `journal_action` event with `app_platform` and one bounded `action`: `opened`, `picker_opened`, `entry_created`, `entry_updated`, `entry_deleted`, `insights_opened`, or `upgrade_opened`. Historical clients used `entry_saved` for both creation and editing; keep it separate rather than relabeling it as a new entry. `entry_created` means a successful create, including repeat viewings; it does not identify a person's first-ever journal entry. Journal events carry no `funnel_version` or viewing country, so filtering them by funnel version would remove them.
+
+The journal's explicit **Explore supporter access** action opens the existing paywall with `placement: journal_insights`. Its prompt uses `source: journal`; subsequent offer/checkout events retain their existing names and this placement. Merely opening insights, seeing a save confirmation, or being unable to load a plan is not a checkout or purchase.
+
 ## Reading results
 
 - Activation: unique analytics users reaching three saved titles, selecting services, and opening viewing options. Compare against new app users in a defined acquisition cohort; these actions are not necessarily sequential.
@@ -44,17 +48,28 @@ Register the listed bounded parameters as event-scoped dimensions where needed, 
 The local report reads only GA4 property `292918173`. Supply a short-lived OAuth access token in `GA4_ACCESS_TOKEN` using an existing secret manager or hidden prompt; it needs `analytics.readonly` scope and access to this property. Do not put the token on the command line, in a file committed to Git, or in shared output.
 
 ```sh
-node scripts/subscription-funnel-report.mjs --from 2026-09-19 --to 2026-09-30
+node scripts/subscription-funnel-report.mjs --from 2026-09-20 --to 2026-10-03
 ```
 
 Output is JSON with date, platform, country, event count and distinct event users per row. Available placement, checkout outcome and saved-title milestone dimensions are included. User counts are not additive across dates, events or segments; the report calculates no conversion rates and no subscriber totals. Default dates cover the preceding 28 completed UTC calendar dates; GA4 evaluates the explicit dates in the property's reported timezone. Use explicit dates when comparing cohorts or release periods.
 
 Metadata discovery checks which custom dimensions are registered. Without `viewing_country`, the report explicitly labels its fallback as GA4 activity country, never billing or viewing country. Without `funnel_version`, it warns that older prompt/checkout events may be mixed in. Thresholding, sampling and high-cardinality data loss are surfaced; unobserved events are not asserted to be zero. Large/incomplete reports fail instead of silently truncating.
 
+The default remains the existing funnel report. Use `--report journal` for a separate `journal_action` query, or `--report all` for both reports under separate `reports.funnel` and `reports.journal` keys. Each query is limited to 100,000 rows in pages of at most 10,000. Journal queries never use the funnel-version filter. Journal country is always GA4 activity country because the event does not send viewing country.
+
+```sh
+node scripts/subscription-funnel-report.mjs --report all --from 2026-09-20 --to 2026-10-03
+```
+
+Those are the planned two-week experiment dates; run the full window only after it closes. During the experiment, end at the most recent completed property-calendar date. If the release or action dimension is not ready on September 20, move and record the observation window before comparing cohorts.
+
+When `customEvent:action` is registered, journal rows include only allowlisted actions. Unknown or missing values become `action: unknown`. Without the dimension, the report explicitly returns `actionBreakdown: unknown` and `unobservedActions: null`; aggregate journal event/user counts remain available but cannot establish which actions happened. No missing action is replaced with a fabricated zero. `entry_saved` remains a historical bucket. Neither daily rows nor their sum establish first-entry users, later-day return, ordered conversion, payments or renewals.
+
 This credential-free command verifies the report using fabricated data, labeled `offline_fixture`:
 
 ```sh
 node scripts/subscription-funnel-report.mjs --fixture tests/fixtures/subscription-funnel-report.json --from 2026-09-01 --to 2026-09-30
+node scripts/subscription-funnel-report.mjs --report all --fixture tests/fixtures/journal-funnel-report.json --from 2026-09-01 --to 2026-09-30
 ```
 
 ## GA4 setup for review
@@ -72,14 +87,19 @@ In property **292918173 → Admin → Data display → Custom definitions**, ins
 | Checkout outcome reason | `reason` |
 | Saved-title milestone | `saved_milestone` |
 | Selected service count | `service_count` |
+| Journal action | `action` |
 
 Use DebugView with a debug device to confirm values; do not generate production purchases for validation. Allow custom definitions to become available before treating missing rows as a tracking defect. Definitions do not reconstruct previously unavailable custom-dimension history.
 
-Create two explorations:
+Create separate explorations:
 
 1. **Funnel activity:** Free form; rows Event name and Date; columns Platform; values Event count and Total users. Filter event names to the table above and Funnel version to `1`. Add Viewing country and Paywall placement as filters. Keep event count and users separate; do not total users across rows.
 2. **Checkout journey:** Closed funnel; step 1 `supporter_offers_visible`, step 2 `remove_ads_purchase_start`, step 3 `remove_ads_purchase_done` with Checkout access granted matching the verified true value. Require indirect succession within seven days, filter Funnel version to `1`, and break down by Platform or Paywall placement. This measures ordered analytics users receiving access, not paid subscriptions. It is not an acquisition-cohort purchase-conversion report.
+3. **Journal activity:** Free form; filter Event name to `journal_action`, rows Date and Journal action, columns Platform, values Event count and Total users. Do not apply Funnel version or Viewing country filters. This is a usage report, not a first-entry or returning-user cohort.
+4. **Journal-to-offer journey:** Use user-level ordered steps: `journal_action`/`entry_created`, `journal_action`/`insights_opened`, then `supporter_offers_visible`, `remove_ads_purchase_start`, and `remove_ads_purchase_done` with granted access. Limit the checkout steps to `placement: journal_insights` and `funnel_version: 1`; never apply that version filter to the journal steps. Use a defined seven-day completion window and distinguish existing supporters from the non-supporter cohort. This records an observed analytics journey, not a causal effect or a paid transaction.
 
 For activation, use a separate user segment with `watchlist_activation` and Saved-title milestone `3`; compare date-bounded acquisition cohorts rather than dividing independent event totals. Use RevenueCat production cohorts separately for first payment, renewal and subscriber retention. Do not mark custom checkout outcomes as additional revenue events.
+
+For the journal experiment, define first-entry activation as the first observed `entry_created` for a user with no earlier observed create in the available history. Disclose history coverage: older `entry_saved` cannot establish whether a create happened, and a missing earlier event is not proof of no prior journal use. Establish later-day use with a user-level cohort analysis requiring a subsequent journal action on a later property-calendar date. The aggregate report cannot make that determination. Do not join users by exporting account IDs, notes or viewing history into these analytics events.
 
 References: [GA4 dimensions, metrics and custom parameters](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema), [read-only reporting API](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runReport), [property metadata](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/getMetadata).

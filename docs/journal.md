@@ -1,6 +1,8 @@
 # Movie journal and supporter insights
 
-Open a movie and choose **Log a watch**, or open **Movie journal** from Watchlist. A Google sign-in is required. Existing watched checkmarks are not converted into viewing dates.
+Open a movie and choose **Log a watch**, or open **Movie journal** from Watchlist. In the journal, **Log a movie** opens **Choose a movie**, with **Saved movies** and explicit title search. A Google sign-in is required. Existing watched checkmarks are not converted into viewing dates.
+
+After saving, **Saved to your journal.** confirms completion and offers **View insights**; movie details also offer **Open journal**. Opening an insight does not open checkout automatically. Only an explicit **Explore supporter access** action opens the existing paywall, attributed to `journal_insights`.
 
 ## Free and paid access
 
@@ -24,8 +26,12 @@ Journal analytics contain only an allowlisted action and platform. Notes, person
 
 The launch hypothesis is that a useful free journal creates repeat visits and that personal insights give engaged viewers a reason to support Yify. It is not a revenue forecast.
 
-Track unique users for `journal_action` with actions `opened`, `entry_saved`, `entry_deleted`, `insights_opened`, and `upgrade_opened`. Compare these with the existing offer/checkout funnel and RevenueCat purchases and first renewals. Do not count journal opens, checkout starts or restored access as new subscriptions.
+Track `journal_action` with actions `opened`, `picker_opened`, `entry_created`, `entry_updated`, `entry_deleted`, `insights_opened`, and `upgrade_opened`. New saves distinguish successful creates from edits. Historical `entry_saved` combines both and remains a separate bucket. A create can be a repeat viewing; it is not a first-ever-user flag. No movie search text, chosen title, note, rating or watch date is added to journal analytics.
 
-Review after two weeks of exposure: are people saving entries on different days, opening insights, and reaching checkout? If use is low, improve discovery and the logging flow before adding more premium features or spending on acquisition. Confirm renewal behavior over a complete monthly billing cycle. There is no new live baseline or observed conversion uplift at implementation time.
+Use the separate journal report described in [Subscription funnel](subscription-funnel.md). Journal events do not carry `funnel_version`; the report queries them separately and uses the registered `action` dimension. Without it, actions are explicitly unknown. Event counts and per-row unique users are different measures; never sum the latter across days or divide independent rows into a conversion rate.
+
+The planned observation window is **September 20–October 3, 2026**, starting only after release and measurement validation; record changed dates if either is delayed. Establish first observed creation and later-day return using dated user-level cohorts with history coverage disclosed. Compare ordered insights-to-offer/checkout activity using the `journal_insights` placement, and review actual production payments and renewals separately in RevenueCat. Journal opens, checkout starts and restored access are not new subscriptions.
+
+If use is low, improve discovery and the logging flow before adding more premium features or spending on acquisition. Confirm renewal behavior over a complete monthly billing cycle. The next milestone is 100 renewing monthly subscribers, with the existing ₹25,000 monthly growth-budget ceiling; this change starts no campaign. There is no verified live baseline or observed conversion uplift at implementation time.
 
 Tests cover free/paid/expired access, loading and sign-in states, date/rating validation, insights calculations, offline restart, account isolation, concurrent writes, storage failures, deletion and rules authorization. Visual QA uses fictional local fixtures without real account writes.

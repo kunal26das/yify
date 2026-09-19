@@ -21,7 +21,16 @@ export type SubscriptionFunnelEvent =
     | {step: 'availability_alert_changed'; enabled: boolean};
 
 function placement(value: unknown): PurchasePlacement | 'unknown' {
-    return value === 'settings_supporter' || value === 'post_ad_supporter' ? value : 'unknown';
+    return value === 'settings_supporter' || value === 'post_ad_supporter' || value === 'journal_insights' ? value : 'unknown';
+}
+
+function promptSource(value: unknown): string {
+    switch (value) {
+        case 'settings_supporter': return 'settings';
+        case 'post_ad_supporter': return 'post_ad';
+        case 'journal_insights': return 'journal';
+        default: return 'unknown';
+    }
 }
 
 function planKind(offer?: CheckoutOffer): string {
@@ -47,7 +56,7 @@ export function trackSubscriptionFunnel(
         case 'paywall_view':
             name = 'supporter_prompt';
             params.placement = placement(event.placement);
-            params.source = event.placement === 'settings_supporter' ? 'settings' : 'post_ad';
+            params.source = promptSource(event.placement);
             params.signed_in = event.signedIn === true;
             params.supporter_access = event.supporter === true;
             break;

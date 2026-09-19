@@ -3,23 +3,27 @@ import {Image} from 'expo-image';
 import {useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, FlatList, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {journalInsights, journalToday, type JournalEntry} from '@/domain';
+import {journalInsights, journalToday, projectJournalMovie, type JournalEntry, type JournalMovie} from '@/domain';
 import {Analytics} from '../analytics/events';
 import {useConfirm} from '../components/confirm-dialog';
 import {PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {Radius, Spacing} from '../constants/theme';
-import {useAuthRepository, useJournalRepository} from '../di/DependenciesContext';
+import {useAuthRepository, useJournalRepository, useMovieRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
 import {useJournal} from '../hooks/use-journal';
 import {usePalette} from '../hooks/use-palette';
 import {usePurchases} from '../hooks/use-purchases';
 import {useResponsive} from '../hooks/use-responsive';
 import {useTopBarHeight} from '../movies/components/TopBar';
+import {WatchlistSheet} from '../movies/components/WatchlistSheet';
 import {useGoTo} from '../movies/constants/destinations';
+import {useWatchlist} from '../movies/useWatchlist';
 import {useSupporterPaywall} from '../purchases/supporter-paywall';
-import {JournalEditor} from './JournalEditor';
+import {JournalEditorContent} from './JournalEditor';
+import {JournalMoviePicker} from './JournalMoviePicker';
+import {JournalSavedNotice} from './JournalSavedNotice';
 import {JOURNAL_DELETED_MESSAGE, journalErrorMessage} from './journal-copy';
 
 function Action({label, onPress, primary = false, disabled = false}: {
@@ -72,12 +76,17 @@ function JournalContent() {
     const auth = useAuthRepository();
     const journal = useJournal();
     const repository = useJournalRepository();
+    const movies = useMovieRepository();
+    const savedMovies = useWatchlist();
     const purchases = usePurchases();
     const showPaywall = useSupporterPaywall();
     const confirm = useConfirm();
     const goTo = useGoTo();
     const [tab, setTab] = useState<'journal' | 'insights'>('journal');
     const [editing, setEditing] = useState<JournalEntry | null>(null);
+    const [newMovie, setNewMovie] = useState<JournalMovie | null>(null);
+    const [choosingMovie, setChoosingMovie] = useState(false);
+    const [saved, setSaved] = useState<'created' | 'updated' | null>(null);
     const [error, setError] = useState('');
     const [currentMonth] = useState(() => journalToday().slice(0, 7));
     const [month, setMonth] = useState<string | undefined>(currentMonth);
@@ -97,6 +106,12 @@ function JournalContent() {
         if (value === 'insights' && tab !== value) Analytics.journal('insights_opened');
         setTab(value);
     };
+    const chooseMovie = () => {
+        setSaved(null);
+        setError('');
+        setChoosingMovie(true);
+        Analytics.journal('picker_opened');
+    };
     const changeMonth = (amount: number) => {
         if (!month) return;
         const [year, value] = month.split('-').map(Number);
@@ -104,14 +119,21 @@ function JournalContent() {
         const next = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         if (next >= '1900-01' && next <= currentMonth) setMonth(next);
     };
+    const closeEditor = () => {setChoosingMovie(false); setEditing(null); setNewMovie(null);};
+    const selectedMovie = editing?.movie ?? newMovie;
     const header = <View style={styles.header}>
         <View style={styles.heading}>
             <View style={styles.headingText}>
                 <ThemedText type="heading">Journal</ThemedText>
                 <ThemedText type="caption" style={{color: colors.textMuted}}>Your private movie diary.</ThemedText>
             </View>
-            <Action label="Open watchlist" onPress={() => goTo('/watchlist')}/>
+            <View style={styles.headingActions}>
+                <Action label="Open watchlist" onPress={() => goTo('/watchlist')}/>
+                <Action label="Log a movie" onPress={chooseMovie} primary disabled={!journal.ready}/>
+            </View>
         </View>
+        {saved && tab === 'journal' ? <JournalSavedNotice updated={saved === 'updated'} actionLabel="View insights"
+            onPress={() => switchTab('insights')}/> : null}
         <View style={styles.tabs}>
             {(['journal', 'insights'] as const).map(value => <PressableScale key={value} onPress={() => switchTab(value)}
                 accessibilityRole="tab" accessibilityLabel={value === 'journal' ? 'Entries' : 'Insights'}
@@ -199,15 +221,28 @@ function JournalContent() {
             <Ionicons name="stats-chart-outline" size={28} color={colors.accent}/>
             <ThemedText type="heading">See your viewing patterns</ThemedText>
             <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Supporters get monthly recaps, favorite genres and personal rating insights. Your journal entries and editing stay free.</ThemedText>
-            <Action label="Explore supporter access" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('settings_supporter');}}/>
+            <Action label="Explore supporter access" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
         </View> : null}
     </View>;
-    return <Screen overlays={<JournalEditor visible={!!editing} movie={editing?.movie ?? null} entry={editing} onClose={() => setEditing(null)}/> }>
+    return <Screen overlays={<WatchlistSheet visible={choosingMovie || !!selectedMovie}
+        contentKey={choosingMovie ? 'picker' : editing ? `entry:${editing.id}` : newMovie ? `new:${newMovie.id}` : 'closed'}
+        title={choosingMovie ? 'Choose a movie' : editing ? 'Edit journal entry' : 'Log a movie'} onClose={closeEditor}>
+        <JournalMoviePicker visible={choosingMovie} repository={movies} savedMovies={savedMovies}
+            onSelect={movie => {
+                if (auth.getSession().account?.uid !== session.account?.uid) return;
+                setChoosingMovie(false);
+                setEditing(null);
+                setNewMovie(projectJournalMovie(movie));
+            }}/>
+        {selectedMovie ? <JournalEditorContent movie={selectedMovie} entry={editing} onClose={closeEditor}
+            onSaved={kind => {setSaved(kind); setTab('journal');}}/> : null}
+    </WatchlistSheet>}>
         <FlatList data={tab === 'journal' && journal.ready ? journal.entries : []} keyExtractor={entry => entry.id}
             ListHeaderComponent={header} ListEmptyComponent={tab === 'journal' && journal.ready ? <View style={styles.empty}>
                 <Ionicons name="book-outline" size={36} color={colors.accent}/>
                 <ThemedText type="heading">Remember your next movie</ThemedText>
-                <ThemedText style={{color: colors.textMuted}}>Open a movie and choose Log a watch. Add the date, your rating or a note.</ThemedText>
+                <ThemedText style={{color: colors.textMuted}}>Choose a movie you watched. Add the date, your rating or a private note.</ThemedText>
+                <View style={styles.start}><Action label="Log your first movie" primary onPress={chooseMovie}/></View>
             </View> : null}
             renderItem={({item}) => <View style={[styles.entry, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.entryTop}>
@@ -222,7 +257,7 @@ function JournalContent() {
                 </View>
                 {item.note ? <ThemedText style={styles.readable}>{item.note}</ThemedText> : null}
                 <View style={styles.entryActions}>
-                    <Action label="Edit entry" onPress={() => {setError(''); setEditing(item);}}/>
+                    <Action label="Edit entry" onPress={() => {setError(''); setSaved(null); setNewMovie(null); setEditing(item);}}/>
                     <PressableScale onPress={() => remove(item)} accessibilityRole="button" accessibilityLabel={`Delete journal entry for ${item.movie.title}`}
                         contentStyle={styles.delete}>
                         <Ionicons name="trash-outline" size={19} color={colors.textMuted}/>
@@ -248,6 +283,8 @@ const styles = StyleSheet.create({
     header: {gap: Spacing.lg, paddingBottom: Spacing.lg},
     heading: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.md},
     headingText: {flex: 1, minWidth: 120},
+    headingActions: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    start: {alignItems: 'flex-start'},
     action: {minHeight: 44, paddingHorizontal: Spacing.lg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderRadius: Radius.pill},
     tabs: {flexDirection: 'row', gap: Spacing.sm},
     tab: {minHeight: 44, paddingHorizontal: Spacing.xl, justifyContent: 'center', borderRadius: Radius.pill, borderWidth: 1},

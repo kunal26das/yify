@@ -303,6 +303,46 @@ test('placement targeting exclusion remains empty and removes purchaseable offer
     assert.equal(f.calls.some(call => call.method === 'purchase'), false);
 });
 
+test('Journal uses the configured web supporter offering and keeps distinct checkout and impression attribution', async () => {
+    const monthly = pkg('$rc_monthly', 'Monthly supporter');
+    monthly.webBillingProduct.productType = 'Subscription';
+    monthly.webBillingProduct.normalPeriodDuration = 'P1M';
+    const settings = offering('configured-supporter', [monthly]);
+    const f = fixture({overrides: {offers: placement => placement === 'settings_supporter' ? settings : null}});
+    await f.repository.identify(account('A'));
+    const settingsOffers = f.repository.getState().offers;
+    const [journal] = await f.repository.getOffers('journal_insights');
+    assert.equal(journal.placement, 'journal_insights');
+    assert.equal(journal.offeringId, settings.identifier);
+    assert.equal(journal.billingPeriod, 'P1M');
+    assert.equal(journal.priceLabel, settingsOffers[0].priceLabel);
+    assert.notEqual(journal.id, settingsOffers[0].id);
+    assert.deepEqual(f.repository.getState().offers, settingsOffers);
+    assert.deepEqual(f.calls.filter(call => call.method === 'offers').map(call => call.placement),
+        ['settings_supporter', 'settings_supporter']);
+    f.repository.trackPaywallImpression(journal.id);
+    assert.equal(await f.repository.purchase(journal.id), true);
+    assert.deepEqual(f.calls.find(call => call.method === 'impression').params, {offering: settings, paywallId: 'journal_insights'});
+    assert.equal(f.calls.find(call => call.method === 'purchase').params.rcPackage, monthly);
+    const events = f.events.filter(event => event.name.startsWith('remove_ads_purchase'));
+    assert.deepEqual(events.map(event => event.name), ['remove_ads_purchase_start', 'remove_ads_purchase_done']);
+    assert.equal(events.every(event => event.params.placement === 'journal_insights' && event.params.plan_kind === 'monthly'), true);
+    assert.doesNotMatch(JSON.stringify(events), /price|currency|revenue|transaction|account/);
+});
+
+test('Journal web offers respect existing targeting exclusion and invalidate previously loaded Journal packages', async () => {
+    let excluded = false;
+    const f = fixture({overrides: {offers: placement => placement === 'settings_supporter' && !excluded ? offering() : null}});
+    await f.repository.identify(account('A'));
+    const [journal] = await f.repository.getOffers('journal_insights');
+    excluded = true;
+    assert.deepEqual(await f.repository.getOffers('journal_insights'), []);
+    f.repository.trackPaywallImpression(journal.id);
+    assert.equal(await f.repository.purchase(journal.id), false);
+    assert.equal(f.calls.some(call => call.method === 'purchase' || call.method === 'impression'), false);
+    assert.equal(f.calls.filter(call => call.method === 'offers').every(call => call.placement === 'settings_supporter'), true);
+});
+
 test('a checkout queued behind placement exclusion cannot use the removed package', async () => {
     const pendingOffers = deferred();
     let refreshOffers = false;
