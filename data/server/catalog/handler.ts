@@ -128,6 +128,10 @@ export function createCatalogHandler(
             if (parsed.operation === 'anime' && error instanceof NyaaFeedError) {
                 headers.set('X-Catalog-Error-Code', `anime_${error.code}`);
                 if (error.upstreamStatus) headers.set('X-Catalog-Upstream-Status', String(error.upstreamStatus));
+                if (error.code === 'rate_limited' && !timeout) {
+                    headers.set('Retry-After', String(error.retryAfterSeconds ?? 60));
+                    return respond({error: 'Anime uploads are temporarily unavailable. Please try again later.'}, 429);
+                }
             }
             if (privateResponse && error instanceof SubscriberAccessError && !timeout) {
                 return respond({error: error.status === 401 ? 'Sign in to access subscriber catalog data'
