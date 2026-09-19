@@ -43,6 +43,8 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "expo-localization"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "expo-location"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "expo-navigation-bar"
         update-types: ["version-update:semver-major"]
       - dependency-name: "expo-network"
