@@ -135,7 +135,8 @@ test('RSS transport coalesces only pending work and never stores completed feed 
         calls++;
         assert.equal(url, 'https://nyaa.si/?page=rss&c=1_0');
         assert.equal(init.redirect, 'error');
-        assert.equal(init.cache, 'no-store');
+        assert.equal(init.cache, undefined);
+        assert.equal((init.headers as Record<string, string>)['Cache-Control'], 'no-store');
         assert.ok(init.signal instanceof AbortSignal);
         return calls === 1 ? wait.promise : response();
     }});

@@ -10,6 +10,7 @@ import {
     projectAnimeList, projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
 } from './projections';
 import type {CatalogProjectionOptions} from './projections';
+import {NyaaFeedError} from './nyaa';
 
 export interface CatalogRepositories {
     movies: MovieRepository;
@@ -124,6 +125,10 @@ export function createCatalogHandler(
             return respond(result, 200);
         } catch (error) {
             const timeout = controller.signal.aborted || error instanceof CatalogTimeout || (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name));
+            if (parsed.operation === 'anime' && error instanceof NyaaFeedError) {
+                headers.set('X-Catalog-Error-Code', `anime_${error.code}`);
+                if (error.upstreamStatus) headers.set('X-Catalog-Upstream-Status', String(error.upstreamStatus));
+            }
             if (privateResponse && error instanceof SubscriberAccessError && !timeout) {
                 return respond({error: error.status === 401 ? 'Sign in to access subscriber catalog data'
                     : error.status === 403 ? 'An active subscription is required' : 'Subscriber verification is temporarily unavailable'}, error.status);
