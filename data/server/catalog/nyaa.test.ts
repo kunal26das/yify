@@ -81,6 +81,25 @@ test('malformed, dangerous, oversized or structurally ambiguous XML is rejected'
     for (const xml of bad) assert.throws(() => parseNyaaFeed(xml), /temporarily unavailable/);
 });
 
+test('XML warnings, recoverable errors and fatal errors all reject the feed without exposing parser details', () => {
+    const valid = feed(item(42, '1_2', 'PRIVATE_SOURCE_TITLE'));
+    for (const xml of [
+        valid.replace('version="2.0"', 'version=2.0'),
+        valid.replace('PRIVATE_SOURCE_TITLE', '&PRIVATE_SOURCE_ENTITY;'),
+        valid.replace('</item>', '</item PRIVATE_SOURCE_END_TAG>'),
+        valid.replace('version="2.0"', 'version="2.0" version="2.0"'),
+        valid.replace('<channel>', '<unbound:channel>').replace('</channel>', '</unbound:channel>'),
+    ]) {
+        assert.throws(() => parseNyaaFeed(xml), error => {
+            assert.ok(error instanceof NyaaFeedError);
+            assert.equal(error.code, 'invalid_feed');
+            assert.equal(error.message, 'Anime releases are temporarily unavailable.');
+            assert.doesNotMatch(error.stack ?? '', /PRIVATE_SOURCE|https:\/\/nyaa\.si/);
+            return true;
+        });
+    }
+});
+
 test('invalid IDs, dates, counters and download destinations cannot become a parsed record', () => {
     for (const [before, after] of [
         ['/view/42', '/view/0'], ['/view/42', '/view/9007199254740992'], ['/download/42.torrent', '/download/43.torrent'],
