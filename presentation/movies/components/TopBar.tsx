@@ -16,6 +16,7 @@ import {SearchOverlay} from './SearchOverlay';
 import {useTopBarSlot} from './TopBarSlot';
 import {useSearchHistory} from '../../di/DependenciesContext';
 import {useAuth} from '../../hooks/use-auth';
+import {useSubscriberAccess} from '../../hooks/use-subscriber-access';
 
 export const TOP_BAR_ROW_HEIGHT = 64;
 
@@ -37,10 +38,12 @@ const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter(
 );
 
 function usesStackedNavigation(width: number): boolean {
-    return width > 0 && width < 380;
+    return width > 0 && width < 520;
 }
 
 export function TopBar() {
+    const {status: subscriberAccess} = useSubscriberAccess();
+    const links = NAV_LINKS.filter(link => link.key !== 'anime' || subscriberAccess === 'allowed');
     const {below, searchValue, onSearchSubmit, showSearch = true} = useTopBarSlot();
     const active = navKeyForPath(usePathname());
     const insets = useSafeAreaInsets();
@@ -258,7 +261,7 @@ export function TopBar() {
                                 contentContainerStyle={[styles.links, styles.linksCompact]}
                                 style={styles.phoneLinks}
                             >
-                                {NAV_LINKS.map(renderLink)}
+                                {links.map(renderLink)}
                             </ScrollView>
                         )}
                         <View style={styles.actions}>
@@ -280,7 +283,7 @@ export function TopBar() {
                     </>
                 ) : (
                     <>
-                        <View style={styles.links}>{NAV_LINKS.map(renderLink)}</View>
+                        <View style={styles.links}>{links.map(renderLink)}</View>
                         <View style={styles.searchArea}>{showSearch ? searchPill : null}</View>
                         {preferencesButton}
                     </>
@@ -289,7 +292,7 @@ export function TopBar() {
 
             {stacked ? (
                 <View style={[styles.stackedLinks, {paddingHorizontal: gutter}]}>
-                    {NAV_LINKS.map(renderLink)}
+                    {links.map(renderLink)}
                 </View>
             ) : null}
 

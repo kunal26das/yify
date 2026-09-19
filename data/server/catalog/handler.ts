@@ -1,4 +1,5 @@
 import type {MovieRepository, ShowRepository} from '@/domain';
+import type {AnimeRepository} from '../../../domain/repositories/AnimeRepository';
 import {InvalidCatalogRequest, parseCatalogRequest} from './parameters';
 import type {CatalogRequest} from './parameters';
 import {assertCatalogActive} from './cancellation';
@@ -6,13 +7,15 @@ import {createCatalogAdmission} from './admission';
 import type {CatalogAdmission} from './admission';
 import {SubscriberAccessError} from '../subscribers/errors';
 import {
-    projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
+    projectAnimeList, projectEpisodes, projectMovieDetails, projectMovieList, projectParentalGuides, projectShowList, projectSuggestions,
 } from './projections';
 import type {CatalogProjectionOptions} from './projections';
+import {NyaaFeedError} from './nyaa';
 
 export interface CatalogRepositories {
     movies: MovieRepository;
     shows: ShowRepository;
+    anime?: AnimeRepository;
 }
 
 interface CatalogHandlerOptions {
@@ -23,7 +26,7 @@ interface CatalogHandlerOptions {
 
 class CatalogTimeout extends Error {}
 
-async function execute(request: CatalogRequest, repositories: CatalogRepositories, options: CatalogProjectionOptions): Promise<unknown> {
+async function execute(request: Exclude<CatalogRequest, {operation: 'access'}>, repositories: CatalogRepositories, options: CatalogProjectionOptions): Promise<unknown> {
     switch (request.operation) {
         case 'movies': return projectMovieList(await repositories.movies.listMovies(request.params));
         case 'movie': return projectMovieDetails(await repositories.movies.getMovieDetails(request.id), options);
@@ -31,6 +34,10 @@ async function execute(request: CatalogRequest, repositories: CatalogRepositorie
         case 'parental-guides': return projectParentalGuides(await repositories.movies.getMovieParentalGuides(request.id));
         case 'shows': return projectShowList(await repositories.shows.listShows(request.params), options);
         case 'episodes': return projectEpisodes(await repositories.shows.listEpisodes(request.imdbId), options);
+        case 'anime': {
+            if (!repositories.anime) throw new Error('Anime releases are unavailable');
+            return projectAnimeList(await repositories.anime.listAnime(request.params));
+        }
     }
 }
 
@@ -79,6 +86,10 @@ export function createCatalogHandler(
             return new Response(null, {status: 204, headers});
         }
 
+        if (!privateResponse && (parsed.operation === 'anime' || parsed.operation === 'access')) {
+            return respond({error: 'An active subscription is required'}, 403);
+        }
+
         const permit = admission.acquire(request, parsed);
         if (!permit.allowed) {
             headers.set('Retry-After', String(permit.retryAfter));
@@ -99,6 +110,7 @@ export function createCatalogHandler(
             assertCatalogActive(controller.signal);
             if (options.subscriber) await options.subscriber.authorize(request, controller.signal);
             assertCatalogActive(controller.signal);
+            if (parsed.operation === 'access') return {metadata: {allowed: true}, raw: {responses: []}};
             const responses: unknown[] = [];
             const onResponse = privateResponse ? (body: unknown) => { responses.push(body); } : undefined;
             const source = typeof repositories === 'function' ? repositories(controller.signal, onResponse) : repositories;
@@ -111,12 +123,21 @@ export function createCatalogHandler(
         void work.then(permit.release, permit.release);
         try {
             const result = await Promise.race([work, cancelled]);
-            if (!privateResponse && (parsed.operation !== 'movies' || !parsed.params.query)) {
+            // Nyaa marks its RSS no-store; do not introduce a CDN or browser cache for it.
+            if (!privateResponse && parsed.operation !== 'anime' && (parsed.operation !== 'movies' || !parsed.params.query)) {
                 headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
             }
             return respond(result, 200);
         } catch (error) {
             const timeout = controller.signal.aborted || error instanceof CatalogTimeout || (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name));
+            if (parsed.operation === 'anime' && error instanceof NyaaFeedError) {
+                headers.set('X-Catalog-Error-Code', `anime_${error.code}`);
+                if (error.upstreamStatus) headers.set('X-Catalog-Upstream-Status', String(error.upstreamStatus));
+                if (error.code === 'rate_limited' && !timeout) {
+                    headers.set('Retry-After', String(error.retryAfterSeconds ?? 60));
+                    return respond({error: 'Anime uploads are temporarily unavailable. Please try again later.'}, 429);
+                }
+            }
             if (privateResponse && error instanceof SubscriberAccessError && !timeout) {
                 return respond({error: error.status === 401 ? 'Sign in to access subscriber catalog data'
                     : error.status === 403 ? 'An active subscription is required' : 'Subscriber verification is temporarily unavailable'}, error.status);

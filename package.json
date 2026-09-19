@@ -56,6 +56,7 @@
     "@react-native-google-signin/google-signin": "16.1.5",
     "@revenuecat/purchases-js": "1.62.0",
     "@sentry/react-native": "8.26.0",
+    "@xmldom/xmldom": "0.8.15",
     "@yify/crashreporting": "0.1.0",
     "expo": "57.0.23",
     "expo-background-task": "57.0.18",

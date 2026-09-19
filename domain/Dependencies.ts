@@ -23,6 +23,8 @@ import type {DisplayAds} from './services/DisplayAds';
 import type {CountryLocation} from './services/CountryLocation';
 import type {AvailabilityAlerts} from './services/AvailabilityAlerts';
 import type {JournalRepository} from './repositories/JournalRepository';
+import type {AnimeRepository} from './repositories/AnimeRepository';
+import type {SubscriberAccess} from './services/SubscriberAccess';
 
 export interface Dependencies {
     diagnostics: Diagnostics;
@@ -50,4 +52,6 @@ export interface Dependencies {
     supporterNudge: SupporterNudge;
     availabilityAlerts?: AvailabilityAlerts;
     journal?: JournalRepository;
+    anime?: AnimeRepository;
+    subscriberAccess?: SubscriberAccess;
 }

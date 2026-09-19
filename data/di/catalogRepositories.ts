@@ -3,13 +3,21 @@ import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
 import {EztvApiDataSource} from '../datasources/EztvApiDataSource';
 import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
 import {ShowRepositoryImpl} from '../repositories/ShowRepositoryImpl';
+import {CANONICAL_CATALOG_BASE_URL, WebCatalogClient} from '../datasources/WebCatalogClient';
+import {WebAnimeRepositoryImpl} from '../repositories/WebAnimeRepositoryImpl';
+import {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
 
 export function createCatalogRepositories(
     appConfig: AppConfig, diagnostics: Diagnostics,
-    _auth?: AuthRepository, _purchases?: PurchaseRepository,
-): Pick<Dependencies, 'movies' | 'shows'> {
+    auth?: AuthRepository, purchases?: PurchaseRepository,
+): Pick<Dependencies, 'movies' | 'shows' | 'anime' | 'subscriberAccess'> {
+    const access = auth && purchases ? new SubscriberCatalogAccess(auth, purchases,
+        () => `${CANONICAL_CATALOG_BASE_URL.replace('/api/catalog', '/api/subscriber-catalog')}/access?v=2`) : undefined;
+    const animeClient = new WebCatalogClient(diagnostics, access, CANONICAL_CATALOG_BASE_URL);
     return {
         movies: new MovieRepositoryImpl(new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics)),
         shows: new ShowRepositoryImpl(new EztvApiDataSource(undefined, diagnostics)),
+        anime: new WebAnimeRepositoryImpl(animeClient),
+        subscriberAccess: access,
     };
 }

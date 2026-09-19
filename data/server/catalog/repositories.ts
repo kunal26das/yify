@@ -4,6 +4,7 @@ import {MovieRepositoryImpl} from '../../repositories/MovieRepositoryImpl';
 import {ShowRepositoryImpl} from '../../repositories/ShowRepositoryImpl';
 import type {CatalogRepositories} from './handler';
 import {createCatalogFetch, withCatalogSignal} from './cancellation';
+import {NyaaAnimeRepository} from './nyaa';
 
 function upstreamUrl(value: string | undefined, fallback: string): string {
     if (!value) return fallback;
@@ -32,6 +33,7 @@ export function createCatalogRepositories(
         return body;
     };
     return {
+        anime: new NyaaAnimeRepository({signal: options.signal, fetch: options.fetch, onResponse: options.onResponse}),
         movies: new MovieRepositoryImpl({
             listMovies: params => capture(() => movies.listMovies(params)),
             getMovieDetails: params => capture(() => movies.getMovieDetails(params)),

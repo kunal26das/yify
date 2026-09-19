@@ -55,7 +55,7 @@ function httpMethod(value: unknown): string | undefined {
 export function sanitizeRoute(value: unknown): string | undefined {
     if (typeof value !== 'string') return undefined;
     const route = value.split(/[?#]/, 1)[0].replace(/^\/(?:yify\/)?/, '').replace(/^\([^)]+\)\//, '');
-    if (['', 'index', 'movies', 'shows', 'history', 'preferences', 'watchlist'].includes(route)) return route === '' || route === 'index' ? '/' : `/${route}`;
+    if (['', 'index', 'movies', 'shows', 'anime', 'history', 'preferences', 'watchlist'].includes(route)) return route === '' || route === 'index' ? '/' : `/${route}`;
     if (/^movie\/[^/]+$/.test(route)) return '/movie/[id]';
     if (/^show\/[^/]+$/.test(route)) return '/show/[imdbId]';
     return undefined;

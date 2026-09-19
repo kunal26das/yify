@@ -2,7 +2,7 @@ import {useCallback} from 'react';
 import {Platform} from 'react-native';
 import {router, useNavigation, usePathname} from 'expo-router';
 
-export type DestinationKey = 'home' | 'movies' | 'shows' | 'watchlist' | 'history';
+export type DestinationKey = 'home' | 'movies' | 'shows' | 'anime' | 'watchlist' | 'history';
 
 export interface Destination {
     key: DestinationKey;
@@ -15,6 +15,7 @@ export const DESTINATIONS: readonly Destination[] = [
     {key: 'home', label: 'Home', href: '/'},
     {key: 'movies', label: 'Movies', href: '/movies'},
     {key: 'shows', label: 'Shows', href: '/shows'},
+    {key: 'anime', label: 'Anime', href: '/anime'},
     {key: 'watchlist', label: 'Watchlist', href: '/watchlist'},
     {key: 'history', label: 'History', href: '/history'},
 ];
