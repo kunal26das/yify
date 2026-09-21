@@ -4865,10 +4865,10 @@ expo-build-properties@57.0.20:
     resolve-from "^5.0.0"
     semver "^7.6.0"
 
-expo-constants@57.0.18, expo-constants@~57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.18.tgz#51b6af86caa1bcfc7dde92fbe501449172891dc5"
-  integrity sha512-cLDwDOniPfuCZPHNY++cAY2ZkK97u5aobbBvilPK2LLmaWxR4ZpD31LWUIzUDLrwMPxLjmh1uURnbeYEf0Mivw==
+expo-constants@57.0.19, expo-constants@~57.0.18:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-constants/-/expo-constants-57.0.19.tgz#9df45e23672342f44f12f290399d95097af738c6"
+  integrity sha512-3eK1kZRwCdMizQLlM/PPlPwjaPnB5qKvdRDMBMnB1ZxmvWJBf9TB4uEO4DMMfIPaFUxYFs29dsR5fPr1gh3FTQ==
   dependencies:
     "@expo/env" "~2.4.3"
 
