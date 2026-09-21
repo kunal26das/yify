@@ -107,11 +107,20 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 ## Dependabot updates
 
-Verified, single-commit Dependabot **patch** updates merge automatically after all three CI jobs pass.
+Verified, single-commit Dependabot **patch** updates merge automatically after normal CI and the clean reinstall check pass.
 Daily patch updates are grouped into one PR so related Expo packages are tested together.
 When a tested PR falls behind `main`, the job asks Dependabot to rebase and rerun CI.
 It requests each PR-head/main combination only once; minor and major updates remain separate.
-The protected `main` branch requires those checks and an up-to-date branch; conflicts,
+Every Dependabot PR also runs an isolated clean reinstall: remove `node_modules`, the
+workspace's `node_modules`, and `yarn.lock`, then run `yarn install --non-interactive`.
+The freshly resolved dependencies must pass typechecking, tests, Expo Doctor and both
+web exports before a patch can auto-merge. Both lockfiles and a diff are saved in the
+workflow's `dependabot-clean-install` artifact for 14 days, including after failures.
+Normal CI and deployments still install the committed lockfile with `--frozen-lockfile`.
+The additional check does not commit its regenerated lockfile: a full reset can change
+unrelated transitive dependencies, so adopting that result needs a reviewed change.
+To run the same check manually, run the CI workflow with `clean_install` enabled.
+The protected `main` branch requires normal CI and an up-to-date branch; conflicts,
 failed checks, and minor or major upgrades remain for manual review. The merge job
 does not check out PR code or bypass branch protection.
 PRs with additional commits also remain manual because Dependabot's metadata verifier
