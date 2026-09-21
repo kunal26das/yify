@@ -58,7 +58,7 @@
     "@sentry/react-native": "8.26.0",
     "@xmldom/xmldom": "0.9.12",
     "@yify/crashreporting": "0.1.0",
-    "expo": "57.0.23",
+    "expo": "57.0.24",
     "expo-background-task": "57.0.18",
     "expo-blur": "57.0.3",
     "expo-build-properties": "57.0.20",
