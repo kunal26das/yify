@@ -61,7 +61,7 @@
     "expo": "57.0.23",
     "expo-background-task": "57.0.18",
     "expo-blur": "57.0.3",
-    "expo-build-properties": "57.0.20",
+    "expo-build-properties": "57.0.21",
     "expo-constants": "57.0.18",
     "expo-dev-client": "57.0.19",
     "expo-device-corner-radius": "0.1.1",
