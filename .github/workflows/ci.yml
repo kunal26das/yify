@@ -147,6 +147,10 @@ jobs:
               echo "Pull request is closed; refusing to merge."
               exit 1
             fi
+            if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
+              echo "Waiting for Dependabot to refresh this branch against main and rerun CI."
+              exit 0
+            fi
             # Required checks may take a moment to be reflected in branch protection.
             # GitHub still enforces them, and the SHA guard rejects an untested push.
             if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
