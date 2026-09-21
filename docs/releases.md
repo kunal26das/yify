@@ -103,10 +103,12 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 ## Dependabot updates
 
-Verified Dependabot **patch** updates merge automatically after all three CI jobs pass.
+Verified, single-commit Dependabot **patch** updates merge automatically after all three CI jobs pass.
 The protected `main` branch requires those checks and an up-to-date branch; conflicts,
 failed checks, and minor or major upgrades remain for manual review. The merge job
 does not check out PR code or bypass branch protection.
+PRs with additional commits also remain manual because Dependabot's metadata verifier
+only validates the first commit.
 
 After confirming the merge, the job explicitly starts both production web deployments,
 because merges made with `GITHUB_TOKEN` do not trigger the normal push workflows.

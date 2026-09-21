@@ -102,6 +102,7 @@ jobs:
       github.event.pull_request.user.login == 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.commits == 1 &&
       !github.event.pull_request.draft
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -131,13 +132,15 @@ jobs:
             if ! jq -e --arg sha "$PR_HEAD_SHA" --arg repo "$GH_REPO" '
               .head.sha == $sha and .head.repo.full_name == $repo and
               .base.ref == "main" and .base.repo.full_name == $repo and
-              .user.login == "dependabot[bot]" and (.draft | not)
+              .user.login == "dependabot[bot]" and .commits == 1 and (.draft | not)
             ' <<< "$pr" >/dev/null; then
-              echo "Pull request changed since CI started; refusing to merge."
+              echo "Pull request no longer matches the tested single-commit Dependabot update."
               exit 1
             fi
             if jq -e '.merged == true' <<< "$pr" >/dev/null; then
-              echo 'merged=true' >> "$GITHUB_OUTPUT"
+              if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$pr" >/dev/null; then
+                echo 'merged=true' >> "$GITHUB_OUTPUT"
+              fi
               exit 0
             fi
             if ! jq -e '.state == "open"' <<< "$pr" >/dev/null; then
@@ -149,7 +152,9 @@ jobs:
             if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
               merged=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
               if jq -e --arg sha "$PR_HEAD_SHA" '.merged == true and .head.sha == $sha' <<< "$merged" >/dev/null; then
-                echo 'merged=true' >> "$GITHUB_OUTPUT"
+                if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$merged" >/dev/null; then
+                  echo 'merged=true' >> "$GITHUB_OUTPUT"
+                fi
                 exit 0
               fi
             fi
