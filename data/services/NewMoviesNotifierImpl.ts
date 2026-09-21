@@ -3,7 +3,7 @@ import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 import {AppState, Platform} from 'react-native';
 
-import type {AnalyticsSink, Diagnostics, NewMoviesNotifier, Preferences, Quality} from '@/domain';
+import type {AnalyticsSink, Diagnostics, NetworkMonitor, NewMoviesNotifier, Preferences, Quality} from '@/domain';
 import {isWithinQuietHours} from '@/domain';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
 import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
@@ -16,6 +16,7 @@ import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {MovieNotificationCoordinator} from './MovieNotificationCoordinator';
 
 let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
+let network: NetworkMonitor | undefined;
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 const CHANNEL = 'movie-recommendations';
 const appConfig = new RemoteAppConfig();
@@ -65,7 +66,7 @@ function owned(request: Notifications.NotificationRequest): boolean {
 
 async function fetchMovies(quality: Quality) {
     await appConfig.ready();
-    const repository = new MovieRepositoryImpl(new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics));
+    const repository = new MovieRepositoryImpl(new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics, {network}));
     return (await repository.listMovies({page: 1, limit: 50, quality})).movies;
 }
 
@@ -175,8 +176,9 @@ export async function registerNewMoviesTask(): Promise<void> {
 }
 
 export class NewMoviesNotifierImpl implements NewMoviesNotifier {
-    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS, _tracking?: AnalyticsSink) {
+    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS, _tracking?: AnalyticsSink, connectivity?: NetworkMonitor) {
         diagnostics = implementation;
+        network = connectivity;
     }
 
     hasPermission() { return hasNotificationPermission(); }

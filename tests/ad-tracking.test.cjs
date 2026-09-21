@@ -8,7 +8,7 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
-function fixture(t, {dev = false, show, diagnostics, online = true, foreground = true, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
+function fixture(t, {dev = false, show, load, diagnostics, online = true, refresh, foreground = true, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});
     const originalDev = global.__DEV__;
     global.__DEV__ = dev;
@@ -38,7 +38,7 @@ function fixture(t, {dev = false, show, diagnostics, online = true, foreground =
                     const ad = {
                         adUnitId,
                         show: show ?? (async () => {}),
-                        load: () => {},
+                        load: load ?? (() => {}),
                         addAdEventListener: (event, listener) => {
                             const set = listeners.get(event) ?? new Set();
                             listeners.set(event, set);
@@ -70,6 +70,7 @@ function fixture(t, {dev = false, show, diagnostics, online = true, foreground =
         diagnostics,
         network: {
             isOnline: () => online,
+            ...(refresh ? {refresh: async () => { online = await refresh(online); return online; }} : {}),
             subscribe: (listener) => {
                 networkListeners.add(listener);
                 return () => networkListeners.delete(listener);
@@ -404,4 +405,118 @@ test('going offline cancels an outstanding retry without foreground events bypas
     assert.equal(ads.length, 1);
     setOnline(true);
     assert.equal(ads.length, 2);
+});
+
+test('known supporters never preload or retry ads, while a later free entitlement permits loading', async (t) => {
+    let state = {ready: true, adsRemoved: true};
+    const {gateway, ads, setForeground} = fixture(t, {entitlement: () => state});
+    await gateway.init();
+    setForeground(true);
+    assert.equal(ads.length, 0);
+    state = {ready: true, adsRemoved: false};
+    setForeground(true);
+    assert.equal(ads.length, 1);
+    state = {ready: true, adsRemoved: true};
+    ads[0].emit('error', {code: 'googleMobileAds/no-fill'});
+    t.mock.timers.tick(300000);
+    assert.equal(ads.length, 1);
+});
+
+test('ads check fresh connectivity before loading and share the in-flight refresh', async (t) => {
+    let resolve;
+    const {gateway, ads, setForeground} = fixture(t, {refresh: () => new Promise(done => { resolve = done; })});
+    await gateway.init();
+    setForeground(true);
+    assert.equal(ads.length, 0);
+    resolve(false);
+    await new Promise(done => setImmediate(done));
+    assert.equal(ads.length, 0);
+});
+
+test('generic ad load failures refresh delayed connectivity without hiding real online failures', async (t) => {
+    let connection = true;
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads, tracked, setOnline} = fixture(t, {diagnostics, refresh: async () => connection});
+    await gateway.init();
+    await new Promise(done => setImmediate(done));
+    connection = false;
+    ads[0].emit('error', {code: 'googleMobileAds/internal-error'});
+    await new Promise(done => setImmediate(done));
+    const first = records.find(record => record.operation === 'ads.load');
+    assert.equal(first.outcome, 'unavailable');
+    assert.equal(first.attributes.error_code, 'network_error');
+    assert.equal(tracked.filter(entry => entry.method === 'trackFailedToLoad').length, 1);
+    t.mock.timers.tick(300000);
+    assert.equal(ads.length, 1);
+    connection = true;
+    setOnline(true);
+    await new Promise(done => setImmediate(done));
+    ads[1].emit('error', {code: 'googleMobileAds/internal-error'});
+    await new Promise(done => setImmediate(done));
+    assert.equal(records.at(-1).outcome, 'error');
+    assert.equal(records.at(-1).attributes.error_code, 'internal_error');
+});
+
+test('a synchronous native ad load failure releases listeners and retries without rejecting init', async (t) => {
+    const error = Object.assign(new Error('Native load failed'), {code: 'googleMobileAds/invalid-request'});
+    let fail = true;
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads, tracked} = fixture(t, {diagnostics, load: () => { if (fail) throw error; }});
+    await assert.doesNotReject(gateway.init());
+    assert.equal(records.at(-1).error, error);
+    assert.equal(records.at(-1).operation, 'ads.load');
+    assert.equal(ads[0].count(), 0);
+    assert.equal(tracked.filter(entry => entry.method === 'trackFailedToLoad').length, 1);
+    fail = false;
+    t.mock.timers.tick(30000);
+    assert.equal(ads.length, 2);
+    ads[1].emit('loaded');
+    assert.equal(tracked.at(-1).method, 'trackLoaded');
+});
+
+test('becoming a supporter while the preload connectivity read waits cancels the request', async t => {
+    let state = {ready: true, adsRemoved: false};
+    let resolve;
+    const f = fixture(t, {entitlement: () => state, refresh: () => new Promise(done => {resolve = done;})});
+    await f.gateway.init();
+    state = {ready: true, adsRemoved: true};
+    resolve(true);
+    await new Promise(done => setImmediate(done));
+    assert.equal(f.ads.length, 0);
+    f.setForeground(true);
+    assert.equal(f.ads.length, 0);
+    state = {ready: true, adsRemoved: false};
+    f.setForeground(true);
+    resolve(true);
+    await new Promise(done => setImmediate(done));
+    assert.equal(f.ads.length, 1);
+});
+
+test('pending failure connectivity read cannot permit stale success or duplicate retries', async t => {
+    let reads = 0;
+    let resolve;
+    const f = fixture(t, {refresh: async () => ++reads === 2 ? new Promise(done => {resolve = done;}) : true});
+    await f.gateway.init();
+    await new Promise(done => setImmediate(done));
+    const old = f.ads[0];
+    old.emit('error', {code: 'googleMobileAds/internal-error'});
+    old.emit('loaded');
+    old.emit('error', {code: 'googleMobileAds/internal-error'});
+    f.setForeground(true);
+    f.setOnline(true);
+    assert.equal(f.ads.length, 1);
+    assert.equal(f.gateway.show('movie_open'), null);
+    resolve(true);
+    await new Promise(done => setImmediate(done));
+    assert.equal(old.count(), 0);
+    assert.equal(f.tracked.filter(item => item.method === 'trackFailedToLoad').length, 1);
+    assert.equal(f.tracked.filter(item => item.method === 'trackLoaded').length, 0);
+    t.mock.timers.tick(30000);
+    await new Promise(done => setImmediate(done));
+    assert.equal(f.ads.length, 2);
+    old.emit('loaded');
+    old.emit('error', {code: 'googleMobileAds/invalid-request'});
+    f.ads[1].emit('loaded');
+    assert.equal(f.tracked.filter(item => item.method === 'trackLoaded').length, 1);
+    assert.equal(f.ads.length, 2);
 });

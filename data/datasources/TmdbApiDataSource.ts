@@ -1,5 +1,5 @@
 import {ResponseCache} from './storage/ResponseCache';
-import type {Diagnostics} from '@/domain';
+import type {Diagnostics, NetworkMonitor} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {requestJson} from './JsonRequest';
 
@@ -143,6 +143,7 @@ export class TmdbApiDataSource implements TmdbApi {
         private readonly resolveApiKey: () => string | Promise<string>,
         private readonly baseUrl: string = TMDB_BASE_URL,
         private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly network?: NetworkMonitor,
     ) {
     }
 
@@ -161,7 +162,7 @@ export class TmdbApiDataSource implements TmdbApi {
 
     private fetchResponse<T>(url: string, operation: string, parse: (body: unknown) => T): Promise<T> {
         return requestJson(url, {
-            diagnostics: this.diagnostics, operation, provider: 'tmdb', timeoutMs: REQUEST_TIMEOUT_MS,
+            diagnostics: this.diagnostics, operation, provider: 'tmdb', timeoutMs: REQUEST_TIMEOUT_MS, network: this.network,
             parse,
         });
     }

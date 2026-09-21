@@ -1,6 +1,6 @@
 import type {EztvTorrentsResponse} from '../models';
 import {ResponseCache} from './storage/ResponseCache';
-import type {Diagnostics} from '@/domain';
+import type {Diagnostics, NetworkMonitor} from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import {InvalidResponseError, requestJson} from './JsonRequest';
 
@@ -29,17 +29,17 @@ export class EztvUnavailableError extends Error {
 }
 
 export function parseEztvResponse(body: unknown): EztvTorrentsResponse {
-    if (body == null || typeof body !== 'object' || Array.isArray(body)) throw new InvalidResponseError();
+    if (body == null || typeof body !== 'object' || Array.isArray(body)) throw new InvalidResponseError('invalid_response', 'envelope');
     const response = body as Record<string, unknown>;
     if (response.torrents == null) {
-        if (response.torrents_count !== 0) throw new InvalidResponseError();
+        if (response.torrents_count !== 0) throw new InvalidResponseError('invalid_response', 'torrents_count');
     } else if (!Array.isArray(response.torrents) || response.torrents.some(item => {
         if (item == null || typeof item !== 'object' || Array.isArray(item)) return true;
         const torrent = item as Record<string, unknown>;
         return !Number.isSafeInteger(torrent.id) || Number(torrent.id) < 1
             || typeof torrent.title !== 'string'
             || (torrent.imdb_id != null && typeof torrent.imdb_id !== 'string');
-    })) throw new InvalidResponseError();
+    })) throw new InvalidResponseError('invalid_response', 'torrents_collection');
     return body as EztvTorrentsResponse;
 }
 
@@ -48,7 +48,8 @@ export class EztvApiDataSource implements EztvApi {
 
     constructor(private readonly resolveBaseUrl: () => string = () => EZTV_BASE_URL,
                 private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
-                private readonly fetcher?: typeof fetch) {
+                private readonly fetcher?: typeof fetch,
+                private readonly network?: NetworkMonitor) {
     }
 
     async getTorrents(params: ListTorrentsApiParams): Promise<EztvTorrentsResponse> {
@@ -70,7 +71,7 @@ export class EztvApiDataSource implements EztvApi {
         try {
             return await requestJson(url, {
                 diagnostics: this.diagnostics, operation: 'api.eztv.torrents', provider: 'eztv',
-                timeoutMs: REQUEST_TIMEOUT_MS, fetcher: this.fetcher,
+                timeoutMs: REQUEST_TIMEOUT_MS, fetcher: this.fetcher, network: this.network,
                 parse: parseEztvResponse,
             });
         } catch (error) {

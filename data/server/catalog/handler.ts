@@ -11,6 +11,7 @@ import {
 } from './projections';
 import type {CatalogProjectionOptions} from './projections';
 import {NyaaFeedError} from './nyaa';
+import {MovieNotFoundError} from '../../datasources/JsonRequest';
 
 export interface CatalogRepositories {
     movies: MovieRepository;
@@ -141,6 +142,9 @@ export function createCatalogHandler(
             if (privateResponse && error instanceof SubscriberAccessError && !timeout) {
                 return respond({error: error.status === 401 ? 'Sign in to access subscriber catalog data'
                     : error.status === 403 ? 'An active subscription is required' : 'Subscriber verification is temporarily unavailable'}, error.status);
+            }
+            if (parsed.operation === 'movie' && error instanceof MovieNotFoundError && !timeout) {
+                return respond({error: 'This movie is no longer available in the catalog.'}, 404);
             }
             return respond({error: timeout ? 'Catalog request timed out' : 'Catalog is temporarily unavailable'}, timeout ? 504 : 502);
         } finally {

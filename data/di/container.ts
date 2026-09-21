@@ -47,7 +47,7 @@ export function createDependencies(): Dependencies {
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();
         return appConfig.getTmdbApiKey();
-    }, undefined, diagnostics);
+    }, undefined, diagnostics, network);
     const tmdb = new TmdbRepositoryImpl(tmdbApi);
 
     const auth = new FirebaseAuthRepositoryImpl(diagnostics);
@@ -61,7 +61,7 @@ export function createDependencies(): Dependencies {
         analytics,
         new PersistentCache('purchases'), diagnostics, () => preferences.getPreferences().watchRegion,
     );
-    const catalog = createCatalogRepositories(appConfig, diagnostics, auth, purchases);
+    const catalog = createCatalogRepositories(appConfig, diagnostics, auth, purchases, network);
     const accountSync = new AccountSyncImpl({
         diagnostics,
         store: new PersistentCache('sync'),
@@ -112,7 +112,7 @@ export function createDependencies(): Dependencies {
         purchases,
         accountSync,
         network,
-        newMovies: new NewMoviesNotifierImpl(diagnostics, analytics),
+        newMovies: new NewMoviesNotifierImpl(diagnostics, analytics, network),
         storeServices: new PlayStoreServices(),
         ads,
         displayAds: new AdSenseDisplayAds(purchases),
