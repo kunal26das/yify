@@ -1030,7 +1030,7 @@
     micromatch "^4.0.4"
     walker "^1.0.8"
 
-"@expo/metro-runtime@57.0.16", "@expo/metro-runtime@^57.0.15":
+"@expo/metro-runtime@57.0.16", "@expo/metro-runtime@^57.0.16":
   version "57.0.16"
   resolved "https://registry.yarnpkg.com/@expo/metro-runtime/-/metro-runtime-57.0.16.tgz#01570c6564c53e2529f4d4c81ea6c3dd862b8e88"
   integrity sha512-x43WgZoICpp37BhDV7vixe0bNxbVPPGaBLHYc98ZJ8MU+UC2dk39Y2XvkfYMRRbAUSIkCIJiwdERnptlPg0Ckw==
@@ -1143,7 +1143,7 @@
   resolved "https://registry.yarnpkg.com/@expo/sudo-prompt/-/sudo-prompt-9.3.2.tgz#0fd2813402a42988e49145cab220e25bea74b308"
   integrity sha512-HHQigo3rQWKMDzYDLkubN5WQOYXJJE2eNqIQC2axC2iO3mHdwnIR7FgZVvHWtBwAdzBgAP0ECp8KqS8TiMKvgw==
 
-"@expo/ui@57.0.19", "@expo/ui@^57.0.18":
+"@expo/ui@57.0.19", "@expo/ui@^57.0.19":
   version "57.0.19"
   resolved "https://registry.yarnpkg.com/@expo/ui/-/ui-57.0.19.tgz#b86804de7241da2cd578ab62c0912fdc5eab199f"
   integrity sha512-WB95zQPge5nb04zgY3O2NmMtxg6G+qFH3yOAHcBkTUrJXoBReQoyY3cfp/8N5Q/azcfHJcBE3Jy0Rwq9OoRrfA==
@@ -5041,15 +5041,15 @@ expo-notifications@57.0.20:
     expo-application "~57.0.3"
     expo-constants "~57.0.19"
 
-expo-router@57.0.21:
-  version "57.0.21"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.21.tgz#2a7cde386f47725d6310b427b7fce84ccf41b140"
-  integrity sha512-r7UDLZU0gtVm8FW4nv2pxSl9TDhKlf2shcBbfp1T9STXJ3xYl9llLH701qQkICuXqqt3vGpOZ57GXC1ioVWg4g==
+expo-router@57.0.22:
+  version "57.0.22"
+  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-57.0.22.tgz#05a04dbfd55115f5ff26c801e2f7567165aaee72"
+  integrity sha512-kOuS3RjMC73YLyBFiV9BzO0Z5OK1nLhPwmptK2II+tePtWXH7oA4zWaPwdWsdzTJRnmGMs/8Sr8YdTPHm1LUCg==
   dependencies:
     "@expo/log-box" "^57.0.4"
-    "@expo/metro-runtime" "^57.0.15"
+    "@expo/metro-runtime" "^57.0.16"
     "@expo/schema-utils" "^57.0.2"
-    "@expo/ui" "^57.0.18"
+    "@expo/ui" "^57.0.19"
     "@radix-ui/react-slot" "^1.2.0"
     "@radix-ui/react-tabs" "^1.1.12"
     "@react-native-masked-view/masked-view" "^0.3.2"
