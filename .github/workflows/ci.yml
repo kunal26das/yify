@@ -92,3 +92,85 @@ jobs:
       - name: Tests
         run: yarn test
         working-directory: release
+
+  dependabot-auto-merge:
+    name: Merge Dependabot patch updates
+    needs: [check, web-export, release-console]
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.repository == 'kunal26das/yify' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      # No PR checkout or dependency execution in this write-enabled job.
+      - name: Verify Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge the tested patch update
+        id: merge
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for attempt in 1 2 3 4; do
+            pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+            if ! jq -e --arg sha "$PR_HEAD_SHA" --arg repo "$GH_REPO" '
+              .head.sha == $sha and .head.repo.full_name == $repo and
+              .base.ref == "main" and .base.repo.full_name == $repo and
+              .user.login == "dependabot[bot]" and (.draft | not)
+            ' <<< "$pr" >/dev/null; then
+              echo "Pull request changed since CI started; refusing to merge."
+              exit 1
+            fi
+            if jq -e '.merged == true' <<< "$pr" >/dev/null; then
+              echo 'merged=true' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if ! jq -e '.state == "open"' <<< "$pr" >/dev/null; then
+              echo "Pull request is closed; refusing to merge."
+              exit 1
+            fi
+            # Required checks may take a moment to be reflected in branch protection.
+            # GitHub still enforces them, and the SHA guard rejects an untested push.
+            if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
+              merged=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+              if jq -e --arg sha "$PR_HEAD_SHA" '.merged == true and .head.sha == $sha' <<< "$merged" >/dev/null; then
+                echo 'merged=true' >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              sleep 10
+            fi
+          done
+          echo "Merge is still blocked; branch protection was not bypassed."
+          exit 1
+
+      # GITHUB_TOKEN merges do not trigger the normal push deployment workflows.
+      - name: Deploy merged main to EAS Hosting
+        if: ${{ !cancelled() && steps.merge.outputs.merged == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy-hosting.yml --repo "$GH_REPO" --ref main -f production=true
+
+      - name: Deploy merged main to GitHub Pages
+        if: ${{ !cancelled() && steps.merge.outputs.merged == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy-pages.yml --repo "$GH_REPO" --ref main
