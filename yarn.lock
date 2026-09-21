@@ -4844,12 +4844,12 @@ expo-asset@~57.0.17:
     "@expo/image-utils" "^0.11.5"
     expo-constants "~57.0.18"
 
-expo-background-task@57.0.18:
-  version "57.0.18"
-  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.18.tgz#fa84ca3a09ed7e73b82d144eaeb906f0b92ddf6d"
-  integrity sha512-jSQAQt+RWrELq171jhnt9JRmko9+s1kKDAsIRuClgEGkcalJH0RHVe2ZO6kSOGA4xPfNuMR9ekQd+pr2PO3IhQ==
+expo-background-task@57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-background-task/-/expo-background-task-57.0.19.tgz#dfcef8e25f0f0bcc38a991993fc2d3b278a8b296"
+  integrity sha512-EAdkHSD9p0DT1yiDm9mX5rlUqUB/WKT4Scvvoj4m3FlWC1n/e3al7Qg+fJiYyGHvwonj0Vv0aTDnxJ0zKN+zyQ==
   dependencies:
-    expo-task-manager "~57.0.18"
+    expo-task-manager "~57.0.19"
 
 expo-blur@57.0.3:
   version "57.0.3"
@@ -5126,10 +5126,17 @@ expo-system-ui@57.0.4:
     "@react-native/normalize-colors" "0.86.3"
     debug "^4.3.2"
 
-expo-task-manager@57.0.18, expo-task-manager@~57.0.18:
+expo-task-manager@57.0.18:
   version "57.0.18"
   resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.18.tgz#4b617467ead35e23815a2dca36c96f8d0e783c98"
   integrity sha512-tMWHgTLlF5CBC7Rl1rtdDpGxN+CWuV6g9R1hD/2WgAlqi2aZyVfgUzNX/1QmNPLSeXRKFApV5GXNyZRDwl2IgQ==
+  dependencies:
+    unimodules-app-loader "~57.0.2"
+
+expo-task-manager@~57.0.19:
+  version "57.0.19"
+  resolved "https://registry.yarnpkg.com/expo-task-manager/-/expo-task-manager-57.0.19.tgz#fe20d76ea1474b3c736c08e8bcd11c5870613641"
+  integrity sha512-v+5NRV9OaI/a7GYCUa4W9796/UwjbK8W/L1wuvS/pSTQQyr7YMdHkhBsIhQ5abfJLuyuIqWTROJ6fwK/JK5t8g==
   dependencies:
     unimodules-app-loader "~57.0.2"
 
