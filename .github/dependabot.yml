@@ -8,6 +8,10 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 20
+    groups:
+      patch-updates:
+        patterns: ["*"]
+        update-types: ["patch"]
     ignore:
       - dependency-name: "@expo/log-box"
         update-types: ["version-update:semver-major"]
