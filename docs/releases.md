@@ -84,6 +84,10 @@ OTA updates can change JavaScript and assets supported by an installed binary. N
 plugin or native code changes require a new binary and a new runtime version. The runtime defaults
 to `package.json`'s `version`; **bump that version whenever native compatibility changes**.
 
+The current dependency upgrades are prepared for **1.8.5 (87)** and require a new native
+binary. Do not publish this dependency tree as an OTA for runtime **1.8.4**. The version
+preparation does not publish a store release or add a release-ledger entry.
+
 `EXPO_UPDATE_CHANNEL` sets the binary's channel (`Production` or `Staging`). The release console uses
 [releases.json](../release/releases.json) to check that a matching binary has shipped before publishing
 an update. Record actual binary releases there, not OTA releases.
@@ -104,6 +108,9 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 ## Dependabot updates
 
 Verified, single-commit Dependabot **patch** updates merge automatically after all three CI jobs pass.
+Daily patch updates are grouped into one PR so related Expo packages are tested together.
+When a tested PR falls behind `main`, the job asks Dependabot to rebase and rerun CI.
+It requests each PR-head/main combination only once; minor and major updates remain separate.
 The protected `main` branch requires those checks and an up-to-date branch; conflicts,
 failed checks, and minor or major upgrades remain for manual review. The merge job
 does not check out PR code or bypass branch protection.
