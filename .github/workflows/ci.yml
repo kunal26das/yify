@@ -4,6 +4,12 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      clean_install:
+        description: Also test a fresh dependency resolution without yarn.lock
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -93,9 +99,90 @@ jobs:
         run: yarn test
         working-directory: release
 
+  dependabot-clean-install:
+    name: Dependabot clean reinstall
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.user.login == 'dependabot[bot]') ||
+      (github.event_name == 'workflow_dispatch' && inputs.clean_install)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Reinstall dependencies from scratch
+        id: reinstall
+        run: |
+          LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
+          mkdir -p "$LOCKFILE_REPORT_DIR"
+          cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
+          rm -rf -- node_modules crashreporting/node_modules yarn.lock
+          yarn install --non-interactive
+
+      - name: Typecheck freshly resolved dependencies
+        run: yarn typecheck
+
+      - name: Test freshly resolved dependencies
+        run: yarn test
+
+      - name: Check Expo dependency compatibility
+        run: node scripts/check-expo-doctor.mjs
+
+      - name: Check fresh Hosting export
+        run: |
+          yarn export:hosting
+          node scripts/check-web-export.mjs dist-hosting --server
+
+      - name: Check fresh Pages export
+        run: |
+          yarn export:web
+          node scripts/check-web-export.mjs dist --static
+
+      - name: Report regenerated lockfile
+        if: always()
+        env:
+          REINSTALL_OUTCOME: ${{ steps.reinstall.outcome }}
+        run: |
+          LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
+          mkdir -p "$LOCKFILE_REPORT_DIR"
+          printf '## Dependabot clean reinstall\n\nInstall: %s.\n\n' "$REINSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$LOCKFILE_REPORT_DIR/original-yarn.lock" ] && [ -f yarn.lock ]; then
+            cp yarn.lock "$LOCKFILE_REPORT_DIR/regenerated-yarn.lock"
+            diff_status=0
+            diff -u --label a/yarn.lock --label b/yarn.lock \
+              "$LOCKFILE_REPORT_DIR/original-yarn.lock" yarn.lock \
+              > "$LOCKFILE_REPORT_DIR/yarn.lock.patch" || diff_status=$?
+            if [ "$diff_status" -gt 1 ]; then exit "$diff_status"; fi
+            if [ "$diff_status" -eq 0 ]; then
+              echo 'The regenerated lockfile matches the committed lockfile.' >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo 'The regenerated lockfile differs. The artifact contains both lockfiles and their diff for review.' >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo 'No complete lockfile comparison is available because setup or installation failed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          printf '\nThis is an additional compatibility check. Required CI and deployments continue to use the committed lockfile. Regeneration does not write to the PR.\n' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save lockfile comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependabot-clean-install-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/dependabot-clean-install/
+          if-no-files-found: warn
+          retention-days: 14
+
   dependabot-auto-merge:
     name: Merge Dependabot patch updates
-    needs: [check, web-export, release-console]
+    needs: [check, web-export, release-console, dependabot-clean-install]
     if: >-
       github.event_name == 'pull_request' &&
       github.repository == 'kunal26das/yify' &&
