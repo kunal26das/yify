@@ -107,24 +107,33 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 ## Dependabot updates
 
-Verified, single-commit Dependabot **patch** updates merge automatically after normal CI and the clean reinstall check pass.
-Daily patch updates are grouped into one PR so related Expo packages are tested together.
-When a tested PR falls behind `main`, the job asks Dependabot to rebase and rerun CI.
-It requests each PR-head/main combination only once; minor and major updates remain separate.
-Every Dependabot PR also runs an isolated clean reinstall: remove `node_modules`, the
-workspace's `node_modules`, and `yarn.lock`, then run `yarn install --non-interactive`.
-The freshly resolved dependencies must pass typechecking, tests, Expo Doctor and both
-web exports before a patch can auto-merge. Both lockfiles and a diff are saved in the
-workflow's `dependabot-clean-install` artifact for 14 days, including after failures.
-Normal CI and deployments still install the committed lockfile with `--frozen-lockfile`.
-The additional check does not commit its regenerated lockfile: a full reset can change
-unrelated transitive dependencies, so adopting that result needs a reviewed change.
-To run the same check manually, run the CI workflow with `clean_install` enabled.
-The protected `main` branch requires normal CI and an up-to-date branch; conflicts,
-failed checks, and minor or major upgrades remain for manual review. The merge job
-does not check out PR code or bypass branch protection.
-PRs with additional commits also remain manual because Dependabot's metadata verifier
-only validates the first commit.
+Dependabot **patch** updates merge automatically after a clean reinstall and full CI
+on the final committed dependency tree. Daily patches are grouped so related Expo
+packages are tested together; minor and major updates still need manual review.
+
+For each original, signed Dependabot PR, an isolated job removes `node_modules`, the
+workspace's `node_modules`, and `yarn.lock`, then runs `yarn install --non-interactive`.
+It checks types, tests, Expo compatibility and both web exports. A separate job then
+commits the regenerated `yarn.lock` back to that PR if it differs. The original lock,
+regenerated lock, diff and source metadata remain available as a 14-day artifact.
+
+The write job executes trusted automation from `main`, verifies the artifact against
+the source commit and successful CI run, and commits only `yarn.lock`. GitHub's expected
+head check prevents overwriting a concurrent push. It then explicitly dispatches CI on
+the new PR head. That follow-up installs the committed lockfile with `--frozen-lockfile`
+and skips regeneration, avoiding a write-back loop. No-change reinstalls create no commit.
+
+Automatic merging accepts only the signed Dependabot commit, optionally followed by
+one verified, GitHub-signed Actions commit with matching run provenance and lockfile
+contents. Other extra commits are rejected. The protected `main` branch still requires
+normal CI and an up-to-date branch; no checks are bypassed. When a patch falls behind,
+the job asks Dependabot to rebase once per head/main combination. The reproducible lock
+commit includes `[dependabot skip]` so Dependabot can replace it during a rebase.
+
+A failed write/dispatch job can be rerun using **Re-run failed jobs**: the previous
+successful artifact is reused, and an existing matching lock commit is not duplicated.
+The CI workflow's `clean_install` input remains a read-only diagnostic for non-Dependabot
+branches; `dependabot_pr` and `dependabot_head` resume checks for a verified PR head.
 
 After confirming the merge, the job explicitly starts both production web deployments,
 because merges made with `GITHUB_TOKEN` do not trigger the normal push workflows.

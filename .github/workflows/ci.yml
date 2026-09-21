@@ -10,6 +10,14 @@ on:
         description: Also test a fresh dependency resolution without yarn.lock
         type: boolean
         default: false
+      dependabot_pr:
+        description: Dependabot PR to validate after the lockfile commit
+        type: string
+        default: ''
+      dependabot_head:
+        description: Exact Dependabot PR head to validate
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -19,12 +27,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dependabot-context:
+    name: Verify dependency automation context
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    outputs:
+      eligible: ${{ steps.inspect.outputs.head != '' }}
+      pr: ${{ steps.inspect.outputs.pr }}
+      head: ${{ steps.inspect.outputs.head }}
+      source: ${{ steps.inspect.outputs.source }}
+      branch: ${{ steps.inspect.outputs.branch }}
+      refreshed: ${{ steps.inspect.outputs.refreshed }}
+    steps:
+      - name: Checkout trusted automation
+        if: >-
+          github.event.pull_request.user.login == 'dependabot[bot]' ||
+          inputs.dependabot_pr != '' || inputs.dependabot_head != ''
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Verify PR identity and commit chain
+        id: inspect
+        if: >-
+          github.event.pull_request.user.login == 'dependabot[bot]' ||
+          inputs.dependabot_pr != '' || inputs.dependabot_head != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.dependabot_pr }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.dependabot_head }}
+        run: node scripts/dependabot-lockfile.mjs inspect
+
   check:
+    needs: dependabot-context
     name: Typecheck and tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -48,11 +93,14 @@ jobs:
         run: node scripts/check-expo-doctor.mjs
 
   web-export:
+    needs: dependabot-context
     name: Web exports render and isolate catalog data
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -76,11 +124,14 @@ jobs:
         run: node scripts/check-web-export.mjs dist --static
 
   release-console:
+    needs: dependabot-context
     name: Typecheck and test release console
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -101,16 +152,21 @@ jobs:
 
   dependabot-clean-install:
     name: Dependabot clean reinstall
+    needs: dependabot-context
+    outputs:
+      artifact_name: ${{ steps.report.outputs.artifact_name }}
+      source_run_attempt: ${{ steps.report.outputs.source_run_attempt }}
     if: >-
-      (github.event_name == 'pull_request' &&
-       github.event.pull_request.user.login == 'dependabot[bot]') ||
-      (github.event_name == 'workflow_dispatch' && inputs.clean_install)
+      (needs.dependabot-context.outputs.eligible == 'true' &&
+       needs.dependabot-context.outputs.refreshed == 'false') ||
+      (github.event_name == 'workflow_dispatch' && inputs.clean_install && inputs.dependabot_pr == '')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
+          ref: ${{ needs.dependabot-context.outputs.source || github.sha }}
           persist-credentials: false
 
       - name: Setup Node
@@ -147,12 +203,15 @@ jobs:
           node scripts/check-web-export.mjs dist --static
 
       - name: Report regenerated lockfile
+        id: report
         if: always()
         env:
           REINSTALL_OUTCOME: ${{ steps.reinstall.outcome }}
         run: |
           LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
           mkdir -p "$LOCKFILE_REPORT_DIR"
+          echo "artifact_name=dependabot-clean-install-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          echo "source_run_attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           printf '## Dependabot clean reinstall\n\nInstall: %s.\n\n' "$REINSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
           if [ -f "$LOCKFILE_REPORT_DIR/original-yarn.lock" ] && [ -f yarn.lock ]; then
             cp yarn.lock "$LOCKFILE_REPORT_DIR/regenerated-yarn.lock"
@@ -169,28 +228,73 @@ jobs:
           else
             echo 'No complete lockfile comparison is available because setup or installation failed.' >> "$GITHUB_STEP_SUMMARY"
           fi
-          printf '\nThis is an additional compatibility check. Required CI and deployments continue to use the committed lockfile. Regeneration does not write to the PR.\n' >> "$GITHUB_STEP_SUMMARY"
+          printf '\nSuccessful Dependabot regeneration is committed back to the PR by a separate job. Full CI then validates the new commit using the committed lockfile.\n' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bind regenerated lockfile to its source
+        if: success() && needs.dependabot-context.outputs.eligible == 'true'
+        env:
+          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
+          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.source }}
+        run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs capture
 
       - name: Save lockfile comparison
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dependabot-clean-install-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.report.outputs.artifact_name }}
           path: ${{ runner.temp }}/dependabot-clean-install/
           if-no-files-found: warn
           retention-days: 14
 
+  dependabot-write-lock:
+    name: Commit regenerated Dependabot lockfile
+    needs: [dependabot-context, dependabot-clean-install]
+    if: >-
+      needs.dependabot-context.outputs.eligible == 'true' &&
+      needs.dependabot-context.outputs.refreshed == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: write
+    outputs:
+      changed: ${{ steps.publish.outputs.changed }}
+      new_sha: ${{ steps.publish.outputs.new_sha }}
+    steps:
+      # Only trusted main code and lockfile data enter this write-enabled job.
+      - name: Checkout trusted automation
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Download this run's lockfile report
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.dependabot-clean-install.outputs.artifact_name }}
+          path: ${{ runner.temp }}/dependabot-clean-install
+      - name: Commit lockfile and request CI on the new head
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
+          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.source }}
+          SOURCE_RUN_ATTEMPT: ${{ needs.dependabot-clean-install.outputs.source_run_attempt }}
+        run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs publish
+
   dependabot-auto-merge:
     name: Merge Dependabot patch updates
-    needs: [check, web-export, release-console, dependabot-clean-install]
+    needs: [dependabot-context, check, web-export, release-console, dependabot-clean-install, dependabot-write-lock]
     if: >-
-      github.event_name == 'pull_request' &&
-      github.repository == 'kunal26das/yify' &&
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.base.ref == 'main' &&
-      github.event.pull_request.commits == 1 &&
-      !github.event.pull_request.draft
+      always() && !cancelled() && github.repository == 'kunal26das/yify' &&
+      needs.dependabot-context.result == 'success' &&
+      needs.dependabot-context.outputs.eligible == 'true' &&
+      needs.check.result == 'success' && needs.web-export.result == 'success' &&
+      needs.release-console.result == 'success' &&
+      (needs.dependabot-context.outputs.refreshed == 'true' ||
+       (needs.dependabot-clean-install.result == 'success' &&
+        needs.dependabot-write-lock.result == 'success' &&
+        needs.dependabot-write-lock.outputs.changed == 'false'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -198,12 +302,42 @@ jobs:
       pull-requests: write
       actions: write
     steps:
-      # No PR checkout or dependency execution in this write-enabled job.
+      # No PR code or dependency execution in this write-enabled job.
+      - name: Checkout trusted automation
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Reverify the tested PR head
+        id: inspect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
+          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.head }}
+          ALLOW_MERGED: 'true'
+        run: node scripts/dependabot-lockfile.mjs inspect
+      - name: Checkout pinned Dependabot metadata verifier
+        uses: actions/checkout@v5
+        with:
+          repository: dependabot/fetch-metadata
+          ref: 21025c705c08248db411dc16f3619e6b5f9ea21a
+          path: .github-tools/fetch-metadata
+          persist-credentials: false
+
       - name: Verify Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERIFIED_EVENT_FILE: ${{ steps.inspect.outputs.event_file }}
+        # Set the event inside the process: the runner replaces GITHUB_EVENT_PATH for uses actions.
+        run: |
+          node <<'NODE'
+          process.env.GITHUB_EVENT_PATH = process.env.VERIFIED_EVENT_FILE;
+          process.env['INPUT_GITHUB-TOKEN'] = process.env.GH_TOKEN;
+          process.env['INPUT_SKIP-COMMIT-VERIFICATION'] = 'false';
+          process.env['INPUT_SKIP-VERIFICATION'] = 'false';
+          require('./.github-tools/fetch-metadata/dist/index.js');
+          NODE
 
       - name: Merge the tested patch update
         id: merge
@@ -211,17 +345,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
+          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.head }}
         run: |
           for attempt in 1 2 3 4; do
             pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
             if ! jq -e --arg sha "$PR_HEAD_SHA" --arg repo "$GH_REPO" '
               .head.sha == $sha and .head.repo.full_name == $repo and
               .base.ref == "main" and .base.repo.full_name == $repo and
-              .user.login == "dependabot[bot]" and .commits == 1 and (.draft | not)
+              .user.login == "dependabot[bot]" and (.draft | not)
             ' <<< "$pr" >/dev/null; then
-              echo "Pull request no longer matches the tested single-commit Dependabot update."
+              echo "Pull request no longer matches the tested Dependabot update."
               exit 1
             fi
             if jq -e '.merged == true' <<< "$pr" >/dev/null; then
@@ -234,6 +368,7 @@ jobs:
               echo "Pull request is closed; refusing to merge."
               exit 1
             fi
+            node scripts/dependabot-lockfile.mjs inspect
             if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
               main_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
               marker="<!-- dependabot-rebase:$PR_HEAD_SHA:$main_sha -->"
