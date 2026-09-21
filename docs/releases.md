@@ -101,6 +101,21 @@ For Staging, use its shipped runtime, set both channel values to `Staging`, and 
 environment. Overriding the runtime does not make an incompatible bundle safe. Verify the published
 update's platform, channel and runtime; the app checks on launch/foreground and prompts for restart.
 
+## Dependabot updates
+
+Verified, single-commit Dependabot **patch** updates merge automatically after all three CI jobs pass.
+The protected `main` branch requires those checks and an up-to-date branch; conflicts,
+failed checks, and minor or major upgrades remain for manual review. The merge job
+does not check out PR code or bypass branch protection.
+PRs with additional commits also remain manual because Dependabot's metadata verifier
+only validates the first commit.
+
+After confirming the merge, the job explicitly starts both production web deployments,
+because merges made with `GITHUB_TOKEN` do not trigger the normal push workflows.
+A failed dispatch can be retried by rerunning the failed CI job; it verifies the same
+PR head before retrying. Native builds and OTA releases remain separate: a native
+dependency update must be validated in a new binary before an OTA uses it.
+
 ## Web
 
 A push to `main` deploys the canonical site at [yify.expo.app](https://yify.expo.app/) and the
