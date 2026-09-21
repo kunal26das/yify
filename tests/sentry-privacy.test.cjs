@@ -167,6 +167,19 @@ test('diagnostics attributes retain operation outcomes while excluding content, 
     });
 });
 
+test('catalog validation diagnostics retain only bounded schema failures, never payload content', () => {
+    for (const reason of ['envelope', 'movie_identity', 'movie_collections', 'pagination',
+        'parental_guides', 'torrents_count', 'torrents_collection']) {
+        const event = sanitizeErrorEvent({contexts: {diagnostics: {
+            'diagnostics.validation_reason': reason, response: {title: 'Private movie'}, query: 'Private query',
+        }}});
+        assert.deepEqual(event.contexts.diagnostics, {'diagnostics.validation_reason': reason});
+    }
+    for (const value of ['PrivateMovie', 'private_uid', 'https://example.test/private', '', 123, {body: 'private'}]) {
+        assert.deepEqual(sanitizeDiagnosticAttributes({validation_reason: value, 'diagnostics.validation_reason': value}), {});
+    }
+});
+
 test('navigation keeps structural route names and strips every concrete parameter', () => {
     for (const route of ['/movie/123?query=private', 'movie/[id]', '/yify/movie/private-title#token']) {
         assert.equal(sanitizeRoute(route), '/movie/[id]');

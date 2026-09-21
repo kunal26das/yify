@@ -22,7 +22,7 @@ function fixture(options = {}) {
         return {remove: () => listeners.delete(listener)};
     }};
     const {ExpoAppUpdates} = loadTypeScript('data/services/ExpoAppUpdates.ts', {
-        'react-native': {AppState: appState},
+        'react-native': {AppState: appState, Platform: {OS: options.platform ?? 'ios'}},
         'expo-updates': {
             isEnabled: options.enabled ?? true,
             channel: options.channel ?? 'Production',
@@ -81,6 +81,19 @@ test('rapid restart taps and foreground callbacks produce only one native reload
     f.service.restart();
     f.foreground();
     assert.deepEqual(f.calls, {check: 1, fetch: 1, reload: 1});
+});
+
+test('Android keeps a downloaded OTA ready for cold start without tearing down the live native runtime', async () => {
+    const f = fixture({platform: 'android'});
+    f.service.start();
+    await settled();
+    f.service.restart();
+    f.service.restart();
+    f.foreground();
+    await f.service.sync();
+    assert.deepEqual(f.calls, {check: 1, fetch: 1, reload: 0});
+    assert.deepEqual(f.service.getStatus(), {state: 'ready', progress: 1});
+    assert.equal(f.events.filter(([operation]) => operation === 'updates.reload').length, 0);
 });
 
 test('failed native reload restores the ready update and permits an explicit retry', async () => {
@@ -265,4 +278,52 @@ test('backgrounding never hides unexplained native failures or configuration def
         assert.equal(f.spans[0].error, error);
         assert.deepEqual(f.spans[0].attributes, {error_code: code, reason: 'background'});
     }
+});
+
+test('refreshing a stale online snapshot prevents a native check while disconnected', async () => {
+    let online = true;
+    const f = fixture({network: {
+        isOnline: () => online,
+        refresh: async () => { online = false; return online; },
+        subscribe: () => () => {},
+    }});
+    await f.service.sync();
+    assert.equal(f.calls.check, 0);
+    assert.equal(f.service.getStatus().state, 'idle');
+});
+
+test('late network callbacks cannot misreport a confirmed offline OTA interruption as a crash', async () => {
+    let online = true;
+    let reads = 0;
+    const listeners = new Set();
+    let fail = true;
+    const f = fixture({network: {
+        isOnline: () => online,
+        refresh: async () => { if (++reads === 2) online = false; return online; },
+        subscribe: listener => { listeners.add(listener); return () => listeners.delete(listener); },
+    }, check: async () => {
+        if (fail) throw Object.assign(new Error('Interrupted'), {code: 'ERR_UPDATES_CHECK'});
+        return {isAvailable: true};
+    }});
+    f.service.start();
+    await settled();
+    assert.equal(f.spans[0].error, undefined);
+    assert.deepEqual(f.spans[0].attributes, {error_code: 'ERR_UPDATES_CHECK', reason: 'offline'});
+    assert.equal(f.spans[0].outcome, 'unavailable');
+    fail = false;
+    online = true;
+    listeners.forEach(listener => listener());
+    await settled();
+    assert.equal(f.service.getStatus().state, 'ready');
+});
+
+test('a failed connectivity refresh still records unexplained update errors', async () => {
+    const error = Object.assign(new Error('Native failure'), {code: 'ERR_UPDATES_CHECK'});
+    const f = fixture({network: {
+        isOnline: () => true,
+        refresh: async () => { throw new Error('Platform snapshot unavailable'); },
+        subscribe: () => () => {},
+    }, check: async () => { throw error; }});
+    await f.service.sync();
+    assert.equal(f.spans[0].error, error);
 });

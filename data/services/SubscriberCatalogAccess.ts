@@ -1,5 +1,5 @@
 import type {AuthRepository, PurchaseRepository, SubscriberAccess, SubscriberAccessState} from '@/domain';
-import {RequestCancelledError} from '../datasources/JsonRequest';
+import {MovieNotFoundError, RequestCancelledError} from '../datasources/JsonRequest';
 
 const ACCESS_BACKOFF_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -159,6 +159,7 @@ export class SubscriberCatalogAccess implements SubscriberAccess {
                     await abortable(response.text(), controller.signal);
                 } catch {}
                 if (!current()) return null;
+                if (response.status === 404 && new URL(url).pathname.endsWith('/movie')) throw new MovieNotFoundError();
                 if (PUBLIC_FALLBACK_STATUSES.has(response.status)) {
                     this.retryAt = Date.now() + ACCESS_BACKOFF_MS;
                     return null;
@@ -172,9 +173,10 @@ export class SubscriberCatalogAccess implements SubscriberAccess {
             const value = parse((envelope as {metadata: unknown}).metadata);
             if (!current()) return null;
             return {value};
-        } catch {
+        } catch (error) {
             if (signal?.aborted) throw new RequestCancelledError();
             if (!current()) return null;
+            if (error instanceof MovieNotFoundError) throw error;
             throw new Error(controller.signal.aborted
                 ? 'The catalog request timed out. Please try again.'
                 : 'The catalog is unavailable. Please try again.');

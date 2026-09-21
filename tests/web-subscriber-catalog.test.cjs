@@ -83,6 +83,23 @@ function fixture(options = {}) {
     };
 }
 
+test('subscriber movie 404 stays readable without public fallback, raw exposure or denied-access backoff', async t => {
+    const requests = [];
+    const missing = Response.json({error: 'private upstream details'}, {status: 404});
+    t.mock.method(globalThis, 'fetch', async url => {
+        requests.push(url);
+        return requests.length === 1 ? missing : response(envelope(details('Still authorized')));
+    });
+    const f = fixture();
+    await assert.rejects(f.movies.getMovieDetails(42), {
+        name: 'MovieNotFoundError', message: 'This movie is no longer available in the catalog.',
+    });
+    assert.equal(missing.bodyUsed, true);
+    assert.equal((await f.movies.getMovieDetails(42)).title, 'Still authorized');
+    assert.deepEqual(requests, [`${privateBase}/movie?id=42&v=2`, `${privateBase}/movie?id=42&v=2`]);
+    assert.doesNotMatch(JSON.stringify(f.diagnostics), /private|raw|token/);
+});
+
 test('unresolved auth and signed-out accounts never attempt subscriber transport', async t => {
     const requests = [];
     t.mock.method(globalThis, 'fetch', async (url, options) => {

@@ -1,11 +1,11 @@
 import type {
     AnimeRelease, CastMember, Diagnostics, ListAnimeParams, ListAnimeResult, ListMoviesParams, ListMoviesResult, ListShowsParams,
-    ListShowsResult, Movie, MovieDetails, ParentalGuide, Show, ShowEpisode, Torrent,
+    ListShowsResult, Movie, MovieDetails, NetworkMonitor, ParentalGuide, Show, ShowEpisode, Torrent,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
 import type {SubscriberCatalogAccess} from '../services/SubscriberCatalogAccess';
 import {ResponseCache} from './storage/ResponseCache';
-import {requestJson, RequestCancelledError, RequestTimeoutError} from './JsonRequest';
+import {MovieNotFoundError, OfflineRequestError, requestJson, RequestCancelledError, RequestTimeoutError} from './JsonRequest';
 
 type CatalogLocation = Pick<Location, 'origin' | 'hostname' | 'protocol'>;
 type CatalogEndpoint = 'movies' | 'movie' | 'suggestions' | 'parental-guides' | 'shows' | 'episodes' | 'anime';
@@ -242,6 +242,7 @@ export class WebCatalogClient {
         private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
         private readonly subscriberAccess?: SubscriberCatalogAccess,
         private readonly baseUrl?: string,
+        private readonly network?: NetworkMonitor,
     ) {}
 
     listMovies(params: ListMoviesParams): Promise<ListMoviesResult> {
@@ -318,7 +319,7 @@ export class WebCatalogClient {
                 return await requestJson(url, {
                     diagnostics: this.diagnostics, operation: `api.catalog.${endpoint.replace('-', '_')}`,
                     provider: 'catalog', timeoutMs: REQUEST_TIMEOUT_MS,
-                    signal,
+                    signal, network: this.network, missingResource: endpoint === 'movie' ? 'movie' : undefined,
                     init: {redirect: 'error', credentials: 'omit', headers: {Accept: 'application/json'}},
                     parse: value => {
                         metadataOnly(value);
@@ -327,6 +328,7 @@ export class WebCatalogClient {
                 });
             } catch (error) {
                 if (signal?.aborted) throw new RequestCancelledError();
+                if (error instanceof MovieNotFoundError || error instanceof OfflineRequestError) throw error;
                 throw new Error(error instanceof RequestTimeoutError
                     ? 'The catalog request timed out. Please try again.'
                     : 'The catalog is unavailable. Please try again.');

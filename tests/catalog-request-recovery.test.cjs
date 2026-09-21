@@ -296,3 +296,126 @@ test('web failures retain the original cause for diagnostics and a safe message 
         assert.equal(records[0].error, failure);
     }
 });
+
+test('real Expo wrapped transport failures retry once while online and retain persistent errors', async () => {
+    const {FetchError} = loadTypeScript('node_modules/expo/src/winter/fetch/FetchErrors.ts');
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const recovers of [true, false]) {
+        const {diagnostics, records} = recorder();
+        const failure = FetchError.createFromError(Object.assign(new Error('Unable to resolve host "private.example": No address associated with hostname'),
+            {name: 'CodedError', code: 'ERR_UNEXPECTED'}));
+        assert.equal(failure.code, undefined, 'Expo discards the native code');
+        let calls = 0;
+        const work = requestJson('https://private.example', {
+            diagnostics, operation: 'api.yts.list_movies', provider: 'yts', timeoutMs: 100,
+            network: {isOnline: () => true, refresh: async () => true},
+            fetcher: async () => {
+                if (++calls === 1 || !recovers) throw failure;
+                return Response.json({value: 1});
+            }, parse: body => body,
+        });
+        if (recovers) assert.deepEqual(await work, {value: 1});
+        else await assert.rejects(work, error => error === failure);
+        assert.equal(calls, 2);
+        assert.equal(records.length, 1);
+        assert.equal(records[0].outcome, recovers ? 'ok' : 'error');
+        if (!recovers) assert.equal(records[0].data.error_code, 'network_error');
+    }
+});
+
+test('Expo programming, redirect, TLS and context failures are never retried as transport outages', async () => {
+    const {FetchError} = loadTypeScript('node_modules/expo/src/winter/fetch/FetchErrors.ts');
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const message of ['Invalid URL', 'Redirect is not allowed when redirect mode is \'error\'',
+        'java.security.cert.CertPathValidatorException: Trust anchor for certification path not found.',
+        'The Android context has been lost']) {
+        const {diagnostics, records} = recorder();
+        const failure = new FetchError(message);
+        let calls = 0;
+        await assert.rejects(requestJson('https://private.example', {
+            diagnostics, operation: 'api.yts.list_movies', provider: 'yts', timeoutMs: 100,
+            fetcher: async () => { calls++; throw failure; }, parse: body => body,
+        }), error => error === failure);
+        assert.equal(calls, 1);
+        assert.equal(records[0].error, failure);
+    }
+});
+
+test('Expo wraps native cancellation without its code and is still recorded as cancellation', async () => {
+    const {FetchError} = loadTypeScript('node_modules/expo/src/winter/fetch/FetchErrors.ts');
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const message of ['Fetch request has been canceled', 'The operation was aborted.']) {
+        const {diagnostics, records} = recorder();
+        let calls = 0;
+        const failure = FetchError.createFromError(Object.assign(new Error(message), {code: 'ERR_FETCH_REQUEST_CANCELED'}));
+        await assert.rejects(requestJson('https://private.example', {
+            diagnostics, operation: 'api.yts.list_movies', provider: 'yts', timeoutMs: 100,
+            fetcher: async () => { calls++; throw failure; }, parse: body => body,
+        }), error => error === failure);
+        assert.equal(calls, 1);
+        assert.equal(records[0].outcome, 'cancelled');
+        assert.equal(records[0].error, undefined);
+    }
+});
+
+test('confirmed offline requests avoid transport and recover after the monitor reports reconnection', async () => {
+    const {diagnostics, records} = recorder();
+    const {YtsApiDataSource} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
+    let online = false;
+    let calls = 0;
+    const source = new YtsApiDataSource(undefined, diagnostics, {
+        network: {isOnline: () => false, refresh: async () => online},
+        fetch: async () => {
+            calls++;
+            return Response.json({status: 'ok', data: {movie_count: 0, page_number: 1, limit: 20}});
+        },
+    });
+    await assert.rejects(source.listMovies({page: 1}), {name: 'OfflineRequestError'});
+    assert.equal(calls, 0);
+    assert.equal(records[0].outcome, 'unavailable');
+    assert.equal(records[0].data.error_code, 'network_offline');
+    online = true;
+    await source.listMovies({page: 1});
+    assert.equal(calls, 1);
+    assert.equal(records[1].outcome, 'ok');
+});
+
+test('a stale online snapshot is refreshed after a transport failure without hiding unknown errors', async () => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    for (const unknown of [false, true]) {
+        const {diagnostics, records} = recorder();
+        const failure = unknown ? new TypeError('Invalid URL') : new TypeError('Failed to fetch');
+        let calls = 0;
+        let refreshes = 0;
+        await assert.rejects(requestJson('https://private.example', {
+            diagnostics, operation: 'api.catalog.movies', provider: 'catalog', timeoutMs: 100,
+            network: {isOnline: () => true, refresh: async () => { refreshes++; return false; }},
+            fetcher: async () => { calls++; throw failure; }, parse: body => body,
+        }), unknown ? error => error === failure : {name: 'OfflineRequestError'});
+        assert.equal(calls, 1);
+        assert.equal(refreshes, unknown ? 0 : 1);
+        assert.equal(records[0].outcome, unknown ? 'error' : 'unavailable');
+    }
+});
+
+test('unknown connectivity and unavailable monitors do not suppress errors or extend the request deadline', async t => {
+    const {requestJson} = loadTypeScript('data/datasources/JsonRequest.ts');
+    const {diagnostics, records} = recorder();
+    let calls = 0;
+    await assert.rejects(requestJson('https://private.example', {
+        diagnostics, operation: 'api.catalog.movies', provider: 'catalog', timeoutMs: 100,
+        network: {isOnline: () => true, refresh: async () => { throw new Error('Native monitor unavailable'); }},
+        fetcher: async () => { calls++; throw new TypeError('Failed to fetch'); }, parse: body => body,
+    }), {name: 'TypeError'});
+    assert.equal(calls, 2);
+    assert.equal(records[0].outcome, 'error');
+
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const pending = assert.rejects(requestJson('https://private.example', {
+        diagnostics, operation: 'api.catalog.movies', provider: 'catalog', timeoutMs: 100,
+        network: {isOnline: () => false, refresh: () => new Promise(() => {})},
+        fetcher: () => assert.fail('offline transport started'), parse: body => body,
+    }), {name: 'TimeoutError'});
+    t.mock.timers.tick(100);
+    await pending;
+});

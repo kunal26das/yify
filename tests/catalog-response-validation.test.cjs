@@ -64,3 +64,45 @@ test('an invalid JSON object is reported once, excluded from cache, and does not
     await api.listMovies({page: 1});
     assert.equal(calls, 2);
 });
+
+test('YTS removed-movie sentinel produces a readable missing movie without retrying or caching it', async () => {
+    const records = [];
+    const diagnostics = {event() {}, start() {
+        return {finish(outcome, attributes) { records.push({outcome, attributes}); },
+            fail(error) { assert.fail(`Missing movie captured as an error: ${error}`); }};
+    }};
+    const {YtsApiDataSource} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
+    let calls = 0;
+    const api = new YtsApiDataSource(undefined, diagnostics, {fetch: async () => {
+        calls++;
+        return Response.json({status: 'ok', data: {movie: {id: 0, title: null, genres: null}}});
+    }});
+    for (let attempt = 0; attempt < 2; attempt++) {
+        await assert.rejects(api.getMovieDetails({movie_id: 999999999}), {
+            name: 'MovieNotFoundError', message: 'This movie is no longer available in the catalog.',
+        });
+    }
+    assert.equal(calls, 2);
+    assert.ok(records.every(record => record.outcome === 'empty' && record.attributes.error_code === 'movie_not_found'
+        && record.attributes.retry_count === 0 && record.attributes.status_code === 200));
+});
+
+test('missing movie handling does not swallow malformed real movies or invalid list entries', () => {
+    const {parseYtsResponse} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
+    for (const movie of [{id: 0, title: 'Broken'}, {id: '0', title: null}, {id: 1, title: null},
+        {id: 1, title: 'Film', cast: {actor: 'Unexpected'}}]) {
+        assert.throws(() => parseYtsResponse({status: 'ok', data: {movie}}, 'movie_details.json'),
+            {name: 'InvalidResponseError', code: 'invalid_response'});
+    }
+    assert.throws(() => parseYtsResponse({status: 'ok', data: {movies: [{id: 0, title: null}],
+        movie_count: 1, limit: 20, page_number: 1}}, 'list_movies.json'), {name: 'InvalidResponseError'});
+});
+
+test('invalid provider structures retain only bounded reasons for diagnosis', () => {
+    const {parseYtsResponse} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
+    const {parseEztvResponse} = loadTypeScript('data/datasources/EztvApiDataSource.ts');
+    assert.throws(() => parseYtsResponse({status: 'ok', data: {movie: {id: 1, title: 'Private title', cast: 'Private details'}}},
+        'movie_details.json'), error => error.reason === 'movie_collections' && !error.message.includes('Private'));
+    assert.throws(() => parseEztvResponse({torrents_count: 'private malformed count'}),
+        error => error.reason === 'torrents_count' && !error.message.includes('private'));
+});

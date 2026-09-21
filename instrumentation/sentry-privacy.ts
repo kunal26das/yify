@@ -7,6 +7,8 @@ type Attributes = Record<string, string | number | boolean>;
 const diagnosticStrings = new Set(['provider', 'operation', 'outcome', 'error_code', 'method', 'stage', 'cache', 'trigger', 'reason']);
 const diagnosticNumbers = new Set(['status_code', 'duration_ms', 'count', 'attempt', 'retry_count']);
 const diagnosticBooleans = new Set(['available', 'trimmed', 'forced']);
+const validationReasons = new Set(['envelope', 'movie_identity', 'movie_collections', 'pagination',
+    'parental_guides', 'torrents_count', 'torrents_collection']);
 const staticIdentifier = /^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/;
 const versionIdentifier = /^[a-zA-Z0-9][a-zA-Z0-9_.+@()-]{0,127}$/;
 const telemetryId = /^(?:[a-f0-9]{32}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i;
@@ -41,6 +43,7 @@ export function sanitizeDiagnosticAttributes(input: Record<string, unknown> | un
     const result: Attributes = {};
     for (const [key, value] of Object.entries(input ?? {})) {
         const name = key.replace(/^diagnostics\./, '');
+        if (name === 'validation_reason' && typeof value === 'string' && validationReasons.has(value)) result[key] = value;
         if (diagnosticStrings.has(name) && typeof value === 'string' && staticIdentifier.test(value) && (name !== 'operation' || isDiagnosticOperation(value))) result[key] = value;
         if (diagnosticNumbers.has(name) && typeof value === 'number' && Number.isFinite(value) && value >= 0) result[key] = value;
         if (diagnosticBooleans.has(name) && typeof value === 'boolean') result[key] = value;

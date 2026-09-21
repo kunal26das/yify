@@ -46,6 +46,30 @@ function setGlobal(t, name, value) {
         : delete globalThis[name]);
 }
 
+test('movie 404 shows a missing movie without retry, but other endpoint 404s remain errors', async t => {
+    let calls = 0;
+    const outcomes = [];
+    const failures = [];
+    const {WebCatalogClient} = loadTypeScript('data/datasources/WebCatalogClient.ts');
+    const source = new WebCatalogClient({event() {}, start() {
+        return {finish: (outcome, attributes) => outcomes.push({outcome, attributes}),
+            fail: error => failures.push(error)};
+    }});
+    t.mock.method(globalThis, 'fetch', async () => {
+        calls++;
+        return Response.json({error: 'private upstream details'}, {status: 404});
+    });
+    await assert.rejects(source.getMovieDetails(42), {
+        name: 'MovieNotFoundError', message: 'This movie is no longer available in the catalog.',
+    });
+    assert.equal(calls, 1);
+    assert.equal(outcomes[0].outcome, 'empty');
+    assert.equal(failures.length, 0);
+    await assert.rejects(source.listMovies({page: 1}), /catalog is unavailable/);
+    assert.equal(calls, 2);
+    assert.equal(failures.length, 1);
+});
+
 test('catalog origin follows hosted previews and local development but keeps Pages and desktop on production', () => {
     const {webCatalogBaseUrl} = loadTypeScript('data/datasources/WebCatalogClient.ts');
     for (const [href, expected, desktop] of [

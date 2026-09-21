@@ -1,5 +1,5 @@
 import {router} from 'expo-router';
-import type {AnalyticsSink, Diagnostics, NewMoviesNotification, NewMoviesNotifier, Preferences, Quality} from '@/domain';
+import type {AnalyticsSink, Diagnostics, NetworkMonitor, NewMoviesNotification, NewMoviesNotifier, Preferences, Quality} from '@/domain';
 import {isWithinQuietHours, localNotificationDateKey, movieNotificationTarget} from '@/domain';
 import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryImpl';
 import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
@@ -11,6 +11,7 @@ import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {MovieNotificationCoordinator, type ScheduledMovieNotification} from './MovieNotificationCoordinator';
 
 let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
+let network: NetworkMonitor | undefined;
 let analytics: AnalyticsSink | undefined;
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 const settingsStore = new PersistentCache('settings');
@@ -84,7 +85,7 @@ const coordinator = new MovieNotificationCoordinator({
     store: new PersistentCache('new-movies'),
     preferences: currentPreferences,
     fetchMovies: async (quality: Quality) => {
-        const repository = new WebMovieRepositoryImpl(new WebCatalogClient(diagnostics));
+        const repository = new WebMovieRepositoryImpl(new WebCatalogClient(diagnostics, undefined, undefined, network));
         return (await repository.listMovies({page: 1, limit: 50, quality})).movies;
     },
     watchlist: () => new WatchlistRepositoryImpl(new PersistentCache('watchlist')).getAll(),
@@ -166,8 +167,9 @@ export async function registerNewMoviesTask(): Promise<void> {
 }
 
 export class NewMoviesNotifierImpl implements NewMoviesNotifier {
-    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS, tracking?: AnalyticsSink) {
+    constructor(implementation: Diagnostics = NOOP_DIAGNOSTICS, tracking?: AnalyticsSink, connectivity?: NetworkMonitor) {
         diagnostics = implementation;
+        network = connectivity;
         analytics = tracking;
     }
     hasPermission() { return hasNotificationPermission(); }

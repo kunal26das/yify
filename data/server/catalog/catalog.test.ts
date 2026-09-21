@@ -337,6 +337,43 @@ test('upstream failures expose no provider details or messages', async () => {
     }
 });
 
+test('removed YTS movie becomes a safe public or authorized subscriber 404 without a raw envelope', async () => {
+    const requests = loadTypeScript('data/datasources/JsonRequest.ts');
+    const {createCatalogHandler: handlerWithRequests} = loadTypeScript('data/server/catalog/handler.ts', {
+        '../../datasources/JsonRequest': requests,
+    });
+    const {parseYtsResponse} = loadTypeScript('data/datasources/YtsApiDataSource.ts', {'./JsonRequest': requests});
+    for (const subscriber of [false, true]) {
+        const {repositories} = fixtures({async getMovieDetails() {
+            return parseYtsResponse({status: 'ok', data: {movie: {id: 0, title: null, genres: null}}}, 'movie_details.json');
+        }});
+        let authorized = 0;
+        const handler = handlerWithRequests(repositories, subscriber ? {
+            subscriber: {authorize: async () => { authorized++; return {uid: 'test-owner'}; }},
+        } : {});
+        const response = await handler(request('movie', 'id=10'), 'movie');
+        assert.equal(response.status, 404);
+        assert.equal(authorized, subscriber ? 1 : 0);
+        assert.equal(response.headers.get('Cache-Control'), subscriber ? 'private, no-store' : 'no-store');
+        assert.deepEqual(await response.json(), {error: 'This movie is no longer available in the catalog.'});
+    }
+});
+
+test('an arbitrary provider 404 or malformed movie still returns an upstream failure', async () => {
+    const requests = loadTypeScript('data/datasources/JsonRequest.ts');
+    const {createCatalogHandler: handlerWithRequests} = loadTypeScript('data/server/catalog/handler.ts', {
+        '../../datasources/JsonRequest': requests,
+    });
+    for (const error of [new requests.HttpResponseError(404), new requests.InvalidResponseError(),
+        Object.assign(new Error('private response'), {name: 'MovieNotFoundError'})]) {
+        const {repositories} = fixtures({async getMovieDetails() { throw error; }});
+        const handler = handlerWithRequests(repositories);
+        const response = await handler(request('movie', 'id=10'), 'movie');
+        assert.equal(response.status, 502);
+        assert.deepEqual(await response.json(), {error: 'Catalog is temporarily unavailable'});
+    }
+});
+
 test('timeouts return a generic 504 and do not return late provider results', async () => {
     const {repositories} = fixtures();
     let resolve: (value: unknown) => void = () => {};

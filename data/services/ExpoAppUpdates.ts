@@ -1,4 +1,4 @@
-import {AppState} from 'react-native';
+import {AppState, Platform} from 'react-native';
 import * as Updates from 'expo-updates';
 
 import {IDLE_UPDATE_STATUS, type AppUpdates, type Diagnostics, type NetworkMonitor, type UpdateStatus} from '@/domain';
@@ -63,6 +63,9 @@ export class ExpoAppUpdates implements AppUpdates {
     }
 
     restart(): void {
+        // Shipped Android binaries can abort in Reanimated callbacks during live runtime teardown.
+        // Expo applies downloaded updates on the next cold start without that unsafe reload.
+        if (Platform.OS === 'android') return;
         if (this.reloading || this.status.state !== 'ready') return;
         this.reloading = true;
         this.publish({state: 'installing', progress: 1});
@@ -83,6 +86,8 @@ export class ExpoAppUpdates implements AppUpdates {
         }
         this.syncing = true;
         try {
+            if (this.network?.refresh) await this.network.refresh().catch(() => this.network?.isOnline());
+            if (AppState.currentState !== 'active' || this.network?.isOnline() === false) return;
             this.publish({state: 'checking', progress: 0});
 
             const check = await this.check();
@@ -103,7 +108,7 @@ export class ExpoAppUpdates implements AppUpdates {
                 this.downloadFailed = false;
                 this.publish(fetched.isNew ? {state: 'ready', progress: 1} : IDLE_UPDATE_STATUS);
             } catch (error) {
-                this.finishFailure(download, error);
+                await this.finishFailure(download, error);
                 if (AppState.currentState !== 'active' || this.network?.isOnline() === false) {
                     this.publish(IDLE_UPDATE_STATUS);
                     return;
@@ -128,14 +133,15 @@ export class ExpoAppUpdates implements AppUpdates {
             span.finish(result.isAvailable ? 'ok' : 'empty');
             return result;
         } catch (error) {
-            this.finishFailure(span, error);
+            await this.finishFailure(span, error);
             return null;
         }
     }
 
-    private finishFailure(span: ReturnType<Diagnostics['start']>, error: unknown): void {
+    private async finishFailure(span: ReturnType<Diagnostics['start']>, error: unknown): Promise<void> {
         const code = updateErrorCode(error);
         const interrupted = code === 'ERR_UPDATES_CHECK' || code === 'ERR_UPDATES_FETCH';
+        if (interrupted && this.network?.refresh) await this.network.refresh().catch(() => this.network?.isOnline());
         const reason = this.network?.isOnline() === false ? 'offline' :
             AppState.currentState !== 'active' ? 'background' : undefined;
         if (interrupted && reason === 'offline') span.finish('unavailable', {error_code: code, reason});

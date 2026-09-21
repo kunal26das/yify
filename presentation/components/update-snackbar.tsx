@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useSyncExternalStore} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {IDLE_UPDATE_STATUS, type UpdateStatus} from '@/domain';
@@ -24,11 +24,14 @@ export function UpdateSnackbar() {
 
     const ready = state === 'ready';
     const failed = state === 'error';
+    // Android's current animation runtime can crash during a live React reload.
+    // Downloaded updates are picked up by Expo on the next cold app start.
+    const canRestart = Platform.OS !== 'android';
 
     const message = failed
         ? "Couldn't fetch the latest update"
         : ready
-            ? 'Update ready — restart to apply'
+            ? canRestart ? 'Update ready — restart to apply' : 'Update downloaded. Applies on next app start.'
             : state === 'installing'
                 ? 'Installing update…'
                 : progress > 0
@@ -55,7 +58,7 @@ export function UpdateSnackbar() {
                     />
                 </Animated.View>
                 <View style={styles.body}>
-                    <ThemedText style={styles.message} numberOfLines={1}>
+                    <ThemedText style={styles.message}>
                         {message}
                     </ThemedText>
                     {state === 'downloading' && progress > 0 ? (
@@ -76,7 +79,7 @@ export function UpdateSnackbar() {
                     ) : null}
                 </View>
 
-                {ready ? (
+                {ready && canRestart ? (
                     <PressableScale
                         onPress={() => appUpdates.restart()}
                         hitSlop={8}

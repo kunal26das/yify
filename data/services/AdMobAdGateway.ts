@@ -208,9 +208,28 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private requestNext(): void {
-        if (!this.initialized || !this.canRequestAds) return;
-        if (!isForeground() || this.options.network?.isOnline() === false) return;
-        if (this.loading || this.loaded || this.showing) return;
+        if (!this.canPreload()) return;
+        if (this.options.network?.refresh) {
+            this.loading = true;
+            void this.options.network.refresh()
+                .catch(() => this.options.network?.isOnline())
+                .then(() => {
+                    this.loading = false;
+                    this.loadNext();
+                });
+        } else this.loadNext();
+    }
+
+    private canPreload(): boolean {
+        const entitlement = this.options.entitlement();
+        return this.initialized && this.canRequestAds &&
+            !(entitlement.ready && entitlement.adsRemoved) &&
+            isForeground() && this.options.network?.isOnline() !== false &&
+            !this.loading && !this.loaded && !this.showing;
+    }
+
+    private loadNext(): void {
+        if (!this.canPreload()) return;
         const unitId = this.resolveUnitId();
         this.clearRetry();
         this.teardownAd();
@@ -223,39 +242,53 @@ export class AdMobAdGateway implements AdGateway {
             impressionId: `${unitId}:${Date.now()}:${this.requestSeq}`,
             placement: AD_PLACEMENT,
         };
-        const ad = InterstitialAd.createForAdRequest(unitId);
-        this.interstitial = ad;
-        this.adTracking = this.observeImpression(ad, impression);
         let loadReported = false;
         let loadFailed = false;
-        const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
-            if (loadReported || loadFailed) return;
-            loadReported = true;
-            span.finish();
-            this.loading = false;
-            this.loaded = true;
-            this.failures = 0;
-            this.options.adRevenue.trackLoaded(impression);
-        });
-        const offError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+        const fail = (error: unknown) => {
             if (loadFailed) return;
             loadFailed = true;
-            finishAdFailure(span, error, this.options.network?.isOnline());
-            this.loading = false;
             this.loaded = false;
-            this.failures += 1;
-            this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'load'});
-            // The native bridge exposes symbolic errors, not AdMob's numeric code.
-            if (!loadReported) {
-                this.options.adRevenue.trackFailedToLoad({adUnitId: unitId, placement: AD_PLACEMENT});
-            }
-            this.scheduleRetry();
-        });
-        this.unsubscribeAd = () => {
-            offLoaded();
-            offError();
+            const failed = () => {
+                finishAdFailure(span, error, this.options.network?.isOnline());
+                this.loading = false;
+                this.failures += 1;
+                this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'load'});
+                // The native bridge exposes symbolic errors, not AdMob's numeric code.
+                if (!loadReported) {
+                    this.options.adRevenue.trackFailedToLoad({adUnitId: unitId, placement: AD_PLACEMENT});
+                }
+                this.teardownAd();
+                this.scheduleRetry();
+            };
+            // Android may deliver network callbacks late while suspended. Confirm connectivity
+            // before treating the SDK's generic internal error as a provider failure.
+            if (adErrorCode(error) === 'internal_error' && this.options.network?.refresh) {
+                this.loading = true;
+                void this.options.network.refresh().catch(() => this.options.network?.isOnline()).then(failed);
+            } else failed();
         };
-        ad.load();
+        try {
+            const ad = InterstitialAd.createForAdRequest(unitId);
+            this.interstitial = ad;
+            this.adTracking = this.observeImpression(ad, impression);
+            const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
+                if (loadReported || loadFailed) return;
+                loadReported = true;
+                span.finish();
+                this.loading = false;
+                this.loaded = true;
+                this.failures = 0;
+                this.options.adRevenue.trackLoaded(impression);
+            });
+            const offError = ad.addAdEventListener(AdEventType.ERROR, fail);
+            this.unsubscribeAd = () => {
+                offLoaded();
+                offError();
+            };
+            ad.load();
+        } catch (error) {
+            fail(error);
+        }
     }
 
     private observeImpression(ad: InterstitialAd, impression: AdImpression): AdTracking {
@@ -416,6 +449,8 @@ export class AdMobAdGateway implements AdGateway {
 
     private scheduleRetry(): void {
         this.clearRetry();
+        const entitlement = this.options.entitlement();
+        if (entitlement.ready && entitlement.adsRemoved) return;
         if (!isForeground() || this.options.network?.isOnline() === false) return;
         const index = Math.min(Math.max(this.failures - 1, 0), LOAD_BACKOFF_MS.length - 1);
         this.retryTimer = setTimeout(() => {
