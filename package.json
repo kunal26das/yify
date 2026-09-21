@@ -107,7 +107,7 @@
   },
   "devDependencies": {
     "@types/react": "19.3.0",
-    "electron": "44.4.1",
+    "electron": "44.4.3",
     "electron-builder": "26.15.3",
     "error-stack-parser": "2.1.4",
     "eslint": "9.39.3",
