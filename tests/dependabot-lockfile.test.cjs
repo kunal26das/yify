@@ -195,6 +195,117 @@ test('publish retries a failed dispatch without creating another commit, includi
   assert.equal(state.writes.filter((write) => write.path.endsWith('/dispatches')).length, 2);
 });
 
+for (const scope of ['root', 'release']) test(`${scope} publication waits for the exact new head after GitHub returns the old head`, async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture({ scope });
+  const directory = await artifact(t, state);
+  const oldPr = structuredClone(state.pr);
+  const waits = [];
+  let readsAfterCommit = 0;
+  const api = async (method, path, body) => {
+    if (method === 'GET' && path === `repos/${REPOSITORY}/pulls/123` && state.writes.some((write) => write.path === 'graphql')) {
+      readsAfterCommit += 1;
+      if (readsAfterCommit < 3) return structuredClone(oldPr);
+    }
+    if (path.endsWith('/dispatches')) assert.equal(readsAfterCommit, 3);
+    return state.api(method, path, body);
+  };
+  assert.deepEqual(await publish({ ...state, api, directory, wait: async (ms) => waits.push(ms) }), { changed: true, new_sha: REFRESHED });
+  assert.deepEqual(waits, [1000, 2000]);
+  assert.equal(state.writes.filter((write) => write.path === 'graphql').length, 1);
+  assert.equal(state.writes.filter((write) => write.path.endsWith('/dispatches')).length, 1);
+  assert.equal(state.writes.at(-1).body.inputs.dependabot_head, REFRESHED);
+});
+
+test('head propagation timeout is bounded and a rerun recovers without another commit', async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture();
+  const directory = await artifact(t, state);
+  const oldPr = structuredClone(state.pr);
+  const waits = [];
+  let readsAfterCommit = 0;
+  const api = async (method, path, body) => {
+    if (method === 'GET' && path === `repos/${REPOSITORY}/pulls/123` && state.writes.some((write) => write.path === 'graphql')) {
+      readsAfterCommit += 1;
+      return structuredClone(oldPr);
+    }
+    return state.api(method, path, body);
+  };
+  await assert.rejects(() => publish({ ...state, api, directory, wait: async (ms) => waits.push(ms) }), /Rerun this failed job/);
+  assert.equal(readsAfterCommit, 6);
+  assert.deepEqual(waits, [1000, 2000, 4000, 8000, 15000]);
+  assert.equal(state.writes.length, 1);
+  state.env.GITHUB_RUN_ATTEMPT = '2'; state.env.SOURCE_RUN_ATTEMPT = '1';
+  assert.deepEqual(await publish({ ...state, directory }), { changed: true, new_sha: REFRESHED });
+  assert.equal(state.writes.filter((write) => write.path === 'graphql').length, 1);
+  assert.equal(state.writes.filter((write) => write.path.endsWith('/dispatches')).length, 1);
+});
+
+for (const [label, mutate] of [
+  ['an unrelated head', (pr) => { pr.head.sha = 'd'.repeat(40); }],
+  ['a missing head', (pr) => { delete pr.head.sha; }],
+  ['a closed pull request', (pr) => { pr.state = 'closed'; }],
+  ['a merged pull request', (pr) => { pr.merged = true; }],
+  ['a draft pull request', (pr) => { pr.draft = true; }],
+  ['another author', (pr) => { pr.user.login = 'someone'; }],
+  ['another branch', (pr) => { pr.head.ref = 'dependabot/another'; }],
+  ['a fork', (pr) => { pr.head.repo.full_name = 'someone/yify'; }],
+  ['another base branch', (pr) => { pr.base.ref = 'dev'; }],
+  ['another base repository', (pr) => { pr.base.repo.full_name = 'someone/yify'; }],
+  ['another pull request', (pr) => { pr.number = 999; }],
+]) test(`head propagation immediately rejects ${label} without dispatching`, async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture();
+  const directory = await artifact(t, state);
+  const oldPr = structuredClone(state.pr);
+  const waits = [];
+  let readsAfterCommit = 0;
+  const api = async (method, path, body) => {
+    if (method === 'GET' && path === `repos/${REPOSITORY}/pulls/123` && state.writes.some((write) => write.path === 'graphql')) {
+      readsAfterCommit += 1;
+      if (readsAfterCommit === 1) return structuredClone(oldPr);
+      const changed = structuredClone(state.pr);
+      mutate(changed);
+      return changed;
+    }
+    return state.api(method, path, body);
+  };
+  await assert.rejects(() => publish({ ...state, api, directory, wait: async (ms) => waits.push(ms) }), /Pull request changed/);
+  assert.equal(readsAfterCommit, 2);
+  assert.deepEqual(waits, [1000]);
+  assert.equal(state.writes.length, 1);
+});
+
+test('a previously published head moving back to its source does not receive a propagation retry', async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture({ refreshed: true });
+  state.env.PR_HEAD_SHA = SOURCE;
+  const directory = await artifact(t, state);
+  let reads = 0;
+  const api = async (method, path, body) => {
+    const response = await state.api(method, path, body);
+    if (method === 'GET' && path === `repos/${REPOSITORY}/pulls/123` && ++reads > 1) response.head.sha = SOURCE;
+    return response;
+  };
+  await assert.rejects(() => publish({ ...state, api, directory, wait: async () => assert.fail('Must not retry a reverted published head.') }), /Pull request changed/);
+  assert.equal(reads, 2);
+  assert.equal(state.writes.length, 0);
+});
+
+test('head propagation does not retry GitHub request failures or repeat the commit', async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture();
+  const directory = await artifact(t, state);
+  const api = async (method, path, body) => {
+    if (method === 'GET' && path === `repos/${REPOSITORY}/pulls/123` && state.writes.some((write) => write.path === 'graphql')) {
+      throw new Error('GitHub request unavailable');
+    }
+    return state.api(method, path, body);
+  };
+  await assert.rejects(() => publish({ ...state, api, directory, wait: async () => assert.fail('Must not retry an API failure.') }), /GitHub request unavailable/);
+  assert.equal(state.writes.length, 1);
+});
+
 test('publish refuses a concurrent push rather than overwriting it', async (t) => {
   const { publish } = await helpers;
   const state = await fixture(); state.concurrentCommit = true;

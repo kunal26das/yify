@@ -1,12 +1,14 @@
 import { createHash } from 'node:crypto';
 import { appendFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 
 const SHA = /^[a-f0-9]{40}$/;
 const DIGEST = /^[a-f0-9]{64}$/;
 const INTEGER = /^[1-9][0-9]*$/;
 const TITLE = 'chore(deps): commit regenerated yarn.lock [dependabot skip]';
+const HEAD_PROPAGATION_DELAYS = [1000, 2000, 4000, 8000, 15000];
 const SCOPES = {
   root: { lockfile: 'yarn.lock', manifests: ['package.json', 'crashreporting/package.json'] },
   release: { lockfile: 'release/yarn.lock', manifests: ['release/package.json'] },
@@ -203,7 +205,23 @@ export async function capture({ env, directory = env.LOCKFILE_REPORT_DIR }) {
   return metadata;
 }
 
-export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR }) {
+async function waitForPublishedHead({ api, ctx, state, newSha, wait }) {
+  for (let attempt = 0; ; attempt += 1) {
+    const current = await api('GET', `repos/${ctx.repository}/pulls/${ctx.pr}`);
+    const unchanged = current.number === ctx.pr && current.state === 'open' && !current.merged && !current.draft &&
+      current.user?.login === 'dependabot[bot]' && current.head?.ref === state.branch && current.head?.repo?.full_name === ctx.repository &&
+      current.base?.ref === 'main' && current.base?.repo?.full_name === ctx.repository;
+    assert(unchanged, 'Pull request changed before follow-up CI could be dispatched.');
+    if (current.head.sha === newSha) return;
+    assert(!state.refreshed && current.head.sha === state.head,
+      'Pull request changed before follow-up CI could be dispatched.');
+    assert(attempt < HEAD_PROPAGATION_DELAYS.length,
+      'GitHub has not exposed the new lockfile commit on the pull request yet. Rerun this failed job to retry without creating another commit.');
+    await wait(HEAD_PROPAGATION_DELAYS[attempt]);
+  }
+}
+
+export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR, wait = delay }) {
   assert(directory, 'LOCKFILE_REPORT_DIR is required.');
   const ctx = context(env);
   const [original, regenerated, text] = await Promise.all([
@@ -241,10 +259,7 @@ export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR })
     newSha = response.data?.createCommitOnBranch?.commit?.oid;
     assert(SHA.test(newSha || ''), 'GitHub did not return a lockfile commit SHA.');
   }
-  // Re-read before dispatching; both the commit CAS and this guard reject concurrent pushes.
-  const current = await api('GET', `repos/${ctx.repository}/pulls/${ctx.pr}`);
-  assert(current.state === 'open' && current.head?.sha === newSha && current.head?.ref === state.branch && current.head?.repo?.full_name === ctx.repository,
-    'Pull request changed before follow-up CI could be dispatched.');
+  await waitForPublishedHead({ api, ctx, state, newSha, wait });
   await api('POST', `repos/${ctx.repository}/actions/workflows/ci.yml/dispatches`, {
     ref: state.branch, inputs: { dependabot_pr: String(ctx.pr), dependabot_head: newSha },
   });
