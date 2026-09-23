@@ -6,28 +6,7 @@ export ANDROID_HOME="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/s
 EMULATOR="${ANDROID_HOME}/emulator/emulator"
 ADB="${ANDROID_HOME}/platform-tools/adb"
 
-if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
-  if [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
-    export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-  elif command -v /usr/libexec/java_home &>/dev/null; then
-    export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || /usr/libexec/java_home -v 11 2>/dev/null || true)
-  fi
-  if [ -z "$JAVA_HOME" ]; then
-    for jdk in /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home \
-               /opt/homebrew/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home \
-               /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home; do
-      if [ -x "$jdk/bin/javac" ]; then
-        export JAVA_HOME="$jdk"
-        break
-      fi
-    done
-  fi
-  if [ -z "$JAVA_HOME" ] || [ ! -x "$JAVA_HOME/bin/javac" ]; then
-    echo "Java (JDK 17 or 11) not found. Install with: brew install openjdk@17"
-    echo "Or use Android Studio (it bundles a JDK)."
-    exit 1
-  fi
-fi
+source "$(dirname "$0")/android-java.sh"
 
 DEVICES=$("${ADB}" devices 2>/dev/null | grep -E 'emulator|device' | grep -v 'List of' || true)
 if [ -z "$DEVICES" ]; then

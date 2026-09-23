@@ -35,7 +35,7 @@ jobs:
       pull-requests: read
       actions: read
     outputs:
-      eligible: ${{ steps.inspect.outputs.head != '' }}
+      eligible: ${{ steps.inspect.outputs.eligible == 'true' }}
       pr: ${{ steps.inspect.outputs.pr }}
       head: ${{ steps.inspect.outputs.head }}
       source: ${{ steps.inspect.outputs.source }}
@@ -46,7 +46,7 @@ jobs:
         if: >-
           github.event.pull_request.user.login == 'dependabot[bot]' ||
           inputs.dependabot_pr != '' || inputs.dependabot_head != ''
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
@@ -67,18 +67,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Check exact dependency pins
+        run: node scripts/check-dependency-pins.mjs
 
       - name: Typecheck
         run: yarn typecheck
@@ -98,12 +101,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: yarn
@@ -129,12 +132,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
@@ -164,13 +167,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.dependabot-context.outputs.source || github.sha }}
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
@@ -239,7 +242,7 @@ jobs:
 
       - name: Save lockfile comparison
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.report.outputs.artifact_name }}
           path: ${{ runner.temp }}/dependabot-clean-install/
@@ -264,12 +267,12 @@ jobs:
     steps:
       # Only trusted main code and lockfile data enter this write-enabled job.
       - name: Checkout trusted automation
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
       - name: Download this run's lockfile report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ needs.dependabot-clean-install.outputs.artifact_name }}
           path: ${{ runner.temp }}/dependabot-clean-install
@@ -304,10 +307,15 @@ jobs:
     steps:
       # No PR code or dependency execution in this write-enabled job.
       - name: Checkout trusted automation
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
+      - name: Setup Node for the metadata verifier
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
       - name: Reverify the tested PR head
         id: inspect
         env:
@@ -317,10 +325,10 @@ jobs:
           ALLOW_MERGED: 'true'
         run: node scripts/dependabot-lockfile.mjs inspect
       - name: Checkout pinned Dependabot metadata verifier
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: dependabot/fetch-metadata
-          ref: 21025c705c08248db411dc16f3619e6b5f9ea21a
+          ref: 25dd0e34f4fe68f24cc83900b1fe3fe149efef98
           path: .github-tools/fetch-metadata
           persist-credentials: false
 

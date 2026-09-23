@@ -8,6 +8,7 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 20
+    versioning-strategy: increase
     groups:
       patch-updates:
         patterns: ["*"]
@@ -75,5 +76,20 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "expo-web-browser"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "react-native-google-mobile-ads"
-        versions: [">=16.4.0"]
+  - package-ecosystem: "npm"
+    directory: "/release"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      release-patches:
+        patterns: ["*"]
+        update-types: ["patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-updates:
+        patterns: ["*"]

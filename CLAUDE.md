@@ -25,9 +25,11 @@ Yify is an Expo / React Native app (iOS, Android, web, Electron desktop) over th
 `yarn test` and `yarn typecheck` include the package. Keep its dependencies in its own manifest
 and use the package name when importing it from the app.
 
-### `yarn lint` is currently broken
+### Validation and dependency compatibility
 
-The repo is pinned to `typescript@7.0.2` by deliberate choice, and `typescript-eslint` throws `typescript-eslint does not support TS 7.0` before any rule runs. **`yarn lint` fails at startup — it is not a signal about your code.** Use `npx tsc --noEmit` as the gate instead, and enforce the module boundaries below by reading imports rather than relying on ESLint to catch them.
+The app uses TypeScript 6 and ESLint 9 because the current Expo lint stack does not support TypeScript 7 or ESLint 10. The independently installed release console uses TypeScript 7. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
+
+Run `node scripts/check-expo-doctor.mjs` for Expo compatibility and `node scripts/check-dependency-pins.mjs` for exact versions. The doctor runs dependency checks with exclusions disabled. Deliberate deviations live in `scripts/expo-dependency-policy.json`; each pins the accepted version, Expo's recommendation and a compatibility reason. Update that policy only after validating an upgrade. Do not disable dependency checking globally.
 
 Tests are `node --test` with native TypeScript type-stripping — no Jest, no transform step. Test files live next to their subject as `*.test.ts` and are excluded from `tsconfig.json` and ESLint.
 
@@ -37,7 +39,7 @@ Four layers, each with a single public barrel (`index.ts`), wired only at the co
 
 > `domain` depends on nothing. `data` and `presentation` depend only on `domain`, never on each other. `app` may import `presentation`, `domain`, and **only** `data/di`.
 
-`eslint.config.js` encodes this as `import/no-restricted-paths` zones — read that file for the exact allowed edges even though the lint run itself is broken. Cross-module imports go through the barrel (`@/domain`, `@/presentation`, `@/data`), never a deep path. `@/*` maps to the repo root.
+`eslint.config.js` encodes this as `import/no-restricted-paths` zones — read that file for the exact allowed edges alongside the other validation gates. Cross-module imports go through the barrel (`@/domain`, `@/presentation`, `@/data`), never a deep path. `@/*` maps to the repo root.
 
 - **`domain/`** — entities, repository/service *ports* (interfaces only), and pure policies. Zero dependencies, zero platform code. `domain/Dependencies.ts` is the port bag the whole app is wired from. Unit tests live here because this is the only layer that is trivially testable.
 - **`data/`** — every implementation and every platform SDK. The only module allowed to name things `*Impl`. `data/index.ts` deliberately exports just two things: `createDependencies` and `bootstrap`. Keep it that way — widening this barrel is how `app` starts reaching into implementation detail.

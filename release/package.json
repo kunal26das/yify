@@ -15,32 +15,32 @@
   },
   "dependencies": {
     "app-info-parser": "1.1.6",
-    "eas-cli": "21.4.0",
-    "ink": "4.4.1",
-    "ink-select-input": "5.0.0",
-    "ink-text-input": "5.0.1",
-    "react": "18.2.0"
+    "eas-cli": "24.7.0",
+    "ink": "7.1.1",
+    "ink-select-input": "6.2.0",
+    "ink-text-input": "6.0.0",
+    "react": "19.3.0"
   },
   "devDependencies": {
-    "@types/node": "20.11.0",
-    "@types/react": "18.2.0",
-    "electron": "44.2.0",
-    "tsx": "4.20.6",
-    "typescript": "6.0.3"
+    "@types/node": "24.13.6",
+    "@types/react": "19.3.0",
+    "electron": "44.4.5",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
   },
   "resolutions": {
-    "protobufjs": "7.6.5",
-    "adm-zip": "0.6.0",
-    "parse-duration": "2.1.8",
+    "protobufjs": "7.6.6",
+    "adm-zip": "0.6.1",
+    "parse-duration": "2.1.9",
     "uuid": "11.1.1",
-    "esbuild": "0.25.12",
+    "esbuild": "0.28.2",
     "tar": "7.5.22",
-    "joi": "17.13.4",
-    "yaml": "2.9.0",
+    "joi": "17.13.8",
+    "yaml": "2.9.1",
     "ajv": "8.20.0",
     "eas-cli/minimatch": "5.1.9",
-    "nanoid": "3.3.18",
-    "diff": "8.0.3",
+    "nanoid": "3.3.19",
+    "diff": "8.0.4",
     "ts-deepmerge": "8.0.0"
   }
 }

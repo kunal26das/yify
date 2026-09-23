@@ -297,9 +297,12 @@ export class AdMobAdGateway implements AdGateway {
         let displayed = false;
         let clicked = false;
         let paid = false;
+        let disposed = false;
         let timer: ReturnType<typeof setTimeout> | null = null;
 
         const dispose = () => {
+            if (disposed) return;
+            disposed = true;
             if (timer != null) clearTimeout(timer);
             timer = null;
             offPaid();
@@ -307,9 +310,15 @@ export class AdMobAdGateway implements AdGateway {
             offClicked();
             offClosed();
             offError();
+            queueMicrotask(() => {
+                try {
+                    ad.destroy();
+                } catch {
+                }
+            });
         };
         const finish = () => {
-            if (finished) return;
+            if (finished || disposed) return;
             finished = true;
             offOpened();
             offClicked();

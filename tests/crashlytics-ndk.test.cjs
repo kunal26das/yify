@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const {test} = require('node:test');
-const withFirebaseCrashlytics = require('@react-native-firebase/crashlytics/app.plugin.js').default;
+const withFirebaseCrashlytics = require('@react-native-firebase/crashlytics/app.plugin.js');
 const withCrashlyticsNdk = require('../plugins/withCrashlyticsNdk');
 
 const repoRoot = path.resolve(__dirname, '..');

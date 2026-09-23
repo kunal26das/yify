@@ -114,7 +114,7 @@ export async function inspect({ api, env, allowPublishedHead = false }) {
     pr.head?.repo?.full_name === ctx.repository && pr.base?.repo?.full_name === ctx.repository && pr.base.ref === 'main' &&
     typeof pr.head.ref === 'string' && pr.head.ref.startsWith('dependabot/') && !/[\r\n]/.test(pr.head.ref),
   'Pull request is not an open, same-repository Dependabot update targeting main.');
-  assert([1, 2].includes(pr.commits), 'Only an original Dependabot commit and one lockfile refresh are allowed.');
+  assert(Number.isInteger(pr.commits) && pr.commits > 0, 'The pull request commit count is invalid.');
   const commits = await list(api, `repos/${ctx.repository}/pulls/${ctx.pr}/commits`);
   assert(commits.length === pr.commits && commits.at(-1).sha === pr.head.sha, 'Pull request changed while inspecting its commits.');
   const source = commits[0];
@@ -123,10 +123,22 @@ export async function inspect({ api, env, allowPublishedHead = false }) {
   const original = await api('GET', `repos/${ctx.repository}/commits/${source.sha}?per_page=100`);
   assert(original.sha === source.sha && original.author?.login === 'dependabot[bot]' && original.commit?.verification?.verified === true &&
     original.parents?.length === 1, 'The original commit identity, signature, or ancestry is invalid.');
-  assert(Array.isArray(original.files) && original.files.length > 0 && original.files.length <= 2 &&
+  assert(Array.isArray(original.files) && original.files.length > 0 &&
     new Set(original.files.map((file) => file.filename)).size === original.files.length && original.files.every((file) =>
-    ['package.json', 'yarn.lock'].includes(file.filename) && file.status === 'modified'),
-  'The original update must modify only package.json and/or yarn.lock.');
+    file.status === 'modified'), 'The original update must contain unique, modified dependency files.');
+  const files = original.files.map((file) => file.filename);
+  const rootUpdate = files.every((file) => ['package.json', 'yarn.lock', 'crashreporting/package.json'].includes(file));
+  const releaseUpdate = files.every((file) => ['release/package.json', 'release/yarn.lock'].includes(file));
+  const actionsUpdate = files.every((file) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(file));
+  assert(rootUpdate || releaseUpdate || actionsUpdate, 'The original update must modify only one supported dependency scope.');
+  if (!rootUpdate) {
+    assert(pr.head.sha === ctx.expected, 'Manual dependency update head changed; refusing stale results.');
+    assert(env.GITHUB_EVENT_NAME !== 'workflow_dispatch' || env.GITHUB_SHA === ctx.expected,
+      'The dispatched workflow is not running on the expected pull request head.');
+    return { eligible: false, pr: ctx.pr, head: pr.head.sha, source: source.sha, branch: pr.head.ref, refreshed: false,
+      pull_request: pr, scope: releaseUpdate ? 'release' : 'github-actions' };
+  }
+  assert([1, 2].includes(pr.commits), 'Only an original Dependabot commit and one lockfile refresh are allowed.');
   await regularLockfile(api, ctx.repository, original);
   let provenance;
   if (commits.length === 2) {
@@ -149,7 +161,7 @@ export async function inspect({ api, env, allowPublishedHead = false }) {
   if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
     assert(env.GITHUB_SHA === ctx.expected, 'The dispatched workflow is not running on the expected pull request head.');
   }
-  return { pr: ctx.pr, head: pr.head.sha, source: source.sha, branch: pr.head.ref, refreshed: commits.length === 2, pull_request: pr, provenance };
+  return { eligible: true, pr: ctx.pr, head: pr.head.sha, source: source.sha, branch: pr.head.ref, refreshed: commits.length === 2, pull_request: pr, provenance };
 }
 
 export async function capture({ env, directory = env.LOCKFILE_REPORT_DIR }) {
@@ -175,6 +187,7 @@ export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR })
   assert(regenerated.length > 0 && regenerated.length <= 10 * 1024 * 1024 && digest(regenerated) === metadata.lockfile_sha256,
     'Regenerated lockfile is empty, oversized, or differs from its recorded digest.');
   const state = await inspect({ api, env: { ...env, ALLOW_MERGED: 'false' }, allowPublishedHead: true });
+  assert(state.eligible, 'Only root workspace updates can publish regenerated lockfiles.');
   assert(state.source === metadata.source, 'Artifact refers to another Dependabot source.');
   const committed = await lockfile(api, ctx.repository, metadata.source);
   assert(original.equals(committed), 'Original artifact lockfile differs from the source commit.');
@@ -227,7 +240,7 @@ export async function main(mode, env = process.env) {
     const directory = await mkdtemp(join(env.RUNNER_TEMP, 'dependabot-event-'));
     const eventFile = join(directory, 'event.json');
     await writeFile(eventFile, JSON.stringify({ pull_request: state.pull_request }), { mode: 0o600 });
-    await writeOutputs(env, { pr: state.pr, head: state.head, source: state.source, branch: state.branch, refreshed: state.refreshed, event_file: eventFile });
+    await writeOutputs(env, { eligible: state.eligible, pr: state.pr, head: state.head, source: state.source, branch: state.branch, refreshed: state.refreshed, event_file: eventFile });
     return state;
   }
   if (mode === 'publish') {

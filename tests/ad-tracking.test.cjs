@@ -37,6 +37,7 @@ function fixture(t, {dev = false, show, load, diagnostics, online = true, refres
                     const listeners = new Map();
                     const ad = {
                         adUnitId,
+                        destroyCount: 0,
                         show: show ?? (async () => {}),
                         load: load ?? (() => {}),
                         addAdEventListener: (event, listener) => {
@@ -46,7 +47,11 @@ function fixture(t, {dev = false, show, load, diagnostics, online = true, refres
                             return () => set.delete(listener);
                         },
                         emit: (event, payload) => {
-                            for (const listener of [...(listeners.get(event) ?? [])]) listener(payload);
+                            listeners.get(event)?.forEach(listener => listener(payload));
+                        },
+                        destroy: () => {
+                            ad.destroyCount += 1;
+                            for (const set of listeners.values()) set.clear();
                         },
                         count: (event) => event
                             ? (listeners.get(event)?.size ?? 0)
@@ -158,6 +163,7 @@ test('load, display, click, and revenue share one impression and movie placement
     assert.deepEqual(tracked.slice(0, 3).map(({data}) => data), [context, context, context]);
     assert.deepEqual(tracked[3].data, {...context, value: 0.004567, currency: 'USD', precision: 'exact'});
     assert.equal(ad.count(), 0);
+    assert.equal(ad.destroyCount, 1);
     ads[1].emit('loaded');
     assert.notEqual(tracked.at(-1).data.impressionId, context.impressionId);
 });
@@ -173,9 +179,12 @@ test('load failure is reported once and never invents a numeric mediator code', 
         adUnitId: productionUnit, placement: 'movie_open',
     }}]);
     assert.equal(ad.count('paid'), 0);
+    await Promise.resolve();
+    assert.equal(ad.destroyCount, 1);
     t.mock.timers.tick(30000);
     assert.equal(ads.length, 2);
     assert.equal(ad.count(), 0);
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('invalid paid payloads are ignored without blocking a later valid zero revenue callback', async (t) => {
@@ -226,13 +235,19 @@ test('revenue arriving after close keeps the completed impression context and is
     await completion;
     const firstContext = tracked[0].data;
     ads[1].emit('loaded');
-    t.mock.timers.tick(30000);
+    t.mock.timers.tick(59999);
+    assert.equal(ad.destroyCount, 0);
     ad.emit('paid', paid());
     ad.emit('paid', paid());
     const revenue = tracked.filter(({method}) => method === 'trackImpression');
     assert.equal(revenue.length, 1);
     assert.equal(revenue[0].data.impressionId, firstContext.impressionId);
     assert.equal(ad.count(), 0);
+    await Promise.resolve();
+    assert.equal(ad.destroyCount, 1);
+    t.mock.timers.tick(60000);
+    await Promise.resolve();
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('missing paid callbacks release listeners after the post-close grace period', async (t) => {
@@ -244,8 +259,14 @@ test('missing paid callbacks release listeners after the post-close grace period
     ad.emit('closed');
     await completion;
     assert.equal(ad.count('paid'), 1);
-    t.mock.timers.tick(60000);
+    t.mock.timers.tick(59999);
+    await Promise.resolve();
+    assert.equal(ad.count('paid'), 1);
+    assert.equal(ad.destroyCount, 0);
+    t.mock.timers.tick(1);
+    await Promise.resolve();
     assert.equal(ad.count(), 0);
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('navigation timeout does not lose later clicks or revenue while the ad remains visible', async (t) => {
@@ -257,13 +278,18 @@ test('navigation timeout does not lose later clicks or revenue while the ad rema
     ad.emit('opened');
     t.mock.timers.tick(8000);
     assert.equal(await completion, true);
+    assert.equal(ad.destroyCount, 0);
     ad.emit('clicked');
     ad.emit('paid', paid());
+    await Promise.resolve();
+    assert.equal(ad.destroyCount, 0);
     ad.emit('closed');
     assert.deepEqual(tracked.map(({method}) => method), [
         'trackLoaded', 'trackDisplayed', 'trackOpened', 'trackImpression',
     ]);
     assert.equal(ad.count(), 0);
+    await Promise.resolve();
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('missing terminal callbacks cannot retain tracking listeners indefinitely', async (t) => {
@@ -276,6 +302,7 @@ test('missing terminal callbacks cannot retain tracking listeners indefinitely',
     t.mock.timers.tick(30 * 60 * 1000);
     await completion;
     assert.equal(ad.count(), 0);
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('show rejection is not mislabeled as a load failure and releases tracking after grace', async (t) => {
@@ -286,7 +313,9 @@ test('show rejection is not mislabeled as a load failure and releases tracking a
     assert.equal(await gateway.show('movie_open'), false);
     assert.deepEqual(tracked.map(({method}) => method), ['trackLoaded']);
     t.mock.timers.tick(60000);
+    await Promise.resolve();
     assert.equal(ad.count(), 0);
+    assert.equal(ad.destroyCount, 1);
 });
 
 test('development test ads remain available to RevenueCat native sandbox reporting', async (t) => {
@@ -466,6 +495,7 @@ test('a synchronous native ad load failure releases listeners and retries withou
     assert.equal(records.at(-1).error, error);
     assert.equal(records.at(-1).operation, 'ads.load');
     assert.equal(ads[0].count(), 0);
+    assert.equal(ads[0].destroyCount, 1);
     assert.equal(tracked.filter(entry => entry.method === 'trackFailedToLoad').length, 1);
     fail = false;
     t.mock.timers.tick(30000);

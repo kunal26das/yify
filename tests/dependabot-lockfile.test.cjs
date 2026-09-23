@@ -238,3 +238,59 @@ test('a validated fresh lockfile can repair a failing original frozen-lock insta
   assert.deepEqual(await publish({ ...state, directory }), { changed: true, new_sha: REFRESHED });
   assert.equal(state.writes.at(-1).body.inputs.dependabot_head, REFRESHED);
 });
+
+test('root lockfile automation includes the declared crash-reporting workspace', async () => {
+  const { inspect } = await helpers;
+  const state = await fixture();
+  state.originalCommit.files.push({ filename: 'crashreporting/package.json', status: 'modified' });
+  assert.equal((await inspect(state)).eligible, true);
+});
+
+for (const [scope, filenames] of [
+  ['release', ['release/package.json', 'release/yarn.lock']],
+  ['github-actions', ['.github/workflows/ci.yml', '.github/workflows/deploy-pages.yml']],
+]) test(`${scope} updates receive CI without entering root lockfile automation`, async () => {
+  const { inspect } = await helpers;
+  const state = await fixture();
+  state.originalCommit.files = filenames.map((filename) => ({ filename, status: 'modified' }));
+  const result = await inspect(state);
+  assert.equal(result.eligible, false);
+  assert.equal(result.scope, scope);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a release update cannot publish root lockfile artifacts', async (t) => {
+  const { publish } = await helpers;
+  const state = await fixture();
+  state.originalCommit.files = [{ filename: 'release/package.json', status: 'modified' }];
+  const directory = await artifact(t, state);
+  await assert.rejects(() => publish({ ...state, directory }), /Only root workspace/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('dependency scopes cannot be mixed or used to bypass exact head checks', async () => {
+  for (const mutate of [
+    (state) => state.originalCommit.files.push({ filename: 'release/package.json', status: 'modified' }),
+    (state) => { state.originalCommit.files = [{ filename: '.github/workflows/../script.js', status: 'modified' }]; },
+    (state) => { state.originalCommit.files = [{ filename: 'release/package.json', status: 'modified' }]; state.env.PR_HEAD_SHA = 'd'.repeat(40); },
+  ]) {
+    const state = await fixture();
+    mutate(state);
+    await rejectsInspection(state);
+  }
+});
+
+test('manual follow-up fixes in release and Actions PRs still receive CI without write eligibility', async () => {
+  const { inspect } = await helpers;
+  for (const filename of ['release/package.json', '.github/workflows/ci.yml']) {
+    const state = await fixture({ refreshed: true });
+    state.originalCommit.files = [{ filename, status: 'modified' }];
+    state.refreshedCommit.author.login = 'maintainer';
+    state.refreshedCommit.commit.verification.verified = false;
+    state.refreshedCommit.files = [{ filename: 'release/data/compatibility.ts', status: 'added' }];
+    const result = await inspect(state);
+    assert.equal(result.eligible, false);
+    assert.equal(result.head, REFRESHED);
+    assert.equal(state.writes.length, 0);
+  }
+});
