@@ -90,7 +90,15 @@
           }
         }
       ],
-      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/app",
+        {
+          "ios": {
+            "disableSPM": true
+          }
+        }
+      ],
+      "./plugins/withGoogleServicesVersion",
       "@react-native-firebase/crashlytics",
       "./plugins/withCrashlyticsNdk",
       "@react-native-firebase/auth",
@@ -109,7 +117,14 @@
       ],
       "@react-native-google-signin/google-signin",
       "./plugins/withAndroidRelease",
-      "./plugins/withGradleJvmArgs",
+      [
+        "./plugins/withGradleJvmArgs",
+        {
+          "properties": {
+            "RNGMA_ANDROID_BACKEND": "classic"
+          }
+        }
+      ],
       [
         "react-native-google-mobile-ads",
         {
@@ -152,7 +167,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "enableSceneSupport": true
           },
           "android": {
             "enableProguardInReleaseBuilds": true,

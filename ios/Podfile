@@ -25,6 +25,9 @@ ENV['EXPO_USE_PRECOMPILED_MODULES'] ||= '1'
 platform :ios, podfile_properties['ios.deploymentTarget'] || '16.4'
 
 prepare_react_native_project!
+# @generated begin @react-native-firebase/app-disableSPM - expo prebuild (DO NOT MODIFY) sync-09f7df9a837716fd4f96713144d8f77224017d89
+$RNFirebaseDisableSPM = true
+# @generated end @react-native-firebase/app-disableSPM
 
 target 'Yify' do
   use_expo_modules!

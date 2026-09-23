@@ -1,0 +1,82 @@
+name: Dependency pin watch
+
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-pin-watch
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Inspect dependency pin coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Test metadata handling
+        run: node --test tests/dependency-watch.test.cjs
+      - name: Read public package and verifier metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDENCY_WATCH_OUTPUT: ${{ runner.temp }}/dependency-watch
+        run: node scripts/dependency-watch.mjs
+      - name: Save dependency report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dependency-pin-report
+          path: ${{ runner.temp }}/dependency-watch/report.*
+          if-no-files-found: warn
+          retention-days: 30
+
+  track:
+    name: Maintain dependency review issue
+    needs: report
+    if: >-
+      always() && !cancelled() &&
+      github.repository == 'kunal26das/yify' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout trusted default-branch automation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Test trusted reporting code
+        run: node --test tests/dependency-watch.test.cjs
+      - name: Refresh public metadata and update the single tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDENCY_WATCH_OUTPUT: ${{ runner.temp }}/dependency-watch
+          DEPENDENCY_WATCH_PUBLISH: 'true'
+        run: node scripts/dependency-watch.mjs
+      - name: Save the published report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dependency-pin-tracking-report
+          path: ${{ runner.temp }}/dependency-watch/report.*
+          if-no-files-found: warn
+          retention-days: 30

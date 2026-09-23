@@ -1,0 +1,55 @@
+{
+  "sdkVersion": "57.0.0",
+  "packages": {
+    "@sentry/react-native": {
+      "version": "8.27.0",
+      "expected": "~7.11.0",
+      "reason": "Keep the Sentry 8 integration and its native crash symbol configuration."
+    },
+    "react": {
+      "version": "19.3.0",
+      "expected": "19.2.3",
+      "reason": "Keep React aligned with React DOM and the test renderer; native validation is required with RN 0.86.3."
+    },
+    "react-dom": {
+      "version": "19.3.0",
+      "expected": "19.2.3",
+      "reason": "Match React 19.3.0 for the web application."
+    },
+    "@types/react": {
+      "version": "19.3.0",
+      "expected": "~19.2.4",
+      "reason": "Match the installed React 19.3 API."
+    },
+    "react-native-gesture-handler": {
+      "version": "3.3.0",
+      "expected": "~2.32.0",
+      "reason": "Keep the existing Gesture Handler 3 integration with RN 0.86."
+    },
+    "react-native-reanimated": {
+      "version": "4.5.5",
+      "expected": "4.5.1",
+      "reason": "Reanimated 4.5 supports RN 0.86 and Worklets 0.11; the 4.7/0.13 upgrade fails Hosting server rendering because requestAnimationFrame is unavailable."
+    },
+    "react-native-worklets": {
+      "version": "0.11.4",
+      "expected": "0.10.1",
+      "reason": "Keep the RN 0.86-compatible partner for Reanimated 4.5.5; Worklets 0.13 fails Hosting server rendering because requestAnimationFrame is unavailable, and 0.12 also lacks the server fallback."
+    },
+    "react-native-safe-area-context": {
+      "version": "5.10.0",
+      "expected": "~5.7.0",
+      "reason": "Retain the current native safe-area integration."
+    },
+    "react-native-screens": {
+      "version": "4.28.0",
+      "expected": "~4.26.0",
+      "reason": "Retain the current Screens 4 integration with Expo Router."
+    },
+    "react-native-webview": {
+      "version": "14.0.1",
+      "expected": "13.16.1",
+      "reason": "Retain the current WebView 14 player integration."
+    }
+  }
+}

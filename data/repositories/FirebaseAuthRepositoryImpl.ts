@@ -7,7 +7,7 @@ import {
     reauthenticateWithCredential,
     signInWithCredential,
     signOut,
-    type FirebaseAuthTypes,
+    type User,
 } from '@react-native-firebase/auth';
 import {GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
 
@@ -23,7 +23,7 @@ const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || FALLBACK_W
 
 const SILENT = new Set<string>([statusCodes.SIGN_IN_CANCELLED, statusCodes.IN_PROGRESS]);
 
-function toAccount(user: FirebaseAuthTypes.User | null): Account | null {
+function toAccount(user: User | null): Account | null {
     if (user == null) return null;
     return {
         uid: user.uid,
@@ -189,7 +189,7 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
         return true;
     }
 
-    private async reauthenticate(user: FirebaseAuthTypes.User): Promise<boolean> {
+    private async reauthenticate(user: User): Promise<boolean> {
         const span = this.diagnostics.start('auth.reauthenticate', {provider: 'google'});
         if (!this.ensureConfigured()) { span.finish('unavailable'); return false; }
         try {

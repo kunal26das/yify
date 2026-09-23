@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.5",
-  "versionCode": 87,
+  "version": "1.8.6",
+  "versionCode": 88,
   "private": true,
   "workspaces": [
     "crashreporting"
@@ -46,13 +46,13 @@
     "@expo/log-box": "57.0.4",
     "@expo/metro-runtime": "57.0.16",
     "@expo/ui": "57.0.19",
-    "@expo/vector-icons": "15.0.2",
+    "@expo/vector-icons": "15.1.1",
     "@gorhom/bottom-sheet": "5.2.14",
-    "@react-native-firebase/analytics": "24.1.1",
-    "@react-native-firebase/app": "24.1.1",
-    "@react-native-firebase/auth": "24.1.1",
-    "@react-native-firebase/crashlytics": "24.1.1",
-    "@react-native-firebase/remote-config": "24.1.1",
+    "@react-native-firebase/analytics": "26.4.0",
+    "@react-native-firebase/app": "26.4.0",
+    "@react-native-firebase/auth": "26.4.0",
+    "@react-native-firebase/crashlytics": "26.4.0",
+    "@react-native-firebase/remote-config": "26.4.0",
     "@react-native-google-signin/google-signin": "16.1.5",
     "@revenuecat/purchases-js": "1.63.1",
     "@sentry/react-native": "8.27.0",
@@ -92,10 +92,10 @@
     "jose": "6.2.12",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-native": "0.86.2",
+    "react-native": "0.86.3",
     "react-native-gesture-handler": "3.3.0",
-    "react-native-google-mobile-ads": "16.3.4",
-    "react-native-purchases": "10.10.0",
+    "react-native-google-mobile-ads": "17.1.0",
+    "react-native-purchases": "10.10.1",
     "react-native-reanimated": "4.5.5",
     "react-native-safe-area-context": "5.10.0",
     "react-native-screens": "4.28.0",
@@ -106,31 +106,20 @@
     "react-native-youtube-iframe": "2.4.1"
   },
   "devDependencies": {
+    "@babel/core": "7.29.7",
+    "@react-native/metro-config": "0.86.3",
     "@types/react": "19.3.0",
-    "electron": "44.4.3",
+    "electron": "44.4.5",
     "electron-builder": "26.15.3",
     "error-stack-parser": "2.1.4",
     "eslint": "9.39.3",
     "eslint-config-expo": "57.0.2",
-    "eslint-import-resolver-typescript": "3.10.1",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "expo-doctor": "1.20.4",
     "react-test-renderer": "19.3.0",
     "typescript": "6.0.3"
   },
   "resolutions": {
     "**/xcode/uuid": "11.1.1"
-  },
-  "expo": {
-    "install": {
-      "exclude": [
-        "typescript",
-        "react-native-gesture-handler",
-        "react-native-webview",
-        "react-native-safe-area-context",
-        "react-native-screens",
-        "react-native-worklets",
-        "react",
-        "react-dom"
-      ]
-    }
   }
 }

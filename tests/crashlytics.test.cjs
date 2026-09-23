@@ -24,9 +24,11 @@ test('the actual RNFB handler receives the fatal marker and individual JavaScrip
     Object.defineProperty(globalThis, 'ErrorUtils', {value: errorUtils, configurable: true});
     try {
         const sdk = loadTypeScript('node_modules/@react-native-firebase/crashlytics/lib/handlers.ts', {
-            '.': {firebase: {app: () => ({analytics: () => ({
-                logEvent: async (name, params) => nativeEvents.push({kind: 'analytics', name, params}),
-            })})}},
+            '@react-native-firebase/app': {getApp: () => ({name: '[DEFAULT]'})},
+            '@react-native-firebase/analytics': {
+                getAnalytics: app => ({app}),
+                logEvent: (analytics, name, params) => nativeEvents.push({kind: 'analytics', name, params}),
+            },
             '@react-native-firebase/app/dist/module/common': {
                 isError: value => value instanceof Error,
                 once: fn => fn,

@@ -2,8 +2,6 @@ import {
   fetchAndActivate,
   getRemoteConfig,
   getString,
-  setConfigSettings,
-  setDefaults,
 } from '@react-native-firebase/remote-config';
 
 import type {AppConfig, Diagnostics} from '@/domain';
@@ -66,14 +64,15 @@ export class RemoteAppConfig implements AppConfig {
     const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});
     try {
       const rc = getRemoteConfig();
-      await setConfigSettings(rc, {
+      rc.settings = {
+        ...rc.settings,
         minimumFetchIntervalMillis: __DEV__ ? 0 : 60 * 60 * 1000,
-      });
-      await setDefaults(rc, {
+      };
+      rc.defaultConfig = {
         [API_BASE_URL_KEY]: DEFAULT_BASE_URL,
         [TMDB_API_KEY]: '',
         [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
-      });
+      };
       const fetched = await Promise.race([
         fetchAndActivate(rc).then(() => true),
         new Promise<boolean>((resolve) => setTimeout(() => resolve(false), CONFIG_TIMEOUT_MS)),

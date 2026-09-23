@@ -100,15 +100,26 @@ test('remote config retains defaults after a fetch failure and reports it only o
     t.after(() => { if (previousDev === undefined) delete global.__DEV__; else global.__DEV__ = previousDev; });
     const failure = new Error('remote config failed with private details');
     const {diagnostics, spans} = recorder();
+    const remoteConfig = {settings: {fetchTimeoutMillis: 60000}, defaultConfig: {}};
+    let fetches = 0;
     const {RemoteAppConfig} = loadTypeScript('data/services/RemoteAppConfig.ts', {
         '@react-native-firebase/remote-config': {
-            getRemoteConfig: () => ({}), setConfigSettings: async () => {}, setDefaults: async () => {},
-            fetchAndActivate: async () => { throw failure; }, getString: () => '',
+            getRemoteConfig: () => remoteConfig,
+            fetchAndActivate: async (instance) => {
+                fetches += 1;
+                assert.equal(instance, remoteConfig);
+                assert.equal(instance.settings.minimumFetchIntervalMillis, 3600000);
+                assert.equal(instance.settings.fetchTimeoutMillis, 60000);
+                assert.ok(Object.keys(instance.defaultConfig).length > 0);
+                throw failure;
+            },
+            getString: (instance, key) => instance.defaultConfig[key] ?? '',
         },
     });
     const config = new RemoteAppConfig(diagnostics);
     await Promise.all([config.ready(), config.ready()]);
     assert.equal(spans.length, 1);
+    assert.equal(fetches, 1);
     assert.equal(spans[0].error, failure);
     assert.match(config.getApiBaseUrl(), /^https:\/\//);
 });

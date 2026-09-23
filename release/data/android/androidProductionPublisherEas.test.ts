@@ -21,9 +21,9 @@ const expectedSubmission = {
 };
 const expectedBuild = {
     id: BUILD_ID, status: 'IN_QUEUE', platform: 'ANDROID', distribution: 'STORE',
-    buildProfile: 'production', channel: 'Production', appVersion: '1.7.5',
-    appBuildVersion: '77', runtimeVersion: '1.7.5',
-    project: {id: PROJECT_ID, slug: 'yify', ownerAccount: {name: 'kunal26das'}},
+    buildProfile: 'production', updateChannel: {name: 'Production'}, appVersion: '1.7.5',
+    appBuildVersion: '77', runtime: {version: '1.7.5'},
+    app: {id: PROJECT_ID, slug: 'yify', ownerAccount: {name: 'kunal26das'}},
     submissions: [expectedSubmission],
 };
 
@@ -210,10 +210,13 @@ for (const status of ['AWAITING_BUILD', 'IN_QUEUE', 'IN_PROGRESS', 'FINISHED']) 
 
 for (const [name, value] of [
     ['status', 'CANCELED'], ['status', 'PENDING_CANCEL'], ['status', 'ERRORED'], ['status', 'UNKNOWN'], ['platform', 'IOS'],
-    ['distribution', 'INTERNAL'], ['buildProfile', 'preview'], ['channel', 'Staging'],
-    ['appVersion', '1.7.4'], ['appBuildVersion', '76'], ['runtimeVersion', '1.7.4'],
+    ['distribution', 'INTERNAL'], ['buildProfile', 'preview'], ['updateChannel', {name: 'Staging'}],
+    ['updateChannel', null], ['updateChannel', {}],
+    ['appVersion', '1.7.4'], ['appBuildVersion', '76'], ['runtime', {version: '1.7.4'}],
+    ['runtime', null], ['runtime', {}],
     ['appBuildVersion', ['77']],
-    ['id', 'invalid-id'], ['project', {id: 'another-project'}],
+    ['id', 'invalid-id'], ['app', {id: 'another-project'}], ['app', null],
+    ['app', {id: PROJECT_ID}], ['app', {id: PROJECT_ID, slug: 'yify', ownerAccount: {name: ''}}],
 ] as const) {
     test(`does not confirm a build with mismatched ${name}: ${JSON.stringify(value)}`, async (t) => {
         const f = fixture(t, {build: {[name]: value}});
@@ -222,6 +225,17 @@ for (const [name, value] of [
         assert.ok(f.lines.some((line) => /Remote work may already exist/.test(line.text)));
     });
 }
+
+test('legacy flat build fields do not substitute for the pinned CLI receipt fields', async (t) => {
+    const {updateChannel, runtime, app, ...build} = expectedBuild;
+    const output = JSON.stringify([{
+        ...build, channel: updateChannel.name, runtimeVersion: runtime.version, project: app,
+    }]);
+    const f = fixture(t, {output});
+    assert.equal((await f.release()).ok, false);
+    assert.equal(f.calls.length, 1);
+    assert.ok(f.lines.some((line) => /Remote work may already exist/.test(line.text)));
+});
 
 for (const submissions of [
     undefined, null, [], [expectedSubmission, expectedSubmission], [null],

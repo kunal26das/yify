@@ -35,7 +35,10 @@ jobs:
       pull-requests: read
       actions: read
     outputs:
-      eligible: ${{ steps.inspect.outputs.head != '' }}
+      eligible: ${{ steps.inspect.outputs.eligible == 'true' }}
+      automerge: ${{ steps.inspect.outputs.automerge == 'true' }}
+      scope: ${{ steps.inspect.outputs.scope }}
+      lockfile: ${{ steps.inspect.outputs.lockfile }}
       pr: ${{ steps.inspect.outputs.pr }}
       head: ${{ steps.inspect.outputs.head }}
       source: ${{ steps.inspect.outputs.source }}
@@ -46,7 +49,7 @@ jobs:
         if: >-
           github.event.pull_request.user.login == 'dependabot[bot]' ||
           inputs.dependabot_pr != '' || inputs.dependabot_head != ''
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
@@ -59,6 +62,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.dependabot_pr }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.dependabot_head }}
+          ALLOW_MANUAL_DEPENDENCY_UPDATES: 'true'
         run: node scripts/dependabot-lockfile.mjs inspect
 
   check:
@@ -67,18 +71,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Check exact dependency pins
+        run: node scripts/check-dependency-pins.mjs
 
       - name: Typecheck
         run: yarn typecheck
@@ -98,12 +105,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
           cache: yarn
@@ -129,12 +136,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dependabot_head || github.sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
@@ -150,9 +157,15 @@ jobs:
         run: yarn test
         working-directory: release
 
+      - name: Build
+        run: yarn build
+        working-directory: release
+
   dependabot-clean-install:
-    name: Dependabot clean reinstall
+    name: Dependabot clean reinstall (${{ needs.dependabot-context.outputs.scope || 'root' }})
     needs: dependabot-context
+    env:
+      DEPENDENCY_SCOPE: ${{ needs.dependabot-context.outputs.scope || 'root' }}
     outputs:
       artifact_name: ${{ steps.report.outputs.artifact_name }}
       source_run_attempt: ${{ steps.report.outputs.source_run_attempt }}
@@ -164,13 +177,13 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.dependabot-context.outputs.source || github.sha }}
           persist-credentials: false
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
 
@@ -179,28 +192,56 @@ jobs:
         run: |
           LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
           mkdir -p "$LOCKFILE_REPORT_DIR"
-          cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
-          rm -rf -- node_modules crashreporting/node_modules yarn.lock
-          yarn install --non-interactive
+          node scripts/check-dependency-pins.mjs
+          case "$DEPENDENCY_SCOPE" in
+            root)
+              cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
+              rm -rf -- node_modules crashreporting/node_modules yarn.lock
+              yarn install --non-interactive
+              ;;
+            release)
+              cp release/yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
+              rm -rf -- release/node_modules release/yarn.lock
+              yarn --cwd release install --non-interactive
+              ;;
+            *) exit 1 ;;
+          esac
 
       - name: Typecheck freshly resolved dependencies
+        if: env.DEPENDENCY_SCOPE == 'root'
         run: yarn typecheck
 
       - name: Test freshly resolved dependencies
+        if: env.DEPENDENCY_SCOPE == 'root'
         run: yarn test
 
       - name: Check Expo dependency compatibility
+        if: env.DEPENDENCY_SCOPE == 'root'
         run: node scripts/check-expo-doctor.mjs
 
       - name: Check fresh Hosting export
+        if: env.DEPENDENCY_SCOPE == 'root'
         run: |
           yarn export:hosting
           node scripts/check-web-export.mjs dist-hosting --server
 
       - name: Check fresh Pages export
+        if: env.DEPENDENCY_SCOPE == 'root'
         run: |
           yarn export:web
           node scripts/check-web-export.mjs dist --static
+
+      - name: Typecheck freshly resolved release console
+        if: env.DEPENDENCY_SCOPE == 'release'
+        run: yarn --cwd release typecheck
+
+      - name: Test freshly resolved release console
+        if: env.DEPENDENCY_SCOPE == 'release'
+        run: yarn --cwd release test
+
+      - name: Build freshly resolved release console
+        if: env.DEPENDENCY_SCOPE == 'release'
+        run: yarn --cwd release build
 
       - name: Report regenerated lockfile
         id: report
@@ -210,14 +251,19 @@ jobs:
         run: |
           LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
           mkdir -p "$LOCKFILE_REPORT_DIR"
-          echo "artifact_name=dependabot-clean-install-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+          case "$DEPENDENCY_SCOPE" in
+            root) lockfile_path=yarn.lock ;;
+            release) lockfile_path=release/yarn.lock ;;
+            *) exit 1 ;;
+          esac
+          echo "artifact_name=dependabot-clean-install-$DEPENDENCY_SCOPE-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
           echo "source_run_attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
-          printf '## Dependabot clean reinstall\n\nInstall: %s.\n\n' "$REINSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f "$LOCKFILE_REPORT_DIR/original-yarn.lock" ] && [ -f yarn.lock ]; then
-            cp yarn.lock "$LOCKFILE_REPORT_DIR/regenerated-yarn.lock"
+          printf '## Dependabot clean reinstall (%s)\n\nInstall: %s.\n\n' "$DEPENDENCY_SCOPE" "$REINSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$LOCKFILE_REPORT_DIR/original-yarn.lock" ] && [ -f "$lockfile_path" ]; then
+            cp "$lockfile_path" "$LOCKFILE_REPORT_DIR/regenerated-yarn.lock"
             diff_status=0
-            diff -u --label a/yarn.lock --label b/yarn.lock \
-              "$LOCKFILE_REPORT_DIR/original-yarn.lock" yarn.lock \
+            diff -u --label "a/$lockfile_path" --label "b/$lockfile_path" \
+              "$LOCKFILE_REPORT_DIR/original-yarn.lock" "$lockfile_path" \
               > "$LOCKFILE_REPORT_DIR/yarn.lock.patch" || diff_status=$?
             if [ "$diff_status" -gt 1 ]; then exit "$diff_status"; fi
             if [ "$diff_status" -eq 0 ]; then
@@ -239,7 +285,7 @@ jobs:
 
       - name: Save lockfile comparison
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.report.outputs.artifact_name }}
           path: ${{ runner.temp }}/dependabot-clean-install/
@@ -264,12 +310,12 @@ jobs:
     steps:
       # Only trusted main code and lockfile data enter this write-enabled job.
       - name: Checkout trusted automation
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
       - name: Download this run's lockfile report
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ needs.dependabot-clean-install.outputs.artifact_name }}
           path: ${{ runner.temp }}/dependabot-clean-install
@@ -283,12 +329,13 @@ jobs:
         run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs publish
 
   dependabot-auto-merge:
-    name: Merge Dependabot patch updates
+    name: Merge release-console Dependabot patches
     needs: [dependabot-context, check, web-export, release-console, dependabot-clean-install, dependabot-write-lock]
     if: >-
       always() && !cancelled() && github.repository == 'kunal26das/yify' &&
       needs.dependabot-context.result == 'success' &&
       needs.dependabot-context.outputs.eligible == 'true' &&
+      needs.dependabot-context.outputs.automerge == 'true' &&
       needs.check.result == 'success' && needs.web-export.result == 'success' &&
       needs.release-console.result == 'success' &&
       (needs.dependabot-context.outputs.refreshed == 'true' ||
@@ -300,14 +347,19 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-      actions: write
+      actions: read
     steps:
       # No PR code or dependency execution in this write-enabled job.
       - name: Checkout trusted automation
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
+      - name: Setup Node for the metadata verifier
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
       - name: Reverify the tested PR head
         id: inspect
         env:
@@ -317,10 +369,10 @@ jobs:
           ALLOW_MERGED: 'true'
         run: node scripts/dependabot-lockfile.mjs inspect
       - name: Checkout pinned Dependabot metadata verifier
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: dependabot/fetch-metadata
-          ref: 21025c705c08248db411dc16f3619e6b5f9ea21a
+          ref: 25dd0e34f4fe68f24cc83900b1fe3fe149efef98
           path: .github-tools/fetch-metadata
           persist-credentials: false
 
@@ -341,7 +393,7 @@ jobs:
 
       - name: Merge the tested patch update
         id: merge
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        if: steps.inspect.outputs.automerge == 'true' && steps.metadata.outputs.update-type == 'version-update:semver-patch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -403,18 +455,3 @@ jobs:
           done
           echo "Merge is still blocked; branch protection was not bypassed."
           exit 1
-
-      # GITHUB_TOKEN merges do not trigger the normal push deployment workflows.
-      - name: Deploy merged main to EAS Hosting
-        if: ${{ !cancelled() && steps.merge.outputs.merged == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-        run: gh workflow run deploy-hosting.yml --repo "$GH_REPO" --ref main -f production=true
-
-      - name: Deploy merged main to GitHub Pages
-        if: ${{ !cancelled() && steps.merge.outputs.merged == 'true' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-        run: gh workflow run deploy-pages.yml --repo "$GH_REPO" --ref main

@@ -84,8 +84,8 @@ OTA updates can change JavaScript and assets supported by an installed binary. N
 plugin or native code changes require a new binary and a new runtime version. The runtime defaults
 to `package.json`'s `version`; **bump that version whenever native compatibility changes**.
 
-The current dependency upgrades are prepared for **1.8.5 (87)** and require a new native
-binary. Do not publish this dependency tree as an OTA for runtime **1.8.4**. The version
+The current dependency upgrades are prepared for **1.8.6 (88)** and require a new native
+binary. Do not publish this dependency tree as an OTA for runtimes **1.8.4 or 1.8.5**. The version
 preparation does not publish a store release or add a release-ledger entry.
 
 `EXPO_UPDATE_CHANNEL` sets the binary's channel (`Production` or `Staging`). The release console uses
@@ -107,39 +107,11 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 ## Dependabot updates
 
-Dependabot **patch** updates merge automatically after a clean reinstall and full CI
-on the final committed dependency tree. Daily patches are grouped so related Expo
-packages are tested together; minor and major updates still need manual review.
+[Dependency automation](dependency-automation.md) covers daily app, release-console and GitHub Actions updates, including major releases. Related framework packages are grouped; exact version pins and Expo compatibility checks remain required.
 
-For each original, signed Dependabot PR, an isolated job removes `node_modules`, the
-workspace's `node_modules`, and `yarn.lock`, then runs `yarn install --non-interactive`.
-It checks types, tests, Expo compatibility and both web exports. A separate job then
-commits the regenerated `yarn.lock` back to that PR if it differs. The original lock,
-regenerated lock, diff and source metadata remain available as a 14-day artifact.
+Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Only release-console patches can merge automatically; app and Actions updates require review. Release-console merges do not trigger app deployments.
 
-The write job executes trusted automation from `main`, verifies the artifact against
-the source commit and successful CI run, and commits only `yarn.lock`. GitHub's expected
-head check prevents overwriting a concurrent push. It then explicitly dispatches CI on
-the new PR head. That follow-up installs the committed lockfile with `--frozen-lockfile`
-and skips regeneration, avoiding a write-back loop. No-change reinstalls create no commit.
-
-Automatic merging accepts only the signed Dependabot commit, optionally followed by
-one verified, GitHub-signed Actions commit with matching run provenance and lockfile
-contents. Other extra commits are rejected. The protected `main` branch still requires
-normal CI and an up-to-date branch; no checks are bypassed. When a patch falls behind,
-the job asks Dependabot to rebase once per head/main combination. The reproducible lock
-commit includes `[dependabot skip]` so Dependabot can replace it during a rebase.
-
-A failed write/dispatch job can be rerun using **Re-run failed jobs**: the previous
-successful artifact is reused, and an existing matching lock commit is not duplicated.
-The CI workflow's `clean_install` input remains a read-only diagnostic for non-Dependabot
-branches; `dependabot_pr` and `dependabot_head` resume checks for a verified PR head.
-
-After confirming the merge, the job explicitly starts both production web deployments,
-because merges made with `GITHUB_TOKEN` do not trigger the normal push workflows.
-A failed dispatch can be retried by rerunning the failed CI job; it verifies the same
-PR head before retrying. Native builds and OTA releases remain separate: a native
-dependency update must be validated in a new binary before an OTA uses it.
+Native dependency updates require a compatible new binary and runtime version. The weekly dependency report tracks exact resolution pins and the metadata verifier that Dependabot cannot reliably update.
 
 ## Web
 
