@@ -10,7 +10,7 @@ import {PressableScale} from '../components/motion';
 import {Screen} from '../components/screen';
 import {ThemedText} from '../components/themed-text';
 import {Radius, Spacing} from '../constants/theme';
-import {useAuthRepository, useJournalRepository, useMovieRepository} from '../di/DependenciesContext';
+import {useAuthRepository, useJournalRepository, useMovieRepository, usePurchaseRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
 import {useJournal} from '../hooks/use-journal';
 import {usePalette} from '../hooks/use-palette';
@@ -151,8 +151,8 @@ function JournalContent() {
             {journal.error !== JOURNAL_DELETED_MESSAGE ? <Action label="Retry journal sync" onPress={() => repository.retrySync()}/> : null}
         </View> : journal.syncing ? <ThemedText type="caption" style={{color: colors.textMuted}}>Syncing your journal…</ThemedText> : null}
         {error ? <ThemedText accessibilityRole="alert" style={{color: colors.danger}}>{error}</ThemedText> : null}
-        {(!journal.ready && !journal.error) || (tab === 'insights' && journal.ready && !purchases.ready) ? <ActivityIndicator color={colors.accent}
-            accessibilityLabel={!journal.ready ? 'Loading your journal' : 'Checking supporter access'}/> : null}
+        {!journal.ready && !journal.error ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading your journal"/> : null}
+        {tab === 'insights' && journal.ready && !purchases.ready ? <SupporterAccessRecovery/> : null}
         {tab === 'insights' && journal.ready && purchases.ready ? premium && insights ? <>
             <View style={styles.periods}>
                 <Action label="Monthly" primary={month !== undefined} onPress={() => setMonth(currentMonth)}/>
@@ -268,6 +268,32 @@ function JournalContent() {
             contentContainerStyle={{width: Math.min(width, contentMaxWidth, 1040), alignSelf: 'center', paddingHorizontal: gutter,
                 paddingTop: top + (isPhone ? Spacing.md : Spacing.xl), paddingBottom: insets.bottom + 96}}/>
     </Screen>;
+}
+
+function SupporterAccessRecovery() {
+    const {colors} = usePalette();
+    const purchases = usePurchases();
+    const repository = usePurchaseRepository();
+    const [error, setError] = useState('');
+    const refresh = async () => {
+        setError('');
+        try {
+            await repository.refresh();
+            if (!repository.getState().ready) setError('Supporter access could not connect. Check your connection and try again.');
+        } catch {
+            setError('Supporter access could not be refreshed. Please try again.');
+        }
+    };
+    return <View style={styles.notice}>
+        {purchases.available && purchases.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Checking supporter access"/> : null}
+        <ThemedText style={{color: colors.textMuted}}>{!purchases.available
+            ? 'Supporter access is unavailable in this version of the app. Your journal entries and editing stay free.'
+            : purchases.refreshing ? 'Checking supporter access…'
+                : 'Supporter access is not connected yet. Refresh access to try again. Your journal entries and editing stay free.'}</ThemedText>
+        {error ? <ThemedText accessibilityRole="alert" style={{color: colors.danger}}>{error}</ThemedText> : null}
+        <Action label={purchases.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => void refresh()}
+            disabled={!purchases.available || purchases.refreshing}/>
+    </View>;
 }
 
 function Metric({label, value}: {label: string; value: string}) {

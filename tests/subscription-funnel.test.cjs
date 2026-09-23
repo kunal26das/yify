@@ -24,11 +24,35 @@ test('checkout events preserve existing event names and safe placement without m
     trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', offer, outcome: 'granted'}, f.context());
     trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', offer, outcome: 'pending'}, f.context());
     assert.deepEqual(f.events, [
-        {name: 'remove_ads_purchase_start', params: {funnel_version: 1, app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly'}},
-        {name: 'remove_ads_purchase_done', params: {funnel_version: 1, app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly', granted: true}},
-        {name: 'remove_ads_purchase_failed', params: {funnel_version: 1, app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly', reason: 'pending'}},
+        {name: 'remove_ads_purchase_start', params: {funnel_version: 'v1', app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly'}},
+        {name: 'remove_ads_purchase_done', params: {funnel_version: 'v1', app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly', granted: 'true'}},
+        {name: 'remove_ads_purchase_failed', params: {funnel_version: 'v1', app_platform: 'android', viewing_country: 'IN', placement: 'post_ad_supporter', plan_kind: 'monthly', reason: 'pending'}},
     ]);
     assert.doesNotMatch(JSON.stringify(f.events), /private|price|revenue|currency|transaction|email|uid|renewal/);
+});
+
+test('categorical dimensions reach Firebase as nonnumeric strings while offer counts remain numeric', () => {
+    const f = fixture();
+    for (const value of [true, false]) {
+        trackSubscriptionFunnel(f.analytics, {step: 'paywall_view', placement: 'settings_supporter', signedIn: value, supporter: value}, f.context());
+        trackSubscriptionFunnel(f.analytics, {step: 'paywall_closed', placement: 'settings_supporter', supporter: value}, f.context());
+        trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', outcome: value ? 'granted' : 'not_granted'}, f.context());
+        trackSubscriptionFunnel(f.analytics, {step: 'availability_alert_changed', enabled: value}, f.context());
+        const [view, closed, checkout, alert] = f.events.slice(-4).map(event => event.params);
+        assert.equal(view.signed_in, String(value));
+        assert.equal(view.supporter_access, String(value));
+        assert.equal(closed.supporter_access, String(value));
+        assert.equal(checkout.granted, String(value));
+        assert.equal(alert.enabled, String(value));
+    }
+    for (const milestone of [1, 3]) trackSubscriptionFunnel(f.analytics, {step: 'watchlist_milestone', milestone}, f.context());
+    assert.deepEqual(f.events.slice(-2).map(event => event.params.saved_milestone), ['one', 'three']);
+    for (const {params} of f.events) {
+        assert.equal(params.funnel_version, 'v1');
+        assert.ok(Object.values(params).every(value => typeof value === 'string' && !/^\d+$/.test(value)));
+    }
+    trackSubscriptionFunnel(f.analytics, {step: 'offers_visible', placement: 'settings_supporter', offerCount: 2}, f.context());
+    assert.equal(f.events.at(-1).params.offer_count, 2);
 });
 
 test('Journal purchase attribution uses a bounded journal source through the existing funnel', () => {
@@ -60,7 +84,7 @@ test('runtime metadata is allowlisted and malformed payloads cannot leak or fabr
     trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', outcome: 'private server message',
         offer: {placement: 'private-user-id', recurring: true, billingPeriod: 'private-title'}}, {platform: 'private-browser', country: 'private@example.test'});
     assert.deepEqual(f.events[0], {name: 'remove_ads_purchase_failed', params: {
-        funnel_version: 1, app_platform: 'other', placement: 'unknown', plan_kind: 'recurring', reason: 'unknown',
+        funnel_version: 'v1', app_platform: 'other', placement: 'unknown', plan_kind: 'recurring', reason: 'unknown',
     }});
     for (const event of [{step: 'purchase', revenue: 99}, {step: 'offers_visible', placement: 'settings_supporter', offerCount: 0},
         {step: 'watchlist_milestone', milestone: 2}, {step: 'streaming_services_saved', selectedCount: Infinity},
@@ -94,7 +118,7 @@ test('watchlist activation records first and third local saves once across remov
     restarted.add(movie(5));
     restarted.add(movie(6));
     assert.deepEqual(f.events.map(event => [event.name, event.params.saved_milestone]),
-        [['watchlist_activation', 1], ['watchlist_activation', 3]]);
+        [['watchlist_activation', 'one'], ['watchlist_activation', 'three']]);
     assert.doesNotMatch(JSON.stringify(f.events), /private|tt[0-9]|movie_id|title/);
 });
 

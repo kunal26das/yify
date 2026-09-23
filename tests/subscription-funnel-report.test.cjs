@@ -20,6 +20,7 @@ test('report keeps event counts separate from per-row users and never invents to
     }});
     assert.equal(report.source, 'offline_fixture');
     assert.equal(report.versionFilter, 1);
+    assert.deepEqual(report.versionFilterValues, ['v1', '1']);
     assert.equal(report.countryMeaning, 'selected_viewing_country');
     assert.deepEqual(report.rows[0], {date: '2026-09-19', platform: 'android', country: 'IN',
         eventName: 'supporter_offers_visible', eventCount: 12, eventUsers: 8, placement: 'settings_supporter'});
@@ -27,7 +28,8 @@ test('report keeps event counts separate from per-row users and never invents to
     assert.equal('conversionRate' in report, false);
     assert.match(report.interpretation.eventUsers, /do not sum/);
     assert.match(report.interpretation.cohortConversion, /Not calculated/);
-    assert.equal(requests[0].dimensionFilter.andGroup.expressions[1].filter.stringFilter.value, '1');
+    assert.deepEqual(requests[0].dimensionFilter.andGroup.expressions[1].filter,
+        {fieldName: 'customEvent:funnel_version', inListFilter: {values: ['v1', '1'], caseSensitive: true}});
     assert.deepEqual(requests[0].metrics, [{name: 'eventCount'}, {name: 'totalUsers'}]);
     assert.ok(report.unobservedEvents.includes('remove_ads_purchase_done'));
 });
@@ -43,8 +45,31 @@ test('unregistered fields use explicit GA4 platform/activity-country fallback an
     })});
     assert.equal(report.countryMeaning, 'ga4_activity_country');
     assert.equal(report.rows.length, 0);
+    assert.equal(report.versionFilterValues, null);
     assert.ok(report.warnings.some(message => message.includes('legacy')));
     assert.ok(report.warnings.some(message => message.includes('not confirmed zeros')));
+});
+
+test('report preserves new and legacy categorical values without inventing missing app history', async () => {
+    const {buildReportPlan, normalizeReportPage, collectReport} = await script;
+    const metadata = {dimensions: [...fixture.metadata.dimensions,
+        {apiName: 'customEvent:granted'}, {apiName: 'customEvent:saved_milestone'}]};
+    const plan = buildReportPlan(metadata, dateRange);
+    const values = [['true', 'one'], ['false', 'three'], ['1', '1'], ['0', '3'], ['private value', 'private milestone']];
+    const page = {
+        dimensionHeaders: plan.request.dimensions,
+        metricHeaders: plan.request.metrics,
+        rowCount: values.length,
+        rows: values.map(([granted, milestone]) => ({
+            dimensionValues: ['20260919', 'android', 'IN', 'watchlist_activation', 'settings_supporter', granted, milestone].map(value => ({value})),
+            metricValues: [{value: '1'}, {value: '1'}],
+        })),
+    };
+    assert.deepEqual(normalizeReportPage(page, plan).map(({granted, savedMilestone}) => [granted, savedMilestone]),
+        [...values.slice(0, 4), ['not_set', 'not_set']]);
+    const report = await collectReport({metadata, dateRange, readPage: async () => page});
+    assert.ok(report.warnings.some(warning => /cannot recover unavailable history/.test(warning)));
+    assert.doesNotMatch(JSON.stringify(report), /private value|private milestone/);
 });
 
 test('pagination is complete and never treats an omitted or changed page as a zero', async () => {

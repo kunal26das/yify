@@ -46,7 +46,7 @@ export function trackSubscriptionFunnel(
 ): void {
     if (!sink) return;
     const params: AnalyticsParams = {
-        funnel_version: 1,
+        funnel_version: 'v1',
         app_platform: ['android', 'ios', 'web'].includes(context.platform) ? context.platform : 'other',
     };
     const country = typeof context.country === 'string' ? context.country.trim().toUpperCase() : '';
@@ -57,8 +57,8 @@ export function trackSubscriptionFunnel(
             name = 'supporter_prompt';
             params.placement = placement(event.placement);
             params.source = promptSource(event.placement);
-            params.signed_in = event.signedIn === true;
-            params.supporter_access = event.supporter === true;
+            params.signed_in = event.signedIn === true ? 'true' : 'false';
+            params.supporter_access = event.supporter === true ? 'true' : 'false';
             break;
         case 'offers_visible':
             if (!Number.isSafeInteger(event.offerCount) || event.offerCount < 1) return;
@@ -69,7 +69,7 @@ export function trackSubscriptionFunnel(
         case 'paywall_closed':
             name = 'supporter_paywall_closed';
             params.placement = placement(event.placement);
-            params.supporter_access = event.supporter === true;
+            params.supporter_access = event.supporter === true ? 'true' : 'false';
             break;
         case 'checkout_started':
             name = 'remove_ads_purchase_start';
@@ -83,7 +83,7 @@ export function trackSubscriptionFunnel(
                 ? event.outcome : 'unknown';
             if (outcome === 'granted' || outcome === 'not_granted') {
                 name = 'remove_ads_purchase_done';
-                params.granted = outcome === 'granted';
+                params.granted = outcome === 'granted' ? 'true' : 'false';
             } else {
                 name = 'remove_ads_purchase_failed';
                 params.reason = outcome;
@@ -93,7 +93,7 @@ export function trackSubscriptionFunnel(
         case 'watchlist_milestone':
             if (event.milestone !== 1 && event.milestone !== 3) return;
             name = 'watchlist_activation';
-            params.saved_milestone = event.milestone;
+            params.saved_milestone = event.milestone === 1 ? 'one' : 'three';
             break;
         case 'streaming_services_saved':
             if (!Number.isSafeInteger(event.selectedCount) || event.selectedCount < 0) return;
@@ -114,7 +114,7 @@ export function trackSubscriptionFunnel(
             break;
         case 'availability_alert_changed':
             name = 'availability_alert_changed';
-            params.enabled = event.enabled === true;
+            params.enabled = event.enabled === true ? 'true' : 'false';
             break;
         default:
             return;
