@@ -37,8 +37,8 @@
     "submit:android:play": "bash scripts/eas.sh submit --platform android --profile play-production",
     "deploy:hosting": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production",
     "deploy:hosting:prod": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
-    "release": "cd release && yarn gui",
-    "test:crashreporting": "yarn workspace @yify/crashreporting test"
+    "test:crashreporting": "yarn workspace @yify/crashreporting test",
+    "release": "cd release && yarn gui"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
