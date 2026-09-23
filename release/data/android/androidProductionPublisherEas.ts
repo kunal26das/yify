@@ -120,11 +120,11 @@ function acceptedRelease(output: string, expected: {
         ['platform', build.platform, 'ANDROID'],
         ['distribution', build.distribution, 'STORE'],
         ['build profile', build.buildProfile, 'production'],
-        ['channel', build.channel, 'Production'],
+        ['channel', build.updateChannel?.name, 'Production'],
         ['version', build.appVersion, expected.version],
         ['version code', build.appBuildVersion, String(expected.versionCode)],
-        ['runtime version', build.runtimeVersion, expected.runtimeVersion],
-        ['Expo project', build.project?.id, expected.projectId],
+        ['runtime version', build.runtime?.version, expected.runtimeVersion],
+        ['Expo project', build.app?.id, expected.projectId],
     ];
     for (const [name, actual, wanted] of checks) {
         if (actual !== wanted) throw new Error(`Could not verify build ${build.id}: ${name} is ${String(actual)}, expected ${wanted}.`);
@@ -139,8 +139,8 @@ function acceptedRelease(output: string, expected: {
         submission.androidConfig?.track !== 'production' || submission.androidConfig?.releaseStatus !== 'COMPLETED') {
         throw new Error(`Could not verify the scheduled Play production submission for build ${build.id}.`);
     }
-    const owner = build.project?.ownerAccount?.name;
-    const slug = build.project?.slug;
+    const owner = build.app?.ownerAccount?.name;
+    const slug = build.app?.slug;
     if (typeof owner !== 'string' || !owner || typeof slug !== 'string' || !slug) {
         throw new Error(`EAS build ${build.id} did not return its project URL details.`);
     }

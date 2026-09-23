@@ -45,7 +45,7 @@ The release console's adm-zip and joi updates address the affected ranges behind
 
 ## Validation
 
-- App and crash-reporting workspace tests: 1,461 passed, including dependency automation coverage. Release-console tests: 103 passed. Lockfile integrity checks passed.
+- App and crash-reporting workspace tests: 1,461 passed, including dependency automation coverage. Release-console tests: 111 passed, including the EAS 24 build-receipt format. Lockfile integrity checks passed.
 - Static web and hosting exports passed. Ten desktop and mobile browser checks passed without crashes or horizontal overflow.
 - Android arm64 debug build passed. The final arm64 release build passed in 12 minutes 33 seconds with Google Services 4.5.0, including Hermes bundling, R8 optimization and APK packaging. Local debug signing was used; Sentry uploads were disabled and Crashlytics upload tasks were excluded.
 - iOS arm64 simulator Debug build passed with Xcode 27 and the iOS 27 SDK, with code signing disabled. The built app reports version 1.8.6, build 88, minimum iOS 16.4 and the generated scene manifest. The installed pods manifest matches Podfile.lock.

@@ -23,6 +23,6 @@ Android and iOS source projects are generated from Expo configuration and npm pa
 
 The configuration and scheduled workflow become active after they reach the default branch. Before merging, PR checks validate the configuration and automation tests. The new release-console writeback path must also be observed on its first real Dependabot PR; local tests cannot reproduce GitHub's bot signatures or issue a real bot update.
 
-Validation: 1,564 app/workspace/release-console tests passed, along with typechecks, the release-console build, workflow syntax validation and exact-pin checks. A live read-only scan checked 15 pins with no failed lookups; seven had newer major versions to review. No tracking issue was created during validation.
+Validation: 1,572 app/workspace/release-console tests passed, along with typechecks, the release-console build, workflow syntax validation and exact-pin checks. A live read-only scan checked 15 pins with no failed lookups; seven had newer major versions to review. No tracking issue was created during validation.
 
 References: [Dependabot options](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference), [supported ecosystems](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories), [Expo native generation](https://docs.expo.dev/workflow/continuous-native-generation/).
