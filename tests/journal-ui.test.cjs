@@ -19,9 +19,9 @@ function observable(initial) {
 
 async function fixture(t, options = {}) {
     const session = observable({ready: true, account: {uid: 'alice'}, signingIn: false, available: true, error: null, ...options.session});
-    const purchase = observable({ready: true, adsRemoved: false, ...options.purchase});
+    const purchase = observable({ready: true, available: true, refreshing: false, adsRemoved: false, ...options.purchase});
     const snapshot = observable({ready: true, entries: [entry], syncing: false, error: null, ...options.snapshot});
-    const calls = {saved: [], removed: [], events: [], paywalls: [], links: [], searches: [], confirmations: [], signIn: 0, closed: 0, retries: 0, confirms: []};
+    const calls = {saved: [], removed: [], events: [], paywalls: [], links: [], searches: [], confirmations: [], signIn: 0, closed: 0, retries: 0, refreshes: 0, confirms: []};
     const repository = {
         save(input) {if (options.saveError) throw new Error(typeof options.saveError === 'string' ? options.saveError : 'private server details'); calls.saved.push(input); return input.id ?? 'new-entry';},
         remove(id) {calls.removed.push(id);}, retrySync() {calls.retries++;},
@@ -48,6 +48,11 @@ async function fixture(t, options = {}) {
         '../components/themed-text': {ThemedText: 'Text'},
         '../di/DependenciesContext': {useJournalRepository: () => repository,
             useMovieRepository: () => moviesRepository,
+            usePurchaseRepository: () => ({getState: purchase.get, async refresh() {
+                calls.refreshes++;
+                purchase.set({refreshing: true});
+                try {await options.refresh?.(purchase);} finally {purchase.set({refreshing: false});}
+            }}),
             useAuthRepository: () => ({getSession: session.get, async signIn() {calls.signIn++; return false;}})},
         '../hooks/use-auth': {useAuth: () => hook(session)},
         '../hooks/use-journal': {useJournal: () => hook(snapshot)},
@@ -98,14 +103,68 @@ test('free accounts can read, edit and delete; only explicit insights upgrade op
 });
 
 test('loading entitlements do not flash an upgrade prompt or hide free entries', async t => {
-    const f = await fixture(t, {purchase: {ready: false, adsRemoved: false}});
+    const f = await fixture(t, {purchase: {ready: false, refreshing: true, adsRemoved: false}});
     assert.match(f.text(), /My private note/);
     await f.press('Insights');
     assert.equal(f.button('Explore supporter access'), undefined);
     assert.equal(f.renderer.root.findAllByType('Spinner').length, 1);
+    assert.equal(f.button('Checking access…').props.disabled, true);
     await f.update(f.purchase, {ready: true, adsRemoved: true});
     await f.press('All time');
     assert.match(f.text(), /Watches logged/); assert.match(f.text(), /1h 30m/);
+    assert.deepEqual(f.calls.paywalls, []);
+});
+
+test('unavailable supporter access stops loading and keeps free journal entries editable', async t => {
+    const f = await fixture(t, {purchase: {ready: false, available: false}});
+    await f.press('Insights');
+    assert.match(f.text(), /Supporter access is unavailable in this version/);
+    assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
+    assert.equal(f.button('Refresh access').props.disabled, true);
+    assert.equal(f.button('Explore supporter access'), undefined);
+    await f.press('Entries');
+    assert.match(f.text(), /My private note/);
+    await f.press('Edit entry');
+    assert.ok(f.button('Save changes'));
+    assert.equal(f.calls.refreshes, 0);
+    assert.deepEqual(f.calls.paywalls, []);
+});
+
+for (const supporter of [true, false]) {
+    test(`unconnected insights can refresh ${supporter ? 'supporter' : 'free'} access without opening checkout`, async t => {
+        const f = await fixture(t, {purchase: {ready: false}, refresh: async purchase => purchase.set({ready: true, adsRemoved: supporter})});
+        await f.press('Insights');
+        assert.match(f.text(), /Supporter access is not connected yet/);
+        assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
+        assert.equal(f.button('Explore supporter access'), undefined);
+        await f.press('Refresh access');
+        assert.equal(f.calls.refreshes, 1);
+        assert.equal(f.button('Refresh access'), undefined);
+        if (supporter) {
+            await f.press('All time');
+            assert.match(f.text(), /Watches logged/);
+        } else {
+            assert.ok(f.button('Explore supporter access'));
+        }
+        assert.deepEqual(f.calls.paywalls, []);
+    });
+}
+
+test('unsuccessful access checks show safe recovery feedback and allow another attempt', async t => {
+    let attempts = 0;
+    const f = await fixture(t, {purchase: {ready: false}, refresh: async () => {
+        if (++attempts === 2) throw new Error('Private upstream failure');
+    }});
+    await f.press('Insights');
+    await f.press('Refresh access');
+    assert.match(f.text(), /could not connect/);
+    assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
+    assert.equal(f.button('Explore supporter access'), undefined);
+    await f.press('Refresh access');
+    assert.match(f.text(), /could not be refreshed/);
+    assert.doesNotMatch(f.text(), /Private upstream failure/);
+    assert.equal(f.button('Refresh access').props.disabled, false);
+    assert.equal(f.calls.refreshes, 2);
     assert.deepEqual(f.calls.paywalls, []);
 });
 

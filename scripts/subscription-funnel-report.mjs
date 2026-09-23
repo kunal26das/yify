@@ -18,6 +18,7 @@ const PAGE_SIZE = 10000;
 const API = `https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY_ID}`;
 const PLACEMENTS = new Set(['settings_supporter', 'post_ad_supporter', 'journal_insights']);
 const REASONS = new Set(['cancelled', 'already_purchased', 'pending', 'not_granted', 'offer_unavailable', 'restore_failed', 'unknown']);
+const FUNNEL_VERSION_VALUES = Object.freeze(['v1', '1']);
 
 function validDate(value) {
     return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -48,7 +49,7 @@ export function buildReportPlan(metadata, dateRange) {
     const versionFiltered = available.has('customEvent:funnel_version');
     const expressions = [{filter: {fieldName: 'eventName', inListFilter: {values: [...FUNNEL_EVENTS], caseSensitive: true}}}];
     if (versionFiltered) expressions.push({filter: {
-        fieldName: 'customEvent:funnel_version', stringFilter: {matchType: 'EXACT', value: '1', caseSensitive: true},
+        fieldName: 'customEvent:funnel_version', inListFilter: {values: [...FUNNEL_VERSION_VALUES], caseSensitive: true},
     }});
     return {
         platformDimension: platform,
@@ -134,7 +135,7 @@ export function normalizeReportPage(response, plan) {
         if (dimensionNames.includes('customEvent:placement')) normalized.placement = bounded(dimensions['customEvent:placement'], PLACEMENTS);
         if (dimensionNames.includes('customEvent:granted')) normalized.granted = bounded(dimensions['customEvent:granted'], new Set(['true', 'false', '1', '0']));
         if (dimensionNames.includes('customEvent:reason')) normalized.reason = bounded(dimensions['customEvent:reason'], REASONS);
-        if (dimensionNames.includes('customEvent:saved_milestone')) normalized.savedMilestone = bounded(dimensions['customEvent:saved_milestone'], new Set(['1', '3']));
+        if (dimensionNames.includes('customEvent:saved_milestone')) normalized.savedMilestone = bounded(dimensions['customEvent:saved_milestone'], new Set(['one', 'three', '1', '3']));
         if (plan.kind === 'journal') {
             const action = plan.actionDimension ? dimensions[plan.actionDimension] : undefined;
             normalized.action = JOURNAL_ACTIONS.includes(action) ? action : 'unknown';
@@ -156,6 +157,7 @@ async function collectPlannedReport({plan, readPage, dateRange, source}) {
     const rows = [];
     const warnings = new Set();
     if (!journal && !plan.versionFiltered) warnings.add('funnel_version is not registered: legacy prompt/checkout events may be included. This is not a version-1 funnel baseline.');
+    if (!journal) warnings.add('Earlier clients sent numeric funnel_version and saved_milestone values and boolean checkout/access values. App custom dimensions may omit these values; accepted legacy values cannot recover unavailable history. Establish a baseline after string-valued events and custom definitions are validated.');
     if (!journal && plan.countryDimension === 'countryId') warnings.add('viewing_country is not registered: country is GA4 activity country, not viewing country or billing country.');
     if (journal && !plan.actionDimension) warnings.add('action is not registered: journal action breakdown, first-entry activity and later-day use are unknown; aggregate journal events cannot substitute for them.');
     let expectedRows;
@@ -188,6 +190,7 @@ async function collectPlannedReport({plan, readPage, dateRange, source}) {
         dateRange,
         timezone,
         versionFilter: plan.versionFiltered ? 1 : null,
+        ...(!journal ? {versionFilterValues: plan.versionFiltered ? [...FUNNEL_VERSION_VALUES] : null} : {}),
         countryMeaning: plan.countryDimension === 'customEvent:viewing_country' ? 'selected_viewing_country' : 'ga4_activity_country',
         dimensions: plan.request.dimensions.map(dimension => dimension.name),
         ...(journal ? {report: 'journal', actionDimension: plan.actionDimension,
