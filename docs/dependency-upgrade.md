@@ -27,10 +27,28 @@ The supported device minimums remain Android API 24 and iOS 16.4. These minimums
 
 Install the exact dependency versions from the lockfile, then regenerate native sources with `expo prebuild --clean --no-install`. Restore ignored local Android signing configuration after a clean prebuild when making a release build. Install iOS pods, refreshing CocoaPods metadata if a newly pinned pod is missing. Build both platforms before publishing any update for runtime 1.8.6.
 
-Validation results are recorded after native build checks finish. Store submission, production deployment and purchase/account smoke tests are separate from local compilation.
+Store submission, production deployment and purchase/account smoke tests are separate from local compilation.
 
 The regenerated iOS lockfile resolves Firebase 12.18.0, Google Mobile Ads 13.6.0, PurchasesHybridCommon 19.2.0 and RevenueCat 5.90.1. These follow the selected React Native wrappers' dependency constraints. Sentry Cocoa remains 9.29.0. Native vendor releases newer than these constraints require a separate compatibility review rather than overriding the wrappers during this upgrade.
 
 ## Deferred animation upgrade
 
 Reanimated 4.7.0 and Worklets 0.13.0 were evaluated together. Web server rendering failed in Worklets' `flushUIQueue` because `requestAnimationFrame` is unavailable on the server. Inspection of the published Worklets 0.12.2 source found the same missing fallback; a second export was not attempted with that version. The app therefore retains the proven Reanimated 4.5.5 / Worklets 0.11.4 pair. Revisit the upgrade after a compatible upstream fix, and verify both static web and hosting exports alongside Android and iOS builds.
+
+## Remaining transitive advisory
+
+[GHSA-vcc3-ghjq-m6fr](https://github.com/SamVerschueren/decode-uri-component/security/advisories/GHSA-vcc3-ghjq-m6fr) remains open: Expo Router 57.0.22 depends on query-string 7.1.3, which uses decode-uri-component 0.2.2. Malformed percent-encoded input can cause excessive CPU usage. The patched decoder 0.5.0 and query-string 9.5.1 use ESM default exports, incompatible with the current consumers' CommonJS imports. No compatible upstream patch is published for this dependency chain; forcing either version would break URL handling.
+
+Expo Router's configured incoming-link parser uses URL.searchParams rather than the affected decoder. A focused check with malformed query input confirmed that this parser does not call the decoder. The vendored React Navigation fallback still calls query-string.parse, so the vulnerable dependency has not been eliminated. Keep the advisory open until a compatible upstream update or separately tested migration removes it.
+
+The release console's adm-zip and joi updates address the affected ranges behind four other open alerts. Their resolved status should be verified after these lockfile changes reach the default branch.
+
+## Validation
+
+- App and crash-reporting workspace tests: 1,417 passed. Release-console tests: 103 passed. Lockfile integrity checks passed.
+- Static web and hosting exports passed. Ten desktop and mobile browser checks passed without crashes or horizontal overflow.
+- Android arm64 debug build passed. The final arm64 release build passed in 12 minutes 33 seconds with Google Services 4.5.0, including Hermes bundling, R8 optimization and APK packaging. Local debug signing was used; Sentry uploads were disabled and Crashlytics upload tasks were excluded.
+- iOS arm64 simulator Debug build passed with Xcode 27 and the iOS 27 SDK, with code signing disabled. The built app reports version 1.8.6, build 88, minimum iOS 16.4 and the generated scene manifest. The installed pods manifest matches Podfile.lock.
+- Google Services plugin tests cover version selection, idempotency, alternate quoting and explicit failure for missing or duplicated anchors and unsupported Gradle syntax. Android Java selection was checked with an unset Java home, a valid JDK 17 and Android Studio's unsupported JDK.
+
+These checks validate compilation and local web behavior. Native sign-in, purchases and store distribution still require their normal device and release checks.
