@@ -33,8 +33,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli@24.7.0
+      - name: Install locked release tools
+        run: yarn install --frozen-lockfile --non-interactive
+        working-directory: release
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Prepare Sentry deployment identity
         run: |

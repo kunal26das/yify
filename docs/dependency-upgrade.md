@@ -6,7 +6,7 @@ The native projects must be regenerated and rebuilt together with these JavaScri
 
 The app updates React Native to 0.86.3, Firebase wrappers to 26.4.0, Google Mobile Ads to 17.1.0, RevenueCat Purchases to 10.10.1, Expo vector icons to 15.1.1, Electron to 44.4.5 and the TypeScript import resolver to 4.4.5. Expo remains on stable SDK 57.0.24; root TypeScript 6 and ESLint 9 remain within the supported peer dependency ranges.
 
-The release console updates EAS CLI to 24.7.0, Ink to 7, React to 19.3.0, TypeScript to 7.0.2 and tsx to 4.23.15. Dependency checks now enforce exact version pins, and Dependabot coverage includes release-console dependencies and GitHub Actions again.
+The release console updates EAS CLI to 24.7.0, Ink to 7, React to 19.3.0, TypeScript to 7.0.2 and tsx to 4.23.15. Dependency checks now enforce exact version pins. [Dependency automation](dependency-automation.md) covers the application, release console, GitHub Actions and pinned-dependency reporting.
 
 ## Supported build baseline
 
@@ -45,7 +45,7 @@ The release console's adm-zip and joi updates address the affected ranges behind
 
 ## Validation
 
-- App and crash-reporting workspace tests: 1,417 passed. Release-console tests: 103 passed. Lockfile integrity checks passed.
+- App and crash-reporting workspace tests: 1,461 passed, including dependency automation coverage. Release-console tests: 103 passed. Lockfile integrity checks passed.
 - Static web and hosting exports passed. Ten desktop and mobile browser checks passed without crashes or horizontal overflow.
 - Android arm64 debug build passed. The final arm64 release build passed in 12 minutes 33 seconds with Google Services 4.5.0, including Hermes bundling, R8 optimization and APK packaging. Local debug signing was used; Sentry uploads were disabled and Crashlytics upload tasks were excluded.
 - iOS arm64 simulator Debug build passed with Xcode 27 and the iOS 27 SDK, with code signing disabled. The built app reports version 1.8.6, build 88, minimum iOS 16.4 and the generated scene manifest. The installed pods manifest matches Podfile.lock.

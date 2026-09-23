@@ -1,95 +1,109 @@
-# Dependabot: open PRs when new dependency versions are available
-# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
-
 version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 20
+      time: "06:00"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 30
     versioning-strategy: increase
+    cooldown:
+      default-days: 3
     groups:
-      patch-updates:
+      expo-sdk:
+        patterns:
+          - "expo"
+          - "@expo/log-box"
+          - "@expo/metro-runtime"
+          - "@expo/ui"
+          - "eslint-config-expo"
+          - "expo-background-task"
+          - "expo-blur"
+          - "expo-build-properties"
+          - "expo-constants"
+          - "expo-dev-client"
+          - "expo-font"
+          - "expo-glass-effect"
+          - "expo-haptics"
+          - "expo-image"
+          - "expo-insights"
+          - "expo-keep-awake"
+          - "expo-linking"
+          - "expo-localization"
+          - "expo-location"
+          - "expo-navigation-bar"
+          - "expo-network"
+          - "expo-notifications"
+          - "expo-router"
+          - "expo-splash-screen"
+          - "expo-sqlite"
+          - "expo-status-bar"
+          - "expo-store-review"
+          - "expo-symbols"
+          - "expo-system-ui"
+          - "expo-task-manager"
+          - "expo-updates"
+          - "expo-web-browser"
+      react-native:
+        patterns: ["react-native", "@react-native/*"]
+      react:
+        patterns: ["react", "react-dom", "react-test-renderer", "@types/react", "@types/react-dom"]
+      firebase-native:
+        patterns: ["@react-native-firebase/*"]
+      animations:
+        patterns: ["react-native-reanimated", "react-native-worklets"]
+      sentry:
+        patterns: ["@sentry/*"]
+      native-integrations:
+        patterns: ["react-native-*", "@react-native-*/*", "@gorhom/*", "expo-device-corner-radius", "expo-in-app-updates", "@expo/vector-icons"]
+      tooling:
+        patterns: ["typescript", "eslint*", "@typescript-eslint/*", "@babel/*", "expo-doctor"]
+      desktop:
+        patterns: ["electron", "electron-builder"]
+      app-patches:
         patterns: ["*"]
         update-types: ["patch"]
-    ignore:
-      - dependency-name: "@expo/log-box"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@expo/metro-runtime"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@expo/ui"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "eslint-config-expo"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-background-task"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-blur"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-build-properties"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-constants"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-dev-client"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-font"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-glass-effect"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-haptics"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-image"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-insights"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-keep-awake"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-linking"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-localization"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-location"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-navigation-bar"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-network"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-notifications"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-router"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-splash-screen"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-sqlite"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-status-bar"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-store-review"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-symbols"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-system-ui"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-task-manager"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-updates"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "expo-web-browser"
-        update-types: ["version-update:semver-major"]
+      app-minors:
+        patterns: ["*"]
+        update-types: ["minor"]
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
   - package-ecosystem: "npm"
     directory: "/release"
     schedule:
       interval: "daily"
-    open-pull-requests-limit: 10
+      time: "06:15"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 20
     versioning-strategy: increase
+    cooldown:
+      default-days: 3
     groups:
+      release-react:
+        patterns: ["react", "@types/react", "ink", "ink-*"]
       release-patches:
         patterns: ["*"]
         update-types: ["patch"]
+      release-minors:
+        patterns: ["*"]
+        update-types: ["minor"]
+      security-updates:
+        applies-to: security-updates
+        patterns: ["*"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "06:30"
+      timezone: "Asia/Kolkata"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 3
     groups:
       actions-updates:
+        patterns: ["*"]
+      security-updates:
+        applies-to: security-updates
         patterns: ["*"]
