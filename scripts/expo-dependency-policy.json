@@ -1,10 +1,65 @@
 {
   "sdkVersion": "57.0.0",
   "packages": {
+    "@expo/ui": {
+      "version": "57.0.19",
+      "expected": "~57.0.20",
+      "reason": "Keep the current native runtime; 57.0.20 adds SwiftUI toolbar/scroll-edge APIs and Android palette caching, requiring a coordinated native release."
+    },
     "@sentry/react-native": {
       "version": "8.27.0",
       "expected": "~7.11.0",
       "reason": "Keep the Sentry 8 integration and its native crash symbol configuration."
+    },
+    "expo": {
+      "version": "57.0.24",
+      "expected": "~57.0.25",
+      "reason": "Keep the tested runtime dependency tree. 57.0.25 advances expo-modules-core to 57.0.19 with native Host, Compose and worklet fixes that require a separate runtime release."
+    },
+    "expo-background-task": {
+      "version": "57.0.19",
+      "expected": "~57.0.20",
+      "reason": "57.0.20 refreshes release metadata and the task-manager floor only; native implementation and Android artifacts are identical. Keep the current runtime pair until the next native release."
+    },
+    "expo-build-properties": {
+      "version": "57.0.21",
+      "expected": "~57.0.22",
+      "reason": "57.0.22 changes release metadata only; plugin source and generated JavaScript are identical. Keep the current native build configuration for this runtime."
+    },
+    "expo-glass-effect": {
+      "version": "57.0.3",
+      "expected": "~57.0.4",
+      "reason": "Defer the native iOS fix for glass rendering under an initially transparent ancestor to the next runtime release; the current ScrollProgress implementation is unchanged."
+    },
+    "expo-insights": {
+      "version": "57.0.19",
+      "expected": "~57.0.20",
+      "reason": "57.0.20 changes release metadata only; implementation, native dependencies and Android artifacts are identical. Retain the current native runtime."
+    },
+    "expo-linking": {
+      "version": "57.0.10",
+      "expected": "~57.0.11",
+      "reason": "57.0.11 has identical implementation and raises only the expo-constants floor, already met by installed 57.0.19; retain the current native runtime."
+    },
+    "expo-location": {
+      "version": "57.0.19",
+      "expected": "~57.0.20",
+      "reason": "57.0.20 has identical implementation and dependency requirements; its version and prebuilt artifact refresh can join the next native runtime release."
+    },
+    "expo-notifications": {
+      "version": "57.0.20",
+      "expected": "~57.0.21",
+      "reason": "57.0.21 has identical implementation and dependency requirements; its version and prebuilt artifact refresh can join the next native runtime release."
+    },
+    "expo-router": {
+      "version": "57.0.22",
+      "expected": "~57.0.23",
+      "reason": "57.0.23 has identical implementation and raises UI, glass-effect and linking floors; keep the coherent current native set until a coordinated runtime release."
+    },
+    "expo-task-manager": {
+      "version": "57.0.19",
+      "expected": "~57.0.20",
+      "reason": "57.0.20 changes release metadata only; implementation, native dependencies and Android artifacts are identical. Keep it paired with the current background-task runtime."
     },
     "react": {
       "version": "19.3.0",
