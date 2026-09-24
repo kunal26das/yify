@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, Platform, StyleSheet, useWindowDimensions, View} from 'react-native';
+import {FlatList, Platform, StyleSheet, useWindowDimensions, View, type ViewInstance} from 'react-native';
 import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
@@ -87,7 +87,7 @@ export function MovieRail({
     const scrollXRef = useRef(0);
     const pagingRef = useRef(false);
     const pagingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const wrapRef = useRef<View>(null);
+    const wrapRef = useRef<ViewInstance>(null);
     const [hovered, setHovered] = useState(false);
     const [metrics, setMetrics] = useState<RailMetrics>({scrollX: 0, layoutW: 0, contentW: 0});
 

@@ -6,6 +6,7 @@ export const REPOSITORY = 'kunal26das/yify';
 export const MARKER = '<!-- yify-dependency-watch:v1 -->';
 export const TITLE = 'Dependency pins needing review';
 const VERIFIER = 'dependabot/fetch-metadata';
+const MANIFESTS = ['package.json', 'crashreporting/package.json', 'tooling/package.json', 'release/package.json'];
 const SHA = /^[a-f0-9]{40}$/;
 const NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
@@ -53,7 +54,7 @@ export function resolutionPackage(selector) {
 export function resolutionPins(manifests) {
     const pins = [];
     for (const [file, pkg] of Object.entries(manifests)) {
-        assert(['package.json', 'release/package.json'].includes(file) && object(pkg), 'Invalid manifest.');
+        assert(MANIFESTS.includes(file) && object(pkg), 'Invalid manifest.');
         assert(pkg.resolutions === undefined || object(pkg.resolutions), 'Invalid resolutions object.');
         for (const [selector, current] of Object.entries(pkg.resolutions ?? {})) {
             const name = resolutionPackage(selector);
@@ -163,7 +164,7 @@ export async function scan({manifests, workflow, request}) {
     const rows = [], errors = [];
     let pins = [];
     try { pins = resolutionPins(manifests); }
-    catch { errors.push('Cannot inspect exact root/release resolution pins.'); }
+    catch { errors.push('Cannot inspect exact workspace/release resolution pins.'); }
     const cache = new Map();
     for (const pin of pins) {
         try {
@@ -241,7 +242,7 @@ export async function main({env = process.env, directory = root, request = jsonC
     const output = env.DEPENDENCY_WATCH_OUTPUT;
     assert(output, 'DEPENDENCY_WATCH_OUTPUT is required.');
     const manifests = {};
-    for (const filename of ['package.json', 'release/package.json']) manifests[filename] = JSON.parse(await readFile(join(directory, filename), 'utf8'));
+    for (const filename of MANIFESTS) manifests[filename] = JSON.parse(await readFile(join(directory, filename), 'utf8'));
     const workflow = await readFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), 'utf8');
     const report = await scan({manifests, workflow, request});
     await persistReport(output, report);

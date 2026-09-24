@@ -130,7 +130,7 @@ export function AnimeScreen({viewModel}: {viewModel: AnimeViewModel}) {
             ListFooterComponent={status === 'ready' ? <ThemedText type="caption" style={[styles.footer, {color: colors.textMuted}]}>
                 {releases.length >= limit ? `Showing the latest ${limit} uploads. Refine your search for a specific title.`
                     : `${releases.length} ${releases.length === 1 ? 'upload' : 'uploads'} in this feed.`}
-            </ThemedText> : null}
+            </ThemedText> : undefined}
             contentContainerStyle={[styles.listContent, {maxWidth: contentMaxWidth || 1680,
                 paddingHorizontal: gutter, paddingTop: top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xxl}]}
             keyboardShouldPersistTaps="handled"

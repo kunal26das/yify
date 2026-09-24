@@ -3,6 +3,7 @@ import {Image} from 'expo-image';
 import {router} from 'expo-router';
 import {type ComponentProps, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
+    type ScrollViewInstance,
     NativeScrollEvent,
     NativeSyntheticEvent,
     Platform,
@@ -73,7 +74,7 @@ export function HeroBillboard({
     const [trailerPlaying, setTrailerPlaying] = useState(false);
     const indexRef = useRef(0);
     const scrollXRef = useRef(0);
-    const scrollRef = useRef<ScrollView>(null);
+    const scrollRef = useRef<ScrollViewInstance>(null);
     const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const trailerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -404,7 +405,7 @@ function HeroThumbStrip({
     reduceMotion: boolean;
     onSelect: (i: number) => void;
 }) {
-    const scrollRef = useRef<ScrollView>(null);
+    const scrollRef = useRef<ScrollViewInstance>(null);
     const [focused, setFocused] = useState<number | null>(null);
 
     useEffect(() => {

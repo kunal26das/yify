@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
-import {Platform, StyleSheet, useWindowDimensions, View} from 'react-native';
+import {Platform, StyleSheet, useWindowDimensions, View, type ViewInstance} from 'react-native';
 import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {Analytics} from '@/presentation/analytics/events';
@@ -42,7 +42,7 @@ export function MovieLandscapeItem({
 }) {
     const {colors} = usePalette();
     const {fontScale} = useWindowDimensions();
-    const nodeRef = useRef<View>(null);
+    const nodeRef = useRef<ViewInstance>(null);
     const hoverCard = useHoverCard();
 
     const width = landscapeWidth(posterWidth);

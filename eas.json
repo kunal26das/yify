@@ -18,7 +18,8 @@
       },
       "ios": {
         "simulator": true
-      }
+      },
+      "node": "24.19.0"
     },
     "development-device": {
       "extends": "development",
@@ -39,7 +40,8 @@
       },
       "ios": {
         "simulator": true
-      }
+      },
+      "node": "24.19.0"
     },
     "production": {
       "environment": "production",
@@ -50,7 +52,8 @@
       "android": {
         "buildType": "app-bundle",
         "credentialsSource": "local"
-      }
+      },
+      "node": "24.19.0"
     }
   },
   "submit": {

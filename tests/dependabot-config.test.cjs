@@ -23,6 +23,7 @@ test('Dependabot checks every installed workspace and Actions daily without supp
     ['github-actions:/', 'npm:/', 'npm:/release']);
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   assert.ok(pkg.workspaces.includes('crashreporting'));
+  assert.ok(pkg.workspaces.includes('tooling'));
   for (const entry of config.updates) {
     assert.equal(entry.schedule.interval, 'daily');
     assert.equal(entry.schedule.timezone, 'Asia/Kolkata');
@@ -81,4 +82,30 @@ test('Hosting takes its EAS CLI from the Dependabot-managed release lockfile', (
   assert.ok(steps.some((step) => step['working-directory'] === 'release' && /yarn install.*--frozen-lockfile/.test(step.run)));
   assert.ok(!steps.some((step) => /npm install.*eas-cli@/.test(step.run ?? '')));
   assert.ok(steps.some((step) => /bash scripts\/eas\.sh deploy/.test(step.run ?? '')));
+});
+
+test('root clean reinstall removes installed files from every app workspace before resolving', async t => {
+  const {mkdir, mkdtemp, readFile, rm, writeFile} = require('node:fs/promises');
+  const {tmpdir} = require('node:os');
+  const {spawnSync} = require('node:child_process');
+  const directory = await mkdtemp(join(tmpdir(), 'yify-dependency-cleanup-'));
+  t.after(() => rm(directory, {recursive: true, force: true}));
+  for (const name of ['node_modules', 'crashreporting/node_modules', 'tooling/node_modules', 'release/node_modules', 'bin']) {
+    await mkdir(join(directory, name), {recursive: true});
+    await writeFile(join(directory, name, 'stale'), 'previous installation');
+  }
+  await writeFile(join(directory, 'yarn.lock'), 'original lockfile');
+  await writeFile(join(directory, 'bin/node'), '#!/bin/sh\nexit 0\n', {mode: 0o755});
+  await writeFile(join(directory, 'bin/yarn'), '#!/bin/sh\nset -eu\nfor file in node_modules crashreporting/node_modules tooling/node_modules yarn.lock; do test ! -e "$file"; done\nprintf fresh > yarn.lock\n', {mode: 0o755});
+  const workflow = load(readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8'));
+  const reinstall = Object.values(workflow.jobs).flatMap(job => job.steps ?? []).find(step => step.name === 'Reinstall dependencies from scratch');
+  const result = spawnSync('/bin/bash', ['-e', '-c', reinstall.run], {
+    cwd: directory,
+    env: {...process.env, DEPENDENCY_SCOPE: 'root', RUNNER_TEMP: join(directory, 'runner'), PATH: `${join(directory, 'bin')}:/usr/bin:/bin`},
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(await readFile(join(directory, 'yarn.lock'), 'utf8'), 'fresh');
+  assert.equal(await readFile(join(directory, 'runner/dependabot-clean-install/original-yarn.lock'), 'utf8'), 'original lockfile');
+  assert.equal(await readFile(join(directory, 'release/node_modules/stale'), 'utf8'), 'previous installation');
 });

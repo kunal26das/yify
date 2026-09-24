@@ -14,10 +14,10 @@ export function checkPins(pkg, filename) {
 }
 
 export async function main() {
-    for (const filename of ['package.json', 'crashreporting/package.json', 'release/package.json']) {
+    for (const filename of ['package.json', 'crashreporting/package.json', 'release/package.json', 'tooling/package.json']) {
         checkPins(JSON.parse(await readFile(join(root, filename), 'utf8')), filename);
     }
-    console.log('Application, crash-reporting workspace and release-console dependencies use exact versions.');
+    console.log('Application, crash-reporting workspace, release-console and tooling dependencies use exact versions.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

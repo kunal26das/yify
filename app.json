@@ -117,6 +117,7 @@
       ],
       "@react-native-google-signin/google-signin",
       "./plugins/withAndroidRelease",
+      "./plugins/withGradleWrapper",
       [
         "./plugins/withGradleJvmArgs",
         {
@@ -168,7 +169,8 @@
         {
           "ios": {
             "useFrameworks": "static",
-            "enableSceneSupport": true
+            "enableSceneSupport": true,
+            "usePrecompiledModules": false
           },
           "android": {
             "enableProguardInReleaseBuilds": true,

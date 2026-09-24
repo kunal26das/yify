@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {Modal, Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
+import {Modal, Platform, ScrollView, StyleSheet, TextInput, View, type TextInputInstance} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ThemedText} from '../../components/themed-text';
@@ -26,7 +26,7 @@ export function SearchOverlay({
 }) {
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
-    const inputRef = useRef<TextInput>(null);
+    const inputRef = useRef<TextInputInstance>(null);
     const [query, setQuery] = useState(initialQuery ?? '');
     const [inputFocused, setInputFocused] = useState(false);
     const [recents, setRecents] = useState<string[]>([]);

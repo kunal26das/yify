@@ -27,11 +27,11 @@ and use the package name when importing it from the app.
 
 ### Validation and dependency compatibility
 
-The app uses TypeScript 6 and ESLint 9 because the current Expo lint stack does not support TypeScript 7 or ESLint 10. The independently installed release console uses TypeScript 7. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
+The app and release console use TypeScript 7, and the app uses ESLint 10. The private `tooling/` workspace isolates Babel 7 and TypeScript 6 for Expo, Worklets and ESLint packages that still require their APIs; Babel 8 compiles mocked test fixtures. Install from the root to apply the version-checked compatibility patches. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
 
 Run `node scripts/check-expo-doctor.mjs` for Expo compatibility and `node scripts/check-dependency-pins.mjs` for exact versions. The doctor runs dependency checks with exclusions disabled. Deliberate deviations live in `scripts/expo-dependency-policy.json`; each pins the accepted version, Expo's recommendation and a compatibility reason. Update that policy only after validating an upgrade. Do not disable dependency checking globally.
 
-Tests are `node --test` with native TypeScript type-stripping — no Jest, no transform step. Test files live next to their subject as `*.test.ts` and are excluded from `tsconfig.json` and ESLint.
+Tests use `node --test` with native TypeScript type-stripping for domain tests and Babel 8 for mocked platform fixtures — no Jest. Test files live next to their subject as `*.test.ts` and are excluded from `tsconfig.json` and ESLint.
 
 ## Architecture
 

@@ -196,7 +196,7 @@ jobs:
           case "$DEPENDENCY_SCOPE" in
             root)
               cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
-              rm -rf -- node_modules crashreporting/node_modules yarn.lock
+              rm -rf -- node_modules crashreporting/node_modules tooling/node_modules yarn.lock
               yarn install --non-interactive
               ;;
             release)

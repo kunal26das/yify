@@ -84,8 +84,8 @@ OTA updates can change JavaScript and assets supported by an installed binary. N
 plugin or native code changes require a new binary and a new runtime version. The runtime defaults
 to `package.json`'s `version`; **bump that version whenever native compatibility changes**.
 
-The current dependency upgrades are prepared for **1.8.6 (88)** and require a new native
-binary. Do not publish this dependency tree as an OTA for runtimes **1.8.4 or 1.8.5**. The version
+The current dependency upgrades are prepared for **1.8.7 (89)** and require a new native
+binary. Do not publish this dependency tree as an OTA for runtimes **1.8.4, 1.8.5 or 1.8.6**. The version
 preparation does not publish a store release or add a release-ledger entry.
 
 `EXPO_UPDATE_CHANNEL` sets the binary's channel (`Production` or `Staging`). The release console uses
@@ -109,7 +109,7 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 [Dependency automation](dependency-automation.md) covers daily app, release-console and GitHub Actions updates, including major releases. Related framework packages are grouped; exact version pins and Expo compatibility checks remain required.
 
-Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Only release-console patches can merge automatically; app and Actions updates require review. Release-console merges do not trigger app deployments.
+Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Verified release-console updates can merge automatically after their required checks pass; app and Actions updates require review. Release-console merges do not trigger app deployments.
 
 Native dependency updates require a compatible new binary and runtime version. The weekly dependency report tracks exact resolution pins and the metadata verifier that Dependabot cannot reliably update.
 

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, StyleSheet, View} from 'react-native';
+import {FlatList, StyleSheet, View, type FlatListProps} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -266,8 +266,8 @@ export function WatchlistScreen() {
         []
     );
 
-    const onViewableItemsChanged = useCallback(
-        ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+    const onViewableItemsChanged = useCallback<NonNullable<FlatListProps<Movie>['onViewableItemsChanged']>>(
+        ({viewableItems}) => {
             const maxIndex = viewableItems.reduce(
                 (acc, item) => (item.index != null && item.index > acc ? item.index : acc),
                 -1

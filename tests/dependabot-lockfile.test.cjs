@@ -614,11 +614,16 @@ test('a validated fresh lockfile can repair a failing original frozen-lock insta
   assert.equal(state.writes.at(-1).path, `repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}/approve`);
 });
 
-test('root lockfile automation includes the declared crash-reporting workspace', async () => {
+for (const manifest of ['crashreporting/package.json', 'tooling/package.json']) test(`root lockfile automation includes ${manifest} without merge eligibility`, async () => {
   const { inspect } = await helpers;
   const state = await fixture();
-  state.originalCommit.files.push({ filename: 'crashreporting/package.json', status: 'modified' });
-  assert.equal((await inspect(state)).eligible, true);
+  state.originalCommit.files = [{ filename: manifest, status: 'modified' }, { filename: 'yarn.lock', status: 'modified' }];
+  const result = await inspect(state);
+  assert.equal(result.eligible, true);
+  assert.equal(result.automerge, false);
+  assert.equal(result.scope, 'root');
+  assert.equal(result.lockfile, 'yarn.lock');
+  assert.equal(state.writes.length, 0);
 });
 
 test('GitHub Actions updates receive CI without write or merge eligibility', async () => {
@@ -644,6 +649,8 @@ test('a release update cannot publish root lockfile artifacts', async (t) => {
 test('dependency scopes cannot be mixed or used to bypass exact head checks', async () => {
   for (const mutate of [
     (state) => state.originalCommit.files.push({ filename: 'release/package.json', status: 'modified' }),
+    (state) => { state.originalCommit.files = ['tooling/package.json', 'release/package.json'].map(filename => ({filename, status: 'modified'})); },
+    (state) => { state.originalCommit.files = [{ filename: 'tooling/babel-core.cjs', status: 'modified' }]; },
     (state) => { state.originalCommit.files = [{ filename: '.github/workflows/../script.js', status: 'modified' }]; },
     (state) => { state.originalCommit.files = [{ filename: 'release/package.json', status: 'modified' }]; state.env.PR_HEAD_SHA = 'd'.repeat(40); },
   ]) {
@@ -655,7 +662,7 @@ test('dependency scopes cannot be mixed or used to bypass exact head checks', as
 
 test('manual follow-up fixes in root, release and Actions PRs receive CI without write or merge eligibility', async () => {
   const { inspect } = await helpers;
-  for (const filename of ['package.json', 'release/package.json', '.github/workflows/ci.yml']) {
+  for (const filename of ['package.json', 'tooling/package.json', 'release/package.json', '.github/workflows/ci.yml']) {
     const state = await fixture({ refreshed: true });
     state.originalCommit.files = [{ filename, status: 'modified' }];
     state.refreshedCommit.author.login = 'maintainer';

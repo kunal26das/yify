@@ -11,7 +11,7 @@ const TITLE = 'chore(deps): commit regenerated yarn.lock [dependabot skip]';
 const HEAD_PROPAGATION_DELAYS = [1000, 2000, 4000, 8000, 15000];
 const REQUIRED_CHECKS = ['Typecheck and tests', 'Web exports render and isolate catalog data', 'Typecheck and test release console'];
 const SCOPES = {
-  root: { lockfile: 'yarn.lock', manifests: ['package.json', 'crashreporting/package.json'] },
+  root: { lockfile: 'yarn.lock', manifests: ['package.json', 'crashreporting/package.json', 'tooling/package.json'] },
   release: { lockfile: 'release/yarn.lock', manifests: ['release/package.json'] },
 };
 

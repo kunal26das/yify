@@ -3,6 +3,7 @@ import {Image} from 'expo-image';
 import {useRef, useState} from 'react';
 import {Analytics} from '@/presentation/analytics/events';
 import {
+    type ScrollViewInstance,
     ActivityIndicator,
     type LayoutChangeEvent,
     type NativeScrollEvent,
@@ -190,7 +191,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const [open, setOpen] = useState<DisclosureKey | null>(null);
     const [sections, setSections] = useState<Partial<Record<SectionKey, boolean>>>({});
 
-    const scrollRef = useRef<ScrollView | null>(null);
+    const scrollRef = useRef<ScrollViewInstance | null>(null);
     const pending = useRef<SectionKey | null>(null);
     const offsetY = useRef(0);
     const viewport = useRef(0);

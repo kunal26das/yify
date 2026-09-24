@@ -104,7 +104,7 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
                 ListEmptyComponent: (!catalog ? <ActivityIndicator style={styles.message} color={colors.accent}
                     accessibilityLabel="Loading streaming services"/> : !unavailable && !unsupported ? <ThemedText style={[styles.message, {color: colors.textMuted}]}>
                         {query.trim() ? 'No matching services.' : `No streaming services listed for ${countryLabel}.`}
-                    </ThemedText> : null),
+                    </ThemedText> : undefined),
                 renderItem: ({item}) => {
                     const added = selectedIds.has(item.id);
                     const label = item.parentName ? `${item.name} through ${item.parentName}` : item.name;

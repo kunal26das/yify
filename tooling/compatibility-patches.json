@@ -1,0 +1,32 @@
+[
+  {
+    "package": "node_modules/react-native-worklets",
+    "version": "0.13.0",
+    "file": "plugin/index.js",
+    "before": "059cb16c0bede1b9a72315a105f788b2ae15d3f9cf0c0e27689a2050f7d847ce",
+    "after": "dd2ea225c0f889635eec9d19ecffc4cbd859f4fa8fb8bd9cc004e943a55c56a1",
+    "find": "require(\"@babel/core\")",
+    "replace": "require(\"@yify/tooling/babel\")",
+    "count": 5
+  },
+  {
+    "package": "tooling/node_modules/ts-api-utils",
+    "version": "2.5.0",
+    "file": "lib/index.cjs",
+    "before": "2c0181ef27b301b8bc2ba4a61f877ed9b2626261eedbb4b651e488ec8b09aaa2",
+    "after": "9481bed231b229fae1e79aac94d44f091e7e9f927fec288c36f0568f4971dd6b",
+    "find": "require('typescript')",
+    "replace": "require('@yify/tooling/typescript')",
+    "count": 1
+  },
+  {
+    "package": "tooling/node_modules/ts-api-utils",
+    "version": "2.5.0",
+    "file": "lib/index.js",
+    "before": "a4c47c12c3c32cffc554c61125460b36f29735bd23bbcb94b66476f9f5e9141d",
+    "after": "70671602e65d68d891f63cbcbb8ba3a9eee0db4113a97e26f81aaef65deb8876",
+    "find": "from 'typescript'",
+    "replace": "from '@yify/tooling/typescript'",
+    "count": 1
+  }
+]

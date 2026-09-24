@@ -1,12 +1,12 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {mkdir, mkdtemp, readFile, rm, writeFile} = require('node:fs/promises');
-const {join} = require('node:path');
+const {dirname, join} = require('node:path');
 const {tmpdir} = require('node:os');
 const api = import('../scripts/dependency-watch.mjs');
 const sha = '1'.repeat(40), newer = '2'.repeat(40);
 const workflow = `jobs:\n  merge:\n    steps:\n      - name: Verifier\n        uses: actions/checkout@${sha}\n        with:\n          repository: dependabot/fetch-metadata\n          ref: ${sha}\n          path: .github-tools/fetch-metadata\n`;
-const manifests = {'package.json': {resolutions: {'**/xcode/uuid': '11.1.1'}}, 'release/package.json': {resolutions: {'parent/@scope/pkg': '1.0.0'}}};
+const manifests = {'package.json': {resolutions: {'**/xcode/uuid': '11.1.1'}}, 'crashreporting/package.json': {}, 'tooling/package.json': {}, 'release/package.json': {resolutions: {'parent/@scope/pkg': '1.0.0'}}};
 const document = (name, versions, latest = versions.at(-1)) => ({name, versions: Object.fromEntries(versions.map(version => [version, {version}])), 'dist-tags': {latest}});
 const metadata = url => {
     if (url.startsWith('https://api.github.com/')) return [{name: 'v3', commit: {sha}}, {name: 'v3.1.0', commit: {sha}}, {name: 'v4.0.0-beta.1', commit: {sha: newer}}];
@@ -25,6 +25,30 @@ test('invalid or wildcard-only package targets fail closed', async () => {
     for (const selector of ['**', '@scope/*', 'foo/', 'foo//bar', 'pkg\nsecret', '@scope', 'https://example.com/pkg']) assert.throws(() => resolutionPackage(selector));
     assert.throws(() => resolutionPins({'package.json': {resolutions: {pkg: '^1.0.0'}}}));
     assert.throws(() => resolutionPins({'other.json': {}}));
+});
+
+test('report inventory reads both app workspaces and preserves scoped resolution package names', async t => {
+    const {main} = await api;
+    const directory = await mkdtemp(join(tmpdir(), 'dependency-watch-workspaces-'));
+    t.after(() => rm(directory, {recursive: true, force: true}));
+    const inventory = {
+        ...manifests,
+        'package.json': {resolutions: {'@yify/tooling/**/ts-api-utils': '2.5.0'}},
+        'crashreporting/package.json': {resolutions: {'**/@scope/pkg': '1.0.0'}},
+        'tooling/package.json': {resolutions: {'**/uuid': '11.1.1'}},
+    };
+    for (const [filename, pkg] of Object.entries(inventory)) {
+        await mkdir(join(directory, dirname(filename)), {recursive: true});
+        await writeFile(join(directory, filename), JSON.stringify(pkg));
+    }
+    await mkdir(join(directory, '.github/workflows'), {recursive: true});
+    await writeFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), workflow);
+    const output = join(directory, 'report');
+    assert.equal(await main({directory, env: {DEPENDENCY_WATCH_OUTPUT: output}, request: metadata}), 0);
+    const report = JSON.parse(await readFile(join(output, 'report.json'), 'utf8'));
+    assert.equal(report.rows.find(row => row.file === 'tooling/package.json').status, 'review');
+    assert.equal(report.rows.find(row => row.file === 'crashreporting/package.json').name, '@scope/pkg');
+    assert.equal(report.rows.find(row => row.selector === '@yify/tooling/**/ts-api-utils').name, 'ts-api-utils');
 });
 
 test('semantic comparison handles numeric parts, prereleases and ignored build metadata', async () => {
@@ -155,7 +179,10 @@ test('failed report persistence stops before any issue lookup or mutation', asyn
     t.after(() => rm(directory, {recursive: true, force: true}));
     await mkdir(join(directory, 'release'));
     await mkdir(join(directory, '.github/workflows'), {recursive: true});
-    for (const [name, pkg] of Object.entries(manifests)) await writeFile(join(directory, name), JSON.stringify(pkg));
+    for (const [name, pkg] of Object.entries(manifests)) {
+        await mkdir(join(directory, dirname(name)), {recursive: true});
+        await writeFile(join(directory, name), JSON.stringify(pkg));
+    }
     await writeFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), workflow);
     const output = join(directory, 'not-a-directory');
     await writeFile(output, 'Keep this file');

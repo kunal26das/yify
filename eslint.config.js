@@ -1,6 +1,6 @@
 const path = require('path');
 const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
+const expoConfig = require('./tooling/eslint.cjs');
 
 module.exports = defineConfig([
   expoConfig,

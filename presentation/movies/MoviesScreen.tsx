@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image as ExpoImage} from 'expo-image';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
+    type FlatListProps,
     FlatList,
     RefreshControl,
     StyleSheet,
@@ -177,8 +178,8 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
         []
     );
 
-    const onViewableItemsChanged = useCallback(
-        ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+    const onViewableItemsChanged = useCallback<NonNullable<FlatListProps<GridItem>['onViewableItemsChanged']>>(
+        ({viewableItems}) => {
             const maxIndex = viewableItems.reduce(
                 (acc, item) => (item.index != null && item.index > acc ? item.index : acc),
                 -1
@@ -443,7 +444,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                                     </ThemedText>
                                 </PressableScale>
                             </Animated.View>
-                        ) : null
+                        ) : undefined
                     }
                     onViewableItemsChanged={onViewableItemsChanged}
                     viewabilityConfig={viewabilityConfig}

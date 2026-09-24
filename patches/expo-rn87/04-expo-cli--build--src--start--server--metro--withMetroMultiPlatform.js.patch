@@ -1,0 +1,32 @@
+--- a/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js
++++ b/node_modules/@expo/cli/build/src/start/server/metro/withMetroMultiPlatform.js
+@@ -88,7 +88,7 @@
+         default: obj
+     };
+ }
+-const ASSET_REGISTRY_SRC = `const assets=[];module.exports={registerAsset:s=>assets.push(s),getAssetByID:s=>assets[s-1]};`;
++const ASSET_REGISTRY_SRC = `const assets=[];const registry={registerAsset:s=>assets.push(s),getAssetByID:s=>assets[s-1]};module.exports={registerAsset:registry.registerAsset,getAssetByID:registry.getAssetByID,AssetRegistry:registry};`;
+ function constructPlatformExtensions(config) {
+     var _config_resolver;
+     const platformExtensions = Object.create(null);
+@@ -176,7 +176,7 @@
+         ];
+         if (ctx.platform === 'web') {
+             try {
+-                const rnGetPolyfills = require('react-native/rn-get-polyfills');
++                const rnGetPolyfills = require('@react-native/js-polyfills');
+                 return [
+                     ...virtualModulesPolyfills,
+                     // Ensure that the error-guard polyfill is included in the web polyfills to
+@@ -536,7 +536,10 @@
+                 return getAsyncRequireModule();
+             }
+             // TODO(@kitten): Compare against `config.transformer.assetRegistryPath`
+-            if (/^@react-native\/assets-registry\/registry(\.js)?$/.test(moduleName)) {
++            if (moduleName === config.transformer.assetRegistryPath || moduleName === 'react-native/asset-registry' || /^@react-native\/assets-registry\/registry(\.js)?$/.test(moduleName)) {
++                return getAssetRegistryModule();
++            }
++            if (moduleName.startsWith('.') && /[\\/]private[\\/]assets[\\/]AssetRegistry(\.js)?$/.test(moduleName) && /[\\/]react-native[\\/](src|Libraries)[\\/]/.test(context.originModulePath)) {
+                 return getAssetRegistryModule();
+             }
+             if (platform === 'web' && context.originModulePath.match(/node_modules[\\/]react-native-web[\\/]/) && moduleName.includes('/modules/AssetRegistry')) {

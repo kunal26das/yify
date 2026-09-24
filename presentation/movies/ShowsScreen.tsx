@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {useCallback, useMemo, useRef, useState} from 'react';
-import {ActivityIndicator, FlatList, RefreshControl, StyleSheet, View} from 'react-native';
+import {ActivityIndicator, FlatList, RefreshControl, StyleSheet, View, type FlatListProps} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Show} from '@/domain';
@@ -66,8 +66,8 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
         return chunks;
     }, [numColumns, shows]);
 
-    const onViewableItemsChanged = useCallback(
-        ({viewableItems}: {viewableItems: {index: number | null}[]}) => {
+    const onViewableItemsChanged = useCallback<NonNullable<FlatListProps<Show[]>['onViewableItemsChanged']>>(
+        ({viewableItems}) => {
             const max = viewableItems.reduce(
                 (acc, token) => (token.index != null && token.index > acc ? token.index : acc),
                 -1
@@ -235,7 +235,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                                 </ThemedText>
                             </PressableScale>
                         </View>
-                    ) : null
+                    ) : undefined
                 }
                 contentContainerStyle={{
                     alignSelf: 'center',

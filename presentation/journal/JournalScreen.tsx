@@ -243,7 +243,7 @@ function JournalContent() {
                 <ThemedText type="heading">Remember your next movie</ThemedText>
                 <ThemedText style={{color: colors.textMuted}}>Choose a movie you watched. Add the date, your rating or a private note.</ThemedText>
                 <View style={styles.start}><Action label="Log your first movie" primary onPress={chooseMovie}/></View>
-            </View> : null}
+            </View> : undefined}
             renderItem={({item}) => <View style={[styles.entry, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.entryTop}>
                     {item.movie.posterUrl ? <Image source={{uri: item.movie.posterUrl}} style={styles.poster} contentFit="cover" accessibilityLabel={`${item.movie.title} poster`}/> : null}

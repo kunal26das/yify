@@ -1,5 +1,6 @@
 import {forwardRef, useState} from 'react';
 import {
+    type ViewInstance,
     Platform,
     Pressable,
     StyleSheet,
@@ -86,7 +87,7 @@ interface PressableScaleProps extends Omit<PressableProps, 'style' | 'children'>
     duration?: number;
 }
 
-export const PressableScale = forwardRef<View, PressableScaleProps>(function PressableScale(
+export const PressableScale = forwardRef<ViewInstance, PressableScaleProps>(function PressableScale(
     {
         style,
         contentStyle,

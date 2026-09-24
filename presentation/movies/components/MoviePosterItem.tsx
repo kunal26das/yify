@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
 import {Link} from 'expo-router';
 import {useRef} from 'react';
-import {Platform, StyleSheet, View} from 'react-native';
+import {Platform, StyleSheet, View, type ViewInstance} from 'react-native';
 import Animated from 'react-native-reanimated';
 import type {Movie} from '@/domain';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
@@ -44,7 +44,7 @@ export function MoviePosterItem({
 }) {
   const { posterUrls } = movie;
   const {colors} = usePalette();
-  const nodeRef = useRef<View>(null);
+  const nodeRef = useRef<ViewInstance>(null);
   const hoverCard = useHoverCard();
   const rank = useTopTenRank(movie.id);
 

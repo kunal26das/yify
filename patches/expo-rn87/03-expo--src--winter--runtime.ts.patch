@@ -1,0 +1,11 @@
+--- a/node_modules/expo/src/winter/runtime.ts
++++ b/node_modules/expo/src/winter/runtime.ts
+@@ -5,3 +5,8 @@
+   enumerable: false,
+   writable: true,
+ });
++
++if (process.env.EXPO_SERVER && typeof globalThis.requestAnimationFrame !== 'function') {
++  globalThis.requestAnimationFrame = () => 0;
++  globalThis.cancelAnimationFrame = () => {};
++}

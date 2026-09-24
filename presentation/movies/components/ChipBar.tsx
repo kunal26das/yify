@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef} from 'react';
-import {ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
+import {ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance, type ViewInstance} from 'react-native';
 import {Duration, PressableScale} from '../../components/motion';
 import {ThemedText} from '../../components/themed-text';
 import {usePalette} from '../../hooks/use-palette';
@@ -18,9 +18,9 @@ const REVEAL_RETRIES = [0, 120, 400];
 export function ChipBar({chips, active, onSelect, contentPadding = Spacing.md}: ChipBarProps) {
     const {colors} = usePalette();
     const haptics = useHaptics();
-    const scrollRef = useRef<ScrollView | null>(null);
-    const contentRef = useRef<View | null>(null);
-    const chipRefs = useRef<Record<string, View | null>>({});
+    const scrollRef = useRef<ScrollViewInstance | null>(null);
+    const contentRef = useRef<ViewInstance | null>(null);
+    const chipRefs = useRef<Record<string, ViewInstance | null>>({});
     const {width} = useWindowDimensions();
 
     const revealActive = useCallback(

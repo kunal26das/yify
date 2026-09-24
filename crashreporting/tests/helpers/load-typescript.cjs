@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const {createRequire} = require('node:module');
-const ts = require('typescript');
+const {transpileTypeScript} = require('../../../tests/helpers/transpile-typescript.cjs');
 
 const moduleRoot = path.resolve(__dirname, '../..');
 
@@ -29,14 +29,7 @@ function loadTypeScript(file, mocks = {}) {
             }
             return nativeRequire(specifier);
         };
-        const {outputText} = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-            fileName: filename,
-            compilerOptions: {
-                target: ts.ScriptTarget.ES2022,
-                module: ts.ModuleKind.CommonJS,
-                esModuleInterop: true,
-            },
-        });
+        const outputText = transpileTypeScript(fs.readFileSync(filename, 'utf8'), filename);
         const execute = vm.runInThisContext(
             `(function(exports, require, module, __filename, __dirname) {\n${outputText}\n})`,
             {filename},

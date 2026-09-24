@@ -4,12 +4,20 @@ const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
 const PROJECT = '130cfded-cef0-49b3-94a4-82d3a3852ef5';
 
+function mutableExports(values) {
+    return Object.defineProperties({}, Object.fromEntries(Object.keys(values).map(key => [key, {
+        enumerable: true,
+        get: () => values[key],
+        set: value => {values[key] = value;},
+    }])));
+}
+
 function nativeFixture({platform = 'android', project = PROJECT, permission = 'granted', canAskAgain = true, iosStatus} = {}) {
     const calls = [];
     let revoke;
     let token = 'ExponentPushToken[test_token]';
     let result = {status: permission, granted: permission === 'granted', canAskAgain, ios: {status: iosStatus}};
-    const notifications = {
+    const notifications = mutableExports({
         AndroidImportance: {DEFAULT: 3}, IosAuthorizationStatus: {PROVISIONAL: 3, EPHEMERAL: 4},
         async setNotificationChannelAsync(...args) {calls.push(['channel', ...args]);},
         async getPermissionsAsync() {calls.push(['permission']); return result;},
@@ -17,7 +25,7 @@ function nativeFixture({platform = 'android', project = PROJECT, permission = 'g
         async getExpoPushTokenAsync(options) {calls.push(['token', options]); return {data: token};},
         async setAutoServerRegistrationEnabledAsync(value) {calls.push(['auto', value]);},
         async unregisterForNotificationsAsync() {calls.push(['revoke']); if (revoke) await revoke();},
-    };
+    });
     const {AvailabilityPushImpl} = loadTypeScript('data/services/AvailabilityPush.ts', {
         'expo-constants': {easConfig: {projectId: project}},
         'react-native': {Platform: {OS: platform}}, 'expo-notifications': notifications,
@@ -54,12 +62,12 @@ function webFixture(t, {permission = 'granted', permissionResult = 'granted', se
     }});
     setGlobal(t, 'PushManager', class {});
     setGlobal(t, 'Notification', {permission, requestPermission() {calls.push(['request']); return Promise.resolve(permissionResult);}});
-    const firebase = {
+    const firebase = mutableExports({
         async isSupported() {calls.push(['supported']); return firebaseSupported;},
         getMessaging() {calls.push(['messaging']); return {};},
         async getToken(_messaging, options) {calls.push(['token', options]); return 'fcm:token_abcdefghijklmnop';},
         async deleteToken() {calls.push(['delete']); if (revoke) await revoke(); return true;},
-    };
+    });
     const {AvailabilityPushImpl} = loadTypeScript('data/services/AvailabilityPush.web.ts', {
         'expo-constants': {expoConfig: {experiments: {baseUrl: base}}},
         'firebase/messaging': firebase,
