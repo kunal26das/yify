@@ -144,6 +144,7 @@ jobs:
         if: steps.inspect.outputs.automerge == 'true' && contains(fromJSON('["version-update:semver-patch","version-update:semver-minor","version-update:semver-major"]'), steps.metadata.outputs.update-type)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDABOT_REBASE_TOKEN: ${{ secrets.DEPENDABOT_REBASE_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ steps.prepare.outputs.pr }}
           PR_HEAD_SHA: ${{ steps.followup.outputs.head || steps.prepare.outputs.head }}
@@ -173,21 +174,10 @@ jobs:
             fi
             node scripts/dependabot-lockfile.mjs inspect-maintenance
             if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
-              main_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
-              marker="<!-- dependabot-rebase:$PR_HEAD_SHA:$main_sha -->"
-              comments=$(gh api --paginate --slurp "repos/$GH_REPO/issues/$PR_NUMBER/comments?per_page=100")
-              if jq -e --arg marker "$marker" '
-                any(.[][]; .user.login == "github-actions[bot]" and ((.body // "") | contains($marker)))
-              ' <<< "$comments" >/dev/null; then
-                echo "Dependabot has already been asked to refresh this head against the current main."
-              else
-                comment_file=$(mktemp)
-                trap 'rm -f "$comment_file"' EXIT
-                printf '%s\n\n%s\n' '@dependabot rebase' "$marker" > "$comment_file"
-                gh pr comment "$PR_NUMBER" --repo "$GH_REPO" --body-file "$comment_file"
-                echo "Requested a Dependabot refresh; the updated branch must pass CI again."
+              refresh=$(node scripts/dependabot-refresh.mjs)
+              if jq -e '.requested == true' <<< "$refresh" >/dev/null; then
+                exit 0
               fi
-              exit 0
             fi
             if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
               merged=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
