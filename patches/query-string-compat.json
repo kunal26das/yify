@@ -1,0 +1,11 @@
+{
+  "package": "node_modules/query-string",
+  "version": "7.1.3",
+  "decoderVersion": "0.5.0",
+  "file": "index.js",
+  "before": "caa3f2c8b45dfe1e91db22ae10743af68de8d96f26515132bb52485ec0f037fa",
+  "after": "fc1ca6e1961ba005e554b1bc0de932d6454bf59bfaea03d02c7261dbdcafcdbd",
+  "find": "const decodeComponent = require('decode-uri-component');",
+  "replace": "const decodeComponent = require('decode-uri-component').default;",
+  "count": 1
+}

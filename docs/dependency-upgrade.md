@@ -35,11 +35,11 @@ The regenerated iOS lockfile resolves Firebase 12.18.0, Google Mobile Ads 13.6.0
 
 Reanimated 4.7.0 and Worklets 0.13.0 were evaluated together. Web server rendering failed in Worklets' `flushUIQueue` because `requestAnimationFrame` is unavailable on the server. Inspection of the published Worklets 0.12.2 source found the same missing fallback; a second export was not attempted with that version. The app therefore retains the proven Reanimated 4.5.5 / Worklets 0.11.4 pair. Revisit the upgrade after a compatible upstream fix, and verify both static web and hosting exports alongside Android and iOS builds.
 
-## Remaining transitive advisory
+## Transitive advisory follow-up, September 25, 2026
 
-[GHSA-vcc3-ghjq-m6fr](https://github.com/SamVerschueren/decode-uri-component/security/advisories/GHSA-vcc3-ghjq-m6fr) remains open: Expo Router 57.0.22 depends on query-string 7.1.3, which uses decode-uri-component 0.2.2. Malformed percent-encoded input can cause excessive CPU usage. The patched decoder 0.5.0 and query-string 9.5.1 use ESM default exports, incompatible with the current consumers' CommonJS imports. No compatible upstream patch is published for this dependency chain; forcing either version would break URL handling.
+[GHSA-vcc3-ghjq-m6fr](https://github.com/SamVerschueren/decode-uri-component/security/advisories/GHSA-vcc3-ghjq-m6fr) was deferred in 1.8.6 because Expo Router's query-string 7.1.3 uses the vulnerable CommonJS decoder 0.2.2, while the patched decoder 0.5.0 exports an ES module default function. Forcing the decoder version alone breaks query parsing.
 
-Expo Router's configured incoming-link parser uses URL.searchParams rather than the affected decoder. A focused check with malformed query input confirmed that this parser does not call the decoder. The vendored React Navigation fallback still calls query-string.parse, so the vulnerable dependency has not been eliminated. Keep the advisory open until a compatible upstream update or separately tested migration removes it.
+Version 1.8.7 supersedes that deferral: an exact resolution scoped to query-string selects decoder 0.5.0, and a version/hash-guarded one-line import adapter selects its default export. The upstream decoder algorithm remains unchanged. Regression checks exercise the actual React Navigation fallback parser, Unicode/malformed input and a bounded large-input case; both web exports and their integrity checks pass. See [adapter maintenance notes](../patches/query-string-compat.md). The GitHub alert's resolved status must be checked after the new lockfile reaches the default branch.
 
 The release console's adm-zip and joi updates address the affected ranges behind four other open alerts. Their resolved status should be verified after these lockfile changes reach the default branch.
 

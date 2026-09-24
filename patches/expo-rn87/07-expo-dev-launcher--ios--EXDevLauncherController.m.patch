@@ -8,3 +8,21 @@
  #import <React/RCTAppearance.h>
  #import <React/RCTConstants.h>
  #import <React/RCTKeyCommands.h>
+@@ -188,6 +187,8 @@
+ 
+ - (void)start:(id<EXDevLauncherControllerDelegate>)delegate launchOptions:(NSDictionary * _Nullable)launchOptions
+ {
++  RCTBundleURLProviderAllowPackagerServerAccess(NO);
++
+   _delegate = delegate;
+   _launchOptions = launchOptions;
+   NSDictionary *lastOpenedApp = [self.recentlyOpenedAppsRegistry mostRecentApp];
+@@ -393,6 +394,8 @@
+       onSuccess:(void (^ _Nullable)(void))onSuccess
+         onError:(void (^ _Nullable)(NSError *error))onError
+ {
++  RCTBundleURLProviderAllowPackagerServerAccess(YES);
++
+   EXDevLauncherUrl *devLauncherUrl = [[EXDevLauncherUrl alloc] init:url];
+   NSURL *expoUrl = devLauncherUrl.url;
+   _possibleManifestURL = expoUrl;

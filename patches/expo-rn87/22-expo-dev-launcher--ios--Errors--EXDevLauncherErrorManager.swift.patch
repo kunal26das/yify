@@ -1,0 +1,10 @@
+--- a/node_modules/expo-dev-launcher/ios/Errors/EXDevLauncherErrorManager.swift
++++ b/node_modules/expo-dev-launcher/ios/Errors/EXDevLauncherErrorManager.swift
+@@ -13,7 +13,6 @@
+   @objc
+   public init(controller: EXDevLauncherController) {
+     self.controller = controller
+-    EXDevLauncherRedBoxInterceptor.isInstalled = true
+   }
+ 
+   @objc

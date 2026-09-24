@@ -1,0 +1,11 @@
+--- a/node_modules/expo-insights/ios/EXReactMarker.mm
++++ b/node_modules/expo-insights/ios/EXReactMarker.mm
+@@ -14,7 +14,7 @@
+ 
+ + (NSDate *)getRunJSBundleEndTime
+ {
+-  return [self getDateFromMediaTime:StartupLogger::getInstance().getRunJSBundleEndTime()];
++  return [self getDateFromMediaTime:StartupLogger::getInstance().getAppStartupEndTime()];
+ }
+ 
+ + (NSDate *)getDateFromMediaTime:(double)mediaTime

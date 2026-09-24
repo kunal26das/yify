@@ -74,10 +74,11 @@
       "version": "57.0.20",
       "file": "ios/EXDevLauncherController.m",
       "before": "0524e8eeea1e444e0cdbabb5db970cb9f9f20ea62ac0c23e908ac614722b25f9",
-      "after": "4764395ab4e70cdcb0c135533a56632e99e506ba98d917071ea32a93713f9ef8",
+      "after": "6b500c6e1c18b772159d9b51c7c941b67255ca20b2007c9796fbf3f7bac2502c",
       "patch": "07-expo-dev-launcher--ios--EXDevLauncherController.m.patch",
       "upstream": [
-        "https://github.com/expo/expo/pull/48770"
+        "https://github.com/expo/expo/pull/48770",
+        "https://github.com/expo/expo/pull/47638"
       ]
     },
     {
@@ -166,6 +167,228 @@
       "patch": "15-expo-dev-launcher--expo-dev-launcher-gradle-plugin--build.gradle.kts.patch",
       "upstream": [
         "https://github.com/expo/expo/pull/48770"
+      ]
+    },
+    {
+      "package": "expo-insights",
+      "version": "57.0.20",
+      "file": "ios/EXReactMarker.mm",
+      "before": "959f266e4d292fabd71e10085a531ccde18ad3fa4ae4a0764a2200690cb2818d",
+      "after": "fb2dfc1a4962d94f3ce5cf315a6712b765adad30888a48ef42b2ffda543277ee",
+      "patch": "16-expo-insights--ios--EXReactMarker.mm.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47782"
+      ]
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "57.0.19",
+      "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt",
+      "before": "ec8e6a05af1a6395a70db35f1d96529653181a2c00824608c1eb5221f46fd4d8",
+      "after": "b1bde479f7fa68b2270b87da142d68c6887192604bbe5ae17b18fdfad95925f8",
+      "patch": "17-expo-modules-core--expo-module-gradle-plugin--src--main--kotlin--expo--modules--plugin--ProjectConfiguration.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46769",
+        "https://github.com/expo/expo/pull/46830"
+      ]
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "57.0.19",
+      "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt",
+      "before": "a8a1a82a46c1d47d4201827d1fc1cdbcc4ca2e4a62f38973dc8a45267337663a",
+      "after": "a022ab0675f61550b922a49890a7a742e9979c0bf393ef9a63c5ded84237f302",
+      "patch": "18-expo-modules-core--expo-module-gradle-plugin--src--main--kotlin--expo--modules--plugin--android--AndroidLibraryExtension.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46769"
+      ]
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "57.0.19",
+      "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/MavenPublicationExtension.kt",
+      "before": "0f067ff0836c1f5f04263ed6ca1eb47844cee7384ef5b31536b9fe63dd8bcdb0",
+      "after": "95e28bf343f666b93b7e4640271fee55935c05a49cd30d4148de256a055a6f4f",
+      "patch": "19-expo-modules-core--expo-module-gradle-plugin--src--main--kotlin--expo--modules--plugin--android--MavenPublicationExtension.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46769"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Headers/RCTCxxBridge+Private.h",
+      "before": "73f565e7ff398511d5c1018f0568a6a971d12dd54961febacd4144412551ee10",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "20-expo-dev-launcher--ios--Headers--RCTCxxBridge+Private.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/EXDevLauncherUtils.swift",
+      "before": "9ed62be0de36edef2e3533d0f5a1273774afa052476caf12d74a22bb79f49a9b",
+      "after": "662e99f9ffe35d555b06838fb42f8f9f7071957b77e0f0d155ae1e2d960fd7cc",
+      "patch": "21-expo-dev-launcher--ios--EXDevLauncherUtils.swift.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Errors/EXDevLauncherErrorManager.swift",
+      "before": "f88b6b3c04e254a75007dcfd5d7f61d2f875b9d01de717ee43ae38a3858adde4",
+      "after": "fd3bf3da382a8ba7be5e7f2b75eae419b4cf375ab6361e2162151b94b41ca7a9",
+      "patch": "22-expo-dev-launcher--ios--Errors--EXDevLauncherErrorManager.swift.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Errors/EXDevLauncherRedBox.h",
+      "before": "79590001b214a548bbc6989267f7579b84b87d98e195e65deeedc0fee1505139",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "23-expo-dev-launcher--ios--Errors--EXDevLauncherRedBox.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Errors/EXDevLauncherRedBox.m",
+      "before": "255e65faeb51eeba3be726ab6828959a85551226756041182b1ac0513abd2fb6",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "24-expo-dev-launcher--ios--Errors--EXDevLauncherRedBox.m.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Headers/RCTBundleURLProvider+Private.h",
+      "before": "ce0c56a7f15e1ecac842094d1a0852e30fd17aaf47d693213800e01e44c978c7",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "25-expo-dev-launcher--ios--Headers--RCTBundleURLProvider+Private.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/ReactNative/EXDevLauncherEarlySetup.m",
+      "before": "1c3edb28c2b991464f3847aefa4a645b21696b3bd4f3d5b08526a8c97fd7cc1a",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "26-expo-dev-launcher--ios--ReactNative--EXDevLauncherEarlySetup.m.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/ReactNative/EXDevLauncherRedBoxInterceptor.swift",
+      "before": "1313f522df714e158d74da2295ee7cc03391da77c308e80709f9c7b96c37e766",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "27-expo-dev-launcher--ios--ReactNative--EXDevLauncherRedBoxInterceptor.swift.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Headers/EXDevLauncherRedBoxProtocol.h",
+      "before": "61d579c6f0aa71ddcf49e9260b2645ba3c04733a8f8217482036e2db330e575f",
+      "after": "3eeb2a0aa320573da6e99e60478efa2c9ce9fa85b1b4a912747f40c5eddfaaea",
+      "patch": "28-expo-dev-launcher--ios--Headers--EXDevLauncherRedBoxProtocol.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47638"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "android/expo-gradle-plugin/expo-autolinking-plugin/build.gradle.kts",
+      "before": "8c358d3290b5164eacdbb9acfec7f72feed43e478ec0b0e95741619414da791a",
+      "after": "f3e02b8f0ac80287614b27d8bbe20023d648353be602296ebb61e812fc6038cd",
+      "patch": "29-expo-modules-autolinking--android--expo-gradle-plugin--expo-autolinking-plugin--build.gradle.kts.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt",
+      "before": "8f56cafd0c2e6927e02b4f4596af94f752bc8c9b9268cdf2cf562212bed02cdf",
+      "after": "2a5687dbfc22ced9e2ebf88e24bb8aba89a331e16bfb67551b33205331f3571c",
+      "patch": "30-expo-modules-autolinking--android--expo-gradle-plugin--expo-autolinking-plugin--src--main--kotlin--expo--modules--plugin--ExpoAutolinkingPlugin.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/GenerateInlineModulesTask.kt",
+      "before": null,
+      "after": "ef5b18b6fbea4ab9fb82dd24dc4a2029e464b6530249a5d01b6968ced1044607",
+      "patch": "31-expo-modules-autolinking--android--expo-gradle-plugin--expo-autolinking-plugin--src--main--kotlin--expo--modules--plugin--GenerateInlineModulesTask.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/GeneratePackagesListTask.kt",
+      "before": "dd6a58b5aa96a8f606ff77c4c5875a72f5b64a8bf76072e217dcb4d5f554b2d6",
+      "after": "bc116c4d55cb48e02fa57da44a60ab85d91960f5eb7653699d1293aa7aa69dbe",
+      "patch": "32-expo-modules-autolinking--android--expo-gradle-plugin--expo-autolinking-plugin--src--main--kotlin--expo--modules--plugin--GeneratePackagesListTask.kt.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "build/inlineModules/androidInlineModules.js",
+      "before": "3b273d322859495383b471cdc6ad390a41845ccdae036577ffbf9b6bf4caa048",
+      "after": "ad9f51f862b0bd9a53fd5bec692f0eaad0efdb3a7d9597312df51d11a54372aa",
+      "patch": "33-expo-modules-autolinking--build--inlineModules--androidInlineModules.js.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-modules-autolinking",
+      "version": "57.0.13",
+      "file": "src/inlineModules/androidInlineModules.ts",
+      "before": "eb2bfa3c8646d14a9bb7bd04533e20f65a6bd119ada54ae3c50be3464b55ac09",
+      "after": "b1ef1a11242813afefde39c4b742694151c0d811ebe0b1c31a5617c79cdbfab7",
+      "patch": "34-expo-modules-autolinking--src--inlineModules--androidInlineModules.ts.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/46766",
+        "https://github.com/expo/expo/pull/46829",
+        "https://github.com/expo/expo/pull/50114"
       ]
     }
   ]

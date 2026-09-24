@@ -169,3 +169,21 @@ test('native Metro polyfills resolve the matching supported package', async () =
   assert.deepEqual(get('ios', loader), ['guard.js']);
   assert.deepEqual(required, ['@react-native/js-polyfills', '@react-native/js-polyfills']);
 });
+
+test('reviewed new native source files are created once and unknown existing files are rejected', async (t) => {
+  const f = await fixture(t);
+  const { applyCompatibility, sha256 } = await modulePromise;
+  const after = 'package expo\nclass GeneratedTask\n';
+  const entry = { package: 'expo', version: '57.0.25', file: 'tasks/New.kt', before: null, after: sha256(after), patch: 'New.patch' };
+  f.manifest.files.push(entry);
+  await f.save();
+  await fs.writeFile(path.join(f.patchDirectory, entry.patch), '--- /dev/null\n+++ b/tasks/New.kt\n@@ -0,0 +1,2 @@\n+package expo\n+class GeneratedTask\n');
+  await assert.rejects(applyCompatibility({ ...f, check: true }), /have not been applied/);
+  await assert.rejects(fs.readFile(f.target(entry.file)), { code: 'ENOENT' });
+  assert.equal((await applyCompatibility(f)).applied, 3);
+  assert.equal(await fs.readFile(f.target(entry.file), 'utf8'), after);
+  assert.equal((await applyCompatibility(f)).applied, 0);
+  await fs.writeFile(f.target(entry.file), 'unexpected user source\n');
+  await assert.rejects(applyCompatibility(f), /Unrecognized compatibility source/);
+  assert.equal(await fs.readFile(f.target(entry.file), 'utf8'), 'unexpected user source\n');
+});

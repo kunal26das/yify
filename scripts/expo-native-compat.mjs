@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -49,7 +49,7 @@ export function applyUnifiedPatch(source, patch) {
   }
   if (hunks === 0) throw new Error('Empty compatibility patch');
   output.push(...original.slice(position));
-  return output.join('\n') + (source.endsWith('\n') ? '\n' : '');
+  return output.join('\n') + (source.endsWith('\n') || lines[0] === '--- /dev/null' ? '\n' : '');
 }
 
 function safePath(root, relative) {
@@ -75,17 +75,26 @@ export async function applyCompatibility({ root = repository, patchDirectory = p
     const target = safePath(packageDirectory, entry.file);
     if (seen.has(target)) throw new Error(`Duplicate compatibility target: ${entry.package}/${entry.file}`);
     seen.add(target);
-    const original = await readFile(target, 'utf8');
-    const digest = sha256(original);
+    let original;
+    try {
+      original = await readFile(target, 'utf8');
+    } catch (error) {
+      if (error.code !== 'ENOENT' || entry.before !== null) throw error;
+      original = null;
+    }
+    const digest = original === null ? null : sha256(original);
     if (digest === entry.after) continue;
     if (digest !== entry.before) throw new Error(`Unrecognized compatibility source: ${entry.package}/${entry.file}`);
     const patch = await readFile(safePath(patchDirectory, entry.patch), 'utf8');
-    const patched = applyUnifiedPatch(original, patch);
+    const patched = applyUnifiedPatch(original ?? '', patch);
     if (sha256(patched) !== entry.after) throw new Error(`Compatibility patch digest does not match: ${entry.package}/${entry.file}`);
     pending.push({ target, patched });
   }
   if (check && pending.length) throw new Error(`${pending.length} Expo compatibility patches have not been applied`);
-  for (const { target, patched } of pending) await writeFile(target, patched);
+  for (const { target, patched } of pending) {
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, patched);
+  }
   return { applied: pending.length, verified: manifest.files.length, reactNative: rn.version };
 }
 

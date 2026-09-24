@@ -40,7 +40,7 @@
     "deploy:hosting:prod": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
     "test:crashreporting": "yarn workspace @yify/crashreporting test",
     "release": "cd release && yarn gui",
-    "postinstall": "node scripts/expo-native-compat.mjs && node scripts/apply-tooling-compatibility.mjs"
+    "postinstall": "node scripts/expo-native-compat.mjs && node scripts/apply-tooling-compatibility.mjs && node scripts/query-string-compat.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
@@ -128,7 +128,8 @@
   },
   "resolutions": {
     "**/xcode/uuid": "11.1.1",
-    "@yify/tooling/**/ts-api-utils": "2.5.0"
+    "@yify/tooling/**/ts-api-utils": "2.5.0",
+    "**/query-string/decode-uri-component": "0.5.0"
   },
   "expo": {
     "autolinking": {

@@ -52,6 +52,13 @@ module.exports = (config) =>
             'release signingConfig'
         );
 
+        contents = replace(
+            contents,
+            /getDefaultProguardFile\((["'])proguard-android(?:-optimize)?\.txt\1\)/,
+            'getDefaultProguardFile("proguard-android-optimize.txt")',
+            'optimized Proguard defaults'
+        );
+
         cfg.modResults.contents = contents;
         return cfg;
     });

@@ -1,6 +1,6 @@
 # Dependency updates
 
-Dependabot checks the application and its crash-reporting workspace, the separately installed release console, and GitHub Actions daily, starting at 06:00 Asia/Kolkata. Related Expo, React, React Native, Firebase and animation packages are grouped. Major releases remain visible; no permanent version ignores are configured. Ordinary updates use a three-day cooldown. Security updates bypass that cooldown, and GitHub's security alerts and automatic security updates are enabled for this repository.
+Dependabot checks the application and its crash-reporting and tooling workspaces, the separately installed release console, and GitHub Actions daily, starting at 06:00 Asia/Kolkata. Related Expo, React, React Native, Firebase and animation packages are grouped. Major releases remain visible; no permanent version ignores are configured. Ordinary updates use a three-day cooldown. Security updates bypass that cooldown, and GitHub's security alerts and automatic security updates are enabled for this repository.
 
 ## Pull request flow
 
@@ -11,7 +11,7 @@ Dependabot checks the application and its crash-reporting workspace, the separat
 
 The application lockfile includes native transitive dependencies, so even a clean reinstall started by a small tooling update can change native code. Before merging an application dependency update, review the native changes, update the runtime version where required, regenerate native projects and verify the affected platforms. The bot never weakens Expo's compatibility policy to make a build pass.
 
-Expo's September 24 patch recommendations were reviewed against the published package contents. The current runtime retains exact, package-specific exceptions in `scripts/expo-dependency-policy.json`: several patches only refresh release metadata, while UI, glass and core changes need a coordinated native release. The online doctor remains enabled, and changed versions or recommendations require another review. Dependabot still proposes these updates. The native changes include [UI additions](https://github.com/expo/expo/blob/9349d1457178dd9cccb8bdd3aed47473c49134e1/packages/expo-ui/CHANGELOG.md), [glass rendering fixes](https://github.com/expo/expo/blob/9349d1457178dd9cccb8bdd3aed47473c49134e1/packages/expo-glass-effect/CHANGELOG.md), and [core fixes](https://github.com/expo/expo/blob/9349d1457178dd9cccb8bdd3aed47473c49134e1/packages/expo-modules-core/CHANGELOG.md).
+Yify 1.8.7 adopts the reviewed Expo 57 patch updates and React Native 0.87. Compatibility backports live in `patches/expo-rn87/`; installation checks package versions and complete source hashes before applying them. The private `tooling/` workspace isolates the older compiler APIs still required by Expo and its lint plugins. The online doctor remains enabled with exact, reviewed deviations in `scripts/expo-dependency-policy.json`. A new package version that changes a guarded target requires another compatibility review.
 
 ## Coverage outside normal Dependabot updates
 
@@ -35,7 +35,7 @@ The branch-refresh token expires on September 24, 2027; `DEPENDABOT_REBASE_TOKEN
 
 A passing manually dispatched run is not evidence that required PR checks passed. The normal PR run must complete, and the branch must be current with `main`. Other reasons to remain open include a failed build, native changes requiring a new app runtime, or manual edits that disable bot writes and merges.
 
-The September 2026 compatibility review found that React Native 0.87 is incompatible with the current stable Expo toolchain; Worklets 0.13 crashes web server rendering; and Babel 8 and TypeScript 7 break the current application build/test toolchain. Those application upgrades remain open while their builds fail. Release-console updates are independently checked by their Node 24 typecheck, tests and build, together with the application checks.
+React Native, Worklets and compiler major updates can require coordinated changes across native builds, server rendering and test tooling. Their integration includes guarded compatibility patches and a new native runtime; passing a dependency-only check cannot replace those release checks. Release-console updates remain independently checked by their Node 24 typecheck, tests and build, together with the application checks.
 
 ## Activation
 
