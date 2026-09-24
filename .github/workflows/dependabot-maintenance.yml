@@ -33,7 +33,7 @@ jobs:
         (github.event.workflow_run.actor.login == 'dependabot[bot]' ||
          github.event.workflow_run.actor.login == 'github-actions[bot]')))
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     permissions:
       contents: write
       pull-requests: write
@@ -93,17 +93,27 @@ jobs:
           SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
           SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
         run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs publish-maintenance
+      - name: Wait for the committed lockfile's pull-request checks
+        id: followup
+        if: steps.publish.outputs.changed == 'true' && steps.prepare.outputs.automerge == 'true'
+        env:
+          PR_NUMBER: ${{ steps.prepare.outputs.pr }}
+          PR_HEAD_SHA: ${{ steps.publish.outputs.new_sha }}
+          FOLLOWUP_RUN_ID: ${{ steps.publish.outputs.ci_run_id }}
+        run: node scripts/dependabot-lockfile.mjs wait-followup
       - name: Reverify every required check on the current head
         id: inspect
         if: >-
           steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.automerge == 'true' &&
-          steps.prepare.outputs.checks_passed == 'true' &&
-          (steps.prepare.outputs.operation == 'merge' || steps.publish.outputs.changed == 'false')
+          (steps.followup.outputs.ready == 'true' ||
+           (steps.prepare.outputs.checks_passed == 'true' &&
+            (steps.prepare.outputs.operation == 'merge' || steps.publish.outputs.changed == 'false')))
         env:
           PR_NUMBER: ${{ steps.prepare.outputs.pr }}
-          PR_HEAD_SHA: ${{ steps.prepare.outputs.head }}
-          SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
-          SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
+          PR_HEAD_SHA: ${{ steps.followup.outputs.head || steps.prepare.outputs.head }}
+          SOURCE_HEAD_SHA: ${{ steps.followup.outputs.source || steps.prepare.outputs.source }}
+          SOURCE_RUN_ID: ${{ steps.followup.outputs.source_run_id || steps.prepare.outputs.source_run_id }}
+          SOURCE_RUN_ATTEMPT: ${{ steps.followup.outputs.source_run_attempt || steps.prepare.outputs.source_run_attempt }}
         run: node scripts/dependabot-lockfile.mjs inspect-maintenance
       - name: Checkout pinned Dependabot metadata verifier
         if: steps.inspect.outputs.automerge == 'true'
@@ -136,9 +146,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ steps.prepare.outputs.pr }}
-          PR_HEAD_SHA: ${{ steps.prepare.outputs.head }}
-          SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
-          SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
+          PR_HEAD_SHA: ${{ steps.followup.outputs.head || steps.prepare.outputs.head }}
+          SOURCE_HEAD_SHA: ${{ steps.followup.outputs.source || steps.prepare.outputs.source }}
+          SOURCE_RUN_ID: ${{ steps.followup.outputs.source_run_id || steps.prepare.outputs.source_run_id }}
+          SOURCE_RUN_ATTEMPT: ${{ steps.followup.outputs.source_run_attempt || steps.prepare.outputs.source_run_attempt }}
         run: |
           for attempt in 1 2 3 4; do
             pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
