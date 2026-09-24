@@ -65,6 +65,7 @@ app-example
 /android/**/*.hprof
 /android/local.properties
 /android/app/src/main/java/inline/
+/android/app/src/main/assets/modules.json
 /android/**/*.jsbundle
 /ios/Pods/
 /ios/build/

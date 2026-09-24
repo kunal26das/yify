@@ -74,11 +74,12 @@
       "version": "57.0.20",
       "file": "ios/EXDevLauncherController.m",
       "before": "0524e8eeea1e444e0cdbabb5db970cb9f9f20ea62ac0c23e908ac614722b25f9",
-      "after": "6b500c6e1c18b772159d9b51c7c941b67255ca20b2007c9796fbf3f7bac2502c",
+      "after": "73b4886aa0cd977aa06fba977299447d36cf9da14c074ca0d5e6303969cc1958",
       "patch": "07-expo-dev-launcher--ios--EXDevLauncherController.m.patch",
       "upstream": [
         "https://github.com/expo/expo/pull/48770",
-        "https://github.com/expo/expo/pull/47638"
+        "https://github.com/expo/expo/pull/47638",
+        "https://github.com/expo/expo/pull/47639"
       ]
     },
     {
@@ -389,6 +390,61 @@
         "https://github.com/expo/expo/pull/46766",
         "https://github.com/expo/expo/pull/46829",
         "https://github.com/expo/expo/pull/50114"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "expo-dev-launcher.podspec",
+      "before": "3df59ccd3d9c21dfd0f31d8b308ec9b17790e973e6d034f5811da90e18bf52ba",
+      "after": "23e48047f28393bc3ebba6d6b2f6ff9f6efc0f0594d19da0319540fc96e9d37c",
+      "patch": "35-expo-dev-launcher--expo-dev-launcher.podspec.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47639"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/EXDevLauncherController.h",
+      "before": "feccc974d9a0c9eb44309cf9ac60c61aeb049efa15d0c9f3696aa56e0b9dcec4",
+      "after": "8e82ff3f9b9d766ea0293e603ebd2fc78e0df88443524d3e69c6c2173c1393b4",
+      "patch": "36-expo-dev-launcher--ios--EXDevLauncherController.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47639"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/ReactDelegateHandler/ExpoDevLauncherReactDelegateHandler.swift",
+      "before": "6d1bf2d485da0dadf5a4916eab473b449f305fb0e2387a5840345d012967dc31",
+      "after": "ff782c66ac9a612360ed8d032e687967af91d5936ad4f0ebf3aa0fd58f764a16",
+      "patch": "37-expo-dev-launcher--ios--ReactDelegateHandler--ExpoDevLauncherReactDelegateHandler.swift.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47639"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h",
+      "before": "fddbc3aeb55bc1ea8f9191ba98c1c9b0c0a667d1e5958538d12f573a91ece708",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "38-expo-dev-launcher--ios--Unsafe--RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47639"
+      ]
+    },
+    {
+      "package": "expo-dev-launcher",
+      "version": "57.0.20",
+      "file": "ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m",
+      "before": "16f9223ad14cfc1672a6dfaf49a88df466dd2b7b538205939826666d6055e52e",
+      "after": "29d75a6c23ba975aa403c9521b6c93daf331918d18cf7a0c75d4cdf2aa152694",
+      "patch": "39-expo-dev-launcher--ios--Unsafe--RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m.patch",
+      "upstream": [
+        "https://github.com/expo/expo/pull/47639"
       ]
     }
   ]
