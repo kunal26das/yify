@@ -306,6 +306,50 @@ function validateFollowupRun(run, workflow, ctx, state, newSha) {
   'Follow-up CI does not identify the exact same-repository lockfile commit and pull request.');
 }
 
+export async function waitFollowup({ api, env, wait = delay, now = Date.now, timeoutMs = 900_000, pollMs = 15_000 }) {
+  assert(env.GITHUB_REF === 'refs/heads/main' && ['workflow_run', 'workflow_dispatch'].includes(env.GITHUB_EVENT_NAME),
+    'Follow-up CI must be awaited from trusted default-branch maintenance.');
+  assert(INTEGER.test(env.FOLLOWUP_RUN_ID || ''), 'A follow-up pull-request CI run ID is required.');
+  assert(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 900_000 &&
+    Number.isSafeInteger(pollMs) && pollMs > 0 && pollMs <= timeoutMs, 'Invalid follow-up CI wait budget.');
+  const ctx = context(env);
+  const sourceEnv = { ...env, GITHUB_EVENT_NAME: 'workflow_run', ALLOW_MERGED: 'false' };
+  const state = await inspect({ api, env: sourceEnv });
+  assert(state.eligible && state.refreshed, 'Follow-up CI requires a verified lockfile refresh on the expected head.');
+  const workflow = await api('GET', `repos/${ctx.repository}/actions/workflows/ci.yml`);
+  assert(Number.isSafeInteger(workflow.id) && workflow.id > 0 && workflow.path === '.github/workflows/ci.yml',
+    'Unable to identify the trusted CI workflow.');
+  const deadline = now() + timeoutMs;
+  const maxPolls = Math.ceil(timeoutMs / pollMs);
+  const readRun = async () => {
+    const run = await api('GET', `repos/${ctx.repository}/actions/runs/${env.FOLLOWUP_RUN_ID}`);
+    validateFollowupRun(run, workflow, ctx, state, ctx.expected);
+    assert(String(run.id) === env.FOLLOWUP_RUN_ID && Number.isSafeInteger(run.run_attempt) && run.run_attempt > 0,
+      'Follow-up CI identity or attempt is invalid.');
+    return run;
+  };
+  for (let poll = 0; ; poll += 1) {
+    await waitForPublishedHead({ api, ctx, state, newSha: ctx.expected, wait });
+    const run = await readRun();
+    if (run.status === 'completed' && run.conclusion === 'success') {
+      const result = await prepareMaintenance({ api, env: { ...env, SOURCE_RUN_ID: String(run.id), SOURCE_RUN_ATTEMPT: String(run.run_attempt) } });
+      assert(result.ready && result.operation === 'merge' && result.head === ctx.expected && result.source === ctx.expected &&
+        result.pr === ctx.pr && result.checks_passed, 'Follow-up CI did not validate the current refreshed head.');
+      const currentRun = await readRun();
+      assert(currentRun.run_attempt === run.run_attempt && currentRun.status === 'completed' && currentRun.conclusion === 'success',
+        'Follow-up CI changed while verifying its completed attempt.');
+      await waitForPublishedHead({ api, ctx, state, newSha: ctx.expected, wait });
+      return result;
+    }
+    assert((['queued', 'in_progress', 'requested', 'pending'].includes(run.status) && run.conclusion === null) ||
+      run.conclusion === 'action_required' || run.status === 'action_required',
+    `Follow-up CI run ${run.id} is ${String(run.status)}/${String(run.conclusion)}; inspect its failure before merging.`);
+    assert(poll < maxPolls && now() < deadline,
+      `Timed out waiting for pull-request CI run ${run.id}. Recover maintenance using this run ID after CI succeeds; no merge was attempted.`);
+    await wait(Math.min(pollMs, Math.max(1, deadline - now())));
+  }
+}
+
 async function approveFollowup({ api, approvalApi, env, ctx, state, metadata, newSha, wait }) {
   const workflow = await api('GET', `repos/${ctx.repository}/actions/workflows/ci.yml`);
   assert(Number.isSafeInteger(workflow.id) && workflow.id > 0 && workflow.path === '.github/workflows/ci.yml',
@@ -397,6 +441,11 @@ async function writeOutputs(env, values) {
 export async function main(mode, env = process.env) {
   if (mode === 'capture') return capture({ env });
   const api = githubApi(env.GH_TOKEN);
+  if (mode === 'wait-followup') {
+    const result = await waitFollowup({ api, env });
+    await writeOutputs(env, result);
+    return result;
+  }
   if (mode === 'prepare-maintenance') {
     const result = await prepareMaintenance({ api, env });
     await writeOutputs(env, result);
@@ -425,7 +474,7 @@ export async function main(mode, env = process.env) {
     await writeOutputs(env, result);
     return result;
   }
-  throw new Error('Expected inspect, capture, prepare-maintenance, or publish mode.');
+  throw new Error('Expected inspect, capture, prepare-maintenance, wait-followup, or publish mode.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

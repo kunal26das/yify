@@ -74,8 +74,8 @@ async function fixture(options = {}) {
     if (path === `repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}`) return structuredClone(followupRun);
     if (path === `repos/${REPOSITORY}/actions/runs/456`) return structuredClone(run);
     if (path === `repos/${REPOSITORY}/actions/runs/456/attempts/1`) return structuredClone(run);
-    if (path === `repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}/attempts/1`) return { ...structuredClone(followupRun), run_attempt: 1 };
-    if (path.startsWith(`repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}/attempts/1/jobs?`)) return { jobs: structuredClone(jobs.slice(0, 3)) };
+    if (path === `repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}/attempts/${followupRun.run_attempt || 1}`) return { ...structuredClone(followupRun), run_attempt: followupRun.run_attempt || 1 };
+    if (path.startsWith(`repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}/attempts/${followupRun.run_attempt || 1}/jobs?`)) return { jobs: structuredClone(jobs.slice(0, 3)) };
     if (path.startsWith(`repos/${REPOSITORY}/actions/runs/456/artifacts?`)) return { artifacts: [{ name: `dependabot-clean-install-${scope}-456-1`, expired: false, workflow_run: { id: 456, head_sha: SOURCE, head_branch: pr.head.ref, repository_id: REPOSITORY_ID, head_repository_id: REPOSITORY_ID } }] };
     if (path.startsWith(`repos/${REPOSITORY}/actions/runs/456/attempts/1/jobs?`)) return { jobs: structuredClone(jobs) };
     throw new Error(`Unexpected API request: ${method} ${path}`);
@@ -576,6 +576,21 @@ test('only the default-branch maintenance workflow can publish, approve or merge
   assert.match(steps.find((step) => step.id === 'inspect').if, /checks_passed == 'true'/);
   assert.match(steps.find((step) => step.id === 'inspect').if, /steps\.publish\.outputs\.changed == 'false'/);
   assert.match(steps.find((step) => step.id === 'merge').if, /version-update:semver-patch/);
+  const followup = steps.find((step) => step.id === 'followup');
+  assert.match(followup.if, /steps\.publish\.outputs\.changed == 'true'/);
+  assert.match(followup.if, /steps\.prepare\.outputs\.automerge == 'true'/);
+  assert.equal(followup.env.FOLLOWUP_RUN_ID, '${{ steps.publish.outputs.ci_run_id }}');
+  assert.equal(followup.env.PR_HEAD_SHA, '${{ steps.publish.outputs.new_sha }}');
+  assert.match(followup.run, /wait-followup/);
+  for (const id of ['inspect', 'merge']) {
+    const env = steps.find((step) => step.id === id).env;
+    assert.equal(env.PR_HEAD_SHA, '${{ steps.followup.outputs.head || steps.prepare.outputs.head }}');
+    assert.equal(env.SOURCE_HEAD_SHA, '${{ steps.followup.outputs.source || steps.prepare.outputs.source }}');
+    assert.equal(env.SOURCE_RUN_ID, '${{ steps.followup.outputs.source_run_id || steps.prepare.outputs.source_run_id }}');
+    assert.equal(env.SOURCE_RUN_ATTEMPT, '${{ steps.followup.outputs.source_run_attempt || steps.prepare.outputs.source_run_attempt }}');
+  }
+  assert.match(steps.find((step) => step.id === 'inspect').if, /steps\.followup\.outputs\.ready == 'true'/);
+  assert.ok(job['timeout-minutes'] > 15);
   assert.ok(steps.every((step) => !/yarn |npm |npx |pull_request\.head/.test(step.run || '')));
 });
 
@@ -914,4 +929,140 @@ test('closed pull requests and GitHub Actions updates are skipped without privil
   const action = await maintenanceFixture(); action.originalCommit.files = [{ filename: '.github/workflows/ci.yml', status: 'modified' }];
   assert.equal((await prepareMaintenance(action)).ready, false);
   assert.equal(closed.writes.length + action.writes.length, 0);
+});
+
+
+async function waitingFixture() {
+  const state = await maintenanceFixture({ scope: 'release', refreshed: true });
+  state.env.FOLLOWUP_RUN_ID = String(FOLLOWUP_ID);
+  state.followupRun.run_attempt = 2;
+  state.followupRun.status = 'in_progress';
+  state.followupRun.conclusion = null;
+  return state;
+}
+
+test('follow-up wait observes real PR success on approval attempt two and rechecks all jobs', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  let waits = 0;
+  const wait = async (ms) => {
+    assert.equal(ms, 15_000); waits += 1;
+    state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success';
+  };
+  const result = await waitFollowup({ ...state, wait });
+  assert.equal(waits, 1);
+  assert.equal(result.pr, 123);
+  assert.equal(result.head, REFRESHED);
+  assert.equal(result.source, REFRESHED);
+  assert.equal(result.source_run_id, String(FOLLOWUP_ID));
+  assert.equal(result.source_run_attempt, '2');
+  assert.equal(result.checks_passed, true);
+  assert.equal(result.operation, 'merge');
+  assert.equal(state.writes.length, 0);
+});
+
+test('manual follow-up wait on main accepts already completed PR CI without sleeping', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  state.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
+  state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success';
+  const wait = async () => { assert.fail('Completed CI must not sleep'); };
+  assert.equal((await waitFollowup({ ...state, wait })).head, REFRESHED);
+  assert.equal(state.writes.length, 0);
+});
+
+for (const [label, mutate] of [
+  ['another checkout', (s) => { s.env.GITHUB_REF = 'refs/heads/other'; }],
+  ['pull-request context', (s) => { s.env.GITHUB_EVENT_NAME = 'pull_request'; }],
+  ['invalid run input', (s) => { s.env.FOLLOWUP_RUN_ID = '../789'; }],
+  ['different returned run', (s) => { s.followupRun.id = 790; }],
+  ['surrogate workflow dispatch', (s) => { s.followupRun.event = 'workflow_dispatch'; }],
+  ['foreign workflow', (s) => { s.followupRun.workflow_id = 13; }],
+  ['foreign repository', (s) => { s.followupRun.head_repository.full_name = 'attacker/yify'; }],
+  ['another PR', (s) => { s.followupRun.pull_requests[0].number = 124; }],
+  ['another run branch', (s) => { s.followupRun.head_branch = 'other'; }],
+  ['another run head', (s) => { s.followupRun.head_sha = SOURCE; }],
+  ['unknown actor', (s) => { s.followupRun.actor.login = 'someone'; }],
+  ['missing attempt', (s) => { delete s.followupRun.run_attempt; }],
+  ['invalid attempt', (s) => { s.followupRun.run_attempt = 0; }],
+  ['unsigned lock refresh', (s) => { s.refreshedCommit.commit.verification.verified = false; }],
+  ['no refresh', (s) => { s.pr.commits = 1; s.pr.head.sha = SOURCE; s.env.PR_HEAD_SHA = SOURCE; }],
+]) test(`follow-up wait rejects ${label} without writes`, async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture(); mutate(state);
+  await assert.rejects(() => waitFollowup({ ...state, wait: async () => { assert.fail('Must reject before waiting'); } }));
+  assert.equal(state.writes.length, 0);
+});
+
+for (const conclusion of ['failure', 'cancelled', 'timed_out', 'skipped', 'neutral', null]) {
+  test(`follow-up wait blocks completed ${conclusion} CI`, async () => {
+    const { waitFollowup } = await helpers;
+    const state = await waitingFixture();
+    state.followupRun.status = 'completed'; state.followupRun.conclusion = conclusion;
+    await assert.rejects(() => waitFollowup({ ...state, wait: async () => { assert.fail('Failed CI must not sleep'); } }), /inspect its failure/);
+    assert.equal(state.writes.length, 0);
+  });
+}
+
+test('follow-up wait tolerates stale approval state but never performs another approval', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  state.followupRun.run_attempt = 1; state.followupRun.status = 'completed'; state.followupRun.conclusion = 'action_required';
+  const wait = async () => {
+    state.followupRun.run_attempt = 2; state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success';
+  };
+  assert.equal((await waitFollowup({ ...state, wait })).source_run_attempt, '2');
+  assert.equal(state.writes.length, 0);
+});
+
+test('follow-up wait times out within its wall-clock and poll budgets', async () => {
+  const { waitFollowup } = await helpers;
+  for (const clockAdvances of [true, false]) {
+    const state = await waitingFixture(); let now = 0; const sleeps = [];
+    const wait = async (ms) => { sleeps.push(ms); if (clockAdvances) now += ms; };
+    await assert.rejects(() => waitFollowup({ ...state, wait, now: () => now, timeoutMs: 30, pollMs: 15 }), /Timed out.*no merge/);
+    assert.deepEqual(sleeps, [15, 15]);
+    assert.equal(state.writes.length, 0);
+  }
+});
+
+test('follow-up wait abandons a concurrent PR push after one sleep', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture(); let sleeps = 0;
+  const wait = async () => { sleeps += 1; state.pr.head.sha = 'd'.repeat(40); };
+  await assert.rejects(() => waitFollowup({ ...state, wait }), /Pull request changed/);
+  assert.equal(sleeps, 1);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a successful run cannot conceal failed required jobs', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success'; state.jobs[1].conclusion = 'failure';
+  await assert.rejects(() => waitFollowup(state), /every required CI check/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a completed run is rejected if its attempt changes during final verification', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success';
+  let reads = 0;
+  const api = async (...args) => {
+    const result = await state.api(...args);
+    if (args[1] === `repos/${REPOSITORY}/actions/runs/${FOLLOWUP_ID}` && ++reads === 3) result.run_attempt = 3;
+    return result;
+  };
+  await assert.rejects(() => waitFollowup({ ...state, api }), /changed while verifying/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('follow-up completion revalidates lockfile provenance after waiting', async () => {
+  const { waitFollowup } = await helpers;
+  const state = await waitingFixture();
+  const wait = async () => {
+    state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success'; state.regenerate = Buffer.from('tampered');
+  };
+  await assert.rejects(() => waitFollowup({ ...state, wait }), /refresh digest/);
+  assert.equal(state.writes.length, 0);
 });
