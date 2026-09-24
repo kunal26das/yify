@@ -550,7 +550,7 @@ test('only the default-branch maintenance workflow can publish, approve or merge
   const ci = yaml.load(ciText);
   const workflow = yaml.load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
   assert.match(ci.concurrency.group, /github\.event\.pull_request\.head\.sha/);
-  assert.doesNotMatch(ciText, /DEPENDABOT_APP|contents: write|pull-requests: write|actions: write|pull_request_target/);
+  assert.doesNotMatch(ciText, /DEPENDABOT_APP|DEPENDABOT_REBASE_TOKEN|contents: write|pull-requests: write|actions: write|pull_request_target/);
   assert.equal(ci.jobs['dependabot-write-lock'], undefined);
   assert.equal(ci.jobs['dependabot-auto-merge'], undefined);
   assert.deepEqual(workflow.on.workflow_run, { workflows: ['CI'], types: ['completed'] });
@@ -580,6 +580,11 @@ test('only the default-branch maintenance workflow can publish, approve or merge
   const allowedUpdates = JSON.parse(mergeCondition.match(/fromJSON\('([^']+)'\)/)[1]);
   assert.deepEqual(allowedUpdates, ['version-update:semver-patch', 'version-update:semver-minor', 'version-update:semver-major']);
   assert.ok(!allowedUpdates.includes('') && !allowedUpdates.includes('unknown'));
+  const merge = steps.find((step) => step.id === 'merge');
+  assert.equal(merge.env.DEPENDABOT_REBASE_TOKEN, '${{ secrets.DEPENDABOT_REBASE_TOKEN }}');
+  assert.match(merge.run, /node scripts\/dependabot-refresh\.mjs/);
+  assert.doesNotMatch(merge.run, /gh pr comment|@dependabot rebase/);
+  assert.deepEqual(steps.filter((step) => step.env?.DEPENDABOT_REBASE_TOKEN).map((step) => step.id), ['merge']);
   const followup = steps.find((step) => step.id === 'followup');
   assert.match(followup.if, /steps\.publish\.outputs\.changed == 'true'/);
   assert.match(followup.if, /steps\.prepare\.outputs\.automerge == 'true'/);

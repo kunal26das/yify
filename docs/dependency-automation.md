@@ -27,6 +27,10 @@ GitHub requires approval for PR workflows triggered by commits made with `GITHUB
 
 `DEPENDABOT_APP_ID` is a repository variable. `DEPENDABOT_APP_PRIVATE_KEY` is an encrypted Actions secret, never a Dependabot secret. It is consumed only by the separate maintenance workflow whose definition, actions and scripts come from `main`. PR workflows have read-only permissions and never receive the key. Each short-lived token is limited to this repository and Actions write permission; the job uses it only for workflow approval. The trusted workflow checks the PR, commit provenance and matching CI run again before approving it.
 
+Behind branches need an owner-authored rebase request: Dependabot rejects commands from GitHub App bots even when their tokens can write. `DEPENDABOT_REBASE_TOKEN` is a separate fine-grained user token restricted to Yify, with pull-request write and metadata read permissions. Only the trusted merge step receives it, solely to request a rebase after checking the current PR and successful CI. Maintenance requires a Dependabot acknowledgement or a newly verified signed source before reporting the request as accepted; rejected bot comments cannot suppress retries. The rebased PR must pass fresh checks and lockfile regeneration before merging.
+
+The branch-refresh token expires on September 24, 2027; `DEPENDABOT_REBASE_TOKEN_EXPIRES_AT` records its exact expiration. Renew the same restricted credential and replace the encrypted secret before that date. The GitHub App approval credential is independent.
+
 ## Why an update stays open
 
 A passing manually dispatched run is not evidence that required PR checks passed. The normal PR run must complete, and the branch must be current with `main`. Other reasons to remain open include a failed build, native changes requiring a new app runtime, or manual edits that disable bot writes and merges.
