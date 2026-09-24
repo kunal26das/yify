@@ -91,7 +91,7 @@ export function verifierPin(workflow) {
             'Verifier must be checked out by a SHA-pinned checkout action.');
         const refs = lines.slice(start, end).map(line => line.match(new RegExp(`^ {${indent}}ref:\\s*(.*)$`))).filter(Boolean);
         assert(refs.length === 1 && SHA.test(scalar(refs[0][1])), 'Verifier checkout must contain one full commit SHA.');
-        pins.push({kind: 'github', file: '.github/workflows/ci.yml', name: VERIFIER, current: scalar(refs[0][1])});
+        pins.push({kind: 'github', file: '.github/workflows/dependabot-maintenance.yml', name: VERIFIER, current: scalar(refs[0][1])});
     }
     assert(pins.length === 1, 'Expected exactly one pinned Dependabot metadata checkout.');
     return pins[0];
@@ -242,7 +242,7 @@ export async function main({env = process.env, directory = root, request = jsonC
     assert(output, 'DEPENDENCY_WATCH_OUTPUT is required.');
     const manifests = {};
     for (const filename of ['package.json', 'release/package.json']) manifests[filename] = JSON.parse(await readFile(join(directory, filename), 'utf8'));
-    const workflow = await readFile(join(directory, '.github/workflows/ci.yml'), 'utf8');
+    const workflow = await readFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), 'utf8');
     const report = await scan({manifests, workflow, request});
     await persistReport(output, report);
     if (env.GITHUB_STEP_SUMMARY) await appendFile(env.GITHUB_STEP_SUMMARY, markdown(report));

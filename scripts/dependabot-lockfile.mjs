@@ -9,6 +9,7 @@ const DIGEST = /^[a-f0-9]{64}$/;
 const INTEGER = /^[1-9][0-9]*$/;
 const TITLE = 'chore(deps): commit regenerated yarn.lock [dependabot skip]';
 const HEAD_PROPAGATION_DELAYS = [1000, 2000, 4000, 8000, 15000];
+const REQUIRED_CHECKS = ['Typecheck and tests', 'Web exports render and isolate catalog data', 'Typecheck and test release console'];
 const SCOPES = {
   root: { lockfile: 'yarn.lock', manifests: ['package.json', 'crashreporting/package.json'] },
   release: { lockfile: 'release/yarn.lock', manifests: ['release/package.json'] },
@@ -68,7 +69,7 @@ export function githubApi(token, fetchImpl = fetch) {
       signal: AbortSignal.timeout(30_000),
     });
     assert(response.ok, `GitHub ${method} ${path} failed (${response.status}).`);
-    if (response.status === 204) return null;
+    if (response.status === 204 || (response.status === 201 && method === 'POST' && /\/actions\/runs\/[1-9][0-9]*\/approve$/.test(path))) return null;
     const result = await response.json();
     assert(!result.errors?.length, `GitHub GraphQL request failed: ${result.errors?.map((item) => item.message).join('; ')}`);
     return result;
@@ -205,30 +206,151 @@ export async function capture({ env, directory = env.LOCKFILE_REPORT_DIR }) {
   return metadata;
 }
 
+export async function prepareMaintenance({ api, env }) {
+  assert(env.GITHUB_REPOSITORY === 'kunal26das/yify' && env.GITHUB_REF === 'refs/heads/main' &&
+    ['workflow_run', 'workflow_dispatch'].includes(env.GITHUB_EVENT_NAME),
+  'Dependency maintenance must run from the trusted default branch.');
+  assert(INTEGER.test(env.SOURCE_RUN_ID || ''), 'A source CI run ID is required.');
+  const repository = env.GITHUB_REPOSITORY;
+  const latest = await api('GET', `repos/${repository}/actions/runs/${env.SOURCE_RUN_ID}`);
+  const attempt = env.SOURCE_RUN_ATTEMPT || String(latest.run_attempt);
+  assert(INTEGER.test(attempt), 'Invalid source CI attempt.');
+  const [run, workflow, jobs] = await Promise.all([
+    api('GET', `repos/${repository}/actions/runs/${env.SOURCE_RUN_ID}/attempts/${attempt}`),
+    api('GET', `repos/${repository}/actions/workflows/ci.yml`),
+    list(api, `repos/${repository}/actions/runs/${env.SOURCE_RUN_ID}/attempts/${attempt}/jobs`, 'jobs'),
+  ]);
+  assert(String(run.id) === env.SOURCE_RUN_ID && String(run.run_attempt) === attempt && run.workflow_id === workflow.id &&
+    workflow.path === '.github/workflows/ci.yml' && run.path === workflow.path && run.event === 'pull_request' &&
+    run.status === 'completed' && SHA.test(run.head_sha || '') && run.repository?.full_name === repository &&
+    run.head_repository?.full_name === repository && ['dependabot[bot]', 'github-actions[bot]'].includes(run.actor?.login) &&
+    Array.isArray(run.pull_requests) && run.pull_requests.length === 1 && Number.isSafeInteger(run.pull_requests[0].number),
+  'Source run is not a completed same-repository Dependabot pull-request CI attempt.');
+  const pr = run.pull_requests[0];
+  const sourceEnv = { ...env, GITHUB_EVENT_NAME: 'workflow_run', PR_NUMBER: String(pr.number), PR_HEAD_SHA: run.head_sha };
+  const currentPr = await api('GET', `repos/${repository}/pulls/${pr.number}`);
+  if (currentPr.state === 'closed') return { ready: false, reason: 'Pull request is already closed.' };
+  const state = await inspect({ api, env: sourceEnv, allowPublishedHead: true });
+  if (!state.eligible) return { ready: false, reason: state.reason };
+  assert(run.head_branch === state.branch && [run.head_sha, state.head].includes(pr.head?.sha) && pr.head?.ref === state.branch && pr.base?.ref === 'main' &&
+    Number.isSafeInteger(state.pull_request.head.repo.id) && pr.head?.repo?.id === state.pull_request.head.repo.id &&
+    Number.isSafeInteger(state.pull_request.base.repo.id) && pr.base?.repo?.id === state.pull_request.base.repo.id,
+  'Source CI association does not match the current verified pull request.');
+  const checksPassed = REQUIRED_CHECKS.every((name) => {
+    const matches = jobs.filter((job) => job.name === name);
+    return matches.length === 1 && matches[0].status === 'completed' && matches[0].conclusion === 'success';
+  });
+  const result = { ready: true, operation: 'publish', pr: state.pr, head: state.head, source: run.head_sha,
+    branch: state.branch, scope: state.scope, automerge: state.automerge, checks_passed: checksPassed,
+    source_run_id: env.SOURCE_RUN_ID, source_run_attempt: attempt };
+  if (state.refreshed && state.head === run.head_sha) {
+    assert(checksPassed, 'The refreshed pull-request head has not passed every required CI check.');
+    return { ...result, operation: 'merge' };
+  }
+  const cleanJobs = jobs.filter((job) => job.name === `Dependabot clean reinstall (${state.scope})`);
+  assert(cleanJobs.length === 1 && cleanJobs[0].status === 'completed' && cleanJobs[0].conclusion === 'success',
+    'Source CI has no successful clean reinstall in the selected attempt. Choose the exact artifact-producing attempt for recovery.');
+  const name = `dependabot-clean-install-${state.scope}-${env.SOURCE_RUN_ID}-${attempt}`;
+  const artifacts = await list(api, `repos/${repository}/actions/runs/${env.SOURCE_RUN_ID}/artifacts`, 'artifacts');
+  const matching = artifacts.filter((artifact) => artifact.name === name);
+  assert(matching.length === 1 && !matching[0].expired && matching[0].workflow_run?.id === run.id &&
+    matching[0].workflow_run?.head_sha === run.head_sha && matching[0].workflow_run?.head_branch === state.branch &&
+    matching[0].workflow_run?.repository_id === state.pull_request.base.repo.id &&
+    matching[0].workflow_run?.head_repository_id === state.pull_request.head.repo.id,
+  'The exact source CI attempt has no unique, unexpired lockfile artifact.');
+  return { ...result, artifact_name: name };
+}
+
+export async function maintenanceContext({ api, env, operation }) {
+  const prepared = await prepareMaintenance({ api, env });
+  assert(prepared.ready && String(prepared.pr) === env.PR_NUMBER && prepared.source === env.SOURCE_HEAD_SHA,
+    'Source CI or pull request changed after maintenance preparation.');
+  if (operation === 'publish') {
+    assert(prepared.operation === 'publish', 'This source CI does not require lockfile publication.');
+  } else {
+    assert(prepared.checks_passed && prepared.head === env.PR_HEAD_SHA,
+      'The current pull-request head has not passed the selected CI attempt.');
+    assert(prepared.head === prepared.source, 'The selected CI attempt did not test the current pull-request head.');
+  }
+  return { ...env, GITHUB_EVENT_NAME: 'workflow_run', PR_HEAD_SHA: operation === 'publish' ? prepared.source : prepared.head,
+    SOURCE_RUN_ID: prepared.source_run_id, SOURCE_RUN_ATTEMPT: prepared.source_run_attempt };
+}
+
 async function waitForPublishedHead({ api, ctx, state, newSha, wait }) {
   for (let attempt = 0; ; attempt += 1) {
     const current = await api('GET', `repos/${ctx.repository}/pulls/${ctx.pr}`);
     const unchanged = current.number === ctx.pr && current.state === 'open' && !current.merged && !current.draft &&
       current.user?.login === 'dependabot[bot]' && current.head?.ref === state.branch && current.head?.repo?.full_name === ctx.repository &&
       current.base?.ref === 'main' && current.base?.repo?.full_name === ctx.repository;
-    assert(unchanged, 'Pull request changed before follow-up CI could be dispatched.');
+    assert(unchanged, 'Pull request changed before follow-up CI could be approved.');
     if (current.head.sha === newSha) return;
     assert(!state.refreshed && current.head.sha === state.head,
-      'Pull request changed before follow-up CI could be dispatched.');
+      'Pull request changed before follow-up CI could be approved.');
     assert(attempt < HEAD_PROPAGATION_DELAYS.length,
       'GitHub has not exposed the new lockfile commit on the pull request yet. Rerun this failed job to retry without creating another commit.');
     await wait(HEAD_PROPAGATION_DELAYS[attempt]);
   }
 }
 
-export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR, wait = delay }) {
+function validateFollowupRun(run, workflow, ctx, state, newSha) {
+  const prs = run.pull_requests;
+  assert(Number.isSafeInteger(state.pull_request.head.repo.id) && state.pull_request.head.repo.id > 0 &&
+    Number.isSafeInteger(state.pull_request.base.repo.id) && state.pull_request.base.repo.id > 0 &&
+    Number.isSafeInteger(run.id) && run.id > 0 && run.workflow_id === workflow.id && run.path === workflow.path &&
+    run.event === 'pull_request' && run.head_sha === newSha && run.head_branch === state.branch &&
+    run.repository?.full_name === ctx.repository && run.head_repository?.full_name === ctx.repository &&
+    run.actor?.login === 'github-actions[bot]' && Array.isArray(prs) && prs.length === 1 &&
+    prs[0].number === ctx.pr && prs[0].head?.sha === newSha && prs[0].head?.ref === state.branch &&
+    prs[0].base?.ref === 'main' && prs[0].head?.repo?.id === state.pull_request.head.repo.id &&
+    prs[0].base?.repo?.id === state.pull_request.base.repo.id,
+  'Follow-up CI does not identify the exact same-repository lockfile commit and pull request.');
+}
+
+async function approveFollowup({ api, approvalApi, env, ctx, state, metadata, newSha, wait }) {
+  const workflow = await api('GET', `repos/${ctx.repository}/actions/workflows/ci.yml`);
+  assert(Number.isSafeInteger(workflow.id) && workflow.id > 0 && workflow.path === '.github/workflows/ci.yml',
+    'Unable to identify the trusted CI workflow.');
+  let candidate;
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await api('GET', `repos/${ctx.repository}/actions/workflows/${workflow.id}/runs?event=pull_request&head_sha=${newSha}&per_page=100`);
+    assert(Array.isArray(response.workflow_runs) && Number.isSafeInteger(response.total_count) &&
+      response.total_count === response.workflow_runs.length && response.total_count <= 1,
+    'Follow-up CI discovery returned ambiguous or incomplete workflow runs.');
+    if (response.workflow_runs.length === 1) {
+      candidate = response.workflow_runs[0];
+      validateFollowupRun(candidate, workflow, ctx, state, newSha);
+      break;
+    }
+    assert(attempt < HEAD_PROPAGATION_DELAYS.length,
+      'GitHub has not created the pull-request CI run yet. Rerun this failed job to retry without creating another commit.');
+    await wait(HEAD_PROPAGATION_DELAYS[attempt]);
+    await waitForPublishedHead({ api, ctx, state: { ...state, refreshed: true }, newSha, wait });
+  }
+  const run = await api('GET', `repos/${ctx.repository}/actions/runs/${candidate.id}`);
+  validateFollowupRun(run, workflow, ctx, state, newSha);
+  const current = await inspect({ api, env: { ...env, ALLOW_MERGED: 'false' }, allowPublishedHead: true });
+  assert(current.head === newSha && current.refreshed && commitMessage(current.provenance) === commitMessage(metadata),
+    'Lockfile provenance changed before follow-up CI could be approved.');
+  await waitForPublishedHead({ api, ctx, state: { ...state, refreshed: true }, newSha, wait });
+  if (run.conclusion === 'action_required' || run.status === 'action_required') {
+    await approvalApi('POST', `repos/${ctx.repository}/actions/runs/${run.id}/approve`);
+  } else {
+    assert((['queued', 'in_progress', 'requested', 'pending'].includes(run.status) && run.conclusion === null) ||
+      (run.status === 'completed' && run.conclusion === 'success'),
+    `Follow-up CI run ${run.id} is ${String(run.status)}/${String(run.conclusion)}; inspect its failure before retrying.`);
+  }
+  return run.id;
+}
+
+export async function publish({ api, approvalApi, env, directory = env.LOCKFILE_REPORT_DIR, wait = delay }) {
   assert(directory, 'LOCKFILE_REPORT_DIR is required.');
+  assert(typeof approvalApi === 'function', 'A separate GitHub App approval token is required before committing a lockfile.');
   const ctx = context(env);
   const [original, regenerated, text] = await Promise.all([
     readFile(join(directory, 'original-yarn.lock')), readFile(join(directory, 'regenerated-yarn.lock')), readFile(join(directory, 'metadata.json'), 'utf8'),
   ]);
   const metadata = validateMetadata(JSON.parse(text), env);
-  assert(metadata.source === ctx.expected && metadata.run_id === env.GITHUB_RUN_ID && metadata.run_attempt === (env.SOURCE_RUN_ATTEMPT || env.GITHUB_RUN_ATTEMPT),
+  assert(metadata.source === ctx.expected && metadata.run_id === (env.SOURCE_RUN_ID || env.GITHUB_RUN_ID) && metadata.run_attempt === (env.SOURCE_RUN_ATTEMPT || env.GITHUB_RUN_ATTEMPT),
     'Artifact was not produced for this source commit and workflow attempt.');
   assert(regenerated.length > 0 && regenerated.length <= 10 * 1024 * 1024 && digest(regenerated) === metadata.lockfile_sha256,
     'Regenerated lockfile is empty, oversized, or differs from its recorded digest.');
@@ -260,10 +382,8 @@ export async function publish({ api, env, directory = env.LOCKFILE_REPORT_DIR, w
     assert(SHA.test(newSha || ''), 'GitHub did not return a lockfile commit SHA.');
   }
   await waitForPublishedHead({ api, ctx, state, newSha, wait });
-  await api('POST', `repos/${ctx.repository}/actions/workflows/ci.yml/dispatches`, {
-    ref: state.branch, inputs: { dependabot_pr: String(ctx.pr), dependabot_head: newSha },
-  });
-  return { changed: true, new_sha: newSha };
+  const runId = await approveFollowup({ api, approvalApi, env, ctx, state, metadata, newSha, wait });
+  return { changed: true, new_sha: newSha, ci_run_id: runId };
 }
 
 async function writeOutputs(env, values) {
@@ -277,6 +397,15 @@ async function writeOutputs(env, values) {
 export async function main(mode, env = process.env) {
   if (mode === 'capture') return capture({ env });
   const api = githubApi(env.GH_TOKEN);
+  if (mode === 'prepare-maintenance') {
+    const result = await prepareMaintenance({ api, env });
+    await writeOutputs(env, result);
+    return result;
+  }
+  if (mode === 'inspect-maintenance' || mode === 'publish-maintenance') {
+    env = await maintenanceContext({ api, env, operation: mode === 'publish-maintenance' ? 'publish' : 'merge' });
+    mode = mode === 'publish-maintenance' ? 'publish' : 'inspect';
+  }
   if (mode === 'inspect') {
     const state = await inspect({ api, env, allowManual: env.ALLOW_MANUAL_DEPENDENCY_UPDATES === 'true' });
     assert(env.RUNNER_TEMP, 'RUNNER_TEMP is required.');
@@ -290,11 +419,13 @@ export async function main(mode, env = process.env) {
     return state;
   }
   if (mode === 'publish') {
-    const result = await publish({ api, env });
+    assert(env.DEPENDABOT_APPROVAL_TOKEN && env.DEPENDABOT_APPROVAL_TOKEN !== env.GH_TOKEN,
+      'DEPENDABOT_APPROVAL_TOKEN must be a separate GitHub App token; configure DEPENDABOT_APP_ID and DEPENDABOT_APP_PRIVATE_KEY before committing a lockfile.');
+    const result = await publish({ api, approvalApi: githubApi(env.DEPENDABOT_APPROVAL_TOKEN), env });
     await writeOutputs(env, result);
     return result;
   }
-  throw new Error('Expected inspect, capture, or publish mode.');
+  throw new Error('Expected inspect, capture, prepare-maintenance, or publish mode.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

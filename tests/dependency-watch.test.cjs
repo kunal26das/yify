@@ -156,7 +156,7 @@ test('failed report persistence stops before any issue lookup or mutation', asyn
     await mkdir(join(directory, 'release'));
     await mkdir(join(directory, '.github/workflows'), {recursive: true});
     for (const [name, pkg] of Object.entries(manifests)) await writeFile(join(directory, name), JSON.stringify(pkg));
-    await writeFile(join(directory, '.github/workflows/ci.yml'), workflow);
+    await writeFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), workflow);
     const output = join(directory, 'not-a-directory');
     await writeFile(output, 'Keep this file');
     await assert.rejects(main({directory, env: {...env, GH_TOKEN: 'private', DEPENDENCY_WATCH_PUBLISH: 'true', DEPENDENCY_WATCH_OUTPUT: output},

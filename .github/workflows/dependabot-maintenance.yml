@@ -1,0 +1,195 @@
+name: Dependabot maintenance
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Completed pull-request CI run ID
+        type: string
+        required: true
+      source_run_attempt:
+        description: Exact artifact-producing attempt for recovery (defaults to latest)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-maintenance-${{ github.event.workflow_run.id || inputs.source_run_id }}
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    name: Verify and maintain Dependabot update
+    if: >-
+      github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.actor.login == 'dependabot[bot]' ||
+         github.event.workflow_run.actor.login == 'github-actions[bot]')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.source_run_id }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || inputs.source_run_attempt }}
+    steps:
+      - name: Checkout trusted default-branch automation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify source CI and lockfile provenance
+        id: prepare
+        run: node scripts/dependabot-lockfile.mjs prepare-maintenance
+      - name: Check workflow approval credentials
+        if: steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.operation == 'publish'
+        env:
+          DEPENDABOT_APP_ID: ${{ vars.DEPENDABOT_APP_ID }}
+          DEPENDABOT_APP_PRIVATE_KEY: ${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "$DEPENDABOT_APP_ID" ] || [ -z "$DEPENDABOT_APP_PRIVATE_KEY" ]; then
+            echo "Configure the DEPENDABOT_APP_ID repository variable and DEPENDABOT_APP_PRIVATE_KEY Actions secret before committing lockfile changes."
+            exit 1
+          fi
+      - name: Create repository-scoped workflow approval token
+        id: approval-token
+        if: steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.operation == 'publish'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.DEPENDABOT_APP_ID }}
+          private-key: ${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
+      - name: Download the verified source attempt's lockfile report
+        if: steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.operation == 'publish'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ steps.prepare.outputs.artifact_name }}
+          path: ${{ runner.temp }}/dependabot-clean-install
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.prepare.outputs.source_run_id }}
+      - name: Commit lockfile and approve its pull-request CI
+        id: publish
+        if: steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.operation == 'publish'
+        env:
+          DEPENDABOT_APPROVAL_TOKEN: ${{ steps.approval-token.outputs.token }}
+          PR_NUMBER: ${{ steps.prepare.outputs.pr }}
+          SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
+          SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
+        run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs publish-maintenance
+      - name: Reverify every required check on the current head
+        id: inspect
+        if: >-
+          steps.prepare.outputs.ready == 'true' && steps.prepare.outputs.automerge == 'true' &&
+          steps.prepare.outputs.checks_passed == 'true' &&
+          (steps.prepare.outputs.operation == 'merge' || steps.publish.outputs.changed == 'false')
+        env:
+          PR_NUMBER: ${{ steps.prepare.outputs.pr }}
+          PR_HEAD_SHA: ${{ steps.prepare.outputs.head }}
+          SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
+          SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
+        run: node scripts/dependabot-lockfile.mjs inspect-maintenance
+      - name: Checkout pinned Dependabot metadata verifier
+        if: steps.inspect.outputs.automerge == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: dependabot/fetch-metadata
+          ref: 25dd0e34f4fe68f24cc83900b1fe3fe149efef98
+          path: .github-tools/fetch-metadata
+          persist-credentials: false
+
+      - name: Verify Dependabot metadata
+        id: metadata
+        if: steps.inspect.outputs.automerge == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERIFIED_EVENT_FILE: ${{ steps.inspect.outputs.event_file }}
+        run: |
+          node <<'NODE'
+          process.env.GITHUB_EVENT_PATH = process.env.VERIFIED_EVENT_FILE;
+          process.env['INPUT_GITHUB-TOKEN'] = process.env.GH_TOKEN;
+          process.env['INPUT_SKIP-COMMIT-VERIFICATION'] = 'false';
+          process.env['INPUT_SKIP-VERIFICATION'] = 'false';
+          require('./.github-tools/fetch-metadata/dist/index.js');
+          NODE
+
+      - name: Merge the tested patch update
+        id: merge
+        if: steps.inspect.outputs.automerge == 'true' && steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.prepare.outputs.pr }}
+          PR_HEAD_SHA: ${{ steps.prepare.outputs.head }}
+          SOURCE_HEAD_SHA: ${{ steps.prepare.outputs.source }}
+          SOURCE_RUN_ATTEMPT: ${{ steps.prepare.outputs.source_run_attempt }}
+        run: |
+          for attempt in 1 2 3 4; do
+            pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+            if ! jq -e --arg sha "$PR_HEAD_SHA" --arg repo "$GH_REPO" '
+              .head.sha == $sha and .head.repo.full_name == $repo and
+              .base.ref == "main" and .base.repo.full_name == $repo and
+              .user.login == "dependabot[bot]" and (.draft | not)
+            ' <<< "$pr" >/dev/null; then
+              echo "Pull request no longer matches the tested Dependabot update."
+              exit 1
+            fi
+            if jq -e '.merged == true' <<< "$pr" >/dev/null; then
+              if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$pr" >/dev/null; then
+                echo 'merged=true' >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            if ! jq -e '.state == "open"' <<< "$pr" >/dev/null; then
+              echo "Pull request is closed; refusing to merge."
+              exit 1
+            fi
+            node scripts/dependabot-lockfile.mjs inspect-maintenance
+            if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
+              main_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
+              marker="<!-- dependabot-rebase:$PR_HEAD_SHA:$main_sha -->"
+              comments=$(gh api --paginate --slurp "repos/$GH_REPO/issues/$PR_NUMBER/comments?per_page=100")
+              if jq -e --arg marker "$marker" '
+                any(.[][]; .user.login == "github-actions[bot]" and ((.body // "") | contains($marker)))
+              ' <<< "$comments" >/dev/null; then
+                echo "Dependabot has already been asked to refresh this head against the current main."
+              else
+                comment_file=$(mktemp)
+                trap 'rm -f "$comment_file"' EXIT
+                printf '%s\n\n%s\n' '@dependabot rebase' "$marker" > "$comment_file"
+                gh pr comment "$PR_NUMBER" --repo "$GH_REPO" --body-file "$comment_file"
+                echo "Requested a Dependabot refresh; the updated branch must pass CI again."
+              fi
+              exit 0
+            fi
+            if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
+              merged=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
+              if jq -e --arg sha "$PR_HEAD_SHA" '.merged == true and .head.sha == $sha' <<< "$merged" >/dev/null; then
+                if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$merged" >/dev/null; then
+                  echo 'merged=true' >> "$GITHUB_OUTPUT"
+                fi
+                exit 0
+              fi
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              sleep 10
+            fi
+          done
+          echo "Merge is still blocked; branch protection was not bypassed."
+          exit 1
