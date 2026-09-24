@@ -575,7 +575,11 @@ test('only the default-branch maintenance workflow can publish, approve or merge
   assert.match(steps.find((step) => step.id === 'publish').run, /publish-maintenance/);
   assert.match(steps.find((step) => step.id === 'inspect').if, /checks_passed == 'true'/);
   assert.match(steps.find((step) => step.id === 'inspect').if, /steps\.publish\.outputs\.changed == 'false'/);
-  assert.match(steps.find((step) => step.id === 'merge').if, /version-update:semver-patch/);
+  const mergeCondition = steps.find((step) => step.id === 'merge').if;
+  assert.match(mergeCondition, /^steps\.inspect\.outputs\.automerge == 'true' && contains\(fromJSON\('[^']+'\), steps\.metadata\.outputs\.update-type\)$/);
+  const allowedUpdates = JSON.parse(mergeCondition.match(/fromJSON\('([^']+)'\)/)[1]);
+  assert.deepEqual(allowedUpdates, ['version-update:semver-patch', 'version-update:semver-minor', 'version-update:semver-major']);
+  assert.ok(!allowedUpdates.includes('') && !allowedUpdates.includes('unknown'));
   const followup = steps.find((step) => step.id === 'followup');
   assert.match(followup.if, /steps\.publish\.outputs\.changed == 'true'/);
   assert.match(followup.if, /steps\.prepare\.outputs\.automerge == 'true'/);
