@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event.pull_request.head.sha || inputs.dependabot_head || 'latest' }}
   cancel-in-progress: true
 
 jobs:
@@ -274,7 +274,7 @@ jobs:
           else
             echo 'No complete lockfile comparison is available because setup or installation failed.' >> "$GITHUB_STEP_SUMMARY"
           fi
-          printf '\nSuccessful Dependabot regeneration is committed back to the PR by a separate job. Full CI then validates the new commit using the committed lockfile.\n' >> "$GITHUB_STEP_SUMMARY"
+          printf '\nSuccessful Dependabot regeneration is committed back to the PR by the trusted maintenance workflow. Full CI then validates the new commit using the committed lockfile.\n' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Bind regenerated lockfile to its source
         if: success() && needs.dependabot-context.outputs.eligible == 'true'
@@ -291,167 +291,3 @@ jobs:
           path: ${{ runner.temp }}/dependabot-clean-install/
           if-no-files-found: warn
           retention-days: 14
-
-  dependabot-write-lock:
-    name: Commit regenerated Dependabot lockfile
-    needs: [dependabot-context, dependabot-clean-install]
-    if: >-
-      needs.dependabot-context.outputs.eligible == 'true' &&
-      needs.dependabot-context.outputs.refreshed == 'false'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: read
-      actions: write
-    outputs:
-      changed: ${{ steps.publish.outputs.changed }}
-      new_sha: ${{ steps.publish.outputs.new_sha }}
-    steps:
-      # Only trusted main code and lockfile data enter this write-enabled job.
-      - name: Checkout trusted automation
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          persist-credentials: false
-      - name: Download this run's lockfile report
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ needs.dependabot-clean-install.outputs.artifact_name }}
-          path: ${{ runner.temp }}/dependabot-clean-install
-      - name: Commit lockfile and request CI on the new head
-        id: publish
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
-          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.source }}
-          SOURCE_RUN_ATTEMPT: ${{ needs.dependabot-clean-install.outputs.source_run_attempt }}
-        run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs publish
-
-  dependabot-auto-merge:
-    name: Merge release-console Dependabot patches
-    needs: [dependabot-context, check, web-export, release-console, dependabot-clean-install, dependabot-write-lock]
-    if: >-
-      always() && !cancelled() && github.repository == 'kunal26das/yify' &&
-      needs.dependabot-context.result == 'success' &&
-      needs.dependabot-context.outputs.eligible == 'true' &&
-      needs.dependabot-context.outputs.automerge == 'true' &&
-      needs.check.result == 'success' && needs.web-export.result == 'success' &&
-      needs.release-console.result == 'success' &&
-      (needs.dependabot-context.outputs.refreshed == 'true' ||
-       (needs.dependabot-clean-install.result == 'success' &&
-        needs.dependabot-write-lock.result == 'success' &&
-        needs.dependabot-write-lock.outputs.changed == 'false'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: read
-    steps:
-      # No PR code or dependency execution in this write-enabled job.
-      - name: Checkout trusted automation
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          persist-credentials: false
-      - name: Setup Node for the metadata verifier
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
-          package-manager-cache: false
-      - name: Reverify the tested PR head
-        id: inspect
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
-          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.head }}
-          ALLOW_MERGED: 'true'
-        run: node scripts/dependabot-lockfile.mjs inspect
-      - name: Checkout pinned Dependabot metadata verifier
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: dependabot/fetch-metadata
-          ref: 25dd0e34f4fe68f24cc83900b1fe3fe149efef98
-          path: .github-tools/fetch-metadata
-          persist-credentials: false
-
-      - name: Verify Dependabot metadata
-        id: metadata
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERIFIED_EVENT_FILE: ${{ steps.inspect.outputs.event_file }}
-        # Set the event inside the process: the runner replaces GITHUB_EVENT_PATH for uses actions.
-        run: |
-          node <<'NODE'
-          process.env.GITHUB_EVENT_PATH = process.env.VERIFIED_EVENT_FILE;
-          process.env['INPUT_GITHUB-TOKEN'] = process.env.GH_TOKEN;
-          process.env['INPUT_SKIP-COMMIT-VERIFICATION'] = 'false';
-          process.env['INPUT_SKIP-VERIFICATION'] = 'false';
-          require('./.github-tools/fetch-metadata/dist/index.js');
-          NODE
-
-      - name: Merge the tested patch update
-        id: merge
-        if: steps.inspect.outputs.automerge == 'true' && steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
-          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.head }}
-        run: |
-          for attempt in 1 2 3 4; do
-            pr=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
-            if ! jq -e --arg sha "$PR_HEAD_SHA" --arg repo "$GH_REPO" '
-              .head.sha == $sha and .head.repo.full_name == $repo and
-              .base.ref == "main" and .base.repo.full_name == $repo and
-              .user.login == "dependabot[bot]" and (.draft | not)
-            ' <<< "$pr" >/dev/null; then
-              echo "Pull request no longer matches the tested Dependabot update."
-              exit 1
-            fi
-            if jq -e '.merged == true' <<< "$pr" >/dev/null; then
-              if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$pr" >/dev/null; then
-                echo 'merged=true' >> "$GITHUB_OUTPUT"
-              fi
-              exit 0
-            fi
-            if ! jq -e '.state == "open"' <<< "$pr" >/dev/null; then
-              echo "Pull request is closed; refusing to merge."
-              exit 1
-            fi
-            node scripts/dependabot-lockfile.mjs inspect
-            if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
-              main_sha=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq '.object.sha')
-              marker="<!-- dependabot-rebase:$PR_HEAD_SHA:$main_sha -->"
-              comments=$(gh api --paginate --slurp "repos/$GH_REPO/issues/$PR_NUMBER/comments?per_page=100")
-              if jq -e --arg marker "$marker" '
-                any(.[][]; .user.login == "github-actions[bot]" and ((.body // "") | contains($marker)))
-              ' <<< "$comments" >/dev/null; then
-                echo "Dependabot has already been asked to refresh this head against the current main."
-              else
-                comment_file=$(mktemp)
-                trap 'rm -f "$comment_file"' EXIT
-                printf '%s\n\n%s\n' '@dependabot rebase' "$marker" > "$comment_file"
-                gh pr comment "$PR_NUMBER" --repo "$GH_REPO" --body-file "$comment_file"
-                echo "Requested a Dependabot refresh; the updated branch must pass CI again."
-              fi
-              exit 0
-            fi
-            # Required checks may take a moment to be reflected in branch protection.
-            # GitHub still enforces them, and the SHA guard rejects an untested push.
-            if gh pr merge "$PR_NUMBER" --repo "$GH_REPO" --squash --match-head-commit "$PR_HEAD_SHA"; then
-              merged=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER")
-              if jq -e --arg sha "$PR_HEAD_SHA" '.merged == true and .head.sha == $sha' <<< "$merged" >/dev/null; then
-                if jq -e '.merged_by.login == "github-actions[bot]"' <<< "$merged" >/dev/null; then
-                  echo 'merged=true' >> "$GITHUB_OUTPUT"
-                fi
-                exit 0
-              fi
-            fi
-            if [ "$attempt" -lt 4 ]; then
-              sleep 10
-            fi
-          done
-          echo "Merge is still blocked; branch protection was not bypassed."
-          exit 1
