@@ -70,7 +70,6 @@ export function HeroBillboard({
 
     const [index, setIndex] = useState(0);
     const [measuredPage, setMeasuredPage] = useState(0);
-    const [contentHeights, setContentHeights] = useState<Record<string, number>>({});
     const [muted, setMuted] = useState(true);
     const [mode, setMode] = useState<'idle' | 'ambient' | 'feature'>('idle');
     const [trailerPlaying, setTrailerPlaying] = useState(false);
@@ -97,18 +96,6 @@ export function HeroBillboard({
     const verticalPadding = split ? 40 : 20;
     const bottomPadding = split && looped ? Spacing.sm : verticalPadding;
     const selectorHeight = looped ? SELECTOR_HEIGHT : 0;
-    const measuredContentHeight = Math.max(0, ...movies.map((movie) => contentHeights[`${movie.id}:${copyWidth}`] ?? 0));
-    const contentHeight = measuredContentHeight || (split ? 340 : 280);
-    const slideHeight = Math.max(
-        height - selectorHeight,
-        verticalPadding + bottomPadding + (split ? Math.max(artHeight, contentHeight) : artHeight + gap + contentHeight)
-    );
-    const totalHeight = slideHeight + selectorHeight;
-    const measureContent = useCallback((movieId: number, measuredWidth: number, measuredHeight: number) => {
-        const key = `${movieId}:${measuredWidth}`;
-        const nextHeight = Math.ceil(measuredHeight);
-        setContentHeights((previous) => previous[key] === nextHeight ? previous : {...previous, [key]: nextHeight});
-    }, []);
 
     const activeMovie = movies[index];
     const activeTrailer = activeMovie
@@ -312,7 +299,7 @@ export function HeroBillboard({
         <View
             style={[
                 styles.container,
-                {width, height: totalHeight, backgroundColor: colors.background},
+                {width, backgroundColor: colors.background},
                 rounded && styles.rounded,
             ]}
         >
@@ -320,7 +307,8 @@ export function HeroBillboard({
                 ref={scrollRef}
                 horizontal
                 pagingEnabled
-                style={{width, height: slideHeight, flexGrow: 0}}
+                style={{width, flexGrow: 0, flexShrink: 0}}
+                contentContainerStyle={{minHeight: height - selectorHeight}}
                 showsHorizontalScrollIndicator={false}
                 scrollEventThrottle={16}
                 onScroll={onScroll}
@@ -336,7 +324,6 @@ export function HeroBillboard({
                         key={`${movie.id}:${i}`}
                         movie={movie}
                         width={page}
-                        height={slideHeight}
                         gutter={pageGutter}
                         gap={gap}
                         verticalPadding={verticalPadding}
@@ -363,7 +350,6 @@ export function HeroBillboard({
                             setTrailerPlaying(false);
                         }}
                         onTrailerStarted={() => setTrailerPlaying(true)}
-                        onMeasureContent={measureContent}
                     />
                 ))}
             </ScrollView>
@@ -469,7 +455,6 @@ function HeroThumbStrip({
 function HeroSlide({
     movie,
     width,
-    height,
     gutter,
     gap,
     verticalPadding,
@@ -493,11 +478,9 @@ function HeroSlide({
     onToggleMute,
     onCloseTrailer,
     onTrailerStarted,
-    onMeasureContent,
 }: {
     movie: Movie;
     width: number;
-    height: number;
     gutter: number;
     gap: number;
     verticalPadding: number;
@@ -521,7 +504,6 @@ function HeroSlide({
     onToggleMute: () => void;
     onCloseTrailer: () => void;
     onTrailerStarted: () => void;
-    onMeasureContent: (movieId: number, measuredWidth: number, measuredHeight: number) => void;
 }) {
     const saved = useIsInWatchlist(movie.id);
     const toggleWatchlist = useToggleWatchlist();
@@ -608,7 +590,7 @@ function HeroSlide({
             >
                 <ThemedText
                     type="display"
-                    style={[styles.title, {color: colors.text, fontSize: titleSize, lineHeight: Math.round(titleSize * 1.14)}]}
+                    style={[styles.title, {color: colors.text, fontSize: titleSize, lineHeight: Platform.OS === 'android' ? undefined : Math.ceil(titleSize * 1.3)}]}
                     numberOfLines={split ? 3 : 2}
                 >
                     {movie.title}
@@ -641,10 +623,7 @@ function HeroSlide({
                 </ThemedText>
             ) : null}
 
-            <View
-                style={styles.ctaRow}
-                onLayout={({nativeEvent: {layout}}) => onMeasureContent(movie.id, copyWidth, layout.y + layout.height)}
-            >
+            <View style={styles.ctaRow}>
                 {hasTrailer ? (
                     <PressableScale
                         onPress={onPlay}
@@ -713,7 +692,6 @@ function HeroSlide({
                 styles.slide,
                 {
                     width,
-                    height,
                     gap,
                     paddingHorizontal: gutter,
                     paddingTop: verticalPadding,
@@ -786,7 +764,7 @@ function formatRuntime(minutes: number): string | null {
 const styles = StyleSheet.create({
     container: {overflow: 'hidden'},
     rounded: {borderRadius: Radius.xl},
-    slide: {overflow: 'hidden'},
+    slide: {flexShrink: 0},
     content: {flexShrink: 0},
     artwork: {flexShrink: 0, overflow: 'hidden', borderRadius: Radius.lg},
     artControls: {position: 'absolute', left: 12, right: 12, top: 12, flexDirection: 'row', justifyContent: 'space-between'},
@@ -803,7 +781,7 @@ const styles = StyleSheet.create({
     infoButton: {minHeight: CONTROL_SIZE, justifyContent: 'center', paddingHorizontal: 10, borderRadius: Radius.md, borderWidth: 2},
     buttonLabel: {fontSize: 14, lineHeight: 20},
     iconButton: {width: CONTROL_SIZE, height: CONTROL_SIZE, borderRadius: Radius.md, borderWidth: 1, justifyContent: 'center', alignItems: 'center'},
-    selector: {height: SELECTOR_HEIGHT, flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
+    selector: {height: SELECTOR_HEIGHT, flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
     thumbStrip: {flex: 1},
     thumbRow: {flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: 8},
     thumbHit: {minHeight: CONTROL_SIZE, justifyContent: 'center'},
