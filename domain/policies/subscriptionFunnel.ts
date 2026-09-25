@@ -21,7 +21,8 @@ export type SubscriptionFunnelEvent =
     | {step: 'availability_alert_changed'; enabled: boolean};
 
 function placement(value: unknown): PurchasePlacement | 'unknown' {
-    return value === 'settings_supporter' || value === 'post_ad_supporter' || value === 'journal_insights' ? value : 'unknown';
+    return value === 'settings_supporter' || value === 'post_ad_supporter' || value === 'journal_insights' ||
+        value === 'watchlist_supporter' || value === 'supporter_page' ? value : 'unknown';
 }
 
 function promptSource(value: unknown): string {
@@ -29,6 +30,8 @@ function promptSource(value: unknown): string {
         case 'settings_supporter': return 'settings';
         case 'post_ad_supporter': return 'post_ad';
         case 'journal_insights': return 'journal';
+        case 'watchlist_supporter': return 'watchlist';
+        case 'supporter_page': return 'supporter_page';
         default: return 'unknown';
     }
 }

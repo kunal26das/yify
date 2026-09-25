@@ -40,6 +40,7 @@ function fixture(isPhone = false, options = {}) {
     const mocks = {
         '@/domain': domain,
         '../journal/JournalEditor': {JournalEditor: 'JournalEditor'},
+        '../purchases/supporter-discovery-card': {SupporterDiscoveryCard: 'SupporterDiscoveryCard'},
         '../hooks/use-auth': {useAuth: () => ({ready: true, account: null})},
         'react-native': {FlatList, View: 'View', TextInput: 'TextInput', ScrollView: 'ScrollView',
             Platform: {OS: 'web', select: options => options.web ?? options.default},
@@ -107,8 +108,10 @@ test('search, sort and runtime controls update the grid; picking opens a matchin
     const f = fixture(true);
     const renderer = await mount(t, f);
     assert.deepEqual(ids(renderer), [1, 2, 3]);
+    assert.equal(renderer.root.findByType('SupporterDiscoveryCard').props.savedCount, 3);
     await input(renderer, 'Search watchlist', 'Zulu');
     assert.deepEqual(ids(renderer), [1]);
+    assert.equal(renderer.root.findByType('SupporterDiscoveryCard').props.savedCount, 3);
     await press(renderer, 'Pick for me');
     assert.deepEqual(f.calls.navigation, ['/movie/1']);
     assert.deepEqual(f.calls.playback, []);
@@ -190,6 +193,7 @@ test('the original trailer playlist and removal confirmation continue to work', 
     await act(async () => f.calls.confirmations[0].onConfirm());
     assert.equal(f.watchlist.contains(1), false);
     assert.deepEqual(ids(renderer), [2, 3]);
+    assert.equal(renderer.root.findByType('SupporterDiscoveryCard').props.savedCount, 2);
 });
 
 test('closing collection management discards an unfinished editor and its validation error', async t => {

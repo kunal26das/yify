@@ -1,4 +1,4 @@
-import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
+import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react';
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {AuthSession, PurchaseOffer, PurchasePlacement} from '@/domain';
@@ -10,11 +10,12 @@ import {usePreferences} from '../hooks/use-preferences';
 import {ThemedText} from '../components/themed-text';
 import {Analytics} from '../analytics/events';
 import {offerDisclosure, purchaseFailureMessage, safeManagementURL, supporterStatus} from './offer-copy';
+import {SupporterInsightsPreview} from './supporter-benefits';
 import {LEGAL_LINKS, openLegalPage} from '../constants/legal';
 
 const NO_OFFERS: PurchaseOffer[] = [];
-type Request = {id: number; placement: PurchasePlacement; onClose?: (supported: boolean) => void};
-type ShowPaywall = (placement: PurchasePlacement, onClose?: Request['onClose']) => void;
+type Request = {id: number; placement: PurchasePlacement; onClose?: (supported: boolean) => void; cancelled: boolean};
+type ShowPaywall = (placement: PurchasePlacement, onClose?: Request['onClose']) => () => void;
 const SupporterContext = createContext<ShowPaywall | null>(null);
 
 export function useSupporterPaywall(): ShowPaywall {
@@ -27,9 +28,14 @@ export function SupporterProvider({children}: {children: ReactNode}) {
     const [requests, setRequests] = useState<Request[]>([]);
     const nextId = useRef(0);
     const show = useCallback<ShowPaywall>((placement, onClose) => {
-        const next = {id: nextId.current++, placement, onClose};
-        // A second request must not replace an open checkout or lose its completion callback.
+        const next: Request = {id: nextId.current++, placement, onClose, cancelled: false};
         setRequests((current) => [...current, next]);
+        return () => {
+            if (next.cancelled) return;
+            next.cancelled = true;
+            setRequests(current => current[0]?.id === next.id
+                ? [...current] : current.filter(item => item.id !== next.id));
+        };
     }, []);
     const request = requests[0];
     return <SupporterContext.Provider value={show}>
@@ -42,11 +48,16 @@ export function SupporterProvider({children}: {children: ReactNode}) {
 
 function SupporterPaywall({request, onClose}: {request: Request; onClose: () => void}) {
     const session = useAuth();
+    const [acting, setActing] = useState(false);
+    const operationRef = useRef(false);
     return <SupporterPaywallContent key={session.account?.uid ?? 'anonymous'} request={request}
-        onClose={onClose} session={session}/>;
+        onClose={onClose} session={session} acting={acting} setActing={setActing} operationRef={operationRef}/>;
 }
 
-function SupporterPaywallContent({request, onClose, session}: {request: Request; onClose: () => void; session: AuthSession}) {
+function SupporterPaywallContent({request, onClose, session, acting, setActing, operationRef}: {
+    request: Request; onClose: () => void; session: AuthSession;
+    acting: boolean; setActing: (value: boolean) => void; operationRef: RefObject<boolean>;
+}) {
     const purchases = usePurchaseRepository();
     const auth = useAuthRepository();
     const state = usePurchases();
@@ -62,8 +73,6 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
     const offers = !loading && state.ready ? loaded?.offers ?? NO_OFFERS : NO_OFFERS;
     const [visible, setVisible] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
-    const [acting, setActing] = useState(false);
-    const operation = useRef(false);
     const mounted = useRef(true);
     const tracked = useRef(new Set<string>());
     const offersTracked = useRef(false);
@@ -77,16 +86,22 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
     }, []);
 
     useEffect(() => {
-        if (!loadKey.ready) return;
+        if (!request.cancelled || busy || operationRef.current || closed.current) return;
+        closed.current = true;
+        onClose();
+    }, [request.cancelled, busy, operationRef, onClose]);
+
+    useEffect(() => {
+        if (!loadKey.ready || request.cancelled) return;
         let active = true;
         void loadKey.purchases.getOffers(loadKey.placement).then((next) => {
             if (active) setLoaded({key: loadKey, offers: next});
         }, () => { if (active) setLoaded({key: loadKey, offers: []}); });
         return () => { active = false; };
-    }, [loadKey]);
+    }, [loadKey, request.cancelled]);
 
     useEffect(() => {
-        if (!visible || loading || !state.ready || state.adsRemoved) return;
+        if (request.cancelled || !visible || loading || !state.ready || state.adsRemoved) return;
         if (offers.length > 0 && !offersTracked.current) {
             offersTracked.current = true;
             Analytics.subscriptionFunnel({step: 'offers_visible', placement: request.placement, offerCount: offers.length}, watchRegion);
@@ -97,10 +112,10 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
             tracked.current.add(offering);
             purchases.trackPaywallImpression(offer.id);
         }
-    }, [offers, purchases, state.adsRemoved, state.ready, visible, loading, request.placement, watchRegion]);
+    }, [offers, purchases, state.adsRemoved, state.ready, visible, loading, request.placement, request.cancelled, watchRegion]);
 
     const close = () => {
-        if (busy || operation.current || closed.current) return;
+        if (busy || operationRef.current || closed.current || request.cancelled) return;
         closed.current = true;
         Analytics.subscriptionFunnel({step: 'paywall_closed', placement: request.placement,
             supporter: purchases.getState().adsRemoved}, watchRegion);
@@ -108,16 +123,16 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
         request.onClose?.(purchases.getState().adsRemoved);
     };
     const runAction = async (action: () => Promise<string | null>) => {
-        if (busy || operation.current) return;
-        operation.current = true;
+        if (busy || operationRef.current || request.cancelled) return;
+        operationRef.current = true;
         setActing(true);
         setNotice(null);
         try {
             const message = await action();
             if (mounted.current) setNotice(message);
         } finally {
-            operation.current = false;
-            if (mounted.current) setActing(false);
+            operationRef.current = false;
+            setActing(false);
         }
     };
     const buy = (offer: PurchaseOffer) => {
@@ -166,6 +181,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
     const message = notice ?? purchaseFailureMessage(state.failure);
 
     return <Modal visible transparent animationType="fade" onRequestClose={close} onShow={() => {
+        if (request.cancelled) return;
         setVisible(true);
         if (!prompted.current) {
             prompted.current = true;
@@ -177,7 +193,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
             <View style={[styles.panel, {backgroundColor: colors.surfaceElevated, maxHeight: Math.max(0, height - insets.top - insets.bottom - 32)}]}
                 accessibilityViewIsModal onAccessibilityEscape={close}>
                 <View style={styles.header}>
-                    <ThemedText accessibilityRole="header" type="heading" style={styles.heading}>{state.adsRemoved ? 'Your Yify support' : 'Support Yify'}</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.heading}>{state.adsRemoved ? 'Your Yify support' : 'No Yify ads + viewing insights'}</ThemedText>
                     <Pressable onPress={close} disabled={busy} accessibilityRole="button" accessibilityLabel="Close supporter options"
                         accessibilityState={{disabled: busy}} style={styles.close}>
                         <ThemedText style={{color: colors.accent, fontWeight: '700'}}>{state.adsRemoved ? 'Done' : 'Close'}</ThemedText>
@@ -185,7 +201,7 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
                 </View>
                 <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
                     <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{state.adsRemoved ? supporterStatus(state)
-                        : 'Get monthly and all-time viewing insights, plus no Yify ads. Your journal stays free. Supporter access follows your Yify account across devices. YouTube ads are separate.'}</ThemedText>
+                        : 'See monthly and all-time recaps, your most-watched genres and personal rating insights. Your journal stays free. YouTube ads are separate.'}</ThemedText>
                     {!state.adsRemoved && (state.expiresAt || state.billingIssue) ? <ThemedText style={styles.copy}>{supporterStatus(state)}</ThemedText> : null}
                     {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading supporter options"/> : null}
                     {!state.ready ? <ThemedText style={styles.copy}>{state.available
@@ -203,8 +219,12 @@ function SupporterPaywallContent({request, onClose, session}: {request: Request;
                             onPress={() => buy(offer)} disabled={busy || !session.account} primary/>
                     </View>) : null}
                     {!state.adsRemoved && state.ready && !loading && offers.length === 0 ? <ThemedText style={styles.copy}>Supporter plans are unavailable right now. You can still check an existing purchase below.</ThemedText> : null}
-                    {!state.adsRemoved && state.ready ? <PaywallButton label="Reload plans" onPress={() => { setReload((value) => value + 1); }} disabled={busy || loading}/> : null}
                     {message ? <ThemedText accessibilityLiveRegion="polite" style={[styles.copy, {color: colors.accent}]}>{message}</ThemedText> : null}
+                    {!state.adsRemoved ? <>
+                        <SupporterInsightsPreview/>
+                        <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Your journal entries and editing stay free. Supporter access follows your Yify account across devices.</ThemedText>
+                    </> : null}
+                    {!state.adsRemoved && state.ready ? <PaywallButton label="Reload plans" onPress={() => { setReload((value) => value + 1); }} disabled={busy || loading}/> : null}
                     {managementURL ? <PaywallButton label="Manage billing or cancel" onPress={() => { void openLink(managementURL); }} disabled={busy}/> : null}
                     <PaywallButton label={state.restoring ? 'Checking purchases…' : Platform.OS === 'web' ? 'Check account purchases' : 'Restore purchases'}
                         onPress={restore} disabled={busy || !state.ready || !session.account || !state.available}/>

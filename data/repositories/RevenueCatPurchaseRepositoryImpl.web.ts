@@ -433,8 +433,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             return [];
         }
         try {
-            // Journal uses the configured supporter offering while retaining its own funnel attribution.
-            const offeringPlacement = placement === 'journal_insights' ? SETTINGS_PLACEMENT : placement;
+            const offeringPlacement = placement === 'post_ad_supporter' ? placement : SETTINGS_PLACEMENT;
             const offering = await this.sdk!.getCurrentOfferingForPlacement(offeringPlacement);
             if (!this.isCurrent(revision)) { span.finish('skipped'); return []; }
             for (const [id, entry] of this.packages) {

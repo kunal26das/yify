@@ -28,6 +28,8 @@ Journal activity uses the separate `journal_action` event with `app_platform` an
 
 The journal's explicit **Explore supporter access** action opens the existing paywall with `placement: journal_insights`. Its prompt uses `source: journal`; subsequent offer/checkout events retain their existing names and this placement. Merely opening insights, seeing a save confirmation, or being unable to load a plan is not a checkout or purchase.
 
+The Watchlist supporter card uses `placement: watchlist_supporter` and `source: watchlist`; the public supporter page's app route uses `placement: supporter_page` and `source: supporter_page`. Both request the existing configured supporter offering and honor targeting exclusions. A card display is not a paywall impression: the user must open it, and offers-visible still requires loaded plans. These optional events follow the same analytics-consent controls; production billing records remain separate.
+
 ## Reading results
 
 - Activation: unique analytics users reaching three saved titles, selecting services, and opening viewing options. Compare against new app users in a defined acquisition cohort; these actions are not necessarily sequential.

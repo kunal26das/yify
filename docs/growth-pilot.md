@@ -18,6 +18,16 @@ The long-term target is 10,000 active monthly subscribers. The first checkpoint 
 
 Keep prices, data costs and acquisition economics in a dated review using actual receipts. Do not infer monthly profit or future retention from this code change. Measure journal use and insight-to-checkout interest first. Data-rights confirmation and push setup remain separate prerequisites for the disabled availability-alert pilot; the code does not enable or purchase these automatically.
 
+## Supporter discovery: September 25, 2026
+
+The public `/support/` page explains shipped paid benefits without app scripts or trackers. Its **See monthly options** link opens `/upgrade`, preserving the adult declaration and sign-in requirements. The paywall shows the existing offering's regional price, renewal terms and a clearly labelled fictional example of viewing insights. It does not promise full movies, external subscriptions or removal of YouTube ads.
+
+Watchlist users with at least three saved titles can see a small supporter card once purchase readiness is known. Current supporters and users with a reported billing issue are excluded. Opening it is voluntary; **Keep using free** saves a device-local dismissal. The existing post-ad prompt frequency and refusal limits are unchanged.
+
+The new `watchlist_supporter` and `supporter_page` placements reuse the configured `settings_supporter` offering, including targeting exclusions, while retaining their own checkout attribution. No new price, trial, annual plan, acquisition spend or customer messages are introduced. The near-term checkpoint is ten genuine monthly subscribers and their first renewals, followed by the existing 100-subscriber milestone.
+
+A fresh production aggregate baseline was read on September 25 and retained privately outside tracked source. Establish a new observation window from actual release dates. Optional funnel measurements cover consenting users only; do not infer an overall conversion rate from RevenueCat customer counts or divide independent event totals. Review loaded offers, checkout failures, production subscriptions, refunds and first renewals before deciding whether to expand the experiment. No revenue uplift has been established by implementing this change.
+
 ## Journal experiment: September 20–October 3, 2026
 
 The next experiment reduces the work needed to log a first movie. **Log a movie** opens a chooser with saved movies and explicit title search. A successful save confirms the entry and offers **View insights**; only **Explore supporter access** opens the paid offer. Free logging, editing and notes stay free. No advertising or outreach is launched by this change, and the ₹25,000 monthly ceiling remains unchanged.

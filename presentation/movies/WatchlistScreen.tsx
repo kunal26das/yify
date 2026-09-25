@@ -35,6 +35,7 @@ import {WatchlistStreamingControls} from './components/WatchlistStreamingControl
 import {WatchlistStreamingBadge} from './components/WatchlistStreamingBadge';
 import {JournalEditor} from '../journal/JournalEditor';
 import {useAuth} from '../hooks/use-auth';
+import {SupporterDiscoveryCard} from '../purchases/supporter-discovery-card';
 
 const COVER_ASPECT = 16 / 9;
 const COVER_WIDTH_WIDE = 360;
@@ -327,6 +328,7 @@ export function WatchlistScreen() {
                                 <WatchlistControlButton label="Movie journal" icon="book-outline" onPress={() => goTo('/journal')}/>
                             </View>
                             <WatchlistStreamingControls streaming={streaming}/>
+                            <SupporterDiscoveryCard savedCount={movies.length}/>
                             {visible.length !== movies.length ? (
                                 <ThemedText accessibilityLiveRegion="polite" style={[styles.results, {color: colors.textMuted}]}>
                                     {visible.length} of {movies.length} titles

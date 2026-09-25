@@ -502,8 +502,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 span.finish('unavailable', {stage, error_code: 'purchase_not_allowed'});
                 return [];
             }
-            // Journal uses the configured supporter offering while retaining its own funnel attribution.
-            const offeringPlacement = placement === 'journal_insights' ? 'settings_supporter' : placement;
+            const offeringPlacement = placement === 'post_ad_supporter' ? placement : 'settings_supporter';
             stage = 'offering_fetch';
             const offering = await Purchases.getCurrentOfferingForPlacement(offeringPlacement);
             if (revision !== this.revision) { span.finish('skipped'); return []; }

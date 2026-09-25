@@ -43,10 +43,10 @@ function fixture(t, server = false) {
     };
     for (const [file, title] of [
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'], ['anime.html', 'Anime'],
-        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'],
+        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'], ['upgrade.html', 'Supporter options'],
     ]) {
         const robots = file === 'anime.html' ? '<meta name="robots" content="noindex,nofollow">'
-            : ['watchlist.html', 'history.html', 'journal.html', 'preferences.html'].includes(file)
+            : ['watchlist.html', 'history.html', 'journal.html', 'preferences.html', 'upgrade.html'].includes(file)
                 ? '<meta name="robots" content="noindex,follow">' : '';
         const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
         write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
@@ -54,6 +54,7 @@ function fixture(t, server = false) {
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css', 'availability-worker.js']) write(asset, '');
     write('sitemap.xml', '<urlset><url><loc>https://yify.expo.app/guide/</loc></url></urlset>');
     for (const file of ['guide.html', 'guide/index.html']) write(file, '<main><h1>How Yify works</h1><p>Read trailers and compare regional viewing options.</p><a href="/movies">Movies</a><a href="/shows">Shows</a></main>');
+    for (const file of ['support.html', 'support/index.html']) write(file, '<main><h1>Yify Supporter</h1><p>Viewing insights and no Yify ads.</p><a href="/upgrade?source=website">See monthly options</a></main>');
     for (const file of ['delete-account.html', 'delete-account/index.html']) write(file, '<body>Delete account</body>');
     for (const [name, title] of [['privacy', 'Privacy Policy'], ['terms', 'Terms &amp; Conditions']]) {
         for (const file of [`${name}.html`, `${name}/index.html`]) write(file, `<h1>${title}</h1><a href="mailto:kunal26das@gmail.com">Contact</a>`);
@@ -142,7 +143,7 @@ test('Hosting gate rejects legal directory copies without server redirects', (t)
     f.write('_expo/routes.json', JSON.stringify({apiRoutes}), f.serverDirectory);
     const result = f.check();
     assert.equal(result.status, 1);
-    for (const name of ['privacy', 'terms', 'delete-account', 'guide']) {
+    for (const name of ['privacy', 'terms', 'delete-account', 'guide', 'support']) {
         for (const source of [`/${name}`, `/${name}/`]) {
             assert.ok(result.output.includes(`${source}: missing permanent Hosting redirect`));
         }
@@ -164,8 +165,8 @@ test('Hosting gate requires trailing-slash matching, standalone targets and both
 });
 
 test('Expo generates narrow Hosting redirects for both forms of each legal URL', () => {
-    assert.equal(legalRedirects.length, 4);
-    for (const name of ['privacy', 'terms', 'delete-account', 'guide']) {
+    assert.equal(legalRedirects.length, 5);
+    for (const name of ['privacy', 'terms', 'delete-account', 'guide', 'support']) {
         for (const source of [`/${name}`, `/${name}/`]) {
             const redirect = legalRedirects.find(route => new RegExp(route.namedRegex).test(source));
             assert.equal(redirect?.page, `https://yify.expo.app/${name}.html`);
@@ -192,7 +193,7 @@ test('Hosting redirects preserve the native configuration and existing router se
         if (!Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
         const {redirects, apiRoutes, ...options} = plugin[1];
         assert.equal(apiRoutes, true);
-        assert.equal(redirects.length, 4);
+        assert.equal(redirects.length, 5);
         return [plugin[0], options];
     }), nativePlugins);
 });
@@ -385,4 +386,18 @@ test('guide copies must stay identical and remain readable without app scripts',
     assert.match(result.output, /guide\.html: public guide must contain readable main content/);
     assert.match(result.output, /public guide must remain readable without app scripts/);
     assert.match(result.output, /guide content and resolved links must stay identical/);
+});
+
+test('supporter landing pages require a working upgrade link and no scripts or embeds', t => {
+    for (const replacement of [
+        '<main><h1>Supporter</h1><p>Benefits</p></main>',
+        '<main><h1>Supporter</h1><a href="/upgrade">Options</a><script src="tracking.js"></script></main>',
+        '<main><h1>Supporter</h1><a href="/upgrade">Options</a><iframe src="https://example.test"></iframe></main>',
+    ]) {
+        const f = fixture(t);
+        for (const file of ['support.html', 'support/index.html']) f.write(file, replacement);
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /supporter page must/);
+    }
 });

@@ -87,7 +87,9 @@ async function fixture(t, options = {}) {
     await act(async () => { renderer = create(React.createElement(SupporterProvider, null, React.createElement(Probe))); });
     t.after(async () => { await act(async () => { renderer.unmount(); }); });
     const open = async (placement = 'settings_supporter', onClose) => {
-        await act(async () => { show(placement, onClose); });
+        let cancel;
+        await act(async () => { cancel = show(placement, onClose); });
+        return cancel;
     };
     const modal = () => renderer.root.findByType('Modal');
     const pressable = label => renderer.root.findAllByType('Pressable').find(node =>
@@ -187,6 +189,28 @@ test('Journal paywall keeps its placement for loading, visibility and purchase w
     await f.press('Continue · $2.99');
     assert.deepEqual(f.calls.purchase, ['journal-monthly']);
     assert.equal(f.calls.offers.every(placement => placement === 'journal_insights'), true);
+});
+
+test('benefits show a labelled fictional example after localized pricing without bypassing sign-in or recording an exposure', async t => {
+    const f = await fixture(t, {offers: [plan('monthly-in', 'supporter', {priceLabel: '₹99.00'})], session: {account: null}});
+    await f.open();
+    const content = f.text();
+    assert.match(content, /No Yify ads \+ viewing insights/);
+    assert.match(content, /monthly and all-time recaps/);
+    assert.match(content, /Fictional journal · one month/);
+    assert.match(content, /Your insights use the movies and ratings you add to your journal/);
+    assert.match(content, /Your journal entries and editing stay free/);
+    assert.match(content, /YouTube ads are separate/);
+    assert.match(content, /₹99\.00 every month\. Renews automatically until cancelled/);
+    assert.ok(content.indexOf('₹99.00 every month') < content.indexOf('Example insights'));
+    assert.equal(f.pressable('Continue · ₹99.00').props.disabled, true);
+    assert.deepEqual(f.calls.purchase, []);
+    assert.deepEqual(f.calls.impressions, []);
+    assert.deepEqual(f.calls.funnel, []);
+    assert.equal(f.renderer.root.findAllByProps({accessibilityLabel: 'Average rating: 4.2 / 5'}).length, 1);
+    await f.update({adsRemoved: true});
+    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|No Yify ads \+ viewing insights/);
+    assert.equal(f.pressable('Continue · ₹99.00'), undefined);
 });
 
 test('active access shows manage and restore actions without recording a sales impression', async t => {
@@ -337,6 +361,58 @@ test('overlapping paywall requests preserve both callbacks and old close handler
     assert.deepEqual(closed, [['first', false], ['second', false]]);
     assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
+
+test('cancelling a queued owner removes only its request and never invokes its completion callback', async t => {
+    const closed = [];
+    const f = await fixture(t);
+    await f.open('settings_supporter', result => closed.push(['first', result]));
+    const cancel = await f.open('supporter_page', result => closed.push(['cancelled', result]));
+    await f.open('journal_insights', result => closed.push(['last', result]));
+    await act(async () => { cancel(); cancel(); });
+    await f.press('Close supporter options');
+    assert.deepEqual(closed, [['first', false]]);
+    assert.deepEqual(f.calls.offers, ['settings_supporter', 'journal_insights']);
+    await act(async () => cancel());
+    await f.press('Close supporter options');
+    assert.deepEqual(closed, [['first', false], ['last', false]]);
+});
+
+test('cancelling an idle active owner closes silently and ignores stale visibility callbacks', async t => {
+    const closed = [];
+    const f = await fixture(t);
+    const cancel = await f.open('supporter_page', value => closed.push(value));
+    const oldShow = f.modal().props.onShow;
+    const oldClose = f.modal().props.onRequestClose;
+    await act(async () => { cancel(); oldShow(); oldClose(); });
+    assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
+    assert.deepEqual(closed, []);
+    assert.deepEqual(f.calls.funnel, []);
+    assert.deepEqual(f.calls.impressions, []);
+});
+
+for (const action of ['purchase', 'restore', 'signIn']) {
+    test(`owner cancellation waits for ${action}, including an account change, before advancing the queue`, async t => {
+        const pending = deferred();
+        const closed = [];
+        const f = await fixture(t, {[action]: () => pending.promise,
+            ...(action === 'signIn' ? {session: {account: null}} : {})});
+        const cancel = await f.open('supporter_page', value => closed.push(['cancelled', value]));
+        await f.press(action === 'purchase' ? 'Continue · $2.99'
+            : action === 'restore' ? 'Restore purchases' : 'Sign in with Google');
+        await act(async () => cancel());
+        await f.open('journal_insights', value => closed.push(['next', value]));
+        await f.update(null, {account: user('B')});
+        assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
+        assert.equal(f.pressable('Close supporter options').props.disabled, true);
+        assert.equal(f.calls.offers.includes('journal_insights'), false);
+        await act(async () => pending.resolve(true));
+        assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
+        assert.equal(f.calls.offers.includes('journal_insights'), true);
+        assert.deepEqual(closed, []);
+        await f.press('Close supporter options');
+        assert.deepEqual(closed, [['next', false]]);
+    });
+}
 
 test('small windows bound the scrolling content and retain an accessible close control outside it', async t => {
     const f = await fixture(t, {height: 320});

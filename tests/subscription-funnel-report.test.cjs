@@ -237,14 +237,19 @@ test('journal report retains privacy, sampling and data-loss warnings instead of
     assert.doesNotMatch(JSON.stringify(report), /PRIVATE/);
 });
 
-test('journal paywall placement is preserved in the existing funnel report', async () => {
+for (const placement of ['journal_insights', 'watchlist_supporter', 'supporter_page']) {
+test(`${placement} paywall attribution is preserved in the existing funnel report`, async () => {
     const {collectReport} = await script;
-    const report = await collectReport({metadata: journalFixture.metadata, dateRange, readPage: async () => journalFixture.pages[0]});
-    assert.equal(report.rows[0].placement, 'journal_insights');
-    assert.equal(report.rows[1].placement, 'journal_insights');
+    const page = structuredClone(journalFixture.pages[0]);
+    page.rows[0].dimensionValues[4].value = placement;
+    page.rows[1].dimensionValues[4].value = placement;
+    const report = await collectReport({metadata: journalFixture.metadata, dateRange, readPage: async () => page});
+    assert.equal(report.rows[0].placement, placement);
+    assert.equal(report.rows[1].placement, placement);
     assert.equal(report.versionFilter, 1);
     assert.equal(report.actionBreakdown, undefined);
 });
+}
 
 test('offline CLI can output separate journal and funnel reports without combining users or requiring credentials', () => {
     const run = report => spawnSync(process.execPath, ['scripts/subscription-funnel-report.mjs', '--report', report,

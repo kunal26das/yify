@@ -16,7 +16,7 @@ const JOURNAL_EVENTS = Object.freeze(['journal_action']);
 const MAX_ROWS = 100000;
 const PAGE_SIZE = 10000;
 const API = `https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY_ID}`;
-const PLACEMENTS = new Set(['settings_supporter', 'post_ad_supporter', 'journal_insights']);
+const PLACEMENTS = new Set(['settings_supporter', 'post_ad_supporter', 'journal_insights', 'watchlist_supporter', 'supporter_page']);
 const REASONS = new Set(['cancelled', 'already_purchased', 'pending', 'not_granted', 'offer_unavailable', 'restore_failed', 'unknown']);
 const FUNNEL_VERSION_VALUES = Object.freeze(['v1', '1']);
 

@@ -8,4 +8,8 @@ export interface SupporterNudge {
     recordDeclined(): void;
 
     recordAccepted(): void;
+
+    isDiscoveryDismissed(): boolean;
+
+    dismissDiscovery(): void;
 }

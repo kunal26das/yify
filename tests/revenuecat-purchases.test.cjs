@@ -421,42 +421,44 @@ test('targeted offerings preserve period, package, placement, and actual impress
     assert.equal(f.calls.find(([name]) => name === 'purchase')[2], afterAd.availablePackages[0]);
 });
 
-test('Journal uses the configured native supporter offering and keeps distinct checkout and impression attribution', async t => {
+for (const placement of ['journal_insights', 'watchlist_supporter', 'supporter_page']) {
+test(`${placement} uses the configured native supporter offering and keeps distinct checkout and impression attribution`, async t => {
     const settings = offering('configured-supporter');
     const f = fixture(t, {country: 'in', offerings: placement => placement === 'settings_supporter' ? settings : null});
     await f.ready('account-a');
     const settingsOffers = f.repository.getState().offers;
-    const [journal] = await f.repository.getOffers('journal_insights');
-    assert.equal(journal.placement, 'journal_insights');
-    assert.equal(journal.offeringId, settings.identifier);
-    assert.equal(journal.billingPeriod, 'P1M');
-    assert.equal(journal.priceLabel, settingsOffers[0].priceLabel);
-    assert.notEqual(journal.id, settingsOffers[0].id);
+    const [offer] = await f.repository.getOffers(placement);
+    assert.equal(offer.placement, placement);
+    assert.equal(offer.offeringId, settings.identifier);
+    assert.equal(offer.billingPeriod, 'P1M');
+    assert.equal(offer.priceLabel, settingsOffers[0].priceLabel);
+    assert.notEqual(offer.id, settingsOffers[0].id);
     assert.deepEqual(f.repository.getState().offers, settingsOffers);
     assert.deepEqual(f.calls.filter(([name]) => name === 'offers').map(call => call[2]),
         ['settings_supporter', 'settings_supporter']);
-    f.repository.trackPaywallImpression(journal.id);
-    assert.equal(await f.repository.purchase(journal.id), true);
-    assert.deepEqual(f.calls.find(([name]) => name === 'impression')[2], {offering: settings, paywallId: 'journal_insights'});
+    f.repository.trackPaywallImpression(offer.id);
+    assert.equal(await f.repository.purchase(offer.id), true);
+    assert.deepEqual(f.calls.find(([name]) => name === 'impression')[2], {offering: settings, paywallId: placement});
     assert.equal(f.calls.find(([name]) => name === 'purchase')[2], settings.availablePackages[0]);
     const events = f.calls.filter(([name, event]) => name === 'analytics' && event.startsWith('remove_ads_purchase'));
     assert.deepEqual(events.map(call => call[1]), ['remove_ads_purchase_start', 'remove_ads_purchase_done']);
-    assert.equal(events.every(call => call[2].placement === 'journal_insights' && call[2].plan_kind === 'monthly'), true);
+    assert.equal(events.every(call => call[2].placement === placement && call[2].plan_kind === 'monthly'), true);
     assert.doesNotMatch(JSON.stringify(events), /price|currency|revenue|transaction|account-a/);
 });
 
-test('Journal native offers respect existing targeting exclusion and invalidate previously loaded Journal packages', async t => {
+test(`${placement} native offers respect targeting exclusion and invalidate previously loaded packages`, async t => {
     let excluded = false;
     const f = fixture(t, {offerings: placement => placement === 'settings_supporter' && !excluded ? offering() : null});
     await f.ready('account-a');
-    const [journal] = await f.repository.getOffers('journal_insights');
+    const [offer] = await f.repository.getOffers(placement);
     excluded = true;
-    assert.deepEqual(await f.repository.getOffers('journal_insights'), []);
-    f.repository.trackPaywallImpression(journal.id);
-    assert.equal(await f.repository.purchase(journal.id), false);
+    assert.deepEqual(await f.repository.getOffers(placement), []);
+    f.repository.trackPaywallImpression(offer.id);
+    assert.equal(await f.repository.purchase(offer.id), false);
     assert.equal(f.calls.some(([name]) => name === 'purchase' || name === 'impression'), false);
     assert.equal(f.calls.filter(([name]) => name === 'offers').every(call => call[2] === 'settings_supporter'), true);
 });
+}
 
 test('explicit targeting exclusion removes old packages and never falls back to the default offering', async (t) => {
     let excluded = false;
