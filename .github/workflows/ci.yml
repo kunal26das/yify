@@ -98,7 +98,7 @@ jobs:
           UMP_TEST_DIR=$(mktemp -d)
           trap 'rm -rf "$UMP_TEST_DIR"' EXIT
           export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
-          UMP_ANDROID_JAR=$(rg --files "$ANDROID_HOME/platforms" | rg '/android.jar$' | sort -V | tail -n 1)
+          UMP_ANDROID_JAR=$(find "$ANDROID_HOME/platforms" -name android.jar -type f | sort -V | tail -n 1)
           test -n "$UMP_ANDROID_JAR"
           curl --fail --silent --show-error --retry 3 --max-time 120 \
             https://dl.google.com/dl/android/maven2/com/google/android/ump/user-messaging-platform/4.0.0/user-messaging-platform-4.0.0.aar \
