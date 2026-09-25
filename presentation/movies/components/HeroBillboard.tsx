@@ -17,6 +17,7 @@ import {Duration, PressableScale} from '../../components/motion';
 import {FontFamily, Radius, Spacing} from '../../constants/theme';
 import {usePalette} from '../../hooks/use-palette';
 import {usePreferences} from '../../hooks/use-preferences';
+import {usePrivacyChoices} from '../../hooks/use-privacy-choices';
 import {useResponsive} from '../../hooks/use-responsive';
 import {ThemedText} from '../../components/themed-text';
 import {Analytics} from '@/presentation/analytics/events';
@@ -62,6 +63,7 @@ export function HeroBillboard({
     const {colors} = usePalette();
     const {gutter} = useResponsive();
     const {playback} = usePreferences();
+    const {youtube} = usePrivacyChoices();
     const active = usePreviewActive(visible);
     const count = movies.length;
     const looped = count > 1;
@@ -267,7 +269,7 @@ export function HeroBillboard({
         }
         if (!activeMovie) return;
         onRequestTrailer?.(activeMovie.id);
-        if (!activeTrailer || !playback.autoplayTrailers || reduceMotion) return;
+        if (!youtube || !activeTrailer || !playback.autoplayTrailers || reduceMotion) return;
         trailerTimerRef.current = setTimeout(() => {
             setMode('ambient');
             Analytics.heroTrailerAutoplay(activeMovie);
@@ -275,7 +277,7 @@ export function HeroBillboard({
         return () => {
             if (trailerTimerRef.current) clearTimeout(trailerTimerRef.current);
         };
-    }, [active, activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers, reduceMotion]);
+    }, [active, activeMovie, activeTrailer, onRequestTrailer, playback.autoplayTrailers, reduceMotion, youtube]);
 
     const seenRef = useRef<Set<number>>(new Set());
     useEffect(() => {
@@ -287,14 +289,14 @@ export function HeroBillboard({
     const onPlay = useCallback(() => {
         if (!activeMovie) return;
         Analytics.heroCta(activeMovie);
-        if (activeTrailer) {
+        if (activeTrailer && youtube) {
             Analytics.trailerPlay(activeMovie);
             setMuted(false);
             setMode('feature');
             return;
         }
         router.push(`/movie/${activeMovie.id}`);
-    }, [activeMovie, activeTrailer]);
+    }, [activeMovie, activeTrailer, youtube]);
 
     const toggleMute = useCallback(() => {
         if (!activeMovie) return;

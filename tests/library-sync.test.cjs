@@ -174,13 +174,17 @@ test('local changes during an upload remain pending and are included in the next
     assert.equal(sync.getStatus().pendingChanges, false);
 });
 
-test('account deletion leaves metadata attributed to the old account instead of importing it into the next', async t => {
-    const {library, sync, remote} = fixture(t);
+test('account deletion clears owned library metadata and blocks resurrection without importing it into the next account', async t => {
+    const {library, sync, remote, store} = fixture(t);
     library.setWatched(1, true);
     sync.setAccount('a');
     await flush();
     await sync.pause();
     assert.equal(await sync.deleteRemote(), true);
+    assert.equal(library.isWatched(1), false);
+    assert.equal(store.getString('libraryAccount:a'), undefined);
+    assert.equal(store.getString('deletedAccount:a'), 'true');
+    assert.throws(() => library.setWatched(1, true));
     sync.setAccount('b');
     sync.resume();
     await flush();

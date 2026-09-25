@@ -192,8 +192,8 @@ test('web withdrawal blocks delayed Google config and already queued events befo
 
 test('another browser tab withdrawing consent sets the Google disable flag synchronously', async t => {
     const {PrivacyPreferencesImpl} = loadTypeScript('data/services/PrivacyPreferencesImpl.ts');
-    let stored = JSON.stringify({adultConfirmed: true, analytics: true,
-        noticeVersion: '2026-09-25', updatedAt: '2026-09-25T00:00:00.000Z'});
+    let stored = JSON.stringify({adultConfirmed: true, analytics: true, youtube: false,
+        noticeVersion: '2026-09-25-v2', updatedAt: '2026-09-25T00:00:00.000Z'});
     let storageChanged;
     const privacy = new PrivacyPreferencesImpl({
         getString: () => stored, set: (_, value) => { stored = value; }, delete: () => { stored = undefined; },

@@ -1,0 +1,66 @@
+# Privacy processing register
+
+Reviewed 25 September 2026. Responsible owner: Kunal Das, operating as Kudos Labs; contact: `kunal26das@gmail.com`. Audience: adults 18+. This working register supports the privacy branch and its release review; it does not certify compliance or describe unshipped controls as live. Owner/legal validation of the proposed grounds and operating targets below is pending.
+
+Owner-authorized correspondence address: C-92/93 Chhatrapati NAGAR, Bhopal, Madhya Pradesh 462041, India, matching the [public Play listing](https://play.google.com/store/apps/details?id=io.github.kunal26das.yify&hl=en). Adding it to the privacy branch does not establish that the updated notice is already published.
+
+## Processing decisions
+
+These are proposed GDPR grounds, not findings that every activity already meets them. “Requested service” means data necessary for a feature the person chooses; it does not make advertising, measurement or every SDK operation necessary. Cookie/device-access rules need a separate assessment even where GDPR permits processing.
+
+| Purpose and data | Proposed GDPR ground | Separate DPDP assessment |
+| --- | --- | --- |
+| Account sign-in and sync: Firebase UID, Google profile, watchlist, history, collections, preferences and private journal | Article 6(1)(b), only as necessary to deliver the requested account features | Assess section 7(a) for data voluntarily supplied for the specified purpose; otherwise obtain section 6 consent. Do not extend this to unrelated tracking. |
+| Purchase access and restoration: RevenueCat identifiers/aliases, subscription and transaction records; store/Stripe billing | Article 6(1)(b); identify the actual statutory duty before relying on 6(1)(c) for retained records | Assess section 7(a), consent, and applicable legal retention separately. Store obligations do not automatically justify every Yify copy. |
+| Optional analytics and measurement linkage: events, installation/session identifiers, Firebase ID shared with RevenueCat | Article 6(1)(a), separate optional consent | Section 6 consent, specific notice and comparable ease of withdrawal |
+| Crash/error diagnostics: Sentry reports and their Firebase Crashlytics mirror, technical device data, stack traces and filtered breadcrumbs; remain active independently of optional analytics | Legal-basis assessment pending: document necessity, minimization and a narrowly scoped Article 6(1)(f) balancing assessment if relying on legitimate interests. Always-active implementation does not itself establish necessity or a lawful basis. | Identify a valid ground for this specific processing before commencement; do not assume section 7(a) covers automatically collected diagnostics. A general GDPR legitimate interest is not a DPDP ground. |
+| Optional Sentry performance traces, logs and metrics; follow optional usage-analytics consent. Native sessions, profiling and replay are disabled. | Article 6(1)(a); verify the notice describes these purposes and the choice is sufficiently specific | Section 6 consent, specific notice and comparable ease of withdrawal; distinguish these optional events from the active crash reports above |
+| Optional availability alerts: UID, push token, country, services, time zone, watchlist and delivery state | Article 6(1)(a) for optional enrollment; permission and preferences must remain revocable | Section 6 consent; distinguish notification permission from the notice and consent for server processing |
+| Advertising and embedded media: connection details, device/storage identifiers and interactions | Specific consent where required; verify each provider's purposes and roles | Obtain valid consent for optional personal-data processing; do not treat non-personalized ads as automatically exempt |
+| Country detection: requested approximate location and connection data sent to OS services/BigDataCloud | Article 6(1)(a), with manual country selection available | Section 6 consent; OS permission alone must not replace the purpose/provider notice |
+| Catalogue/artwork delivery, support, rights handling, hosting/security logs and deletion barriers | Assess 6(1)(b), specific 6(1)(c) duties, or narrowly scoped 6(1)(f) necessity/balancing as applicable | Map each operation to consent, a specific section 7 use, or an applicable statutory provision; no blanket “legitimate interest” |
+
+Approve each row with the data categories, recipients, necessity, applicable ground and evidence reference. Do not infer sensitive traits from viewing history; private notes can contain unexpected sensitive information and must stay out of telemetry. Assess EU representative requirements separately. Controller identity/contact details are required; multiple contact channels are preferable under the [transparency guidance](https://ec.europa.eu/newsroom/article29/document.cfm?action=display&doc_id=51025), rather than a universal postal-address prerequisite.
+
+## Retention evidence and unresolved periods
+
+| Data | Observed behavior; decision still needed |
+| --- | --- |
+| Account content | Retained for account features until removal/deletion. Deletion removes synchronized content and Auth account; provider backups and recovery windows remain unverified. |
+| Deleted-account barrier | `journals/{uid}` retains an empty payload, deletion flag and timestamp. Firestore rules prevent stale clients from restoring content. No automatic expiry exists; document proportionality and a safe retirement condition before introducing a purge. |
+| Watchlist/history removal marks | Code prunes marks older than 90 days during merge. This is not a scheduled guarantee that every offline device/cloud copy disappears on day 90. |
+| Availability state | Worker clears state for missing accounts/unenrolled devices it processes. Records outside its pilot allowlist need a separate sweep; no general retention period is approved. |
+| Device records | Clearing controls, account-cache cleanup and bounded caches vary by namespace. Unreachable devices cannot be remotely wiped. Consent receipts are device-local, versioned and removable. |
+| Analytics, diagnostics, ads, billing, hosting, support and backups | Configured periods, legal retention and provider deletion windows are unverified. Record actual settings and category-specific periods/criteria before publishing them. Withdrawal stops future optional collection; it is not proof of retroactive erasure. |
+
+Evidence: `firestore.rules`, `data/services/AccountSyncImpl.ts`, `domain/policies/syncMerge.ts`, `domain/policies/historyMerge.ts`, `scripts/availability-alerts/worker.mjs`. Scope DPDP Rules 6 and 8(3) before their commencement; neither an assumed universal instant wipe nor an invented blanket retention period is an acceptable policy.
+
+## Provider agreement and transfer checks
+
+All account-specific verification is **pending**. For each row, save restricted evidence of the accepted terms/version, contracting entity and role, service region, subprocessors, transfer mechanism, retention settings and export/erasure route. Public links do not establish that Yify executed an agreement or meets transfer requirements.
+
+| Provider/activity | Official starting points | Particular check |
+| --- | --- | --- |
+| Firebase Auth, Firestore, Analytics, Crashlytics, FCM | [Privacy/service scope](https://firebase.google.com/support/privacy), [data terms](https://firebase.google.com/terms/data-processing-terms), [SCCs](https://firebase.google.com/terms/firebase-sccs) | Applicable terms differ by service; verify project regions, linked Analytics settings and retention. |
+| AdMob/AdSense | [Publisher roles](https://support.google.com/adsense/answer/7688702?hl=en-GB), [controller terms](https://business.safety.google/controllerterms/) | Generally controller-to-controller, except specified processor features. Verify CMP choices and withdrawal in live regions. |
+| Sentry | [DPA](https://sentry.io/legal/dpa/), [subprocessors](https://sentry.io/legal/subprocessors/) | Verify electronic acceptance, organization region, retention and deletion support. |
+| RevenueCat | [Terms](https://www.revenuecat.com/terms), [DPA](https://www.revenuecat.com/dpa) | Verify applicable incorporated terms, aliases/integrations, transaction retention and deletion effects. |
+| Stripe and stores | [Stripe DPA](https://stripe.com/legal/dpa), [Google policy](https://policies.google.com/privacy), [Apple policy](https://www.apple.com/legal/privacy/) | Distinguish Yify's records from payment/store processing under their own obligations; verify actual contracting/billing arrangement. |
+| Expo hosting, updates and push | [Terms](https://expo.dev/terms), [trust center](https://expo.dev/trust), [subprocessors](https://expo.dev/privacy/subprocessors) | Confirm applicable agreement and end-user data flows; provider claims do not establish Yify compliance. |
+| GitHub Pages/Actions | [DPA](https://github.com/customer-terms/github-data-protection-agreement), [subprocessors](https://docs.github.com/en/site-policy/privacy-policies/github-subprocessors) | Confirm terms cover this account/plan and services; restrict workflow logs/artifacts containing personal data. |
+| Catalogue/media/location/support | [TMDB](https://www.themoviedb.org/privacy-policy), [BigDataCloud](https://www.bigdatacloud.com/privacy), [Google/YouTube](https://policies.google.com/privacy) | Inventory remaining catalogue/image/email vendors. Determine independent-controller versus processor roles and actual countries; a privacy-policy link is not a DPA. |
+
+## Requests and grievances
+
+1. Record receipt time, requested right, jurisdiction, owner and deadline in a restricted register. Use signed-in ownership or a proportionate check; never request passwords, routine ID scans, or unrelated viewing details. Accept requests through the published email; no special phrase is required.
+2. GDPR: act without undue delay, normally within one month. If complexity/volume justifies up to two further months, explain within the first month. **Proposed internal grievance target: 30 days, pending owner approval.** Once applicable, publish a reasonable DPDP grievance period no longer than 90 days; this does not replace shorter applicable deadlines. [EDPB rights guidance](https://www.edpb.europa.eu/sme/be-compliant/respect-individuals-rights_en), [DPDP Rule 14](https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf).
+3. Access/export must cover applicable Firebase, billing, telemetry, alerts and support records plus purposes, recipients and retention context. A Firebase export is a component, not a complete response. Review third-party data and transmit securely. Explain unavailable records and genuine limits; do not equate correction, objection, restriction, portability and erasure.
+4. For erasure, establish the deletion barrier first; process eligible records and provider requests, document narrowly justified retained data and its purge condition, collect receipts, and remove temporary exports after secure delivery. Account deletion does not cancel billing. Escalate failed cleanup rather than closing the request as successful.
+5. Nomination: accept a request via the same contact, verify the account holder, record the nominee's minimum necessary name/contact and scope securely, and provide a correction/revocation route. Do not disclose data until death/incapacity and the nominee's authority are proportionately verified. This procedure needs owner/legal approval and a secure record before it is advertised as operational.
+6. Language: record the person's requested English/Eighth Schedule language; arrange a reviewed translation of the notice/consent before processing dependent on that consent. Track language/version and delivery without sensitive content in logs. English-only UI plus a future email translation promise is not a completed language-access implementation. DPDP requires exhausting the grievance route before the Board; GDPR authority complaints do not depend on that Indian procedure. [DPDP Act, sections 5–6 and 11–14](https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf).
+
+## Breach response
+
+Contain access, preserve necessary evidence, record awareness time, affected people/data, consequences and mitigations; involve the owner immediately. Assess GDPR authority notification within 72 hours unless unlikely to risk rights/freedoms, and individual notification without undue delay when high risk requires it. Once DPDP rules apply, notify the Board and affected people without delay and submit the further Board details within 72 hours unless extended. Keep decision records, including justified non-notification; verify recipients/facts before sending. Do not wait for a final root-cause report. [GDPR Articles 33–34](https://eur-lex.europa.eu/eli/reg/2016/679/oj), [DPDP Rule 7](https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf).
+
+Core DPDP duties are scheduled for **13 May 2027**; GDPR already applies where its territorial scope is met. Existing Indian duties are not suspended by the transition. [MeitY confirmation](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2261823&lang=1&reg=3). Owner sign-off, provider evidence and live controls verification remain open actions.

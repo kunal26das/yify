@@ -7,35 +7,40 @@ import {
     sanitizeMetric,
     sanitizeSpan,
     sanitizeTransaction,
-    shouldCaptureErrorReplay,
 } from './sentry-privacy';
+import {optionalTelemetryConsent, type OptionalTelemetryConsent} from './optional-telemetry';
+import {CONSENT_REVISION, sentryConsentIntegration} from './sentry-consent';
 
-export function createSentryOptions({native, android = false, environment, replayEnabled = false, mirrorException}: {
+export function createSentryOptions({native, environment, mirrorException, consent = optionalTelemetryConsent}: {
     native: boolean;
     android?: boolean;
     environment: 'production' | 'preview';
-    replayEnabled?: boolean;
+    consent?: OptionalTelemetryConsent;
     mirrorException?: (event: Sentry.ErrorEvent, hint: Parameters<NonNullable<Sentry.ReactNativeOptions['beforeSend']>>[1]) => void | Promise<void>;
 }): Sentry.ReactNativeOptions {
     return {
         dsn: 'https://ab0c10fbe49dc5a4e4f0c9ab3c7a0386@o4512058491338752.ingest.us.sentry.io/4512058497695744',
         environment,
         sendDefaultPii: false,
-        tracesSampleRate: 0.1,
-        profilesSampleRate: native && !android ? 0.1 : undefined,
+        tracesSampler: () => consent.token() !== undefined ? 0.1 : 0,
         tracePropagationTargets: [],
         enableLogs: true,
         logsOrigin: 'js',
         enableAutoConsoleLogs: false,
         enableMetrics: true,
-        enableNativeFramesTracking: native,
+        enableAutoSessionTracking: false,
+        enableAutoPerformanceTracing: false,
+        enableAppStartTracking: false,
+        enableNativeFramesTracking: false,
+        enableStallTracking: false,
+        enableUserInteractionTracing: false,
+        sendClientReports: false,
         enableTombstone: native,
         enableHistoricalTombstoneReporting: false,
-        ...(native && replayEnabled ? {replaysSessionSampleRate: 0, replaysOnErrorSampleRate: 0.1} : {}),
         integrations: [
             Sentry.breadcrumbsIntegration({console: false}),
             ...(native ? [Sentry.reactNativeErrorHandlersIntegration({onerror: false})] : []),
-            Sentry.expoRouterIntegration({enableTimeToInitialDisplay: native, useDispatchedActionData: false}),
+            sentryConsentIntegration(consent),
             Sentry.feedbackIntegration({
                 formTitle: 'Report a problem',
                 submitButtonLabel: 'Send report',
@@ -55,18 +60,6 @@ export function createSentryOptions({native, android = false, environment, repla
                     return sanitizeFeedbackEvent(event);
                 },
             },
-            ...(native && replayEnabled ? [Sentry.mobileReplayIntegration({
-                maskAllText: true,
-                maskAllImages: true,
-                maskAllVectors: true,
-                captureSurfaceViews: false,
-                networkDetailAllowUrls: [],
-                networkDetailDenyUrls: [],
-                networkCaptureBodies: false,
-                networkRequestHeaders: [],
-                networkResponseHeaders: [],
-                beforeErrorSampling: shouldCaptureErrorReplay,
-            })] : []),
         ],
         beforeBreadcrumb: sanitizeBreadcrumb,
         beforeSend: async (event, hint) => {
@@ -74,9 +67,29 @@ export function createSentryOptions({native, android = false, environment, repla
             try { if (native) await mirrorException?.(clean, hint); } catch {}
             return clean;
         },
-        beforeSendTransaction: sanitizeTransaction,
-        beforeSendSpan: sanitizeSpan,
-        beforeSendLog: sanitizeLog,
-        beforeSendMetric: sanitizeMetric,
+        beforeSendTransaction: event => {
+            const token = event.contexts?.trace?.data?.[CONSENT_REVISION];
+            if (!consent.permits(token)) return null;
+            const clean = sanitizeTransaction(event);
+            if (clean.contexts?.trace) clean.contexts.trace.data = {...clean.contexts.trace.data, [CONSENT_REVISION]: token};
+            return clean;
+        },
+        beforeSendSpan: span => {
+            const token = span.data?.[CONSENT_REVISION];
+            const clean = sanitizeSpan(span);
+            return consent.permits(token) ? {...clean, data: {...clean.data, [CONSENT_REVISION]: token}} : clean;
+        },
+        beforeSendLog: log => {
+            const token = consent.token();
+            if (token === undefined) return null;
+            const clean = sanitizeLog(log);
+            return clean ? {...clean, attributes: {...clean.attributes, [CONSENT_REVISION]: token}} : null;
+        },
+        beforeSendMetric: metric => {
+            const token = consent.token();
+            if (token === undefined) return null;
+            const clean = sanitizeMetric(metric);
+            return clean ? {...clean, attributes: {...clean.attributes, [CONSENT_REVISION]: token}} : null;
+        },
     };
 }

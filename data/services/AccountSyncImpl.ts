@@ -239,18 +239,13 @@ export class AccountSyncImpl implements AccountSync {
         this.cancelPush();
         this.cancelRetry();
         this.backoff = RETRY_MS;
-        this.mergedUid = null;
-        this.watchlistDirty = false;
-        this.preferencesDirty = false;
-        this.historyDirty = false;
-        this.libraryDirty = false;
-        this.marks = {};
-        this.store.delete(MARKS_KEY);
-        // Retained local data must stay attributed to its account on the next sign-in.
+        this.deletedUid = uid;
+        this.store.set(deletedAccountKey(uid), 'true');
         if (!this.store.getString(LINKED_UID_KEY)) this.store.set(LINKED_UID_KEY, uid);
-        this.store.delete(PREFERENCES_AT_KEY);
-        this.store.delete(LAST_SYNCED_AT_KEY);
-        this.status.set({state: 'idle', failure: null, detail: null, pendingChanges: false, lastSyncedAt: null});
+        this.clearDeletedAccountData();
+        this.status.set({state: 'error', failure: 'deleted',
+            detail: 'Your synced data was deleted. Finish deleting your account or sign out.',
+            pendingChanges: false, lastSyncedAt: null});
         return true;
     }
 

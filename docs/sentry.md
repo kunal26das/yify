@@ -7,11 +7,12 @@ Existing Firebase Crashlytics remains enabled.
 
 ## Application monitoring
 
-Production and preview builds record errors, release sessions, native crashes and hangs,
-navigation timing, frame performance, and explicit operation diagnostics. Tracing samples
-10% of operations; native profiling samples 10% of those traces (about 1% overall).
-Screen display checkpoints cover home, browse, movie details and shows. Native SDK options
-refresh from JavaScript, so these settings are compatible with runtime **1.7.7** through OTA.
+Production and preview builds record errors, native crashes and hangs. Optional operation
+traces, structured logs and metrics require the device's adult declaration and usage-analytics
+consent. Tracing samples 10% of eligible operations. Automatic session tracking, native frame
+and app-start tracing, stall and interaction tracing, profiling and replay are disabled.
+Screen display checkpoints cover home, browse, movie details and shows when measurement is
+allowed. Native defaults in the privacy release require the prepared **1.8.10** binary.
 
 The domain `Diagnostics` port separates monitoring from application behavior. Its Sentry
 adapter records spans, structured logs, operation counts and duration distributions. It
@@ -20,6 +21,12 @@ ads, remote configuration, background notification work, OTA checks/downloads an
 Playback separates ad wait from startup and buffering; unavailable videos and cancellations
 are outcomes rather than application issues. Instrument actual failures at the owning
 operation to avoid duplicate captures from consumers of a shared request.
+
+Consent starts disabled until the saved choice is validated. Withdrawal disables new optional
+measurement; consent-revision filtering rejects queued optional envelopes from an earlier
+consent interval, including after re-enabling analytics. This applies before the SDK transport
+handoff; it does not recall data already handed to a provider transport or its offline cache.
+Crash reports, the Firebase mirror and explicitly submitted feedback remain available.
 
 Preferences → About → **Report a problem** opens Sentry's feedback form. The user chooses
 whether to submit text; identity fields, screenshots and shake-to-report are disabled.
@@ -33,10 +40,8 @@ route names use templates without parameters. Error messages are scrubbed while 
 stack locations and debugging identifiers are retained. Console logging is not collected.
 No tracing headers propagate to external APIs.
 
-Session replay is configured for controlled verification but disabled in distributed builds.
-It must pass a real-device masking/performance check before activation; error-only buffering
-also has overhead. The verification option masks text, images and vectors, excludes player
-surfaces, and captures no network bodies or headers. No native source attachment or automatic
+Session replay is not configured. Any future activation needs a separate consent and privacy
+review, plus real-device masking/performance checks. No native source attachment or automatic
 screenshot collection is enabled.
 
 There is no instrumented backend, AI agent, or reliably scheduled server job in this app.
@@ -48,8 +53,9 @@ Current Remote Config values are endpoints and keys, not feature switches.
 Android sampling profiling is disabled following the `Sampling Profil` / invalid `pthread_t`
 abort in YIFY-1T. Sentry's Android profiler exercises the affected thread-lifetime path;
 see [upstream investigation](https://github.com/getsentry/sentry-java/issues/2604).
-Crash and ANR collection, transaction tracing and the Firebase mirror stay enabled.
-iOS sampling profiling is unchanged. This mitigation removes the observed profiler trigger;
+Crash and ANR collection and the Firebase mirror stay enabled. Transaction tracing follows
+optional measurement consent.
+iOS sampling profiling is also disabled in the privacy update. This mitigation removes the observed profiler trigger;
 it does not establish that every Android thread-lifetime or background ANR defect is fixed.
 
 The reusable implementation lives in

@@ -15,10 +15,12 @@ function readChoices(store: KeyValueStore): PrivacyChoices {
         const record = value as Record<string, unknown>;
         if (record.noticeVersion !== PRIVACY_NOTICE_VERSION ||
             typeof record.adultConfirmed !== 'boolean' || typeof record.analytics !== 'boolean' ||
+            typeof record.youtube !== 'boolean' ||
             typeof record.updatedAt !== 'string' || !Number.isFinite(Date.parse(record.updatedAt)) ||
             new Date(record.updatedAt).toISOString() !== record.updatedAt ||
-            (!record.adultConfirmed && record.analytics)) return DEFAULT_PRIVACY_CHOICES;
+            (!record.adultConfirmed && (record.analytics || record.youtube))) return DEFAULT_PRIVACY_CHOICES;
         return Object.freeze({adultConfirmed: record.adultConfirmed, analytics: record.analytics,
+            youtube: record.youtube,
             updatedAt: record.updatedAt, noticeVersion: PRIVACY_NOTICE_VERSION});
     } catch {
         return DEFAULT_PRIVACY_CHOICES;
@@ -48,14 +50,16 @@ export class PrivacyPreferencesImpl implements PrivacyPreferences {
         if (JSON.stringify(choices) !== JSON.stringify(this.choices)) this.publish(choices);
     }
 
-    updateChoices(choices: Pick<PrivacyChoices, 'adultConfirmed' | 'analytics'>): void {
+    updateChoices(choices: Pick<PrivacyChoices, 'adultConfirmed' | 'analytics'> & {youtube?: boolean}): void {
         try {
-            if (typeof choices?.adultConfirmed !== 'boolean' || typeof choices?.analytics !== 'boolean') {
+            if (typeof choices?.adultConfirmed !== 'boolean' || typeof choices?.analytics !== 'boolean' ||
+                (choices.youtube !== undefined && typeof choices.youtube !== 'boolean')) {
                 throw new Error('Invalid privacy choices');
             }
             const next: PrivacyChoices = Object.freeze({
                 adultConfirmed: choices.adultConfirmed,
                 analytics: choices.adultConfirmed && choices.analytics,
+                youtube: choices.adultConfirmed && (choices.youtube ?? this.choices.youtube),
                 noticeVersion: PRIVACY_NOTICE_VERSION,
                 updatedAt: new Date().toISOString(),
             });

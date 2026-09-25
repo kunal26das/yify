@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react-native';
 import type {DiagnosticAttributes, DiagnosticOutcome, DiagnosticSpan, Diagnostics} from '@/domain';
 import {isDiagnosticOperation, sanitizeDiagnosticAttributes} from '@/instrumentation/sentry-privacy';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import {optionalTelemetryConsent, type OptionalTelemetryConsent} from '@/instrumentation/optional-telemetry';
 
 type Sdk = Pick<typeof Sentry, 'startInactiveSpan' | 'withActiveSpan' | 'captureException' | 'addBreadcrumb' | 'metrics' | 'logger' | 'showFeedbackForm' | 'getClient'>;
 
@@ -38,7 +39,8 @@ export class SentryDiagnostics implements Diagnostics {
     private readonly captured = new WeakMap<object, string | undefined>();
     private readonly spans = new WeakMap<DiagnosticSpan, Sentry.Span>();
 
-    constructor(private readonly sdk: Sdk = Sentry, private readonly now: () => number = Date.now) {}
+    constructor(private readonly sdk: Sdk = Sentry, private readonly now: () => number = Date.now,
+        private readonly consent: OptionalTelemetryConsent = optionalTelemetryConsent) {}
 
     async trace<T>(operation: string, work: () => Promise<T>, input?: DiagnosticAttributes): Promise<T> {
         const span = this.start(operation, input);
@@ -55,8 +57,11 @@ export class SentryDiagnostics implements Diagnostics {
     start(operation: string, input?: DiagnosticAttributes): DiagnosticSpan {
         if (!safely(() => isDiagnosticOperation(operation))) return NOOP_DIAGNOSTICS.start(operation);
         const data = {...attributes(input), 'diagnostics.operation': operation};
+        const token = this.consent.token();
         const started = safely(this.now) ?? 0;
-        const span = safely(() => this.sdk.startInactiveSpan({name: operation, op: `yify.${operation}`, attributes: data}));
+        const span = token !== undefined
+            ? safely(() => this.sdk.startInactiveSpan({name: operation, op: `yify.${operation}`, attributes: data}))
+            : undefined;
         let finished = false;
         const finish = (outcome: DiagnosticOutcome = 'ok', extra?: DiagnosticAttributes) => {
             if (finished) return;
@@ -67,6 +72,7 @@ export class SentryDiagnostics implements Diagnostics {
             safely(() => span?.setStatus(outcome === 'error' || outcome === 'timeout'
                 ? {code: 2, message: outcome === 'timeout' ? 'deadline_exceeded' : 'internal_error'} : {code: 1}));
             safely(() => span?.end());
+            if (!this.consent.permits(token)) return;
             safely(() => this.sdk.metrics.count('yify.operation.count', 1, {attributes: finalData}));
             safely(() => this.sdk.metrics.distribution('yify.operation.duration', duration, {unit: 'millisecond', attributes: finalData}));
             this.event(operation, {...finalData, outcome, duration_ms: duration});
@@ -121,6 +127,7 @@ export class SentryDiagnostics implements Diagnostics {
         const warning = data['diagnostics.outcome'] === 'error' || data['diagnostics.outcome'] === 'timeout';
         safely(() => this.sdk.addBreadcrumb({category: `yify.${operation}`, message: operation,
             level: warning ? 'warning' : 'info', data}));
+        if (this.consent.token() === undefined) return;
         safely(() => warning ? this.sdk.logger.warn(operation, data) : this.sdk.logger.info(operation, data));
     }
 

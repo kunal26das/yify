@@ -1,5 +1,5 @@
 function privacyFixture(analytics = false, adultConfirmed = true) {
-    let choices = {adultConfirmed, analytics, updatedAt: '2026-09-25T00:00:00.000Z', noticeVersion: '2026-09-25'};
+    let choices = {adultConfirmed, analytics, youtube: false, updatedAt: '2026-09-25T00:00:00.000Z', noticeVersion: '2026-09-25-v2'};
     const listeners = new Set();
     return {
         getChoices: () => choices,

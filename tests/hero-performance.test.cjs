@@ -150,6 +150,7 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
         '../../constants/theme': {FontFamily: {}, Radius: {}, Spacing: {xl: 16, xxl: 24, sm: 4}},
         '../../hooks/use-palette': {usePalette: () => palette},
         '../../hooks/use-preferences': {usePreferences: () => preferences},
+        '../../hooks/use-privacy-choices': {usePrivacyChoices: () => ({adultConfirmed: true, youtube: true})},
         '../../hooks/use-responsive': {useResponsive: () => ({isDesktop: false, gutter: 16, contentMaxWidth: 400})},
         '../../hooks/use-reduce-motion': {useReduceMotion: () => false},
         '../../components/linear-gradient': {LinearGradient: 'LinearGradient'},

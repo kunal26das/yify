@@ -33,6 +33,7 @@ import {availabilityPilotAccess} from '../services/availabilityAccess';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {JournalRepositoryImpl} from '../repositories/JournalRepositoryImpl';
 import {PrivacyPreferencesImpl} from '../services/PrivacyPreferencesImpl';
+import {optionalTelemetryConsent} from '@/instrumentation/optional-telemetry';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -46,6 +47,7 @@ export function createDependencies(): Dependencies {
                 if (event.key === null || event.key === 'privacy:choices') listener();
             })
             : undefined);
+    optionalTelemetryConsent.bind(privacy);
     const analytics = new FirebaseAnalyticsSink(privacy);
     const diagnostics = new SentryDiagnostics();
     const network = new ExpoNetworkMonitor();

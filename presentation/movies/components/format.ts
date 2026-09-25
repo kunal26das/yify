@@ -1,12 +1,23 @@
 import type {Movie} from '@/domain';
 
+function catalogueArtwork(url: string | undefined): url is string {
+    if (!url) return false;
+    try {
+        const {hostname} = new URL(url);
+        return !['youtube.com', 'youtube-nocookie.com', 'ytimg.com', 'googlevideo.com']
+            .some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
+    } catch {
+        return false;
+    }
+}
+
 export function thumbCandidates(movie: Movie): string[] {
     const posters = movie.posterUrls ?? [];
     return [
         ...(movie.thumbnailUrls ?? []),
         movie.backgroundImageUrl,
         posters[posters.length - 1],
-    ].filter((url): url is string => !!url);
+    ].filter(catalogueArtwork);
 }
 
 export function thumbFor(movie: Movie): string | undefined {
@@ -14,10 +25,7 @@ export function thumbFor(movie: Movie): string | undefined {
 }
 
 export function thumbPlaceholder(movie: Movie): string | undefined {
-    if (movie.ytTrailerCode) {
-        return `https://img.youtube.com/vi/${movie.ytTrailerCode}/mqdefault.jpg`;
-    }
-    return (movie.posterUrls ?? [])[0];
+    return (movie.posterUrls ?? []).find(catalogueArtwork) ?? thumbFor(movie);
 }
 
 export function formatRuntime(minutes: number): string | null {

@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {YoutubePlayer} from './YoutubePlayer';
+import {usePrivacyChoices} from '../../hooks/use-privacy-choices';
 
 export function HeroTrailerLayer({
     videoId,
@@ -20,6 +21,7 @@ export function HeroTrailerLayer({
     onStarted?: () => void;
 }) {
     const [started, setStarted] = useState(false);
+    const {youtube} = usePrivacyChoices();
 
     useEffect(() => {
         setStarted(false);
@@ -28,6 +30,8 @@ export function HeroTrailerLayer({
     const widthLed = width * 9 / 16 >= height;
     const videoWidth = widthLed ? width : Math.ceil((height * 16) / 9);
     const videoHeight = widthLed ? Math.ceil((width * 9) / 16) : height;
+
+    if (!youtube) return null;
 
     return (
         <View

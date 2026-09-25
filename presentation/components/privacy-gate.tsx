@@ -55,7 +55,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
                 <View style={styles.row}>
                     <View style={styles.label}>
                         <ThemedText type="defaultSemiBold">Optional usage analytics</ThemedText>
-                        <ThemedText style={{color: colors.textMuted}}>Share app activity and purchase or ad measurements with Google Firebase and RevenueCat to help improve Yify. You can change this in Preferences → Privacy.</ThemedText>
+                        <ThemedText style={{color: colors.textMuted}}>Share app activity and purchase or ad measurements with Google Firebase and RevenueCat, and performance measurements with Sentry. You can change this in Preferences → Privacy.</ThemedText>
                     </View>
                     <Switch value={analytics} onValueChange={setAnalytics} accessibilityLabel="Optional usage analytics"/>
                 </View>

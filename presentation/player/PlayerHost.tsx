@@ -8,6 +8,8 @@ import {activateKeepAwakeAsync, deactivateKeepAwake} from 'expo-keep-awake';
 
 import {Radius} from '../constants/theme';
 import {usePreferences} from '../hooks/use-preferences';
+import {usePrivacyChoices} from '../hooks/use-privacy-choices';
+import {YoutubeConsent} from '../components/youtube-consent';
 import {useResponsive} from '../hooks/use-responsive';
 import {useTopBarHeight} from '../movies/components/TopBar';
 import {MiniBar} from './MiniBar';
@@ -33,6 +35,7 @@ function heightFor(width: number): number {
 export function PlayerHost(): ReactElement | null {
     const {video, mode, playing, muted, maximize, minimize} = usePlayer();
     const {playback} = usePreferences();
+    const {youtube} = usePrivacyChoices();
     const {surfaceRef, subscribeInlineRect, getInlineRect, reportPlaying, reportEnded,
         reportReady, reportState, reportError} = usePlayerInternal();
     const insets = useSafeAreaInsets();
@@ -45,14 +48,14 @@ export function PlayerHost(): ReactElement | null {
     const pip = useDocumentPip();
 
     useEffect(() => {
-        if (!playing) return;
+        if (!playing || !youtube) return;
         void activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {
         });
         return () => {
             void deactivateKeepAwake(KEEP_AWAKE_TAG).catch(() => {
             });
         };
-    }, [playing]);
+    }, [playing, youtube]);
 
     const inlineTarget = useMemo<PlayerRect>(() => {
         if (inlineRect) return inlineRect;
@@ -186,7 +189,7 @@ export function PlayerHost(): ReactElement | null {
                         width={baseWidth}
                         height={baseHeight}
                     >
-                        <PlayerSurface
+                        <YoutubeConsent><PlayerSurface
                             ref={surfaceRef}
                             videoId={video.videoId}
                             width={baseWidth}
@@ -199,7 +202,7 @@ export function PlayerHost(): ReactElement | null {
                             onPlaybackState={reportState}
                             onError={reportError}
                             onEnded={reportEnded}
-                        />
+                        /></YoutubeConsent>
                     </PlayerScrollBridge>
                 </Animated.View>
 

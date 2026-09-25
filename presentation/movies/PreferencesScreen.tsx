@@ -63,6 +63,7 @@ import {
     useAppConfig,
     useAuthRepository,
     useDiagnostics,
+    useDisplayAds,
     usePrivacyPreferences,
 } from '../di/DependenciesContext';
 
@@ -171,6 +172,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const availabilityAlerts = useAvailabilityAlertSettings();
     const privacy = usePrivacyPreferences();
     const privacyChoices = usePrivacyChoices();
+    const displayAds = useDisplayAds();
 
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
@@ -681,7 +683,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                 <SettingsSection {...sectionProps('privacy', 8, 'Privacy')}
                     summary={privacyChoices.analytics ? 'Analytics on' : 'Analytics off'}>
                     <Row icon="bar-chart-outline" title="Optional usage analytics"
-                        subtitle="Share app activity and purchase or ad measurements with Google Firebase and RevenueCat. Turning this off stops future measurement on this device."
+                        subtitle="Share app activity and purchase or ad measurements with Google Firebase and RevenueCat, and performance measurements with Sentry. Turning this off stops future optional measurement on this device."
                         colors={colors} gutter={gutter}
                         trailing={<Switch value={privacyChoices.analytics} accessibilityLabel="Optional usage analytics"
                             onValueChange={analytics => {
@@ -691,6 +693,25 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                                     toast('Could not save your privacy choice. Analytics stays off.', 'alert-circle-outline');
                                 }
                             }} {...switchColors(colors, privacyChoices.analytics)}/>}/>
+                    <Row icon="videocam-outline" title="YouTube trailers"
+                        subtitle="Allow embedded videos from YouTube, which receives your IP address and video choices and may use cookies. Turning this off closes loaded trailers."
+                        colors={colors} gutter={gutter}
+                        trailing={<Switch value={privacyChoices.youtube} accessibilityLabel="YouTube trailers"
+                            onValueChange={youtube => {
+                                try {
+                                    privacy.updateChoices({...privacyChoices, youtube});
+                                } catch {
+                                    toast('Could not save your privacy choice. YouTube stays off.', 'alert-circle-outline');
+                                }
+                            }} {...switchColors(colors, privacyChoices.youtube)}/>}/>
+                    {Platform.OS === 'web' ? <Row icon="shield-outline" title="Privacy and cookie settings"
+                        subtitle="Review Google’s advertising choices for this browser."
+                        colors={colors} gutter={gutter} accessibilityRole="button"
+                        accessibilityLabel="Privacy and cookie settings"
+                        onPress={() => void displayAds.showPrivacyOptions().then(opened => {
+                            if (!opened) toast('Google’s privacy form is unavailable here. You can use your browser’s cookie controls or contact us.', 'information-circle-outline');
+                        }).catch(() => toast('Could not open Google’s privacy form. Please try again.', 'alert-circle-outline'))}
+                        trailing={<Ionicons name="chevron-forward" size={18} color={colors.textMuted}/>}/> : null}
                     <Row icon="mail-outline" title="Request your data or raise a privacy concern"
                         subtitle="Request access, a copy, correction, deletion, or object to processing. Opens your email app."
                         colors={colors} gutter={gutter} accessibilityRole="link" accessibilityLabel="Contact Yify about your personal data"
