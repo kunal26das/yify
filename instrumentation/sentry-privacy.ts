@@ -9,6 +9,10 @@ const diagnosticNumbers = new Set(['status_code', 'duration_ms', 'count', 'attem
 const diagnosticBooleans = new Set(['available', 'trimmed', 'forced']);
 const purchasesErrorCodes = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
     18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 42]);
+const updatesLogCodes = new Set(['UpdateAssetsNotAvailable', 'UpdateServerUnreachable', 'UpdateHasInvalidSignature',
+    'UpdateCodeSigningError', 'UpdateFailedToLoad', 'AssetsFailedToLoad', 'JSRuntimeError', 'InitializationError', 'Unknown']);
+const updatesLogStatuses = new Set(['captured', 'empty', 'unavailable', 'timeout', 'error', 'invalid']);
+const updatesPhases = new Set(['asset', 'update', 'signature', 'runtime', 'initialization', 'unknown']);
 const validationReasons = new Set(['envelope', 'movie_identity', 'movie_collections', 'pagination',
     'parental_guides', 'torrents_count', 'torrents_collection']);
 const staticIdentifier = /^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/;
@@ -50,6 +54,9 @@ export function sanitizeDiagnosticAttributes(input: Record<string, unknown> | un
             typeof value === 'number' && Number.isInteger(value) && value >= 0 &&
             value <= (name === 'ad_adapter_error_code' ? 65535 : 100)) result[key] = value;
         if (name === 'purchases_error_code' && typeof value === 'number' && purchasesErrorCodes.has(value)) result[key] = value;
+        if (name === 'updates_log_code' && typeof value === 'string' && updatesLogCodes.has(value)) result[key] = value;
+        if (name === 'updates_log_status' && typeof value === 'string' && updatesLogStatuses.has(value)) result[key] = value;
+        if (name === 'updates_phase' && typeof value === 'string' && updatesPhases.has(value)) result[key] = value;
         if (name === 'validation_reason' && typeof value === 'string' && validationReasons.has(value)) result[key] = value;
         if (diagnosticStrings.has(name) && typeof value === 'string' && staticIdentifier.test(value) && (name !== 'operation' || isDiagnosticOperation(value))) result[key] = value;
         if (diagnosticNumbers.has(name) && typeof value === 'number' && Number.isFinite(value) && value >= 0) result[key] = value;

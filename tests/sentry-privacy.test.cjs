@@ -453,3 +453,34 @@ test('documented RevenueCat numeric codes are bounded in every monitoring payloa
         for (const output of outputs) assert.deepEqual(output, safe);
     }
 });
+
+test('update diagnostics retain only documented codes and fixed categories in every telemetry sink', () => {
+    const {UpdatesLogEntryCode} = loadTypeScript('node_modules/expo-updates/src/Updates.types.ts');
+    const allowed = Object.values(UpdatesLogEntryCode).filter(code => !['None', 'NoUpdatesAvailable'].includes(code));
+    for (const code of allowed) assert.deepEqual(sanitizeDiagnosticAttributes({updates_log_code: code}), {updates_log_code: code});
+    for (const status of ['captured', 'empty', 'unavailable', 'timeout', 'error', 'invalid']) {
+        assert.deepEqual(sanitizeDiagnosticAttributes({updates_log_status: status}), {updates_log_status: status});
+    }
+    for (const phase of ['asset', 'update', 'signature', 'runtime', 'initialization', 'unknown']) {
+        assert.deepEqual(sanitizeDiagnosticAttributes({updates_phase: phase}), {updates_phase: phase});
+    }
+    for (const key of ['updates_log_code', 'updates_log_status', 'updates_phase']) {
+        for (const value of ['private', 'https://assets.test/token', 'None', 'NoUpdatesAvailable', '', 403, null, {}]) {
+            assert.deepEqual(sanitizeDiagnosticAttributes({[key]: value, ['diagnostics.' + key]: value}), {});
+        }
+    }
+    const safe = {'diagnostics.operation': 'updates.download', 'diagnostics.updates_log_status': 'captured',
+        'diagnostics.updates_log_code': 'AssetsFailedToLoad', 'diagnostics.updates_phase': 'asset'};
+    const attributes = {...safe, message: 'Private native response', assetId: 'private', updateId: 'private',
+        stacktrace: ['private native stack'], headers: {authorization: 'private'}, url: 'file:///private',
+        'diagnostics.updates_message': 'private', 'diagnostics.updates_log_entries': [{message: 'private'}]};
+    const outputs = [
+        sanitizeErrorEvent({contexts: {diagnostics: attributes}}).contexts.diagnostics,
+        sanitizeBreadcrumb({category: 'yify.updates.download', data: attributes}).data,
+        sanitizeSpan({op: 'yify.updates.download', description: 'updates.download', data: attributes}).data,
+        sanitizeTransaction({type: 'transaction', contexts: {trace: {data: attributes}}}).contexts.trace.data,
+        sanitizeLog({level: 'error', message: 'updates.download', attributes}).attributes,
+        sanitizeMetric({name: 'yify.operation.count', type: 'counter', value: 1, attributes}).attributes,
+    ];
+    for (const output of outputs) assert.deepEqual(output, safe);
+});
