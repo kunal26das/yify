@@ -176,6 +176,21 @@ The remaining **28 stay open**, including regressed issues X and 1D, native issu
 and real provider, billing, authentication and network failures without a verified causal fix.
 No claim is made that all Sentry issues are fixed. iOS was not submitted to a store.
 
+## Follow-up update failure diagnostics
+
+A failed update check or download now reads native Expo log codes for that operation only,
+with a 250 ms deadline, a 60-second window and at most 50 inspected entries. Specific documented
+SDK codes take precedence over generic wrapper errors. The report retains only a fixed code,
+broad phase and diagnostic-read status; it never reads raw messages, URLs, headers, update or
+asset identifiers, or native stacks. A generic load failure is not labelled as a particular
+transport, storage or integrity failure.
+
+The original exception, issue grouping and retry behavior are preserved. Missing APIs, native
+log-read errors and late results cannot replace the original failure. The full suite passed
+1,761 tests (1,710 app and 51 workspace), with typechecking and independent focused review.
+This improves evidence for YIFY-1D; the issue remains open because its original cause is unknown.
+The change has no native or dependency inputs and is compatible with the 1.8.8 and 1.8.9 binaries.
+
 ## Catalogue issue evidence (initial snapshot)
 
 The catalogue parser and cache changes passed 181 focused tests, including server public/private
