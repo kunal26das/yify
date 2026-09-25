@@ -1,6 +1,6 @@
 # Sentry follow-up — 25 September 2026
 
-The audit covered 35 issue groups: 32 initially unresolved plus three new reports. The initial set included regressed
+The audit covered 36 issue groups: 32 initially unresolved plus four additional new or regressed reports. The initial set included regressed
 YIFY-5 and YIFY-X. A handled operation failure is not evidence of a terminated process.
 Issue closure follows deployed verification of a concrete fix; older release numbers or a
 quiet period alone do not establish resolution.
@@ -113,6 +113,68 @@ were closed with their scope recorded. Other issues remain open. The older backp
 their previous OTA dependency trees, including existing optional-location guards; this does
 not claim those historical trees exactly match their original binaries. Runtime 1.8.5 was
 excluded because its build was cancelled and no Production OTA was found.
+
+## Android 1.8.9 release and final diagnostics
+
+Android **1.8.9 / version code 91** was built from `43bf8d7` and submitted to the
+production track. The [Expo build](https://expo.dev/accounts/kunal26das/projects/yify/builds/97af9bf1-74bf-4f88-809d-47cbfa8798d4)
+finished successfully, and the [submission](https://expo.dev/accounts/kunal26das/projects/yify/submissions/075f17e3-cc23-492c-9e59-9da6df7960b3)
+completed at 09:44:15 UTC. A fresh Play API read confirmed production code 91 with
+status `completed`; it does not establish public availability for every user or country.
+The downloaded AAB's manifest, runtime, channel and native libraries matched the build.
+Its SHA-256 is `f0f4018ea9e0cf3b72d4c3674ec2e1243b7bf46141a6f722053b395185dbd71a`.
+
+The cloud build successfully uploaded Sentry JavaScript source maps, native symbols and
+ProGuard mappings, plus Crashlytics NDK symbols and mappings. Sentry deployment metadata
+was recorded for `io.github.kunal26das.yify@1.8.9+91`. **YIFY-24 is resolved** after this
+verification; users must install the new binary to receive this native fix.
+
+[PR 909](https://github.com/kunal26das/yify/pull/909) merged as `ee0153fc`. It adds bounded
+billing operation-stage and SDK-code diagnostics while preserving real failures. It makes
+no native or dependency changes. Main CI and both web deployments passed. Fresh live checks
+confirmed the matching deployed assets, successful catalog requests and no JavaScript errors.
+The full local suite passed 1,749 app/workspace tests and 18 dependency-doctor regression tests.
+Expo validation passed with the documented dependency deviations.
+
+The billing diagnostics were also published for Android 1.8.8 from `6731dba`, superseding the
+first-fix update in the earlier table. Its Production update group is
+`0c6e64fd-04c2-4808-93ce-c5964294e079`. The live manifest selected the expected update and
+matched the local bundle SHA-256; Sentry source maps and deployment metadata were recorded.
+The first independent download check omitted Expo's per-asset authorization header and
+received HTTP 403. The corrected verifier follows the [Expo Updates protocol](https://docs.expo.dev/technical-specs/expo-updates-1/)
+and uses the headers provided in the manifest extensions. It successfully downloaded and
+verified the SHA-256 of all 37 assets for both 1.8.8 and 1.8.9. This was a verifier defect,
+not evidence of a broken CDN or an environment restriction.
+
+Android 1.8.9 received the same diagnostics from clean source `ee0153fc` in Production group
+`ca99ccc3-fc01-41b7-8d83-a2a8c2458467`, update `01a0d7f7-c683-73d7-b473-e9f8b9af0720`.
+Its live manifest selected runtime 1.8.9 and matched bundle SHA-256
+`90013d35dddf17b31da5495cceb0569ccd6370bebd8e8f401d10e85d59b13cc7`.
+Source maps were uploaded and Sentry deployment 161953296 was recorded after store deployment
+161952775. The native and dependency trees match the verified store binary.
+
+Channel delivery was verified for all five historical runtimes in the earlier table. Their
+original build metadata and source manifests use `Production`; Sentry's Expo integration
+lowercases the displayed channel. The lowercase Sentry value does not require a channel alias.
+Each live `Production` manifest selected the corresponding expected update.
+
+The final recheck found another **YIFY-1J** event at 09:04:07 UTC on web release 1.8.9,
+source `43bf8d7`. It followed a successful catalog request by about two seconds; the trace
+contains no spans, logs, HTTP status or underlying fetch message. Its timing matches a browser
+smoke navigation, but no retained transport identifier proves that attribution. It stays open;
+no broader network-error suppression or unverified fix was applied.
+
+**YIFY-1D** regressed at 09:51:13 UTC on the embedded 1.8.9 build. The same device trace
+recorded a successful update download at 09:52:00, about 47 seconds later. Native Expo Updates
+already parses the required per-asset headers; the incomplete independent verifier does not
+explain the device failure. The original native error details were not retained, so 1D remains
+open. The same session reported an AdMob internal error that later retried to no-fill, and
+EZTV returned HTTP 403 while YTS and TMDB succeeded. These do not establish new client fixes.
+
+Eight of the 36 audited issue groups are now resolved: **5, 1N, 1S, 1V, 1T, 22, 23 and 24**.
+The remaining **28 stay open**, including regressed issues X and 1D, native issues V and 15,
+and real provider, billing, authentication and network failures without a verified causal fix.
+No claim is made that all Sentry issues are fixed. iOS was not submitted to a store.
 
 ## Catalogue issue evidence (initial snapshot)
 
