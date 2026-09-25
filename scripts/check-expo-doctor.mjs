@@ -63,15 +63,21 @@ export function assessDoctor(run, {reviewedDependencies = []} = {}) {
     if (failedCount !== failures.length || (run.status === 0) !== (failedCount === 0)) {
         throw new Error('expo-doctor exit status, summary and failure details disagree.');
     }
-    const unexpected = failures.filter((name) => !structuralChecks.has(name) && !(name === dependencyCheck && reviewedDependencies.length > 0));
+    const displayedDependencies = reviewedDependencies.filter(({actualVersion, expectedVersionOrRange}) => {
+        const version = /^[~^]?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+        const actualCore = actualVersion.match(version)?.[1];
+        const expectedCore = expectedVersionOrRange.match(version)?.[1];
+        return !actualCore || !expectedCore || actualCore !== expectedCore;
+    });
+    const unexpected = failures.filter((name) => !structuralChecks.has(name) && !(name === dependencyCheck && displayedDependencies.length > 0));
     if (unexpected.length) throw new Error(`expo-doctor reported unexpected failures: ${unexpected.join('; ')}`);
-    if (failures.includes(dependencyCheck) !== (reviewedDependencies.length > 0)) {
+    if (failures.includes(dependencyCheck) !== (displayedDependencies.length > 0)) {
         throw new Error('expo-doctor dependency findings differ from the reviewed dependency check.');
     }
     if (failures.includes(dependencyCheck)) {
         const escape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const reportedCount = output.match(/(\d+) packages? out of date\./);
-        if (Number(reportedCount?.[1]) !== reviewedDependencies.length || reviewedDependencies.some(({packageName, actualVersion, expectedVersionOrRange}) =>
+        if (Number(reportedCount?.[1]) !== displayedDependencies.length || displayedDependencies.some(({packageName, actualVersion, expectedVersionOrRange}) =>
             !new RegExp(`^${escape(packageName)}\\s+${escape(expectedVersionOrRange)}\\s+${escape(actualVersion)}\\s*$`, 'm').test(output))) {
             throw new Error('expo-doctor dependency findings differ from the reviewed dependency check.');
         }

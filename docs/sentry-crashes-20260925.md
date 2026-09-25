@@ -85,6 +85,9 @@ matching assets, saved filters and mobile search focus.
 Expo published the preview.7 dependency cohort between PR and main validation. The reviewed
 policy retains the tested preview.6 dependency tree for this native crash fix; a future
 coordinated upgrade must use a new runtime. No dependencies or lockfile were changed.
+Doctor omits prerelease-only version differences from its formatted table; the wrapper now
+accounts for that presentation behavior while still requiring exact approval of every CLI
+dependency finding, including the omitted Expo package.
 
 ## Verified deployment of the first fixes
 
