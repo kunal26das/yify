@@ -26,10 +26,11 @@ function fixture(platform, t, options = {}) {
     const {operations, diagnostics} = recorder();
     const auth = {currentUser: account};
     const calls = [];
+    let authListener;
     let deletions = 0;
     const common = {
         getAuth: () => auth,
-        onAuthStateChanged: (_auth, listener) => listener(auth.currentUser),
+        onAuthStateChanged: (_auth, listener) => { authListener = listener; listener(auth.currentUser); },
         deleteUser: async () => { calls.push('delete'); return options.delete?.(++deletions); },
         getIdToken: async user => {
             calls.push('token');
@@ -44,15 +45,23 @@ function fixture(platform, t, options = {}) {
             '@react-native-firebase/auth': {
                 ...common,
                 GoogleAuthProvider: {credential: token => ({token})},
-                signInWithCredential: async () => ({user: account}),
+                signInWithCredential: async () => {
+                    if (options.credentialError) throw options.credentialError;
+                    return {user: account};
+                },
                 reauthenticateWithCredential: async () => ({user: account}),
             },
             '@react-native-google-signin/google-signin': {
                 statusCodes: {SIGN_IN_CANCELLED: 'cancelled', IN_PROGRESS: 'in_progress', PLAY_SERVICES_NOT_AVAILABLE: 'play_services'},
                 GoogleSignin: {
-                    configure() {},
-                    hasPlayServices: async () => true,
+                    configure() { if (options.configureError) throw options.configureError; },
+                    hasPlayServices: async () => {
+                        if (options.playServicesError) throw options.playServicesError;
+                        return true;
+                    },
                     signIn: async () => {
+                        calls.push('google_sign_in');
+                        if (options.signIn) return options.signIn();
                         if (options.signInError) throw options.signInError;
                         return options.cancelResult ? {type: 'cancelled'} : {type: 'success', data: {idToken: 'private-token'}};
                     },
@@ -86,8 +95,62 @@ function fixture(platform, t, options = {}) {
     }
     const repository = new Repository(diagnostics);
     repository.init();
-    return {repository, operations, options, calls, auth};
+    return {repository, operations, options, calls, auth,
+        notifyAuth(user) {auth.currentUser = user; authListener(user);}};
 }
+
+test('native sign-in shares concurrent taps until the Google flow completes', async t => {
+    let complete;
+    const f = fixture('native', t, {signIn: () => new Promise(resolve => { complete = resolve; })});
+    const first = f.repository.signIn();
+    const second = f.repository.signIn();
+    assert.equal(first, second);
+    await tick();
+    assert.equal(f.calls.filter(call => call === 'google_sign_in').length, 1);
+    assert.equal(f.repository.getSession().signingIn, true);
+    complete({type: 'success', data: {idToken: 'private-token'}});
+    assert.equal(await first, true);
+    assert.equal(f.repository.getSession().signingIn, false);
+    f.options.signIn = null;
+    assert.equal(await f.repository.signIn(), true);
+    assert.equal(f.calls.filter(call => call === 'google_sign_in').length, 2);
+});
+
+for (const [code, expected] of [['7', 'network_request_failed'], ['8', 'internal_error'],
+    ['10', 'developer_error'], ['15', 'timeout'], ['17', 'api_unavailable'], ['12500', 'sign_in_failed'],
+    ['NULL_PRESENTER', 'presenter_unavailable']]) {
+    test(`native Google sign-in preserves the bounded ${expected} cause`, async t => {
+        const f = fixture('native', t, {signInError: failure(code)});
+        assert.equal(await f.repository.signIn(), false);
+        assert.deepEqual(f.operations.at(-1).finishAttributes, {stage: 'google', error_code: expected});
+        assert.equal(f.operations.at(-1).outcome, 'error');
+    });
+}
+
+test('native Google configuration failures are recoverable and identify their stage', async t => {
+    const f = fixture('native', t, {configureError: failure('10')});
+    assert.equal(f.repository.getSession().ready, true);
+    assert.equal(f.repository.getSession().available, true);
+    assert.equal(await f.repository.signIn(), false);
+    assert.deepEqual(f.operations.at(-1).finishAttributes, {stage: 'configure', error_code: 'developer_error'});
+    f.options.configureError = null;
+    assert.equal(await f.repository.signIn(), true);
+    assert.equal(f.repository.getSession().available, true);
+    f.notifyAuth(null);
+    assert.equal(f.repository.getSession().account, null);
+});
+
+test('native auth identifies whether Google Play services or Firebase rejected sign-in', async t => {
+    const f = fixture('native', t, {playServicesError: failure('play_services')});
+    assert.equal(await f.repository.signIn(), false);
+    assert.deepEqual(f.operations.at(-1).finishAttributes,
+        {stage: 'play_services', error_code: 'play_services_unavailable'});
+    f.options.playServicesError = null;
+    f.options.credentialError = failure('auth/invalid-credential');
+    assert.equal(await f.repository.signIn(), false);
+    assert.deepEqual(f.operations.at(-1).finishAttributes,
+        {stage: 'firebase', error_code: 'invalid_credential'});
+});
 
 for (const platform of ['native', 'web']) {
     test(`${platform} offline token refresh preserves the account and can recover without a false denial`, async t => {

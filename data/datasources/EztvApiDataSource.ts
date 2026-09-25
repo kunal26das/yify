@@ -32,7 +32,12 @@ export function parseEztvResponse(body: unknown): EztvTorrentsResponse {
     if (body == null || typeof body !== 'object' || Array.isArray(body)) throw new InvalidResponseError('invalid_response', 'envelope');
     const response = body as Record<string, unknown>;
     if (response.torrents == null) {
-        if (response.torrents_count !== 0) throw new InvalidResponseError('invalid_response', 'torrents_count');
+        const {torrents_count: count, page, limit} = response;
+        const exhausted = Number.isSafeInteger(count) && Number(count) > 0
+            && Number.isSafeInteger(page) && Number(page) > 1
+            && Number.isSafeInteger(limit) && Number(limit) > 0 && Number(limit) <= EZTV_MAX_LIMIT
+            && Number(page) > Math.ceil(Number(count) / Number(limit));
+        if (count !== 0 && !exhausted) throw new InvalidResponseError('invalid_response', 'torrents_count');
     } else if (!Array.isArray(response.torrents) || response.torrents.some(item => {
         if (item == null || typeof item !== 'object' || Array.isArray(item)) return true;
         const torrent = item as Record<string, unknown>;

@@ -43,6 +43,10 @@ export function sanitizeDiagnosticAttributes(input: Record<string, unknown> | un
     const result: Attributes = {};
     for (const [key, value] of Object.entries(input ?? {})) {
         const name = key.replace(/^diagnostics\./, '');
+        if (name === 'ad_error_domain' && (value === 'admob' || value === 'admob_mediation' || value === 'other')) result[key] = value;
+        if (['ad_adapter_count', 'ad_adapter_error_count', 'ad_adapter_error_code'].includes(name) &&
+            typeof value === 'number' && Number.isInteger(value) && value >= 0 &&
+            value <= (name === 'ad_adapter_error_code' ? 65535 : 100)) result[key] = value;
         if (name === 'validation_reason' && typeof value === 'string' && validationReasons.has(value)) result[key] = value;
         if (diagnosticStrings.has(name) && typeof value === 'string' && staticIdentifier.test(value) && (name !== 'operation' || isDiagnosticOperation(value))) result[key] = value;
         if (diagnosticNumbers.has(name) && typeof value === 'number' && Number.isFinite(value) && value >= 0) result[key] = value;

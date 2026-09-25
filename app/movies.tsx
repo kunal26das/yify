@@ -1,8 +1,9 @@
 import {router, useLocalSearchParams} from 'expo-router';
 import Head from 'expo-router/head';
 import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
-import {useEffect, useMemo, useRef, useState} from 'react';
-import {Genre, OrderBy, Quality, SortBy} from '@/domain';
+import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react';
+import {Platform} from 'react-native';
+import {DEFAULT_BROWSE_DEFAULTS, Genre, OrderBy, Quality, SortBy, type BrowseDefaults} from '@/domain';
 import {
     canonicalUrl,
   MoviesScreen,
@@ -30,6 +31,25 @@ function serialize(filters: MovieFilters, query: string): string {
     query,
   });
 }
+
+function seedFilters(defaults: BrowseDefaults): MovieFilters {
+  const seeded: MovieFilters = {};
+  const genre = asEnum(defaults.genre, Object.values(Genre));
+  if (genre) seeded.genre = genre;
+  const quality = asEnum(defaults.quality, Object.values(Quality));
+  if (quality) seeded.quality = quality;
+  if (defaults.minimum_rating > 0) seeded.minimum_rating = defaults.minimum_rating;
+  const sortBy = asEnum(defaults.sort_by, Object.values(SortBy));
+  if (sortBy) seeded.sort_by = sortBy;
+  const orderBy = asEnum(defaults.order_by, Object.values(OrderBy));
+  if (orderBy) seeded.order_by = orderBy;
+  return seeded;
+}
+
+const SERVER_FILTERS = seedFilters(DEFAULT_BROWSE_DEFAULTS);
+const subscribeHydration = () => () => {};
+const clientHydrationSnapshot = () => true;
+const serverHydrationSnapshot = () => Platform.OS !== 'web';
 
 export default function BrowseRoute() {
   const params = useLocalSearchParams<{
@@ -73,26 +93,21 @@ export default function BrowseRoute() {
     params.order_by,
   ]);
 
-  const [initialFilters] = useState<MovieFilters>(() => {
-    if (paramFilters) return paramFilters;
-    const defaults = preferences.getBrowseDefaults();
-    const seeded: MovieFilters = {};
-    const genre = asEnum(defaults.genre, Object.values(Genre));
-    if (genre) seeded.genre = genre;
-    const quality = asEnum(defaults.quality, Object.values(Quality));
-    if (quality) seeded.quality = quality;
-    if (defaults.minimum_rating > 0) seeded.minimum_rating = defaults.minimum_rating;
-    const sortBy = asEnum(defaults.sort_by, Object.values(SortBy));
-    if (sortBy) seeded.sort_by = sortBy;
-    const orderBy = asEnum(defaults.order_by, Object.values(OrderBy));
-    if (orderBy) seeded.order_by = orderBy;
-    return seeded;
-  });
+  const [initialFilters] = useState<MovieFilters>(() => paramFilters ?? seedFilters(preferences.getBrowseDefaults()));
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrationSnapshot, serverHydrationSnapshot);
 
   const viewModel = useMoviesViewModel(repository, {
     initialFilters,
     initialQuery: params.query ?? '',
   });
+
+  const visibleViewModel = hydrated ? viewModel : {
+    ...viewModel,
+    filters: SERVER_FILTERS,
+    appliedFilters: SERVER_FILTERS,
+    searchQuery: '',
+    appliedQuery: '',
+  };
 
   const {appliedQuery, appliedFilters, submitSearch, applyFilters} = viewModel;
 
@@ -113,6 +128,7 @@ export default function BrowseRoute() {
   }, [incoming, submitSearch, applyFilters]);
 
   useEffect(() => {
+    if (!hydrated) return;
     const rating = appliedFilters.minimum_rating;
     const query = appliedQuery.trim();
     const echoed = serialize(appliedFilters, query);
@@ -127,7 +143,7 @@ export default function BrowseRoute() {
       order_by: appliedFilters.order_by,
       focus: undefined,
     });
-  }, [appliedQuery, appliedFilters]);
+  }, [hydrated, appliedQuery, appliedFilters]);
 
     usePageMeta({
         title: 'Browse Movies — Yify',
@@ -146,7 +162,7 @@ export default function BrowseRoute() {
           <link rel="canonical" href={canonicalUrl('movies')}/>
           <meta property="og:url" content={canonicalUrl('movies')}/>
       </Head>
-      <MoviesScreen viewModel={viewModel} autoFocus={params.focus === '1'} />
+      <MoviesScreen viewModel={visibleViewModel} autoFocus={hydrated && params.focus === '1'} />
       <ScreenDisplay ready={!viewModel.loading && (viewModel.totalMovieCount !== null || viewModel.error !== null)}/>
     </>
   );

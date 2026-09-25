@@ -9,6 +9,7 @@ if (!__DEV__ && (Platform.OS !== 'web' || typeof window !== 'undefined')) {
     const native = Platform.OS === 'android' || Platform.OS === 'ios';
     Sentry.init(createSentryOptions({
         native,
+        android: Platform.OS === 'android',
         mirrorException: native ? mirrorSentryException : undefined,
         environment: sentryEnvironment({
             native,

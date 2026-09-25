@@ -4,7 +4,7 @@ import {
   getString,
 } from '@react-native-firebase/remote-config';
 
-import type {AppConfig, Diagnostics} from '@/domain';
+import type {AppConfig, Diagnostics, DiagnosticSpan, NetworkMonitor} from '@/domain';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {DEFAULT_BASE_URL, secureBaseUrl} from '../datasources/YtsApiDataSource';
 import {
@@ -17,13 +17,40 @@ import {
 } from '../datasources/config/remoteConfigKeys';
 
 export class RemoteAppConfig implements AppConfig {
-  constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+  constructor(
+    private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+    private readonly network?: NetworkMonitor,
+  ) {
+    network?.subscribe(() => {
+      if (network.isOnline()) {
+        this.retryAt = 0;
+        void this.init();
+      }
+    });
+  }
   private initialized = false;
   private readyPromise: Promise<void> | null = null;
   private lastError: string | null = null;
+  private retryAt = 0;
 
   init(): Promise<void> {
-    this.readyPromise = this.readyPromise ?? this.doInit();
+    if (this.readyPromise) return this.readyPromise;
+    if (this.initialized || Date.now() < this.retryAt) return Promise.resolve();
+    const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});
+    let timer: ReturnType<typeof setTimeout>;
+    const attempt = this.doInit(span).finally(() => {
+      clearTimeout(timer);
+      this.readyPromise = null;
+    });
+    this.readyPromise = Promise.race([
+      attempt,
+      new Promise<void>(resolve => {
+        timer = setTimeout(() => {
+          this.diagnostics.event('config.readiness', {provider: 'firebase', outcome: 'timeout'});
+          resolve();
+        }, CONFIG_TIMEOUT_MS);
+      }),
+    ]);
     return this.readyPromise;
   }
 
@@ -59,29 +86,48 @@ export class RemoteAppConfig implements AppConfig {
     }
   }
 
-  private async doInit(): Promise<void> {
-    if (this.initialized) return;
-    const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});
+  private async online(): Promise<boolean> {
+    try {
+      return await this.network?.refresh?.() ?? this.network?.isOnline() ?? true;
+    } catch {
+      return this.network?.isOnline() ?? true;
+    }
+  }
+
+  private async doInit(span: DiagnosticSpan): Promise<void> {
+    let stage = 'configure';
     try {
       const rc = getRemoteConfig();
       rc.settings = {
         ...rc.settings,
         minimumFetchIntervalMillis: __DEV__ ? 0 : 60 * 60 * 1000,
+        fetchTimeoutMillis: CONFIG_TIMEOUT_MS,
       };
       rc.defaultConfig = {
         [API_BASE_URL_KEY]: DEFAULT_BASE_URL,
         [TMDB_API_KEY]: '',
         [SUPPORT_URL_KEY]: SUPPORT_URL_DEFAULT,
       };
-      const fetched = await Promise.race([
-        fetchAndActivate(rc).then(() => true),
-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), CONFIG_TIMEOUT_MS)),
-      ]);
-      span.finish(fetched ? 'ok' : 'timeout');
+      stage = 'fetch';
+      if (!await this.online()) {
+        this.retryAt = Date.now() + 30000;
+        this.lastError = null;
+        span.finish('unavailable', {error_code: 'offline', stage});
+        return;
+      }
+      await fetchAndActivate(rc);
+      span.finish('ok');
       this.initialized = true;
+      this.lastError = null;
     } catch (error) {
-      span.fail(error);
-      this.lastError = error instanceof Error ? error.message : String(error);
+      this.retryAt = Date.now() + 30000;
+      if (stage === 'fetch' && !await this.online()) {
+        span.finish('unavailable', {error_code: 'offline', stage});
+        this.lastError = null;
+      } else {
+        span.fail(error, {stage});
+        this.lastError = 'Unable to refresh configuration. Saved settings are still available.';
+      }
     }
   }
 }

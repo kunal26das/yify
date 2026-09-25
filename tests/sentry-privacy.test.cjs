@@ -127,7 +127,7 @@ test('monitoring initializes in release app runtimes with the correct environmen
                 assert.equal(calls[0].sendDefaultPii, false);
                 assert.equal(calls[0].integrations[0].options.console, false);
                 assert.equal(calls[0].tracesSampleRate, 0.1);
-                assert.equal(calls[0].profilesSampleRate, platform === 'web' ? undefined : 0.1);
+                assert.equal(calls[0].profilesSampleRate, platform === 'ios' ? 0.1 : undefined);
                 assert.equal(calls[0].enableLogs, true);
                 assert.equal(calls[0].enableAutoConsoleLogs, false);
                 assert.equal(calls[0].logsOrigin, 'js');
@@ -361,6 +361,29 @@ test('native crash diagnostics enrich the latest process crash without importing
         const web = createSentryOptions({native: false, environment});
         assert.equal(web.enableTombstone, false);
         assert.equal(web.enableHistoricalTombstoneReporting, false);
+    }
+});
+
+test('Android skips the sampling profiler while retaining crash capture, tracing, and Firebase mirroring', async () => {
+    const event = {event_id: 'a'.repeat(32), exception: {values: [{type: 'SIGABRT', value: 'Abort', mechanism: {handled: false}}]}};
+    for (const environment of ['production', 'preview']) {
+        const mirrored = [];
+        const android = createSentryOptions({native: true, android: true, environment,
+            mirrorException: clean => {mirrored.push(clean);}});
+        assert.equal(android.profilesSampleRate, undefined);
+        assert.equal(android.anrProfilingSampleRate, undefined);
+        assert.equal(android._experiments?.profilingOptions, undefined);
+        assert.equal(android.tracesSampleRate, 0.1);
+        assert.equal(android.enableNativeFramesTracking, true);
+        assert.equal(android.enableTombstone, true);
+        assert.notEqual(android.enableNative, false);
+        assert.notEqual(android.enableNativeCrashHandling, false);
+        assert.notEqual(android.enableNdk, false);
+        const captured = await android.beforeSend(event, {});
+        assert.equal(captured.exception.values[0].type, 'SIGABRT');
+        assert.deepEqual(mirrored, [captured]);
+        assert.equal(createSentryOptions({native: true, android: false, environment}).profilesSampleRate, 0.1);
+        assert.equal(createSentryOptions({native: false, environment}).profilesSampleRate, undefined);
     }
 });
 

@@ -109,7 +109,7 @@ test('remote config retains defaults after a fetch failure and reports it only o
                 fetches += 1;
                 assert.equal(instance, remoteConfig);
                 assert.equal(instance.settings.minimumFetchIntervalMillis, 3600000);
-                assert.equal(instance.settings.fetchTimeoutMillis, 60000);
+                assert.equal(instance.settings.fetchTimeoutMillis, 4000);
                 assert.ok(Object.keys(instance.defaultConfig).length > 0);
                 throw failure;
             },

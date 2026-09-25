@@ -152,6 +152,26 @@ test('an older evicted failure cannot evict its replacement request', async () =
     assert.equal(await cache.getOrLoad('a', 1000, async () => assert.fail('replacement was evicted')), 'new a');
 });
 
+test('an evicted YTS request failing late cannot discard a newer successful response', async () => {
+    const {YtsApiDataSource} = loadTypeScript('data/datasources/YtsApiDataSource.ts');
+    const older = deferred();
+    let targetRequests = 0;
+    const api = new YtsApiDataSource(undefined, undefined, {fetch: async url => {
+        const page = Number(new URL(url).searchParams.get('page'));
+        if (page === 1 && ++targetRequests === 1) return older.promise;
+        return Response.json({status: 'ok', data: {movies: [], movie_count: 0, limit: 20, page_number: page}});
+    }});
+    const failure = new Error('older request failed');
+    const first = api.listMovies({page: 1});
+    const rejected = assert.rejects(first, error => error === failure);
+    for (let page = 2; page <= 121; page++) await api.listMovies({page});
+    const replacement = await api.listMovies({page: 1});
+    older.reject(failure);
+    await rejected;
+    assert.equal(await api.listMovies({page: 1}), replacement);
+    assert.equal(targetRequests, 2);
+});
+
 function watchlistFixture(raw) {
     const {WatchlistRepositoryImpl} = loadTypeScript('data/repositories/WatchlistRepositoryImpl.ts');
     const values = new Map(raw === undefined ? [] : [['items', raw]]);
