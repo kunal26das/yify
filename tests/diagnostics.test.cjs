@@ -168,3 +168,18 @@ test('billing stage and SDK code enrich the existing issue without changing its 
         assert.doesNotMatch(capture.error.stack, /private|customer@example.test/);
     }
 });
+
+test('native update categories preserve the original update issue fingerprint and exclude log payloads', () => {
+    const {diagnostics, calls} = fixture();
+    const original = Object.assign(new Error('Failed to download asset https://assets.test/private'), {code: 'ERR_UPDATES_FETCH'});
+    diagnostics.start('updates.download', {provider: 'expo'}).fail(original, {
+        error_code: original.code, updates_log_status: 'captured', updates_log_code: 'AssetsFailedToLoad',
+        updates_phase: 'asset', updates_message: 'Private response', updates_asset_id: 'private',
+    });
+    assert.equal(calls.captures.length, 1);
+    const capture = calls.captures[0];
+    assert.deepEqual(capture.options.fingerprint, ['{{ default }}', 'updates.download']);
+    assert.equal(capture.error.message, 'updates.download failed (ERR_UPDATES_FETCH)');
+    assert.equal(capture.options.contexts.diagnostics['diagnostics.updates_log_code'], 'AssetsFailedToLoad');
+    assert.doesNotMatch(JSON.stringify(calls), /Private|private|assets\.test/);
+});

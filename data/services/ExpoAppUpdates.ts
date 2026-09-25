@@ -3,6 +3,7 @@ import * as Updates from 'expo-updates';
 
 import {IDLE_UPDATE_STATUS, type AppUpdates, type Diagnostics, type NetworkMonitor, type UpdateStatus} from '@/domain';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import {readExpoUpdateFailureDetails} from './ExpoUpdateFailureDetails';
 
 const ERROR_VISIBLE_MS = 6000;
 const UPDATE_ERROR_CODES = new Set([
@@ -102,13 +103,14 @@ export class ExpoAppUpdates implements AppUpdates {
 
             this.publish({state: 'downloading', progress: 0});
             const download = this.diagnostics.start('updates.download', {provider: 'expo'});
+            const startedAt = Date.now();
             try {
                 const fetched = await Updates.fetchUpdateAsync();
                 download.finish(fetched.isNew ? 'ok' : 'empty');
                 this.downloadFailed = false;
                 this.publish(fetched.isNew ? {state: 'ready', progress: 1} : IDLE_UPDATE_STATUS);
             } catch (error) {
-                await this.finishFailure(download, error);
+                await this.finishFailure(download, error, startedAt);
                 if (AppState.currentState !== 'active' || this.network?.isOnline() === false) {
                     this.publish(IDLE_UPDATE_STATUS);
                     return;
@@ -128,24 +130,29 @@ export class ExpoAppUpdates implements AppUpdates {
 
     private async check(): Promise<Updates.UpdateCheckResult | null> {
         const span = this.diagnostics.start('updates.check', {provider: 'expo'});
+        const startedAt = Date.now();
         try {
             const result = await Updates.checkForUpdateAsync();
             span.finish(result.isAvailable ? 'ok' : 'empty');
             return result;
         } catch (error) {
-            await this.finishFailure(span, error);
+            await this.finishFailure(span, error, startedAt);
             return null;
         }
     }
 
-    private async finishFailure(span: ReturnType<Diagnostics['start']>, error: unknown): Promise<void> {
+    private async finishFailure(span: ReturnType<Diagnostics['start']>, error: unknown, startedAt: number): Promise<void> {
+        const failedAt = Date.now();
         const code = updateErrorCode(error);
         const interrupted = code === 'ERR_UPDATES_CHECK' || code === 'ERR_UPDATES_FETCH';
         if (interrupted && this.network?.refresh) await this.network.refresh().catch(() => this.network?.isOnline());
         const reason = this.network?.isOnline() === false ? 'offline' :
             AppState.currentState !== 'active' ? 'background' : undefined;
         if (interrupted && reason === 'offline') span.finish('unavailable', {error_code: code, reason});
-        else span.fail(error, {error_code: code, ...(reason ? {reason} : {})});
+        else {
+            const details = await readExpoUpdateFailureDetails(startedAt, failedAt);
+            span.fail(error, {error_code: code, ...(reason ? {reason} : {}), ...details});
+        }
     }
 
     private publish(next: UpdateStatus): void {

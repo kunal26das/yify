@@ -16,6 +16,7 @@ function fixture(options = {}) {
     const events = [];
     const failures = [];
     const spans = [];
+    const logReads = [];
     const reload = options.reload ?? deferred();
     const appState = {currentState: options.appState ?? 'active', addEventListener: (_event, listener) => {
         listeners.add(listener);
@@ -31,6 +32,7 @@ function fixture(options = {}) {
                 return options.check ? options.check() : {isAvailable: true};
             },
             fetchUpdateAsync: async () => {calls.fetch += 1; return options.fetch ? options.fetch() : {isNew: true};},
+            readLogEntriesAsync: async maxAge => {logReads.push(maxAge); return options.logs ? options.logs() : [];},
             reloadAsync: () => {calls.reload += 1; return reload.promise;},
         },
     });
@@ -49,7 +51,7 @@ function fixture(options = {}) {
         appState.currentState = state;
         listeners.forEach(listener => listener(state));
     };
-    return {service, calls, events, failures, spans, reload, listeners, changeState,
+    return {service, calls, events, failures, spans, reload, listeners, changeState, logReads,
         foreground: () => changeState('active')};
 }
 
@@ -187,7 +189,7 @@ test('native update check codes remain captured and distinguish configuration fa
         });
         await f.service.sync();
         assert.equal(f.spans[0].error, error);
-        assert.deepEqual(f.spans[0].attributes, {error_code: code});
+        assert.deepEqual(f.spans[0].attributes, {error_code: code, updates_log_status: 'empty'});
         assert.deepEqual(f.service.getStatus(), {state: 'idle', progress: 0});
         rejected = false;
         await f.service.sync();
@@ -205,7 +207,7 @@ test('unknown update failures remain captured without leaking arbitrary native c
         const f = fixture({check: async () => {throw error;}});
         await assert.doesNotReject(f.service.sync());
         assert.equal(f.spans[0].error, error);
-        assert.deepEqual(f.spans[0].attributes, {error_code: 'unknown'});
+        assert.deepEqual(f.spans[0].attributes, {error_code: 'unknown', updates_log_status: 'empty'});
     }
 });
 
@@ -276,7 +278,7 @@ test('backgrounding never hides unexplained native failures or configuration def
         pending.reject(error);
         await settled();
         assert.equal(f.spans[0].error, error);
-        assert.deepEqual(f.spans[0].attributes, {error_code: code, reason: 'background'});
+        assert.deepEqual(f.spans[0].attributes, {error_code: code, reason: 'background', updates_log_status: 'empty'});
     }
 });
 
@@ -326,4 +328,75 @@ test('a failed connectivity refresh still records unexplained update errors', as
     }, check: async () => { throw error; }});
     await f.service.sync();
     assert.equal(f.spans[0].error, error);
+});
+
+test('failure details belong to the failed download rather than the preceding check and preserve later retry', async t => {
+    let now = 1000;
+    t.mock.method(Date, 'now', () => now);
+    const error = Object.assign(new Error('Private native URL https://assets.test/token'), {code: 'ERR_UPDATES_FETCH'});
+    let fail = true;
+    const f = fixture({
+        check: async () => {now = 2000; return {isAvailable: true};},
+        fetch: async () => {now = 3000; if (fail) throw error; return {isNew: true};},
+        logs: async () => [
+            {timestamp: 1500, code: 'UpdateHasInvalidSignature', level: 'error'},
+            {timestamp: 2500, code: 'AssetsFailedToLoad', level: 'error', message: 'private', assetId: 'private'},
+            {timestamp: 3001, code: 'InitializationError', level: 'error'},
+        ],
+    });
+    await f.service.sync();
+    const span = f.spans.find(item => item.operation === 'updates.download');
+    assert.equal(span.error, error);
+    assert.deepEqual(span.attributes, {error_code: 'ERR_UPDATES_FETCH', updates_log_status: 'captured',
+        updates_log_code: 'AssetsFailedToLoad', updates_phase: 'asset'});
+    assert.equal(f.service.getStatus().state, 'error');
+    assert.deepEqual(f.logReads, [60000]);
+    f.service.dismiss();
+    fail = false;
+    await f.service.sync();
+    assert.deepEqual(f.calls, {check: 2, fetch: 2, reload: 0});
+    assert.equal(f.service.getStatus().state, 'ready');
+    assert.equal(f.spans.filter(item => item.error).length, 1);
+    assert.deepEqual(f.logReads, [60000]);
+});
+
+test('success, empty results, background deferral and confirmed offline failures never read native logs', async () => {
+    for (const options of [{}, {check: async () => ({isAvailable: false})}, {enabled: false}, {appState: 'background'}]) {
+        const f = fixture(options);
+        await f.service.sync();
+        assert.deepEqual(f.logReads, []);
+    }
+    let online = true;
+    const f = fixture({
+        check: async () => {online = false; throw Object.assign(new Error('Offline'), {code: 'ERR_UPDATES_CHECK'});},
+        network: {isOnline: () => online, subscribe: () => () => {}},
+    });
+    await f.service.sync();
+    assert.deepEqual(f.logReads, []);
+    assert.equal(f.spans[0].outcome, 'unavailable');
+    assert.equal(f.spans[0].error, undefined);
+});
+
+test('a native log timeout preserves original failure, prevents overlap and releases the existing retry guard', async t => {
+    t.mock.timers.enable({apis: ['setTimeout']});
+    const original = Object.assign(new Error('Original update failure'), {code: 'ERR_UPDATES_CHECK'});
+    const logs = deferred();
+    let fail = true;
+    const f = fixture({check: async () => {if (fail) throw original; return {isAvailable: false};}, logs: () => logs.promise});
+    const first = f.service.sync();
+    await settled();
+    await f.service.sync();
+    assert.equal(f.calls.check, 1);
+    t.mock.timers.tick(250);
+    await first;
+    assert.equal(f.spans[0].error, original);
+    assert.deepEqual(f.spans[0].attributes, {error_code: 'ERR_UPDATES_CHECK', updates_log_status: 'timeout'});
+    logs.reject(new Error('Late diagnostics failure'));
+    await settled();
+    assert.equal(f.spans.filter(item => item.error).length, 1);
+    assert.equal(f.service.getStatus().state, 'idle');
+    fail = false;
+    await f.service.sync();
+    assert.equal(f.calls.check, 2);
+    assert.deepEqual(f.logReads, [60000]);
 });
