@@ -139,7 +139,7 @@ jobs:
           require('./.github-tools/fetch-metadata/dist/index.js');
           NODE
 
-      - name: Merge the tested release-console update
+      - name: Merge the eligible tested dependency update
         id: merge
         if: steps.inspect.outputs.automerge == 'true' && contains(fromJSON('["version-update:semver-patch","version-update:semver-minor","version-update:semver-major"]'), steps.metadata.outputs.update-type)
         env:

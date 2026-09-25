@@ -815,7 +815,7 @@ test('trusted maintenance binds source checks and exact-attempt artifact before 
   const state = await maintenanceFixture({ scope: 'release' });
   assert.deepEqual(await prepareMaintenance(state), { ready: true, operation: 'publish', pr: 123, head: SOURCE, source: SOURCE,
     branch: state.pr.head.ref, scope: 'release', automerge: true, checks_passed: true, source_run_id: '456',
-    source_run_attempt: '1', artifact_name: 'dependabot-clean-install-release-456-1' });
+    source_run_attempt: '1', artifact_name: 'dependabot-clean-install-release-456-1', checks: state.jobs });
   assert.equal(state.writes.length, 0);
 });
 
@@ -847,7 +847,6 @@ for (const [label, mutate] of [
   ['another association head', (s) => { s.run.pull_requests[0].head.sha = 'd'.repeat(40); }],
   ['another association repository', (s) => { s.run.pull_requests[0].head.repo.id = 99; }],
   ['multiple associations', (s) => { s.run.pull_requests.push(s.run.pull_requests[0]); }],
-  ['failed clean reinstall', (s) => { s.jobs[3].conclusion = 'failure'; }],
   ['incomplete clean reinstall', (s) => { s.jobs[3].status = 'in_progress'; }],
   ['missing clean reinstall', (s) => { s.jobs.pop(); }],
 ]) test(`maintenance rejects ${label} before credentials or publication`, async () => {
@@ -855,6 +854,92 @@ for (const [label, mutate] of [
   const state = await maintenanceFixture(); mutate(state);
   await assert.rejects(() => prepareMaintenance(state));
   assert.equal(state.writes.length, 0);
+});
+
+for (const conclusion of ['failure', 'cancelled', 'timed_out', 'skipped']) test(`automatic maintenance reports ${conclusion} clean installs without loading artifacts or using privileges`, async () => {
+  const { prepareMaintenance } = await helpers;
+  const state = await maintenanceFixture();
+  state.jobs[0].conclusion = 'failure';
+  state.jobs[3].conclusion = conclusion;
+  const reads = [];
+  const api = async (...args) => { reads.push(args[1]); return state.api(...args); };
+  const result = await prepareMaintenance({ ...state, api });
+  assert.equal(result.ready, false);
+  assert.equal(result.operation, 'blocked');
+  assert.equal(result.automerge, false);
+  assert.equal(result.pr, 123);
+  assert.match(result.reason, /Typecheck and tests \(failure\)/);
+  assert.ok(result.reason.includes(`Dependabot clean reinstall (root) (${conclusion})`));
+  assert.equal(result.artifact_name, undefined);
+  assert.equal(reads.some((path) => path.includes('/artifacts')), false);
+  assert.equal(state.writes.length, 0);
+  state.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
+  await assert.rejects(() => prepareMaintenance({ ...state, api }), /exact artifact-producing attempt/);
+});
+
+for (const [label, mutate] of [
+  ['unsigned source', (s) => { s.originalCommit.commit.verification.verified = false; }],
+  ['mismatched repository', (s) => { s.run.pull_requests[0].head.repo.id = 99; }],
+  ['missing required check', (s) => { s.jobs.splice(0, 1); }],
+  ['duplicate required check', (s) => { s.jobs.push(s.jobs[0]); }],
+  ['incomplete required check', (s) => { s.jobs[0].status = 'in_progress'; }],
+  ['unexpected conclusion', (s) => { s.jobs[0].conclusion = 'unknown'; }],
+]) test(`a failed clean install cannot hide ${label}`, async () => {
+  const { prepareMaintenance } = await helpers;
+  const state = await maintenanceFixture();
+  state.jobs[3].conclusion = 'failure'; mutate(state);
+  await assert.rejects(() => prepareMaintenance(state));
+  assert.equal(state.writes.length, 0);
+});
+
+test('prepare step writes a blocked summary and safe outputs without approval credentials', async (t) => {
+  const { main } = await helpers;
+  const state = await maintenanceFixture();
+  state.jobs[0].conclusion = 'failure';
+  state.jobs[3].conclusion = 'failure';
+  state.jobs.forEach((job, index) => { job.id = 1000 + index; });
+  const directory = await mkdtemp(join(tmpdir(), 'dependabot-summary-'));
+  const previousFetch = global.fetch;
+  t.after(async () => { global.fetch = previousFetch; await rm(directory, { recursive: true, force: true }); });
+  global.fetch = async (url, options) => {
+    assert.equal(options.method, 'GET');
+    const path = new URL(url).pathname.slice(1) + new URL(url).search;
+    const value = await state.api(options.method, path);
+    return { ok: true, status: 200, json: async () => value };
+  };
+  const env = { ...state.env, GH_TOKEN: 'read-source-token', GITHUB_OUTPUT: join(directory, 'output'),
+    GITHUB_STEP_SUMMARY: join(directory, 'summary') };
+  const result = await main('prepare-maintenance', env);
+  assert.equal(result.ready, false);
+  const summary = await readFile(env.GITHUB_STEP_SUMMARY, 'utf8');
+  assert.match(summary, /\[#123\]\(https:\/\/github.com\/kunal26das\/yify\/pull\/123\)/);
+  assert.match(summary, /actions\/runs\/456\/attempts\/1/);
+  assert.match(summary, /actions\/runs\/456\/job\/1003/);
+  assert.match(summary, /Maintenance: \*\*blocked\*\*/);
+  assert.match(summary, /Automatic merge: \*\*not eligible\*\*/);
+  assert.match(summary, /native compatibility review and a runtime version update/);
+  assert.match(summary, /Dependabot clean reinstall \(root\).*failure/);
+  const output = await readFile(env.GITHUB_OUTPUT, 'utf8');
+  assert.match(output, /^ready=false$/m);
+  assert.match(output, /^operation=blocked$/m);
+  assert.doesNotMatch(output, /artifact_name|checks=|\[object Object\]/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('ready release maintenance summarizes eligible checks and lockfile repair requirements', async (t) => {
+  const { prepareMaintenance, writeMaintenanceSummary } = await helpers;
+  const state = await maintenanceFixture({ scope: 'release' });
+  state.jobs[0].conclusion = 'failure';
+  const directory = await mkdtemp(join(tmpdir(), 'dependabot-summary-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  state.env.GITHUB_STEP_SUMMARY = join(directory, 'summary');
+  const result = await prepareMaintenance(state);
+  await writeMaintenanceSummary({ env: state.env, result });
+  const summary = await readFile(state.env.GITHUB_STEP_SUMMARY, 'utf8');
+  assert.match(summary, /Maintenance: \*\*ready\*\*/);
+  assert.match(summary, /eligible after all required checks pass/);
+  assert.match(summary, /new pull-request checks must pass before merging/);
+  assert.doesNotMatch(summary, /native compatibility review/);
 });
 
 for (const [label, mutate] of [
@@ -917,6 +1002,10 @@ test('a refreshed head requires three passing actual pull-request checks and no 
   assert.equal(result.artifact_name, undefined);
   assert.equal((await maintenanceContext({ ...state, operation: 'merge' })).PR_HEAD_SHA, REFRESHED);
   state.jobs[0].conclusion = 'failure';
+  const blocked = await prepareMaintenance(state);
+  assert.equal(blocked.ready, false);
+  assert.match(blocked.reason, /Typecheck and tests \(failure\)/);
+  state.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
   await assert.rejects(() => prepareMaintenance(state), /every required CI check/);
   assert.equal(state.writes.length, 0);
 });
@@ -927,6 +1016,23 @@ test('failed frozen checks permit a tested fresh lockfile but never immediate me
   state.jobs[0].conclusion = 'failure';
   assert.equal((await prepareMaintenance(state)).checks_passed, false);
   await assert.rejects(() => maintenanceContext({ ...state, operation: 'merge' }), /has not passed/);
+});
+
+test('cancelled refreshed checks block automatic maintenance and retain strict manual recovery', async () => {
+  const { prepareMaintenance } = await helpers;
+  const state = await maintenanceFixture({ scope: 'release', refreshed: true });
+  state.followupRun.run_attempt = 1;
+  state.followupRun.conclusion = 'cancelled';
+  state.env.SOURCE_RUN_ID = String(FOLLOWUP_ID);
+  state.jobs[1].conclusion = 'cancelled';
+  const result = await prepareMaintenance(state);
+  assert.equal(result.ready, false);
+  assert.equal(result.operation, 'blocked');
+  assert.match(result.reason, /Web exports render and isolate catalog data \(cancelled\)/);
+  assert.equal(result.artifact_name, undefined);
+  state.env.GITHUB_EVENT_NAME = 'workflow_dispatch';
+  await assert.rejects(() => prepareMaintenance(state), /every required CI check/);
+  assert.equal(state.writes.length, 0);
 });
 
 test('maintenance rejects stale preparation and source checks on a different current head', async () => {
@@ -1055,7 +1161,7 @@ test('a successful run cannot conceal failed required jobs', async () => {
   const { waitFollowup } = await helpers;
   const state = await waitingFixture();
   state.followupRun.status = 'completed'; state.followupRun.conclusion = 'success'; state.jobs[1].conclusion = 'failure';
-  await assert.rejects(() => waitFollowup(state), /every required CI check/);
+  await assert.rejects(() => waitFollowup(state), /Source CI blocked maintenance/);
   assert.equal(state.writes.length, 0);
 });
 

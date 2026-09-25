@@ -35,6 +35,20 @@ The branch-refresh token expires on September 24, 2027; `DEPENDABOT_REBASE_TOKEN
 
 A passing manually dispatched run is not evidence that required PR checks passed. The normal PR run must complete, and the branch must be current with `main`. Other reasons to remain open include a failed build, native changes requiring a new app runtime, or manual edits that disable bot writes and merges.
 
+The maintenance summary links the source CI run and its blocking checks. An automatic run stops
+without creating credentials or writing a lockfile when the clean reinstall fails or is cancelled;
+it does not report that expected compatibility failure as a broken publisher. Manual recovery still
+requires the exact successful artifact-producing attempt. Signature, provenance and artifact
+validation failures remain errors.
+
+On 25 September 2026, PR #902 proposed Expo 58 modules while retaining Expo 57, and installation
+correctly rejected the unreviewed native combination. The npm registry still identified Expo 57 as
+the latest stable SDK and Expo 58 as a preview, so this was not a complete stable SDK upgrade. PR #903 replaced the tooling workspace's
+Babel 7 and TypeScript 6 compatibility dependencies with Babel 8 and TypeScript 7. That broke
+the Worklets transform and ESLint parser. The application already uses Babel 8 and TypeScript 7;
+the older tooling copies are required by upstream APIs. These proposals need coordinated
+compatibility work, not another workflow approval or a merge that bypasses failed checks.
+
 React Native, Worklets and compiler major updates can require coordinated changes across native builds, server rendering and test tooling. Their integration includes guarded compatibility patches and a new native runtime; passing a dependency-only check cannot replace those release checks. Release-console updates remain independently checked by their Node 24 typecheck, tests and build, together with the application checks.
 
 ## Activation
