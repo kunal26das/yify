@@ -45,6 +45,13 @@ Current Remote Config values are endpoints and keys, not feature switches.
 
 ## Firebase fatal JavaScript crashes
 
+Android sampling profiling is disabled following the `Sampling Profil` / invalid `pthread_t`
+abort in YIFY-1T. Sentry's Android profiler exercises the affected thread-lifetime path;
+see [upstream investigation](https://github.com/getsentry/sentry-java/issues/2604).
+Crash and ANR collection, transaction tracing and the Firebase mirror stay enabled.
+iOS sampling profiling is unchanged. This mitigation removes the observed profiler trigger;
+it does not establish that every Android thread-lifetime or background ANR defect is fixed.
+
 The reusable implementation lives in
 the [`@yify/crashreporting` workspace](../crashreporting/README.md), with its
 own public API, dependency manifest, tests and TypeScript configuration. It imports no Yify, Expo,

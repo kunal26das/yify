@@ -26,6 +26,7 @@ import {
 } from '@/domain';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import {adErrorCode, adErrorDetails} from './AdMobFailure';
 
 const AD_UNIT_ID = 'ca-app-pub-2292299294214510/8726265265';
 const AD_SHOW_TIMEOUT_MS = 8000;
@@ -57,27 +58,14 @@ export interface AdMobAdGatewayOptions {
     network?: NetworkMonitor;
 }
 
-function adErrorCode(error: unknown): string {
-    const code = error != null && typeof error === 'object' && 'code' in error ? error.code : undefined;
-    const known: Record<string, string> = {
-        'googleMobileAds/no-fill': 'no_fill',
-        'googleMobileAds/mediation-no-fill': 'no_fill',
-        'googleMobileAds/error-code-no-fill': 'no_fill',
-        'googleMobileAds/network-error': 'network_error',
-        'googleMobileAds/invalid-request': 'invalid_request',
-        'googleMobileAds/internal-error': 'internal_error',
-        'googleMobileAds/app-not-foreground': 'app_not_foreground',
-    };
-    return typeof code === 'string' ? known[code] ?? 'unknown' : 'unknown';
-}
-
 function finishAdFailure(span: DiagnosticSpan, error: unknown, online = true): void {
     const reportedCode = adErrorCode(error);
     const errorCode = !online && reportedCode === 'internal_error' ? 'network_error' : reportedCode;
+    const attributes = {...adErrorDetails(error), error_code: errorCode};
     if (errorCode === 'no_fill' || errorCode === 'network_error' || errorCode === 'app_not_foreground') {
-        span.finish(errorCode === 'no_fill' ? 'empty' : 'unavailable', {error_code: errorCode});
+        span.finish(errorCode === 'no_fill' ? 'empty' : 'unavailable', attributes);
     } else {
-        span.fail(error, {error_code: errorCode});
+        span.fail(error, attributes);
     }
 }
 

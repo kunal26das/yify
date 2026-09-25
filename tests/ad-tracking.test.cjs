@@ -409,6 +409,32 @@ test('online internal failures and offline invalid requests still report real ad
     assert.deepEqual(records.at(-1).attributes, {error_code: 'invalid_request'});
 });
 
+test('structured Ads17 failures preserve provider errors and recovery without deprecated codes', async t => {
+    const {diagnostics, records} = diagnosticRecorder();
+    const {gateway, ads, tracked} = fixture(t, {diagnostics});
+    await gateway.init();
+    ads[0].emit('error', {reason: 'no-fill', phase: 'load'});
+    assert.equal(records.at(-1).outcome, 'empty');
+    t.mock.timers.tick(30000);
+    const error = {reason: 'internal-error', phase: 'load', responseInfo: {adapterResponses: [
+        {outcome: 'error', adError: {domain: 'com.google.android.gms.ads', code: 2, message: 'private details'}},
+    ]}};
+    ads[1].emit('error', error);
+    assert.equal(records.at(-1).outcome, 'error');
+    assert.equal(records.at(-1).error, error);
+    assert.deepEqual(records.at(-1).attributes, {error_code: 'internal_error', stage: 'load',
+        ad_adapter_count: 1, ad_adapter_error_count: 1, ad_adapter_error_code: 2, ad_error_domain: 'admob'});
+    assert.equal(tracked.filter(item => item.method === 'trackFailedToLoad').length, 2);
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ads[1].destroyCount, 1);
+    t.mock.timers.tick(59999);
+    assert.equal(ads.length, 2);
+    t.mock.timers.tick(1);
+    assert.equal(ads.length, 3);
+    ads[2].emit('loaded');
+    assert.equal(records.at(-1).outcome, 'ok');
+});
+
 test('background retries pause and resume once in the foreground', async (t) => {
     const {gateway, ads, setForeground} = fixture(t, {foreground: false});
     await gateway.init();

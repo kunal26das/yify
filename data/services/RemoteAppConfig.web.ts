@@ -1,10 +1,10 @@
-import type {AppConfig, Diagnostics} from '@/domain';
+import type {AppConfig, Diagnostics, NetworkMonitor} from '@/domain';
 import {webCatalogBaseUrl} from '../datasources/WebCatalogClient';
 import {SUPPORT_URL_DEFAULT, TMDB_FALLBACK_KEY} from '../datasources/config/remoteConfigKeys';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 
 export class RemoteAppConfig implements AppConfig {
-  constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {}
+  constructor(private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS, network?: NetworkMonitor) {}
 
   async init(): Promise<void> {}
 

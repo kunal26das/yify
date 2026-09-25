@@ -10,8 +10,9 @@ import {
     shouldCaptureErrorReplay,
 } from './sentry-privacy';
 
-export function createSentryOptions({native, environment, replayEnabled = false, mirrorException}: {
+export function createSentryOptions({native, android = false, environment, replayEnabled = false, mirrorException}: {
     native: boolean;
+    android?: boolean;
     environment: 'production' | 'preview';
     replayEnabled?: boolean;
     mirrorException?: (event: Sentry.ErrorEvent, hint: Parameters<NonNullable<Sentry.ReactNativeOptions['beforeSend']>>[1]) => void | Promise<void>;
@@ -21,7 +22,7 @@ export function createSentryOptions({native, environment, replayEnabled = false,
         environment,
         sendDefaultPii: false,
         tracesSampleRate: 0.1,
-        profilesSampleRate: native ? 0.1 : undefined,
+        profilesSampleRate: native && !android ? 0.1 : undefined,
         tracePropagationTargets: [],
         enableLogs: true,
         logsOrigin: 'js',

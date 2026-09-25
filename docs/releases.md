@@ -84,9 +84,9 @@ OTA updates can change JavaScript and assets supported by an installed binary. N
 plugin or native code changes require a new binary and a new runtime version. The runtime defaults
 to `package.json`'s `version`; **bump that version whenever native compatibility changes**.
 
-The current dependency upgrades are prepared for **1.8.7 (89)** and require a new native
-binary. Do not publish this dependency tree as an OTA for runtimes **1.8.4, 1.8.5 or 1.8.6**. The version
-preparation does not publish a store release or add a release-ledger entry.
+The current dependency tree ships in **1.8.8 (90)** and requires that native binary.
+Do not publish it as an OTA for older runtimes, including **1.8.7**. Backport JavaScript
+fixes onto each older binary's compatible dependency tree before publishing an update.
 
 `EXPO_UPDATE_CHANNEL` sets the binary's channel (`Production` or `Staging`). The release console uses
 [releases.json](../release/releases.json) to check that a matching binary has shipped before publishing

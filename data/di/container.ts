@@ -41,8 +41,8 @@ export function createDependencies(): Dependencies {
 
     const analytics = new FirebaseAnalyticsSink();
     const diagnostics = new SentryDiagnostics();
-    const appConfig = new RemoteAppConfig(diagnostics);
     const network = new ExpoNetworkMonitor();
+    const appConfig = new RemoteAppConfig(diagnostics, network);
 
     const tmdbApi = new TmdbApiDataSource(async () => {
         await appConfig.ready();

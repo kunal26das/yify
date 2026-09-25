@@ -112,7 +112,10 @@ export function parseYtsResponse<T extends YtsApiResponse<unknown>>(body: unknow
     if (data.movie.id === 0 && data.movie.title === null) throw new MovieNotFoundError();
   }
   const movies = endpoint === YtsEndpoint.MovieDetails ? [data.movie] : data.movies;
-  if (movies !== undefined) {
+  const missingSuggestions = endpoint === YtsEndpoint.MovieSuggestions && data.movie_count === 0
+      && Array.isArray(movies) && movies.length === 1 && record(movies[0])
+      && movies[0].id === 0 && movies[0].title === null;
+  if (movies !== undefined && !missingSuggestions) {
     if (!Array.isArray(movies) || movies.some(movie => !record(movie)
         || !Number.isSafeInteger(movie.id) || Number(movie.id) < 1 || typeof movie.title !== 'string')) {
       throw new InvalidResponseError('invalid_response', 'movie_identity');
@@ -126,7 +129,7 @@ export function parseYtsResponse<T extends YtsApiResponse<unknown>>(body: unknow
   if (data.parental_guides !== undefined && (!Array.isArray(data.parental_guides)
       || data.parental_guides.some(guide => !record(guide) || typeof guide.type !== 'string'
           || typeof guide.parental_guide_text !== 'string'))) throw new InvalidResponseError('invalid_response', 'parental_guides');
-  return body as unknown as T;
+  return (missingSuggestions ? {...body, data: {...data, movies: []}} : body) as unknown as T;
 }
 
 function fetchWithTimeout<T extends YtsApiResponse<unknown>>(
@@ -229,8 +232,8 @@ export class YtsApiDataSource implements YtsApi {
     }
 
     const operation = `api.yts.${endpoint.replace('.json', '')}`;
-    const promise = fetchWithTimeout<T>(url, this.diagnostics, operation, this.options.fetch ?? fetch, endpoint, this.options.network).catch((error) => {
-      if (ttlMs > 0) responseCache.delete(url);
+    const promise: Promise<T> = fetchWithTimeout<T>(url, this.diagnostics, operation, this.options.fetch ?? fetch, endpoint, this.options.network).catch((error) => {
+      if (ttlMs > 0 && responseCache.get(url)?.value === promise) responseCache.delete(url);
       throw error;
     });
 
