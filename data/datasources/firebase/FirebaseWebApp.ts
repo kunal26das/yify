@@ -25,6 +25,10 @@ const firebaseConfig = {
 
 let app: FirebaseApp | null = null;
 
+export function getFirebaseMeasurementId(): string {
+  return firebaseConfig.measurementId;
+}
+
 export function getFirebaseApp(): FirebaseApp | null {
   if (app != null) return app;
   const hasConfig =

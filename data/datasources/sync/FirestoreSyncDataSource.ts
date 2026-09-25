@@ -87,6 +87,27 @@ function failureFor(status: number): SyncFailure {
     return 'server';
 }
 
+async function deletedAccountFailure(uid: string, token: string, status: number): Promise<SyncWriteResult | null> {
+    if (status !== 403) return null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    try {
+        const response = await fetch(`${BASE}/journals/${encodeURIComponent(uid)}?mask.fieldPaths=deleting`, {
+            headers: {Authorization: `Bearer ${token}`}, signal: controller.signal,
+            cache: 'no-store', credentials: 'omit', redirect: 'error',
+        });
+        if (!response.ok) return null;
+        const body = await response.json() as {fields?: {deleting?: {booleanValue?: unknown}}};
+        return body.fields?.deleting?.booleanValue === true
+            ? {ok: false, failure: 'deleted', detail: 'Account deletion has started. Your saved account data cannot sync. Finish deleting your account or sign out.'}
+            : null;
+    } catch {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 async function detailFor(response: Response, fallback: string): Promise<string> {
     try {
         const body = (await response.json()) as {error?: {message?: string}};
@@ -107,6 +128,8 @@ export async function fetchSyncDocument(uid: string, token: string): Promise<Syn
     }
     if (response.status === 404) return {ok: true, document: {}};
     if (!response.ok) {
+        const deleted = await deletedAccountFailure(uid, token, response.status);
+        if (deleted && !deleted.ok) return deleted;
         return {
             ok: false,
             failure: failureFor(response.status),
@@ -171,6 +194,8 @@ export async function writeSyncDocument(
         return {ok: false, failure: 'network', detail: String(error)};
     }
     if (response.ok) return {ok: true};
+    const deleted = await deletedAccountFailure(uid, token, response.status);
+    if (deleted) return deleted;
     let error: {message?: string; status?: string} | undefined;
     try {
         error = ((await response.json()) as {error?: {message?: string; status?: string}}).error;

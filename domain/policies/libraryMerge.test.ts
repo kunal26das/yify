@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {emptyLibraryState, encodeLibraryState, libraryCollectionContains, libraryMovieWatched, liveLibraryCollections, mergeLibraryState, parseLibraryState} from './libraryMerge.ts';
+import {emptyLibraryState, encodeLibraryState, libraryCollectionContains, libraryMovieWatched, libraryNeedsDeletionCleanup, liveLibraryCollections, mergeLibraryState, parseLibraryState} from './libraryMerge.ts';
 
 const state = () => ({...emptyLibraryState(), collections: {favorites: {name: 'Favorites', updatedAt: 10, removedAt: 0}}});
 
@@ -39,7 +39,49 @@ test('deleting a collection wins over an offline rename or membership edit', () 
     assert.deepEqual(liveLibraryCollections(merged), []);
     assert.equal(libraryCollectionContains(merged, 'favorites', 1), false);
     assert.equal(merged.collections.favorites.removedAt, 20);
+    assert.equal(merged.collections.favorites.name, 'Removed collection');
+    assert.equal(merged.collections.favorites.updatedAt, 25);
+    assert.equal(encodeLibraryState(merged).includes('Renamed offline'), false);
+    assert.deepEqual(mergeLibraryState(b, a), merged);
     assert.deepEqual(merged.memberships, {});
+});
+
+test('existing removed records lose personal names and memberships while live records remain unchanged', () => {
+    const raw = JSON.stringify({...state(), collections: {...state().collections,
+        private: {name: 'Personal sensitive collection', updatedAt: 11, removedAt: 21}},
+        memberships: {private: {'42': {at: 12, value: true}}, favorites: {'13': {at: 15, value: true}}}});
+    assert.equal(libraryNeedsDeletionCleanup(raw), true);
+    const parsed = parseLibraryState(raw);
+    assert.deepEqual(parsed.collections.private, {name: 'Removed collection', updatedAt: 11, removedAt: 21});
+    assert.equal(parsed.memberships.private, undefined);
+    assert.equal(libraryCollectionContains(parsed, 'favorites', 13), true);
+    assert.equal(parsed.collections.favorites.name, 'Favorites');
+    const encoded = encodeLibraryState(parsed);
+    assert.equal(encoded.includes('Personal sensitive'), false);
+    assert.equal(libraryNeedsDeletionCleanup(encoded), false);
+    assert.deepEqual(parseLibraryState(encoded), parsed);
+});
+
+test('older offline clients cannot restore names or membership after merging a minimized deletion record', () => {
+    const removed = parseLibraryState(JSON.stringify({...state(), collections: {
+        favorites: {name: 'Removed collection', updatedAt: 10, removedAt: 20}}}));
+    const offline = {...state(), collections: {favorites: {name: 'Sensitive offline rename', updatedAt: 35, removedAt: 0}},
+        memberships: {favorites: {'42': {at: 40, value: true}}}};
+    const merged = mergeLibraryState(removed, offline);
+    assert.equal(merged.collections.favorites.name, 'Removed collection');
+    assert.equal(merged.collections.favorites.removedAt, 20);
+    assert.deepEqual(merged.memberships, {});
+    assert.deepEqual(liveLibraryCollections(merged), []);
+    assert.deepEqual(mergeLibraryState(merged, offline), merged);
+    assert.deepEqual(mergeLibraryState(offline, removed), merged);
+});
+
+test('cleanup detection ignores malformed payloads and does not alter live user-created names', () => {
+    for (const raw of [undefined, '', 'invalid', '{}', JSON.stringify(state()), 'x'.repeat(300001)]) {
+        assert.equal(libraryNeedsDeletionCleanup(raw), false);
+    }
+    assert.equal(parseLibraryState(JSON.stringify({...state(), collections: {
+        favorites: {name: 'Removed collection', updatedAt: 10, removedAt: 0}}})).collections.favorites.removedAt, 0);
 });
 
 test('clear suppresses older data while later explicit watched updates survive', () => {

@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const {test, beforeEach, afterEach} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
+const {privacyFixture} = require('./helpers/privacy-fixture.cjs');
 
 const originalWindow = global.window;
 const originalDocument = global.document;
@@ -36,7 +37,7 @@ const deferred = () => {
 };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key', diagnostics, country} = {}) {
+function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_key', diagnostics, country, privacy = privacyFixture(true)} = {}) {
     const calls = [];
     const events = [];
     const properties = [];
@@ -105,7 +106,7 @@ function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_
     const repository = new RevenueCatPurchaseRepositoryImpl({
         trackEvent: (name, params) => events.push({name, params}),
         setUserProperty: (name, value) => properties.push({name, value}),
-    }, store, diagnostics, () => country ?? null);
+    }, store, diagnostics, () => country ?? null, privacy);
     return {repository, calls, events, properties, values, sdk, PurchasesError};
 }
 
@@ -641,4 +642,25 @@ test('web checkout enriches one coalesced funnel without logging payments, ident
         assert.equal(params.plan_kind, 'monthly');
     }
     assert.doesNotMatch(JSON.stringify(events), /private|package_id|price|currency|revenue|transaction|renewal/);
+});
+
+test('web purchase access remains available when optional paywall measurement is refused', async () => {
+    const privacy = privacyFixture(false);
+    const f = fixture({privacy});
+    await f.repository.identify(account('customer'));
+    const offer = selectedOffer(f.repository);
+    f.repository.trackPaywallImpression(offer);
+    assert.equal(f.calls.some(call => call.method === 'impression'), false);
+    assert.equal(await f.repository.purchase(offer), true);
+});
+
+test('RevenueCat automatic web analytics and campaign metadata stay disabled regardless of optional consent', async () => {
+    for (const analytics of [false, true]) {
+        const f = fixture({privacy: privacyFixture(analytics)});
+        await f.repository.identify(account('customer'));
+        assert.deepEqual(f.calls.find(call => call.method === 'configure').options.flags, {
+            collectAnalyticsEvents: false, autoCollectUTMAsMetadata: false,
+        });
+        assert.equal(f.repository.getState().ready, true);
+    }
 });

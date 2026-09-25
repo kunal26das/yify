@@ -127,3 +127,4 @@ export {SITE_URL, canonicalUrl} from './constants/site';
 export {Colors, Fonts, FontFamily, Gradients, Spacing, Radius, Typography} from './constants/theme';
 export type {Palette} from './constants/theme';
 export {JournalScreen} from './journal/JournalScreen';
+export {PrivacyGate} from './components/privacy-gate';

@@ -37,14 +37,40 @@ test('same-millisecond edits get strictly increasing timestamps and retain false
 });
 
 test('removing a collection keeps its tombstone but excludes it from all memberships', () => {
-    const {repository} = fixture();
-    const id = repository.createCollection('A');
+    const {repository, values} = fixture();
+    const id = repository.createCollection('Private collection name');
     repository.setCollectionMembership(42, id, true);
     repository.removeCollection(id);
     repository.renameCollection(id, 'B');
     assert.deepEqual(liveLibraryCollections(repository.getState()), []);
     assert.ok(repository.getState().collections[id].removedAt > 0);
+    assert.equal(repository.getState().collections[id].name, 'Removed collection');
+    assert.equal(values.get('state')!.includes('Private collection name'), false);
     assert.equal(libraryCollectionContains(repository.getState(), id, 42), false);
+});
+
+test('reading an older persisted deletion scrubs the stored name without changing live collections', () => {
+    const {repository, values} = fixture();
+    values.set('state', JSON.stringify({...emptyLibraryState(), collections: {
+        removed: {name: 'Sensitive deleted name', updatedAt: 10, removedAt: 20},
+        live: {name: 'Keep me', updatedAt: 15, removedAt: 0}},
+        memberships: {removed: {'42': {at: 11, value: true}}}}));
+    assert.equal(repository.getState().collections.removed.name, 'Removed collection');
+    assert.deepEqual(liveLibraryCollections(repository.getState()), [{id: 'live', name: 'Keep me'}]);
+    assert.equal(values.get('state')!.includes('Sensitive deleted name'), false);
+    assert.deepEqual(JSON.parse(values.get('state')!).memberships, {});
+});
+
+test('a temporary storage failure keeps deletion hidden in memory and retries cleanup on the next read', () => {
+    const {repository, store, values} = fixture();
+    values.set('state', JSON.stringify({...emptyLibraryState(), collections: {
+        removed: {name: 'Sensitive deleted name', updatedAt: 10, removedAt: 20}}}));
+    const save = store.set;
+    store.set = () => {throw new Error('disk full');};
+    assert.equal(repository.getState().collections.removed.name, 'Removed collection');
+    store.set = save;
+    assert.equal(repository.getState().collections.removed.removedAt, 20);
+    assert.equal(values.get('state')!.includes('Sensitive deleted name'), false);
 });
 
 test('clear leaves a syncable watermark and fresh edits remain possible', () => {

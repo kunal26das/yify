@@ -16,6 +16,7 @@ import type {
     NetworkMonitor,
     NewMoviesNotifier,
     PreferencesRepository,
+    PrivacyPreferences,
     PurchaseRepository,
     SearchHistoryRepository,
     ShowRepository,
@@ -100,6 +101,10 @@ export function useAuthRepository(): AuthRepository {
 
 export function usePreferencesRepository(): PreferencesRepository {
     return useDependencies().preferences;
+}
+
+export function usePrivacyPreferences(): PrivacyPreferences {
+    return useDependencies().privacy;
 }
 
 export function useWatchlistRepository(): WatchlistRepository {

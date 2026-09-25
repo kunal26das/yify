@@ -21,9 +21,11 @@ import {
     type PurchasePlacement,
     type PurchaseRepository,
     type PurchaseState,
+    type PrivacyPreferences,
     type SubscriptionFunnelEvent,
 } from '@/domain';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
+import {optionalAnalyticsAllowed} from '../services/optionalAnalytics';
 import {createObservable} from './support/observable';
 
 const APP_USER_ID_KEY = 'app_user_id';
@@ -94,7 +96,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private observingForeground = false;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
-        private readonly viewingCountry: () => string | null = () => null) {
+        private readonly viewingCountry: () => string | null = () => null,
+        private readonly privacy?: PrivacyPreferences) {
         this.analytics = analytics;
         this.cache = cache;
         // The old unscoped ads_removed flag cannot establish who owns a purchase.
@@ -200,6 +203,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     trackPaywallImpression(offerId: string): void {
+        if (!optionalAnalyticsAllowed(this.privacy)) return;
         const offer = this.packages.get(offerId);
         const sdk = this.sdk;
         if (!offer || !sdk || !this.store.get().ready || sdk.getAppUserId() !== this.desiredUserId) return;
@@ -344,7 +348,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         try {
             const userId = this.desiredUserId!;
             if (!this.sdk) {
-                this.sdk = Purchases.configure({apiKey: apiKey!, appUserId: this.loginSourceId ?? userId});
+                this.sdk = Purchases.configure({apiKey: apiKey!, appUserId: this.loginSourceId ?? userId,
+                    flags: {collectAnalyticsEvents: false, autoCollectUTMAsMetadata: false}});
             }
             stage = 'customer';
             let info: CustomerInfo;

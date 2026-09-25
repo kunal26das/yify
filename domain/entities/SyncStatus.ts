@@ -1,6 +1,6 @@
 export type SyncState = 'idle' | 'syncing' | 'synced' | 'error';
 
-export type SyncFailure = 'denied' | 'network' | 'server' | 'oversized';
+export type SyncFailure = 'denied' | 'deleted' | 'network' | 'server' | 'oversized';
 
 export interface SyncStatus {
     state: SyncState;

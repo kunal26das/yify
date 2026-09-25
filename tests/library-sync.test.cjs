@@ -60,6 +60,31 @@ function remoteState(id, value, at) {
     return {library: encodeLibraryState({...emptyLibraryState(), watched: {[id]: {value, at}}})};
 }
 
+test('sync republishes minimized remote collection tombstones even when the normalized states already match', async t => {
+    const {library, sync, remote, patches} = fixture(t);
+    sync.setAccount('a');
+    await flush();
+    const legacy = {...emptyLibraryState(), collections: {
+        deleted: {name: 'Sensitive old collection name', updatedAt: 10, removedAt: 20},
+        active: {name: 'Current collection', updatedAt: 25, removedAt: 0}},
+        memberships: {deleted: {'42': {at: 15, value: true}}}};
+    library.applyRemote(legacy);
+    remote.set('a', {...remote.get('a'), library: JSON.stringify(legacy)});
+    patches.length = 0;
+    sync.syncNow();
+    await flush();
+    assert.equal(patches.length, 1);
+    assert.equal(patches[0].patch.library.includes('Sensitive old collection name'), false);
+    const saved = JSON.parse(remote.get('a').library);
+    assert.deepEqual(saved.collections.deleted, {name: 'Removed collection', updatedAt: 10, removedAt: 20});
+    assert.equal(saved.collections.active.name, 'Current collection');
+    assert.deepEqual(saved.memberships, {});
+    patches.length = 0;
+    sync.syncNow();
+    await flush();
+    assert.equal(patches.length, 0);
+});
+
 test('first account imports local explicit status and merges independent remote status', async t => {
     const {library, sync, remote} = fixture(t);
     library.setWatched(1, true);

@@ -9,6 +9,7 @@ import {
     LIBRARY_NAME_LIMIT,
     libraryLatestTimestamp,
     libraryMovieWatched,
+    libraryNeedsDeletionCleanup,
     liveLibraryCollections,
     normalizeCollectionName,
     normalizeLibraryState,
@@ -21,13 +22,24 @@ const MUTATION_BLOCK_KEY = 'mutationBlocked';
 
 export class LibraryRepositoryImpl implements LibraryRepository {
     private snapshot: LibraryState | null = null;
+    private pendingDeletionCleanup: string | null = null;
     private mutationBlocked: boolean | null = null;
     private readonly listeners = new Set<() => void>();
 
     constructor(private readonly store: KeyValueStore, private readonly now: () => number = Date.now) {}
 
     getState(): LibraryState {
-        if (!this.snapshot) this.snapshot = parseLibraryState(this.store.getString(KEY));
+        if (!this.snapshot) {
+            const raw = this.store.getString(KEY);
+            this.snapshot = parseLibraryState(raw);
+            if (libraryNeedsDeletionCleanup(raw)) this.pendingDeletionCleanup = encodeLibraryState(this.snapshot);
+        }
+        if (this.pendingDeletionCleanup) {
+            try {
+                this.store.set(KEY, this.pendingDeletionCleanup);
+                this.pendingDeletionCleanup = null;
+            } catch {}
+        }
         return this.snapshot;
     }
 
@@ -146,6 +158,7 @@ export class LibraryRepositoryImpl implements LibraryRepository {
         const encoded = encodeLibraryState(next);
         if (encoded.length > LIBRARY_MAX_PAYLOAD_CHARS) throw new Error('Your library has reached its storage limit.');
         this.store.set(KEY, encoded);
+        this.pendingDeletionCleanup = null;
         this.snapshot = next;
         this.listeners.forEach(listener => listener());
     }

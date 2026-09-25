@@ -5,6 +5,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {
     type ScrollViewInstance,
     ActivityIndicator,
+    Linking,
     type LayoutChangeEvent,
     type NativeScrollEvent,
     type NativeSyntheticEvent,
@@ -33,6 +34,7 @@ import {ThemedText, type ThemedTextType} from '../components/themed-text';
 import {FontFamily, Radius, Spacing} from '../constants/theme';
 import {LEGAL_LINKS, openLegalPage, PRIVACY_POLICY_URL} from '../constants/legal';
 import {usePalette} from '../hooks/use-palette';
+import {usePrivacyChoices} from '../hooks/use-privacy-choices';
 import {useResponsive} from '../hooks/use-responsive';
 import {
     GENRE_OPTIONS,
@@ -61,6 +63,7 @@ import {
     useAppConfig,
     useAuthRepository,
     useDiagnostics,
+    usePrivacyPreferences,
 } from '../di/DependenciesContext';
 
 type Colors = ReturnType<typeof usePalette>['colors'];
@@ -146,7 +149,7 @@ const THEME_OPTIONS: {value: ThemePreference; label: string; icon: Glyph}[] = [
     {value: 'dark', label: 'Dark', icon: 'moon-outline'},
 ];
 
-type SectionKey = 'browse' | 'playback' | 'notifications' | 'search' | 'watchlist' | 'about';
+type SectionKey = 'browse' | 'playback' | 'notifications' | 'search' | 'watchlist' | 'privacy' | 'about';
 
 const SECTION_ROWS: Partial<Record<SectionKey, string>> = {
     browse: 'browse.',
@@ -166,6 +169,8 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
     const fallback = usePreferencesViewModel();
     const vm = viewModel ?? fallback;
     const availabilityAlerts = useAvailabilityAlertSettings();
+    const privacy = usePrivacyPreferences();
+    const privacyChoices = usePrivacyChoices();
 
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
@@ -673,7 +678,33 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     />
                 </SettingsSection>
 
-                <SettingsSection {...sectionProps('about', 8, 'About')} summary={vm.appInfo.version}>
+                <SettingsSection {...sectionProps('privacy', 8, 'Privacy')}
+                    summary={privacyChoices.analytics ? 'Analytics on' : 'Analytics off'}>
+                    <Row icon="bar-chart-outline" title="Optional usage analytics"
+                        subtitle="Share app activity and purchase or ad measurements with Google Firebase and RevenueCat. Turning this off stops future measurement on this device."
+                        colors={colors} gutter={gutter}
+                        trailing={<Switch value={privacyChoices.analytics} accessibilityLabel="Optional usage analytics"
+                            onValueChange={analytics => {
+                                try {
+                                    privacy.updateChoices({adultConfirmed: privacyChoices.adultConfirmed, analytics});
+                                } catch {
+                                    toast('Could not save your privacy choice. Analytics stays off.', 'alert-circle-outline');
+                                }
+                            }} {...switchColors(colors, privacyChoices.analytics)}/>}/>
+                    <Row icon="mail-outline" title="Request your data or raise a privacy concern"
+                        subtitle="Request access, a copy, correction, deletion, or object to processing. Opens your email app."
+                        colors={colors} gutter={gutter} accessibilityRole="link" accessibilityLabel="Contact Yify about your personal data"
+                        onPress={() => void Linking.openURL('mailto:kunal26das@gmail.com?subject=Yify%20privacy%20request')
+                            .catch(() => toast('Email kunal26das@gmail.com with your privacy request.', 'mail-outline'))}
+                        trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}/>
+                    <Row icon="shield-checkmark-outline" title="Privacy policy"
+                        colors={colors} gutter={gutter} accessibilityRole="link" accessibilityLabel="Privacy policy"
+                        onPress={() => void openLegalPage(PRIVACY_POLICY_URL)
+                            .catch(() => toast('Could not open the privacy policy. Please try again.', 'alert-circle-outline'))}
+                        trailing={<Ionicons name="open-outline" size={18} color={colors.textMuted}/>}/>
+                </SettingsSection>
+
+                <SettingsSection {...sectionProps('about', 9, 'About')} summary={vm.appInfo.version}>
                     {LEGAL_LINKS.map(link => <Row
                         key={link.url}
                         icon={link.url === PRIVACY_POLICY_URL ? 'shield-checkmark-outline' : 'document-text-outline'}
@@ -765,14 +796,14 @@ function SyncRow({colors, gutter}: {colors: Colors; gutter: number}) {
     return (
         <Row
             icon="cloud-offline-outline"
-            title="Sync failed"
+            title={status.failure === 'deleted' ? 'Account data deleted' : 'Sync failed'}
             subtitle={status.detail ?? undefined}
             colors={colors}
             gutter={gutter}
-            onPress={() => accountSync.syncNow()}
-            accessibilityLabel="Retry sync"
+            onPress={status.failure === 'deleted' ? undefined : () => accountSync.syncNow()}
+            accessibilityLabel={status.failure === 'deleted' ? 'Account data deleted' : 'Retry sync'}
             trailing={
-                <ThemedText style={[styles.value, {color: colors.accent}]}>Retry</ThemedText>
+                status.failure === 'deleted' ? null : <ThemedText style={[styles.value, {color: colors.accent}]}>Retry</ThemedText>
             }
         />
     );

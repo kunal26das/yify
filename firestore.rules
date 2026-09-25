@@ -6,6 +6,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function accountDeletionRequested(uid) {
+      let journal = /databases/$(database)/documents/journals/$(uid);
+      return exists(journal) && get(journal).data.deleting == true;
+    }
+
     function isSyncPayload(data) {
       return data.keys().hasOnly([
                'watchlist',
@@ -35,8 +40,8 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read: if isOwner(uid);
-      allow create, update: if isOwner(uid) && isSyncPayload(request.resource.data);
+      allow read: if isOwner(uid) && !accountDeletionRequested(uid);
+      allow create, update: if isOwner(uid) && !accountDeletionRequested(uid) && isSyncPayload(request.resource.data);
       allow delete: if isOwner(uid);
     }
 

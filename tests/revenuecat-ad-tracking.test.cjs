@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
+const {privacyFixture} = require('./helpers/privacy-fixture.cjs');
 
 const impression = {
     adUnitId: 'unit-1', impressionId: 'impression-1', placement: 'movie_open',
@@ -11,7 +12,7 @@ const base = {
 const revenue = {...impression, value: 0.0012345, currency: 'USD', precision: 'estimated'};
 const methods = ['trackAdLoaded', 'trackAdDisplayed', 'trackAdOpened', 'trackAdRevenue', 'trackAdFailedToLoad'];
 
-function fixture(override = {}) {
+function fixture(override = {}, privacy = privacyFixture(true)) {
     const calls = [];
     const diagnostics = [];
     const adTracker = Object.fromEntries(methods.map(method => [method, async data => {
@@ -31,7 +32,7 @@ function fixture(override = {}) {
     });
     const sink = new RevenueCatAdRevenueSink({
         trackEvent: (name, params) => diagnostics.push({name, params}),
-    });
+    }, undefined, privacy);
     return {sink, calls, diagnostics};
 }
 
@@ -66,6 +67,7 @@ test('ad tracking does not wait for purchase details and preserves optional netw
 test('installed RevenueCat bridge sends all ad events after configuration without waiting for customer info', async () => {
     const calls = [];
     const diagnostics = [];
+    const privacy = privacyFixture(true);
     let configurationChecks = 0;
     let customerReads = 0;
     const native = {
@@ -87,7 +89,7 @@ test('installed RevenueCat bridge sends all ad events after configuration withou
     });
     const sink = new RevenueCatAdRevenueSink({
         trackEvent: (name, params) => diagnostics.push({name, params}),
-    });
+    }, undefined, privacy);
 
     sink.trackLoaded(impression);
     sink.trackDisplayed(impression);
@@ -152,4 +154,24 @@ test('web ad tracking remains a no-op without loading the native SDK', () => {
         assert.doesNotThrow(() => sink[method](impression));
     }
     assert.doesNotThrow(() => sink.trackImpression(revenue));
+});
+
+test('ad measurement requires adult analytics consent and never replays discarded impressions', async () => {
+    const privacy = privacyFixture(false);
+    const f = fixture({}, privacy);
+    f.sink.trackLoaded(impression);
+    f.sink.trackDisplayed(impression);
+    f.sink.trackOpened(impression);
+    f.sink.trackImpression(revenue);
+    f.sink.trackFailedToLoad({adUnitId: 'unit-1'});
+    assert.deepEqual(f.calls, []);
+    assert.deepEqual(f.diagnostics, []);
+    privacy.updateChoices({analytics: true});
+    await Promise.resolve();
+    assert.deepEqual(f.calls, []);
+    f.sink.trackLoaded({...impression, impressionId: 'new-impression'});
+    assert.equal(f.calls.length, 1);
+    privacy.updateChoices({adultConfirmed: false});
+    f.sink.trackImpression(revenue);
+    assert.equal(f.calls.length, 1);
 });

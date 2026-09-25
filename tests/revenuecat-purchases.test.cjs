@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
+const {privacyFixture} = require('./helpers/privacy-fixture.cjs');
 
 function deferred() {
     let resolve;
@@ -47,7 +48,7 @@ function fixture(t, options = {}) {
     const defaultOffering = offering();
     const sdk = {
         setLogLevel: () => {},
-        configure: async () => { calls.push(['configure']); await options.configure?.(); },
+        configure: async config => { calls.push(['configure', config]); await options.configure?.(); },
         getAppUserID: async () => sdkUid,
         isAnonymous: async () => sdkUid.startsWith('$RCAnonymousID:'),
         addCustomerInfoUpdateListener: (listener) => { listeners.push(listener); },
@@ -81,8 +82,8 @@ function fixture(t, options = {}) {
             calls.push(['restore', sdkUid]);
             return options.restore ? options.restore(sdkUid) : customer(true);
         },
-        setFirebaseAppInstanceID: async () => {
-            calls.push(['analytics-id', sdkUid]);
+        setFirebaseAppInstanceID: async (id) => {
+            calls.push(['analytics-id', sdkUid, id]);
             await options.linkAnalytics?.();
         },
         PURCHASES_ERROR_CODE: {
@@ -106,7 +107,7 @@ function fixture(t, options = {}) {
         setUserProperty: (...args) => { calls.push(['property', ...args]); },
     }, {
         getString: (key) => cache.get(key), set: (key, value) => cache.set(key, value), delete: (key) => cache.delete(key),
-    }, options.diagnostics, () => options.country ?? null);
+    }, options.diagnostics, () => options.country ?? null, options.privacy ?? privacyFixture(true));
     return {repository, calls, listeners, foreground, infos, cache, defaultOffering,
         uid: () => sdkUid,
         ready: async (uid = null) => {
@@ -820,4 +821,105 @@ test('hostile SDK code getters retain the original failure and stage without int
     t.mock.timers.tick(5000);
     await flush();
     assert.equal(attempts, 2);
+});
+
+test('refusing optional analytics preserves purchasing and clears any prior Firebase linkage', async t => {
+    const privacy = privacyFixture(false);
+    let idReads = 0;
+    const f = fixture(t, {privacy, analyticsInstanceId: () => { idReads++; return 'private-installation'; }});
+    await f.ready('customer');
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(idReads, 0);
+    const associations = f.calls.filter(([kind]) => kind === 'analytics-id');
+    assert.ok(associations.length > 0);
+    assert.ok(associations.every(([, , id]) => id === null));
+    assert.deepEqual(associations.at(-1), ['analytics-id', 'customer', null]);
+    const offer = f.repository.getState().offers[0].id;
+    f.repository.trackPaywallImpression(offer);
+    await flush();
+    assert.equal(f.calls.some(([kind]) => kind === 'impression'), false);
+    assert.equal(await f.repository.purchase(offer), true);
+    assert.equal(f.calls.some(([kind]) => kind === 'purchase'), true);
+});
+
+test('changing privacy preferences relinks and clears RevenueCat without changing purchase identity', async t => {
+    const privacy = privacyFixture(false);
+    const f = fixture(t, {privacy});
+    await f.ready('customer');
+    privacy.updateChoices({analytics: true});
+    await flush();
+    assert.deepEqual(f.calls.filter(([kind]) => kind === 'analytics-id').at(-1), ['analytics-id', 'customer', 'analytics-id']);
+    privacy.updateChoices({analytics: false});
+    await flush();
+    assert.deepEqual(f.calls.filter(([kind]) => kind === 'analytics-id').at(-1), ['analytics-id', 'customer', null]);
+    assert.equal(f.uid(), 'customer');
+    assert.equal(f.calls.filter(([kind]) => kind === 'configure').length, 1);
+});
+
+test('withdrawal during Firebase ID lookup cannot add a stale RevenueCat association', async t => {
+    const privacy = privacyFixture(true);
+    const lookup = deferred();
+    const f = fixture(t, {privacy, analyticsInstanceId: () => lookup.promise});
+    const ready = f.ready('customer');
+    await flush();
+    privacy.updateChoices({analytics: false});
+    lookup.resolve('private-installation');
+    await ready;
+    await flush();
+    const links = f.calls.filter(([kind]) => kind === 'analytics-id');
+    assert.ok(links.length > 0);
+    assert.ok(links.every(([, , id]) => id === null));
+    assert.equal(f.repository.getState().ready, true);
+});
+
+test('withdrawal during a RevenueCat ID write removes the association before queued work continues', async t => {
+    const privacy = privacyFixture(true);
+    const writing = deferred();
+    let writes = 0;
+    const f = fixture(t, {privacy, linkAnalytics: async () => { if (++writes === 1) await writing.promise; }});
+    const ready = f.ready('customer');
+    await flush();
+    privacy.updateChoices({analytics: false});
+    writing.resolve();
+    await ready;
+    await flush();
+    assert.deepEqual(f.calls.filter(([kind]) => kind === 'analytics-id').at(-1), ['analytics-id', 'customer', null]);
+});
+
+test('native RevenueCat disables automatic identifier collection and clears a prior association before customer lookup fails', async t => {
+    const privacy = privacyFixture(false);
+    const f = fixture(t, {privacy, uid: 'customer', getCustomerInfo: async () => { throw Error('offline'); }});
+    await f.ready('customer');
+    const configured = f.calls.find(([kind]) => kind === 'configure')[1];
+    assert.equal(configured.automaticDeviceIdentifierCollectionEnabled, false);
+    const clear = f.calls.findIndex(([kind, , id]) => kind === 'analytics-id' && id === null);
+    const lookup = f.calls.findIndex(([kind]) => kind === 'customer');
+    assert.ok(clear >= 0 && clear < lookup);
+});
+
+test('RevenueCat unlink failures do not prevent essential customer access or purchases', async t => {
+    const privacy = privacyFixture(false);
+    const f = fixture(t, {privacy, linkAnalytics: async () => { throw Error('unlink unavailable'); }});
+    await f.ready('customer');
+    assert.equal(f.repository.getState().ready, true);
+    const offer = f.repository.getState().offers[0].id;
+    assert.equal(await f.repository.purchase(offer), true);
+});
+
+test('withdrawing analytics clears RevenueCat while an existing customer refresh is still pending', async t => {
+    const privacy = privacyFixture(true);
+    const lookup = deferred();
+    let delayLookup = false;
+    const f = fixture(t, {privacy, getCustomerInfo: async () => delayLookup ? lookup.promise : customer(true)});
+    await f.ready('customer');
+    delayLookup = true;
+    const refresh = f.repository.refresh();
+    await flush();
+    privacy.updateChoices({analytics: false});
+    await flush();
+    assert.deepEqual(f.calls.filter(([kind]) => kind === 'analytics-id').at(-1), ['analytics-id', 'customer', null]);
+    lookup.resolve(customer(true));
+    await refresh;
+    await flush();
+    assert.equal(f.repository.getState().ready, true);
 });
