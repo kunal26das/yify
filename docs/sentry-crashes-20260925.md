@@ -114,6 +114,59 @@ their previous OTA dependency trees, including existing optional-location guards
 not claim those historical trees exactly match their original binaries. Runtime 1.8.5 was
 excluded because its build was cancelled and no Production OTA was found.
 
+## Android 1.8.9 release and final diagnostics
+
+Android **1.8.9 / version code 91** was built from `43bf8d7` and submitted to the
+production track. The [Expo build](https://expo.dev/accounts/kunal26das/projects/yify/builds/97af9bf1-74bf-4f88-809d-47cbfa8798d4)
+finished successfully, and the [submission](https://expo.dev/accounts/kunal26das/projects/yify/submissions/075f17e3-cc23-492c-9e59-9da6df7960b3)
+completed at 09:44:15 UTC. A fresh Play API read confirmed production code 91 with
+status `completed`; it does not establish public availability for every user or country.
+The downloaded AAB's manifest, runtime, channel and native libraries matched the build.
+Its SHA-256 is `f0f4018ea9e0cf3b72d4c3674ec2e1243b7bf46141a6f722053b395185dbd71a`.
+
+The cloud build successfully uploaded Sentry JavaScript source maps, native symbols and
+ProGuard mappings, plus Crashlytics NDK symbols and mappings. Sentry deployment metadata
+was recorded for `io.github.kunal26das.yify@1.8.9+91`. **YIFY-24 is resolved** after this
+verification; users must install the new binary to receive this native fix.
+
+[PR 909](https://github.com/kunal26das/yify/pull/909) merged as `ee0153fc`. It adds bounded
+billing operation-stage and SDK-code diagnostics while preserving real failures. It makes
+no native or dependency changes. Main CI and both web deployments passed. Fresh live checks
+confirmed the matching deployed assets, successful catalog requests and no JavaScript errors.
+The full local suite passed 1,749 app/workspace tests and 18 dependency-doctor regression tests.
+Expo validation passed with the documented dependency deviations.
+
+The billing diagnostics were also published for Android 1.8.8 from `6731dba`, superseding the
+first-fix update in the earlier table. Its Production update group is
+`0c6e64fd-04c2-4808-93ce-c5964294e079`. The live manifest selected the expected update and
+matched the local bundle SHA-256; Sentry source maps and deployment metadata were recorded.
+An independent CDN download was blocked with HTTP 403 by this environment, so no separate
+byte-for-byte CDN download verification is claimed.
+
+Android 1.8.9 received the same diagnostics from clean source `ee0153fc` in Production group
+`ca99ccc3-fc01-41b7-8d83-a2a8c2458467`, update `01a0d7f7-c683-73d7-b473-e9f8b9af0720`.
+Its live manifest selected runtime 1.8.9 and matched bundle SHA-256
+`90013d35dddf17b31da5495cceb0569ccd6370bebd8e8f401d10e85d59b13cc7`.
+Source maps were uploaded and Sentry deployment 161953296 was recorded after store deployment
+161952775. The independent CDN download was not repeated after the preceding environment
+restriction. The native and dependency trees match the verified store binary.
+
+Channel delivery was verified for all five historical runtimes in the earlier table. Their
+original build metadata and source manifests use `Production`; Sentry's Expo integration
+lowercases the displayed channel. The lowercase Sentry value does not require a channel alias.
+Each live `Production` manifest selected the corresponding expected update.
+
+The final recheck found another **YIFY-1J** event at 09:04:07 UTC on web release 1.8.9,
+source `43bf8d7`. It followed a successful catalog request by about two seconds; the trace
+contains no spans, logs, HTTP status or underlying fetch message. Its timing matches a browser
+smoke navigation, but no retained transport identifier proves that attribution. It stays open;
+no broader network-error suppression or unverified fix was applied.
+
+Eight of the 35 audited issue groups are now resolved: **5, 1N, 1S, 1V, 1T, 22, 23 and 24**.
+The remaining **27 stay open**, including regressed ads issue X, native issues V and 15,
+and real provider, billing, authentication and network failures without a verified causal fix.
+No claim is made that all Sentry issues are fixed. iOS was not submitted to a store.
+
 ## Catalogue issue evidence (initial snapshot)
 
 The catalogue parser and cache changes passed 181 focused tests, including server public/private
