@@ -10,6 +10,7 @@ const INTEGER = /^[1-9][0-9]*$/;
 const TITLE = 'chore(deps): commit regenerated yarn.lock [dependabot skip]';
 const HEAD_PROPAGATION_DELAYS = [1000, 2000, 4000, 8000, 15000];
 const REQUIRED_CHECKS = ['Typecheck and tests', 'Web exports render and isolate catalog data', 'Typecheck and test release console'];
+const BLOCKED_CONCLUSIONS = new Set(['failure', 'cancelled', 'timed_out', 'action_required', 'startup_failure', 'skipped', 'neutral']);
 const SCOPES = {
   root: { lockfile: 'yarn.lock', manifests: ['package.json', 'crashreporting/package.json', 'tooling/package.json'] },
   release: { lockfile: 'release/yarn.lock', manifests: ['release/package.json'] },
@@ -227,11 +228,12 @@ export async function prepareMaintenance({ api, env }) {
     Array.isArray(run.pull_requests) && run.pull_requests.length === 1 && Number.isSafeInteger(run.pull_requests[0].number),
   'Source run is not a completed same-repository Dependabot pull-request CI attempt.');
   const pr = run.pull_requests[0];
+  const details = { pr: pr.number, source_run_id: env.SOURCE_RUN_ID, source_run_attempt: attempt };
   const sourceEnv = { ...env, GITHUB_EVENT_NAME: 'workflow_run', PR_NUMBER: String(pr.number), PR_HEAD_SHA: run.head_sha };
   const currentPr = await api('GET', `repos/${repository}/pulls/${pr.number}`);
-  if (currentPr.state === 'closed') return { ready: false, reason: 'Pull request is already closed.' };
+  if (currentPr.state === 'closed') return { ...details, ready: false, reason: 'Pull request is already closed.' };
   const state = await inspect({ api, env: sourceEnv, allowPublishedHead: true });
-  if (!state.eligible) return { ready: false, reason: state.reason };
+  if (!state.eligible) return { ...details, ready: false, scope: state.scope, automerge: false, reason: state.reason };
   assert(run.head_branch === state.branch && [run.head_sha, state.head].includes(pr.head?.sha) && pr.head?.ref === state.branch && pr.base?.ref === 'main' &&
     Number.isSafeInteger(state.pull_request.head.repo.id) && pr.head?.repo?.id === state.pull_request.head.repo.id &&
     Number.isSafeInteger(state.pull_request.base.repo.id) && pr.base?.repo?.id === state.pull_request.base.repo.id,
@@ -243,11 +245,30 @@ export async function prepareMaintenance({ api, env }) {
   const result = { ready: true, operation: 'publish', pr: state.pr, head: state.head, source: run.head_sha,
     branch: state.branch, scope: state.scope, automerge: state.automerge, checks_passed: checksPassed,
     source_run_id: env.SOURCE_RUN_ID, source_run_attempt: attempt };
+  const checkNames = [...REQUIRED_CHECKS, ...(!state.refreshed || state.head !== run.head_sha ? [`Dependabot clean reinstall (${state.scope})`] : [])];
+  const checks = checkNames.flatMap((name) => jobs.filter((job) => job.name === name).map((job) => ({
+    name, status: job.status, conclusion: job.conclusion,
+    ...(Number.isSafeInteger(job.id) && job.id > 0 ? { id: job.id } : {}),
+  })));
+  const blocked = () => {
+    const blockingChecks = checks.filter((job) => job.conclusion !== 'success');
+    const complete = checkNames.every((name) => {
+      const matches = jobs.filter((job) => job.name === name);
+      return matches.length === 1 && matches[0].status === 'completed';
+    });
+    assert(complete && blockingChecks.every((job) => BLOCKED_CONCLUSIONS.has(job.conclusion)),
+      'Source CI is missing a unique completed check or has an unexpected check conclusion.');
+    return { ...result, ready: false, operation: 'blocked', checks,
+      reason: `Source CI blocked maintenance: ${blockingChecks.map((job) => `${job.name} (${job.conclusion})`).join('; ')}.` };
+  };
   if (state.refreshed && state.head === run.head_sha) {
+    if (!checksPassed && env.GITHUB_EVENT_NAME === 'workflow_run') return blocked();
     assert(checksPassed, 'The refreshed pull-request head has not passed every required CI check.');
-    return { ...result, operation: 'merge' };
+    return { ...result, operation: 'merge', checks };
   }
   const cleanJobs = jobs.filter((job) => job.name === `Dependabot clean reinstall (${state.scope})`);
+  if (env.GITHUB_EVENT_NAME === 'workflow_run' && cleanJobs.length === 1 && cleanJobs[0].status === 'completed' &&
+      BLOCKED_CONCLUSIONS.has(cleanJobs[0].conclusion)) return blocked();
   assert(cleanJobs.length === 1 && cleanJobs[0].status === 'completed' && cleanJobs[0].conclusion === 'success',
     'Source CI has no successful clean reinstall in the selected attempt. Choose the exact artifact-producing attempt for recovery.');
   const name = `dependabot-clean-install-${state.scope}-${env.SOURCE_RUN_ID}-${attempt}`;
@@ -258,7 +279,31 @@ export async function prepareMaintenance({ api, env }) {
     matching[0].workflow_run?.repository_id === state.pull_request.base.repo.id &&
     matching[0].workflow_run?.head_repository_id === state.pull_request.head.repo.id,
   'The exact source CI attempt has no unique, unexpired lockfile artifact.');
-  return { ...result, artifact_name: name };
+  return { ...result, artifact_name: name, checks };
+}
+
+export async function writeMaintenanceSummary({ env, result }) {
+  if (!env.GITHUB_STEP_SUMMARY) return;
+  const repository = 'https://github.com/kunal26das/yify';
+  const run = `${repository}/actions/runs/${result.source_run_id}/attempts/${result.source_run_attempt}`;
+  const lines = ['## Dependabot maintenance', '', `Pull request: [#${result.pr}](${repository}/pull/${result.pr})`,
+    `Source CI: [run ${result.source_run_id}, attempt ${result.source_run_attempt}](${run})`, '',
+    `Maintenance: **${result.ready ? 'ready' : 'blocked'}**.`,
+    `Automatic merge: **${result.automerge ? 'eligible after all required checks pass' : 'not eligible'}**.`];
+  if (result.reason) lines.push('', result.reason);
+  if (result.scope === 'root') lines.push('',
+    'Application dependencies require native compatibility review and a runtime version update when native code changes. Passing web and JavaScript checks does not authorize an automatic merge.');
+  if (result.scope === 'github-actions') lines.push('', 'GitHub Actions updates require manual review.');
+  if (result.ready && !result.checks_passed) lines.push('',
+    'The successful clean reinstall can publish a repaired lockfile. Its new pull-request checks must pass before merging.');
+  if (result.checks?.length) {
+    lines.push('', '| Source check | Result |', '| --- | --- |');
+    for (const check of result.checks) {
+      const link = check.id ? `${repository}/actions/runs/${result.source_run_id}/job/${check.id}` : run;
+      lines.push(`| [${check.name}](${link}) | ${check.conclusion || check.status} |`);
+    }
+  }
+  await appendFile(env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
 }
 
 export async function maintenanceContext({ api, env, operation }) {
@@ -334,7 +379,7 @@ export async function waitFollowup({ api, env, wait = delay, now = Date.now, tim
     if (run.status === 'completed' && run.conclusion === 'success') {
       const result = await prepareMaintenance({ api, env: { ...env, SOURCE_RUN_ID: String(run.id), SOURCE_RUN_ATTEMPT: String(run.run_attempt) } });
       assert(result.ready && result.operation === 'merge' && result.head === ctx.expected && result.source === ctx.expected &&
-        result.pr === ctx.pr && result.checks_passed, 'Follow-up CI did not validate the current refreshed head.');
+        result.pr === ctx.pr && result.checks_passed, result.reason || 'Follow-up CI did not validate the current refreshed head.');
       const currentRun = await readRun();
       assert(currentRun.run_attempt === run.run_attempt && currentRun.status === 'completed' && currentRun.conclusion === 'success',
         'Follow-up CI changed while verifying its completed attempt.');
@@ -443,12 +488,16 @@ export async function main(mode, env = process.env) {
   const api = githubApi(env.GH_TOKEN);
   if (mode === 'wait-followup') {
     const result = await waitFollowup({ api, env });
-    await writeOutputs(env, result);
+    const { checks, ...outputs } = result;
+    await writeOutputs(env, outputs);
     return result;
   }
   if (mode === 'prepare-maintenance') {
     const result = await prepareMaintenance({ api, env });
-    await writeOutputs(env, result);
+    const { checks, ...outputs } = result;
+    await writeOutputs(env, outputs);
+    await writeMaintenanceSummary({ env, result });
+    if (!result.ready) console.log(result.reason);
     return result;
   }
   if (mode === 'inspect-maintenance' || mode === 'publish-maintenance') {
