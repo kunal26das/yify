@@ -19,9 +19,10 @@ const ROUTES = [
     ['watchlist.html', 'Watchlist'],
     ['history.html', 'History'],
     ['journal.html', 'Journal'],
+    ['upgrade.html', 'Supporter options'],
     ['preferences.html', 'Preferences'],
 ];
-const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences'];
+const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences', 'upgrade'];
 const PAID_ROUTES = ['anime'];
 const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]', '/api/availability-alerts/status'];
 const SERVER_ONLY_MARKERS = [
@@ -52,7 +53,7 @@ if (serverOutput) {
                 throw new Error(`${page} bundle is missing or outside the server directory`);
             }
         }
-        for (const page of ['privacy', 'terms', 'delete-account', 'guide']) {
+        for (const page of ['privacy', 'terms', 'delete-account', 'guide', 'support']) {
             for (const source of [`/${page}`, `/${page}/`]) {
                 const redirect = Array.isArray(manifest.redirects) ? manifest.redirects.find((entry) => {
                     try {
@@ -207,6 +208,29 @@ for (const page of guidePages) {
 }
 if (normalizedGuides.length === guidePages.length && normalizedGuides[0] !== normalizedGuides[1]) {
     failures.push(`${guidePages.join(' and ')} have drifted — their guide content and resolved links must stay identical`);
+}
+
+const supportPages = ['support/index.html', 'support.html'];
+const normalizedSupportPages = [];
+for (const page of supportPages) {
+    const path = join(dir, page);
+    if (!existsSync(path)) {
+        failures.push(`${page}: missing public supporter page`);
+        continue;
+    }
+    const html = readFileSync(path, 'utf8');
+    if (!/<main\b/i.test(html) || !/<h1\b[^>]*>[^<]+<\/h1>/i.test(html)) {
+        failures.push(`${page}: supporter page must contain readable main content`);
+    }
+    if (/<(?:script|iframe)\b/i.test(html)) failures.push(`${page}: supporter page must not load scripts or embeds`);
+    if (!linkedPaths(html, `/yify/${page}`).includes('/upgrade')) {
+        failures.push(`${page}: supporter page must link to monthly options`);
+    }
+    normalizedSupportPages.push(html.replace(/href="(\.\.?\/[^"\r\n]*)"/g, (_attribute, href) =>
+        `href="${new URL(href, `https://support.yify.invalid/yify/${page}`).href}"`));
+}
+if (normalizedSupportPages.length === supportPages.length && normalizedSupportPages[0] !== normalizedSupportPages[1]) {
+    failures.push(`${supportPages.join(' and ')} have drifted — their supporter content and resolved links must stay identical`);
 }
 
 const DELETION_PAGES = ['delete-account.html', join('delete-account', 'index.html')];

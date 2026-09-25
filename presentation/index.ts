@@ -37,6 +37,7 @@ export { useShowsViewModel } from './movies/useShowsViewModel';
 export type { ShowsViewModel, ShowsStatus } from './movies/useShowsViewModel';
 export { PreferencesScreen } from './movies/PreferencesScreen';
 export {SupporterProvider} from './purchases/supporter-paywall';
+export {UpgradeScreen} from './purchases/UpgradeScreen';
 export { usePreferencesViewModel } from './movies/usePreferencesViewModel';
 export type { PreferencesViewModel } from './movies/usePreferencesViewModel';
 export { DESTINATIONS, destinationHref } from './movies/constants/destinations';

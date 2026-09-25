@@ -24,7 +24,7 @@ module.exports = {
                 apiRoutes: true,
                 redirects: [
                     ...(plugin[1].redirects ?? []),
-                    ...['privacy', 'terms', 'delete-account', 'guide'].map((page) => ({
+                    ...['privacy', 'terms', 'delete-account', 'guide', 'support'].map((page) => ({
                         source: `/${page}`,
                         destination: `https://yify.expo.app/${page}.html`,
                         permanent: true,

@@ -14,6 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/': 'Yify — Discover Movies', '/movies': 'Browse Movies — Yify', '/shows': 'Shows — Yify',
     '/preferences': 'Preferences — Yify', '/watchlist': 'Watchlist — Yify', '/history': 'History — Yify',
     '/journal': 'Journal — Yify', '/anime': 'Anime — Yify',
+    '/upgrade': 'Supporter options — Yify',
 };
 
 export function PrivacyGate({children}: {children: ReactNode}) {
@@ -42,7 +43,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
             <Head>
                 <title>{PAGE_TITLES[pathname] ?? 'Yify — Movie Discovery'}</title>
                 <meta name="robots" content={pathname === '/anime' ? 'noindex,nofollow'
-                    : ['/preferences', '/watchlist', '/history', '/journal'].includes(pathname) ? 'noindex,follow' : 'index,follow'}/>
+                    : ['/preferences', '/watchlist', '/history', '/journal', '/upgrade'].includes(pathname) ? 'noindex,follow' : 'index,follow'}/>
                 <link rel="canonical" href={canonicalUrl(pathname)}/>
             </Head>
             <View style={[styles.card, {borderColor: colors.border}]}>
@@ -76,7 +77,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
                     <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>Continue</ThemedText>
                 </Pressable>
                 {Platform.OS === 'web' ? <View style={styles.links}>
-                    {[['Movies', '/movies'], ['Shows', '/shows'], ['About Yify', '/guide/']].map(([label, path]) =>
+                    {[['Movies', '/movies'], ['Shows', '/shows'], ['About Yify', '/guide/'], ['Yify Supporter', '/support/']].map(([label, path]) =>
                         <Link key={path} href={canonicalUrl(path)}><ThemedText type="link">{label}</ThemedText></Link>)}
                 </View> : null}
             </View>

@@ -71,6 +71,7 @@ async function fixture(t, {platform = 'android', movies = [movie], account = {ui
         '../movies/useWatchlist': {useWatchlist: () => movies},
         '../hooks/use-purchases': {usePurchases: () => ({ready: true, adsRemoved: false})},
         '../purchases/supporter-paywall': {useSupporterPaywall: () => noop},
+        '../purchases/supporter-discovery-card': {SupporterDiscoveryCard: 'SupporterDiscoveryCard'},
         '../movies/constants/destinations': {useGoTo: () => route => calls.navigation.push(route)},
         './components/WatchlistStreamingControls': {WatchlistStreamingControls: () => null},
         './components/WatchlistStreamingBadge': {WatchlistStreamingBadge: () => null},

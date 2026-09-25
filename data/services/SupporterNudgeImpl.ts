@@ -14,6 +14,7 @@ import {
 } from '@/domain';
 
 const NUDGE_STATE_KEY = 'state';
+const DISCOVERY_DISMISSED_KEY = 'discovery_dismissed';
 
 export interface SupporterNudgeOptions {
     analytics: AnalyticsSink;
@@ -26,6 +27,7 @@ export class SupporterNudgeImpl implements SupporterNudge {
     private readonly options: SupporterNudgeOptions;
 
     private state: NudgeState;
+    private discoveryDismissed = false;
 
     constructor(options: SupporterNudgeOptions) {
         this.options = options;
@@ -63,6 +65,23 @@ export class SupporterNudgeImpl implements SupporterNudge {
 
     recordAccepted(): void {
         this.write(commitNudgeAccepted(this.state));
+    }
+
+    isDiscoveryDismissed(): boolean {
+        if (this.discoveryDismissed) return true;
+        try {
+            return this.options.store.getString(DISCOVERY_DISMISSED_KEY) === 'true';
+        } catch {
+            return true;
+        }
+    }
+
+    dismissDiscovery(): void {
+        this.discoveryDismissed = true;
+        try {
+            this.options.store.set(DISCOVERY_DISMISSED_KEY, 'true');
+        } catch {
+        }
     }
 
     private write(next: NudgeState): void {

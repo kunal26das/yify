@@ -55,9 +55,9 @@ test('categorical dimensions reach Firebase as nonnumeric strings while offer co
     assert.equal(f.events.at(-1).params.offer_count, 2);
 });
 
-test('Journal purchase attribution uses a bounded journal source through the existing funnel', () => {
+for (const [placement, source] of [['journal_insights', 'journal'], ['watchlist_supporter', 'watchlist'], ['supporter_page', 'supporter_page']]) {
+test(`${placement} purchase attribution uses its bounded source through the existing funnel`, () => {
     const f = fixture();
-    const placement = 'journal_insights';
     const offer = {placement, recurring: true, billingPeriod: 'P1M'};
     for (const event of [
         {step: 'paywall_view', placement, signedIn: true, supporter: false},
@@ -72,12 +72,13 @@ test('Journal purchase attribution uses a bounded journal source through the exi
         'remove_ads_purchase_done', 'remove_ads_purchase_failed', 'supporter_paywall_closed',
     ]);
     assert.equal(f.events.every(event => event.params.placement === placement), true);
-    assert.equal(f.events[0].params.source, 'journal');
+    assert.equal(f.events[0].params.source, source);
     assert.doesNotMatch(JSON.stringify(f.events), /post_ad|price|currency|revenue|transaction|renewal/);
     trackSubscriptionFunnel(f.analytics, {step: 'paywall_view', placement: 'private source', signedIn: false}, f.context());
     assert.equal(f.events.at(-1).params.placement, 'unknown');
     assert.equal(f.events.at(-1).params.source, 'unknown');
 });
+}
 
 test('runtime metadata is allowlisted and malformed payloads cannot leak or fabricate funnel events', () => {
     const f = fixture();
