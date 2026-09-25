@@ -1,7 +1,7 @@
 # Sentry follow-up — 25 September 2026
 
-The audit covers all 32 unresolved issues returned for project Yify, including regressed
-YIFY-5 and YIFY-X. A handled operation failure is not evidence of a terminated process.
+The audit initially covered 32 unresolved issues for project Yify, including regressed
+YIFY-5 and YIFY-X. Two additional reports arrived during verification. A handled operation failure is not evidence of a terminated process.
 Issue closure follows deployed verification of a concrete fix; older release numbers or a
 quiet period alone do not establish resolution.
 
@@ -51,11 +51,46 @@ quiet period alone do not establish resolution.
 - **YIFY-15:** background ANR has main/JS threads waiting in JNI/ART with a Worklets callback;
   the available snapshot lacks the causal lock owner or original system trace. Current Worklets
   already includes queue invalidation. Keep open pending a reproducible native trace.
-- **YIFY-V:** the only stack is device ART MarmotUnpacker/strcmp, without an identified app
-  frame. There is no established application fix. Keep open; do not suppress the device.
+- **YIFY-V:** two events now come from different identifiers on the same OnePlus/Android 11
+  build. The original stack is device ART MarmotUnpacker/strcmp; the newer 1.8.8 event lacks
+  usable thread stacks. Neither establishes an application fix. Keep open.
 - **YIFY-22 / YIFY-23:** local preview-only API 404s during the SDK migration, not production
   endpoint failures. Current production movies and shows endpoints returned HTTP 200 with valid
   JSON metadata. Local tests now block external telemetry and provide their intended API fixture.
+- **YIFY-24:** reproduced Google UMP 4.0.0's metrics worker calling `Scanner.next()` on an
+  empty HTTP 403/500 error body. The Android build guard changes only that read in
+  `zzcr.zzl()` to accept an empty string, preserving the SDK's HTTP failure and retry path.
+  It verifies the exact official AAR checksum and expected method/call site, and fails the
+  build if either changes. Consent and ads keep their existing APIs and versions. This
+  native change requires Android 1.8.9 (91); it cannot be delivered over the air.
+- **YIFY-25:** a handled `sync.pull` server failure recovered in the same trace after 4.8
+  seconds. The original HTTP status and response cause were not retained. Existing backoff
+  worked; no causal fix is established, so the issue stays open.
+
+## Verified deployment of the first fixes
+
+[PR 907](https://github.com/kunal26das/yify/pull/907) merged as `b19ff24`. Both web deployments
+passed. Sixteen distinct live browser cases verified deployed assets, saved/URL filters and
+mobile search focus with no hydration or JavaScript errors. One initial response wait timed
+out; its isolated rerun passed, and the original cause remains unproven. Both production
+catalog endpoints returned valid HTTP 200 responses.
+
+Android Production updates were verified against their live manifest IDs and bundle hashes,
+with source maps uploaded and Sentry deployment metadata recorded:
+
+| Runtime | Source | Update group |
+| --- | --- | --- |
+| 1.8.3 / 85 | `0e29fa8` | `8316ff41-2594-495b-8be3-2d4c20909c84` |
+| 1.8.4 / 86 | `b46cdd8` | `e1b7361d-db99-4d0d-9d08-1ba34d1d2ed8` |
+| 1.8.6 / 88 | `0ad3dbc` | `1825b968-ae55-4009-833b-ee49be17115d` |
+| 1.8.7 / 89 | `6d09e49` | `848ed7c2-68ec-4191-a27b-f019772a27b8` |
+| 1.8.8 / 90 | `b19ff24` | `c3de684e-7267-4762-837b-5d475973cebf` |
+
+YIFY-5, 1N, 1S, 1V and 1T were resolved after verification; preview incidents 22 and 23
+were closed with their scope recorded. Other issues remain open. The older backports preserve
+their previous OTA dependency trees, including existing optional-location guards; this does
+not claim those historical trees exactly match their original binaries. Runtime 1.8.5 was
+excluded because its build was cancelled and no Production OTA was found.
 
 ## Catalogue issue evidence
 

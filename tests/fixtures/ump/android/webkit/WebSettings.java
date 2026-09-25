@@ -1,0 +1,1 @@
+package android.webkit; public final class WebSettings { public static String getDefaultUserAgent(android.content.Context context){return "verification";} }

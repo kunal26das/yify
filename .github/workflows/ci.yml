@@ -93,6 +93,25 @@ jobs:
       - name: Tests
         run: yarn test
 
+      - name: Verify Android consent SDK crash guard
+        run: |
+          UMP_TEST_DIR=$(mktemp -d)
+          trap 'rm -rf "$UMP_TEST_DIR"' EXIT
+          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
+          UMP_ANDROID_JAR=$(find "$ANDROID_HOME/platforms" -name android.jar -type f | sort -V | tail -n 1)
+          test -n "$UMP_ANDROID_JAR"
+          curl --fail --silent --show-error --retry 3 --max-time 120 \
+            https://dl.google.com/dl/android/maven2/com/google/android/ump/user-messaging-platform/4.0.0/user-messaging-platform-4.0.0.aar \
+            --output "$UMP_TEST_DIR/ump.aar"
+          curl --fail --silent --show-error --retry 3 --max-time 120 \
+            https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar \
+            --output "$UMP_TEST_DIR/asm.jar"
+          curl --fail --silent --show-error --retry 3 --max-time 120 \
+            https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar \
+            --output "$UMP_TEST_DIR/asm-tree.jar"
+          node scripts/check-ump-metrics.mjs "$UMP_TEST_DIR/ump.aar" "$UMP_ANDROID_JAR" \
+            "$UMP_TEST_DIR/asm.jar" "$UMP_TEST_DIR/asm-tree.jar"
+
       - name: Committed OTA channel is Production
         run: node scripts/check-update-channel.mjs
 

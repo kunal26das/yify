@@ -84,9 +84,10 @@ OTA updates can change JavaScript and assets supported by an installed binary. N
 plugin or native code changes require a new binary and a new runtime version. The runtime defaults
 to `package.json`'s `version`; **bump that version whenever native compatibility changes**.
 
-The current dependency tree ships in **1.8.8 (90)** and requires that native binary.
-Do not publish it as an OTA for older runtimes, including **1.8.7**. Backport JavaScript
-fixes onto each older binary's compatible dependency tree before publishing an update.
+The Android consent SDK crash guard requires **1.8.9 (91)**. Earlier native dependencies
+shipped in **1.8.8 (90)**, but OTA updates cannot add the guard to that binary.
+Do not publish current code under an older runtime label. Backport JavaScript fixes onto
+each older binary's compatible source before publishing an update.
 
 `EXPO_UPDATE_CHANNEL` sets the binary's channel (`Production` or `Staging`). The release console uses
 [releases.json](../release/releases.json) to check that a matching binary has shipped before publishing

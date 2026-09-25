@@ -102,8 +102,8 @@ android {
         applicationId 'io.github.kunal26das.yify'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 90
-        versionName "1.8.8"
+        versionCode 91
+        versionName "1.8.9"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -198,6 +198,24 @@ dependencies {
 }
 
 apply plugin: 'com.google.gms.google-services'
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def umpArtifact = variant.runtimeConfiguration.incoming.artifactView {
+            attributes { attribute(org.gradle.api.artifacts.type.ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, 'aar') }
+            componentFilter { component ->
+                def ump = component instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier && component.group == 'com.google.android.ump' && component.module == 'user-messaging-platform'
+                if (ump && component.version != '4.0.0') throw new GradleException('Review the UMP metrics guard before changing SDK version ' + component.version)
+                return ump
+            }
+        }.files
+        variant.instrumentation.transformClassesWith(io.github.kunal26das.yify.ump.UmpMetricsFactory, com.android.build.api.instrumentation.InstrumentationScope.ALL) { parameters ->
+            parameters.umpArtifact.from(umpArtifact)
+        }
+        variant.instrumentation.setAsmFramesComputationMode(com.android.build.api.instrumentation.FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
+    }
+}
+
 
   sentry {
       autoUploadProguardMapping = shouldSentryAutoUpload()
