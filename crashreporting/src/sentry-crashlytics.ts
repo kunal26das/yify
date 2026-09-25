@@ -1,11 +1,11 @@
 import {createCrashlyticsError} from './crashlytics-error';
-import {GLOBAL_MECHANISM} from './constants';
+import {diagnosticOperation, GLOBAL_MECHANISM} from './constants';
 import type {CrashEvent, CrashException, CrashFrame} from './types';
 
 interface MirrorOptions {
     recordError(error: Error, metadata: Record<string, string>): void | Promise<void>;
     isEnabled(): boolean;
-    normalizeError?: (error: unknown) => Error;
+    normalizeError?: (error: unknown, operation?: string) => Error;
     globalMechanism?: string;
 }
 
@@ -33,7 +33,7 @@ function sourceException(event: CrashEvent, globalMechanism: string): CrashExcep
         !exception.stacktrace?.frames?.length || exceptionFrames(exception).length > 0);
 }
 
-function sourceError(exception: CrashException, normalizeError: (error: unknown) => Error): Error {
+function sourceError(exception: CrashException, normalizeError: (error: unknown, operation?: string) => Error, operation?: string): Error {
     const name = exception.type || 'Error';
     const message = exception.value ?? 'JavaScript exception';
     const frames = exceptionFrames(exception).reverse().map(frame => {
@@ -43,7 +43,7 @@ function sourceError(exception: CrashException, normalizeError: (error: unknown)
         const column = Number.isSafeInteger(frame.colno) && frame.colno! >= 0 ? frame.colno : 0;
         return `    at ${fn} (${location}:${line}:${column})`;
     });
-    return normalizeError({name, message, stack: [`${name}: ${message}`, ...frames].join('\n')});
+    return normalizeError({name, message, stack: [`${name}: ${message}`, ...frames].join('\n')}, operation);
 }
 
 function eventMetadata(event: CrashEvent, exception: CrashException): Record<string, string> {
@@ -53,7 +53,7 @@ function eventMetadata(event: CrashEvent, exception: CrashException): Record<str
         sentry_release: safeValue(event.release, releasePattern),
         sentry_environment: safeValue(event.environment, identifierPattern),
         sentry_mechanism: safeValue(exception.mechanism?.type, identifierPattern),
-        'diagnostics.operation': safeValue(event.tags?.['diagnostics.operation'], /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/),
+        'diagnostics.operation': diagnosticOperation(event.tags?.['diagnostics.operation']),
     };
     for (const [key, value] of Object.entries(values)) {
         if (value && value.length <= 128) result[key] = value;
@@ -65,7 +65,8 @@ function eventMetadata(event: CrashEvent, exception: CrashException): Record<str
 }
 
 export function createSentryCrashlyticsMirror({recordError, isEnabled,
-    normalizeError = createCrashlyticsError, globalMechanism = GLOBAL_MECHANISM}: MirrorOptions):
+    normalizeError = (error, operation) => createCrashlyticsError(error, undefined, operation),
+    globalMechanism = GLOBAL_MECHANISM}: MirrorOptions):
     (event: CrashEvent, hint?: unknown) => Promise<void> {
     const recorded = new Map<string, Promise<void>>();
     return async (event, _hint) => {
@@ -77,7 +78,7 @@ export function createSentryCrashlyticsMirror({recordError, isEnabled,
             const id = metadata.sentry_event_id;
             const existing = id ? recorded.get(id) : undefined;
             if (existing) return await existing;
-            const error = sourceError(exception, normalizeError);
+            const error = sourceError(exception, normalizeError, metadata['diagnostics.operation']);
             const delivery = Promise.resolve().then(() => recordError(error, metadata)).catch(() => {
                 if (id && recorded.get(id) === delivery) recorded.delete(id);
             });

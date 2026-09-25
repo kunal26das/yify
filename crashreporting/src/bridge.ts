@@ -22,7 +22,7 @@ export function createCrashReportingBridge<Client extends CrashlyticsClient>({
     let api: CrashlyticsApi<Client> | undefined;
     let client: Client | undefined;
     let reportToSentry: ((error: unknown, isFatal: boolean) => Promise<void>) | undefined;
-    const normalizeError = (error: unknown) => createCrashlyticsError(error, groupingNamespace);
+    const normalizeError = (error: unknown, operation?: string) => createCrashlyticsError(error, groupingNamespace, operation);
 
     async function setReportMetadata(metadata: Record<string, string>): Promise<void> {
         if (!api || !client?.isCrashlyticsCollectionEnabled) return;

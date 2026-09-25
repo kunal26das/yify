@@ -23,7 +23,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.8.7</string>
+	<string>1.8.8</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -55,7 +55,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>89</string>
+	<string>90</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>GADDelayAppMeasurementInit</key>
@@ -103,7 +103,7 @@
 					<key>UISceneConfigurationName</key>
 					<string>Default Configuration</string>
 					<key>UISceneDelegateClassName</key>
-					<string>EXExpoAppSceneDelegate</string>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 				</dict>
 			</array>
 		</dict>

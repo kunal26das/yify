@@ -21,6 +21,7 @@ module.exports = {
             if (!hostingOutput || !Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
             return [plugin[0], {
                 ...plugin[1],
+                apiRoutes: true,
                 redirects: [
                     ...(plugin[1].redirects ?? []),
                     ...['privacy', 'terms', 'delete-account', 'guide'].map((page) => ({
@@ -47,7 +48,7 @@ module.exports = {
         },
         web: {
             ...base.expo.web,
-            output: hostingOutput ? 'server' : 'static',
+            output: 'static',
         },
         android: {
             ...base.expo.android,

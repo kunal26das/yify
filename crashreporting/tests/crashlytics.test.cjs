@@ -62,6 +62,21 @@ test('a crash identity follows its source location without splitting on dynamic 
     );
 });
 
+test('operation grouping preserves the existing signature when no bounded diagnostic operation is supplied', async () => {
+    const error = {
+        name: 'Error', message: 'api.yts.list_movies failed (request_failed)',
+        stack: 'Error: Request failed\n    at CodedError (app:///index.android.bundle:1:1257956)',
+    };
+    const signature = operation => ErrorStackParser.parse(createCrashlyticsError(error, 'YifyReactNative', operation))[0].functionName;
+    const original = 'YifyReactNative.nfmajegoefpiopjb.CodedError_Error';
+    for (const operation of [undefined, '', 'operation', 'api.' + 'x'.repeat(77), 'api.load\n', 1, null]) {
+        assert.equal(signature(operation), original);
+    }
+    assert.notEqual(signature('api.yts.list_movies'), original);
+    assert.notEqual(signature('api.yts.list_movies'), signature('api.eztv.torrents'));
+    assert.notEqual(signature('api.' + 'x'.repeat(76)), original);
+});
+
 test('equivalent JSC and V8 crash frames ignore installation paths and bundle URL parameters', async () => {
     const jsc = {
         name: 'Error', message: 'Load failed',

@@ -17,8 +17,8 @@ test('patched query parsing preserves Unicode, malformed escapes, repeated keys 
     assert.deepEqual({...queryString.parse(queryString.stringify({q: 'a+b & 😀'}))}, {q: 'a+b & 😀'});
 });
 
-test('Expo Router decodes deep-link queries through the patched dependency', () => {
-    const {getStateFromPath} = require('expo-router/build/react-navigation/core/getStateFromPath');
+test('Expo Router preserves deep-link query decoding after router upgrades', () => {
+    const {getStateFromPath} = require('expo-router/build/fork/getStateFromPath');
     const state = getStateFromPath('/movies?query=hello%20world&genre=%E2%82%AC%ZZ&literal=%252F');
     assert.equal(state.routes[0].name, 'movies');
     assert.deepEqual(state.routes[0].params, {query: 'hello world', genre: '€%ZZ', literal: '%2F'});

@@ -4,6 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs/promises');
 const {tmpdir} = require('node:os');
 const {createHash} = require('node:crypto');
+const {createRequire} = require('node:module');
 const {test} = require('node:test');
 const {transpileTypeScript} = require('./helpers/transpile-typescript.cjs');
 
@@ -90,6 +91,25 @@ test('native Worklets transform stays on Babel 7 while root tools use the reques
     assert.equal(vm.runInThisContext(result.exports.square.__initData.code)(7), 49);
 });
 
+test('tooling retains the current compilers alongside explicit legacy API adapters', () => {
+    const toolingRequire = createRequire(path.join(root, 'tooling/package.json'));
+    const pins = toolingRequire('./package.json').devDependencies;
+    assert.equal(toolingRequire('@babel/core').version, pins['@babel/core']);
+    assert.equal(toolingRequire('typescript7').version, pins.typescript7.split('@').at(-1));
+    assert.match(toolingRequire('typescript7').version, /^7\./);
+    assert.equal(toolingRequire('typescript/package.json').name, '@typescript/typescript6');
+    assert.equal(toolingRequire('typescript/package.json').version, pins.typescript.split('@').at(-1));
+    assert.equal(require('@yify/tooling/babel'), toolingRequire('babel7'));
+    assert.equal(toolingRequire('babel7').version, pins.babel7.split('@').at(-1));
+    assert.match(toolingRequire('babel7').version, /^7\./);
+    const typescript = require('@yify/tooling/typescript');
+    assert.equal(typescript, toolingRequire('typescript'));
+    assert.match(typescript.version, /^6\./);
+    const parsed = typescript.createSourceFile('fixture.ts', 'export const value: number = 42;', typescript.ScriptTarget.Latest);
+    assert.equal(parsed.parseDiagnostics.length, 0);
+    assert.equal(parsed.statements[0].kind, typescript.SyntaxKind.VariableStatement);
+});
+
 test('ESLint 10 still rejects architecture violations and invalid React lists', async () => {
     const {ESLint} = require('eslint');
     const eslint = new ESLint({cwd: root});
@@ -111,6 +131,14 @@ test('isolated tooling dependencies retain exact version enforcement', async () 
     const manifest = require('../tooling/package.json');
     assert.doesNotThrow(() => checkPins(manifest, 'tooling/package.json'));
     assert.throws(() => checkPins({devDependencies: {typescript: '^6.0.3'}}, 'tooling/package.json'), /must use an exact version/);
+    for (const version of ['npm:@babel/core@7.29.7', 'npm:typescript@7.0.2', 'npm:@typescript/typescript6@6.0.2']) {
+        assert.doesNotThrow(() => checkPins({devDependencies: {compiler: version}}, 'tooling/package.json'));
+    }
+    for (const version of ['npm:@babel/core@^7.29.7', 'npm:@babel/core@~7.29.7', 'npm:typescript@latest',
+        'npm:typescript@7', 'npm:typescript', 'npm:@typescript/typescript6@>=6.0.2', 'npm:../compiler@1.0.0',
+        'npm:typescript@7.0.2\n', 'file:./typescript', 'https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz']) {
+        assert.throws(() => checkPins({devDependencies: {compiler: version}}, 'tooling/package.json'), /must use an exact version/);
+    }
 });
 
 test('tooling import patches are idempotent and reject unreviewed source or anchors', async () => {

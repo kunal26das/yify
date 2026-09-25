@@ -75,7 +75,10 @@ including the Hermes column offset; its file, line and column and the remaining 
 The namespace uses an alphabetic encoding of a 64-bit signature. Live Android tests showed
 that Firebase merged hexadecimal suffixes but separated this class-like representation.
 Repeated failures at that location share a signature; different locations
-get different signatures. Caller stacks, timestamps, user identifiers and changing error
+get different signatures. Mirrored operation diagnostics also include their validated, bounded
+`diagnostics.operation`, matching Sentry's separation of operations that share an SDK error
+constructor. Reports without an operation, including the global fatal path, retain their existing
+signatures. Caller stacks, timestamps, user identifiers and changing error
 messages do not split a known failure. Errors without a usable location fall back to type
 and message. Sentry receives the original error unchanged.
 
@@ -108,6 +111,31 @@ not the browser/Electron renderer, and keeps only the latest eight recorded nonf
 Native signals and Android ANRs are collected independently by the native SDKs, not by JavaScript
 `beforeSend`; their detection rules and delivery timing differ. Reports can require an app relaunch.
 Exact event counts and identical issue grouping across both products are not guaranteed.
+
+On 25 September 2026, an event-level comparison confirmed a grouping defect: Firebase issue
+`5f42ba0b4a43b60e1f837cb338412536`, titled `api.yts.list_movies failed`, also contained the
+`api.eztv.torrents` event `b642cf5f197441b4a383ea626fcaa6fe`, matching Sentry **YIFY-C** at
+21 September 17:23:48 UTC. Both operations originated in the same Expo `CodedError` constructor.
+The mirror retained the operation as a custom key but omitted it from the grouping signature.
+Operation-aware grouping separates future reports from these distinct operations; it cannot
+split Firebase's existing historical issue. Keep all event types and issue states visible when
+comparing dashboards, and use the per-event `sentry_event_id` rather than issue titles or totals.
+The same audit matched native **YIFY-1T** to Firebase issue
+`85c581edcdb39b941df627e7b1324a71`: version 1.8.4 (86), Oppo CPH2375, Android 13,
+22 September 16:55:03–04 UTC, with the same `invalid pthread_t` abort message in Firebase's
+Tombstone tab. Sentry's `syscall` title and Firebase's `SIGABRT` title refer to that same crash.
+
+The operation-aware fix was verified on 25 September in an isolated Android release-mode
+probe using 1.8.7 (89), React Native Firebase 26.4.0 and native Crashlytics 20.1.0. Three
+handled exceptions shared an identical error type and source stack, with operations A, B, A.
+Both dashboards produced two issues: A had two events and B had one. Every Firebase event's
+`sentry_event_id` and `diagnostics.operation` matched its Sentry event. The controlled reports
+used environment `verification` and did not crash the app or publish a production update.
+
+| Operation | Sentry | Firebase | Matching event IDs |
+| --- | --- | --- | --- |
+| `verification.bridge.alpha` | [YIFY-20](https://kudos-labs.sentry.io/issues/7753696128/) | [2 events](https://console.firebase.google.com/project/yify-2da67/crashlytics/app/android:io.github.kunal26das.yify/issues/267d44cc603692698e33f4aa52ff0dae) | `c13e1783559f4eafb2369abbed1b2201`, `8c1dfa2afeed4cdb95dc87bc8c3dadb4` |
+| `verification.bridge.beta` | [YIFY-21](https://kudos-labs.sentry.io/issues/7753696139/) | [1 event](https://console.firebase.google.com/project/yify-2da67/crashlytics/app/android:io.github.kunal26das.yify/issues/d941d0575bf62fdffcfda33be9d844ef) | `0ac595f23c7d45d198e3a04427a353e3` |
 
 On 18 September 2026, a production ANR was matched across
 [Sentry YIFY-15](https://kudos-labs.sentry.io/issues/7738168148/) and

@@ -27,6 +27,88 @@ test('invalid or wildcard-only package targets fail closed', async () => {
     assert.throws(() => resolutionPins({'other.json': {}}));
 });
 
+test('alias inventory preserves manifest locations and queries the underlying scoped or unscoped package', async () => {
+    const {aliasPins} = await api;
+    const inventory = {
+        'package.json': {dependencies: {current: '8.0.6', first: 'npm:@babel/core@7.29.7'}},
+        'tooling/package.json': {devDependencies: {typescript: 'npm:@typescript/typescript6@6.0.2', typescript7: 'npm:typescript@7.0.2'}},
+        'crashreporting/package.json': {optionalDependencies: {'@local/compiler': 'npm:typescript@7.0.2'}},
+    };
+    const pins = aliasPins(inventory);
+    assert.equal(pins.length, 4);
+    assert.deepEqual(pins.find(pin => pin.alias === 'first'), {
+        kind: 'npm', file: 'package.json', selector: 'dependencies.first', alias: 'first', name: '@babel/core', current: '7.29.7',
+    });
+    assert.equal(pins.find(pin => pin.alias === 'typescript').name, '@typescript/typescript6');
+    assert.equal(pins.find(pin => pin.alias === 'typescript7').current, '7.0.2');
+    assert.equal(pins.find(pin => pin.alias === '@local/compiler').selector, 'optionalDependencies.@local/compiler');
+    assert.equal(pins.some(pin => pin.name === 'current'), false);
+});
+
+test('alias inventory rejects ranges, tags, malformed targets and unsafe names', async () => {
+    const {aliasPins} = await api;
+    for (const requirement of ['npm:@babel/core@^7.29.7', 'npm:typescript@~7.0.2', 'npm:typescript@latest',
+        'npm:typescript', 'npm:@scope/pkg', 'npm:@scope/pkg@', 'npm:typescript@7.0.2\n', 'npm:../typescript@7.0.2',
+        'npm:https://example.com/pkg@1.0.0', 'npm:typescript@npm:other@7.0.2']) {
+        assert.throws(() => aliasPins({'tooling/package.json': {devDependencies: {compiler: requirement}}}));
+    }
+    for (const alias of ['../compiler', 'compiler\n', 'compiler|injected', '@scope']) {
+        assert.throws(() => aliasPins({'tooling/package.json': {devDependencies: {[alias]: 'npm:typescript@7.0.2'}}}));
+    }
+    assert.throws(() => aliasPins({'other.json': {}}));
+    assert.throws(() => aliasPins({'tooling/package.json': {devDependencies: []}}));
+    assert.throws(() => aliasPins({'tooling/package.json': {devDependencies:
+        Object.fromEntries(Array.from({length: 101}, (_, index) => [`compiler${index}`, 'npm:typescript@7.0.2'])),
+    }}), /supported size/);
+});
+
+test('read-only alias scans reuse real package metadata and report both newer majors and compatible updates', async () => {
+    const {scan, markdown} = await api;
+    const calls = [];
+    const inventory = {
+        'package.json': {resolutions: {'@babel/core': '8.0.6'}},
+        'tooling/package.json': {devDependencies: {babel7: 'npm:@babel/core@7.29.7', typescript: 'npm:@typescript/typescript6@6.0.2'}},
+    };
+    const request = async (url, options) => {
+        assert.equal(options, undefined);
+        calls.push(url);
+        if (url.includes('%40babel%2Fcore')) return document('@babel/core', ['7.29.7', '7.30.0', '8.0.6']);
+        if (url.includes('%40typescript%2Ftypescript6')) return document('@typescript/typescript6', ['6.0.2', '6.0.3']);
+        return metadata(url);
+    };
+    const report = await scan({manifests: inventory, workflow, request});
+    assert.deepEqual(report.errors, []);
+    assert.equal(calls.filter(url => url.includes('%40babel%2Fcore')).length, 1);
+    assert.equal(calls.some(url => /\/babel7(?:$|\?)/.test(url)), false);
+    const babel = report.rows.find(row => row.alias === 'babel7');
+    assert.equal(babel.status, 'review');
+    assert.equal(babel.sameMajor, '7.30.0');
+    assert.equal(babel.latest, '8.0.6');
+    assert.equal(report.rows.find(row => row.alias === 'typescript').sameMajor, '6.0.3');
+    const text = markdown(report);
+    assert.match(text, /devDependencies\.babel7 → @babel\/core/);
+    assert.match(text, /no dependencies are changed automatically/);
+});
+
+test('malformed alias coverage is visible while resolution and verifier reports remain available', async () => {
+    const {scan} = await api;
+    const report = await scan({manifests: {...manifests, 'tooling/package.json': {
+        devDependencies: {compiler: 'npm:@babel/core@latest'},
+    }}, workflow, request: metadata});
+    assert.deepEqual(report.errors, ['Cannot inspect exact workspace/release npm alias pins.']);
+    assert.equal(report.rows.length, 3);
+    assert.equal(report.rows.some(row => row.name === 'uuid'), true);
+});
+
+test('real tooling manifest aliases are included in dependency watch coverage', async () => {
+    const {aliasPins} = await api;
+    const pkg = JSON.parse(await readFile(join(__dirname, '../tooling/package.json'), 'utf8'));
+    const pins = aliasPins({'tooling/package.json': pkg});
+    assert.deepEqual(pins.map(pin => [pin.alias, pin.name]), [
+        ['babel7', '@babel/core'], ['typescript', '@typescript/typescript6'], ['typescript7', 'typescript'],
+    ]);
+});
+
 test('report inventory reads both app workspaces and preserves scoped resolution package names', async t => {
     const {main} = await api;
     const directory = await mkdtemp(join(tmpdir(), 'dependency-watch-workspaces-'));
@@ -109,14 +191,26 @@ test('JSON transport keeps tokens off npm, rejects redirects and never executes 
     const request = jsonClient({token: 'private-token', fetchImpl: async (url, options) => { calls.push({url, options}); return new Response('{"ok":true}'); }});
     await request('https://registry.npmjs.org/uuid'); await request('https://api.github.com/repos/dependabot/fetch-metadata/tags');
     assert.equal(calls[0].options.headers.Authorization, undefined);
+    assert.equal(calls[0].options.headers.Accept, 'application/vnd.npm.install-v1+json');
     assert.equal(calls[1].options.headers.Authorization, 'Bearer private-token');
+    assert.equal(calls[1].options.headers.Accept, 'application/json');
     assert.equal(calls[0].options.redirect, 'error');
     await assert.rejects(request('https://evil.example/package'));
     await assert.rejects(request('https://registry.npmjs.org/uuid', {method: 'POST'}));
-    for (const response of [new Response('secret', {status: 500}), new Response('private-not-json'), new Response('x'.repeat(8 * 1024 * 1024 + 1))]) {
+    for (const response of [new Response('secret', {status: 500}), new Response('private-not-json'), new Response('x'.repeat(16 * 1024 * 1024 + 1))]) {
         await assert.rejects(jsonClient({fetchImpl: async () => response})('https://registry.npmjs.org/uuid'), error => !/secret|private/.test(error.message));
     }
+    await assert.rejects(jsonClient({fetchImpl: async () => new Response('x'.repeat(8 * 1024 * 1024 + 1))})(
+        'https://api.github.com/repos/dependabot/fetch-metadata/tags'), /size limit/);
     await assert.rejects(jsonClient({fetchImpl: async () => { throw new Error('token=private'); }})('https://registry.npmjs.org/uuid'), /failed or timed out/);
+});
+
+test('abbreviated npm metadata may exceed 8 MiB while staying within the registry limit', async () => {
+    const {jsonClient} = await api;
+    const data = document('typescript', ['7.0.2']);
+    const body = `${JSON.stringify(data)}${' '.repeat(8 * 1024 * 1024)}`;
+    const result = await jsonClient({fetchImpl: async () => new Response(body)})('https://registry.npmjs.org/typescript');
+    assert.deepEqual(result, data);
 });
 
 test('report files persist fully and failed replacement preserves the earlier report', async t => {

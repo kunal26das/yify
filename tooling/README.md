@@ -1,8 +1,12 @@
 # Tooling compatibility
 
-The app uses TypeScript 7 for typechecking, Babel 8 for the test loader, and ESLint 10 for linting. Expo 57 and Worklets still compile application bundles with Babel 7. The Expo ESLint parser still needs the TypeScript 6 compiler API, which TypeScript 7 does not provide.
+The app uses TypeScript 7 for typechecking, Babel 8 for the test loader, and ESLint 10 for linting. Expo and Worklets still compile application bundles with Babel 7. The Expo ESLint parser still needs the TypeScript 6 compiler API, which TypeScript 7 does not provide.
 
-This private workspace keeps those build-time dependencies separate with scoped Yarn Classic `nohoist` rules. It contains no native runtime dependency. `babel.config.js` selects the single root Worklets plugin; its version remains identical to the native package selected by autolinking.
+This private workspace keeps those build-time dependencies separate with scoped Yarn Classic `nohoist` rules. It retains Babel 8.0.6 directly and TypeScript 7.0.2 as `typescript7`. The Babel adapter imports the explicit `babel7` alias pinned to Babel 7.29.7. ESLint's `typescript` peer resolves to Microsoft's `@typescript/typescript6` compatibility package, pinned to 6.0.2; this provides the TypeScript 6 API and a separate `tsc6` executable. Application typechecking still uses the root TypeScript 7 compiler.
+
+The aliases are deliberate compatibility dependencies, not evidence that Expo or ESLint support the newer compiler APIs. Exact version checks accept pinned npm aliases but reject ranges and tags. This workspace contains no native runtime dependency. `babel.config.js` selects the single root Worklets plugin; its version remains identical to the native package selected by autolinking.
+
+The dependency watch report checks each alias against its underlying npm package, including newer versions in the pinned major. It reports compatibility upgrades for review without changing dependencies. This preserves monitoring when Dependabot does not propose updates for aliased packages. Compiler tests compare installed versions with the manifest pins, so compatible patch updates do not require changing version literals in tests; the Babel 7 and TypeScript 6 API checks remain enforced.
 
 `scripts/apply-tooling-compatibility.mjs` handles two broad peer ranges that Yarn Classic otherwise resolves to incompatible root versions:
 

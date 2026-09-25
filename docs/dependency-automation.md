@@ -11,7 +11,7 @@ Dependabot checks the application and its crash-reporting and tooling workspaces
 
 The application lockfile includes native transitive dependencies, so even a clean reinstall started by a small tooling update can change native code. Before merging an application dependency update, review the native changes, update the runtime version where required, regenerate native projects and verify the affected platforms. The bot never weakens Expo's compatibility policy to make a build pass.
 
-Yify 1.8.7 adopts the reviewed Expo 57 patch updates and React Native 0.87. Compatibility backports live in `patches/expo-rn87/`; installation checks package versions and complete source hashes before applying them. The private `tooling/` workspace isolates the older compiler APIs still required by Expo and its lint plugins. The online doctor remains enabled with exact, reviewed deviations in `scripts/expo-dependency-policy.json`. A new package version that changes a guarded target requires another compatibility review.
+Yify 1.8.8 integrates the Expo 58 preview SDK and React Native 0.88 release candidate together, replacing the partial SDK upgrade proposed by Dependabot. The former SDK 57 backports are now upstream; `patches/expo-native/` verifies their replacement sources with exact package versions and complete source hashes. The private `tooling/` workspace retains the newer compiler packages alongside explicit, pinned compatibility aliases for APIs still required by Expo and ESLint. The online doctor remains enabled with exact, reviewed deviations in `scripts/expo-dependency-policy.json`. A new package version that changes a guarded target requires another compatibility review.
 
 ## Coverage outside normal Dependabot updates
 

@@ -27,7 +27,7 @@ and use the package name when importing it from the app.
 
 ### Validation and dependency compatibility
 
-The app and release console use TypeScript 7, and the app uses ESLint 10. The private `tooling/` workspace isolates Babel 7 and TypeScript 6 for Expo, Worklets and ESLint packages that still require their APIs; Babel 8 compiles mocked test fixtures. Install from the root to apply the version-checked compatibility patches. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
+The app and release console use TypeScript 7, and the app uses ESLint 10. The private `tooling/` workspace retains explicit, pinned Babel 7 and TypeScript 6 compatibility aliases for Expo, Worklets and ESLint packages that still require their APIs; Babel 8 compiles mocked test fixtures. Install from the root to apply the version-checked compatibility patches and verify the Expo 58 / React Native 0.88 source guards in `patches/expo-native/`. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
 
 Run `node scripts/check-expo-doctor.mjs` for Expo compatibility and `node scripts/check-dependency-pins.mjs` for exact versions. The doctor runs dependency checks with exclusions disabled. Deliberate deviations live in `scripts/expo-dependency-policy.json`; each pins the accepted version, Expo's recommendation and a compatibility reason. Update that policy only after validating an upgrade. Do not disable dependency checking globally.
 
@@ -59,6 +59,8 @@ Metro resolves `Foo.web.ts(x)` over `Foo.ts(x)` on web. This is how the app keep
 ### Never use `^` or `~` in a dependency version
 
 Every dependency is pinned to an exact version. `"react-native": "0.86.2"`, never `"^0.86.2"` or `"~0.86.2"`. This applies to `dependencies`, `devDependencies`, and `resolutions`, in the root `package.json` and in `release/package.json`.
+
+Compatibility aliases must also pin their npm target exactly, such as `"babel7": "npm:@babel/core@7.29.7"`; ranges and tags are rejected.
 
 `expo install`, `yarn add`, and `npm install` all write a caret range by default, and Dependabot PRs may carry one in. **Strip the range immediately after any command that touches `package.json`**, then re-run the install so the lockfile matches. Never leave a range in a commit.
 

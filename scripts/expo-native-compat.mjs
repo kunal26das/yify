@@ -59,14 +59,15 @@ function safePath(root, relative) {
   return path.join(root, relative);
 }
 
-export async function applyCompatibility({ root = repository, patchDirectory = path.join(repository, 'patches/expo-rn87'), check = false } = {}) {
+export async function applyCompatibility({ root = repository, patchDirectory = path.join(repository, 'patches/expo-native'), check = false } = {}) {
   const manifest = JSON.parse(await readFile(path.join(patchDirectory, 'manifest.json'), 'utf8'));
   const rn = JSON.parse(await readFile(path.join(root, 'node_modules/react-native/package.json'), 'utf8'));
   if (rn.version !== manifest.reactNative) throw new Error(`Expo compatibility requires react-native@${manifest.reactNative}; installed ${rn.version}`);
   const pending = [];
   const seen = new Set();
   const versions = new Map();
-  for (const entry of manifest.files) {
+  const reviewed = [...(manifest.sources ?? []).map((entry) => ({ ...entry, before: entry.sha256, after: entry.sha256 })), ...manifest.files];
+  for (const entry of reviewed) {
     const packageDirectory = safePath(path.join(root, 'node_modules'), entry.package);
     if (!versions.has(entry.package)) {
       versions.set(entry.package, JSON.parse(await readFile(path.join(packageDirectory, 'package.json'), 'utf8')).version);
@@ -95,7 +96,7 @@ export async function applyCompatibility({ root = repository, patchDirectory = p
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, patched);
   }
-  return { applied: pending.length, verified: manifest.files.length, reactNative: rn.version };
+  return { applied: pending.length, verified: reviewed.length, reactNative: rn.version };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -10,16 +10,22 @@
     "nohoist": [
       "@babel/core",
       "@babel/core/**",
+      "babel7",
+      "babel7/**",
       "eslint-config-expo",
       "eslint-config-expo/**",
       "typescript",
-      "typescript/**"
+      "typescript/**",
+      "typescript7",
+      "typescript7/**"
     ]
   },
   "devDependencies": {
     "@babel/core": "8.0.6",
     "@eslint/compat": "2.1.1",
-    "eslint-config-expo": "57.0.2",
-    "typescript": "7.0.2"
+    "babel7": "npm:@babel/core@7.29.7",
+    "eslint-config-expo": "58.0.2",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript7": "npm:typescript@7.0.2"
   }
 }

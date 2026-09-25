@@ -104,7 +104,9 @@ This module does not install SDKs, change collection preferences or upload symbo
   and stack on the Firebase path; a Sentry filter alone does not redact that path.
 - Grouping uses error type and failure location, including Hermes column offsets. Repeated events
   share an identity; different locations receive different identities. Firebase decides final
-  grouping, and rebuilt bundles can move locations. Duplicate Sentry event IDs are bounded/deduped
+  grouping, and rebuilt bundles can move locations. Mirrored diagnostics also include the validated
+  `diagnostics.operation` tag so different operations sharing an SDK constructor remain separate.
+  Without that tag, existing identities are preserved. Duplicate Sentry event IDs are bounded/deduped
   per bridge; distinct occurrences at the same location are still recorded.
 - Firebase custom keys link reports to Sentry event IDs. Keys are session-wide and best-effort under
   concurrent errors. Collection-disabled hosts do not send Firebase reports.

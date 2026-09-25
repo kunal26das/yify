@@ -37,6 +37,49 @@ test('A/B/A occurrences preserve distinct Hermes locations and group repeated cr
     assert.ok(frames.every(value => value[0].fileName === 'index.android.bundle'));
 });
 
+test('YTS and EZTV failures sharing the CodedError constructor keep separate issues and repeated operations group together', async () => {
+    const {calls, mirror} = harness();
+    const operations = ['api.yts.list_movies', 'api.eztv.torrents', 'api.yts.list_movies'];
+    for (const [index, operation] of operations.entries()) {
+        const event = eventAt(1257956, index + 1);
+        event.tags = {'diagnostics.operation': operation};
+        event.fingerprint = ['{{ default }}', operation];
+        const exception = event.exception.values[0];
+        exception.type = 'Error';
+        exception.value = `${operation} failed (${index === 2 ? 'unavailable' : 'request_failed'})`;
+        exception.stacktrace.frames[1].filename = 'app:///index.android.bundle';
+        exception.stacktrace.frames[1].function = 'CodedError';
+        const before = structuredClone(event);
+        await mirror(event);
+        assert.deepEqual(event, before);
+    }
+    assert.equal(calls.length, 3);
+    const frames = await Promise.all(calls.map(call => framesOf(call.error)));
+    assert.notEqual(frames[0][0].functionName, frames[1][0].functionName);
+    assert.equal(frames[0][0].functionName, frames[2][0].functionName);
+    assert.ok(frames.every(value => value[0].fileName === 'app:///index.android.bundle' &&
+        value[0].lineNumber === 1 && value[0].columnNumber === 1257956 && value.length === 2));
+    assert.deepEqual(calls.map(call => call.metadata['diagnostics.operation']), operations);
+});
+
+test('untrusted fingerprints and invalid operation tags cannot split ordinary exception grouping', async () => {
+    const {calls, mirror} = harness();
+    await mirror(eventAt(100, 1));
+    const invalid = ['', 'account', 'api.token=secret', 'api.private@example.com',
+        'api.' + 'x'.repeat(77), 'api.load\n', 'api.load\r', {operation: 'api.load'}];
+    for (const [index, operation] of invalid.entries()) {
+        const event = eventAt(100, index + 2);
+        event.tags = {'diagnostics.operation': operation};
+        event.fingerprint = ['private@example.com', `user-${index}`];
+        await mirror(event);
+    }
+    const frames = await Promise.all(calls.map(call => framesOf(call.error)));
+    assert.equal(calls.length, invalid.length + 1);
+    assert.ok(frames.every(value => value[0].functionName === frames[0][0].functionName));
+    assert.ok(calls.every(call => !Object.hasOwn(call.metadata, 'diagnostics.operation')));
+    assert.doesNotMatch(JSON.stringify(calls.map(call => ({stack: call.error.stack, metadata: call.metadata}))), /private@|secret|user-/);
+});
+
 test('promise rejections, handled boundaries and manual exceptions all reach the nonfatal recorder', async () => {
     const {calls, mirror} = harness();
     const mechanisms = ['onunhandledrejection', 'expo_router_error_boundary', 'generic'];

@@ -3,7 +3,7 @@ const {test} = require('node:test');
 const ErrorStackParser = require('error-stack-parser');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
-const {createCrashReportingBridge, createNoopCrashReportingBridge} = loadTypeScript('index.ts');
+const {createCrashReportingBridge, createNoopCrashReportingBridge, createCrashlyticsError} = loadTypeScript('index.ts');
 const eventId = value => value.toString(16).padStart(32, '0');
 const sourceError = () => Object.assign(new TypeError('Unable to render'), {
     stack: 'TypeError: Unable to render\n    at render (index.android.bundle:1:100)\n    at browse (index.android.bundle:1:800)',
@@ -112,6 +112,25 @@ test('separate hosts retain independent grouping namespaces, global mechanisms a
         assert.ok(fatal[0].error.stack.includes(namespace + '.'));
         assert.equal(host.events.find(value => value.kind === 'sentry').hint.mechanism.type, mechanism);
     }
+});
+
+test('the host passes operation grouping to mirrored errors without changing fatal identities or inheriting earlier operations', async () => {
+    const host = fixture({groupingNamespace: 'YifyReactNative', globalMechanism: 'yify.react_native.global'});
+    const error = sourceError();
+    for (const [index, operation] of ['api.yts.list_movies', 'api.eztv.torrents', 'api.yts.list_movies'].entries()) {
+        const event = eventFor(error, index + 1);
+        event.tags = {'diagnostics.operation': operation};
+        await host.bridge.mirrorException(event);
+    }
+    const reports = host.events.filter(event => event.kind === 'nonfatal');
+    assert.equal(reports.length, 3);
+    assert.notEqual(reports[0].error.stack, reports[1].error.stack);
+    assert.equal(reports[0].error.stack, reports[2].error.stack);
+    assert.ok(reports.every(event => event.error.stack.includes('YifyReactNative.')));
+    await host.invoke(error, true);
+    const fatal = host.events.find(event => event.kind === 'fatal');
+    assert.equal(fatal.error.stack, createCrashlyticsError(error, 'YifyReactNative').stack);
+    assert.equal(host.events.filter(event => event.kind === 'nonfatal').length, 3);
 });
 
 test('per-event correlation replaces stale optional metadata while retaining host attributes', async () => {

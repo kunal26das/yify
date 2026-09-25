@@ -187,10 +187,11 @@ test('Hosting redirects preserve the native configuration and existing router se
     const {plugins: hostingPlugins, web: hostingWeb, ...hostingRest} = hosting;
     const {plugins: nativePlugins, web: nativeWeb, ...nativeRest} = native;
     assert.deepEqual(hostingRest, nativeRest);
-    assert.deepEqual(hostingWeb, {...nativeWeb, output: 'server'});
+    assert.deepEqual(hostingWeb, {...nativeWeb, output: 'static'});
     assert.deepEqual(hostingPlugins.map(plugin => {
         if (!Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
-        const {redirects, ...options} = plugin[1];
+        const {redirects, apiRoutes, ...options} = plugin[1];
+        assert.equal(apiRoutes, true);
         assert.equal(redirects.length, 4);
         return [plugin[0], options];
     }), nativePlugins);
@@ -306,14 +307,14 @@ for (const server of [false, true]) {
     });
 }
 
-test('only the explicit Hosting export selects server output', () => {
-    for (const [output, baseUrl, expected] of [[undefined, '', 'static'], ['static', '/yify', 'static'], ['server', '', 'server']]) {
+test('only Hosting enables API routes while every target retains prerendered HTML', () => {
+    for (const [output, baseUrl, expected] of [[undefined, '', 'static'], ['static', '/yify', 'static'], ['server', '', 'static']]) {
         const env = {...process.env, EXPO_WEB_BASE_URL: baseUrl};
         if (output === undefined) delete env.EXPO_WEB_OUTPUT;
         else env.EXPO_WEB_OUTPUT = output;
-        const result = spawnSync(process.execPath, ['-e', 'const {expo}=require("./app.config.js"); console.log(JSON.stringify({output:expo.web.output,baseUrl:expo.experiments.baseUrl}));'], {cwd: root, env, encoding: 'utf8'});
+        const result = spawnSync(process.execPath, ['-e', 'const {expo}=require("./app.config.js"); console.log(JSON.stringify({output:expo.web.output,baseUrl:expo.experiments.baseUrl,apiRoutes:expo.plugins.find(plugin=>Array.isArray(plugin)&&plugin[0]==="expo-router")[1].apiRoutes??false}));'], {cwd: root, env, encoding: 'utf8'});
         assert.equal(result.status, 0, result.stderr);
-        assert.deepEqual(JSON.parse(result.stdout), {output: expected, baseUrl});
+        assert.deepEqual(JSON.parse(result.stdout), {output: expected, baseUrl, apiRoutes: output === 'server'});
     }
 });
 

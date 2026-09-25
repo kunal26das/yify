@@ -49,6 +49,7 @@ function fixture(t, {platform = 'android', captureFailure = false, flushFailure 
             const event = {
                 event_id: eventId, platform: 'javascript', release: 'io.github.kunal26das.yify@1.8.4+84',
                 environment: options.environment, level: hint.captureContext?.level ?? 'error',
+                tags: hint.tags, fingerprint: hint.fingerprint,
                 exception: {values: [{type: error.name, value: error.message,
                     mechanism: hint.mechanism ?? {type: 'generic', handled: true}, stacktrace: {frames}}]},
             };
@@ -69,6 +70,7 @@ function fixture(t, {platform = 'android', captureFailure = false, flushFailure 
         'react-native': {Platform: {OS: platform}},
         'react-native/Libraries/Core/ExceptionsManager': {default: manager},
         '@sentry/react-native': sentry,
+        '@yify/crashreporting': loadTypeScript('crashreporting/index.ts'),
     };
     Object.defineProperty(mocks, '@react-native-firebase/crashlytics', {get() {
         if (nativeSdk) return nativeSdk;
@@ -126,6 +128,29 @@ test('real entry wiring forwards a handled Sentry exception once with sanitized 
     assert.equal(f.nonfatal[0].attributes.sentry_event_id, eventId);
     assert.equal(error.message, 'Failed for private@example.com token=private-token');
     assert.equal(f.nativeImports(), 1);
+});
+
+test('real diagnostic captures retain operation-specific grouping through privacy filtering and the native bridge', async t => {
+    const f = fixture(t);
+    const {SentryDiagnostics} = loadTypeScript('data/services/SentryDiagnostics.ts', {'@sentry/react-native': f.sentry});
+    const diagnostics = new SentryDiagnostics(f.sentry);
+    const operations = ['api.yts.list_movies', 'api.eztv.torrents', 'api.yts.list_movies'];
+    for (const operation of operations) {
+        const error = new Error('Private upstream response');
+        error.code = 'request_failed';
+        error.stack = 'Error: Private upstream response\n    at CodedError (index.android.bundle:1:1257956)';
+        diagnostics.capture(error, operation);
+        await f.sentry.flush();
+    }
+    assert.equal(f.sent.length, 3);
+    assert.equal(f.nonfatal.length, 3);
+    assert.equal(f.fatal.length, 0);
+    assert.notEqual(f.nonfatal[0].error.stack, f.nonfatal[1].error.stack);
+    assert.equal(f.nonfatal[0].error.stack, f.nonfatal[2].error.stack);
+    assert.deepEqual(f.nonfatal.map(report => report.attributes['diagnostics.operation']), operations);
+    assert.deepEqual(f.sent.map(event => event.fingerprint), operations.map(operation => ['{{ default }}', operation]));
+    assert.deepEqual(f.nonfatal.map(report => report.error.message), operations.map(operation => `${operation} failed (request_failed)`));
+    assert.doesNotMatch(JSON.stringify(f.sent), /Private upstream response/);
 });
 
 test('uncaught renderer fatal traverses Sentry beforeSend and RNFB once without a mirrored nonfatal', async t => {

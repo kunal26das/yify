@@ -1,5 +1,5 @@
 import ErrorStackParser from 'error-stack-parser';
-import {GROUPING_NAMESPACE} from './constants';
+import {diagnosticOperation, GROUPING_NAMESPACE} from './constants';
 
 function readString(value: unknown, key: string): string | undefined {
     try {
@@ -56,7 +56,7 @@ function groupingFile(file: string | undefined): string {
     return location.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*/i, '').replace(/^\/+/, '');
 }
 
-export function createCrashlyticsError(input: unknown, groupingNamespace = GROUPING_NAMESPACE): Error {
+export function createCrashlyticsError(input: unknown, groupingNamespace = GROUPING_NAMESPACE, operation?: string): Error {
     const name = readString(input, 'name') || 'Error';
     const message = readString(input, 'message') ?? describe(input);
     const originalStack = readString(input, 'stack');
@@ -70,6 +70,8 @@ export function createCrashlyticsError(input: unknown, groupingNamespace = GROUP
         ? [name, failure.functionName || '<anonymous>', groupingFile(failure.fileName),
             failure.lineNumber || 0, failure.columnNumber || 0]
         : [name, message.replace(/\s+/g, ' ').trim()];
+    const operationKey = diagnosticOperation(operation);
+    if (operationKey) identity.push('operation', operationKey);
     const signature = fingerprint(JSON.stringify(identity));
     const symbol = `${groupingNamespace}.${signature}.${failure?.functionName || 'anonymous'}_${name.replace(/[^a-zA-Z0-9_$]/g, '_')}`;
     const copy = new Error(message);

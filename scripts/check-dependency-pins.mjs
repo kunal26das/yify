@@ -4,11 +4,15 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const exactVersion = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+const packageAlias = /^npm:(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*@(.+)$/;
 
 export function checkPins(pkg, filename) {
     for (const section of ['dependencies', 'devDependencies', 'resolutions']) {
         for (const [name, version] of Object.entries(pkg[section] ?? {})) {
-            if (!exactVersion.test(version)) throw new Error(`${filename}: ${section}.${name} must use an exact version, received ${version}.`);
+            const aliasedVersion = typeof version === 'string' ? version.match(packageAlias)?.[1] : undefined;
+            if (typeof version !== 'string' || version.trim() !== version || !exactVersion.test(aliasedVersion ?? version)) {
+                throw new Error(`${filename}: ${section}.${name} must use an exact version, received ${version}.`);
+            }
         }
     }
 }

@@ -51,7 +51,7 @@ test('the production Expo configuration registers the wrapper fix exactly once',
     assert.equal(plugins.filter((plugin) => plugin === './plugins/withGradleWrapper').length, 1);
 });
 
-test('prebuild preserves the explicit Kotlin plugin and legacy DSL until the Expo migration is complete', async () => {
+test('prebuild preserves the upstream Expo template explicit Kotlin plugin and legacy DSL', async () => {
     const root = path.resolve(__dirname, '..');
     const config = withGradleWrapper({name: 'Yify', slug: 'yify', _internal: {projectRoot: root}});
     const apply = (modResults) => config.mods.android.gradleProperties({...config, modResults, modRequest: {

@@ -1,70 +1,40 @@
 {
-  "sdkVersion": "57.0.0",
+  "sdkVersion": "58.0.0",
   "packages": {
     "@sentry/react-native": {
       "version": "8.27.0",
       "expected": "~7.11.0",
       "reason": "Keep the Sentry 8 integration and its native crash symbol configuration."
     },
-    "react": {
-      "version": "19.3.0",
-      "expected": "19.2.3",
-      "reason": "Keep React aligned with React DOM and the test renderer for the React Native 0.87 runtime."
-    },
-    "react-dom": {
-      "version": "19.3.0",
-      "expected": "19.2.3",
-      "reason": "Match React 19.3.0 for the web application."
-    },
-    "react-native": {
-      "version": "0.87.1",
-      "expected": "0.86.3",
-      "reason": "React Native 0.87 migration with exact-version Expo native and Metro backports in scripts/expo-native-compat.mjs; this dependency set has its own 1.8.7 binary/runtime."
-    },
     "react-native-gesture-handler": {
       "version": "3.3.0",
-      "expected": "~2.32.0",
-      "reason": "Gesture Handler 3.3 supports the React Native 0.87 integration."
+      "expected": "~3.2.1",
+      "reason": "Retain Gesture Handler 3.3 and the existing gesture API; validate its native integration as part of the coordinated Expo 58 runtime build."
     },
     "react-native-reanimated": {
       "version": "4.7.0",
-      "expected": "4.5.1",
-      "reason": "Reanimated 4.7 and Worklets 0.13 support React Native 0.87; the Expo server runtime uses the upstream inert animation-frame fallback during rendering."
+      "expected": "4.6.0",
+      "reason": "Reanimated 4.7.0 explicitly supports React Native 0.88 and Worklets 0.13 in its published compatibility.json; the SDK recommendation 4.6.0 does not include React Native 0.88."
     },
     "react-native-safe-area-context": {
       "version": "5.10.0",
-      "expected": "~5.7.0",
-      "reason": "Retain the current native safe-area integration."
-    },
-    "react-native-screens": {
-      "version": "4.28.0",
-      "expected": "~4.26.0",
-      "reason": "Retain the current Screens 4 integration with Expo Router."
-    },
-    "react-native-webview": {
-      "version": "14.0.1",
-      "expected": "13.16.1",
-      "reason": "Retain the current WebView 14 player integration."
+      "expected": "~5.9.1",
+      "reason": "Retain the current safe-area native integration while validating the coordinated Expo 58 runtime."
     },
     "react-native-worklets": {
       "version": "0.13.0",
-      "expected": "0.10.1",
-      "reason": "Pair Worklets 0.13 with Reanimated 4.7 and React Native 0.87; server rendering uses the upstream Expo animation-frame fallback."
+      "expected": "0.12.2",
+      "reason": "Worklets 0.13.0 explicitly supports React Native 0.88 in its published compatibility.json and is the required pair for Reanimated 4.7.0."
     },
     "@babel/core": {
       "version": "8.0.6",
-      "expected": "^7.29.0",
-      "reason": "Babel 8 compiles test fixtures. Expo and the Worklets plugin retain their scoped Babel 7 toolchain until those upstream packages support Babel 8."
-    },
-    "@types/react": {
-      "version": "19.3.0",
-      "expected": "~19.2.4",
-      "reason": "Match the installed React 19.3 API."
+      "expected": "^7.29.7",
+      "reason": "Babel 8 compiles test fixtures. Expo and Worklets retain an explicit Babel 7 adapter until those upstream transforms support Babel 8."
     },
     "typescript": {
       "version": "7.0.2",
       "expected": "~6.0.3",
-      "reason": "TypeScript 7 checks application and crash-reporting types. ESLint keeps its supported scoped TypeScript 6 parser, and test fixtures use Babel instead of the removed compiler API."
+      "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
     }
   }
 }

@@ -101,20 +101,19 @@ test('strict hunk application preserves final newline and rejects shifted contex
   assert.throws(() => applyUnifiedPatch('old\n', patch.replace('-1,1', '-1,2')), /line count/);
 });
 
-async function patchedSource(packageName, file) {
-  const directory = path.join(repository, 'patches/expo-rn87');
+async function reviewedSource(packageName, file) {
+  const directory = path.join(repository, 'patches/expo-native');
   const manifest = JSON.parse(await fs.readFile(path.join(directory, 'manifest.json'), 'utf8'));
-  const entry = manifest.files.find((entry) => entry.package === packageName && entry.file === file);
+  const entry = manifest.sources.find((entry) => entry.package === packageName && entry.file === file);
   assert.ok(entry);
   const source = await fs.readFile(path.join(repository, 'node_modules', packageName, file), 'utf8');
-  const { applyUnifiedPatch, sha256 } = await modulePromise;
-  if (sha256(source) === entry.after) return source;
-  assert.equal(sha256(source), entry.before);
-  return applyUnifiedPatch(source, await fs.readFile(path.join(directory, entry.patch), 'utf8'));
+  const { sha256 } = await modulePromise;
+  assert.equal(sha256(source), entry.sha256);
+  return source;
 }
 
 test('Expo server frame shim schedules no work and preserves browser/native APIs', async () => {
-  const source = await patchedSource('expo', 'src/winter/runtime.ts');
+  const source = await reviewedSource('expo', 'src/winter/runtime.ts');
   const shim = source.slice(source.indexOf("if (process.env.EXPO_SERVER && typeof globalThis.requestAnimationFrame"));
   assert.ok(shim.startsWith('if ('));
   let calls = 0;
@@ -133,7 +132,7 @@ test('Expo server frame shim schedules no work and preserves browser/native APIs
 });
 
 test('Metro and React Native share the same asset registry and accepted import routes', async () => {
-  const source = await patchedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
+  const source = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
   const registry = /const ASSET_REGISTRY_SRC = `([^`]+)`;/.exec(source)?.[1];
   assert.ok(registry);
   const context = vm.createContext({ module: { exports: {} } });
@@ -158,8 +157,8 @@ test('Metro and React Native share the same asset registry and accepted import r
 });
 
 test('native Metro polyfills resolve the matching supported package', async () => {
-  const source = await patchedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
-  const body = /getPolyfills: \(\{ platform \}\) => \{([\s\S]*?)\n            \},/.exec(source)?.[1];
+  const source = await reviewedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
+  const body = /getPolyfills: \(\{ platform \}\)\s*=>\{([\s\S]*?)\n            \},?/.exec(source)?.[1];
   assert.ok(body);
   const required = [];
   const get = new Function('platform', 'require', body);
@@ -186,4 +185,37 @@ test('reviewed new native source files are created once and unknown existing fil
   await fs.writeFile(f.target(entry.file), 'unexpected user source\n');
   await assert.rejects(applyCompatibility(f), /Unrecognized compatibility source/);
   assert.equal(await fs.readFile(f.target(entry.file), 'utf8'), 'unexpected user source\n');
+});
+
+
+test('reviewed upstream sources fail before patches and enforce removed-file absence', async (t) => {
+  const f = await fixture(t);
+  const { applyCompatibility, sha256 } = await modulePromise;
+  f.manifest.sources = [
+    { package: 'expo', version: '57.0.25', file: 'upstream.js', sha256: sha256('reviewed\n') },
+    { package: 'expo', version: '57.0.25', file: 'removed.js', sha256: null },
+  ];
+  await f.save();
+  await fs.writeFile(f.target('upstream.js'), 'unreviewed\n');
+  await assert.rejects(applyCompatibility(f), /Unrecognized compatibility source/);
+  assert.equal(await fs.readFile(f.target('a.js'), 'utf8'), 'first\nold\nlast\n');
+  await fs.writeFile(f.target('upstream.js'), 'reviewed\n');
+  await fs.writeFile(f.target('removed.js'), 'restored legacy bridge\n');
+  await assert.rejects(applyCompatibility(f), /Unrecognized compatibility source/);
+  await fs.rm(f.target('removed.js'));
+  assert.deepEqual(await applyCompatibility(f), { applied: 2, verified: 4, reactNative: '0.87.1' });
+  assert.equal((await applyCompatibility({ ...f, check: true })).applied, 0);
+});
+
+test('reviewed animation libraries explicitly support the selected React Native runtime', async () => {
+  const reanimated = JSON.parse(await reviewedSource('react-native-reanimated', 'compatibility.json'));
+  const worklets = JSON.parse(await reviewedSource('react-native-worklets', 'compatibility.json'));
+  const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
+  const minor = (version) => version.split('.').slice(0, 2).join('.');
+  const reactNative = minor(pkg.dependencies['react-native']);
+  const reanimatedVersion = `${minor(pkg.dependencies['react-native-reanimated'])}.x`;
+  const workletsVersion = `${minor(pkg.dependencies['react-native-worklets'])}.x`;
+  assert.ok(reanimated.fabric[reanimatedVersion]['react-native'].includes(reactNative));
+  assert.ok(reanimated.fabric[reanimatedVersion]['react-native-worklets'].includes(workletsVersion));
+  assert.ok(worklets[workletsVersion]['react-native'].includes(reactNative));
 });

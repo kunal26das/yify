@@ -1,8 +1,0 @@
---- a/node_modules/expo-updates/android/proguard-rules.pro
-+++ b/node_modules/expo-updates/android/proguard-rules.pro
-@@ -8,3 +8,5 @@
- 
- # Workaround zstd-kmp R8 issue - https://github.com/square/zstd-kmp/issues/108
- -keep class com.squareup.zstd.** { *; }
-+
-+-keep class * extends androidx.room.RoomDatabase { <init>(); }

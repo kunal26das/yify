@@ -66,6 +66,27 @@ export function resolutionPins(manifests) {
     return pins.sort((a, b) => `${a.file}/${a.selector}`.localeCompare(`${b.file}/${b.selector}`));
 }
 
+export function aliasPins(manifests) {
+    const pins = [];
+    for (const [file, pkg] of Object.entries(manifests)) {
+        assert(MANIFESTS.includes(file) && object(pkg), 'Invalid manifest.');
+        for (const section of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+            assert(pkg[section] === undefined || object(pkg[section]), 'Invalid dependency object.');
+            for (const [alias, requirement] of Object.entries(pkg[section] ?? {})) {
+                if (typeof requirement !== 'string' || !requirement.startsWith('npm:')) continue;
+                assert(alias.length <= 240 && alias.match(NAME)?.[0] === alias, 'Invalid npm alias name.');
+                const separator = requirement.lastIndexOf('@');
+                const name = requirement.slice(4, separator), current = requirement.slice(separator + 1);
+                assert(separator > 4 && name.length <= 240 && name.match(NAME)?.[0] === name && semver(current),
+                    'npm aliases must name a package and an exact semantic version.');
+                pins.push({kind: 'npm', file, selector: `${section}.${alias}`, alias, name, current});
+            }
+        }
+    }
+    assert(pins.length <= 100, 'Alias coverage exceeds the supported size.');
+    return pins.sort((a, b) => `${a.file}/${a.selector}`.localeCompare(`${b.file}/${b.selector}`));
+}
+
 function scalar(value) {
     const match = value.trim().match(/^(?:"([^"\\]*)"|'([^']*)'|([^\s#"']+))(?:\s+#.*)?$/);
     assert(match, 'Verifier checkout must use literal YAML values.');
@@ -119,10 +140,12 @@ export function jsonClient({fetchImpl = fetch, token} = {}) {
         assert(method === 'GET' || (parsed.origin === 'https://api.github.com' &&
             new RegExp(`^/repos/${REPOSITORY}/issues(?:/[1-9][0-9]*)?$`).test(parsed.pathname) && ['POST', 'PATCH'].includes(method)),
             'Unsupported metadata operation.');
+        const registry = parsed.origin === 'https://registry.npmjs.org';
+        const byteLimit = (registry ? 16 : 8) * 1024 * 1024;
         let response;
         try {
             response = await fetchImpl(url, {method, redirect: 'error', signal: AbortSignal.timeout(20000),
-                headers: {Accept: 'application/json', ...(parsed.origin === 'https://api.github.com' ? {
+                headers: {Accept: registry ? 'application/vnd.npm.install-v1+json' : 'application/json', ...(parsed.origin === 'https://api.github.com' ? {
                     'X-GitHub-Api-Version': '2022-11-28', ...(token ? {Authorization: `Bearer ${token}`} : {}),
                 } : {}), ...(body ? {'Content-Type': 'application/json'} : {})},
                 ...(body ? {body: JSON.stringify(body)} : {})});
@@ -133,7 +156,7 @@ export function jsonClient({fetchImpl = fetch, token} = {}) {
         const chunks = []; let bytes = 0;
         for await (const chunk of response.body) {
             bytes += chunk.length;
-            assert(bytes <= 8 * 1024 * 1024, 'Metadata response exceeds the size limit.');
+            assert(bytes <= byteLimit, 'Metadata response exceeds the size limit.');
             chunks.push(chunk);
         }
         try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
@@ -165,6 +188,8 @@ export async function scan({manifests, workflow, request}) {
     let pins = [];
     try { pins = resolutionPins(manifests); }
     catch { errors.push('Cannot inspect exact workspace/release resolution pins.'); }
+    try { pins.push(...aliasPins(manifests)); }
+    catch { errors.push('Cannot inspect exact workspace/release npm alias pins.'); }
     const cache = new Map();
     for (const pin of pins) {
         try {
@@ -183,11 +208,11 @@ export function markdown(report) {
     assert(report?.version === 1 && Array.isArray(report.rows) && Array.isArray(report.errors), 'Invalid dependency report.');
     const findings = report.rows.filter(row => row.status === 'review');
     const lines = [MARKER, '# Dependency pin coverage', '', `${findings.length} pins need review. ${report.errors.length} checks could not complete.`, '',
-        'This report covers exact Yarn resolution overrides and the separately checked-out Dependabot verifier. Newer versions require compatibility review; no dependencies are changed automatically.', '',
+        'This report covers exact Yarn resolution overrides, npm aliases and the separately checked-out Dependabot verifier. Newer versions require compatibility review; no dependencies are changed automatically.', '',
         '| Location / package | Pinned | npm latest / latest GitHub tag | Newest stable | Latest in pinned major | Result |',
         '| --- | --- | --- | --- | --- | --- |'];
     for (const row of report.rows) {
-        if (row.kind === 'npm') lines.push(`| ${row.file}: [${row.selector}](https://www.npmjs.com/package/${row.name}) | ${row.current} | ${row.latest} | ${row.newestStable} | ${row.sameMajor ?? 'None'} | ${row.status} |`);
+        if (row.kind === 'npm') lines.push(`| ${row.file}: [${row.selector}${row.alias ? ` → ${row.name}` : ''}](https://www.npmjs.com/package/${row.name}) | ${row.current} | ${row.latest} | ${row.newestStable} | ${row.sameMajor ?? 'None'} | ${row.status} |`);
         else lines.push(`| ${row.file}: [${row.name}](https://github.com/${VERIFIER}/tags) | ${row.current} | [${row.latest}](https://github.com/${VERIFIER}/releases/tag/${row.latest}) | ${row.latestSha} | — | ${row.status} |`);
     }
     if (report.errors.length) lines.push('', '## Incomplete checks', '', ...report.errors.map(error => `- ${error}`), '', 'A failed lookup is not evidence that a pin is current. Existing tracking remains open.');
