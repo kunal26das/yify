@@ -119,6 +119,7 @@
       "@react-native-google-signin/google-signin",
       "./plugins/withAndroidRelease",
       "./plugins/withGradleWrapper",
+      "./plugins/withUmpMetricsGuard",
       [
         "./plugins/withGradleJvmArgs",
         {
