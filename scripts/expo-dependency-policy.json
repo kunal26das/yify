@@ -35,6 +35,86 @@
       "version": "7.0.2",
       "expected": "~6.0.3",
       "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
+    },
+    "@expo/metro-runtime": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "@expo/ui": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo": {
+      "version": "58.0.0-preview.6",
+      "expected": "~58.0.0-preview.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-background-task": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-build-properties": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-constants": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-dev-client": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-image": {
+      "version": "58.0.5",
+      "expected": "~58.0.6",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-insights": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-linking": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-location": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-notifications": {
+      "version": "58.0.6",
+      "expected": "~58.0.7",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-router": {
+      "version": "58.0.7",
+      "expected": "~58.0.8",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-sqlite": {
+      "version": "58.0.5",
+      "expected": "~58.0.6",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-task-manager": {
+      "version": "58.0.7",
+      "expected": "~58.0.8",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+    },
+    "expo-updates": {
+      "version": "58.0.8",
+      "expected": "~58.0.9",
+      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
     }
   }
 }

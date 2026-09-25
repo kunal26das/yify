@@ -7,6 +7,8 @@ type Attributes = Record<string, string | number | boolean>;
 const diagnosticStrings = new Set(['provider', 'operation', 'outcome', 'error_code', 'method', 'stage', 'cache', 'trigger', 'reason']);
 const diagnosticNumbers = new Set(['status_code', 'duration_ms', 'count', 'attempt', 'retry_count']);
 const diagnosticBooleans = new Set(['available', 'trimmed', 'forced']);
+const purchasesErrorCodes = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
+    18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31, 32, 33, 34, 35, 42]);
 const validationReasons = new Set(['envelope', 'movie_identity', 'movie_collections', 'pagination',
     'parental_guides', 'torrents_count', 'torrents_collection']);
 const staticIdentifier = /^[a-zA-Z][a-zA-Z0-9_.-]{0,79}$/;
@@ -47,6 +49,7 @@ export function sanitizeDiagnosticAttributes(input: Record<string, unknown> | un
         if (['ad_adapter_count', 'ad_adapter_error_count', 'ad_adapter_error_code'].includes(name) &&
             typeof value === 'number' && Number.isInteger(value) && value >= 0 &&
             value <= (name === 'ad_adapter_error_code' ? 65535 : 100)) result[key] = value;
+        if (name === 'purchases_error_code' && typeof value === 'number' && purchasesErrorCodes.has(value)) result[key] = value;
         if (name === 'validation_reason' && typeof value === 'string' && validationReasons.has(value)) result[key] = value;
         if (diagnosticStrings.has(name) && typeof value === 'string' && staticIdentifier.test(value) && (name !== 'operation' || isDiagnosticOperation(value))) result[key] = value;
         if (diagnosticNumbers.has(name) && typeof value === 'number' && Number.isFinite(value) && value >= 0) result[key] = value;

@@ -88,6 +88,17 @@ function diagnosticCode(error: unknown): string {
     }
 }
 
+function diagnosticPurchaseCode(error: unknown): {purchases_error_code?: number} {
+    try {
+        const code = (error as {code?: unknown} | null)?.code;
+        if (typeof code === 'string' && /^(0|[1-9][0-9]?)$/.test(code) &&
+            Object.values<string>(Purchases.PURCHASES_ERROR_CODE).includes(code)) {
+            return {purchases_error_code: Number(code)};
+        }
+    } catch {}
+    return {};
+}
+
 function toOffer(
     pkg: PurchasesPackage, offering: PurchasesOffering, placement: PurchasePlacement, revision: number
 ): PurchaseOffer {
@@ -462,16 +473,18 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
 
     private async fetchOffers(placement: PurchasePlacement, revision: number): Promise<PurchaseOffer[]> {
         const span = this.diagnostics.start('purchases.offerings', {provider: 'revenuecat'});
+        let stage: 'billing_check' | 'offering_fetch' = 'billing_check';
         try {
             const billingSupported = await Purchases.canMakePayments();
             if (revision !== this.revision) { span.finish('skipped'); return []; }
             if (!billingSupported) {
                 this.clearOffers(placement);
-                span.finish('unavailable', {error_code: 'purchase_not_allowed'});
+                span.finish('unavailable', {stage, error_code: 'purchase_not_allowed'});
                 return [];
             }
             // Journal uses the configured supporter offering while retaining its own funnel attribution.
             const offeringPlacement = placement === 'journal_insights' ? 'settings_supporter' : placement;
+            stage = 'offering_fetch';
             const offering = await Purchases.getCurrentOfferingForPlacement(offeringPlacement);
             if (revision !== this.revision) { span.finish('skipped'); return []; }
             this.clearOffers(placement);
@@ -486,14 +499,15 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         } catch (error) {
             if (revision !== this.revision) { span.finish('skipped'); return []; }
             const code = diagnosticCode(error);
+            const details = {stage, error_code: code, ...diagnosticPurchaseCode(error)};
             if (code === 'purchase_not_allowed') {
                 this.clearOffers(placement);
-                span.finish('unavailable', {error_code: code});
+                span.finish('unavailable', details);
                 return [];
             }
             if (code === 'configuration') this.clearOffers(placement);
-            if (code === 'network' || code === 'offline') span.finish('unavailable', {error_code: code});
-            else span.fail(error, {error_code: code});
+            if (code === 'network' || code === 'offline') span.finish('unavailable', details);
+            else span.fail(error, details);
             throw error;
         }
     }

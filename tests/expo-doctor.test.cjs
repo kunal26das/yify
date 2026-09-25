@@ -58,6 +58,24 @@ test('ANSI output and a repeated verbose failure heading do not weaken the summa
     assert.deepEqual(assessDoctor(run), [structural]);
 });
 
+test('doctor omits same-core prerelease rows while CLI policy still requires their exact approval', async () => {
+    const {assessDoctor, reviewDeviations} = await helpers;
+    const expo = {packageName: 'expo', actualVersion: '58.0.0-preview.6', expectedVersionOrRange: '~58.0.0-preview.7'};
+    const reviewedPolicy = {sdkVersion: '58.0.0', packages: {expo: {
+        version: expo.actualVersion, expected: expo.expectedVersionOrRange, reason: 'Keep validated native runtime.'
+    }}};
+    assert.throws(() => reviewDeviations([expo], {...reviewedPolicy, packages: {}}, '58.0.0'), /Unreviewed/);
+    assert.equal(reviewDeviations([expo], reviewedPolicy, '58.0.0').length, 1);
+    assert.throws(() => reviewDeviations([{...expo, actualVersion: '58.0.0-preview.5'}], reviewedPolicy, '58.0.0'), /Unreviewed/);
+    assert.deepEqual(assessDoctor(result(), {reviewedDependencies: [expo]}), []);
+    const run = result([dependencyTitle], 'react  19.2.3  19.3.0\n1 package out of date.');
+    assert.deepEqual(assessDoctor(run, {reviewedDependencies: [dependency, expo]}), [dependencyTitle]);
+    assert.throws(() => assessDoctor(result(), {reviewedDependencies: [dependency, expo]}), /findings differ/);
+    assert.throws(() => assessDoctor(run, {reviewedDependencies: [dependency, {...expo, expectedVersionOrRange: '~58.0.1-preview.1'}]}), /findings differ/);
+    assert.throws(() => assessDoctor(result([dependencyTitle], 'react 19.2.3 19.3.0\nother 1.0.0 2.0.0\n2 packages out of date.'),
+        {reviewedDependencies: [dependency, expo]}), /findings differ/);
+});
+
 test('only exact, SDK-scoped policy entries permit dependency deviations', async () => {
     const {reviewDeviations} = await helpers;
     assert.match(reviewDeviations([dependency], policy, '57.0.0')[0], /React DOM/);

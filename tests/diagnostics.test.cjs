@@ -148,3 +148,23 @@ test('native error codes survive redaction while unsafe values and getters remai
     assert.doesNotThrow(() => diagnostics.capture(hostile, 'api.yts.list_movies'));
     assert.equal(calls.captures.at(-1).error.message, 'api.yts.list_movies failed');
 });
+
+test('billing stage and SDK code enrich the existing issue without changing its fingerprint or exposing SDK payloads', () => {
+    const {diagnostics, calls} = fixture();
+    for (const stage of ['billing_check', 'offering_fetch']) {
+        const error = Object.assign(new Error('private billing response customer@example.test'), {
+            code: '2', userInfo: {underlyingErrorMessage: 'private details'},
+        });
+        diagnostics.start('purchases.offerings', {provider: 'revenuecat'}).fail(error,
+            {stage, error_code: 'store_problem', purchases_error_code: 2});
+        const capture = calls.captures.at(-1);
+        assert.deepEqual(capture.options.fingerprint, ['{{ default }}', 'purchases.offerings']);
+        assert.equal(capture.error.message, 'purchases.offerings failed (store_problem)');
+        assert.deepEqual(capture.options.contexts.diagnostics, {
+            'diagnostics.provider': 'revenuecat', 'diagnostics.operation': 'purchases.offerings',
+            'diagnostics.stage': stage, 'diagnostics.error_code': 'store_problem', 'diagnostics.purchases_error_code': 2,
+        });
+        assert.equal(capture.error.userInfo, undefined);
+        assert.doesNotMatch(capture.error.stack, /private|customer@example.test/);
+    }
+});
