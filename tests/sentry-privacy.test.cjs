@@ -428,3 +428,28 @@ test('feedback strips hidden account autofill and inherited attachments while re
     const error = {exception: {values: [{value: 'Existing fatal'}]}};
     assert.equal(integration.processEvent(error, {}), error);
 });
+
+test('documented RevenueCat numeric codes are bounded in every monitoring payload', () => {
+    const {PURCHASES_ERROR_CODE} = require('@revenuecat/purchases-typescript-internal');
+    for (const code of Object.values(PURCHASES_ERROR_CODE)) {
+        const numeric = Number(code);
+        assert.deepEqual(sanitizeDiagnosticAttributes({purchases_error_code: numeric}), {purchases_error_code: numeric});
+    }
+    for (const value of [-1, 27, 36, 41, 43, 999999, 2.5, NaN, Infinity, '2', 'private', null, {code: 2}]) {
+        assert.deepEqual(sanitizeDiagnosticAttributes({purchases_error_code: value, 'diagnostics.purchases_error_code': value}), {});
+    }
+    for (const stage of ['billing_check', 'offering_fetch']) {
+        const safe = {'diagnostics.operation': 'purchases.offerings', 'diagnostics.stage': stage, 'diagnostics.purchases_error_code': 2};
+        const attributes = {...safe, underlyingErrorMessage: 'private billing response', userInfo: {email: 'private@example.test'},
+            billing_response_code: 6, 'diagnostics.underlying_error_code': 6, customer_id: 'private'};
+        const outputs = [
+            sanitizeErrorEvent({contexts: {diagnostics: attributes}}).contexts.diagnostics,
+            sanitizeBreadcrumb({category: 'yify.purchases.offerings', data: attributes}).data,
+            sanitizeSpan({op: 'yify.purchases.offerings', description: 'purchases.offerings', data: attributes}).data,
+            sanitizeTransaction({type: 'transaction', contexts: {trace: {data: attributes}}}).contexts.trace.data,
+            sanitizeLog({level: 'error', message: 'purchases.offerings', attributes}).attributes,
+            sanitizeMetric({name: 'yify.operation.count', type: 'counter', value: 1, attributes}).attributes,
+        ];
+        for (const output of outputs) assert.deepEqual(output, safe);
+    }
+});

@@ -88,7 +88,7 @@ function fixture(t, options = {}) {
         PURCHASES_ERROR_CODE: {
             PURCHASE_CANCELLED_ERROR: 'cancelled', PRODUCT_ALREADY_PURCHASED_ERROR: 'already', PAYMENT_PENDING_ERROR: 'pending',
             PURCHASE_NOT_ALLOWED_ERROR: '3', NETWORK_ERROR: '10', OFFLINE_CONNECTION_ERROR: '35',
-            CONFIGURATION_ERROR: '23',
+            CONFIGURATION_ERROR: '23', STORE_PROBLEM_ERROR: '2', UNKNOWN_ERROR: '0', TEST_STORE_SIMULATED_PURCHASE_ERROR: '42',
         },
     };
     const {RevenueCatPurchaseRepositoryImpl} = loadTypeScript('data/repositories/RevenueCatPurchaseRepositoryImpl.ts', {
@@ -753,4 +753,71 @@ test('native checkout emits one attributed non-revenue funnel per coalesced atte
         assert.equal(params.plan_kind, 'monthly');
     }
     assert.doesNotMatch(JSON.stringify(events), /private|package_id|price|currency|revenue|transaction|renewal/);
+});
+
+for (const stage of ['billing_check', 'offering_fetch']) {
+    test(`store failures identify ${stage}, retain verified access and recover on the existing retry`, async t => {
+        const {diagnostics, operations} = diagnosticRecorder();
+        let blocked = true;
+        let billingChecks = 0;
+        const failure = Object.assign(new Error('private SDK response'), {code: '2',
+            underlyingErrorMessage: 'private customer billing response 6',
+            userInfo: {code: 2, underlyingErrorCode: 6, email: 'private@example.test'}});
+        const f = fixture(t, {diagnostics, infos: [['private-account', customer(true)]],
+            canMakePayments: () => {
+                billingChecks++;
+                if (blocked && stage === 'billing_check') throw failure;
+                return true;
+            }, offerings: () => {
+                if (blocked && stage === 'offering_fetch') throw failure;
+                return offering();
+            }});
+        await f.ready('private-account');
+        const errors = operations.filter(entry => entry.error);
+        assert.equal(errors.length, 1);
+        assert.equal(errors[0].operation, 'purchases.offerings');
+        assert.equal(errors[0].error, failure);
+        assert.deepEqual(errors[0].finishAttributes, {stage, error_code: 'store_problem', purchases_error_code: 2});
+        assert.equal(f.repository.getState().ready, true);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        assert.equal(f.calls.filter(([name]) => name === 'offers').length, stage === 'billing_check' ? 0 : 1);
+        assert.doesNotMatch(JSON.stringify(operations.map(({error, ...entry}) => entry)), /private|userInfo|underlying|email/);
+        t.mock.timers.tick(4999);
+        await flush();
+        assert.equal(billingChecks, 1);
+        blocked = false;
+        t.mock.timers.tick(1);
+        await flush();
+        assert.equal(billingChecks, 2);
+        assert.equal(f.repository.getState().offers.length, 1);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        assert.equal(operations.filter(entry => entry.error).length, 1);
+    });
+}
+
+for (const code of ['private-account', '27', '36', '99', '02', '2.0', 2, null, undefined, {toString() { throw new Error('private'); }}]) {
+    test(`offering diagnostics reject undocumented or malformed SDK code ${typeof code}:${typeof code === 'object' ? 'object' : code}`, async t => {
+        const {diagnostics, operations} = diagnosticRecorder();
+        const failure = Object.assign(new Error('private SDK response'), {code});
+        Object.defineProperties(failure, {
+            userInfo: {get() { throw new Error('SDK details must never be read'); }},
+            underlyingErrorMessage: {get() { throw new Error('SDK details must never be read'); }},
+        });
+        const f = fixture(t, {diagnostics, offerings: () => { throw failure; }});
+        await f.ready();
+        assert.deepEqual(operations.find(entry => entry.error).finishAttributes, {stage: 'offering_fetch', error_code: 'unknown'});
+    });
+}
+
+test('hostile SDK code getters retain the original failure and stage without interrupting retry setup', async t => {
+    const {diagnostics, operations} = diagnosticRecorder();
+    const failure = Object.defineProperty(new Error('private'), 'code', {get() { throw new Error('private'); }});
+    let attempts = 0;
+    const f = fixture(t, {diagnostics, canMakePayments: () => { attempts++; throw failure; }});
+    await f.ready();
+    assert.equal(operations.find(entry => entry.error).error, failure);
+    assert.deepEqual(operations.find(entry => entry.error).finishAttributes, {stage: 'billing_check', error_code: 'unknown'});
+    t.mock.timers.tick(5000);
+    await flush();
+    assert.equal(attempts, 2);
 });
