@@ -10,4 +10,8 @@ export class AdSenseDisplayAds implements DisplayAds {
     attach(): () => void {
         return () => {};
     }
+
+    async showPrivacyOptions(): Promise<boolean> {
+        return false;
+    }
 }

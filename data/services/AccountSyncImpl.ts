@@ -4,6 +4,7 @@ import {
     type LibraryRepository,
     encodeLibraryState,
     mergeLibraryState,
+    libraryNeedsDeletionCleanup,
     parseLibraryState,
     sameLibraryState,
     type AuthRepository,
@@ -59,6 +60,7 @@ const LIBRARY_UID_KEY = 'libraryUid';
 const LIBRARY_TRANSITION_KEY = 'libraryTransition';
 const LIBRARY_WRITE_ATTEMPTS = 3;
 const libraryAccountKey = (uid: string) => `libraryAccount:${uid}`;
+const deletedAccountKey = (uid: string) => `deletedAccount:${uid}`;
 const MARKS_KEY = 'watchlistMarks';
 const PREFERENCES_AT_KEY = 'preferencesUpdatedAt';
 const LAST_SYNCED_AT_KEY = 'lastSyncedAt';
@@ -94,6 +96,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private started = false;
     private currentUid: string | null = null;
+    private deletedUid: string | null = null;
     private mergedUid: string | null = null;
     private applying = false;
     private running = false;
@@ -161,17 +164,22 @@ export class AccountSyncImpl implements AccountSync {
         this.cancelRetry();
         this.backoff = RETRY_MS;
         this.currentUid = uid;
+        this.deletedUid = null;
         this.mergedUid = null;
         this.libraryAccountReady = false;
         if (!uid) {
             this.recoverAnonymousLibrary();
             return;
         }
-        if (this.selectLibraryAccount(uid)) void this.pull();
+        if (this.selectLibraryAccount(uid)) {
+            if (this.store.getString(deletedAccountKey(uid)) === 'true') {
+                this.fail('deleted', 'Account deletion has started. Finish deleting your account or sign out.');
+            } else void this.pull();
+        }
     }
 
     syncNow(): void {
-        if (this.paused) return;
+        if (this.paused || this.isDeletedAccount()) return;
         if (!this.currentUid) {
             if (!this.libraryAccountReady) this.recoverAnonymousLibrary();
             return;
@@ -231,18 +239,13 @@ export class AccountSyncImpl implements AccountSync {
         this.cancelPush();
         this.cancelRetry();
         this.backoff = RETRY_MS;
-        this.mergedUid = null;
-        this.watchlistDirty = false;
-        this.preferencesDirty = false;
-        this.historyDirty = false;
-        this.libraryDirty = false;
-        this.marks = {};
-        this.store.delete(MARKS_KEY);
-        // Retained local data must stay attributed to its account on the next sign-in.
+        this.deletedUid = uid;
+        this.store.set(deletedAccountKey(uid), 'true');
         if (!this.store.getString(LINKED_UID_KEY)) this.store.set(LINKED_UID_KEY, uid);
-        this.store.delete(PREFERENCES_AT_KEY);
-        this.store.delete(LAST_SYNCED_AT_KEY);
-        this.status.set({state: 'idle', failure: null, detail: null, pendingChanges: false, lastSyncedAt: null});
+        this.clearDeletedAccountData();
+        this.status.set({state: 'error', failure: 'deleted',
+            detail: 'Your synced data was deleted. Finish deleting your account or sign out.',
+            pendingChanges: false, lastSyncedAt: null});
         return true;
     }
 
@@ -290,7 +293,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private schedulePush(): void {
-        if (!this.currentUid || this.paused) return;
+        if (!this.currentUid || this.paused || this.isDeletedAccount()) return;
         this.cancelPush();
         this.pushTimer = setTimeout(() => {
             this.pushTimer = null;
@@ -299,7 +302,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private scheduleRetry(): void {
-        if (this.retryTimer || (!this.currentUid && this.libraryAccountReady) || this.paused) return;
+        if (this.retryTimer || (!this.currentUid && this.libraryAccountReady) || this.paused || this.isDeletedAccount()) return;
         const delay = this.backoff;
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
@@ -310,6 +313,17 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private fail(failure: SyncFailure, detail: string): void {
+        if (failure === 'deleted' && this.currentUid) {
+            this.deletedUid = this.currentUid;
+            this.store.set(deletedAccountKey(this.currentUid), 'true');
+            this.cancelPush();
+            this.cancelRetry();
+            this.clearDeletedAccountData();
+            this.journal?.retrySync();
+            this.diagnosticSpan?.finish('cancelled', {error_code: failure});
+            this.status.set({state: 'error', failure, detail, pendingChanges: false, lastSyncedAt: null});
+            return;
+        }
         if (failure !== 'network' && this.diagnosticSpan && this.reportedFailure !== failure) {
             this.diagnosticSpan.fail(new Error('Account sync failed'), {error_code: failure});
         } else {
@@ -318,6 +332,39 @@ export class AccountSyncImpl implements AccountSync {
         this.reportedFailure = failure;
         this.status.set({state: 'error', failure, detail});
         this.scheduleRetry();
+    }
+
+    private isDeletedAccount(): boolean {
+        return this.currentUid != null && this.deletedUid === this.currentUid;
+    }
+
+    private clearDeletedAccountData(): void {
+        const uid = this.deletedUid;
+        if (!uid || uid !== this.currentUid) return;
+        const owner = this.store.getString(LINKED_UID_KEY);
+        this.applyRemote(() => {
+            if (!owner || owner === uid) {
+                this.watchlist.applyRemote([]);
+                this.watchHistory.applyRemote(parseHistoryState(undefined));
+                this.preferences.applyRemote(this.preferences.getDefaultSynced());
+                this.marks = {};
+                this.trackedIds = [];
+                this.lastPreferencesPayload = JSON.stringify(this.preferences.getSynced());
+                this.store.delete(MARKS_KEY);
+                this.store.delete(PREFERENCES_AT_KEY);
+            }
+            if (this.store.getString(LIBRARY_UID_KEY) === uid) {
+                this.library.applyRemote(parseLibraryState(undefined));
+                this.library.setMutationBlocked(true);
+            }
+        });
+        this.store.delete(libraryAccountKey(uid));
+        this.store.delete(LAST_SYNCED_AT_KEY);
+        this.watchlistDirty = false;
+        this.preferencesDirty = false;
+        this.historyDirty = false;
+        this.libraryDirty = false;
+        this.mergedUid = null;
     }
 
     private async getSyncToken(uid: string): Promise<string | null> {
@@ -363,6 +410,7 @@ export class AccountSyncImpl implements AccountSync {
     }
 
     private onWatchlistChanged(): void {
+        if (!this.applying && this.isDeletedAccount()) { this.clearDeletedAccountData(); return; }
         const nextIds = this.watchlist.getAll().map((movie) => movie.id);
         if (this.applying) {
             this.trackedIds = nextIds;
@@ -379,6 +427,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private onHistoryChanged(): void {
         if (this.applying) return;
+        if (this.isDeletedAccount()) { this.clearDeletedAccountData(); return; }
         this.historyDirty = true;
         this.historyRevision += 1;
         this.status.set({pendingChanges: true});
@@ -455,6 +504,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private onLibraryChanged(): void {
         if (this.applying) return;
+        if (this.isDeletedAccount()) { this.clearDeletedAccountData(); return; }
         this.persistLibraryAccount();
         this.libraryDirty = true;
         this.libraryRevision += 1;
@@ -464,6 +514,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private onPreferencesChanged(): void {
         if (this.applying) return;
+        if (this.isDeletedAccount()) { this.clearDeletedAccountData(); return; }
         const payload = JSON.stringify(this.preferences.getSynced());
         if (payload === this.lastPreferencesPayload) return;
         this.lastPreferencesPayload = payload;
@@ -476,7 +527,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private async push(): Promise<void> {
         const uid = this.currentUid;
-        if (!uid || uid !== this.mergedUid || this.paused || !this.libraryAccountReady) return;
+        if (!uid || uid !== this.mergedUid || this.paused || this.isDeletedAccount() || !this.libraryAccountReady) return;
         if (!this.pendingChanges()) return;
         if (this.running) {
             this.schedulePush();
@@ -643,7 +694,7 @@ export class AccountSyncImpl implements AccountSync {
         const next = mergeLibraryState(this.library.getState(), remoteState);
         this.applyRemote(() => this.library.applyRemote(next));
         this.persistLibraryAccount();
-        if (!sameLibraryState(next, remoteState)) {
+        if (!sameLibraryState(next, remoteState) || libraryNeedsDeletionCleanup(remote.library)) {
             this.libraryDirty = true;
             this.libraryRevision += 1;
         }
@@ -696,7 +747,7 @@ export class AccountSyncImpl implements AccountSync {
 
     private async pull(): Promise<void> {
         const uid = this.currentUid;
-        if (!uid || this.paused) return;
+        if (!uid || this.paused || this.isDeletedAccount()) return;
         if (!this.libraryAccountReady && !this.selectLibraryAccount(uid)) return;
         if (this.running) {
             this.scheduleRetry();

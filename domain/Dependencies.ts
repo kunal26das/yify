@@ -25,8 +25,10 @@ import type {AvailabilityAlerts} from './services/AvailabilityAlerts';
 import type {JournalRepository} from './repositories/JournalRepository';
 import type {AnimeRepository} from './repositories/AnimeRepository';
 import type {SubscriberAccess} from './services/SubscriberAccess';
+import type {PrivacyPreferences} from './services/PrivacyPreferences';
 
 export interface Dependencies {
+    privacy: PrivacyPreferences;
     diagnostics: Diagnostics;
     analytics: AnalyticsSink;
     appConfig: AppConfig;

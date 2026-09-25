@@ -1,7 +1,8 @@
 import Purchases, {AdFormat, AdMediatorName} from 'react-native-purchases';
 
-import type {AdImpression, AdImpressionRevenue, AdLoadFailure, AdRevenueSink, AnalyticsSink, Diagnostics} from '@/domain';
+import type {AdImpression, AdImpressionRevenue, AdLoadFailure, AdRevenueSink, AnalyticsSink, Diagnostics, PrivacyPreferences} from '@/domain';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
+import {optionalAnalyticsAllowed} from './optionalAnalytics';
 
 type TrackingEvent = 'loaded' | 'displayed' | 'opened' | 'revenue' | 'failed_to_load';
 
@@ -17,7 +18,8 @@ function impressionData(impression: AdImpression) {
 }
 
 export class RevenueCatAdRevenueSink implements AdRevenueSink {
-    constructor(private readonly analytics: AnalyticsSink, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS) {
+    constructor(private readonly analytics: AnalyticsSink, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
+        private readonly privacy?: PrivacyPreferences) {
     }
 
     trackLoaded(impression: AdImpression): void {
@@ -43,6 +45,7 @@ export class RevenueCatAdRevenueSink implements AdRevenueSink {
     }
 
     trackImpression(revenue: AdImpressionRevenue): void {
+        if (!optionalAnalyticsAllowed(this.privacy)) return;
         const revenueMicros = Math.round(revenue.value * 1_000_000);
         if (!Number.isFinite(revenue.value) || revenue.value < 0 ||
             !Number.isSafeInteger(revenueMicros) || !/^[A-Z]{3}$/.test(revenue.currency)) {
@@ -58,8 +61,7 @@ export class RevenueCatAdRevenueSink implements AdRevenueSink {
     }
 
     private track(event: TrackingEvent, send: () => Promise<void>): void {
-        // AdTracker checks SDK configuration itself. CustomerInfo/offerings may
-        // still be loading, but that must not discard valid ad callbacks.
+        if (!optionalAnalyticsAllowed(this.privacy)) return;
         const span = this.diagnostics.start('ads.revenue_delivery', {provider: 'revenuecat', stage: event});
         try {
             void send().then(() => span.finish()).catch((error) => {

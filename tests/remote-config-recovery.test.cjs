@@ -49,6 +49,16 @@ function fixture(t, options = {}) {
     };
 }
 
+test('connectivity changes cannot start remote config before explicit startup', async t => {
+    const f = fixture(t, {online: false});
+    f.connect(true);
+    await tick();
+    assert.equal(f.fetches(), 0);
+    assert.equal(f.spans.length, 0);
+    await f.config.init();
+    assert.equal(f.fetches(), 1);
+});
+
 test('offline startup uses defaults and reconnects without restarting the app', async t => {
     const f = fixture(t, {online: false});
     await f.config.ready();

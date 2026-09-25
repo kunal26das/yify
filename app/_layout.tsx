@@ -26,6 +26,7 @@ import {
     OverlayProvider,
     PlayerHost,
     PlayerProvider,
+    PrivacyGate,
     SystemBars,
     SupporterProvider,
     TopBar,
@@ -41,7 +42,6 @@ import {availabilityNotificationOpen} from '@/domain/policies/availabilityNotifi
 
 const dependencies = createDependencies();
 installAnalyticsSink(dependencies.analytics);
-bootstrap(dependencies);
 
 function handleNotificationData(data: unknown) {
     const target = movieNotificationTarget(data);
@@ -54,14 +54,6 @@ function handleNotificationData(data: unknown) {
 const DESKTOP_TOP_INSET = 48;
 
 function RootLayout() {
-    return (
-        <DependenciesProvider dependencies={dependencies}>
-            <AppShell/>
-        </DependenciesProvider>
-    );
-}
-
-function AppShell() {
     const [fontsLoaded, fontError] = useFonts({
         ...(Platform.OS === 'web' ? Ionicons.font : {}),
         HankenGrotesk_400Regular,
@@ -72,9 +64,19 @@ function AppShell() {
         Lora_600SemiBold,
         Lora_700Bold,
     });
+    if (!fontsLoaded && !fontError) return null;
+    return (
+        <DependenciesProvider dependencies={dependencies}>
+            <PrivacyGate><AppShell/></PrivacyGate>
+        </DependenciesProvider>
+    );
+}
+
+function AppShell() {
+    useEffect(() => bootstrap(dependencies), []);
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
-    const navReady = fontsLoaded || !!fontError;
+    const navReady = true;
     const handledNotification = useRef<string | null>(null);
     useEffect(() => {
         if (!lastResponse || !navReady) return;
@@ -130,10 +132,6 @@ function AppShell() {
     const theme = isFrosted
         ? {...baseTheme, colors: {...baseTheme.colors, background: 'transparent', card: 'transparent'}}
         : baseTheme;
-
-    if (!fontsLoaded && !fontError) {
-        return null;
-    }
 
     const content = (
         <ThemeProvider value={theme}>

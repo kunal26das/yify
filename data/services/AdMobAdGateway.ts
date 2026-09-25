@@ -77,7 +77,10 @@ export class AdMobAdGateway implements AdGateway {
     private loadSpan: DiagnosticSpan | null = null;
 
     private readyPromise: Promise<void> | null = null;
+    private privacyPromise: Promise<void> | null = null;
+    private privacyActive = false;
     private interstitial: InterstitialAd | null = null;
+    private presentedAd: InterstitialAd | null = null;
     private unsubscribeAd: (() => void) | null = null;
     private adTracking: AdTracking | null = null;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -88,6 +91,7 @@ export class AdMobAdGateway implements AdGateway {
     private showing = false;
     private failures = 0;
     private requestSeq = 0;
+    private loadGeneration = 0;
     private privacyRequired = false;
     private canRequestAds = false;
 
@@ -108,19 +112,21 @@ export class AdMobAdGateway implements AdGateway {
 
     init(): Promise<void> {
         if (!this.supported) return Promise.resolve();
+        if (this.privacyPromise != null) return this.privacyPromise;
         this.readyPromise = this.readyPromise ?? this.doInit();
         return this.readyPromise;
     }
 
     show(trigger: AdTrigger): Promise<boolean> | null {
         if (!this.supported) return null;
-        if (this.showing) return this.pending;
+        if (this.privacyActive) return null;
+        if (this.showing || this.presentedAd != null) return this.pending;
         const entitlement = this.options.entitlement();
         const decision = decideAd({
             trigger,
             entitlementKnown: entitlement.ready,
             adsRemoved: entitlement.adsRemoved,
-            loaded: this.loaded && !this.showing && this.interstitial != null,
+            loaded: this.canRequestAds && this.loaded && !this.showing && this.interstitial != null,
         });
         if (decision !== 'show') {
             this.options.analytics.trackEvent('trailer_ad_gated', {trigger, reason: decision});
@@ -133,6 +139,7 @@ export class AdMobAdGateway implements AdGateway {
         const ad = this.interstitial;
         if (ad == null) return null;
         this.showing = true;
+        this.presentedAd = ad;
         this.loaded = false;
         this.unsubscribeAd?.();
         this.unsubscribeAd = null;
@@ -146,11 +153,42 @@ export class AdMobAdGateway implements AdGateway {
         return this.privacyRequired;
     }
 
-    async showPrivacyOptions(): Promise<void> {
-        if (!this.supported) return;
+    showPrivacyOptions(): Promise<void> {
+        if (!this.supported || this.showing || this.presentedAd != null) return Promise.resolve();
+        if (this.privacyPromise != null) return this.privacyPromise;
+        this.privacyActive = true;
+        this.canRequestAds = false;
+        this.loaded = false;
+        this.loading = false;
+        this.clearRetry();
+        this.teardownAd();
+        this.privacyPromise = this.updatePrivacyOptions();
+        return this.privacyPromise;
+    }
+
+    private async updatePrivacyOptions(): Promise<void> {
+        await this.readyPromise;
         try {
             await AdsConsent.showPrivacyOptionsForm();
         } catch {
+        }
+        const info = await Promise.resolve().then(() => AdsConsent.getConsentInfo()).catch(() => null);
+        this.canRequestAds = info?.canRequestAds === true;
+        if (info != null) {
+            this.privacyRequired = info.privacyOptionsRequirementStatus ===
+                AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
+        }
+        try {
+            if (this.canRequestAds && !this.initialized) await this.initializeAds();
+        } catch {
+            this.canRequestAds = false;
+            this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'init'});
+        } finally {
+            this.privacyActive = false;
+            this.privacyPromise = null;
+            this.readyPromise = this.initialized || info?.canRequestAds === false ? Promise.resolve() : null;
+            this.failures = 0;
+            this.requestNext();
         }
     }
 
@@ -158,17 +196,18 @@ export class AdMobAdGateway implements AdGateway {
         const span = this.diagnostics.start('ads.initialize', {provider: 'admob'});
         try {
             await this.gatherConsent();
+            if (this.privacyActive) {
+                span.finish('cancelled');
+                this.readyPromise = null;
+                return;
+            }
             if (!this.canRequestAds) {
                 span.finish('unavailable');
                 this.readyPromise = null;
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent'});
                 return;
             }
-            await mobileAds().setRequestConfiguration({
-                maxAdContentRating: MaxAdContentRating.T,
-            });
-            await mobileAds().initialize();
-            this.initialized = true;
+            await this.initializeAds();
             span.finish();
             this.requestNext();
         } catch (error) {
@@ -178,13 +217,20 @@ export class AdMobAdGateway implements AdGateway {
         }
     }
 
+    private async initializeAds(): Promise<void> {
+        if (this.initialized) return;
+        await mobileAds().setRequestConfiguration({maxAdContentRating: MaxAdContentRating.T});
+        await mobileAds().initialize();
+        this.initialized = true;
+    }
+
     private async gatherConsent(): Promise<void> {
         this.canRequestAds = false;
         const info = await AdsConsent.gatherConsent().catch(() => {
             this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'consent_error'});
             return AdsConsent.getConsentInfo().catch(() => null);
         });
-        if (info == null) return;
+        if (info == null || this.privacyActive) return;
         this.canRequestAds = info.canRequestAds;
         this.privacyRequired =
             info.privacyOptionsRequirementStatus ===
@@ -198,10 +244,12 @@ export class AdMobAdGateway implements AdGateway {
     private requestNext(): void {
         if (!this.canPreload()) return;
         if (this.options.network?.refresh) {
+            const generation = this.loadGeneration;
             this.loading = true;
             void this.options.network.refresh()
                 .catch(() => this.options.network?.isOnline())
                 .then(() => {
+                    if (generation !== this.loadGeneration) return;
                     this.loading = false;
                     this.loadNext();
                 });
@@ -210,10 +258,10 @@ export class AdMobAdGateway implements AdGateway {
 
     private canPreload(): boolean {
         const entitlement = this.options.entitlement();
-        return this.initialized && this.canRequestAds &&
+        return this.initialized && this.canRequestAds && !this.privacyActive &&
             !(entitlement.ready && entitlement.adsRemoved) &&
             isForeground() && this.options.network?.isOnline() !== false &&
-            !this.loading && !this.loaded && !this.showing;
+            !this.loading && !this.loaded && !this.showing && this.presentedAd == null;
     }
 
     private loadNext(): void {
@@ -221,6 +269,7 @@ export class AdMobAdGateway implements AdGateway {
         const unitId = this.resolveUnitId();
         this.clearRetry();
         this.teardownAd();
+        const generation = this.loadGeneration;
         this.loading = true;
         this.requestSeq += 1;
         const span = this.diagnostics.start('ads.load', {provider: 'admob', attempt: this.failures + 1});
@@ -233,10 +282,11 @@ export class AdMobAdGateway implements AdGateway {
         let loadReported = false;
         let loadFailed = false;
         const fail = (error: unknown) => {
-            if (loadFailed) return;
+            if (loadFailed || generation !== this.loadGeneration) return;
             loadFailed = true;
             this.loaded = false;
             const failed = () => {
+                if (generation !== this.loadGeneration) return;
                 finishAdFailure(span, error, this.options.network?.isOnline());
                 this.loading = false;
                 this.failures += 1;
@@ -260,7 +310,7 @@ export class AdMobAdGateway implements AdGateway {
             this.interstitial = ad;
             this.adTracking = this.observeImpression(ad, impression);
             const offLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
-                if (loadReported || loadFailed) return;
+                if (loadReported || loadFailed || generation !== this.loadGeneration) return;
                 loadReported = true;
                 span.finish();
                 this.loading = false;
@@ -288,6 +338,12 @@ export class AdMobAdGateway implements AdGateway {
         let disposed = false;
         let timer: ReturnType<typeof setTimeout> | null = null;
 
+        const releasePresentation = () => {
+            if (this.presentedAd !== ad) return;
+            this.presentedAd = null;
+            this.requestNext();
+        };
+
         const dispose = () => {
             if (disposed) return;
             disposed = true;
@@ -298,6 +354,7 @@ export class AdMobAdGateway implements AdGateway {
             offClicked();
             offClosed();
             offError();
+            releasePresentation();
             queueMicrotask(() => {
                 try {
                     ad.destroy();
@@ -308,6 +365,7 @@ export class AdMobAdGateway implements AdGateway {
         const finish = () => {
             if (finished || disposed) return;
             finished = true;
+            releasePresentation();
             offOpened();
             offClicked();
             offClosed();
@@ -319,19 +377,19 @@ export class AdMobAdGateway implements AdGateway {
         };
 
         const offPaid = ad.addAdEventListener(AdEventType.PAID, (payload) => {
-            if (paid || !this.reportRevenue(payload as unknown as PaidEvent, impression)) return;
+            if (disposed || paid || !this.reportRevenue(payload as unknown as PaidEvent, impression)) return;
             paid = true;
             offPaid();
             if (finished) dispose();
         });
         const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
-            if (displayed) return;
+            if (disposed || displayed) return;
             displayed = true;
             // AdMob OPENED means visible; RevenueCat OPENED means the user clicked.
             this.options.adRevenue.trackDisplayed(impression);
         });
         const offClicked = ad.addAdEventListener(AdEventType.CLICKED, () => {
-            if (clicked) return;
+            if (disposed || clicked) return;
             clicked = true;
             this.options.adRevenue.trackOpened(impression);
         });
@@ -446,6 +504,7 @@ export class AdMobAdGateway implements AdGateway {
 
     private scheduleRetry(): void {
         this.clearRetry();
+        if (this.privacyActive || !this.canRequestAds) return;
         const entitlement = this.options.entitlement();
         if (entitlement.ready && entitlement.adsRemoved) return;
         if (!isForeground() || this.options.network?.isOnline() === false) return;
@@ -463,6 +522,7 @@ export class AdMobAdGateway implements AdGateway {
     }
 
     private teardownAd(): void {
+        this.loadGeneration += 1;
         this.loadSpan?.finish('cancelled');
         this.loadSpan = null;
         this.unsubscribeAd?.();

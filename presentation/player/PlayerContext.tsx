@@ -17,7 +17,7 @@ import {Analytics} from '@/presentation/analytics/events';
 import {useAdBreak} from './use-ad-break';
 import {usePreferences} from '../hooks/use-preferences';
 import type {PlayerSurfaceHandle} from './PlayerSurface';
-import {useDiagnostics} from '../di/DependenciesContext';
+import {useDiagnostics, usePrivacyPreferences} from '../di/DependenciesContext';
 import {PlaybackDiagnostics} from './PlaybackDiagnostics';
 
 export interface PlayerVideo {
@@ -76,6 +76,11 @@ const PlayerInternalContext = createContext<PlayerInternalApi | null>(null);
 
 export function PlayerProvider({children}: {children: ReactNode}): ReactElement {
     const diagnostics = useDiagnostics();
+    const privacy = usePrivacyPreferences();
+    const canPlay = useCallback(() => {
+        const choices = privacy.getChoices();
+        return choices.adultConfirmed && choices.youtube;
+    }, [privacy]);
     const playbackDiagnostics = useMemo(() => new PlaybackDiagnostics(diagnostics), [diagnostics]);
     useEffect(() => {
         const subscription = AppState.addEventListener('change', (state) => {
@@ -92,6 +97,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     playbackRef.current = playback;
     const adBreak = useAdBreak();
     const generationRef = useRef(0);
+    const pendingStartRef = useRef<{video: PlayerVideo; trigger: AdTrigger} | null>(null);
 
     const [video, setVideo] = useState<PlayerVideo | null>(null);
     const [mode, setMode] = useState<PlayerMode>('closed');
@@ -127,8 +133,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const start = useCallback(
         (next: PlayerVideo, trigger: AdTrigger) => {
             const generation = ++generationRef.current;
-            playbackDiagnostics.prepare();
-            if (AppState.currentState && AppState.currentState !== 'active') playbackDiagnostics.suspend();
+            playbackDiagnostics.stop();
             applyVideo(next);
             applyPlaying(false);
             if (trigger === 'movie_open') {
@@ -136,17 +141,50 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                 pendingUnmuteRef.current = deferUnmute;
                 applyMuted(deferUnmute);
             }
+            if (!canPlay()) {
+                pendingStartRef.current = {video: next, trigger};
+                return;
+            }
+            pendingStartRef.current = null;
+            playbackDiagnostics.prepare();
+            if (AppState.currentState && AppState.currentState !== 'active') playbackDiagnostics.suspend();
             const begin = () => {
                 if (generationRef.current !== generation) return;
                 if (videoRef.current?.videoId !== next.videoId) return;
+                if (!canPlay()) return;
                 playbackDiagnostics.begin();
                 applyPlaying(true);
                 Analytics.trailerPlay({id: next.movieId, title: next.title});
             };
             adBreak(trigger, begin);
         },
-        [adBreak, applyMuted, applyPlaying, applyVideo, playbackDiagnostics],
+        [adBreak, applyMuted, applyPlaying, applyVideo, canPlay, playbackDiagnostics],
     );
+
+    useEffect(() => {
+        let allowed = canPlay();
+        const unsubscribe = privacy.subscribe(() => {
+            const nextAllowed = canPlay();
+            if (allowed === nextAllowed) return;
+            allowed = nextAllowed;
+            if (nextAllowed) {
+                const pending = pendingStartRef.current;
+                if (pending && videoRef.current?.videoId === pending.video.videoId) start(pending.video, pending.trigger);
+                return;
+            }
+            generationRef.current++;
+            playbackDiagnostics.stop();
+            applyPlaying(false);
+            const current = videoRef.current;
+            pendingStartRef.current = current ? {video: current, trigger: 'movie_open'} : null;
+            try {surfaceRef.current?.pause();} catch {}
+        });
+        return () => {
+            unsubscribe();
+            generationRef.current++;
+            pendingStartRef.current = null;
+        };
+    }, [applyPlaying, canPlay, playbackDiagnostics, privacy, start]);
 
     const open = useCallback(
         (next: PlayerVideo) => {
@@ -163,6 +201,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const close = useCallback(() => {
         const current = videoRef.current;
         generationRef.current += 1;
+        pendingStartRef.current = null;
         playbackDiagnostics.stop();
         queueRef.current = [];
         setMode('closed');
@@ -210,21 +249,24 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     const getInlineRect = useCallback(() => inlineRectRef.current, []);
 
     const togglePlay = useCallback(() => {
+        if (!canPlay()) {applyPlaying(false); return;}
         const next = !playingRef.current;
         if (next) surfaceRef.current?.play();
         else surfaceRef.current?.pause();
         applyPlaying(next);
-    }, [applyPlaying]);
+    }, [applyPlaying, canPlay]);
 
     const toggleMute = useCallback(() => {
+        if (!canPlay()) return;
         const next = !mutedRef.current;
         surfaceRef.current?.setMuted(next);
         applyMuted(next);
-    }, [applyMuted]);
+    }, [applyMuted, canPlay]);
 
     const seekBy = useCallback((seconds: number) => {
+        if (!canPlay()) return;
         surfaceRef.current?.seekBy(seconds);
-    }, []);
+    }, [canPlay]);
 
     const setQueue = useCallback((items: PlayerVideo[]) => {
         queueRef.current = items.slice();
@@ -244,12 +286,13 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
     }, [applyPlaying, start]);
 
     const handleEnded = useCallback(() => {
+        if (!canPlay()) return;
         if (playbackRef.current.autoplayNext) {
             playNext();
             return;
         }
         applyPlaying(false);
-    }, [applyPlaying, playNext]);
+    }, [applyPlaying, canPlay, playNext]);
 
     const api = useMemo<PlayerApi>(
         () => ({
@@ -292,6 +335,7 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
             subscribeInlineRect,
             getInlineRect,
             reportPlaying: (playing: boolean) => {
+                if (!canPlay()) {applyPlaying(false); return;}
                 applyPlaying(playing);
                 if (playing && pendingUnmuteRef.current) {
                     pendingUnmuteRef.current = false;
@@ -299,11 +343,11 @@ export function PlayerProvider({children}: {children: ReactNode}): ReactElement 
                 }
             },
             reportEnded: handleEnded,
-            reportReady: () => playbackDiagnostics.ready(),
-            reportState: (state: string) => playbackDiagnostics.state(state),
-            reportError: (code: string) => playbackDiagnostics.error(code),
+            reportReady: () => {if (canPlay()) playbackDiagnostics.ready();},
+            reportState: (state: string) => {if (canPlay()) playbackDiagnostics.state(state);},
+            reportError: (code: string) => {if (canPlay()) playbackDiagnostics.error(code);},
         }),
-        [applyMuted, applyPlaying, getInlineRect, handleEnded, subscribeInlineRect, playbackDiagnostics],
+        [applyMuted, applyPlaying, canPlay, getInlineRect, handleEnded, subscribeInlineRect, playbackDiagnostics],
     );
 
     return (

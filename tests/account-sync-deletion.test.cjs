@@ -13,10 +13,15 @@ function syncFixture(t, options = {}) {
     t.mock.timers.enable({apis: ['setTimeout', 'setInterval']});
     const remote = new Map();
     const calls = [];
+    const listeners = {};
     let foreground;
     let movies = [{id: 123}];
-    let library = {watched: {}, collections: {}, memberships: {}, clearedAt: 0};
-    let history = {entries: [], removed: {}, clearedAt: 0};
+    let library = options.library ?? {watched: {}, collections: {}, memberships: {}, clearedAt: 0};
+    let history = options.history ?? {entries: [], removed: {}, clearedAt: 0};
+    const defaultPreferences = {
+        theme: 'system',
+        browseDefaults: {sort_by: 'date_added', order_by: 'desc', quality: 'all', genre: 'all', minimum_rating: 0},
+    };
     let preferences = {
         theme: 'dark',
         browseDefaults: {sort_by: 'date_added', order_by: 'desc', quality: 'all', genre: 'all', minimum_rating: 0},
@@ -42,19 +47,21 @@ function syncFixture(t, options = {}) {
             writeSyncDocument: async (uid, token, patch) => {
                 calls.push(`write-start:${uid}`);
                 await options.beforeWrite?.();
+                if (options.writeFailure) return {ok: false, failure: options.writeFailure, detail: 'Request rejected'};
                 remote.set(uid, {...remote.get(uid), ...patch});
                 calls.push(`write-end:${uid}`);
                 return {ok: true};
             },
             deleteSyncDocument: async (uid) => {
                 calls.push(`delete:${uid}`);
+                await options.beforeDelete?.();
                 if (options.deleteFails) return {ok: false, failure: 'network', detail: 'offline'};
                 remote.delete(uid);
                 return {ok: true};
             },
         },
     });
-    const values = new Map();
+    const values = options.values ?? new Map();
     const sync = new AccountSyncImpl({
         store: {
             getString: (key) => values.get(key),
@@ -70,29 +77,113 @@ function syncFixture(t, options = {}) {
         watchlist: {
             getAll: () => movies,
             applyRemote: (next) => { movies = next; },
-            subscribe: () => () => {},
+            subscribe: (listener) => {listeners.watchlist = listener; return () => {};},
         },
         library: {
             setMutationBlocked: () => {},
             getState: () => library,
             applyRemote: (next) => { library = next; },
-            subscribe: () => () => {},
+            subscribe: (listener) => {listeners.library = listener; return () => {};},
         },
         watchHistory: {
             getState: () => history,
             applyRemote: (next) => { history = next; },
-            subscribe: () => () => {},
+            subscribe: (listener) => {listeners.history = listener; return () => {};},
         },
         preferences: {
             getSynced: () => preferences,
-            getDefaultSynced: () => preferences,
+            getDefaultSynced: () => defaultPreferences,
             applyRemote: (next) => { preferences = next; },
-            subscribe: () => () => {},
+            subscribe: (listener) => {listeners.preferences = listener; return () => {};},
         },
     });
     sync.start();
-    return {sync, calls, remote, foreground: () => foreground(), movies: () => movies};
+    return {sync, calls, remote, values, listeners, foreground: () => foreground(), movies: () => movies,
+        history: () => history, library: () => library, preferences: () => preferences,
+        setMovies: next => {movies = next; listeners.watchlist();}};
 }
+
+test('confirmed account deletion clears synced local data and prevents retries and local resurrection', async t => {
+    const options = {};
+    const f = syncFixture(t, options);
+    f.sync.setAccount('account-a');
+    await flush();
+    assert.equal(f.movies().length, 1);
+    assert.ok(f.values.has('libraryAccount:account-a'));
+    options.readFailure = 'deleted';
+    f.sync.syncNow();
+    await flush();
+    assert.equal(f.sync.getStatus().failure, 'deleted');
+    assert.equal(f.sync.getStatus().pendingChanges, false);
+    assert.deepEqual(f.movies(), []);
+    assert.deepEqual(f.history().entries, []);
+    assert.deepEqual(f.library().collections, {});
+    assert.equal(f.values.has('libraryAccount:account-a'), false);
+    assert.equal(f.values.get('deletedAccount:account-a'), 'true');
+    const calls = [...f.calls];
+    f.setMovies([{id: 987}]);
+    f.foreground();
+    f.sync.resume();
+    t.mock.timers.tick(120000);
+    await flush();
+    assert.deepEqual(f.movies(), []);
+    assert.deepEqual(f.calls, calls);
+});
+
+test('a persisted deletion marker prevents restoring a removed account after restarting the client', async t => {
+    const f = syncFixture(t, {values: new Map([['deletedAccount:account-a', 'true'], ['linkedUid', 'account-a']])});
+    f.sync.setAccount('account-a');
+    await flush();
+    assert.deepEqual(f.calls, []);
+    assert.deepEqual(f.movies(), []);
+    assert.equal(f.sync.getStatus().failure, 'deleted');
+    f.sync.setAccount('account-b');
+    await flush();
+    assert.ok(f.calls.includes('read:account-b'));
+    assert.equal(f.calls.some(call => call.endsWith('account-a')), false);
+});
+
+test('deleted sync remains deletable when authentication deletion must be retried', async t => {
+    const f = syncFixture(t, {readFailure: 'deleted'});
+    f.sync.setAccount('account-a');
+    await flush();
+    assert.equal(f.sync.getStatus().failure, 'deleted');
+    await f.sync.pause();
+    assert.equal(await f.sync.deleteRemote(), true);
+    assert.ok(f.calls.includes('delete:account-a'));
+    f.sync.resume();
+    const count = f.calls.length;
+    t.mock.timers.tick(120000);
+    await flush();
+    assert.equal(f.calls.length, count);
+});
+
+test('a deletion response for a previous account cannot clear the next account', async t => {
+    const read = deferred();
+    const options = {beforeRead: () => read.promise, readFailure: 'deleted'};
+    const f = syncFixture(t, options);
+    f.sync.setAccount('account-a');
+    await flush();
+    f.sync.setAccount('account-b');
+    read.resolve();
+    await flush();
+    assert.equal(f.values.has('deletedAccount:account-b'), false);
+    assert.deepEqual(f.movies(), [{id: 123}]);
+});
+
+test('a deletion during a pending write clears the account and does not report a sync crash', async t => {
+    const {operations, diagnostics} = diagnosticsRecorder();
+    const f = syncFixture(t, {writeFailure: 'deleted', diagnostics});
+    f.sync.setAccount('account-a');
+    await flush();
+    assert.equal(f.sync.getStatus().failure, 'deleted');
+    assert.deepEqual(f.movies(), []);
+    assert.equal(operations.some(entry => entry.error), false);
+    const count = f.calls.length;
+    t.mock.timers.tick(120000);
+    await flush();
+    assert.equal(f.calls.length, count);
+});
 
 test('account deletion drains an active upload and blocks foreground and poll resurrection', async (t) => {
     const write = deferred();
@@ -148,18 +239,21 @@ test('account deletion drains journal writes and deletes journal before the acco
 
 test('a failed journal deletion prevents deletion of the account sync document', async t => {
     const journal = {pause: async () => {}, resume() {}, deleteRemote: async () => false};
-    const {sync, calls, remote} = syncFixture(t, {journal});
+    const {sync, calls, remote, movies, values} = syncFixture(t, {journal});
     sync.setAccount('account-a');
     await flush();
     await sync.pause();
     assert.equal(await sync.deleteRemote(), false);
     assert.equal(calls.includes('delete:account-a'), false);
     assert.ok(remote.has('account-a'));
+    assert.deepEqual(movies(), [{id: 123}]);
+    assert.equal(values.has('libraryAccount:account-a'), true);
+    assert.equal(values.has('deletedAccount:account-a'), false);
     assert.equal(sync.getStatus().failure, 'network');
 });
 
-test('cancelled auth deletion can resume and restore sync for the original account', async (t) => {
-    const {sync, remote} = syncFixture(t);
+test('cancelled auth deletion cannot restore deleted local or remote data when sync resumes', async (t) => {
+    const {sync, remote, movies, values, calls, setMovies} = syncFixture(t);
     sync.setAccount('account-a');
     await flush();
     await sync.pause();
@@ -169,8 +263,76 @@ test('cancelled auth deletion can resume and restore sync for the original accou
     sync.setAccount('account-a');
     sync.resume();
     await flush();
-    assert.equal(remote.has('account-a'), true);
-    assert.equal(JSON.parse(remote.get('account-a').watchlist).items[0].id, 123);
+    const afterDelete = [...calls];
+    setMovies([{id: 999}]);
+    t.mock.timers.tick(120000);
+    await flush();
+    assert.deepEqual(calls, afterDelete);
+    assert.equal(remote.has('account-a'), false);
+    assert.deepEqual(movies(), []);
+    assert.equal(values.get('deletedAccount:account-a'), 'true');
+    assert.equal(sync.getStatus().failure, 'deleted');
+});
+
+test('successful remote deletion clears every account-owned sync cache only after server confirmation', async t => {
+    const confirmation = deferred();
+    const f = syncFixture(t, {beforeDelete: () => confirmation.promise,
+        library: {watched: {'123': {value: true, at: 1}}, collections: {private: {name: 'Private list', updatedAt: 1, removedAt: 0}},
+            memberships: {private: {'123': {value: true, at: 1}}}, clearedAt: 0},
+        history: {entries: [{key: 'movie:123', title: 'Private viewing history', watchedAt: 1}], removed: {}, clearedAt: 0}});
+    f.sync.setAccount('account-a');
+    await flush();
+    await f.sync.pause();
+    const deletion = f.sync.deleteRemote();
+    await flush();
+    assert.equal(f.movies().length, 1);
+    assert.equal(f.history().entries.length, 1);
+    assert.equal(f.library().collections.private.name, 'Private list');
+    assert.equal(f.preferences().theme, 'dark');
+    assert.equal(f.values.has('deletedAccount:account-a'), false);
+    confirmation.resolve();
+    assert.equal(await deletion, true);
+    assert.deepEqual(f.movies(), []);
+    assert.deepEqual(f.history(), {entries: [], removed: {}, clearedAt: 0});
+    assert.deepEqual(f.library(), {watched: {}, collections: {}, memberships: {}, clearedAt: 0});
+    assert.equal(f.preferences().theme, 'system');
+    for (const key of ['libraryAccount:account-a', 'watchlistMarks', 'preferencesUpdatedAt', 'lastSyncedAt']) assert.equal(f.values.has(key), false, key);
+    assert.equal(f.values.get('deletedAccount:account-a'), 'true');
+    assert.equal(f.sync.getStatus().pendingChanges, false);
+});
+
+test('a successful deletion response arriving after an account switch leaves the next account caches intact', async t => {
+    const confirmation = deferred();
+    const otherLibrary = {watched: {'456': {value: true, at: 2}}, collections: {}, memberships: {}, clearedAt: 0};
+    const f = syncFixture(t, {beforeDelete: () => confirmation.promise,
+        values: new Map([['libraryAccount:account-b', JSON.stringify(otherLibrary)]])});
+    f.sync.setAccount('account-a');
+    await flush();
+    await f.sync.pause();
+    const deletion = f.sync.deleteRemote();
+    await flush();
+    f.sync.setAccount('account-b');
+    const movies = f.movies();
+    const preferences = f.preferences();
+    confirmation.resolve();
+    assert.equal(await deletion, false);
+    assert.deepEqual(f.library(), otherLibrary);
+    assert.deepEqual(f.movies(), movies);
+    assert.deepEqual(f.preferences(), preferences);
+    assert.equal(f.values.has('deletedAccount:account-b'), false);
+    assert.equal(f.values.has('deletedAccount:account-a'), false);
+    assert.equal(f.values.has('libraryAccount:account-b'), true);
+});
+
+test('deletion before the first merge preserves shared caches still attributed to a different account', async t => {
+    const f = syncFixture(t, {values: new Map([['linkedUid', 'account-other']])});
+    await f.sync.pause();
+    f.sync.setAccount('account-a');
+    assert.equal(await f.sync.deleteRemote(), true);
+    assert.deepEqual(f.movies(), [{id: 123}]);
+    assert.equal(f.preferences().theme, 'dark');
+    assert.equal(f.values.get('linkedUid'), 'account-other');
+    assert.equal(f.values.get('deletedAccount:account-a'), 'true');
 });
 
 test('pausing during a read abandons its merge and prevents a following upload', async (t) => {
@@ -200,7 +362,7 @@ test('account changes stay paused until the deletion flow resumes the actual acc
     assert.equal(calls.slice(beforeChange.length).some((call) => call.endsWith('account-a')), false);
 });
 
-test('deleting one account never copies its retained local data into another account', async (t) => {
+test('deleting one account never copies its removed local data into another account', async (t) => {
     const {sync, remote, movies} = syncFixture(t);
     remote.set('account-b', {
         watchlist: JSON.stringify({items: [{id: 456}], marks: {}}),
@@ -219,7 +381,7 @@ test('deleting one account never copies its retained local data into another acc
     assert.equal(remote.has('account-a'), false);
 });
 
-test('deletion before the first merge still attributes retained local data to the deleted account', async (t) => {
+test('deletion before the first merge clears unclaimed local data without importing it into another account', async (t) => {
     const firstRead = deferred();
     const {sync, remote, movies} = syncFixture(t, {beforeRead: () => firstRead.promise});
     remote.set('account-b', {
@@ -231,6 +393,7 @@ test('deletion before the first merge still attributes retained local data to th
     firstRead.resolve();
     await paused;
     assert.equal(await sync.deleteRemote(), true);
+    assert.deepEqual(movies(), []);
     sync.setAccount('account-b');
     sync.resume();
     await flush();
@@ -256,11 +419,15 @@ test('identity changes while obtaining a deletion token prevent deleting either 
 });
 
 test('failed remote deletion stays paused until the caller resumes normal sync', async (t) => {
-    const {sync, calls, remote, foreground} = syncFixture(t, {deleteFails: true});
+    const {sync, calls, remote, foreground, movies, values, preferences} = syncFixture(t, {deleteFails: true});
     sync.setAccount('account-a');
     await flush();
     await sync.pause();
     assert.equal(await sync.deleteRemote(), false);
+    assert.deepEqual(movies(), [{id: 123}]);
+    assert.equal(preferences().theme, 'dark');
+    assert.equal(values.has('libraryAccount:account-a'), true);
+    assert.equal(values.has('deletedAccount:account-a'), false);
     const afterDelete = calls.length;
     foreground();
     t.mock.timers.tick(60000);

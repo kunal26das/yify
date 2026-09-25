@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
-function fixture(overrides = {}) {
+function fixture(overrides = {}, analytics = true) {
     const calls = {spans: [], captures: [], breadcrumbs: [], logs: [], counts: [], durations: []};
     let active;
     let time = 100;
@@ -31,8 +31,44 @@ function fixture(overrides = {}) {
         ...overrides,
     };
     const {SentryDiagnostics} = loadTypeScript('data/services/SentryDiagnostics.ts', {'@sentry/react-native': {}});
-    return {diagnostics: new SentryDiagnostics(sdk, () => time), calls, sdk, advance: (ms) => { time += ms; }};
+    const {OptionalTelemetryConsent} = loadTypeScript('instrumentation/optional-telemetry.ts');
+    const consent = new OptionalTelemetryConsent();
+    let listener;
+    consent.bind({getChoices: () => ({adultConfirmed: true, analytics}), subscribe(callback) {listener = callback; return () => {};}});
+    return {diagnostics: new SentryDiagnostics(sdk, () => time, consent), calls, sdk, advance: (ms) => { time += ms; },
+        consent(value) {analytics = value; listener();}};
 }
+
+test('refusal blocks optional telemetry while failures and explicit feedback stay available', async () => {
+    const {diagnostics, calls} = fixture({}, false);
+    const error = new Error('fatal operation');
+    await assert.rejects(diagnostics.trace('api.tmdb.find', async () => {throw error;}), value => value === error);
+    diagnostics.event('player.prepare');
+    assert.equal(calls.spans.length, 0);
+    assert.equal(calls.logs.length, 0);
+    assert.equal(calls.counts.length, 0);
+    assert.equal(calls.durations.length, 0);
+    assert.equal(calls.captures.length, 1);
+    assert.equal(await diagnostics.showFeedback(), true);
+});
+
+test('work across refusal, withdrawal and re-consent is never backfilled into optional telemetry', () => {
+    const {diagnostics, calls, consent} = fixture({}, false);
+    const beforeConsent = diagnostics.start('api.tmdb.find');
+    consent(true);
+    beforeConsent.finish();
+    const beforeWithdrawal = diagnostics.start('player.prepare');
+    consent(false);
+    diagnostics.event('player.prepare');
+    consent(true);
+    beforeWithdrawal.finish();
+    assert.equal(calls.spans.length, 1);
+    assert.equal(calls.spans[0].ended, 1);
+    assert.equal(calls.logs.length, 0);
+    assert.equal(calls.counts.length, 0);
+    diagnostics.start('player.prepare').finish();
+    assert.equal(calls.counts.length, 1);
+});
 
 test('trace preserves results and correlates nested work with one finished span and metrics', async () => {
     const {diagnostics, calls, advance} = fixture();

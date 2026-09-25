@@ -101,11 +101,8 @@ export class MovieRepositoryImpl implements MovieRepository {
   }
 
   private toThumbnailUrls(dto: YtsMovieDto): string[] {
-    const trailerCode = dto.yt_trailer_code?.trim();
     const backdrop = dto.background_image_original ?? dto.background_image;
     return [
-      trailerCode ? `https://img.youtube.com/vi/${trailerCode}/maxresdefault.jpg` : null,
-      trailerCode ? `https://img.youtube.com/vi/${trailerCode}/hq720.jpg` : null,
       this.toDisplayImageUrl(backdrop, 896, {quality: 92, noEnlarge: true}),
     ].filter((url): url is string => url != null);
   }

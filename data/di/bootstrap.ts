@@ -2,7 +2,11 @@ import type {Dependencies} from '@/domain';
 import {publishNotificationSettings, refreshMovieNotificationContent} from '../services/NewMoviesNotifierImpl';
 import {getAccountLink} from './container';
 
+const started = new WeakSet<Dependencies>();
+
 export function bootstrap(dependencies: Dependencies): void {
+    if (!dependencies.privacy.getChoices().adultConfirmed || started.has(dependencies)) return;
+    started.add(dependencies);
     void dependencies.appConfig.init();
     dependencies.auth.init();
     void dependencies.purchases.init();

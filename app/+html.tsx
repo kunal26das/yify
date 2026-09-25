@@ -34,7 +34,6 @@ export default function Root({children}: PropsWithChildren) {
                       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/>
                 <link rel="preconnect" href="https://wsrv.nl" crossOrigin="anonymous"/>
                 <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous"/>
-                <link rel="dns-prefetch" href="https://img.youtube.com"/>
                 <title>{TITLE}</title>
                 <meta name="description" content={DESCRIPTION} />
                 <link rel="manifest" href={`${BASE_URL}/manifest.json`}/>

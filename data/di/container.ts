@@ -32,6 +32,8 @@ import {FirestoreAvailabilityEnrollment} from '../datasources/AvailabilityEnroll
 import {availabilityPilotAccess} from '../services/availabilityAccess';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {JournalRepositoryImpl} from '../repositories/JournalRepositoryImpl';
+import {PrivacyPreferencesImpl} from '../services/PrivacyPreferencesImpl';
+import {optionalTelemetryConsent} from '@/instrumentation/optional-telemetry';
 
 let instance: Dependencies | null = null;
 let accountLink: AccountLink | null = null;
@@ -39,7 +41,14 @@ let accountLink: AccountLink | null = null;
 export function createDependencies(): Dependencies {
     if (instance != null) return instance;
 
-    const analytics = new FirebaseAnalyticsSink();
+    const privacy = new PrivacyPreferencesImpl(new PersistentCache('privacy'),
+        Platform.OS === 'web' && typeof window !== 'undefined'
+            ? listener => window.addEventListener('storage', event => {
+                if (event.key === null || event.key === 'privacy:choices') listener();
+            })
+            : undefined);
+    optionalTelemetryConsent.bind(privacy);
+    const analytics = new FirebaseAnalyticsSink(privacy);
     const diagnostics = new SentryDiagnostics();
     const network = new ExpoNetworkMonitor();
     const appConfig = new RemoteAppConfig(diagnostics, network);
@@ -59,7 +68,7 @@ export function createDependencies(): Dependencies {
     const journal = new JournalRepositoryImpl({auth, store: new PersistentCache('journal'), network});
     const purchases = new RevenueCatPurchaseRepositoryImpl(
         analytics,
-        new PersistentCache('purchases'), diagnostics, () => preferences.getPreferences().watchRegion,
+        new PersistentCache('purchases'), diagnostics, () => preferences.getPreferences().watchRegion, privacy,
     );
     const catalog = createCatalogRepositories(appConfig, diagnostics, auth, purchases, network);
     const accountSync = new AccountSyncImpl({
@@ -79,7 +88,7 @@ export function createDependencies(): Dependencies {
         network,
         diagnostics,
         analytics,
-        adRevenue: new RevenueCatAdRevenueSink(analytics, diagnostics),
+        adRevenue: new RevenueCatAdRevenueSink(analytics, diagnostics, privacy),
         entitlement: () => purchases.getState(),
     });
 
@@ -91,6 +100,7 @@ export function createDependencies(): Dependencies {
     });
 
     instance = {
+        privacy,
         diagnostics,
         analytics,
         appConfig,

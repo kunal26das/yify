@@ -126,8 +126,9 @@ test('monitoring initializes in release app runtimes with the correct environmen
                 assert.equal(calls[0].environment, environment);
                 assert.equal(calls[0].sendDefaultPii, false);
                 assert.equal(calls[0].integrations[0].options.console, false);
-                assert.equal(calls[0].tracesSampleRate, 0.1);
-                assert.equal(calls[0].profilesSampleRate, platform === 'ios' ? 0.1 : undefined);
+                assert.equal(calls[0].tracesSampleRate, undefined);
+                assert.equal(calls[0].tracesSampler({}), 0);
+                assert.equal(calls[0].profilesSampleRate, undefined);
                 assert.equal(calls[0].enableLogs, true);
                 assert.equal(calls[0].enableAutoConsoleLogs, false);
                 assert.equal(calls[0].logsOrigin, 'js');
@@ -137,10 +138,10 @@ test('monitoring initializes in release app runtimes with the correct environmen
                 assert.equal(typeof calls[0].beforeSend, 'function');
                 assert.deepEqual(calls[0].integrations.find(integration => integration.name === 'ReactNativeErrorHandlers')?.options,
                     platform === 'web' ? undefined : {onerror: false});
-                assert.equal(calls[0].beforeSendTransaction.name, 'sanitizeTransaction');
-                assert.equal(calls[0].beforeSendSpan.name, 'sanitizeSpan');
-                assert.equal(calls[0].beforeSendLog.name, 'sanitizeLog');
-                assert.equal(calls[0].beforeSendMetric.name, 'sanitizeMetric');
+                assert.equal(calls[0].beforeSendTransaction({}), null);
+                assert.equal(typeof calls[0].beforeSendSpan, 'function');
+                assert.equal(calls[0].beforeSendLog({}), null);
+                assert.equal(calls[0].beforeSendMetric({}), null);
                 assert.equal(calls[0].defaultIntegrations, undefined);
                 assert.equal(calls[0].release, undefined);
                 assert.equal(calls[0].dist, undefined);
@@ -331,25 +332,22 @@ test('logs and metrics accept only application diagnostics and strip automatic u
     assert.equal(sanitizeMetric({...metric, value: Infinity}), null);
 });
 
-test('shipping configuration keeps replay off, and controlled native verification keeps visual and network masking', () => {
-    const shipping = createSentryOptions({native: true, environment: 'production'});
-    assert.equal(shipping.integrations.some(item => item.name === 'MobileReplay'), false);
-    assert.equal(shipping.replaysOnErrorSampleRate, undefined);
-    const verification = createSentryOptions({native: true, environment: 'preview', replayEnabled: true});
-    assert.equal(verification.replaysSessionSampleRate, 0);
-    assert.equal(verification.replaysOnErrorSampleRate, 0.1);
-    const replay = verification.integrations.find(item => item.name === 'MobileReplay').options;
-    for (const key of ['maskAllText', 'maskAllImages', 'maskAllVectors']) assert.equal(replay[key], true);
-    for (const key of ['captureSurfaceViews', 'networkCaptureBodies']) assert.equal(replay[key], false);
-    for (const key of ['networkDetailAllowUrls', 'networkDetailDenyUrls', 'networkRequestHeaders', 'networkResponseHeaders']) assert.deepEqual(replay[key], []);
-    const web = createSentryOptions({native: false, environment: 'production', replayEnabled: true});
-    assert.equal(web.replaysOnErrorSampleRate, undefined);
-    assert.equal(web.profilesSampleRate, undefined);
-    assert.equal(web.integrations.some(item => item.name === 'MobileReplay'), false);
-    assert.equal(shipping.integrations.filter(item => item.name === 'ExpoRouter').length, 1);
-    assert.equal(shipping.integrations.find(item => item.name === 'ExpoRouter').options.enableTimeToInitialDisplay, true);
-    const feedback = shipping.integrations.find(item => item.name === 'MobileFeedback').options;
-    for (const key of ['showName', 'showEmail', 'isNameRequired', 'isEmailRequired', 'enableScreenshot', 'enableTakeScreenshot', 'enableShakeToReport']) assert.equal(feedback[key], false);
+test('optional automatic session, profiling, replay and performance collection stays disabled', () => {
+    for (const native of [true, false]) {
+        const options = createSentryOptions({native, environment: 'production'});
+        for (const key of ['enableAutoSessionTracking', 'enableAutoPerformanceTracing', 'enableAppStartTracking',
+            'enableNativeFramesTracking', 'enableStallTracking', 'enableUserInteractionTracing', 'sendClientReports']) {
+            assert.equal(options[key], false, key);
+        }
+        assert.equal(options.profilesSampleRate, undefined);
+        assert.equal(options.replaysSessionSampleRate, undefined);
+        assert.equal(options.replaysOnErrorSampleRate, undefined);
+        assert.equal(options.integrations.some(item => ['MobileReplay', 'ExpoRouter'].includes(item.name)), false);
+        const feedback = options.integrations.find(item => item.name === 'MobileFeedback').options;
+        for (const key of ['showName', 'showEmail', 'isNameRequired', 'isEmailRequired', 'enableScreenshot', 'enableTakeScreenshot', 'enableShakeToReport']) {
+            assert.equal(feedback[key], false);
+        }
+    }
 });
 
 test('native crash diagnostics enrich the latest process crash without importing historical crashes', () => {
@@ -364,7 +362,7 @@ test('native crash diagnostics enrich the latest process crash without importing
     }
 });
 
-test('Android skips the sampling profiler while retaining crash capture, tracing, and Firebase mirroring', async () => {
+test('Android retains crash capture and Firebase mirroring without optional consent', async () => {
     const event = {event_id: 'a'.repeat(32), exception: {values: [{type: 'SIGABRT', value: 'Abort', mechanism: {handled: false}}]}};
     for (const environment of ['production', 'preview']) {
         const mirrored = [];
@@ -373,8 +371,9 @@ test('Android skips the sampling profiler while retaining crash capture, tracing
         assert.equal(android.profilesSampleRate, undefined);
         assert.equal(android.anrProfilingSampleRate, undefined);
         assert.equal(android._experiments?.profilingOptions, undefined);
-        assert.equal(android.tracesSampleRate, 0.1);
-        assert.equal(android.enableNativeFramesTracking, true);
+        assert.equal(android.tracesSampleRate, undefined);
+        assert.equal(android.tracesSampler({}), 0);
+        assert.equal(android.enableNativeFramesTracking, false);
         assert.equal(android.enableTombstone, true);
         assert.notEqual(android.enableNative, false);
         assert.notEqual(android.enableNativeCrashHandling, false);
@@ -382,7 +381,7 @@ test('Android skips the sampling profiler while retaining crash capture, tracing
         const captured = await android.beforeSend(event, {});
         assert.equal(captured.exception.values[0].type, 'SIGABRT');
         assert.deepEqual(mirrored, [captured]);
-        assert.equal(createSentryOptions({native: true, android: false, environment}).profilesSampleRate, 0.1);
+        assert.equal(createSentryOptions({native: true, android: false, environment}).profilesSampleRate, undefined);
         assert.equal(createSentryOptions({native: false, environment}).profilesSampleRate, undefined);
     }
 });

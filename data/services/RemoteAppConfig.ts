@@ -22,18 +22,20 @@ export class RemoteAppConfig implements AppConfig {
     private readonly network?: NetworkMonitor,
   ) {
     network?.subscribe(() => {
-      if (network.isOnline()) {
+      if (this.startRequested && network.isOnline()) {
         this.retryAt = 0;
         void this.init();
       }
     });
   }
   private initialized = false;
+  private startRequested = false;
   private readyPromise: Promise<void> | null = null;
   private lastError: string | null = null;
   private retryAt = 0;
 
   init(): Promise<void> {
+    this.startRequested = true;
     if (this.readyPromise) return this.readyPromise;
     if (this.initialized || Date.now() < this.retryAt) return Promise.resolve();
     const span = this.diagnostics.start('config.initialize', {provider: 'firebase'});

@@ -6,8 +6,11 @@ export class PersistentCache implements KeyValueStore {
 
     constructor(id: string) {
         this.prefix = `${id}:`;
-        this.storage =
-            typeof window !== 'undefined' && window.localStorage ? window.localStorage : null;
+        try {
+            this.storage = typeof window !== 'undefined' ? window.localStorage : null;
+        } catch {
+            this.storage = null;
+        }
     }
 
     getString(key: string): string | undefined {

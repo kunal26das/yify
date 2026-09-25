@@ -177,7 +177,7 @@ export type {Dependencies} from './Dependencies';
 
 export type {LibraryState, LibraryMark, LibraryCollection} from './entities/LibraryState';
 export type {LibraryRepository} from './repositories/LibraryRepository';
-export {emptyLibraryState, normalizeLibraryState, parseLibraryState, mergeLibraryState, encodeLibraryState, sameLibraryState, liveLibraryCollections, libraryMovieWatched, libraryCollectionContains, libraryLatestTimestamp, normalizeCollectionName, LIBRARY_MAX_COLLECTIONS, LIBRARY_MAX_COLLECTION_RECORDS, LIBRARY_MAX_MARKS, LIBRARY_NAME_LIMIT, LIBRARY_MAX_PAYLOAD_CHARS} from './policies/libraryMerge';
+export {emptyLibraryState, normalizeLibraryState, parseLibraryState, mergeLibraryState, encodeLibraryState, sameLibraryState, liveLibraryCollections, libraryMovieWatched, libraryCollectionContains, libraryLatestTimestamp, libraryNeedsDeletionCleanup, normalizeCollectionName, LIBRARY_MAX_COLLECTIONS, LIBRARY_MAX_COLLECTION_RECORDS, LIBRARY_MAX_MARKS, LIBRARY_NAME_LIMIT, LIBRARY_MAX_PAYLOAD_CHARS} from './policies/libraryMerge';
 export {selectWatchlistMovies, pickWatchlistMovie} from './policies/watchlistView';
 export type {WatchlistViewOptions, WatchlistSort, WatchlistStatus} from './policies/watchlistView';
 export {movieNotificationTarget} from './policies/movieNotificationTarget';
@@ -190,3 +190,6 @@ export {journalToday, projectJournalMovie, validateJournalInput, JOURNAL_MAX_NOT
 export type {AnimeCategory, AnimeRelease} from './entities/AnimeRelease';
 export type {AnimeRepository, ListAnimeParams, ListAnimeResult} from './repositories/AnimeRepository';
 export type {SubscriberAccess, SubscriberAccessState} from './services/SubscriberAccess';
+export type {PrivacyChoices} from './entities/PrivacyChoices';
+export {DEFAULT_PRIVACY_CHOICES, PRIVACY_NOTICE_VERSION} from './entities/PrivacyChoices';
+export type {PrivacyPreferences} from './services/PrivacyPreferences';

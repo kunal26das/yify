@@ -6,6 +6,41 @@ const flush = async () => {
     for (let index = 0; index < 6; index++) await Promise.resolve();
 };
 
+test('reopening Google privacy choices removes existing ads and blocks later requests this session', async t => {
+    const f = fixture(t);
+    f.attach();
+    await flush();
+    await f.loaded();
+    assert.equal(f.calls.pushes, 1);
+    let opened = 0;
+    window.googlefc = {showRevocationMessage() { opened++; }};
+    assert.equal(await f.gateway.showPrivacyOptions(), true);
+    assert.equal(opened, 1);
+    assert.equal(f.container.children.length, 0);
+    f.attach('ad-slot');
+    f.changeState({ready: true});
+    await flush();
+    assert.equal(f.calls.pushes, 1);
+});
+
+test('ad privacy withdrawal wins over a pending script load', async t => {
+    const f = fixture(t);
+    f.attach();
+    await flush();
+    window.googlefc = {showRevocationMessage() {}};
+    assert.equal(await f.gateway.showPrivacyOptions(), true);
+    await f.loaded();
+    assert.equal(f.calls.pushes, 0);
+});
+
+test('missing Google privacy API reports unavailable without loading advertising', async t => {
+    const f = fixture(t);
+    assert.equal(await f.gateway.showPrivacyOptions(), false);
+    assert.equal(f.calls.scripts.length, 0);
+    window.googlefc = {showRevocationMessage() {throw Error('blocked');}};
+    assert.equal(await f.gateway.showPrivacyOptions(), false);
+});
+
 function fixture(t, {url = 'https://kunal26das.github.io/yify/', ready = true, adsRemoved = false, width = 728,
     dev = false, preview = false, electron = false, desktop = false, sdkThrows = false} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});

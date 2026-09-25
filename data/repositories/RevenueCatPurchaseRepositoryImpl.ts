@@ -20,11 +20,13 @@ import {
     type PurchasePlacement,
     type PurchaseRepository,
     type PurchaseState,
+    type PrivacyPreferences,
     type SubscriptionFunnelEvent,
 } from '@/domain';
 import {getAnalyticsInstanceId} from '../datasources/analytics/FirebaseAnalyticsSink';
 import {watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {NOOP_DIAGNOSTICS} from '../services/NoopDiagnostics';
+import {optionalAnalyticsAllowed} from '../services/optionalAnalytics';
 import {createObservable} from './support/observable';
 
 const apiKey =
@@ -141,14 +143,26 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private reportedEntitlement: string | undefined;
     private syncFailures = 0;
     private linkedRevision = -1;
+    private analyticsRevision = 0;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
-        private readonly viewingCountry: () => string | null = () => null) {
+        private readonly viewingCountry: () => string | null = () => null,
+        private readonly privacy?: PrivacyPreferences) {
         this.analytics = analytics;
         this.cache = cache;
         // The legacy unscoped cache cannot identify which customer owned the entitlement.
         this.store.set({available: Boolean(apiKey)});
+        privacy?.subscribe(() => {
+            this.analyticsRevision += 1;
+            this.linkedRevision = -1;
+            if (this.configured) {
+                void this.clearFirebaseAnalyticsIfDeclined();
+                void this.enqueue(async () => {
+                    if (await this.linkFirebaseAnalytics()) this.linkedRevision = this.revision;
+                });
+            }
+        });
     }
 
     getState(): PurchaseState {
@@ -217,10 +231,11 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     trackPaywallImpression(offerId: string): void {
+        if (!optionalAnalyticsAllowed(this.privacy)) return;
         const entry = this.packages.get(offerId);
         if (!entry || !this.isCurrent(entry.revision, this.activeSdkUid)) return;
         void this.enqueue(async () => {
-            if (!this.isCurrent(entry.revision, this.activeSdkUid)) return;
+            if (!optionalAnalyticsAllowed(this.privacy) || !this.isCurrent(entry.revision, this.activeSdkUid)) return;
             try {
                 await Purchases.trackCustomPaywallImpression({offering: entry.offering, paywallId: entry.offer.placement});
             } catch {
@@ -347,8 +362,9 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private async configure(): Promise<void> {
         if (!this.configured) {
             Purchases.setLogLevel(LOG_LEVEL.WARN);
-            await Purchases.configure({apiKey: apiKey!});
+            await Purchases.configure({apiKey: apiKey!, automaticDeviceIdentifierCollectionEnabled: false});
             this.configured = true;
+            await this.clearFirebaseAnalyticsIfDeclined();
         }
         if (!this.observing) {
             Purchases.addCustomerInfoUpdateListener((info) => {
@@ -383,11 +399,15 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 const previousUid = await Purchases.getAppUserID();
                 if (revision !== this.revision) continue;
                 if (desiredUid != null && previousUid !== desiredUid) {
-                    info = (await Purchases.logIn(desiredUid)).customerInfo;
+                    try { info = (await Purchases.logIn(desiredUid)).customerInfo; }
+                    finally { await this.clearFirebaseAnalyticsIfDeclined(); }
                 } else if (desiredUid == null) {
                     const anonymous = await Purchases.isAnonymous();
                     if (revision !== this.revision) continue;
-                    if (!anonymous) info = await Purchases.logOut();
+                    if (!anonymous) {
+                        try { info = await Purchases.logOut(); }
+                        finally { await this.clearFirebaseAnalyticsIfDeclined(); }
+                    }
                 }
                 const sdkUid = await Purchases.getAppUserID();
                 if (revision !== this.revision) continue;
@@ -549,11 +569,30 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         this.retryTimer = null;
     }
 
-    private async linkFirebaseAnalytics(): Promise<boolean> {
+    private async clearFirebaseAnalyticsIfDeclined(): Promise<void> {
+        if (optionalAnalyticsAllowed(this.privacy)) return;
         try {
-            const instanceId = await getAnalyticsInstanceId();
+            await Purchases.setFirebaseAppInstanceID(null);
+        } catch (error) {
+            this.diagnostics.capture(error, 'purchases.analytics_link', {provider: 'revenuecat'});
+        }
+    }
+
+    private async linkFirebaseAnalytics(): Promise<boolean> {
+        const revision = this.analyticsRevision;
+        try {
+            if (!optionalAnalyticsAllowed(this.privacy)) {
+                await Purchases.setFirebaseAppInstanceID(null);
+                return revision === this.analyticsRevision;
+            }
+            const instanceId = await getAnalyticsInstanceId(this.privacy);
+            if (revision !== this.analyticsRevision || !optionalAnalyticsAllowed(this.privacy)) return false;
             if (!instanceId) return false;
             await Purchases.setFirebaseAppInstanceID(instanceId);
+            if (revision !== this.analyticsRevision || !optionalAnalyticsAllowed(this.privacy)) {
+                await Purchases.setFirebaseAppInstanceID(null);
+                return false;
+            }
             return true;
         } catch (error) {
             this.diagnostics.capture(error, 'purchases.analytics_link', {provider: 'revenuecat'});

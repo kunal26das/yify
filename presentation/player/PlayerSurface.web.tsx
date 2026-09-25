@@ -42,7 +42,7 @@ function embedSource(videoId: string, captions: boolean): string {
         modestbranding: '1',
         playsinline: '1',
         controls: '1',
-        autoplay: '1',
+        autoplay: '0',
         ...(captions ? {cc_load_policy: '1'} : {}),
     });
     if (typeof window !== 'undefined') params.set('origin', window.location.origin);

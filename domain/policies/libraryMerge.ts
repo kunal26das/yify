@@ -5,6 +5,7 @@ export const LIBRARY_MAX_COLLECTION_RECORDS = 200;
 export const LIBRARY_MAX_MARKS = 2000;
 export const LIBRARY_NAME_LIMIT = 60;
 export const LIBRARY_MAX_PAYLOAD_CHARS = 300000;
+const REMOVED_COLLECTION_NAME = 'Removed collection';
 
 export function emptyLibraryState(): LibraryState {
     return {watched: {}, collections: {}, memberships: {}, clearedAt: 0};
@@ -51,7 +52,7 @@ export function normalizeLibraryState(value: unknown): LibraryState {
         const item = record(value);
         const updatedAt = timestamp(item.updatedAt);
         const removedAt = timestamp(item.removedAt);
-        const name = typeof item.name === 'string' ? normalizeCollectionName(item.name) : '';
+        const name = removedAt > 0 ? REMOVED_COLLECTION_NAME : typeof item.name === 'string' ? normalizeCollectionName(item.name) : '';
         return collectionKey(id) && name.length > 0 && name.length <= LIBRARY_NAME_LIMIT && !/[\u0000-\u001f\u007f]/.test(name) &&
             Math.max(updatedAt, removedAt) > clearedAt
             ? [[id, {name, updatedAt, removedAt}] as const] : [];
@@ -75,6 +76,21 @@ export function parseLibraryState(raw: string | undefined): LibraryState {
         return normalizeLibraryState(JSON.parse(raw));
     } catch {
         return emptyLibraryState();
+    }
+}
+
+export function libraryNeedsDeletionCleanup(raw: string | undefined): boolean {
+    if (!raw || raw.length > LIBRARY_MAX_PAYLOAD_CHARS) return false;
+    try {
+        const state = record(JSON.parse(raw));
+        const memberships = record(state.memberships);
+        return Object.entries(record(state.collections)).some(([id, value]) => {
+            const item = record(value);
+            return collectionKey(id) && timestamp(item.removedAt) > 0 &&
+                (item.name !== REMOVED_COLLECTION_NAME || Object.hasOwn(memberships, id));
+        });
+    } catch {
+        return false;
     }
 }
 

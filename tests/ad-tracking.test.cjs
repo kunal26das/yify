@@ -8,7 +8,11 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
-function fixture(t, {dev = false, show, load, diagnostics, online = true, refresh, foreground = true, entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
+function fixture(t, {dev = false, show, load, diagnostics, online = true, refresh, foreground = true,
+    gatherConsent = async () => ({canRequestAds: true}),
+    getConsentInfo = async () => ({canRequestAds: true}),
+    showPrivacyOptionsForm = async () => {}, initialize = async () => {},
+    entitlement = () => ({ready: true, adsRemoved: false})} = {}) {
     t.mock.timers.enable({apis: ['setTimeout']});
     const originalDev = global.__DEV__;
     global.__DEV__ = dev;
@@ -25,8 +29,8 @@ function fixture(t, {dev = false, show, load, diagnostics, online = true, refres
         'react-native': {Platform: {OS: 'android'}},
         'react-native-google-mobile-ads': {
             __esModule: true,
-            default: () => ({setRequestConfiguration: async () => {}, initialize: async () => {}}),
-            AdsConsent: {gatherConsent: async () => ({canRequestAds: true})},
+            default: () => ({setRequestConfiguration: async () => {}, initialize}),
+            AdsConsent: {gatherConsent, getConsentInfo, showPrivacyOptionsForm},
             AdsConsentPrivacyOptionsRequirementStatus: {REQUIRED: 'REQUIRED'},
             MaxAdContentRating: {T: 'T'},
             RevenuePrecisions: {UNKNOWN: 0, ESTIMATED: 1, PUBLISHER_PROVIDED: 2, PRECISE: 3},
@@ -49,6 +53,7 @@ function fixture(t, {dev = false, show, load, diagnostics, online = true, refres
                         emit: (event, payload) => {
                             listeners.get(event)?.forEach(listener => listener(payload));
                         },
+                        callbacks: event => [...(listeners.get(event) ?? [])],
                         destroy: () => {
                             ad.destroyCount += 1;
                             for (const set of listeners.values()) set.clear();
@@ -575,4 +580,243 @@ test('pending failure connectivity read cannot permit stale success or duplicate
     f.ads[1].emit('loaded');
     assert.equal(f.tracked.filter(item => item.method === 'trackLoaded').length, 1);
     assert.equal(f.ads.length, 2);
+});
+
+function deferred() {
+    let resolve;
+    let reject;
+    const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+    return {promise, resolve, reject};
+}
+
+const flush = () => new Promise(done => setImmediate(done));
+
+test('privacy withdrawal discards a cached ad and blocks future shows and reconnect loads', async t => {
+    let shows = 0;
+    const f = fixture(t, {
+        show: async () => { shows++; },
+        getConsentInfo: async () => ({canRequestAds: false, privacyOptionsRequirementStatus: 'REQUIRED'}),
+    });
+    await f.gateway.init();
+    const old = f.ads[0];
+    old.emit('loaded');
+    await f.gateway.showPrivacyOptions();
+    assert.equal(old.destroyCount, 1);
+    assert.equal(old.count(), 0);
+    assert.equal(f.gateway.privacyOptionsRequired(), true);
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.setForeground(true);
+    f.setOnline(false);
+    f.setOnline(true);
+    t.mock.timers.tick(300000);
+    assert.equal(f.ads.length, 1);
+    assert.equal(shows, 0);
+});
+
+test('privacy updates share one form and suspend initialization, queued events and retries', async t => {
+    const form = deferred();
+    let forms = 0;
+    const f = fixture(t, {showPrivacyOptionsForm: () => { forms++; return form.promise; }});
+    await f.gateway.init();
+    const staleLoaded = f.ads[0].callbacks('loaded');
+    const stalePaid = f.ads[0].callbacks('paid');
+    const first = f.gateway.showPrivacyOptions();
+    const second = f.gateway.showPrivacyOptions();
+    assert.equal(first, second);
+    assert.equal(f.gateway.init(), first);
+    await flush();
+    assert.equal(forms, 1);
+    for (const listener of staleLoaded) listener();
+    for (const listener of stalePaid) listener(paid());
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.setForeground(true);
+    f.setOnline(true);
+    t.mock.timers.tick(300000);
+    assert.equal(f.ads.length, 1);
+    assert.equal(f.tracked.length, 0);
+    form.resolve();
+    await first;
+    assert.equal(f.ads.length, 2);
+    assert.equal(f.ads[0].destroyCount, 1);
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.ads[1].emit('loaded');
+    const shown = f.gateway.show('movie_open');
+    assert.ok(shown instanceof Promise);
+    f.ads[1].emit('closed');
+    await shown;
+});
+
+test('withdrawing while a retry is scheduled cancels it', async t => {
+    const f = fixture(t, {getConsentInfo: async () => ({canRequestAds: false})});
+    await f.gateway.init();
+    f.ads[0].emit('error', {reason: 'no-fill'});
+    await f.gateway.showPrivacyOptions();
+    t.mock.timers.tick(300000);
+    assert.equal(f.ads.length, 1);
+});
+
+test('a pre-consent connectivity response cannot clear or duplicate the replacement preload', async t => {
+    const oldRead = deferred();
+    const freshRead = deferred();
+    let reads = 0;
+    const f = fixture(t, {refresh: () => ++reads === 1 ? oldRead.promise : freshRead.promise});
+    await f.gateway.init();
+    await f.gateway.showPrivacyOptions();
+    assert.equal(reads, 2);
+    oldRead.resolve(true);
+    await flush();
+    f.setForeground(true);
+    f.setOnline(true);
+    assert.equal(reads, 2);
+    assert.equal(f.ads.length, 0);
+    freshRead.resolve(true);
+    await flush();
+    assert.equal(f.ads.length, 1);
+});
+
+test('a pending old load failure cannot destroy a replacement ad after privacy changes', async t => {
+    const failureRead = deferred();
+    let reads = 0;
+    const f = fixture(t, {refresh: () => ++reads === 2 ? failureRead.promise : Promise.resolve(true)});
+    await f.gateway.init();
+    await flush();
+    f.ads[0].emit('error', {reason: 'internal-error'});
+    await f.gateway.showPrivacyOptions();
+    await flush();
+    assert.equal(f.ads.length, 2);
+    const replacement = f.ads[1];
+    replacement.emit('loaded');
+    failureRead.resolve(true);
+    await flush();
+    t.mock.timers.tick(300000);
+    assert.equal(replacement.destroyCount, 0);
+    assert.equal(f.ads.length, 2);
+    assert.deepEqual(f.tracked.map(item => item.method), ['trackLoaded']);
+});
+
+test('a privacy form failure still refreshes consent instead of reusing permission', async t => {
+    const f = fixture(t, {
+        showPrivacyOptionsForm: async () => { throw new Error('form failed'); },
+        getConsentInfo: async () => ({canRequestAds: false}),
+    });
+    await f.gateway.init();
+    f.ads[0].emit('loaded');
+    await assert.doesNotReject(f.gateway.showPrivacyOptions());
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.setForeground(true);
+    assert.equal(f.ads.length, 1);
+});
+
+test('unreadable refreshed consent fails closed and another explicit privacy attempt can recover', async t => {
+    let unavailable = true;
+    const f = fixture(t, {getConsentInfo: async () => {
+        if (unavailable) throw new Error('consent unavailable');
+        return {canRequestAds: true};
+    }});
+    await f.gateway.init();
+    f.ads[0].emit('loaded');
+    await f.gateway.showPrivacyOptions();
+    f.setForeground(true);
+    assert.equal(f.gateway.show('movie_open'), null);
+    assert.equal(f.ads.length, 1);
+    unavailable = false;
+    await f.gateway.showPrivacyOptions();
+    assert.equal(f.ads.length, 2);
+});
+
+test('privacy choices wait for an in-flight initial consent form and override its result', async t => {
+    const consent = deferred();
+    let forms = 0;
+    let initialized = 0;
+    const f = fixture(t, {
+        gatherConsent: () => consent.promise,
+        showPrivacyOptionsForm: async () => { forms++; },
+        getConsentInfo: async () => ({canRequestAds: false}),
+        initialize: async () => { initialized++; },
+    });
+    const initial = f.gateway.init();
+    const update = f.gateway.showPrivacyOptions();
+    await flush();
+    assert.equal(forms, 0);
+    consent.resolve({canRequestAds: true});
+    await Promise.all([initial, update]);
+    await f.gateway.init();
+    assert.equal(forms, 1);
+    assert.equal(initialized, 0);
+    assert.equal(f.ads.length, 0);
+});
+
+test('privacy approval initializes ads after initial consent refusal', async t => {
+    let initialized = 0;
+    const f = fixture(t, {
+        gatherConsent: async () => ({canRequestAds: false}),
+        getConsentInfo: async () => ({canRequestAds: true, privacyOptionsRequirementStatus: 'NOT_REQUIRED'}),
+        initialize: async () => { initialized++; },
+    });
+    await f.gateway.init();
+    assert.equal(f.ads.length, 0);
+    await f.gateway.showPrivacyOptions();
+    await f.gateway.init();
+    assert.equal(initialized, 1);
+    assert.equal(f.ads.length, 1);
+    assert.equal(f.gateway.privacyOptionsRequired(), false);
+});
+
+test('privacy changes during SDK initialization block the old initialization preload', async t => {
+    const initialization = deferred();
+    let initialized = 0;
+    let forms = 0;
+    const f = fixture(t, {
+        initialize: () => { initialized++; return initialization.promise; },
+        showPrivacyOptionsForm: async () => { forms++; },
+        getConsentInfo: async () => ({canRequestAds: false}),
+    });
+    const initial = f.gateway.init();
+    await flush();
+    const update = f.gateway.showPrivacyOptions();
+    assert.equal(f.gateway.init(), update);
+    await flush();
+    assert.equal(forms, 0);
+    initialization.resolve();
+    await Promise.all([initial, update]);
+    f.setForeground(true);
+    assert.equal(initialized, 1);
+    assert.equal(forms, 1);
+    assert.equal(f.ads.length, 0);
+});
+
+test('a failed SDK initialization after privacy approval stays blocked until a fresh attempt succeeds', async t => {
+    let failing = true;
+    const f = fixture(t, {
+        gatherConsent: async () => ({canRequestAds: false}),
+        initialize: async () => { if (failing) throw new Error('SDK init failed'); },
+    });
+    await f.gateway.init();
+    await assert.doesNotReject(f.gateway.showPrivacyOptions());
+    f.setForeground(true);
+    assert.equal(f.gateway.show('movie_open'), null);
+    assert.equal(f.ads.length, 0);
+    failing = false;
+    await f.gateway.showPrivacyOptions();
+    assert.equal(f.ads.length, 1);
+});
+
+test('privacy options never cover an active ad, including after its navigation timeout', async t => {
+    let forms = 0;
+    const f = fixture(t, {showPrivacyOptionsForm: async () => { forms++; }});
+    await f.gateway.init();
+    const ad = f.ads[0];
+    ad.emit('loaded');
+    const shown = f.gateway.show('movie_open');
+    ad.emit('opened');
+    await f.gateway.showPrivacyOptions();
+    assert.equal(forms, 0);
+    t.mock.timers.tick(8000);
+    await shown;
+    await f.gateway.showPrivacyOptions();
+    assert.equal(forms, 0);
+    assert.equal(f.ads.length, 1);
+    ad.emit('closed');
+    await f.gateway.showPrivacyOptions();
+    assert.equal(forms, 1);
 });

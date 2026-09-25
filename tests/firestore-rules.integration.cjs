@@ -49,11 +49,6 @@ test('Firestore rules allow owner deletion while preserving access and payload r
         await assert.rejects(deleteDoc(doc(client, 'journals/owner')), denied);
     }
     await assert.rejects(updateDoc(journalDoc, {deleting: true}), denied);
-    await updateDoc(journalDoc, {payload: '{"version":1,"clearedAt":0,"entries":{}}', deleting: true});
-    await assert.rejects(updateDoc(journalDoc, {payload: 'old private notes', deleting: false}), denied);
-    await assert.rejects(setDoc(journalDoc, {payload: '{}', updatedAt: 3, deleting: false}), denied);
-    await assert.rejects(deleteDoc(journalDoc), denied);
-    assert.equal((await getDoc(journalDoc)).data().payload, '{"version":1,"clearedAt":0,"entries":{}}');
 
     await setDoc(ownDoc, {watchlist: '[]', watchlistUpdatedAt: 1});
     await updateDoc(ownDoc, {watchlistUpdatedAt: 2});
@@ -120,5 +115,18 @@ test('Firestore rules allow owner deletion while preserving access and payload r
     assert.equal((await commit('{}', {exists: false})).ok, true);
     assert.equal((await commit('{"unexpected":true}', {exists: false})).ok, false);
     assert.equal((await getDoc(ownDoc)).data().library, '{}');
+    await updateDoc(journalDoc, {payload: '{"version":1,"clearedAt":0,"entries":{}}', deleting: true});
+    await assert.rejects(updateDoc(journalDoc, {payload: 'old private notes', deleting: false}), denied);
+    await assert.rejects(setDoc(journalDoc, {payload: '{}', updatedAt: 3, deleting: false}), denied);
+    await assert.rejects(deleteDoc(journalDoc), denied);
+    assert.equal((await getDoc(journalDoc)).data().payload, '{"version":1,"clearedAt":0,"entries":{}}');
+    await assert.rejects(getDoc(ownDoc), denied);
+    await assert.rejects(updateDoc(ownDoc, {watchlist: '[1]'}), denied);
+    assert.equal((await enroll({exists: false})).ok, false);
+    await deleteDoc(ownDoc);
+    await assert.rejects(setDoc(ownDoc, {watchlist: '[1]'}), denied);
+    const blockedRestore = await commit('{"watched":{"1":true}}', {exists: false});
+    assert.equal(blockedRestore.status, 403);
+    assert.equal((await enroll({exists: false})).status, 403);
     await deleteDoc(ownDoc);
 });

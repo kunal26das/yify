@@ -1,40 +1,32 @@
 import {
-    getAnalytics,
+    initializeAnalytics,
     isSupported,
     logEvent,
+    setConsent,
     setUserProperties,
     type Analytics,
 } from 'firebase/analytics';
 
-import type {AnalyticsParams, AnalyticsSink} from '@/domain';
-import {getFirebaseApp} from '../firebase/FirebaseWebApp';
+import type {AnalyticsParams, AnalyticsSink, PrivacyPreferences} from '@/domain';
+import {getFirebaseApp, getFirebaseMeasurementId} from '../firebase/FirebaseWebApp';
+import {optionalAnalyticsAllowed} from '../../services/optionalAnalytics';
 
 const BOT_PATTERN =
     /bot|crawl|spider|slurp|headless|phantom|puppeteer|playwright|selenium|lighthouse|pagespeed|gtmetrix|pingdom|uptime|preview|scrap/i;
 
-function isElectron(): boolean {
-    return typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron');
-}
-
 export class FirebaseAnalyticsSink implements AnalyticsSink {
     private analytics: Analytics | null = null;
-    private initStarted = false;
-    private botChecked = false;
-    private bot = false;
-    private readonly queue: {name: string; params?: AnalyticsParams}[] = [];
-    private readonly propertyQueue: Record<string, string | null> = {};
+    private enabled = false;
+    private revision = 0;
+
+    constructor(private readonly privacy: PrivacyPreferences) {
+        privacy.subscribe(() => { void this.applyChoices(); });
+        void this.applyChoices();
+    }
 
     trackEvent(name: string, params?: AnalyticsParams): void {
-        try {
-            if (this.isBot()) return;
-            this.init();
-            if (this.analytics) {
-                logEvent(this.analytics, name, params);
-            } else if (this.queue.length < 50) {
-                this.queue.push({name, params});
-            }
-        } catch {
-        }
+        if (!this.allowed() || !this.analytics) return;
+        try { logEvent(this.analytics, name, {...params, ...this.pageContext()}); } catch {}
     }
 
     trackScreenView(screenName: string): void {
@@ -42,51 +34,74 @@ export class FirebaseAnalyticsSink implements AnalyticsSink {
     }
 
     setUserProperty(name: string, value: string | null): void {
+        if (!this.allowed() || !this.analytics) return;
+        try { setUserProperties(this.analytics, {[name]: value}); } catch {}
+    }
+
+    private allowed(): boolean {
+        return this.enabled && optionalAnalyticsAllowed(this.privacy);
+    }
+
+    private async applyChoices(): Promise<void> {
+        const revision = ++this.revision;
+        this.enabled = false;
+        const allowed = optionalAnalyticsAllowed(this.privacy);
         try {
-            if (this.isBot()) return;
-            this.init();
-            if (this.analytics) {
-                setUserProperties(this.analytics, {[name]: value});
-            } else {
-                this.propertyQueue[name] = value;
+            this.setCollectionDisabled(true);
+            if (!allowed) {
+                if (this.analytics) {
+                    setConsent({analytics_storage: 'denied', ad_storage: 'denied',
+                        ad_user_data: 'denied', ad_personalization: 'denied'});
+                }
+                this.clearCookies();
+                return;
             }
+            if (typeof navigator === 'undefined' || typeof window === 'undefined' ||
+                (navigator as Navigator & {webdriver?: boolean}).webdriver === true ||
+                BOT_PATTERN.test(navigator.userAgent) || /Electron/i.test(navigator.userAgent)) return;
+            const supported = await isSupported();
+            if (!supported || revision !== this.revision || !optionalAnalyticsAllowed(this.privacy)) return;
+            const app = getFirebaseApp();
+            if (!app) return;
+            setConsent({analytics_storage: 'granted', ad_storage: 'denied',
+                ad_user_data: 'denied', ad_personalization: 'denied'});
+            this.analytics ??= initializeAnalytics(app, {config: {send_page_view: false,
+                allow_google_signals: false, allow_ad_personalization_signals: false, ...this.pageContext()}});
+            this.setCollectionDisabled(false);
+            this.enabled = true;
         } catch {
+            this.enabled = false;
         }
     }
 
-    private isBot(): boolean {
-        if (this.botChecked) return this.bot;
-        this.botChecked = true;
-        if (typeof navigator === 'undefined') return (this.bot = false);
-        this.bot =
-            (navigator as Navigator & {webdriver?: boolean}).webdriver === true ||
-            BOT_PATTERN.test(navigator.userAgent);
-        return this.bot;
+    private setCollectionDisabled(disabled: boolean): void {
+        if (typeof window === 'undefined') return;
+        const measurementIds = new Set([getFirebaseMeasurementId(), this.analytics?.app.options.measurementId]);
+        for (const measurementId of measurementIds) {
+            if (measurementId) (window as unknown as Record<string, unknown>)[`ga-disable-${measurementId}`] = disabled;
+        }
     }
 
-    private init(): void {
-        if (this.initStarted) return;
-        this.initStarted = true;
-        if (isElectron() || this.isBot()) return;
-        void isSupported()
-            .then((supported) => {
-                const app = getFirebaseApp();
-                if (!supported || app == null) return;
-                this.analytics = getAnalytics(app);
-                this.queue.splice(0).forEach(({name, params}) => {
-                    logEvent(this.analytics!, name, params);
-                });
-                const properties = Object.entries(this.propertyQueue);
-                if (properties.length > 0) {
-                    properties.forEach(([key]) => delete this.propertyQueue[key]);
-                    setUserProperties(this.analytics, Object.fromEntries(properties));
+    private pageContext(): {page_location: string; page_referrer: string} {
+        return {page_location: typeof window === 'undefined' ? '' : `${window.location.origin}${window.location.pathname}`,
+            page_referrer: ''};
+    }
+
+    private clearCookies(): void {
+        if (typeof document === 'undefined') return;
+        try {
+            const measurementId = this.analytics?.app.options.measurementId ?? getFirebaseMeasurementId();
+            const names = ['_ga', '_gid', '_gat', ...(measurementId ? [`_ga_${measurementId.replace(/^G-/, '')}`] : [])];
+            const domains = typeof window === 'undefined' ? [] : [window.location.hostname, `.${window.location.hostname}`];
+            for (const name of names) {
+                for (const domain of ['', ...domains.map(value => `; domain=${value}`)]) {
+                    document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax${domain}`;
                 }
-            })
-            .catch(() => {
-            });
+            }
+        } catch {}
     }
 }
 
-export async function getAnalyticsInstanceId(): Promise<string | null> {
+export async function getAnalyticsInstanceId(_privacy?: PrivacyPreferences): Promise<string | null> {
     return null;
 }

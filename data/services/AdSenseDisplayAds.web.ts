@@ -7,6 +7,7 @@ const scriptLoads = new WeakMap<Document, Promise<boolean>>();
 
 type AdsWindow = Window & {
     adsbygoogle?: {push(value: Record<string, never>): unknown};
+    googlefc?: {showRevocationMessage?: () => void};
     yifyDesktop?: {isDesktop?: boolean};
 };
 
@@ -15,6 +16,7 @@ interface Attachment {
     listeners: Set<(state: DisplayAdState) => void>;
     references: number;
     dispose(): void;
+    suspend(): void;
 }
 
 function loadScript(document: Document): Promise<boolean> {
@@ -63,8 +65,23 @@ function notify(listener: (state: DisplayAdState) => void, state: DisplayAdState
 
 export class AdSenseDisplayAds implements DisplayAds {
     private readonly attachments = new Map<HTMLElement, Attachment>();
+    private privacyReviewActive = false;
 
     constructor(private readonly purchases: PurchaseRepository) {
+    }
+
+    async showPrivacyOptions(): Promise<boolean> {
+        if (typeof window === 'undefined') return false;
+        const cmp = (window as AdsWindow).googlefc;
+        if (typeof cmp?.showRevocationMessage !== 'function') return false;
+        this.privacyReviewActive = true;
+        for (const attachment of this.attachments.values()) attachment.suspend();
+        try {
+            cmp.showRevocationMessage();
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     get supported(): boolean {
@@ -122,6 +139,7 @@ export class AdSenseDisplayAds implements DisplayAds {
             state: 'loading',
             listeners: new Set(),
             references: 0,
+            suspend: () => stop('disabled'),
             dispose: () => {
                 disposed = true;
                 unsubscribe();
@@ -148,7 +166,7 @@ export class AdSenseDisplayAds implements DisplayAds {
         };
         const permitted = () => {
             const state = this.purchases.getState();
-            return this.supported && state.ready && !state.adsRemoved;
+            return this.supported && !this.privacyReviewActive && state.ready && !state.adsRemoved;
         };
         const readStatus = () => {
             const status = ad?.getAttribute('data-ad-status');

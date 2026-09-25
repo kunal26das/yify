@@ -58,7 +58,7 @@ export const Analytics = {
         trackEvent('rail_page', {rail_title: railTitle, direction}),
 
     search: (term: string, resultCount?: number) =>
-        trackEvent('search', {search_term: term, ...(resultCount != null ? {result_count: resultCount} : {})}),
+        trackEvent('search', {query_length: term.length, ...(resultCount != null ? {result_count: resultCount} : {})}),
     searchCleared: () => trackEvent('search_cleared'),
     filtersOpen: () => trackEvent('filters_open'),
     filtersApplied: (filters: Record<string, string | number | undefined>) =>
