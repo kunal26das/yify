@@ -1,7 +1,7 @@
 # Sentry follow-up — 25 September 2026
 
-The audit initially covered 32 unresolved issues for project Yify, including regressed
-YIFY-5 and YIFY-X. Two additional reports arrived during verification. A handled operation failure is not evidence of a terminated process.
+The audit covered 35 issue groups: 32 initially unresolved plus three new reports. The initial set included regressed
+YIFY-5 and YIFY-X. A handled operation failure is not evidence of a terminated process.
 Issue closure follows deployed verification of a concrete fix; older release numbers or a
 quiet period alone do not establish resolution.
 
@@ -67,6 +67,25 @@ quiet period alone do not establish resolution.
   seconds. The original HTTP status and response cause were not retained. Existing backoff
   worked; no causal fix is established, so the issue stays open.
 
+- **YIFY-26:** eight handled `purchases.offerings` store errors arrived from two Android
+  1.8.8 device models. Existing bounded retries run roughly every five minutes; no recovery
+  or underlying Play error was recorded. Preserve the failure and add operation-stage and
+  allowlisted SDK-code diagnostics; this does not establish a billing fix. Keep open.
+
+## Native crash guard validation
+
+[PR 908](https://github.com/kunal26das/yify/pull/908) merged as `43bf8d7`. The exact Google
+SDK passed 26 response/failure cases and five incompatible-bytecode rejection checks. Both
+debug assembly and release optimization passed; the final DEX retains the guard and normal
+HTTP error/retry path. An isolated emulator verified EEA consent, declining consent, reopening
+privacy options, and loading/showing/closing a Google test interstitial with no native crash.
+Both web deployments of `43bf8d7` passed, with four additional live browser checks confirming
+matching assets, saved filters and mobile search focus.
+
+Expo published the preview.7 dependency cohort between PR and main validation. The reviewed
+policy retains the tested preview.6 dependency tree for this native crash fix; a future
+coordinated upgrade must use a new runtime. No dependencies or lockfile were changed.
+
 ## Verified deployment of the first fixes
 
 [PR 907](https://github.com/kunal26das/yify/pull/907) merged as `b19ff24`. Both web deployments
@@ -92,7 +111,7 @@ their previous OTA dependency trees, including existing optional-location guards
 not claim those historical trees exactly match their original binaries. Runtime 1.8.5 was
 excluded because its build was cancelled and no Production OTA was found.
 
-## Catalogue issue evidence
+## Catalogue issue evidence (initial snapshot)
 
 The catalogue parser and cache changes passed 181 focused tests, including server public/private
 response boundaries. The complete app suite passed 1,678 tests and the crash-reporting workspace
