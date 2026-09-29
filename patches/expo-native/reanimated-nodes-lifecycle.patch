@@ -1,0 +1,258 @@
+--- a/android/src/main/java/com/swmansion/reanimated/NodesManager.kt
++++ b/android/src/main/java/com/swmansion/reanimated/NodesManager.kt
+@@ -44,6 +44,8 @@
+     private var mFabricUIManager: FabricUIManager
+     private val mDrawPassDetector: DrawPassDetector
+ 
++    private val mLifecycleLock = Any()
++    private val mInvalidated = AtomicBoolean(false)
+     private var mNativeProxy: NativeProxy? = null
+ 
+     fun getNativeProxy(): NativeProxy? = mNativeProxy
+@@ -73,13 +75,18 @@
+     }
+ 
+     fun invalidate() {
+-        mNativeProxy?.let {
+-            it.invalidate()
++        val nativeProxy = synchronized(mLifecycleLock) {
++            if (mInvalidated.getAndSet(true)) return
++            val proxy = mNativeProxy
+             mNativeProxy = null
+-        }
+-
++            mCustomEventHandler = NoopEventHandler()
++            mFrameCallbacks.clear()
++            mEventQueue.clear()
++            proxy
++        }
++        stopUpdatingOnAnimationFrame()
++        nativeProxy?.invalidate()
+         mDrawPassDetector.invalidate()
+-
+         mFabricUIManager.eventDispatcher.removeListener(this)
+     }
+ 
+@@ -99,11 +106,19 @@
+     }
+ 
+     fun startUpdatingOnAnimationFrame() {
++        if (mInvalidated.get()) return
+         if (!mCallbackPosted.getAndSet(true)) {
+             mReactChoreographer.postFrameCallback(
+                 ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
+                 mChoreographerCallback,
+             )
++            if (mInvalidated.get()) {
++                mCallbackPosted.set(false)
++                mReactChoreographer.removeFrameCallback(
++                    ReactChoreographer.CallbackType.NATIVE_ANIMATED_MODULE,
++                    mChoreographerCallback,
++                )
++            }
+         }
+     }
+ 
+@@ -117,79 +132,94 @@
+     }
+ 
+     fun performOperations() {
+-        UiThreadUtil.assertOnUiThread()
+-        mNativeProxy?.performOperations()
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            UiThreadUtil.assertOnUiThread()
++            mNativeProxy?.performOperations()
++        }
+     }
+ 
+     internal fun performNonLayoutOperations() {
+-        UiThreadUtil.assertOnUiThread()
+-        mNativeProxy?.performNonLayoutOperations()
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            UiThreadUtil.assertOnUiThread()
++            mNativeProxy?.performNonLayoutOperations()
++        }
+     }
+ 
+     internal fun performOperationsRespectingDrawPass() {
+-        mDrawPassDetector.initialize()
+-        if (isInDrawPass()) {
+-            performNonLayoutOperations()
+-            startUpdatingOnAnimationFrame()
+-            return
+-        }
+-
+-        performOperations()
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            mDrawPassDetector.initialize()
++            if (isInDrawPass()) {
++                performNonLayoutOperations()
++                startUpdatingOnAnimationFrame()
++                return
++            }
++
++            performOperations()
++        }
+     }
+ 
+     internal fun isInDrawPass(): Boolean = mDrawPassDetector.isInDrawPass()
+ 
+     private fun onAnimationFrame(frameTimeNanos: Long) {
+-        UiThreadUtil.assertOnUiThread()
+-
+-        try {
+-            if (BuildConfig.REANIMATED_PROFILING) {
+-                Trace.beginSection("onAnimationFrame")
+-            }
+-
+-            mDrawPassDetector.initialize()
+-
+-            var currentFrameTimeMs = frameTimeNanos / 1000000.0
+-            if (mSlowAnimationsEnabled) {
+-                currentFrameTimeMs =
+-                    mFirstUptime + (currentFrameTimeMs - mFirstUptime) / mAnimationsDragFactor
+-            }
+-
+-            if (currentFrameTimeMs > lastFrameTimeMs) {
+-                // It is possible for ChoreographerCallback to be executed twice within the same frame
+-                // due to frame drops. If this occurs, the additional callback execution should be ignored.
+-                lastFrameTimeMs = currentFrameTimeMs
+-
+-                while (!mEventQueue.isEmpty()) {
+-                    val copiedEvent = mEventQueue.poll()
+-                    handleEvent(copiedEvent!!)
+-                }
+-
+-                if (mFrameCallbacks.isNotEmpty()) {
+-                    val frameCallbacks = mFrameCallbacks
+-                    mFrameCallbacks = ArrayList(frameCallbacks.size)
+-                    for (i in 0 until frameCallbacks.size) {
+-                        frameCallbacks[i].onAnimationFrame(currentFrameTimeMs)
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            UiThreadUtil.assertOnUiThread()
++
++            try {
++                if (BuildConfig.REANIMATED_PROFILING) {
++                    Trace.beginSection("onAnimationFrame")
++                }
++
++                mDrawPassDetector.initialize()
++
++                var currentFrameTimeMs = frameTimeNanos / 1000000.0
++                if (mSlowAnimationsEnabled) {
++                    currentFrameTimeMs =
++                        mFirstUptime + (currentFrameTimeMs - mFirstUptime) / mAnimationsDragFactor
++                }
++
++                if (currentFrameTimeMs > lastFrameTimeMs) {
++                    // It is possible for ChoreographerCallback to be executed twice within the same frame
++                    // due to frame drops. If this occurs, the additional callback execution should be ignored.
++                    lastFrameTimeMs = currentFrameTimeMs
++
++                    while (!mEventQueue.isEmpty()) {
++                        val copiedEvent = mEventQueue.poll()
++                        handleEvent(copiedEvent!!)
+                     }
+-                }
+-
+-                performOperations()
+-            }
+-
+-            mCallbackPosted.set(false)
+-            if (mFrameCallbacks.isNotEmpty() || !mEventQueue.isEmpty()) {
+-                // enqueue next frame
+-                startUpdatingOnAnimationFrame()
+-            }
+-        } finally {
+-            if (BuildConfig.REANIMATED_PROFILING) {
+-                Trace.endSection()
++
++                    if (mFrameCallbacks.isNotEmpty()) {
++                        val frameCallbacks = mFrameCallbacks
++                        mFrameCallbacks = ArrayList(frameCallbacks.size)
++                        for (i in 0 until frameCallbacks.size) {
++                            frameCallbacks[i].onAnimationFrame(currentFrameTimeMs)
++                        }
++                    }
++
++                    performOperations()
++                }
++
++                mCallbackPosted.set(false)
++                if (mFrameCallbacks.isNotEmpty() || !mEventQueue.isEmpty()) {
++                    // enqueue next frame
++                    startUpdatingOnAnimationFrame()
++                }
++            } finally {
++                if (BuildConfig.REANIMATED_PROFILING) {
++                    Trace.endSection()
++                }
+             }
+         }
+     }
+ 
+     fun postOnAnimation(onAnimationFrame: OnAnimationFrame) {
+-        mFrameCallbacks.add(onAnimationFrame)
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            mFrameCallbacks.add(onAnimationFrame)
++        }
+         startUpdatingOnAnimationFrame()
+     }
+ 
+@@ -198,27 +228,21 @@
+             if (BuildConfig.REANIMATED_PROFILING) {
+                 Trace.beginSection("onEventDispatch")
+             }
+-
+-            if (mNativeProxy == null) {
+-                return
+-            }
+-            // Events can be dispatched from any thread so we have to make sure handleEvent is run from
+-            // the UI thread.
+-            if (UiThreadUtil.isOnUiThread()) {
+-                // Ensure draw-pass tracking is attached before event handling; the backend reads
+-                // isInDrawPass during receiveEvent.
+-                mDrawPassDetector.initialize()
+-                handleEvent(event)
+-                performOperationsRespectingDrawPass()
+-            } else {
++            synchronized(mLifecycleLock) {
++                val nativeProxy = mNativeProxy ?: return
++                if (mInvalidated.get()) return
++                if (UiThreadUtil.isOnUiThread()) {
++                    mDrawPassDetector.initialize()
++                    handleEvent(event)
++                    performOperationsRespectingDrawPass()
++                    return
++                }
+                 val eventName = mCustomEventNamesResolver.resolveCustomEventName(event.eventName) ?: return
+-                val viewTag = event.viewTag
+-                val shouldSaveEvent = mNativeProxy!!.isAnyHandlerWaitingForEvent(eventName, viewTag)
+-                if (shouldSaveEvent) {
++                if (nativeProxy.isAnyHandlerWaitingForEvent(eventName, event.viewTag)) {
+                     mEventQueue.offer(CopiedEvent(event))
+                 }
+-                startUpdatingOnAnimationFrame()
+-            }
++            }
++            startUpdatingOnAnimationFrame()
+         } finally {
+             if (BuildConfig.REANIMATED_PROFILING) {
+                 Trace.endSection()
+@@ -245,7 +269,10 @@
+     fun getEventNameResolver(): UIManagerModule.CustomEventNamesResolver = mCustomEventNamesResolver
+ 
+     fun registerEventHandler(handler: RCTModernEventEmitter) {
+-        mCustomEventHandler = handler
++        synchronized(mLifecycleLock) {
++            if (mInvalidated.get()) return
++            mCustomEventHandler = handler
++        }
+     }
+ 
+     fun sendEvent(

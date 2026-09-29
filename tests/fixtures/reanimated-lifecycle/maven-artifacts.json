@@ -1,0 +1,14 @@
+{
+  "repository": "https://repo.maven.apache.org/maven2",
+  "compilerVersion": "2.4.20",
+  "artifacts": [
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-compiler-embeddable", "version": "2.4.20", "sha256": "cf97161430683fb9af96dc6a7017ffae1fe8737b80d12eee11f2fe3e76f8ded8"},
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-build-tools-api", "version": "2.4.20", "sha256": "47a622dce7231b1916334b69a00bc1094adf6577e6492f9f06b3d9c2450fe459"},
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-stdlib", "version": "2.4.20", "sha256": "2226de463d309d4a5500a481320b3dea515a6981dcae1def531fbc158884e25f"},
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-script-runtime", "version": "2.4.20", "sha256": "fc5a19df78be445d84e8352e0d01098a6a8181324aa50c6f7bf850338e81e1b4"},
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-reflect", "version": "1.6.10", "sha256": "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203"},
+    {"group": "org.jetbrains.kotlin", "artifact": "kotlin-daemon-embeddable", "version": "2.4.20", "sha256": "eef72cf8f17e6d98d33e5b7c7e1cab31a1cf5fc34084dd5e563e7b1f3ef53435"},
+    {"group": "org.jetbrains.kotlinx", "artifact": "kotlinx-coroutines-core-jvm", "version": "1.8.0", "sha256": "9860906a1937490bf5f3b06d2f0e10ef451e65b95b269f22daf68a3d1f5065c5"},
+    {"group": "org.jetbrains", "artifact": "annotations", "version": "13.0", "sha256": "ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478"}
+  ]
+}

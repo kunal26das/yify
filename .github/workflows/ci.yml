@@ -112,6 +112,11 @@ jobs:
           node scripts/check-ump-metrics.mjs "$UMP_TEST_DIR/ump.aar" "$UMP_ANDROID_JAR" \
             "$UMP_TEST_DIR/asm.jar" "$UMP_TEST_DIR/asm-tree.jar"
 
+      - name: Verify Android animation lifecycle crash guard
+        run: |
+          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
+          node scripts/check-reanimated-lifecycle.mjs --output "$RUNNER_TEMP/reanimated-lifecycle"
+
       - name: Committed OTA channel is Production
         run: node scripts/check-update-channel.mjs
 

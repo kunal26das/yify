@@ -386,7 +386,55 @@
       "upstream": [
         "https://docs.swmansion.com/react-native-reanimated/docs/guides/compatibility/"
       ]
+    },
+    {
+      "package": "react-native-worklets",
+      "version": "0.13.0",
+      "file": "android/src/main/java/com/swmansion/worklets/runloop/AnimationFrameQueue.kt",
+      "sha256": "3a934db95beaa959074264e8b5b657e4a74f820ed5ba6e279e615cbe5febfa48"
+    },
+    {
+      "package": "react-native-reanimated",
+      "version": "4.7.0",
+      "file": "android/src/main/java/com/swmansion/reanimated/NativeProxy.kt",
+      "sha256": "f7b7fdc67436c6df24c88f68d2d716e8da2feec127cca54d45c676696abc70c6"
+    },
+    {
+      "package": "react-native-reanimated",
+      "version": "4.7.0",
+      "file": "android/src/main/cpp/reanimated/android/NativeProxy.cpp",
+      "sha256": "b2bc505744950c33c51e89504a67f2f0825ae418ec3392a80cc0a7a14ce50915"
+    },
+    {
+      "package": "react-native-reanimated",
+      "version": "4.7.0",
+      "file": "Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp",
+      "sha256": "fe25cd9ad6e77ba96e783d20c77e155d58ce536d59f8160a1366afbaac330a24"
+    },
+    {
+      "package": "react-native",
+      "version": "0.88.0-rc.2",
+      "file": "ReactAndroid/src/main/java/com/facebook/react/modules/core/ReactChoreographer.kt",
+      "sha256": "ce7223e6c53dea829e873595f7d41e918a8dd906a3d3d250882be0de9f08ebbb"
+    },
+    {
+      "package": "react-native",
+      "version": "0.88.0-rc.2",
+      "file": "ReactAndroid/src/main/java/com/facebook/react/internal/ChoreographerProvider.kt",
+      "sha256": "9180d11e12d5e850a5338185576ead0c57f1ddba3f5c0ab9b4a256b7ff4af765"
     }
   ],
-  "files": []
+  "files": [
+    {
+      "package": "react-native-reanimated",
+      "version": "4.7.0",
+      "file": "android/src/main/java/com/swmansion/reanimated/NodesManager.kt",
+      "before": "3e3c9ced9779e8f0b2918325aaee10a70405eff8576c739a9c7c63e4bc1ad6da",
+      "after": "31006b95194cedf5215711aa241ef8b8a2982c3474ecc14d928bfb476686d6e3",
+      "patch": "reanimated-nodes-lifecycle.patch",
+      "upstream": [
+        "https://github.com/software-mansion/react-native-reanimated/issues/10279"
+      ]
+    }
+  ]
 }
