@@ -2,7 +2,7 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "@sentry/react-native": {
-      "version": "8.27.0",
+      "version": "8.28.0",
       "expected": "~7.11.0",
       "reason": "Keep the Sentry 8 integration and its native crash symbol configuration."
     },
@@ -37,84 +37,89 @@
       "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
     },
     "@expo/metro-runtime": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "@expo/ui": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo": {
-      "version": "58.0.0-preview.6",
+      "version": "58.0.0-preview.7",
       "expected": "~58.0.0-preview.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-background-task": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-build-properties": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-constants": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-dev-client": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-image": {
-      "version": "58.0.5",
+      "version": "58.0.6",
       "expected": "~58.0.6",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-insights": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-linking": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-location": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-notifications": {
-      "version": "58.0.6",
+      "version": "58.0.7",
       "expected": "~58.0.7",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-router": {
-      "version": "58.0.7",
+      "version": "58.0.8",
       "expected": "~58.0.8",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-sqlite": {
-      "version": "58.0.5",
+      "version": "58.0.6",
       "expected": "~58.0.6",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-task-manager": {
-      "version": "58.0.7",
+      "version": "58.0.8",
       "expected": "~58.0.8",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
     },
     "expo-updates": {
-      "version": "58.0.8",
+      "version": "58.0.9",
       "expected": "~58.0.9",
-      "reason": "Retain the Expo 58 preview.6 cohort verified by app tests, web export, Android debug and optimized release builds, and consent/test-ad emulator checks for the 1.8.9 UMP crash fix. Preview.7 was published during release validation; its native changes require a separate coordinated upgrade and runtime rather than altering this binary or its OTA dependency tree."
+      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
+    },
+    "react-native": {
+      "version": "0.88.0-rc.2",
+      "expected": "0.88.0-rc.1",
+      "reason": "React Native 0.88.0-rc.2 restores compatible ArrayBuffer code generation and matches the rc.2 polyfills required by @expo/metro-config 58.0.5. Validate this coordinated Expo 58 preview.7 native cohort under runtime 1.8.11."
     }
   }
 }

@@ -176,6 +176,20 @@ test('a bundled React Native prerelease permits only newer recommendations in it
     assert.throws(() => reviewDeviations([{...current, packageName: 'unknown-native'}], policy, '58.0.0', installedSdk), /Unreviewed/);
 });
 
+test('a reviewed React Native candidate ahead of its SDK bundle remains valid when the same candidate series advances', async () => {
+    const {reviewDeviations} = await helpers;
+    const current = {packageName: 'react-native', actualVersion: '0.88.0-rc.2', expectedVersionOrRange: '0.88.0-rc.3'};
+    const reviewed = {version: current.actualVersion, expected: '0.88.0-rc.1', reason: 'Validated native builds for this candidate.'};
+    const {policy, installedSdk} = sdkReview({'react-native': reviewed}, {'react-native': reviewed.expected});
+    assert.match(reviewDeviations([current], policy, '58.0.0', installedSdk)[0], /matches the reviewed native runtime.*now recommends 0.88.0-rc.3/);
+    for (const expectedVersionOrRange of ['0.88.0-rc.0', '0.88.0-rc.2', '0.88.0-preview.3', '0.88.0', '0.88.1-rc.3', '0.89.0-rc.3', '~0.88.0-rc.3']) {
+        assert.throws(() => reviewDeviations([{...current, expectedVersionOrRange}], policy, '58.0.0', installedSdk), /Unreviewed/);
+    }
+    assert.throws(() => reviewDeviations([current], {...policy, packages: {expo: expoPolicy}}, '58.0.0', installedSdk), /Unreviewed/);
+    assert.throws(() => reviewDeviations([current], policy, '58.0.0', {...installedSdk, bundledNativeModules: {'react-native': '0.88.0-rc.0'}}), /Unreviewed/);
+    assert.throws(() => reviewDeviations([{...current, actualVersion: '0.88.0-rc.3', expectedVersionOrRange: '0.88.0-rc.4'}], policy, '58.0.0', installedSdk), /Unreviewed/);
+});
+
 test('unrelated release and type updates still run full network doctor when remote SDK recommendations advance', async (t) => {
     const {main} = await helpers;
     const root = await mkdtemp(join(tmpdir(), 'expo-doctor-recommendation-drift-'));
