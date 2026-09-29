@@ -216,7 +216,8 @@ export function markdown(report) {
         else lines.push(`| ${row.file}: [${row.name}](https://github.com/${VERIFIER}/tags) | ${row.current} | [${row.latest}](https://github.com/${VERIFIER}/releases/tag/${row.latest}) | ${row.latestSha} | — | ${row.status} |`);
     }
     if (report.errors.length) lines.push('', '## Incomplete checks', '', ...report.errors.map(error => `- ${error}`), '', 'A failed lookup is not evidence that a pin is current. Existing tracking remains open.');
-    lines.push('', 'Review changelogs and compatibility before updating a pin, commit regenerated lockfiles, and run the affected build checks. A different verifier SHA needs review before replacement.', '',
+    lines.push('', '[Recorded compatibility reviews](https://github.com/kunal26das/yify/blob/main/docs/dependency-pin-review.md) explain retained pins and pending native upgrades; they do not suppress newer-version findings.', '',
+        'Review changelogs and compatibility before updating a pin, commit regenerated lockfiles, and run the affected build checks. A different verifier SHA needs review before replacement.', '',
         'Sources: [Yarn resolution selectors](https://classic.yarnpkg.com/lang/en/docs/selective-version-resolutions/), [npm distribution tags](https://docs.npmjs.com/cli/v11/commands/npm-dist-tag/), [GitHub repository tags](https://docs.github.com/en/rest/repos/repos#list-repository-tags).', '');
     return lines.join('\n');
 }

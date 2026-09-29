@@ -21,6 +21,8 @@ Yify 1.8.8 integrates the Expo 58 preview SDK and React Native 0.88 release cand
 
 The weekly dependency-watch workflow checks exact Yarn `resolutions` and the separately checked-out Dependabot metadata verifier. It publishes a report and maintains one tracking issue for outstanding findings. It updates the issue only when findings change and closes it when they clear. Upstream lookup failures are reported as failures, not treated as evidence that everything is current. Manual runs from a non-default branch produce reports without changing issues.
 
+[Pin compatibility reviews](dependency-pin-review.md) record tested upgrades, required older APIs and pending native updates. A documented compatibility requirement does not hide the newer version from the report.
+
 Hosting installs EAS CLI from the release console's committed lockfile, so a Dependabot update also updates the tool used by later deployments.
 
 Android and iOS source projects are generated from Expo configuration and npm packages. Independent Gradle edits would be overwritten, and Dependabot does not support CocoaPods. Native Firebase, Ads, Purchases and Sentry versions therefore advance through their React Native wrappers and a regenerated iOS lockfile. Xcode, JDK and EAS build-image compatibility still require review during native upgrades; this automation does not install development tools or publish store builds.
