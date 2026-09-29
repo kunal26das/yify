@@ -48,8 +48,8 @@
     },
     "expo": {
       "version": "58.0.0-preview.7",
-      "expected": "~58.0.0-preview.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
+      "expected": "~58.0.0",
+      "reason": "Retain the exact Expo 58 preview.7 / React Native 0.88.0-rc.2 cohort validated for the 1.8.13 native crash hotfix. Expo published 58.0.0 under next on 2026-09-29 during release validation; review its coordinated native dependency upgrade separately. The installed versions, source guards, native lifecycle fixtures, signed build and device checks remain required."
     },
     "expo-background-task": {
       "version": "58.0.7",
