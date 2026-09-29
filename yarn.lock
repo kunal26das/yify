@@ -1155,7 +1155,7 @@
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/material-symbols/-/material-symbols-0.4.48.tgz#f8a00bbcf23a0996286a5558432283663643eac1"
   integrity sha512-aZztj44PyA/sj3TXSwwpLJwqMlTUJ49okbZJYURzEcuERxMQB0KbX7RrLBi8WJnuWz5HFOLlTRxORrJfNnUPNQ==
 
-"@expo/cli@^58.0.6":
+"@expo/cli@58.0.6", "@expo/cli@^58.0.6":
   version "58.0.6"
   resolved "https://registry.yarnpkg.com/@expo/cli/-/cli-58.0.6.tgz#976ed75c74f86a5dcc2e89f50b87ea68e2403fd1"
   integrity sha512-743sN46SYqg+nIXqxVQkoosk+FsOfaR1pW3akznvPOO0vw4GhCeNszyjMW3Hxewyd1HnFoYVCaBhicPa5ivSsg==
@@ -1371,7 +1371,7 @@
     anser "^1.4.9"
     stacktrace-parser "^0.1.10"
 
-"@expo/metro-config@~58.0.4":
+"@expo/metro-config@58.0.4", "@expo/metro-config@~58.0.4":
   version "58.0.4"
   resolved "https://registry.yarnpkg.com/@expo/metro-config/-/metro-config-58.0.4.tgz#35564dc13a8ca84c24a2bda1c261b62769285b35"
   integrity sha512-4uru6G+M7HHUWN0VXO1Lm6ugRThsvGBl6lROGFAPleIjiK/w9UfI/AHrnba+fPMv1aqvAd7eTGY3ZuWeKgKrZA==
@@ -5454,7 +5454,7 @@ expo-dev-client@58.0.6:
     expo-manifests "~58.0.0"
     expo-updates-interface "~58.0.0"
 
-expo-dev-launcher@~58.0.6:
+expo-dev-launcher@58.0.6, expo-dev-launcher@~58.0.6:
   version "58.0.6"
   resolved "https://registry.yarnpkg.com/expo-dev-launcher/-/expo-dev-launcher-58.0.6.tgz#78e3d6d9afde4a9258ac4b551d8c85871e4003a7"
   integrity sha512-wf5tN64NznR90rlY21l0gEKgEfrh8qwM9cRocADJrDEkSr+qjOEyqtBZVbRI7nIvOZGdvjBxOVwMpvOpHyv/pw==
@@ -5568,7 +5568,7 @@ expo-manifests@~58.0.0:
   dependencies:
     expo-json-utils "~58.0.0"
 
-expo-modules-autolinking@~58.0.3:
+expo-modules-autolinking@58.0.3, expo-modules-autolinking@~58.0.3:
   version "58.0.3"
   resolved "https://registry.yarnpkg.com/expo-modules-autolinking/-/expo-modules-autolinking-58.0.3.tgz#896bacc9a40c34bb033bfddd18757217e31ab47f"
   integrity sha512-sP0nVv1wy8T2X8HhuKWpni+Z0vwkby6M2d6FkWpDgbMar073mzqQpMaRsI6Z7wP9EsLViEHuCVfP+iHhcRTCNg==
@@ -5578,7 +5578,7 @@ expo-modules-autolinking@~58.0.3:
     chalk "^4.1.0"
     commander "^7.2.0"
 
-expo-modules-core@~58.0.6:
+expo-modules-core@58.0.6, expo-modules-core@~58.0.6:
   version "58.0.6"
   resolved "https://registry.yarnpkg.com/expo-modules-core/-/expo-modules-core-58.0.6.tgz#44a46b13c8c1098021c52240e85d2c3a9292ff27"
   integrity sha512-ro114fsBHMbEPW3wY2sJGzx+sBlByBM2ABkVgJG2k2uUohYwlcGYz3kw2U6+nADNwYjVmxBoq+8+OntZ5VPfoA==
