@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.10",
-  "versionCode": 92,
+  "version": "1.8.11",
+  "versionCode": 93,
   "private": true,
   "workspaces": [
     "crashreporting",
@@ -129,7 +129,18 @@
   "resolutions": {
     "**/xcode/uuid": "11.1.1",
     "@yify/tooling/**/ts-api-utils": "2.5.0",
-    "**/query-string/decode-uri-component": "0.5.0"
+    "**/query-string/decode-uri-component": "0.5.0",
+    "expo-modules-core": "58.0.8",
+    "@expo/cli": "58.0.7",
+    "@expo/metro-config": "58.0.5",
+    "expo-dev-launcher": "58.0.8",
+    "expo-modules-autolinking": "58.0.5",
+    "@expo/log-box": "58.0.5",
+    "@expo/metro-runtime": "58.0.7",
+    "expo-constants": "58.0.7",
+    "expo-task-manager": "58.0.8",
+    "expo-asset": "58.0.7",
+    "expo-font": "58.0.2"
   },
   "expo": {
     "autolinking": {
