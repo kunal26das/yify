@@ -219,3 +219,13 @@ test('reviewed animation libraries explicitly support the selected React Native 
   assert.ok(reanimated.fabric[reanimatedVersion]['react-native-worklets'].includes(workletsVersion));
   assert.ok(worklets[workletsVersion]['react-native'].includes(reactNative));
 });
+
+test('every guarded package has an exact installation pin including transitive Expo tools', async () => {
+  const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
+  const manifest = JSON.parse(await fs.readFile(path.join(repository, 'patches/expo-native/manifest.json'), 'utf8'));
+  const pins = {...pkg.dependencies, ...pkg.devDependencies, ...pkg.resolutions};
+  assert.equal(pins['react-native'], manifest.reactNative);
+  for (const entry of [...manifest.sources, ...manifest.files]) {
+    assert.equal(pins[entry.package], entry.version, `${entry.package} must stay at its reviewed version after a clean resolution`);
+  }
+});
