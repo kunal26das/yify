@@ -94,6 +94,16 @@ export function parseManifestTree(tree) {
     const packageName = root.find(line => /^A: package=/.test(line))?.match(/="([^"\r\n]+)"/)?.[1];
     if (!packageName) throw new Error('Missing manifest package');
     const split = root.find(line => /^A: split=/.test(line))?.match(/="([^"\r\n]*)"/)?.[1] ?? '';
+    function versionPart(name, fallback) {
+        const found = root.filter(line => new RegExp(`^A: (?:android|http://schemas\\.android\\.com/apk/res/android):${name}(?:\\(|=)`).test(line));
+        if (!found.length && fallback !== undefined) return fallback;
+        if (found.length !== 1) throw new Error(`Expected one manifest ${name} attribute`);
+        const value = found[0].split('=').slice(1).join('=').trim();
+        const integer = /^(?:\(type 0x1[01]\))?(0x[0-9a-fA-F]+|[0-9]+)$/.exec(value)?.[1];
+        if (!integer || BigInt(integer) > 0xffffffffn) throw new Error(`Invalid manifest ${name} attribute`);
+        return BigInt(integer);
+    }
+    const longVersionCode = ((versionPart('versionCodeMajor', 0n) << 32n) | versionPart('versionCode')).toString();
     const extraction = application.filter(line => /^A: (?:android|http:\/\/schemas\.android\.com\/apk\/res\/android):extractNativeLibs(?:\(|=)/.test(line));
     if (extraction.length > 1) throw new Error('Duplicate native extraction attribute');
     let extractNativeLibs;
@@ -103,7 +113,7 @@ export function parseManifestTree(tree) {
         else if (/^(?:false|\(type 0x12\)0x0)$/.test(value)) extractNativeLibs = false;
         else throw new Error('Invalid native extraction attribute');
     }
-    return {packageName, split, extractNativeLibs};
+    return {packageName, split, longVersionCode, extractNativeLibs};
 }
 
 function manifestFromAapt(apk, aapt2) {
@@ -119,6 +129,7 @@ export function verifyAndroidNativeLibraries(apks, {abis, aapt2 = 'aapt2', readM
     const splits = new Set();
     const artifacts = [];
     let packageName;
+    let longVersionCode;
     let bases = 0;
     for (const apk of apks) {
         const bytes = readFileSync(apk);
@@ -126,6 +137,10 @@ export function verifyAndroidNativeLibraries(apks, {abis, aapt2 = 'aapt2', readM
         if (!entries.has('AndroidManifest.xml')) throw new Error('APK has no Android manifest');
         const manifest = readManifest(apk, aapt2);
         packageName ??= manifest.packageName;
+        longVersionCode ??= manifest.longVersionCode;
+        if (!/^[0-9]+$/.test(manifest.longVersionCode ?? '') || longVersionCode !== manifest.longVersionCode) {
+            throw new Error('APKs must have the same compiled long version code');
+        }
         if (packageName !== manifest.packageName || splits.has(manifest.split)) throw new Error('APKs do not form one package and split set');
         splits.add(manifest.split);
         if (!manifest.split) {
@@ -160,7 +175,7 @@ export function verifyAndroidNativeLibraries(apks, {abis, aapt2 = 'aapt2', readM
             if (!libraries.get(abi)?.has(library)) throw new Error(`Missing required native library: lib/${abi}/${library}`);
         }
     }
-    return {packageName, extractNativeLibs: true, abis: Object.fromEntries(abis.map(abi => [abi, libraries.get(abi).size])), artifacts};
+    return {packageName, longVersionCode, extractNativeLibs: true, abis: Object.fromEntries(abis.map(abi => [abi, libraries.get(abi).size])), artifacts};
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

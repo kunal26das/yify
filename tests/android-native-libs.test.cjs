@@ -77,7 +77,7 @@ function fixture(t) {
         apk(name, entries, manifest = {packageName: 'test.yify', split: '', extractNativeLibs: true}) {
             const file = path.join(directory, name);
             writeFileSync(file, zip([{name: 'AndroidManifest.xml', bytes: Buffer.from('manifest fixture')}, ...entries]));
-            manifests.set(file, manifest);
+            manifests.set(file, {longVersionCode: '94', ...manifest});
             return file;
         },
         readManifest: file => manifests.get(file),
@@ -173,14 +173,33 @@ test('duplicate native entries and unexpected ABIs are rejected', async t => {
 
 test('compiled manifest parsing distinguishes base/split and strict application extraction booleans', async () => {
     const {parseManifestTree} = await load();
-    const tree = value => `N: android=http://schemas.android.com/apk/res/android\n  E: manifest (line=1)\n    A: package="test.yify" (Raw: "test.yify")\n    E: application (line=3)\n      A: android:extractNativeLibs(0x010104ea)=${value}\n      E: meta-data (line=4)\n        A: android:name(0x01010003)="test"\n`;
-    assert.deepEqual(parseManifestTree(tree('(type 0x12)0xffffffff')), {packageName: 'test.yify', split: '', extractNativeLibs: true});
+    const tree = value => `N: android=http://schemas.android.com/apk/res/android\n  E: manifest (line=1)\n    A: package="test.yify" (Raw: "test.yify")\n    A: android:versionCode(0x0101021b)=94\n    E: application (line=3)\n      A: android:extractNativeLibs(0x010104ea)=${value}\n      E: meta-data (line=4)\n        A: android:name(0x01010003)="test"\n`;
+    assert.deepEqual(parseManifestTree(tree('(type 0x12)0xffffffff')), {packageName: 'test.yify', split: '', longVersionCode: '94', extractNativeLibs: true});
     assert.equal(parseManifestTree(tree('(type 0x12)0x0')).extractNativeLibs, false);
     assert.equal(parseManifestTree(tree('true').replace('A: android:extractNativeLibs', 'A: http://schemas.android.com/apk/res/android:extractNativeLibs')).extractNativeLibs, true);
     assert.equal(parseManifestTree(tree('false').replace('A: android:extractNativeLibs', 'A: http://schemas.android.com/apk/res/android:extractNativeLibs')).extractNativeLibs, false);
     assert.equal(parseManifestTree(tree('true').replace('    E: application', '    A: split="config.arm64_v8a"\n    E: application')).split, 'config.arm64_v8a');
     assert.throws(() => parseManifestTree(tree('"true"')), /Invalid native extraction attribute/);
     assert.throws(() => parseManifestTree(''), /Expected one manifest/);
+});
+
+test('compiled version codes are exact across base and ABI splits including the major component', async t => {
+    const {parseManifestTree, verifyAndroidNativeLibraries} = await load();
+    const f = fixture(t);
+    const tree = (version, major = '') => `E: manifest\n  A: package="test.yify"\n  A: http://schemas.android.com/apk/res/android:versionCode(0x0101021b)=${version}\n${major}  E: application\n    A: android:extractNativeLibs(0x010104ea)=true\n`;
+    const parse = (version, major = '') => parseManifestTree(tree(version, major));
+    const baseManifest = parse('94');
+    const base = f.apk('base.apk', [], baseManifest);
+    const matching = f.apk('matching.apk', nativeEntries(['arm64-v8a']), {...parse('(type 0x10)0x5e'), split: 'config.arm64_v8a'});
+    assert.equal(verifyAndroidNativeLibraries([base, matching], {...f, abis: ['arm64-v8a']}).longVersionCode, '94');
+    for (const manifest of [parse('93'), parse('94', '  A: android:versionCodeMajor(0x01010576)=1\n')]) {
+        const split = f.apk('mixed.apk', nativeEntries(['arm64-v8a']), {...manifest, split: 'config.arm64_v8a'});
+        assert.throws(() => verifyAndroidNativeLibraries([base, split], {...f, abis: ['arm64-v8a']}), /same compiled long version code/);
+    }
+    assert.equal(parse('94', '  A: android:versionCodeMajor(0x01010576)=(type 0x11)0x200000\n').longVersionCode, '9007199254741086');
+    for (const value of ['-1', '4294967296', '1.5', '"94"']) assert.throws(() => parse(value), /Invalid manifest versionCode/);
+    assert.throws(() => parse('94', '  A: android:versionCodeMajor(0x01010576)=4294967296\n'), /Invalid manifest versionCodeMajor/);
+    assert.throws(() => parseManifestTree(tree('94').replace(/.*:versionCode\(.*\n/, '')), /Expected one manifest versionCode/);
 });
 
 test('native artifact validation propagates manifest inspection failures', async t => {
