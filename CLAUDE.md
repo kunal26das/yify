@@ -92,6 +92,10 @@ EAS commands route through `scripts/eas.sh`, which reuses the release console's 
 
 Web has two distinct exports: `yarn export:web` builds with `baseUrl=/yify` into `dist/` for GitHub Pages (auto-deployed on push to `main`), and `yarn export:hosting` builds with a root `baseUrl` into `dist-hosting/` for EAS Hosting. `EXPO_PUBLIC_*` values are baked in at export time and supplied by GitHub Actions secrets in CI — a change to `.env` needs `--clear` or the export silently reuses the old values. An `expo export` that succeeds does not prove the page renders; load the build before calling a web deploy done.
 
+Before browser QA, run `node scripts/check-web-preview.mjs <preview-base-url>` and block outbound telemetry before navigation. Hosting exports need Expo's server preview; static Pages previews need explicit same-origin catalog fixtures or a proxy. A plain static server cannot run API routes.
+
+Android release verification includes bundletool-generated APKs, not only the AAB: run `node scripts/check-android-native-libs.mjs --abis <comma-separated-abis> --aapt2 <sdk-aapt2-path> <base.apk> [abi-split.apk ...]`. The native startup fix requires compressed libraries and `extractNativeLibs=true`; retain all four ABIs in the store bundle and verify an actual installation.
+
 `.env` is optional — with no keys the app falls back to the default API URL and hides the account section. See `.env.example`.
 
 ## Other agent configs
