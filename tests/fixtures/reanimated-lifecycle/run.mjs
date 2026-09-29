@@ -127,6 +127,10 @@ try {
     const row = {mode, expectedUnsafe, expectedDeadlock, matched, ...result};
     receipt.results.push(row);
     console.log(`${matched ? 'PASS' : 'FAIL'} ${mode}: ${result.stdout.trim()}`);
+    if (!matched) {
+      if (result.error) console.error(result.error);
+      if (result.stderr) console.error(result.stderr.trim());
+    }
   }
   receipt.passed = receipt.results.every(result => result.matched);
   if (!receipt.passed) process.exitCode = 1;
