@@ -5,6 +5,8 @@ import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {checkPins} from './check-dependency-pins.mjs';
 
+const require = createRequire(import.meta.url);
+const semver = createRequire(require.resolve('@expo/cli/package.json'))('semver');
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dependencyCheck = 'Check that packages match versions required by installed Expo SDK';
 const structuralChecks = new Set([
@@ -25,15 +27,77 @@ export async function verifyInstalledDependencies(pkg, root) {
     }
 }
 
-export function reviewDeviations(dependencies, policy, sdkVersion) {
+function recommendation(value) {
+    const match = typeof value === 'string' && value.match(/^([~^]?)(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/);
+    const version = match && semver.parse(match[2]);
+    return version ? {operator: match[1], version} : null;
+}
+
+function isBundledRecommendationUpdate(actualVersion, expected, bundled, reviewedExpected) {
+    const actual = semver.parse(actualVersion);
+    const next = recommendation(expected);
+    const baseline = recommendation(bundled);
+    const reviewed = recommendation(reviewedExpected ?? bundled);
+    if (!actual || !next || !baseline || !reviewed) return false;
+    if (actualVersion === bundled && next.operator === baseline.operator &&
+        isPrereleaseRecommendationUpdate(actualVersion, expected, reviewedExpected ?? bundled)) return true;
+    if (!semver.satisfies(actual, bundled)) return false;
+    return [actual, baseline.version, reviewed.version, next.version].every((version) =>
+        version.prerelease.length === 0 && version.major === actual.major && version.minor === actual.minor) &&
+        next.operator === baseline.operator && next.operator === reviewed.operator &&
+        semver.gt(next.version, actual) && semver.gt(next.version, baseline.version) && semver.gt(next.version, reviewed.version);
+}
+
+function isPrereleaseRecommendationUpdate(actualVersion, expected, reviewedExpected) {
+    const actual = recommendation(actualVersion);
+    const next = recommendation(expected);
+    const reviewed = recommendation(reviewedExpected);
+    if (!actual || !next || !reviewed || next.operator !== reviewed.operator) return false;
+    const versions = [actual.version, reviewed.version, next.version];
+    return versions.every((version) =>
+        version.major === actual.version.major && version.minor === actual.version.minor && version.patch === actual.version.patch &&
+        version.prerelease.length === 2 && typeof version.prerelease[0] === 'string' && typeof version.prerelease[1] === 'number' &&
+        version.prerelease[0] === actual.version.prerelease[0]) &&
+        semver.gte(reviewed.version, actual.version) && semver.gt(next.version, reviewed.version);
+}
+
+export function reviewDeviations(dependencies, policy, sdkVersion, installedSdk) {
     if (policy.sdkVersion !== sdkVersion) throw new Error('Review Expo dependency deviations for the installed SDK.');
+    if (installedSdk) {
+        const {expoVersion, installedVersions, bundledNativeModules} = installedSdk;
+        const approvedExpo = policy.packages.expo;
+        if (!semver.valid(expoVersion) || `${semver.major(expoVersion)}.0.0` !== sdkVersion ||
+            approvedExpo?.version !== expoVersion || !approvedExpo.reason?.trim() ||
+            !installedVersions || !bundledNativeModules || typeof bundledNativeModules !== 'object' || Array.isArray(bundledNativeModules)) {
+            throw new Error('Review Expo dependency deviations for the installed SDK version.');
+        }
+        for (const [name, approved] of Object.entries(policy.packages)) {
+            if (installedVersions[name] !== approved.version || !approved.reason?.trim()) {
+                throw new Error(`Unreviewed installed Expo dependency: ${name}@${installedVersions[name]}; reviewed ${approved.version}.`);
+            }
+        }
+    }
     return dependencies.map((dependency) => {
         const {packageName, actualVersion, expectedVersionOrRange} = dependency;
         const approved = policy.packages[packageName];
-        if (!approved || approved.version !== actualVersion || approved.expected !== expectedVersionOrRange || !approved.reason?.trim()) {
+        const reject = () => {
             throw new Error(`Unreviewed Expo dependency: ${packageName}@${actualVersion}; expected ${expectedVersionOrRange}.`);
+        };
+        if (installedSdk && installedSdk.installedVersions[packageName] !== actualVersion) reject();
+        if (approved && (approved.version !== actualVersion || !approved.reason?.trim())) reject();
+        if (approved?.expected === expectedVersionOrRange) {
+            return `${packageName}@${actualVersion}; Expo recommends ${expectedVersionOrRange}. ${approved.reason}`;
         }
-        return `${packageName}@${actualVersion}; Expo recommends ${expectedVersionOrRange}. ${approved.reason}`;
+        if (installedSdk) {
+            const bundled = installedSdk.bundledNativeModules[packageName];
+            if (packageName === 'expo' && approved && isPrereleaseRecommendationUpdate(actualVersion, expectedVersionOrRange, approved.expected)) {
+                return `${packageName}@${actualVersion}; Expo now recommends ${expectedVersionOrRange} (reviewed ${approved.expected}). Schedule a coordinated SDK update. ${approved.reason}`;
+            }
+            if (packageName !== 'expo' && isBundledRecommendationUpdate(actualVersion, expectedVersionOrRange, bundled, approved?.expected)) {
+                return `${packageName}@${actualVersion} satisfies bundled ${bundled} from Expo ${installedSdk.expoVersion}; Expo now recommends ${expectedVersionOrRange}. Schedule a coordinated dependency update.${approved ? ` ${approved.reason}` : ''}`;
+            }
+        }
+        return reject();
     });
 }
 
@@ -93,13 +157,18 @@ export async function main({root = projectRoot, spawn = spawnSync, log = console
     const expo = require('expo/package.json');
     const sdkVersion = `${expo.version.split('.')[0]}.0.0`;
     const policy = JSON.parse(await readFile(join(root, 'scripts/expo-dependency-policy.json'), 'utf8'));
+    const bundledNativeModules = JSON.parse(await readFile(join(dirname(require.resolve('expo/package.json')), 'bundledNativeModules.json'), 'utf8'));
     const env = {...process.env, CI: '1', EXPO_NO_TELEMETRY: '1', FORCE_COLOR: '0'};
     for (const name of ['EXPO_OFFLINE', 'EXPO_NO_DEPENDENCY_VALIDATION', 'EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK', 'EXPO_DOCTOR_WARN_ON_NETWORK_ERRORS']) delete env[name];
     const options = {cwd: root, encoding: 'utf8', env, timeout: 120_000, maxBuffer: 10 * 1024 * 1024};
     const cli = join(dirname(require.resolve('expo/package.json')), 'bin/cli');
     const dependencyRun = spawn(process.execPath, [cli, 'install', '--check', '--json'], options);
     const dependencies = readDependencyCheck(dependencyRun);
-    const reviewed = reviewDeviations(dependencies, policy, sdkVersion);
+    const reviewed = reviewDeviations(dependencies, policy, sdkVersion, {
+        expoVersion: expo.version,
+        installedVersions: {...pkg.dependencies, ...pkg.devDependencies},
+        bundledNativeModules,
+    });
     for (const message of reviewed) log(`Reviewed Expo deviation: ${message}`);
     const doctor = require.resolve('expo-doctor/bin/expo-doctor.js');
     const run = spawn(process.execPath, [doctor], options);

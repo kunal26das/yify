@@ -38,8 +38,7 @@ test('Dependabot checks every installed workspace and Actions daily without supp
 
 test('coupled dependencies stay together for patch, minor and major proposals', () => {
   const families = [
-    ['expo', 'expo-router', 'expo-build-properties', '@expo/metro-runtime', 'eslint-config-expo'],
-    ['react-native', '@react-native/metro-config'],
+    ['expo', 'expo-router', 'expo-build-properties', '@expo/metro-runtime', 'eslint-config-expo', 'react-native', '@react-native/metro-config', '@react-native/js-polyfills'],
     ['react', 'react-dom', 'react-test-renderer', '@types/react'],
     ['@react-native-firebase/app', '@react-native-firebase/auth', '@react-native-firebase/crashlytics'],
     ['react-native-reanimated', 'react-native-worklets'],
