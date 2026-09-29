@@ -93,6 +93,11 @@ export function reviewDeviations(dependencies, policy, sdkVersion, installedSdk)
             if (packageName === 'expo' && approved && isPrereleaseRecommendationUpdate(actualVersion, expectedVersionOrRange, approved.expected)) {
                 return `${packageName}@${actualVersion}; Expo now recommends ${expectedVersionOrRange} (reviewed ${approved.expected}). Schedule a coordinated SDK update. ${approved.reason}`;
             }
+            if (packageName === 'react-native' && approved?.expected === bundled &&
+                isPrereleaseRecommendationUpdate(bundled, actualVersion, bundled) &&
+                isPrereleaseRecommendationUpdate(actualVersion, expectedVersionOrRange, actualVersion)) {
+                return `${packageName}@${actualVersion} matches the reviewed native runtime; Expo now recommends ${expectedVersionOrRange}. Schedule a coordinated dependency update. ${approved.reason}`;
+            }
             if (packageName !== 'expo' && isBundledRecommendationUpdate(actualVersion, expectedVersionOrRange, bundled, approved?.expected)) {
                 return `${packageName}@${actualVersion} satisfies bundled ${bundled} from Expo ${installedSdk.expoVersion}; Expo now recommends ${expectedVersionOrRange}. Schedule a coordinated dependency update.${approved ? ` ${approved.reason}` : ''}`;
             }
