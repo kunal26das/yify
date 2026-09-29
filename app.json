@@ -175,6 +175,7 @@
             "usePrecompiledModules": false
           },
           "android": {
+            "useLegacyPackaging": true,
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
             "extraProguardRules": "-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.worklets.** { *; }\n-keep class com.margelo.nitro.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-keep class com.google.android.gms.internal.consent_sdk.** { *; }\n-keepattributes SourceFile,LineNumberTable\n-keepattributes *Annotation*\n"
