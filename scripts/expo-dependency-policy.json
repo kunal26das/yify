@@ -93,8 +93,8 @@
     },
     "expo-notifications": {
       "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
+      "expected": "~58.1.0",
+      "reason": "Temporarily retain the tested 1.8.13 native cohort while repairing unrelated dependency automation. Expo 58.0.0-preview.7 bundles notifications ~58.0.7 from the same published source commit; installed versions and native source guards remain exact. Upgrade notifications with the coordinated Expo/JSI native runtime, including its newer push-token retry fix, rather than changing native dependencies in an unrelated release-console update."
     },
     "expo-router": {
       "version": "58.0.8",
