@@ -317,3 +317,233 @@ test('CLI exports a requested result only after acknowledged success', async (t)
   await assert.rejects(() => main(state.env), /Acknowledgement unavailable/);
   await assert.rejects(() => readFile(state.env.GITHUB_OUTPUT), { code: 'ENOENT' });
 });
+
+async function recoveryFixture() {
+  const state = await fixture();
+  const baseApi = state.api;
+  state.env.SOURCE_RUN_ID = '999';
+  state.env.SOURCE_RUN_ATTEMPT = '1';
+  state.pr.mergeable_state = 'blocked';
+  state.run.repository.id = REPOSITORY_ID;
+  state.run.head_repository.id = REPOSITORY_ID;
+  state.run.conclusion = 'failure';
+  state.jobs[0].conclusion = 'failure';
+  state.mainJobs = names.map((name) => ({ name, status: 'completed', conclusion: 'success' }));
+  state.mainRun = { ...structuredClone(state.run), id: 999, event: 'push', run_attempt: 1, head_sha: MAIN,
+    head_branch: 'main', conclusion: 'success', pull_requests: [] };
+  state.prs = [structuredClone(state.pr)];
+  state.runList = [state.run];
+  state.comparison = { base_commit: { sha: HEAD }, ahead_by: 2, status: 'diverged' };
+  state.api = async (method, path, body) => {
+    assert.equal(method, 'GET');
+    if (state.beforeRecoveryApi) await state.beforeRecoveryApi(method, path, body);
+    if (path === `repos/${REPOSITORY}/actions/runs/999` || path === `repos/${REPOSITORY}/actions/runs/999/attempts/1`) return structuredClone(state.mainRun);
+    if (path.startsWith(`repos/${REPOSITORY}/actions/runs/999/attempts/1/jobs?`)) return { jobs: structuredClone(state.mainJobs) };
+    if (path.startsWith(`repos/${REPOSITORY}/pulls?state=open&base=main`)) return structuredClone(state.prs);
+    if (path.startsWith(`repos/${REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=`)) return { workflow_runs: structuredClone(state.runList) };
+    if (path.startsWith(`repos/${REPOSITORY}/compare/`)) return structuredClone(state.comparison);
+    return baseApi(method, path, body);
+  };
+  state.recover = async (options = {}) => (await helpers).recoverAfterMain({ ...state, now: () => state.now, timeoutMs: 10, pollMs: 5, ...options });
+  return state;
+}
+
+test('current successful main CI recovers a signed release head with failed PR checks', async () => {
+  const state = await recoveryFixture();
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  const result = await state.recover();
+  assert.equal(result.main, MAIN);
+  assert.equal(result.results[0].requested, true);
+  assert.equal(result.results[0].failed_run_id, 456);
+  assert.equal(result.results[0].failed_run_attempt, 2);
+  assert.deepEqual(state.writes, [{ method: 'POST', path: `repos/${REPOSITORY}/issues/892/comments`, body: { body: state.body } }]);
+  assert.ok(state.calls.every(({ method }) => method === 'GET'));
+});
+
+for (const [label, mutate] of [
+  ['non-default execution branch', (s) => { s.env.GITHUB_REF = 'refs/heads/test'; }],
+  ['manual dispatch', (s) => { s.env.GITHUB_EVENT_NAME = 'workflow_dispatch'; }],
+  ['pull-request source event', (s) => { s.mainRun.event = 'pull_request'; }],
+  ['failed main', (s) => { s.mainRun.conclusion = 'failure'; }],
+  ['incomplete main', (s) => { s.mainRun.status = 'in_progress'; }],
+  ['another main branch', (s) => { s.mainRun.head_branch = 'other'; }],
+  ['another workflow', (s) => { s.mainRun.workflow_id += 1; }],
+  ['another workflow path', (s) => { s.mainRun.path = '.github/workflows/other.yml'; }],
+  ['fork run', (s) => { s.mainRun.head_repository.full_name = 'someone/yify'; }],
+  ['repository ID mismatch', (s) => { s.mainRun.head_repository.id += 1; }],
+  ['missing repository ID', (s) => { delete s.mainRun.repository.id; }],
+  ['older main', (s) => { s.main.object.sha = NEXT; }],
+  ['different checkout', (s) => { s.env.GITHUB_SHA = NEXT; }],
+  ['stale run attempt', (s) => { s.mainRun.run_attempt += 1; }],
+  ['missing attempt', (s) => { delete s.env.SOURCE_RUN_ATTEMPT; }],
+  ['failed required main job', (s) => { s.mainJobs[0].conclusion = 'failure'; }],
+  ['missing required main job', (s) => { s.mainJobs.pop(); }],
+  ['duplicate required main job', (s) => { s.mainJobs.push(s.mainJobs[0]); }],
+]) test(`main recovery rejects ${label} before writing`, async () => {
+  const state = await recoveryFixture(); mutate(state);
+  await assert.rejects(() => state.recover());
+  assert.equal(state.writes.length, 0);
+});
+
+for (const [label, mutate] of [
+  ['closed', (s) => { s.prs[0].state = 'closed'; }],
+  ['draft', (s) => { s.prs[0].draft = true; }],
+  ['foreign author', (s) => { s.prs[0].user.login = 'someone'; }],
+  ['foreign repository', (s) => { s.prs[0].head.repo.full_name = 'someone/yify'; }],
+  ['foreign repository ID', (s) => { s.prs[0].head.repo.id += 1; }],
+  ['application dependency', (s) => { s.prs[0].head.ref = 'dependabot/npm_and_yarn/expo-59'; }],
+  ['Actions dependency', (s) => { s.prs[0].head.ref = 'dependabot/github_actions/actions/checkout-8'; }],
+]) test(`main recovery excludes ${label} proposals`, async () => {
+  const state = await recoveryFixture(); mutate(state);
+  assert.deepEqual((await state.recover()).results, []);
+  assert.equal(state.writes.length, 0);
+});
+
+for (const [label, mutate] of [
+  ['unsigned source', (s) => { s.original.commit.verification.verified = false; }],
+  ['mixed-scope source', (s) => { s.original.files.push({ filename: 'package.json', status: 'modified' }); }],
+  ['manual followup', (s) => { s.refresh.author.login = 'kunal26das'; }],
+  ['changed repository identity', (s) => { s.pr.head.repo.id += 1; }],
+  ['unsigned followup', (s) => { s.refresh.commit.verification.verified = false; }],
+  ['unverified lockfile contents', (s) => { s.lock = Buffer.from('changed'); }],
+  ['unknown ancestry', (s) => { delete s.comparison.ahead_by; }],
+  ['different compared head', (s) => { s.comparison.base_commit.sha = NEXT; }],
+  ['different failed CI head', (s) => { s.run.head_sha = NEXT; }],
+  ['different failed CI workflow', (s) => { s.run.workflow_id += 1; }],
+  ['foreign failed CI actor', (s) => { s.run.actor.login = 'someone'; }],
+  ['wrong failed CI PR association', (s) => { s.run.pull_requests[0].number += 1; }],
+  ['missing failed required job', (s) => { s.jobs.pop(); }],
+]) test(`main recovery never rebases ${label}`, async () => {
+  const state = await recoveryFixture(); mutate(state);
+  const result = await state.recover();
+  assert.ok(result.results.every((item) => !item.requested));
+  assert.equal(state.writes.length, 0);
+});
+
+for (const [label, mutate] of [
+  ['up-to-date head', (s) => { s.comparison.ahead_by = 0; s.comparison.status = 'behind'; }],
+  ['healthy head', (s) => { s.run.conclusion = 'success'; }],
+  ['running head', (s) => { s.run.status = 'in_progress'; }],
+  ['cancelled head', (s) => { s.run.conclusion = 'cancelled'; }],
+  ['unrelated failed job', (s) => { s.jobs[0].conclusion = 'success'; }],
+  ['missing head CI', (s) => { s.runList = []; }],
+]) test(`main recovery leaves ${label} to its ordinary maintenance`, async () => {
+  const state = await recoveryFixture(); mutate(state);
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, false);
+  assert.equal(result.results[0].blocked, undefined);
+  assert.equal(state.writes.length, 0);
+});
+
+test('main recovery aborts when a fresh successful attempt replaces failed CI before posting', async () => {
+  const state = await recoveryFixture();
+  state.beforeApi = async (_method, path) => {
+    if (path.includes('/issues/892/comments?')) { state.run.run_attempt += 1; state.run.conclusion = 'success'; }
+  };
+  const result = await state.recover();
+  assert.match(result.results[0].reason, /CI changed/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('main recovery aborts when its main source is rerun after initial verification', async () => {
+  const state = await recoveryFixture();
+  state.beforeApi = async (_method, path) => {
+    if (path.includes('/issues/892/comments?')) state.mainRun.run_attempt += 1;
+  };
+  const result = await state.recover();
+  assert.match(result.results[0].reason, /latest successful CI attempt/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('main recovery rechecks the current main and PR head immediately before posting', async () => {
+  for (const mutate of [(s) => { s.main.object.sha = NEXT; }, (s) => { s.pr.head.sha = NEXT; }]) {
+    const state = await recoveryFixture();
+    state.beforeApi = async (_method, path) => { if (path.includes('/issues/892/comments?')) mutate(state); };
+    const result = await state.recover();
+    assert.equal(result.results[0].blocked, true);
+    assert.equal(state.writes.length, 0);
+  }
+});
+
+test('main recovery reuses the exact owner marker without duplicate comments', async () => {
+  const state = await recoveryFixture(); state.comments.push(state.comment());
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  assert.equal((await state.recover()).results[0].requested, true);
+  assert.equal((await state.recover()).results[0].requested, true);
+  assert.equal(state.writes.length, 0);
+});
+
+test('pending recovery is bounded and a repeated main event observes it without reposting', async () => {
+  const state = await recoveryFixture();
+  assert.equal((await state.recover()).results[0].blocked, true);
+  assert.equal((await state.recover()).results[0].blocked, true);
+  assert.equal(state.writes.length, 1);
+  assert.deepEqual(state.waits, [5, 5, 5, 5]);
+});
+
+test('main recovery accepts a newly signed head and never merges or approves it', async () => {
+  const state = await recoveryFixture(); state.onPost = state.rebase;
+  const result = await state.recover();
+  assert.equal(result.results[0].acknowledgement, 'signed-head');
+  assert.equal(result.results[0].new_head, NEXT);
+  assert.equal(state.writes.length, 1);
+  assert.ok(state.calls.every(({ method }) => method === 'GET'));
+});
+
+test('recovery summary identifies blocked requests without claiming a merge', async (t) => {
+  const state = await recoveryFixture();
+  const directory = await mkdtemp(join(tmpdir(), 'dependabot-main-recovery-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  state.env.GITHUB_STEP_SUMMARY = join(directory, 'summary');
+  await state.recover();
+  const text = await readFile(state.env.GITHUB_STEP_SUMMARY, 'utf8');
+  assert.match(text, /actions\/runs\/999\/attempts\/1/);
+  assert.match(text, /Fresh PR checks and lockfile verification still control merging/);
+  assert.match(text, /#892: Dependabot has not acknowledged/);
+});
+
+test('the recovery job uses read-only built-in credentials and handles only successful main push CI', async () => {
+  const { load } = require('js-yaml');
+  const workflow = load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
+  const job = workflow.jobs['recover-main'];
+  assert.match(job.if, /github.event.workflow_run.event == 'push'/);
+  assert.match(job.if, /github.event.workflow_run.conclusion == 'success'/);
+  assert.match(job.if, /github.event.workflow_run.head_branch == 'main'/);
+  assert.deepEqual(job.permissions, { contents: 'read', 'pull-requests': 'read', actions: 'read' });
+  assert.equal(job.concurrency.queue, 'max');
+  assert.equal(job.concurrency['cancel-in-progress'], false);
+  assert.notEqual(job.concurrency.group, workflow.concurrency.group);
+  assert.equal(job.steps.filter((step) => step.env?.DEPENDABOT_REBASE_TOKEN).length, 1);
+  assert.equal(job.steps[0].with.ref, '${{ github.sha }}');
+  assert.ok(job.steps.some((step) => step.run === 'node scripts/dependabot-refresh.mjs recover-main'));
+});
+
+test('main recovery selects the newest exact-head CI run instead of an older failure', async () => {
+  const state = await recoveryFixture();
+  const latest = { ...structuredClone(state.run), id: 777, conclusion: 'success' };
+  state.runList = [state.run, latest];
+  const api = state.api;
+  state.api = async (method, path, body) => path === `repos/${REPOSITORY}/actions/runs/777` ? latest : api(method, path, body);
+  assert.equal((await state.recover()).results[0].requested, false);
+  assert.equal(state.writes.length, 0);
+});
+
+test('one rejected release proposal cannot prevent inspecting another eligible update', async () => {
+  const state = await recoveryFixture();
+  state.prs.unshift({ ...structuredClone(state.pr), number: 891 });
+  const api = state.api;
+  state.api = async (method, path, body) => path === `repos/${REPOSITORY}/pulls/891`
+    ? { ...structuredClone(state.prs[0]), user: { login: 'someone' } } : api(method, path, body);
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  const result = await state.recover();
+  assert.equal(result.results[0].blocked, true);
+  assert.equal(result.results[1].requested, true);
+  assert.equal(state.writes.length, 1);
+});
+
+test('main recovery bounds the release backlog before posting any requests', async () => {
+  const state = await recoveryFixture();
+  state.prs = Array.from({ length: 21 }, (_, index) => ({ ...structuredClone(state.pr), number: 900 + index }));
+  await assert.rejects(() => state.recover(), /More than 20/);
+  assert.equal(state.writes.length, 0);
+});

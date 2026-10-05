@@ -61,6 +61,16 @@ function isPrereleaseRecommendationUpdate(actualVersion, expected, reviewedExpec
         semver.gte(reviewed.version, actual.version) && semver.gt(next.version, reviewed.version);
 }
 
+function isReviewedStableSdkRecommendationUpdate(actualVersion, expected, reviewedExpected) {
+    const actual = semver.parse(actualVersion);
+    const next = recommendation(expected);
+    const reviewed = recommendation(reviewedExpected);
+    if (!actual || !next || !reviewed || next.operator !== reviewed.operator) return false;
+    return [reviewed.version, next.version].every((version) =>
+        version.prerelease.length === 0 && version.major === actual.major && version.minor === actual.minor) &&
+        semver.gte(reviewed.version, actual) && semver.gt(next.version, reviewed.version);
+}
+
 export function reviewDeviations(dependencies, policy, sdkVersion, installedSdk) {
     if (policy.sdkVersion !== sdkVersion) throw new Error('Review Expo dependency deviations for the installed SDK.');
     if (installedSdk) {
@@ -90,7 +100,9 @@ export function reviewDeviations(dependencies, policy, sdkVersion, installedSdk)
         }
         if (installedSdk) {
             const bundled = installedSdk.bundledNativeModules[packageName];
-            if (packageName === 'expo' && approved && isPrereleaseRecommendationUpdate(actualVersion, expectedVersionOrRange, approved.expected)) {
+            if (packageName === 'expo' && approved &&
+                (isPrereleaseRecommendationUpdate(actualVersion, expectedVersionOrRange, approved.expected) ||
+                    isReviewedStableSdkRecommendationUpdate(actualVersion, expectedVersionOrRange, approved.expected))) {
                 return `${packageName}@${actualVersion}; Expo now recommends ${expectedVersionOrRange} (reviewed ${approved.expected}). Schedule a coordinated SDK update. ${approved.reason}`;
             }
             if (packageName === 'react-native' && approved?.expected === bundled &&

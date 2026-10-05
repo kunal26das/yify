@@ -159,6 +159,46 @@ test('Expo recommendation drift is limited to progression within the exact revie
     assert.match(reviewDeviations([{...current, actualVersion: upgradedVersion}], upgradedPolicy, '58.0.0', upgradedSdk)[0], /now recommends ~58.0.0-preview.8/);
 });
 
+test('reviewed stable Expo recommendations can advance by patch without changing the approved installed runtime', async () => {
+    const {reviewDeviations, assessDoctor} = await helpers;
+    for (const installed of ['58.0.0-preview.7', '58.0.0', '58.0.1']) {
+        const {policy, installedSdk} = sdkReview({expo: {version: installed, expected: '~58.0.1', reason: 'Retain the validated native runtime.'}});
+        installedSdk.expoVersion = installed;
+        for (const patch of [2, 3, 12]) {
+            const current = {packageName: 'expo', actualVersion: installed, expectedVersionOrRange: `~58.0.${patch}`};
+            assert.match(reviewDeviations([current], policy, '58.0.0', installedSdk)[0], /now recommends.*reviewed ~58.0.1.*coordinated SDK update/);
+            assert.deepEqual(assessDoctor(result([dependencyTitle], `expo ${current.expectedVersionOrRange} ${installed}\n1 package out of date.`),
+                {reviewedDependencies: [current]}), [dependencyTitle]);
+            assert.throws(() => assessDoctor(result(), {reviewedDependencies: [current]}), /findings differ/);
+        }
+    }
+});
+
+test('stable Expo recommendation drift rejects unsupported ranges, SDK changes, regressions and unreviewed installed versions', async () => {
+    const {reviewDeviations} = await helpers;
+    const installed = '58.0.0-preview.7';
+    const {policy, installedSdk} = sdkReview({expo: {version: installed, expected: '~58.0.1', reason: 'Retain the validated native runtime.'}});
+    installedSdk.expoVersion = installed;
+    const current = {packageName: 'expo', actualVersion: installed, expectedVersionOrRange: '~58.0.3'};
+    for (const expectedVersionOrRange of ['~58.0.0', '~58.0.2-preview.1', '~58.1.0', '~59.0.0', '^58.0.3', '58.0.3', '>=58.0.3', '~58.0.3 || ~59.0.0']) {
+        assert.throws(() => reviewDeviations([{...current, expectedVersionOrRange}], policy, '58.0.0', installedSdk), /Unreviewed/);
+    }
+    assert.throws(() => reviewDeviations([current], policy, '58.0.0'), /Unreviewed/);
+    assert.throws(() => reviewDeviations([current], {...policy, packages: {}}, '58.0.0', installedSdk), /installed SDK version/);
+    assert.throws(() => reviewDeviations([current], {...policy, packages: {expo: {...policy.packages.expo, reason: ' '}}}, '58.0.0', installedSdk), /installed SDK version/);
+    for (const actualVersion of ['58.0.0-preview.8', '58.0.0', '58.0.3', '58.1.0', '59.0.0']) {
+        assert.throws(() => reviewDeviations([{...current, actualVersion}], policy, '58.0.0', installedSdk), /Unreviewed/);
+        assert.throws(() => reviewDeviations([], policy, '58.0.0', {...installedSdk, installedVersions: {expo: actualVersion}}), /Unreviewed installed/);
+    }
+    for (const expected of ['~58.0.0-preview.7', '~57.0.0', '~58.1.0']) {
+        assert.throws(() => reviewDeviations([current], {...policy, packages: {expo: {...policy.packages.expo, expected}}}, '58.0.0', installedSdk), /Unreviewed/);
+    }
+    const newerInstalled = '58.0.4';
+    const newerPolicy = {...policy, packages: {expo: {...policy.packages.expo, version: newerInstalled}}};
+    const newerSdk = {...installedSdk, expoVersion: newerInstalled, installedVersions: {expo: newerInstalled}};
+    assert.throws(() => reviewDeviations([{...current, actualVersion: newerInstalled}], newerPolicy, '58.0.0', newerSdk), /Unreviewed/);
+});
+
 test('a bundled React Native prerelease permits only newer recommendations in its exact core and channel', async () => {
     const {reviewDeviations} = await helpers;
     const current = {packageName: 'react-native', actualVersion: '0.88.0-rc.1', expectedVersionOrRange: '0.88.0-rc.2'};
@@ -221,7 +261,7 @@ test('unrelated release and type updates still run full network doctor when remo
         }
     });
     for (const name of bypasses) process.env[name] = '1';
-    for (const patch of [7, 8]) {
+    for (const patch of [7, 8, 9]) {
         if (patch === 8) {
             pkg.devDependencies['@types/node'] = '26.0.1';
             await Promise.all([
@@ -230,8 +270,12 @@ test('unrelated release and type updates still run full network doctor when remo
                 save('release/package.json', {dependencies: {vite: '8.0.1'}}),
             ]);
         }
+        if (patch === 9) {
+            policy.packages.expo = {...policy.packages.expo, expected: '~58.0.0'};
+            await save('scripts/expo-dependency-policy.json', policy);
+        }
         const findings = [
-            {packageName: 'expo', actualVersion: expoVersion, expectedVersionOrRange: `~58.0.0-preview.${patch}`},
+            {packageName: 'expo', actualVersion: expoVersion, expectedVersionOrRange: patch === 9 ? '~58.0.3' : `~58.0.0-preview.${patch}`},
             {packageName: 'expo-constants', actualVersion: '58.0.6', expectedVersionOrRange: `~58.0.${patch}`},
         ];
         if (patch === 8) findings.push({packageName: 'react-native', actualVersion: '0.88.0-rc.1', expectedVersionOrRange: '0.88.0-rc.2'});
@@ -240,7 +284,7 @@ test('unrelated release and type updates still run full network doctor when remo
         await main({root, log: (line) => logs.push(line), spawn: (command, args, options) => {
             calls.push({command, args, options});
             return calls.length === 1 ? {status: 1, stdout: JSON.stringify({upToDate: false, dependencies: findings})} :
-                result([dependencyTitle], `expo-constants  ~58.0.${patch}  58.0.6\n1 package out of date.`);
+                result([dependencyTitle], `expo-constants  ~58.0.${patch}  58.0.6\n${patch === 9 ? `expo  ~58.0.3  ${expoVersion}\n2 packages` : '1 package'} out of date.`);
         }});
         assert.equal(calls.length, 2);
         assert.equal(calls[0].command, process.execPath);
@@ -253,6 +297,7 @@ test('unrelated release and type updates still run full network doctor when remo
         }
         assert.match(logs.join('\n'), /Expo checks passed/);
         if (patch === 8) assert.match(logs.join('\n'), /now recommends ~58.0.8/);
+        if (patch === 9) assert.match(logs.join('\n'), /now recommends ~58.0.3.*reviewed ~58.0.0/);
     }
 });
 
