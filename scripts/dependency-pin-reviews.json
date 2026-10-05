@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "reviews": [
+    {
+      "file": "release/package.json",
+      "selector": "eas-cli/minimatch",
+      "name": "minimatch",
+      "current": "5.1.9",
+      "latest": "10.2.6",
+      "newestStable": "10.2.6",
+      "sameMajor": "5.1.9",
+      "consumers": [
+        {
+          "file": "release/package.json",
+          "section": "dependencies",
+          "name": "eas-cli",
+          "version": "24.9.0"
+        }
+      ],
+      "reason": "EAS CLI 24.9.0 calls minimatch as a CommonJS function; minimatch 10 exports an object. Keep the reviewed 5.1.9 compatibility pin.",
+      "evidence": "docs/dependency-pin-review.md"
+    },
+    {
+      "file": "tooling/package.json",
+      "selector": "devDependencies.babel7",
+      "name": "@babel/core",
+      "current": "7.29.7",
+      "latest": "8.0.6",
+      "newestStable": "8.0.6",
+      "sameMajor": "7.29.7",
+      "consumers": [
+        {
+          "file": "package.json",
+          "section": "dependencies",
+          "name": "expo",
+          "version": "58.0.3"
+        },
+        {
+          "file": "package.json",
+          "section": "dependencies",
+          "name": "react-native-worklets",
+          "version": "0.13.0"
+        },
+        {
+          "file": "tooling/package.json",
+          "section": "devDependencies",
+          "name": "@babel/core",
+          "version": "8.0.6"
+        }
+      ],
+      "reason": "Expo 58.0.3 and Worklets 0.13.0 still require Babel 7 APIs. The private compatibility alias coexists with Babel 8.0.6 for mocked test fixtures.",
+      "evidence": "docs/dependency-pin-review.md"
+    }
+  ]
+}
