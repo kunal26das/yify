@@ -7,6 +7,8 @@ export const MARKER = '<!-- yify-dependency-watch:v1 -->';
 export const TITLE = 'Dependency pins needing review';
 const VERIFIER = 'dependabot/fetch-metadata';
 const MANIFESTS = ['package.json', 'crashreporting/package.json', 'tooling/package.json', 'release/package.json'];
+const REVIEW_POLICY = 'scripts/dependency-pin-reviews.json';
+const DEPENDENCY_SECTIONS = ['dependencies', 'devDependencies', 'optionalDependencies'];
 const SHA = /^[a-f0-9]{40}$/;
 const NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
@@ -132,6 +134,58 @@ export function npmVersions(name, document, current) {
     return {latest, newestStable, sameMajor, status: compareVersions(current, newestStable) < 0 ? 'review' : 'current'};
 }
 
+export function compatibilityReviews(policy) {
+    const keys = (value, allowed) => object(value) && Object.keys(value).length === allowed.length && allowed.every(key => Object.hasOwn(value, key));
+    assert(keys(policy, ['version', 'reviews']) && policy.version === 1 && Array.isArray(policy.reviews) && policy.reviews.length <= 100,
+        'Invalid dependency compatibility review policy.');
+    const identities = new Set();
+    for (const review of policy.reviews) {
+        assert(keys(review, ['file', 'selector', 'name', 'current', 'latest', 'newestStable', 'sameMajor', 'consumers', 'reason', 'evidence']),
+            'Invalid dependency compatibility review record.');
+        assert(MANIFESTS.includes(review.file) && typeof review.selector === 'string' && review.selector.length <= 240 &&
+            typeof review.name === 'string' && review.name.match(NAME)?.[0] === review.name,
+        'Invalid reviewed dependency identity.');
+        const section = DEPENDENCY_SECTIONS.find(value => review.selector.startsWith(`${value}.`));
+        if (section) {
+            const alias = review.selector.slice(section.length + 1);
+            assert(alias.match(NAME)?.[0] === alias, 'Invalid reviewed alias selector.');
+        } else assert(resolutionPackage(review.selector) === review.name, 'Invalid reviewed resolution selector.');
+        assert(['current', 'latest', 'newestStable', 'sameMajor'].every(key => semver(review[key])) &&
+            semver(review.newestStable).prerelease.length === 0 && semver(review.sameMajor).prerelease.length === 0 &&
+            semver(review.current).numbers[0] === semver(review.sameMajor).numbers[0] &&
+            compareVersions(review.current, review.sameMajor) >= 0 && compareVersions(review.current, review.newestStable) < 0 &&
+            compareVersions(review.latest, review.newestStable) <= 0,
+        'Invalid reviewed dependency versions.');
+        assert(typeof review.reason === 'string' && review.reason.trim().length > 0 && review.reason.length <= 1000 && !/[\r\n]/.test(review.reason) &&
+            typeof review.evidence === 'string' && /^docs\/[a-z0-9-]+\.md(?:#[a-z0-9-]+)?$/.test(review.evidence),
+        'Invalid dependency compatibility review explanation.');
+        const identity = `${review.file}:${review.selector}`;
+        assert(!identities.has(identity), 'Duplicate dependency compatibility review.');
+        identities.add(identity);
+        assert(Array.isArray(review.consumers) && review.consumers.length > 0 && review.consumers.length <= 10,
+            'Invalid dependency compatibility consumers.');
+        const consumers = new Set();
+        for (const consumer of review.consumers) {
+            assert(keys(consumer, ['file', 'section', 'name', 'version']) && MANIFESTS.includes(consumer.file) &&
+                DEPENDENCY_SECTIONS.includes(consumer.section) && typeof consumer.name === 'string' &&
+                consumer.name.match(NAME)?.[0] === consumer.name && semver(consumer.version),
+            'Invalid dependency compatibility consumer.');
+            const identity = `${consumer.file}:${consumer.section}:${consumer.name}`;
+            assert(!consumers.has(identity), 'Duplicate dependency compatibility consumer.');
+            consumers.add(identity);
+        }
+    }
+    return policy.reviews;
+}
+
+function applyCompatibilityReview(row, reviews, manifests) {
+    if (row.kind !== 'npm' || row.status !== 'review') return row;
+    const review = reviews.find(candidate => ['file', 'selector', 'name', 'current', 'latest', 'newestStable', 'sameMajor']
+        .every(key => candidate[key] === row[key]) && candidate.consumers.every(consumer =>
+        manifests[consumer.file]?.[consumer.section]?.[consumer.name] === consumer.version));
+    return review ? {...row, status: 'compatible-reviewed', reason: review.reason, evidence: review.evidence} : row;
+}
+
 export function jsonClient({fetchImpl = fetch, token} = {}) {
     return async (url, {method = 'GET', body} = {}) => {
         const parsed = new URL(url);
@@ -183,8 +237,11 @@ export async function latestVerifier(request) {
     throw new Error('Verifier tags exceed the supported page limit.');
 }
 
-export async function scan({manifests, workflow, request}) {
+export async function scan({manifests, workflow, request, reviewPolicy = {version: 1, reviews: []}}) {
     const rows = [], errors = [];
+    let reviews = [];
+    try { reviews = compatibilityReviews(reviewPolicy); }
+    catch { errors.push('Cannot validate the dependency compatibility review policy. No compatibility reviews were applied.'); }
     let pins = [];
     try { pins = resolutionPins(manifests); }
     catch { errors.push('Cannot inspect exact workspace/release resolution pins.'); }
@@ -194,7 +251,7 @@ export async function scan({manifests, workflow, request}) {
     for (const pin of pins) {
         try {
             if (!cache.has(pin.name)) cache.set(pin.name, await request(`https://registry.npmjs.org/${encodeURIComponent(pin.name)}`));
-            rows.push({...pin, ...npmVersions(pin.name, cache.get(pin.name), pin.current)});
+            rows.push(applyCompatibilityReview({...pin, ...npmVersions(pin.name, cache.get(pin.name), pin.current)}, reviews, manifests));
         } catch { errors.push(`Cannot verify ${pin.file}: ${pin.selector}.`); }
     }
     try {
@@ -212,11 +269,14 @@ export function markdown(report) {
         '| Location / package | Pinned | npm latest / latest GitHub tag | Newest stable | Latest in pinned major | Result |',
         '| --- | --- | --- | --- | --- | --- |'];
     for (const row of report.rows) {
-        if (row.kind === 'npm') lines.push(`| ${row.file}: [${row.selector}${row.alias ? ` → ${row.name}` : ''}](https://www.npmjs.com/package/${row.name}) | ${row.current} | ${row.latest} | ${row.newestStable} | ${row.sameMajor ?? 'None'} | ${row.status} |`);
+        const result = row.status === 'compatible-reviewed'
+            ? `${row.status}: ${row.reason.replace(/[\\`*_[\]<>|]/g, character => `&#${character.charCodeAt(0)};`)} [Review](https://github.com/${REPOSITORY}/blob/main/${row.evidence})`
+            : row.status;
+        if (row.kind === 'npm') lines.push(`| ${row.file}: [${row.selector}${row.alias ? ` → ${row.name}` : ''}](https://www.npmjs.com/package/${row.name}) | ${row.current} | ${row.latest} | ${row.newestStable} | ${row.sameMajor ?? 'None'} | ${result} |`);
         else lines.push(`| ${row.file}: [${row.name}](https://github.com/${VERIFIER}/tags) | ${row.current} | [${row.latest}](https://github.com/${VERIFIER}/releases/tag/${row.latest}) | ${row.latestSha} | — | ${row.status} |`);
     }
     if (report.errors.length) lines.push('', '## Incomplete checks', '', ...report.errors.map(error => `- ${error}`), '', 'A failed lookup is not evidence that a pin is current. Existing tracking remains open.');
-    lines.push('', '[Recorded compatibility reviews](https://github.com/kunal26das/yify/blob/main/docs/dependency-pin-review.md) explain retained pins and pending native upgrades; they do not suppress newer-version findings.', '',
+    lines.push('', '[Recorded compatibility reviews](https://github.com/kunal26das/yify/blob/main/docs/dependency-pin-review.md) retain only the exact reviewed pin, registry candidates and consumer versions. Any changed candidate or consumer requires review again; failed lookups remain incomplete checks.', '',
         'Review changelogs and compatibility before updating a pin, commit regenerated lockfiles, and run the affected build checks. A different verifier SHA needs review before replacement.', '',
         'Sources: [Yarn resolution selectors](https://classic.yarnpkg.com/lang/en/docs/selective-version-resolutions/), [npm distribution tags](https://docs.npmjs.com/cli/v11/commands/npm-dist-tag/), [GitHub repository tags](https://docs.github.com/en/rest/repos/repos#list-repository-tags).', '');
     return lines.join('\n');
@@ -270,7 +330,10 @@ export async function main({env = process.env, directory = root, request = jsonC
     const manifests = {};
     for (const filename of MANIFESTS) manifests[filename] = JSON.parse(await readFile(join(directory, filename), 'utf8'));
     const workflow = await readFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), 'utf8');
-    const report = await scan({manifests, workflow, request});
+    let reviewPolicy = null;
+    try { reviewPolicy = JSON.parse(await readFile(join(directory, REVIEW_POLICY), 'utf8')); }
+    catch {}
+    const report = await scan({manifests, workflow, request, reviewPolicy});
     await persistReport(output, report);
     if (env.GITHUB_STEP_SUMMARY) await appendFile(env.GITHUB_STEP_SUMMARY, markdown(report));
     if (env.DEPENDENCY_WATCH_PUBLISH === 'true') {

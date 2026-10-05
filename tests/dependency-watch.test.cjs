@@ -15,6 +15,19 @@ const metadata = url => {
 };
 const env = {GITHUB_REPOSITORY: 'kunal26das/yify', GITHUB_EVENT_NAME: 'schedule', GITHUB_REF: 'refs/heads/main', GITHUB_SHA: sha};
 const event = {repository: {full_name: 'kunal26das/yify', default_branch: 'main'}};
+const reviewedInventory = {
+    'package.json': {dependencies: {expo: '58.0.3', 'react-native-worklets': '0.13.0'}},
+    'crashreporting/package.json': {},
+    'tooling/package.json': {devDependencies: {'@babel/core': '8.0.6', babel7: 'npm:@babel/core@7.29.7'}},
+    'release/package.json': {dependencies: {'eas-cli': '24.9.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
+};
+const reviewedMetadata = url => {
+    const name = decodeURIComponent(new URL(url).pathname.slice(1));
+    if (name === 'minimatch') return document(name, ['5.1.9', '10.2.6']);
+    if (name === '@babel/core') return document(name, ['7.29.7', '8.0.6']);
+    return metadata(url);
+};
+const reviewedPolicy = async () => JSON.parse(await readFile(join(__dirname, '../scripts/dependency-pin-reviews.json'), 'utf8'));
 
 for (const [selector, expected] of [['uuid', 'uuid'], ['**/xcode/uuid', 'uuid'], ['eas-cli/minimatch', 'minimatch'], ['@scope/pkg', '@scope/pkg'], ['@scope/parent/@other/child', '@other/child'], ['**/@scope/pkg', '@scope/pkg']]) {
     test(`resolution selector ${selector} identifies ${expected}`, async () => assert.equal((await api).resolutionPackage(selector), expected));
@@ -125,6 +138,8 @@ test('report inventory reads both app workspaces and preserves scoped resolution
     }
     await mkdir(join(directory, '.github/workflows'), {recursive: true});
     await writeFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), workflow);
+    await mkdir(join(directory, 'scripts'), {recursive: true});
+    await writeFile(join(directory, 'scripts/dependency-pin-reviews.json'), JSON.stringify({version: 1, reviews: []}));
     const output = join(directory, 'report');
     assert.equal(await main({directory, env: {DEPENDENCY_WATCH_OUTPUT: output}, request: metadata}), 0);
     const report = JSON.parse(await readFile(join(output, 'report.json'), 'utf8'));
@@ -253,6 +268,181 @@ test('one issue is created, unchanged reruns do nothing, and resolution closes t
     assert.equal(await syncIssue({report, request, env, event}), 'updated'); assert.equal(writes.length, 3);
     assert.equal(issue.state, 'open');
     assert.ok(writes.every(call => !call.url.includes('comments')));
+});
+
+test('exact compatibility reviews remain visible, close the tracking issue and make unchanged reruns idempotent', async () => {
+    const {scan, markdown, syncIssue, MARKER, TITLE} = await api;
+    const report = await scan({manifests: reviewedInventory, workflow, request: reviewedMetadata, reviewPolicy: await reviewedPolicy()});
+    assert.equal(report.version, 1);
+    assert.deepEqual(report.errors, []);
+    assert.equal(report.rows.length, 3);
+    assert.equal(report.rows.filter(row => row.status === 'compatible-reviewed').length, 2);
+    assert.equal(report.rows.filter(row => row.status === 'review').length, 0);
+    const text = markdown(report);
+    assert.match(text, /0 pins need review\. 0 checks could not complete/);
+    assert.match(text, /eas-cli\/minimatch/);
+    assert.match(text, /devDependencies\.babel7 → @babel\/core/);
+    assert.match(text, /compatible-reviewed: EAS CLI 24\.9\.0/);
+    assert.match(text, /compatible-reviewed: Expo 58\.0\.3/);
+    assert.match(text, /docs\/dependency-pin-review\.md/);
+    let issue = {number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'open', body: `${MARKER}\nPrevious findings`};
+    const writes = [];
+    const request = async (_url, options) => {
+        if (!options) return [issue];
+        writes.push(options);
+        issue = {...issue, ...options.body};
+        return issue;
+    };
+    assert.equal(await syncIssue({report, request, env, event}), 'closed');
+    assert.equal(issue.state_reason, 'completed');
+    assert.equal(writes.length, 1);
+    const rerun = await scan({manifests: reviewedInventory, workflow, request: reviewedMetadata, reviewPolicy: await reviewedPolicy()});
+    assert.equal(await syncIssue({report: rerun, request, env, event}), 'unchanged');
+    assert.equal(writes.length, 1);
+});
+
+for (const [label, name, versions, latest] of [
+    ['new Babel stable release', '@babel/core', ['7.29.7', '8.0.6', '8.0.7'], '8.0.7'],
+    ['new compatible Babel patch', '@babel/core', ['7.29.7', '7.29.8', '8.0.6'], '8.0.6'],
+    ['changed Babel latest tag', '@babel/core', ['7.29.7', '8.0.6'], '7.29.7'],
+    ['new minimatch stable release', 'minimatch', ['5.1.9', '10.2.6', '10.2.7'], '10.2.7'],
+    ['new compatible minimatch patch', 'minimatch', ['5.1.9', '5.1.10', '10.2.6'], '10.2.6'],
+    ['new latest prerelease', '@babel/core', ['7.29.7', '8.0.6', '9.0.0-beta.1'], '9.0.0-beta.1'],
+]) {
+    test(`${label} invalidates only its exact compatibility review and reopens tracking`, async () => {
+        const {scan, syncIssue, markdown, MARKER, TITLE} = await api;
+        const report = await scan({manifests: reviewedInventory, workflow, reviewPolicy: await reviewedPolicy(), request: url =>
+            decodeURIComponent(new URL(url).pathname.slice(1)) === name ? document(name, versions, latest) : reviewedMetadata(url)});
+        assert.deepEqual(report.errors, []);
+        assert.equal(report.rows.find(row => row.name === name).status, 'review');
+        assert.equal(report.rows.filter(row => row.status === 'compatible-reviewed').length, 1);
+        assert.match(markdown(report), /1 pins need review/);
+        let state;
+        await syncIssue({report, env, event, request: async (_url, options) => {
+            if (options) { state = options.body.state; return {}; }
+            return [{number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'closed', body: `${MARKER}\nEarlier review`}];
+        }});
+        assert.equal(state, 'open');
+    });
+}
+
+for (const [label, change, name] of [
+    ['Expo consumer update', inventory => { inventory['package.json'].dependencies.expo = '58.0.4'; }, '@babel/core'],
+    ['Worklets consumer update', inventory => { inventory['package.json'].dependencies['react-native-worklets'] = '0.13.1'; }, '@babel/core'],
+    ['Babel 8 consumer update', inventory => { inventory['tooling/package.json'].devDependencies['@babel/core'] = '8.0.7'; }, '@babel/core'],
+    ['EAS consumer update', inventory => { inventory['release/package.json'].dependencies['eas-cli'] = '24.10.0'; }, 'minimatch'],
+    ['removed consumer', inventory => { delete inventory['release/package.json'].dependencies['eas-cli']; }, 'minimatch'],
+    ['changed pin', inventory => { inventory['release/package.json'].resolutions['eas-cli/minimatch'] = '5.1.8'; }, 'minimatch'],
+    ['changed resolution selector', inventory => { inventory['release/package.json'].resolutions = {'**/minimatch': '5.1.9'}; }, 'minimatch'],
+    ['changed alias selector', inventory => {
+        inventory['tooling/package.json'].devDependencies.babellegacy = inventory['tooling/package.json'].devDependencies.babel7;
+        delete inventory['tooling/package.json'].devDependencies.babel7;
+    }, '@babel/core'],
+    ['changed alias section', inventory => {
+        inventory['tooling/package.json'].dependencies = {babel7: inventory['tooling/package.json'].devDependencies.babel7};
+        delete inventory['tooling/package.json'].devDependencies.babel7;
+    }, '@babel/core'],
+    ['changed manifest location', inventory => {
+        inventory['package.json'].resolutions = inventory['release/package.json'].resolutions;
+        delete inventory['release/package.json'].resolutions;
+    }, 'minimatch'],
+    ['changed underlying alias package', inventory => {
+        inventory['tooling/package.json'].devDependencies.babel7 = 'npm:@babel/other@7.29.7';
+    }, '@babel/other'],
+]) {
+    test(`${label} cannot inherit an existing compatibility review`, async () => {
+        const {scan} = await api;
+        const inventory = structuredClone(reviewedInventory);
+        change(inventory);
+        const report = await scan({manifests: inventory, workflow, reviewPolicy: await reviewedPolicy(), request: url =>
+            url.includes('%40babel%2Fother') ? document('@babel/other', ['7.29.7', '8.0.6']) : reviewedMetadata(url)});
+        assert.deepEqual(report.errors, []);
+        assert.equal(report.rows.find(row => row.name === name).status, 'review');
+        assert.equal(report.rows.filter(row => row.status === 'compatible-reviewed').length, 1);
+    });
+}
+
+test('lookup failure is never waived by a compatibility record', async () => {
+    const {scan, syncIssue, MARKER, TITLE} = await api;
+    const report = await scan({manifests: reviewedInventory, workflow, reviewPolicy: await reviewedPolicy(), request: url => {
+        if (url.includes('minimatch')) throw new Error('private response');
+        return reviewedMetadata(url);
+    }});
+    assert.deepEqual(report.errors, ['Cannot verify release/package.json: eas-cli/minimatch.']);
+    assert.equal(report.rows.some(row => row.name === 'minimatch'), false);
+    assert.equal(report.rows.filter(row => row.status === 'compatible-reviewed').length, 1);
+    let state;
+    await syncIssue({report, env, event, request: async (_url, options) => {
+        if (options) { state = options.body.state; return {}; }
+        return [{number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'closed', body: `${MARKER}\nEarlier review`}];
+    }});
+    assert.equal(state, 'open');
+});
+
+test('malformed policies fail closed with a visible error and apply no partial reviews', async () => {
+    const {scan, markdown} = await api;
+    const base = await reviewedPolicy();
+    const changes = [
+        () => null,
+        () => ({...base, version: 2}),
+        () => ({...base, ignored: true}),
+        () => ({...base, reviews: [...base.reviews, base.reviews[0]]}),
+        policy => { policy.reviews[1].newestStable = '*'; return policy; },
+        policy => { policy.reviews[1].sameMajor = '7.30.0'; return policy; },
+        policy => { policy.reviews[1].current = '^7.29.7'; return policy; },
+        policy => { policy.reviews[1].name = '@babel/core\n'; return policy; },
+        policy => { policy.reviews[1].selector = 'devDependencies.*'; return policy; },
+        policy => { policy.reviews[1].reason = ''; return policy; },
+        policy => { policy.reviews[1].evidence = 'https://example.com'; return policy; },
+        policy => { policy.reviews[1].consumers = []; return policy; },
+        policy => { policy.reviews[1].consumers[0].version = '^58.0.3'; return policy; },
+        policy => { policy.reviews[1].consumers.push(policy.reviews[1].consumers[0]); return policy; },
+        policy => { policy.reviews[1].consumers[0].optional = true; return policy; },
+    ];
+    for (const change of changes) {
+        const report = await scan({manifests: reviewedInventory, workflow, reviewPolicy: change(structuredClone(base)), request: reviewedMetadata});
+        assert.deepEqual(report.errors, ['Cannot validate the dependency compatibility review policy. No compatibility reviews were applied.']);
+        assert.equal(report.rows.filter(row => row.status === 'review').length, 2);
+        assert.equal(report.rows.some(row => row.status === 'compatible-reviewed'), false);
+        assert.match(markdown(report), /2 pins need review\. 1 checks could not complete/);
+    }
+});
+
+test('review explanations cannot inject report rows or links', async () => {
+    const {scan, markdown} = await api;
+    const reviewPolicy = await reviewedPolicy();
+    reviewPolicy.reviews[0].reason = 'Retained | [unexpected](https://example.com) <tag>';
+    const report = await scan({manifests: reviewedInventory, workflow, reviewPolicy, request: reviewedMetadata});
+    assert.deepEqual(report.errors, []);
+    const result = markdown(report);
+    assert.match(result, /Retained &#124; &#91;unexpected&#93;/);
+    assert.doesNotMatch(result, /\[unexpected\]|<tag>/);
+});
+
+test('main loads the review policy and persists missing or malformed policy failures before publication', async t => {
+    const {main} = await api;
+    const directory = await mkdtemp(join(tmpdir(), 'dependency-watch-policy-'));
+    t.after(() => rm(directory, {recursive: true, force: true}));
+    for (const [filename, pkg] of Object.entries(reviewedInventory)) {
+        await mkdir(join(directory, dirname(filename)), {recursive: true});
+        await writeFile(join(directory, filename), JSON.stringify(pkg));
+    }
+    await mkdir(join(directory, '.github/workflows'), {recursive: true});
+    await writeFile(join(directory, '.github/workflows/dependabot-maintenance.yml'), workflow);
+    const output = join(directory, 'report');
+    const environment = {DEPENDENCY_WATCH_OUTPUT: output};
+    assert.equal(await main({directory, env: environment, request: reviewedMetadata}), 1);
+    let report = JSON.parse(await readFile(join(output, 'report.json'), 'utf8'));
+    assert.equal(report.errors.length, 1);
+    assert.equal(report.rows.filter(row => row.status === 'review').length, 2);
+    await mkdir(join(directory, 'scripts'), {recursive: true});
+    await writeFile(join(directory, 'scripts/dependency-pin-reviews.json'), '{bad json');
+    assert.equal(await main({directory, env: environment, request: reviewedMetadata}), 1);
+    await writeFile(join(directory, 'scripts/dependency-pin-reviews.json'), JSON.stringify(await reviewedPolicy()));
+    assert.equal(await main({directory, env: environment, request: reviewedMetadata}), 0);
+    report = JSON.parse(await readFile(join(output, 'report.json'), 'utf8'));
+    assert.deepEqual(report.errors, []);
+    assert.equal(report.rows.filter(row => row.status === 'compatible-reviewed').length, 2);
 });
 
 test('upstream failure keeps tracking open; duplicate issues and API failures never cause duplicate creation', async () => {

@@ -1,6 +1,6 @@
-# Dependency pin review — 29 September 2026
+# Dependency pin review — 6 October 2026
 
-[Issue #921](https://github.com/kunal26das/yify/issues/921) tracks versions outside ordinary Dependabot updates. An open finding means a newer version exists; it does not establish that the replacement works with its callers. This review does not suppress findings or change automatic-merge rules.
+[Issue #921](https://github.com/kunal26das/yify/issues/921) tracks versions outside ordinary Dependabot updates. The Expo findings in its previous report were resolved in [PR #941](https://github.com/kunal26das/yify/pull/941). The two remaining older majors are required compatibility pins, reviewed again against the installed dependencies below. Automatic-merge rules remain unchanged.
 
 ## Updated pins
 
@@ -27,25 +27,31 @@ Validation includes the app and crash-reporting tests, typechecks, exact-pin che
 
 | Pin | Why it remains | When to revisit |
 | --- | --- | --- |
-| `release/package.json`: `eas-cli/minimatch` 5.1.9 | EAS 24.8.0 calls the default export as a function when matching an iOS provisioning profile's bundle identifier. Minimatch 10 exports an object with a named function. Replacing 5 with 10 makes a valid profile fail validation. | EAS changes this caller, or a separately reviewed adapter passes exact and wildcard provisioning-profile checks. |
+| `release/package.json`: `eas-cli/minimatch` 5.1.9 | EAS 24.9.0 calls the default export as a function when matching an iOS provisioning profile's bundle identifier. Minimatch 10 exports an object with a named function. Replacing 5 with 10 makes a valid profile fail validation. | EAS changes this caller, or a separately reviewed adapter passes exact and wildcard provisioning-profile checks. |
 | `tooling/package.json`: `babel7` 7.29.7 | Worklets 0.13.0 uses Babel 7 presets that assert a Babel 7 compiler. A Babel 8 replacement fails the actual transform with `Requires Babel "^7.0.0-0"`. Expo's Babel 7 syntax plugin also rejects Babel 8. The root tools already use Babel 8.0.6. | The upstream presets/plugins support Babel 8, and Worklets transforms, web exports and native builds pass together. |
 
-Both pins are on the newest available version in their required major as of this review. They remain visible in the watcher; newer patches, majors and lookup failures are not ignored. Existing transform tests and the release consumer checks protect these compatibility requirements.
+The reviewed registry candidates are minimatch 10.2.6 and Babel 8.0.6; the newest releases in the required majors are 5.1.9 and 7.29.7 respectively. Nine release compatibility tests and ten tooling tests pass against the installed 1.8.14 dependencies. Replacing the Worklets compiler with Babel 8 in an isolated in-memory probe still reproduces the Babel 7 version assertion.
 
-## New Expo findings
+The watcher reads `scripts/dependency-pin-reviews.json`. A review applies only when the manifest, selector, package, pinned version, all three reported registry versions and every recorded consumer version match exactly. Matching rows remain visible as `compatible-reviewed`, with the reason and this evidence. A new release, a compatible-major patch, a changed consumer or a changed pin requires another review. Missing or malformed review data and failed registry lookups keep the issue open. This is not a range exclusion or a claim that an older major is universally safe.
 
-A fresh scan also finds seven packages newer than the native combination validated in [PR #927](https://github.com/kunal26das/yify/pull/927):
+## Resolved Expo findings
 
-| Package | Validated pin | Candidate |
+The 1.8.14 upgrade in PR #941 resolved all eleven Expo findings from the previous issue report:
+
+| Package | Previous pin | Validated replacement |
 | --- | --- | --- |
-| `@expo/cli` | 58.0.7 | 58.0.8 |
-| `@expo/log-box` | 58.0.5 | 58.0.6 |
-| `@expo/metro-runtime` | 58.0.7 | 58.0.8 |
-| `expo-asset` | 58.0.7 | 58.0.8 |
-| `expo-constants` | 58.0.7 | 58.0.8 |
-| `expo-font` | 58.0.2 | 58.0.3 |
-| `expo-task-manager` | 58.0.8 | 58.0.9 |
+| `@expo/cli` | 58.0.7 | 58.1.2 |
+| `@expo/log-box` | 58.0.5 | 58.0.9 |
+| `@expo/metro-config` | 58.0.5 | 58.0.8 |
+| `@expo/metro-runtime` | 58.0.7 | 58.0.11 |
+| `expo-asset` | 58.0.7 | 58.0.11 |
+| `expo-constants` | 58.0.7 | 58.0.9 |
+| `expo-dev-launcher` | 58.0.8 | 58.0.11 |
+| `expo-font` | 58.0.2 | 58.0.6 |
+| `expo-modules-autolinking` | 58.0.5 | 58.0.8 |
+| `expo-modules-core` | 58.0.8 | 58.0.12 |
+| `expo-task-manager` | 58.0.8 | 58.0.11 |
 
-These are pending native upgrades, not completed compatibility reviews. Font 58.0.3 includes an [iOS font-registration crash fix](https://github.com/expo/expo/pull/50561). Advance the relevant direct dependencies, resolution pins and source guards together; regenerate native projects, verify Android/iOS builds and web exports, and advance the runtime if native code changes. A tools-only pin review must not silently replace this build validation.
+Direct dependencies, resolution pins and source guards advanced together, both lockfiles were regenerated and committed, and native projects were regenerated. Validation covered 1,999 tests, the exact-pin checker, Expo doctor, both web exports, a signed Android build with device smoke checks, and an unsigned iOS simulator build. Runtime 1.8.14 / Android build 96 was submitted to Google Play. The obsolete query-string override was removed because the updated Expo Router no longer uses it.
 
-After the six upgrades above, the live report contains nine findings: these seven Expo candidates and the two required compatibility pins. Keep #921 open until the outstanding versions are addressed. The automatic report remains authoritative for current registry versions.
+The tracking issue can close when a fresh scan has no unreviewed findings or incomplete checks. Future findings reopen the same issue; registry version checks remain enabled for every pin.
