@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "app-info-parser": "1.1.6",
-    "eas-cli": "24.8.0",
+    "eas-cli": "24.9.0",
     "ink": "7.1.1",
     "ink-select-input": "6.2.0",
     "ink-text-input": "6.0.0",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/node": "26.6.4",
     "@types/react": "19.3.0",
-    "electron": "44.4.5",
+    "electron": "44.5.1",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
   },
