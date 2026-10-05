@@ -146,7 +146,7 @@ test('Metro and React Native share the same asset registry and accepted import r
   assert.ok(start >= 0 && end > start);
   const resolve = new Function('moduleName', 'context', 'config', 'getAssetRegistryModule', source.slice(start, end));
   const config = { transformer: { assetRegistryPath: 'custom-registry' } };
-  for (const specifier of ['custom-registry', 'react-native/asset-registry', '@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js']) {
+  for (const specifier of ['custom-registry', 'react-native/asset-registry', '@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js', 'react-native/Libraries/Image/AssetRegistry', 'react-native/Libraries/Image/AssetRegistry.js']) {
     assert.equal(resolve(specifier, {}, config, () => 'shared'), 'shared');
   }
   for (const [specifier, origin] of [

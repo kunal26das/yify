@@ -1,30 +1,25 @@
 {
   "sdkVersion": "58.0.0",
   "packages": {
+    "expo": {
+      "version": "58.0.3",
+      "expected": "~58.0.3",
+      "reason": "Use the coordinated Expo 58.0.3 / React Native 0.88.0-rc.3 dependency set under runtime 1.8.14. Preserve source guards, lifecycle regression coverage and native build validation."
+    },
     "@sentry/react-native": {
-      "version": "8.28.0",
-      "expected": "~7.11.0",
-      "reason": "Keep the Sentry 8 integration and its native crash symbol configuration."
+      "version": "8.29.0",
+      "expected": "~8.28.0",
+      "reason": "Sentry 8.29 updates native Android/Cocoa SDKs, replay registration and iOS linking. This upgrade is coupled to runtime 1.8.14 and native project regeneration; retain crash-reporting and symbol upload validation."
     },
     "react-native-gesture-handler": {
       "version": "3.3.0",
       "expected": "~3.2.1",
-      "reason": "Retain Gesture Handler 3.3 and the existing gesture API; validate its native integration as part of the coordinated Expo 58 runtime build."
-    },
-    "react-native-reanimated": {
-      "version": "4.7.0",
-      "expected": "4.6.0",
-      "reason": "Reanimated 4.7.0 explicitly supports React Native 0.88 and Worklets 0.13 in its published compatibility.json; the SDK recommendation 4.6.0 does not include React Native 0.88."
+      "reason": "Retain Gesture Handler 3.3 and the existing gesture API with the coordinated Expo 58 native runtime."
     },
     "react-native-safe-area-context": {
-      "version": "5.10.0",
+      "version": "5.10.1",
       "expected": "~5.9.1",
-      "reason": "Retain the current safe-area native integration while validating the coordinated Expo 58 runtime."
-    },
-    "react-native-worklets": {
-      "version": "0.13.0",
-      "expected": "0.12.2",
-      "reason": "Worklets 0.13.0 explicitly supports React Native 0.88 in its published compatibility.json and is the required pair for Reanimated 4.7.0."
+      "reason": "Safe-area 5.10.1 preserves the 5.10.0 Android/iOS implementation and fixes SwiftPM package metadata; validate its integration in runtime 1.8.14."
     },
     "@babel/core": {
       "version": "8.0.6",
@@ -35,91 +30,6 @@
       "version": "7.0.2",
       "expected": "~6.0.3",
       "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
-    },
-    "@expo/metro-runtime": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "@expo/ui": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo": {
-      "version": "58.0.0-preview.7",
-      "expected": "~58.0.0",
-      "reason": "Retain the exact Expo 58 preview.7 / React Native 0.88.0-rc.2 cohort validated for the 1.8.13 native crash hotfix. Expo published 58.0.0 under next on 2026-09-29 during release validation; review its coordinated native dependency upgrade separately. The installed versions, source guards, native lifecycle fixtures, signed build and device checks remain required."
-    },
-    "expo-background-task": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-build-properties": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-constants": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-dev-client": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-image": {
-      "version": "58.0.6",
-      "expected": "~58.0.6",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-insights": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-linking": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-location": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-notifications": {
-      "version": "58.0.7",
-      "expected": "~58.1.0",
-      "reason": "Temporarily retain the tested 1.8.13 native cohort while repairing unrelated dependency automation. Expo 58.0.0-preview.7 bundles notifications ~58.0.7 from the same published source commit; installed versions and native source guards remain exact. Upgrade notifications with the coordinated Expo/JSI native runtime, including its newer push-token retry fix, rather than changing native dependencies in an unrelated release-console update."
-    },
-    "expo-router": {
-      "version": "58.0.8",
-      "expected": "~58.0.8",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-sqlite": {
-      "version": "58.0.6",
-      "expected": "~58.0.6",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-task-manager": {
-      "version": "58.0.8",
-      "expected": "~58.0.8",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "expo-updates": {
-      "version": "58.0.9",
-      "expected": "~58.0.9",
-      "reason": "Use the Expo 58 preview.7 cohort with React Native 0.88.0-rc.2 for runtime 1.8.11; retain strict source guards and validate native builds and application checks together."
-    },
-    "react-native": {
-      "version": "0.88.0-rc.2",
-      "expected": "0.88.0-rc.1",
-      "reason": "React Native 0.88.0-rc.2 restores compatible ArrayBuffer code generation and matches the rc.2 polyfills required by @expo/metro-config 58.0.5. Validate this coordinated Expo 58 preview.7 native cohort under runtime 1.8.11."
     }
   }
 }

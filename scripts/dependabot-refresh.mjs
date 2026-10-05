@@ -75,13 +75,15 @@ async function postRebase({ api, rebaseApi, env, trustedEnv, state, beforePost, 
     'Unable to verify the current main branch.');
   const body = `@dependabot rebase\n\n<!-- dependabot-rebase:v2:${state.head}:${main.object.sha} -->`;
   let requests = ownerRequests(await list(api, commentsPath), body);
-  const recoveryBehind = beforePost ? await beforePost() : false;
+  const hasNewMainCommits = beforePost ? await beforePost() :
+    await behindMain({ api, env, state, context: { main: main.object.sha } });
   const [current, currentMain] = await Promise.all([api('GET', path), api('GET', mainPath)]);
   assert(samePullRequest(current, state, repository) && current.head.sha === state.head,
     'Pull request changed before the rebase request.');
   assert(currentMain.ref === main.ref && currentMain.object?.sha === main.object.sha,
     'Main changed before the rebase request.');
-  if (requests.length === 0 && current.mergeable_state !== 'behind' && !recoveryBehind) {
+  if (requests.length === 0 && (!hasNewMainCommits ||
+      (!beforePost && !['behind', 'dirty'].includes(current.mergeable_state)))) {
     return { requested: false, pr: state.pr, head: state.head, main: main.object.sha };
   }
   if (requests.length === 0) {

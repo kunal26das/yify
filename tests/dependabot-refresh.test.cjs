@@ -43,7 +43,8 @@ async function fixture() {
     SOURCE_RUN_ID: '456', SOURCE_RUN_ATTEMPT: '2', GH_TOKEN: 'builtin-fixture', DEPENDABOT_REBASE_TOKEN: 'owner-fixture' };
   const state = { env, pr, run, sourceRun, jobs, original, refresh, next, comments: [], reactions: [], writes: [],
     calls: [], main: { ref: 'refs/heads/main', object: { type: 'commit', sha: MAIN } },
-    owner: { login: 'kunal26das', type: 'User' }, nextCommentId: 100, now: 0, waits: [] };
+    owner: { login: 'kunal26das', type: 'User' }, nextCommentId: 100, now: 0, waits: [],
+    comparison: { base_commit: { sha: HEAD }, ahead_by: 1, status: 'diverged' } };
   state.body = `@dependabot rebase\n\n<!-- dependabot-rebase:v2:${HEAD}:${MAIN} -->`;
   state.comment = (extra = {}) => ({ id: 100, user: { login: 'kunal26das', type: 'User' }, body: state.body, created_at: DATE, ...extra });
   state.rebase = () => { pr.commits = 1; pr.head.sha = NEXT; };
@@ -65,6 +66,7 @@ async function fixture() {
     if (path.startsWith(`repos/${REPOSITORY}/actions/runs/456/attempts/2/jobs?`)) return { jobs: structuredClone(jobs) };
     if (path.startsWith(`repos/${REPOSITORY}/actions/runs/123/attempts/1/jobs?`)) return { jobs: [{ name: 'Dependabot clean reinstall (release)', status: 'completed', conclusion: 'success' }] };
     if (path === `repos/${REPOSITORY}/git/ref/heads/main`) return structuredClone(state.main);
+    if (path.startsWith(`repos/${REPOSITORY}/compare/`)) return structuredClone(state.comparison);
     if (path.startsWith(`repos/${REPOSITORY}/issues/892/comments?`)) {
       if (state.listError) throw new Error('Comments unavailable');
       if (state.commentPages) return structuredClone(state.commentPages[Number(new URL(`https://api.github.com/${path}`).searchParams.get('page')) - 1] || []);
@@ -546,4 +548,54 @@ test('main recovery bounds the release backlog before posting any requests', asy
   state.prs = Array.from({ length: 21 }, (_, index) => ({ ...structuredClone(state.pr), number: 900 + index }));
   await assert.rejects(() => state.recover(), /More than 20/);
   assert.equal(state.writes.length, 0);
+});
+
+
+for (const status of ['behind', 'dirty']) test(`green PR ${status} after main advances requests a verified rebase`, async () => {
+  const state = await fixture(); state.pr.mergeable_state = status;
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  assert.equal((await state.observe()).requested, true);
+  assert.equal(state.writes.length, 1);
+  assert.ok(state.calls.some(({ path }) => path === `repos/${REPOSITORY}/compare/${HEAD}...${MAIN}?per_page=1`));
+});
+
+for (const status of ['behind', 'dirty']) test(`green PR ${status} without new main commits is not rebased`, async () => {
+  const state = await fixture(); state.pr.mergeable_state = status;
+  state.comparison = { base_commit: { sha: HEAD }, ahead_by: 0, status: 'behind' };
+  assert.equal((await state.observe()).requested, false);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a conflicted PR with failed checks cannot use the green-PR rebase path', async () => {
+  const state = await fixture(); state.pr.mergeable_state = 'dirty'; state.jobs[0].conclusion = 'failure';
+  await assert.rejects(() => state.observe());
+  assert.equal(state.writes.length, 0);
+});
+
+for (const [label, mutate] of [
+  ['main changes during ancestry lookup', (s) => { s.main.object.sha = NEXT; }],
+  ['head changes during ancestry lookup', (s) => { s.pr.head.sha = NEXT; }],
+  ['comparison refers to another head', (s) => { s.comparison.base_commit.sha = NEXT; }],
+  ['comparison is missing ancestry counts', (s) => { delete s.comparison.ahead_by; }],
+]) test(`green-PR conflict recovery aborts when ${label}`, async () => {
+  const state = await fixture(); state.pr.mergeable_state = 'dirty';
+  state.beforeApi = async (_method, path) => { if (path.includes('/compare/')) mutate(state); };
+  await assert.rejects(() => state.observe());
+  assert.equal(state.writes.length, 0);
+});
+
+test('a repeated green-PR conflict request observes the owner marker without another comment', async () => {
+  const state = await fixture(); state.pr.mergeable_state = 'dirty'; state.comments.push(state.comment());
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  assert.equal((await state.observe()).requested, true);
+  assert.equal(state.writes.length, 0);
+});
+
+test('the merge step invokes guarded rebase for behind and conflicted PRs', async () => {
+  const { load } = require('js-yaml');
+  const workflow = load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
+  const step = workflow.jobs.maintain.steps.find((candidate) => candidate.id === 'merge');
+  assert.match(step.run, /mergeable_state == "behind" or \.mergeable_state == "dirty"/);
+  assert.ok(step.run.indexOf('inspect-maintenance') < step.run.indexOf('node scripts/dependabot-refresh.mjs'));
+  assert.match(step.run, /--match-head-commit "\$PR_HEAD_SHA"/);
 });

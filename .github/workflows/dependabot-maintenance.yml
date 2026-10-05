@@ -173,7 +173,7 @@ jobs:
               exit 1
             fi
             node scripts/dependabot-lockfile.mjs inspect-maintenance
-            if jq -e '.mergeable_state == "behind"' <<< "$pr" >/dev/null; then
+            if jq -e '.mergeable_state == "behind" or .mergeable_state == "dirty"' <<< "$pr" >/dev/null; then
               refresh=$(node scripts/dependabot-refresh.mjs)
               if jq -e '.requested == true' <<< "$refresh" >/dev/null; then
                 exit 0
