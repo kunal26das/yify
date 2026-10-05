@@ -111,7 +111,7 @@
     "@babel/core": "8.0.6",
     "@react-native/metro-config": "0.88.0-rc.2",
     "@types/react": "19.3.0",
-    "electron": "44.4.5",
+    "electron": "44.5.1",
     "electron-builder": "26.15.3",
     "error-stack-parser": "2.1.4",
     "eslint": "10.11.0",
