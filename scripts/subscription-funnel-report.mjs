@@ -4,7 +4,9 @@ import {pathToFileURL} from 'node:url';
 export const PROPERTY_ID = '292918173';
 export const FUNNEL_EVENTS = Object.freeze([
     'watchlist_activation', 'streaming_country_selected', 'streaming_services_saved',
-    'watch_option_opened', 'availability_alert_changed', 'supporter_prompt',
+    'watch_option_opened', 'availability_alert_changed',
+    'supporter_discovery_view', 'supporter_discovery_opened', 'supporter_discovery_dismissed',
+    'supporter_sign_in_started', 'supporter_sign_in_finished', 'supporter_prompt',
     'supporter_offers_visible', 'remove_ads_purchase_start', 'remove_ads_purchase_done',
     'remove_ads_purchase_failed', 'supporter_paywall_closed',
 ]);
@@ -17,7 +19,7 @@ const MAX_ROWS = 100000;
 const PAGE_SIZE = 10000;
 const API = `https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY_ID}`;
 const PLACEMENTS = new Set(['settings_supporter', 'post_ad_supporter', 'journal_insights', 'watchlist_supporter', 'supporter_page']);
-const REASONS = new Set(['cancelled', 'already_purchased', 'pending', 'not_granted', 'offer_unavailable', 'restore_failed', 'unknown']);
+const REASONS = new Set(['cancelled', 'already_purchased', 'pending', 'not_granted', 'offer_unavailable', 'restore_failed', 'unknown', 'signed_in', 'failed']);
 const FUNNEL_VERSION_VALUES = Object.freeze(['v1', '1']);
 
 function validDate(value) {
@@ -157,6 +159,7 @@ async function collectPlannedReport({plan, readPage, dateRange, source}) {
     const rows = [];
     const warnings = new Set();
     if (!journal && !plan.versionFiltered) warnings.add('funnel_version is not registered: legacy prompt/checkout events may be included. This is not a version-1 funnel baseline.');
+    if (!journal) warnings.add('Discovery and explicit supporter sign-in events are available only after their client deployment. Unobserved events are not confirmed zeros; comparisons across releases are observational, not randomized experiments.');
     if (!journal) warnings.add('Earlier clients sent numeric funnel_version and saved_milestone values and boolean checkout/access values. App custom dimensions may omit these values; accepted legacy values cannot recover unavailable history. Establish a baseline after string-valued events and custom definitions are validated.');
     if (!journal && plan.countryDimension === 'countryId') warnings.add('viewing_country is not registered: country is GA4 activity country, not viewing country or billing country.');
     if (journal && !plan.actionDimension) warnings.add('action is not registered: journal action breakdown, first-entry activity and later-day use are unknown; aggregate journal events cannot substitute for them.');
@@ -201,6 +204,10 @@ async function collectPlannedReport({plan, readPage, dateRange, source}) {
             eventUsers: 'Distinct GA4 users for this row only; do not sum across dates, events or segments.',
             cohortConversion: 'Not calculated: these rows do not establish user-level order, cohort conversion or paid subscriptions.',
             subscriptions: 'Use RevenueCat production cohorts for paid subscriptions, renewals, revenue and refunds.',
+            ...(!journal ? {
+                discovery: 'A discovery view is one qualified card exposure per mount, not a unique customer or an offer exposure. Opens and dismissals are explicit actions; row totals do not establish ignored invitations or conversion.',
+                signIn: 'Explicit supporter sign-in attempts and bounded outcomes; signed_in is authentication, not a new account or payment.',
+            } : {}),
             ...(journal ? {
                 action: 'Only allowlisted journal_action values; unknown means missing, unregistered or unrecognized action, not zero activity.',
                 firstEntry: 'Not calculated: entry_created counts successful creates, including repeat entries; per-row users are not first-ever journal users.',

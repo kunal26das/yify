@@ -16,6 +16,48 @@ function fixture() {
     return {events, analytics, store, values, context, repository: new WatchlistRepositoryImpl(store, analytics, context)};
 }
 
+test('discovery and explicit supporter sign-in use bounded placements and outcomes without personal or billing fields', () => {
+    const f = fixture();
+    const placement = 'watchlist_supporter';
+    const cases = [
+        [{step: 'discovery_view', placement}, 'supporter_discovery_view'],
+        [{step: 'discovery_opened', placement}, 'supporter_discovery_opened'],
+        [{step: 'discovery_dismissed', placement}, 'supporter_discovery_dismissed'],
+        [{step: 'sign_in_started', placement}, 'supporter_sign_in_started'],
+        ...['signed_in', 'cancelled', 'failed'].map(outcome => [
+            {step: 'sign_in_finished', placement, outcome}, 'supporter_sign_in_finished', outcome,
+        ]),
+    ];
+    for (const [event] of cases) trackSubscriptionFunnel(f.analytics, {
+        ...event, accountId: 'private account', email: 'private@example.test', amount: 99,
+        error: 'private server message', title: 'private title',
+    }, f.context());
+    assert.deepEqual(f.events, cases.map(([, name, reason]) => ({name, params: {
+        funnel_version: 'v1', app_platform: 'android', viewing_country: 'IN', placement,
+        ...(reason ? {reason} : {}),
+    }})));
+    assert.doesNotMatch(JSON.stringify(f.events), /private|amount|purchase|transaction|revenue|email|account|title/);
+});
+
+test('discovery and sign-in runtime input cannot create unbounded categories or new event names', () => {
+    const f = fixture();
+    const events = ['discovery_view', 'discovery_opened', 'discovery_dismissed', 'sign_in_started', 'sign_in_finished'];
+    for (const step of events) trackSubscriptionFunnel(f.analytics, {
+        step, placement: 'private placement', outcome: 'private auth failure',
+    }, {platform: 'private platform', country: 'private@example.test'});
+    assert.equal(f.events.length, 5);
+    assert.ok(f.events.every(({params}) => params.placement === 'unknown' && params.app_platform === 'other'));
+    assert.equal(f.events.at(-1).params.reason, 'unknown');
+    assert.doesNotMatch(JSON.stringify(f.events), /private/);
+    trackSubscriptionFunnel(f.analytics, {step: 'private event'}, f.context());
+    assert.equal(f.events.length, 5);
+    for (const step of events) {
+        assert.doesNotThrow(() => trackSubscriptionFunnel(null, {step, placement: 'watchlist_supporter'}, f.context()));
+        assert.doesNotThrow(() => trackSubscriptionFunnel({trackEvent() {throw new Error('offline');}},
+            {step, placement: 'watchlist_supporter', outcome: 'failed'}, f.context()));
+    }
+});
+
 test('checkout events preserve existing event names and safe placement without money or identity fields', () => {
     const f = fixture();
     const offer = {placement: 'post_ad_supporter', recurring: true, billingPeriod: 'P1M',

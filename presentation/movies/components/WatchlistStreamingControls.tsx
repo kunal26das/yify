@@ -9,7 +9,10 @@ import {MyStreamingServices} from './MyStreamingServices';
 import {WatchlistControlButton} from './WatchlistControls';
 import {openStreamingLink} from './openStreamingLink';
 
-export function WatchlistStreamingControls({streaming}: {streaming: WatchlistStreaming}) {
+export function WatchlistStreamingControls({streaming, onModalVisibilityChange}: {
+    streaming: WatchlistStreaming;
+    onModalVisibilityChange?: (visible: boolean) => void;
+}) {
     const {colors} = usePalette();
     const toast = useToast();
     const action = streaming.busy ? `Checking ${streaming.completed} of ${streaming.batchTotal}`
@@ -17,7 +20,7 @@ export function WatchlistStreamingControls({streaming}: {streaming: WatchlistStr
             ? `Check next ${streaming.nextCount}` : 'Check availability') : 'Retry availability';
 
     return <View style={styles.container}>
-        <MyStreamingServices/>
+        <MyStreamingServices onModalVisibilityChange={onModalVisibilityChange}/>
         <View style={styles.actions}>
             <WatchlistControlButton label="On my services" icon="tv-outline" active={streaming.filterActive}
                 disabled={streaming.services.length === 0} onPress={() => streaming.setOnlySelected(!streaming.filterActive)}/>

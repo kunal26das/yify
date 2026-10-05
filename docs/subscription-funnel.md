@@ -11,6 +11,11 @@ The funnel measures product use and checkout behavior. RevenueCat remains the so
 | `streaming_services_saved` | The user changes their saved service choices | `service_count`: none, one, two_to_three, four_plus |
 | `watch_option_opened` | A regional viewing-options link opens successfully | `media_type`, `source` |
 | `availability_alert_changed` | The user changes availability-alert enrollment | `enabled` |
+| `supporter_discovery_view` | At least half of the Watchlist supporter card's area is visible continuously for one second while the screen is focused and the app is in the foreground | `placement` |
+| `supporter_discovery_opened` | The user selects the supporter card's upgrade action | `placement` |
+| `supporter_discovery_dismissed` | The user explicitly dismisses the supporter card | `placement` |
+| `supporter_sign_in_started` | The user starts sign-in from supporter options | `placement` |
+| `supporter_sign_in_finished` | That explicit sign-in attempt finishes | `placement`, `reason`: signed_in, cancelled or failed |
 | `supporter_prompt` | Supporter options become visible | `placement`, `signed_in`, `supporter_access` |
 | `supporter_offers_visible` | A visible paywall has at least one loaded offer and no active supporter access | `placement`, `offer_count` |
 | `remove_ads_purchase_start` | The purchase repository starts one SDK checkout | `placement`, `plan_kind` |
@@ -28,7 +33,17 @@ Journal activity uses the separate `journal_action` event with `app_platform` an
 
 The journal's explicit **Explore supporter access** action opens the existing paywall with `placement: journal_insights`. Its prompt uses `source: journal`; subsequent offer/checkout events retain their existing names and this placement. Merely opening insights, seeing a save confirmation, or being unable to load a plan is not a checkout or purchase.
 
-The Watchlist supporter card uses `placement: watchlist_supporter` and `source: watchlist`; the public supporter page's app route uses `placement: supporter_page` and `source: supporter_page`. Both request the existing configured supporter offering and honor targeting exclusions. A card display is not a paywall impression: the user must open it, and offers-visible still requires loaded plans. These optional events follow the same analytics-consent controls; production billing records remain separate.
+The Watchlist supporter card uses `placement: watchlist_supporter`; its opened paywall uses `source: watchlist`. The public supporter page's app route uses `placement: supporter_page` and paywall `source: supporter_page`. Both request the existing configured supporter offering and honor targeting exclusions. A card display is not a paywall impression: the user must open it, and offers-visible still requires loaded plans. These optional events follow the same analytics-consent controls; production billing records remain separate.
+
+Discovery exposure uses the card's measured intersection with the scroll viewport, excluding the top bar. Mounting an offscreen card does not count. Falling below half-visible, changing screens, backgrounding the app or opening a known Watchlist modal cancels the one-second timer. A qualified view is recorded at most once per mounted eligible card; remounting can record another exposure. This measures viewport eligibility, not proof of attention or detection of every possible overlay or occlusion. It is not a unique-person count. A quick tap can open or dismiss a card before the view timer completes, so action counts can exceed qualified-view counts. Do not subtract actions from views to claim how many people ignored the card, or divide these independent counts to claim conversion.
+
+Supporter sign-in events describe explicit attempts from the paywall, not restored sessions. `reason: signed_in` means authentication completed, not that a new account or subscription was created. `cancelled` and `failed` distinguish those attempt outcomes without sending account details or error messages. A redirect or interrupted page can leave an attempt without a finish event; do not classify that missing outcome as a cancellation or failure. They reuse the existing `reason` custom dimension; this addition requires no new GA4 custom definitions. Event names distinguish sign-in outcomes from checkout outcomes even though both use `reason`.
+
+## Supporter flow observation
+
+The value preview is shown before the paywall's account and purchase controls. Record the deployment date and, for native clients, app version and OTA update when beginning the observation window. Compare completed dates for the same platform and placement, separating clients before and after rollout where the available app-version data permits it. Native app version alone cannot distinguish two OTA updates on the same runtime; disclose mixed clients rather than assuming all active users received the new flow. The aggregate report below does not segment by app version or identify OTA versions.
+
+This is an observational release comparison, not a randomized A/B test. The newly added discovery and sign-in events have no earlier baseline: missing historical rows are unknown, not zero. First validate consent-enabled delivery, then inspect invitation exposure and actions, sign-in outcomes, loaded offers and checkout attempts separately. Use ordered user-level GA4 explorations to investigate drop-off; independent row totals do not establish a cohort or an ordered journey. Use RevenueCat production purchases and first renewals to assess whether the change brings paying customers who stay. No subscriber or revenue target is a forecast from these events.
 
 ## Reading results
 
@@ -55,7 +70,7 @@ The local report reads only GA4 property `292918173`. Supply a short-lived OAuth
 node scripts/subscription-funnel-report.mjs --from 2026-09-20 --to 2026-10-03
 ```
 
-Output is JSON with date, platform, country, event count and distinct event users per row. Available placement, checkout outcome and saved-title milestone dimensions are included. User counts are not additive across dates, events or segments; the report calculates no conversion rates and no subscriber totals. Default dates cover the preceding 28 completed UTC calendar dates; GA4 evaluates the explicit dates in the property's reported timezone. Use explicit dates when comparing cohorts or release periods.
+Output is JSON with date, platform, country, event count and distinct event users per row. Available placement, checkout or sign-in outcome and saved-title milestone dimensions are included. Discovery and explicit sign-in event names are included in the same version-1 query. User counts are not additive across dates, events or segments; the report calculates no conversion rates, ignored invitations or subscriber totals. Default dates cover the preceding 28 completed UTC calendar dates; GA4 evaluates the explicit dates in the property's reported timezone. Use explicit dates when comparing cohorts or release periods.
 
 Metadata discovery checks which custom dimensions are registered. Without `viewing_country`, the report explicitly labels its fallback as GA4 activity country, never billing or viewing country. Without `funnel_version`, it warns that older prompt/checkout events may be mixed in. When registered, the version filter accepts `"v1"` and legacy `"1"`; `versionFilter` remains the logical version `1`, while `versionFilterValues` lists both accepted encodings. Milestone rows retain observed `"one"`/`"three"` or legacy `"1"`/`"3"`; checkout access rows retain `"true"`/`"false"` or legacy `"1"`/`"0"`. These fallbacks preserve available old data but cannot recover missing app dimension values. Establish the baseline after the string payload release and custom definitions are validated. Thresholding, sampling and high-cardinality data loss are surfaced; unobserved events are not asserted to be zero. Large/incomplete reports fail instead of silently truncating.
 

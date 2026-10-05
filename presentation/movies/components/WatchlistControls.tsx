@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {StyleSheet, TextInput, View} from 'react-native';
 import type {WatchlistSort, WatchlistStatus, WatchlistViewOptions} from '@/domain';
 import {PressableScale} from '../../components/motion';
@@ -66,7 +66,7 @@ function Choices<T extends string | number>({title, options, value, onChange}: {
     );
 }
 
-export function WatchlistControls({options, onChange, genres, collections, onManageCollections, onPick, canPick}: {
+export function WatchlistControls({options, onChange, genres, collections, onManageCollections, onPick, canPick, onModalVisibilityChange}: {
     options: WatchlistViewOptions;
     onChange: (value: WatchlistViewOptions) => void;
     genres: string[];
@@ -74,12 +74,16 @@ export function WatchlistControls({options, onChange, genres, collections, onMan
     onManageCollections: () => void;
     onPick: () => void;
     canPick: boolean;
+    onModalVisibilityChange?: (visible: boolean) => void;
 }) {
     const {colors} = usePalette();
     const {isPhone} = useResponsive();
     const [showFilters, setShowFilters] = useState(false);
     const filtered = !!(options.genre || options.collectionId || options.maxRuntimeMinutes || (options.sort ?? 'saved') !== 'saved');
     const selectedCollection = collections.find((collection) => collection.id === options.collectionId);
+
+    useEffect(() => { onModalVisibilityChange?.(showFilters); }, [onModalVisibilityChange, showFilters]);
+    useEffect(() => () => onModalVisibilityChange?.(false), [onModalVisibilityChange]);
 
     return (
         <View style={styles.controls}>

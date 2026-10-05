@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 const {privacyFixture} = require('./helpers/privacy-fixture.cjs');
+const {trackSubscriptionFunnel} = loadTypeScript('domain/policies/subscriptionFunnel.ts');
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => {
     let resolve;
@@ -113,6 +114,46 @@ function webFixture(t, privacy, supported = async () => true, sdkOverrides = {})
         '../firebase/FirebaseWebApp': {getFirebaseApp: () => app, getFirebaseMeasurementId: () => app.options.measurementId},
     });
     return {sink: new FirebaseAnalyticsSink(privacy), calls, cookies};
+}
+
+for (const platform of ['android', 'ios', 'web']) {
+test(`${platform} supporter discovery and sign-in events honor adult consent and are never replayed after withdrawal`, async t => {
+    const privacy = privacyFixture(false, false);
+    const f = platform === 'web' ? webFixture(t, privacy) : nativeFixture(privacy);
+    const events = [
+        ...['discovery_view', 'discovery_opened', 'discovery_dismissed', 'sign_in_started'].map(step => ({step, placement: 'watchlist_supporter'})),
+        ...['signed_in', 'cancelled', 'failed'].map(outcome => ({step: 'sign_in_finished', placement: 'watchlist_supporter', outcome})),
+    ];
+    const send = () => events.forEach(event => trackSubscriptionFunnel(f.sink,
+        {...event, accountId: 'private account', amount: 99, error: 'private auth failure'}, {platform, country: 'IN'}));
+    const captured = () => f.calls.filter(([kind]) => kind === 'event');
+    send();
+    await flush();
+    assert.deepEqual(captured(), []);
+    privacy.updateChoices({analytics: true});
+    await flush();
+    send();
+    assert.deepEqual(captured(), []);
+    privacy.updateChoices({adultConfirmed: true});
+    await flush();
+    assert.deepEqual(captured(), []);
+    send();
+    const allowed = captured();
+    assert.deepEqual(allowed.map(([, name]) => name), [
+        'supporter_discovery_view', 'supporter_discovery_opened', 'supporter_discovery_dismissed',
+        'supporter_sign_in_started', 'supporter_sign_in_finished', 'supporter_sign_in_finished', 'supporter_sign_in_finished',
+    ]);
+    assert.deepEqual(allowed.slice(-3).map(([, , params]) => params.reason), ['signed_in', 'cancelled', 'failed']);
+    assert.ok(allowed.every(([, , params]) => params.app_platform === platform && params.placement === 'watchlist_supporter'));
+    assert.doesNotMatch(JSON.stringify(allowed), /private|accountId|amount|auth failure/);
+    privacy.updateChoices({analytics: false});
+    send();
+    await flush();
+    assert.deepEqual(captured(), allowed);
+    privacy.updateChoices({analytics: true});
+    await flush();
+    assert.deepEqual(captured(), allowed);
+});
 }
 
 test('web does not initialize or buffer before consent and disables collection on withdrawal', async t => {
