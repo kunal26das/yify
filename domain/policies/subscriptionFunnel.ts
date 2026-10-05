@@ -9,6 +9,9 @@ export interface SubscriptionFunnelContext {
 type CheckoutOffer = Pick<PurchaseOffer, 'recurring' | 'billingPeriod' | 'placement'>;
 
 export type SubscriptionFunnelEvent =
+    | {step: 'discovery_view' | 'discovery_opened' | 'discovery_dismissed'; placement: PurchasePlacement}
+    | {step: 'sign_in_started'; placement: PurchasePlacement}
+    | {step: 'sign_in_finished'; placement: PurchasePlacement; outcome: 'signed_in' | 'cancelled' | 'failed'}
     | {step: 'paywall_view'; placement: PurchasePlacement; signedIn: boolean; supporter: boolean}
     | {step: 'offers_visible'; placement: PurchasePlacement; offerCount: number}
     | {step: 'paywall_closed'; placement: PurchasePlacement; supporter: boolean}
@@ -56,6 +59,27 @@ export function trackSubscriptionFunnel(
     if (/^[A-Z]{2}$/.test(country)) params.viewing_country = country;
     let name: string;
     switch (event.step) {
+        case 'discovery_view':
+            name = 'supporter_discovery_view';
+            params.placement = placement(event.placement);
+            break;
+        case 'discovery_opened':
+            name = 'supporter_discovery_opened';
+            params.placement = placement(event.placement);
+            break;
+        case 'discovery_dismissed':
+            name = 'supporter_discovery_dismissed';
+            params.placement = placement(event.placement);
+            break;
+        case 'sign_in_started':
+            name = 'supporter_sign_in_started';
+            params.placement = placement(event.placement);
+            break;
+        case 'sign_in_finished':
+            name = 'supporter_sign_in_finished';
+            params.placement = placement(event.placement);
+            params.reason = ['signed_in', 'cancelled', 'failed'].includes(event.outcome) ? event.outcome : 'unknown';
+            break;
         case 'paywall_view':
             name = 'supporter_prompt';
             params.placement = placement(event.placement);

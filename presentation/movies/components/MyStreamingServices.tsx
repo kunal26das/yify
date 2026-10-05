@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {StyleSheet, type StyleProp, View, type ViewStyle} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {usePreferencesRepository} from '../../di/DependenciesContext';
@@ -11,7 +11,10 @@ import {StreamingServicesPicker} from './StreamingServicesPicker';
 import {countryName, WatchRegionPicker} from './WatchRegionPicker';
 import {useDeviceRegion} from './watchRegion';
 
-export function MyStreamingServices({style}: {style?: StyleProp<ViewStyle>} = {}) {
+export function MyStreamingServices({style, onModalVisibilityChange}: {
+    style?: StyleProp<ViewStyle>;
+    onModalVisibilityChange?: (visible: boolean) => void;
+} = {}) {
     const {colors} = usePalette();
     const preferences = usePreferences();
     const repository = usePreferencesRepository();
@@ -20,6 +23,10 @@ export function MyStreamingServices({style}: {style?: StyleProp<ViewStyle>} = {}
     const selected = preferences.streamingServices[country] ?? [];
     const [pickingCountry, setPickingCountry] = useState(false);
     const [pickingServices, setPickingServices] = useState(false);
+    const picking = pickingCountry || pickingServices;
+
+    useEffect(() => { onModalVisibilityChange?.(picking); }, [onModalVisibilityChange, picking]);
+    useEffect(() => () => onModalVisibilityChange?.(false), [onModalVisibilityChange]);
 
     return <View style={[styles.container, style]}>
         <View style={styles.row}>

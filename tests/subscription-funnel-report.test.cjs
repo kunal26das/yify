@@ -11,6 +11,63 @@ const journalFixturePath = path.join(__dirname, 'fixtures/journal-funnel-report.
 const journalFixture = JSON.parse(readFileSync(journalFixturePath, 'utf8'));
 const dateRange = {startDate: '2026-09-01', endDate: '2026-09-30'};
 
+test('discovery and explicit sign-in reports reuse existing dimensions and preserve bounded outcomes without deriving conversion', async () => {
+    const {buildReportPlan, collectReport} = await script;
+    const metadata = {dimensions: [...fixture.metadata.dimensions, {apiName: 'customEvent:reason'}]};
+    const plan = buildReportPlan(metadata, dateRange);
+    const cases = [
+        ['supporter_discovery_view', '(not set)', 12, 8],
+        ['supporter_discovery_opened', '(not set)', 4, 3],
+        ['supporter_discovery_dismissed', '(not set)', 2, 2],
+        ['supporter_sign_in_started', '(not set)', 3, 2],
+        ['supporter_sign_in_finished', 'signed_in', 1, 1],
+        ['supporter_sign_in_finished', 'cancelled', 1, 1],
+        ['supporter_sign_in_finished', 'failed', 1, 1],
+        ['supporter_sign_in_finished', 'PRIVATE_AUTH_FAILURE', 1, 1],
+        ['remove_ads_purchase_failed', 'pending', 1, 1],
+        ['remove_ads_purchase_failed', 'already_purchased', 1, 1],
+    ];
+    const events = plan.request.dimensionFilter.andGroup.expressions[0].filter.inListFilter.values;
+    assert.ok(cases.every(([event]) => events.includes(event)));
+    assert.deepEqual(plan.request.dimensions.map(({name}) => name), [
+        'date', 'customEvent:app_platform', 'customEvent:viewing_country', 'eventName',
+        'customEvent:placement', 'customEvent:reason',
+    ]);
+    const report = await collectReport({metadata, dateRange, readPage: async () => ({
+        dimensionHeaders: plan.request.dimensions, metricHeaders: plan.request.metrics, rowCount: cases.length,
+        rows: cases.map(([eventName, reason, eventCount, eventUsers]) => ({
+            dimensionValues: ['20260919', 'android', 'IN', eventName, 'watchlist_supporter', reason].map(value => ({value})),
+            metricValues: [eventCount, eventUsers].map(value => ({value: String(value)})),
+            userId: 'PRIVATE_ACCOUNT_ID',
+        })),
+    })});
+    assert.deepEqual(report.rows.map(({reason}) => reason), [
+        'not_set', 'not_set', 'not_set', 'not_set', 'signed_in', 'cancelled', 'failed', 'not_set', 'pending', 'already_purchased',
+    ]);
+    assert.ok(report.rows.every(({placement}) => placement === 'watchlist_supporter'));
+    assert.ok(!report.unobservedEvents.some(name => name.startsWith('supporter_discovery_') || name.startsWith('supporter_sign_in_')));
+    assert.equal(report.rows[0].eventCount, 12);
+    assert.equal(report.rows[0].eventUsers, 8);
+    assert.equal('conversionRate' in report, false);
+    assert.equal('ignoredInvitations' in report, false);
+    assert.match(report.interpretation.discovery, /do not establish ignored invitations or conversion/);
+    assert.match(report.interpretation.signIn, /not a new account or payment/);
+    assert.ok(report.warnings.some(warning => /not randomized experiments/.test(warning)));
+    assert.doesNotMatch(JSON.stringify(report), /PRIVATE_/);
+});
+
+test('historical reports leave new discovery and sign-in events unobserved without fabricating zeros', async () => {
+    const {collectReport} = await script;
+    const report = await collectReport({metadata: fixture.metadata, dateRange, readPage: async () => fixture.pages[0]});
+    for (const event of ['supporter_discovery_view', 'supporter_discovery_opened', 'supporter_discovery_dismissed',
+        'supporter_sign_in_started', 'supporter_sign_in_finished']) {
+        assert.ok(report.unobservedEvents.includes(event));
+        assert.ok(!report.rows.some(row => row.eventName === event));
+    }
+    assert.ok(report.warnings.some(warning => /only after their client deployment/.test(warning)));
+    assert.deepEqual(report.versionFilterValues, ['v1', '1']);
+});
+
 test('report keeps event counts separate from per-row users and never invents totals or conversion', async () => {
     const {collectReport} = await script;
     const requests = [];

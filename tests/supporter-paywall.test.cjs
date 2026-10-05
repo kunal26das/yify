@@ -53,15 +53,15 @@ async function fixture(t, options = {}) {
     const auth = {
         getSession: session.get,
         subscribe: session.subscribe,
-        async signIn() { calls.signIn++; return options.signIn ? options.signIn() : false; },
+        async signIn() { calls.signIn++; return options.signIn ? options.signIn(session) : false; },
     };
     const colors = new Proxy({}, {get: () => '#123456'});
-    const {SupporterProvider, useSupporterPaywall} = loadTypeScript('presentation/purchases/supporter-paywall.tsx', {
+    const {SupporterProvider, useSupporterPaywall, useSupporterPaywallVisible} = loadTypeScript('presentation/purchases/supporter-paywall.tsx', {
         'react-native': {
             ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Pressable: 'Pressable',
             ScrollView: 'ScrollView', View: 'View', Platform: {OS: options.platform ?? 'android'},
             StyleSheet: {create: value => value},
-            useWindowDimensions: () => ({height: options.height ?? 800, width: 360}),
+            useWindowDimensions: () => ({height: options.height ?? 800, width: options.width ?? 360, fontScale: options.fontScale ?? 1}),
             Linking: {async openURL(url) { calls.links.push(url); if (options.openURL) await options.openURL(url); }},
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 20, bottom: 10, left: 0, right: 0})},
@@ -81,10 +81,12 @@ async function fixture(t, options = {}) {
                 : event.placement === 'settings_supporter' ? 'settings' : 'post_ad');
         }}},
     });
-    let show;
-    function Probe() { show = useSupporterPaywall(); return null; }
+    let show, visible;
+    let callerKey = 0;
+    function Probe() { show = useSupporterPaywall(); visible = useSupporterPaywallVisible(); return null; }
+    const tree = () => React.createElement(SupporterProvider, null, React.createElement(Probe, {key: callerKey}));
     let renderer;
-    await act(async () => { renderer = create(React.createElement(SupporterProvider, null, React.createElement(Probe))); });
+    await act(async () => { renderer = create(tree()); });
     t.after(async () => { await act(async () => { renderer.unmount(); }); });
     const open = async (placement = 'settings_supporter', onClose) => {
         let cancel;
@@ -102,6 +104,8 @@ async function fixture(t, options = {}) {
     };
     return {
         renderer, state, session, calls, purchases, open, modal, press, pressable,
+        visible: () => visible,
+        remountCaller: () => act(async () => {callerKey++; renderer.update(tree());}),
         show: () => act(async () => { modal().props.onShow(); }),
         text: () => renderer.root.findAllByType('Text').map(nodeText).join('\n'),
         update: async (patch, authPatch) => act(async () => {
@@ -182,7 +186,7 @@ test('Journal paywall keeps its placement for loading, visibility and purchase w
     assert.deepEqual(f.calls.prompts, ['journal']);
     assert.deepEqual(f.calls.impressions, ['journal-monthly']);
     assert.equal(f.calls.funnel.every(({event}) => event.placement === 'journal_insights'), true);
-    assert.equal(f.pressable('Continue · $2.99').props.disabled, true);
+    assert.equal(f.pressable('Continue · $2.99'), undefined);
     assert.deepEqual(f.calls.purchase, []);
     await f.update(null, {account: user('A')});
     await f.show();
@@ -191,7 +195,7 @@ test('Journal paywall keeps its placement for loading, visibility and purchase w
     assert.equal(f.calls.offers.every(placement => placement === 'journal_insights'), true);
 });
 
-test('benefits show a labelled fictional example after localized pricing without bypassing sign-in or recording an exposure', async t => {
+test('benefits and a labelled fictional example precede localized pricing and the single anonymous sign-in action', async t => {
     const f = await fixture(t, {offers: [plan('monthly-in', 'supporter', {priceLabel: '₹99.00'})], session: {account: null}});
     await f.open();
     const content = f.text();
@@ -202,8 +206,12 @@ test('benefits show a labelled fictional example after localized pricing without
     assert.match(content, /Your journal entries and editing stay free/);
     assert.match(content, /YouTube ads are separate/);
     assert.match(content, /₹99\.00 every month\. Renews automatically until cancelled/);
-    assert.ok(content.indexOf('₹99.00 every month') < content.indexOf('Example insights'));
-    assert.equal(f.pressable('Continue · ₹99.00').props.disabled, true);
+    assert.ok(content.indexOf('Example insights') < content.indexOf('₹99.00 every month'));
+    assert.ok(content.indexOf('₹99.00 every month') < content.indexOf('Sign in with Google'));
+    assert.match(content, /Signing in does not start a subscription/);
+    assert.equal(f.pressable('Continue · ₹99.00'), undefined);
+    assert.equal(f.pressable('Restore purchases'), undefined);
+    assert.equal(f.renderer.root.findAllByType('Pressable').filter(node => nodeText(node) === 'Sign in with Google').length, 1);
     assert.deepEqual(f.calls.purchase, []);
     assert.deepEqual(f.calls.impressions, []);
     assert.deepEqual(f.calls.funnel, []);
@@ -289,11 +297,104 @@ test('missing purchase configuration clearly disables retry and checkout', async
 test('sign-in gates purchases and reports rejected sign-in without an unhandled promise', async t => {
     const f = await fixture(t, {session: {account: null}, signIn: async () => { throw Error('offline'); }});
     await f.open();
-    assert.equal(f.pressable('Continue · $2.99').props.disabled, true);
-    assert.equal(f.pressable('Restore purchases').props.disabled, true);
+    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Restore purchases'), undefined);
     await f.press('Sign in with Google');
     assert.equal(f.calls.signIn, 1);
     assert.match(f.text(), /Sign-in could not be completed/);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step.startsWith('sign_in')), [
+        {event: {step: 'sign_in_started', placement: 'settings_supporter'}, country: 'IN'},
+        {event: {step: 'sign_in_finished', placement: 'settings_supporter', outcome: 'failed'}, country: 'IN'},
+    ]);
+});
+
+test('anonymous users can compare multiple localized plans without any checkout action before signing in', async t => {
+    const f = await fixture(t, {session: {account: null}, offers: [
+        plan('monthly', 'supporter', {priceLabel: '€2,99'}),
+        plan('annual', 'supporter', {title: 'Annual supporter', priceLabel: '€29,99', billingPeriod: 'P1Y'}),
+    ]});
+    await f.open();
+    assert.match(f.text(), /€2,99 every month\. Renews automatically until cancelled/);
+    assert.match(f.text(), /€29,99 every year\. Renews automatically until cancelled/);
+    assert.match(f.text(), /Manage or cancel a subscription in the store where you paid/);
+    assert.equal(f.renderer.root.findAllByType('Pressable').some(node => nodeText(node).startsWith('Continue ·')), false);
+    assert.equal(f.calls.signIn, 0);
+    assert.deepEqual(f.calls.purchase, []);
+});
+
+test('an accepted sign-in attempt finishes once across account remounts and never starts a purchase', async t => {
+    const pending = deferred();
+    const f = await fixture(t, {session: {account: null}, signIn: session => {
+        session.set({signingIn: true, error: null});
+        return pending.promise;
+    }});
+    await f.open('journal_insights');
+    const signIn = f.pressable('Sign in with Google').props.onPress;
+    await act(async () => {signIn(); signIn();});
+    assert.equal(f.calls.signIn, 1);
+    assert.equal(f.pressable('Close supporter options').props.disabled, true);
+    f.setOffers([plan('signed-in-monthly', 'supporter', {priceLabel: '₹89.00'})]);
+    await f.update(null, {account: user('B'), signingIn: false});
+    assert.equal(f.pressable('Continue · ₹89.00').props.disabled, true);
+    assert.deepEqual(f.calls.purchase, []);
+    await act(async () => pending.resolve(true));
+    assert.equal(f.pressable('Continue · ₹89.00').props.disabled, false);
+    await act(async () => signIn());
+    assert.equal(f.calls.signIn, 1);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step.startsWith('sign_in')), [
+        {event: {step: 'sign_in_started', placement: 'journal_insights'}, country: 'IN'},
+        {event: {step: 'sign_in_finished', placement: 'journal_insights', outcome: 'signed_in'}, country: 'IN'},
+    ]);
+    assert.deepEqual(f.calls.purchase, []);
+    await f.press('Continue · ₹89.00');
+    assert.deepEqual(f.calls.purchase, ['signed-in-monthly']);
+});
+
+test('cancelled sign-in and repository failures remain distinct and each explicit retry records one attempt', async t => {
+    let attempt = 0;
+    const f = await fixture(t, {session: {account: null}, signIn: session => {
+        attempt++;
+        session.set({signingIn: false, error: attempt === 1 ? null : 'auth/private-error-code'});
+        return false;
+    }});
+    await f.open();
+    await f.press('Sign in with Google');
+    assert.match(f.text(), /Sign-in was cancelled\. No purchase was made/);
+    await f.press('Sign in with Google');
+    assert.match(f.text(), /Sign-in could not be completed/);
+    assert.doesNotMatch(f.text(), /private-error-code/);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step.startsWith('sign_in')).map(({event}) => event), [
+        {step: 'sign_in_started', placement: 'settings_supporter'},
+        {step: 'sign_in_finished', placement: 'settings_supporter', outcome: 'cancelled'},
+        {step: 'sign_in_started', placement: 'settings_supporter'},
+        {step: 'sign_in_finished', placement: 'settings_supporter', outcome: 'failed'},
+    ]);
+    assert.deepEqual(f.calls.purchase, []);
+});
+
+test('web redirect acceptance without an account remains pending instead of reporting a sign-in conversion', async t => {
+    const f = await fixture(t, {platform: 'web', session: {account: null}, signIn: session => {
+        session.set({signingIn: true, error: null});
+        return true;
+    }});
+    await f.open();
+    await f.press('Sign in with Google');
+    assert.deepEqual(f.calls.funnel, [
+        {event: {step: 'sign_in_started', placement: 'settings_supporter'}, country: 'IN'},
+    ]);
+    assert.equal(f.pressable('Signing in…').props.disabled, true);
+    assert.deepEqual(f.calls.purchase, []);
+});
+
+test('session restoration and access refresh do not masquerade as paywall sign-in attempts', async t => {
+    const f = await fixture(t, {session: {account: null}});
+    await f.open();
+    await f.update(null, {account: user('restored')});
+    await f.press('Refresh access');
+    await f.press('Restore purchases');
+    assert.equal(f.calls.signIn, 0);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step.startsWith('sign_in')), []);
+    assert.deepEqual(f.calls.purchase, []);
 });
 
 test('pending payments are visible and a failed restore provides recovery copy', async t => {
@@ -362,6 +463,34 @@ test('overlapping paywall requests preserve both callbacks and old close handler
     assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
 
+test('provider visibility survives caller remounts and stays active until the final queued paywall closes', async t => {
+    const f = await fixture(t);
+    assert.equal(f.visible(), false);
+    await f.open();
+    await f.show();
+    assert.equal(f.visible(), true);
+    const originalModal = f.modal();
+    await f.remountCaller();
+    assert.equal(f.visible(), true);
+    assert.equal(f.modal(), originalModal);
+    assert.deepEqual(f.calls.offers, ['settings_supporter']);
+    await f.open('journal_insights');
+    await f.press('Close supporter options');
+    assert.equal(f.visible(), true);
+    await f.press('Close supporter options');
+    assert.equal(f.visible(), false);
+});
+
+test('cancelling queued or active requests clears provider visibility only after no paywall remains', async t => {
+    const f = await fixture(t);
+    const cancelActive = await f.open();
+    const cancelQueued = await f.open('journal_insights');
+    await act(async () => cancelQueued());
+    assert.equal(f.visible(), true);
+    await act(async () => cancelActive());
+    assert.equal(f.visible(), false);
+});
+
 test('cancelling a queued owner removes only its request and never invokes its completion callback', async t => {
     const closed = [];
     const f = await fixture(t);
@@ -402,6 +531,7 @@ for (const action of ['purchase', 'restore', 'signIn']) {
         await act(async () => cancel());
         await f.open('journal_insights', value => closed.push(['next', value]));
         await f.update(null, {account: user('B')});
+        assert.equal(f.visible(), true);
         assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
         assert.equal(f.pressable('Close supporter options').props.disabled, true);
         assert.equal(f.calls.offers.includes('journal_insights'), false);
@@ -411,6 +541,7 @@ for (const action of ['purchase', 'restore', 'signIn']) {
         assert.deepEqual(closed, []);
         await f.press('Close supporter options');
         assert.deepEqual(closed, [['next', false]]);
+        assert.equal(f.visible(), false);
     });
 }
 
@@ -427,6 +558,19 @@ test('small windows bound the scrolling content and retain an accessible close c
     const close = f.pressable('Close supporter options');
     assert.ok(flattenStyle(close.props.style).minHeight >= 44);
     assert.equal(f.renderer.root.findAllByProps({accessibilityRole: 'header'}).length, 1);
+});
+
+test('large text on narrow screens puts the title inside the scroll while keeping Close independently reachable', async t => {
+    const f = await fixture(t, {width: 320, height: 568, fontScale: 2});
+    await f.open();
+    const scroll = f.renderer.root.findByType('ScrollView');
+    const headings = scroll.findAllByProps({accessibilityRole: 'header'});
+    assert.equal(headings.length, 1);
+    assert.equal(nodeText(headings[0]), 'Yify Supporter');
+    assert.equal(flattenStyle(headings[0].props.style).flex, undefined);
+    assert.equal(scroll.findAllByProps({accessibilityLabel: 'Close supporter options'}).length, 0);
+    await f.press('Close supporter options');
+    assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
 
 test('paywall funnel measures actual visibility, ready offers and one explicit close with viewing country', async t => {

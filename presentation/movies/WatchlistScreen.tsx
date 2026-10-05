@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState, type ComponentRef} from 'react';
 import {FlatList, StyleSheet, View, type FlatListProps} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -35,7 +35,7 @@ import {WatchlistStreamingControls} from './components/WatchlistStreamingControl
 import {WatchlistStreamingBadge} from './components/WatchlistStreamingBadge';
 import {JournalEditor} from '../journal/JournalEditor';
 import {useAuth} from '../hooks/use-auth';
-import {SupporterDiscoveryCard} from '../purchases/supporter-discovery-card';
+import {SupporterDiscoveryCard, type SupporterDiscoveryHandle} from '../purchases/supporter-discovery-card';
 
 const COVER_ASPECT = 16 / 9;
 const COVER_WIDTH_WIDE = 360;
@@ -179,6 +179,8 @@ export function WatchlistScreen() {
     const [manage, setManage] = useState<{movie: Movie | null} | null>(null);
     const session = useAuth();
     const [journalMovie, setJournalMovie] = useState<Movie | null>(null);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [streamingPickerOpen, setStreamingPickerOpen] = useState(false);
     const closeManage = useCallback(() => setManage(null), []);
     const collections = useMemo(() => liveLibraryCollections(libraryState), [libraryState]);
     const options = useMemo(() => viewOptions.collectionId && !collections.some((collection) => collection.id === viewOptions.collectionId)
@@ -192,6 +194,8 @@ export function WatchlistScreen() {
     const goTo = useGoTo();
 
     const listRef = useRef<FlatList<Movie>>(null);
+    const viewportRef = useRef<ComponentRef<typeof View>>(null);
+    const discoveryRef = useRef<SupporterDiscoveryHandle>(null);
     const prevCountRef = useRef(0);
     const [lastVisibleIndex, setLastVisibleIndex] = useState(0);
     const [isAtTop, setIsAtTop] = useState(true);
@@ -258,6 +262,7 @@ export function WatchlistScreen() {
     const onScroll = useCallback(
         ({nativeEvent}: {nativeEvent: {contentOffset: {y: number}}}) => {
             setIsAtTop(nativeEvent.contentOffset.y <= SCROLL_AT_TOP_THRESHOLD);
+            discoveryRef.current?.checkVisibility();
         },
         []
     );
@@ -310,6 +315,8 @@ export function WatchlistScreen() {
                     </>
                 }
             >
+                <View ref={viewportRef} collapsable={false} style={styles.container}
+                    onLayout={() => discoveryRef.current?.checkVisibility()}>
                 <FlatList
                     ref={listRef}
                     key={`grid-${numColumns}`}
@@ -323,12 +330,15 @@ export function WatchlistScreen() {
                                 <PlaylistHeader movies={movies} canPlayAll={queue.length > 0} onPlayAll={playAll}/>
                             ) : null}
                             <WatchlistControls options={options} onChange={setOptions} genres={genres} collections={collections}
+                                               onModalVisibilityChange={setFiltersOpen}
                                                onManageCollections={() => setManage({movie: null})} onPick={pickForMe} canPick={canPick}/>
                             <View style={{alignItems: 'flex-start'}}>
                                 <WatchlistControlButton label="Movie journal" icon="book-outline" onPress={() => goTo('/journal')}/>
                             </View>
-                            <WatchlistStreamingControls streaming={streaming}/>
-                            <SupporterDiscoveryCard savedCount={movies.length}/>
+                            <WatchlistStreamingControls streaming={streaming} onModalVisibilityChange={setStreamingPickerOpen}/>
+                            <SupporterDiscoveryCard ref={discoveryRef} savedCount={movies.length}
+                                viewportRef={viewportRef} topInset={topBarHeight}
+                                obscured={manage != null || journalMovie != null || filtersOpen || streamingPickerOpen}/>
                             {visible.length !== movies.length ? (
                                 <ThemedText accessibilityLiveRegion="polite" style={[styles.results, {color: colors.textMuted}]}>
                                     {visible.length} of {movies.length} titles
@@ -381,6 +391,7 @@ export function WatchlistScreen() {
                         paddingBottom: bottomInset + 96,
                     }}
                 />
+                </View>
                 <WatchlistActionsSheet visible={manage != null} movie={manage?.movie ?? null}
                                        library={library} state={libraryState} onClose={closeManage} onRemove={remove}
                                        onLogWatch={movie => {setManage(null); setJournalMovie(movie);}}
