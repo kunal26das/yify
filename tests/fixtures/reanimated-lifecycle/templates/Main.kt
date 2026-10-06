@@ -15,6 +15,35 @@ fun main(args:Array<String>) {
  val callbacks=AtomicInteger(); val events=AtomicInteger()
  nodes.registerEventHandler(object:RCTModernEventEmitter { override fun receiveEvent(a:Int,b:Int,c:String,d:Boolean,e:Int,f:WritableMap?,g:Int) { events.incrementAndGet() } })
  fun post() { nodes.postOnAnimation(object:NodesManager.OnAnimationFrame { override fun onAnimationFrame(t:Double) { callbacks.incrementAndGet() } }) }
+ if(mode=="upstream-disposed") {
+  native.requestRender(AnimationFrameCallback { callbacks.incrementAndGet() }); native.invalidate()
+  native.performOperations(); native.performNonLayoutOperations(); check(!native.isAnyHandlerWaitingForEvent("onTransitionProgress",1)); frames.tick()
+  check(native.operationCount()==0 && callbacks.get()==0 && frames.pending()==0 && HarnessControl.resetCount.get()==1)
+  println("PASS upstream native guard rejects operations, event queries and queued rendering after disposal"); return
+ }
+ if(mode=="upstream-inflight") {
+  HarnessControl.pauseAfterReset=true
+  lateinit var invalidator:Thread
+  HarnessControl.beforeNativeOperation={
+   invalidator=Thread({ native.invalidate() },"upstream-native-invalidation"); invalidator.isDaemon=true; invalidator.start()
+   val flag=native.javaClass.getDeclaredField("mInvalidated"); flag.isAccessible=true
+   val invalidated=flag.get(native) as java.util.concurrent.atomic.AtomicBoolean
+   val until=System.nanoTime()+TimeUnit.SECONDS.toNanos(5); while(!invalidated.get() && System.nanoTime()<until) Thread.yield()
+   check(invalidated.get()); check(!HarnessControl.reset.await(100,TimeUnit.MILLISECONDS)); HarnessControl.beforeNativeOperation=null
+  }
+  native.performOperations(); check(HarnessControl.reset.await(5,TimeUnit.SECONDS)); check(native.operationCount()==1)
+  HarnessControl.release.countDown(); invalidator.join(5000); check(!invalidator.isAlive)
+  println("PASS upstream write lock waits for an admitted native reader before reset"); return
+ }
+ if(mode=="upstream-trylock") {
+  HarnessControl.pauseAfterReset=true
+  val invalidator=Thread({ native.invalidate() },"upstream-native-writer"); invalidator.isDaemon=true; invalidator.start(); check(HarnessControl.reset.await(5,TimeUnit.SECONDS))
+  native.requestRender(AnimationFrameCallback { callbacks.incrementAndGet() })
+  val started=System.nanoTime(); native.performOperations(); native.performNonLayoutOperations(); check(!native.isAnyHandlerWaitingForEvent("onTransitionProgress",1)); frames.tick()
+  check(System.nanoTime()-started<TimeUnit.SECONDS.toNanos(2)); check(native.operationCount()==0 && callbacks.get()==0)
+  HarnessControl.release.countDown(); invalidator.join(5000); check(!invalidator.isAlive)
+  println("PASS upstream guard skips native calls and rendering while teardown holds its write lock"); return
+ }
  if(mode=="lock-order" || mode=="cancel-lock-order") {
   val workerDone=CountDownLatch(1); val tested=CountDownLatch(1)
   lateinit var worker:Thread
@@ -74,6 +103,14 @@ fun main(args:Array<String>) {
  }
  HarnessControl.release.countDown(); invalidator.join(10000); check(!invalidator.isAlive)
  check(native.operationCount()==0)
- check(callbacks.get()==0 && events.get()==0 && frames.pending()==0)
- println("PASS no native operation during "+mode+"; callbacks="+callbacks.get()+" events="+events.get()+" pending="+frames.pending())
+ if(FixtureVariant.baseline) {
+  val expectedCallbacks=when(mode) { "event-window", "query-window", "direct-window" -> 0; "arriving-frame" -> 2; else -> 1 }
+  check(callbacks.get()==expectedCallbacks)
+  check(events.get()==if(mode=="event-window") 1 else 0)
+  check(frames.pending()==if(mode=="query-window" || mode=="direct-window") 1 else 0)
+  println("PASS upstream prevents native calls while unpatched Nodes retains callbacks during "+mode+"; callbacks="+callbacks.get()+" events="+events.get()+" pending="+frames.pending())
+ } else {
+  check(callbacks.get()==0 && events.get()==0 && frames.pending()==0)
+  println("PASS no native operation during "+mode+"; callbacks="+callbacks.get()+" events="+events.get()+" pending="+frames.pending())
+ }
 }

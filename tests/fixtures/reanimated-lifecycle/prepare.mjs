@@ -59,6 +59,11 @@ for (const name of await readdir(templates)) {
   let value = await readFile(join(templates, name), 'utf8');
   for (const [token, path, signature] of [
     ['__NATIVE_INVALIDATE__', nativeKotlin, 'fun invalidate()'],
+    ['__NATIVE_GUARD__', nativeKotlin, 'private inline fun <T> ifNotInvalidated('],
+    ['__NATIVE_KOTLIN_PERFORM__', nativeKotlin, 'fun performOperations()'],
+    ['__NATIVE_KOTLIN_NON_LAYOUT__', nativeKotlin, 'fun performNonLayoutOperations()'],
+    ['__NATIVE_KOTLIN_QUERY__', nativeKotlin, 'fun isAnyHandlerWaitingForEvent('],
+    ['__NATIVE_RENDER__', nativeKotlin, 'fun requestRender('],
     ['__NATIVE_PERFORM__', nativeCpp, 'void NativeProxy::performOperations()'],
     ['__NATIVE_NON_LAYOUT__', nativeCpp, 'void NativeProxy::performNonLayoutOperations()'],
     ['__NATIVE_QUERY__', nativeCpp, 'bool NativeProxy::isAnyHandlerWaitingForEvent('],
@@ -70,6 +75,7 @@ for (const name of await readdir(templates)) {
   if (/__[A-Z_]+__/.test(value)) throw new Error(`Unresolved source placeholder in ${name}`);
   await writeFile(join(output, name), value);
 }
+await writeFile(join(output, 'FixtureVariant.kt'), `object FixtureVariant { const val baseline = ${variant === 'baseline'} }\n`);
 
 let fixtureNodesSha256;
 for (const [name, path] of [
