@@ -30,6 +30,11 @@
       "version": "7.0.2",
       "expected": "~6.0.3",
       "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
+    },
+    "react-native-reanimated": {
+      "version": "4.7.1",
+      "expected": "4.7.0",
+      "reason": "Reanimated 4.7.1 supports React Native 0.88 and Worklets 0.13 and adds native teardown and layout-animation crash fixes. Runtime 1.8.15 regenerates native projects, rebases the callback-cleanup patch and verifies the upstream native-state guard with lifecycle tests and Android/iOS builds."
     }
   }
 }

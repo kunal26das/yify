@@ -204,14 +204,12 @@
          startUpdatingOnAnimationFrame()
      }
  
-@@ -198,27 +228,21 @@
+@@ -198,25 +228,21 @@
              if (BuildConfig.REANIMATED_PROFILING) {
                  Trace.beginSection("onEventDispatch")
              }
 -
--            if (mNativeProxy == null) {
--                return
--            }
+-            val nativeProxy = mNativeProxy ?: return
 -            // Events can be dispatched from any thread so we have to make sure handleEvent is run from
 -            // the UI thread.
 -            if (UiThreadUtil.isOnUiThread()) {
@@ -232,7 +230,7 @@
 +                }
                  val eventName = mCustomEventNamesResolver.resolveCustomEventName(event.eventName) ?: return
 -                val viewTag = event.viewTag
--                val shouldSaveEvent = mNativeProxy!!.isAnyHandlerWaitingForEvent(eventName, viewTag)
+-                val shouldSaveEvent = nativeProxy.isAnyHandlerWaitingForEvent(eventName, viewTag)
 -                if (shouldSaveEvent) {
 +                if (nativeProxy.isAnyHandlerWaitingForEvent(eventName, event.viewTag)) {
                      mEventQueue.offer(CopiedEvent(event))
@@ -244,7 +242,7 @@
          } finally {
              if (BuildConfig.REANIMATED_PROFILING) {
                  Trace.endSection()
-@@ -245,7 +269,10 @@
+@@ -243,7 +269,10 @@
      fun getEventNameResolver(): UIManagerModule.CustomEventNamesResolver = mCustomEventNamesResolver
  
      fun registerEventHandler(handler: RCTModernEventEmitter) {

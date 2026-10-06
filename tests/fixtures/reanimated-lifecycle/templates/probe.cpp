@@ -17,11 +17,11 @@ __NATIVE_INVALIDATE_CPP__
 __NATIVE_NON_LAYOUT__
 __NATIVE_QUERY__
 static NativeProxy proxy;
-extern "C" JNIEXPORT void JNICALL Java_com_swmansion_reanimated_NativeProxy_performOperations(JNIEnv* env,jobject) { jclass cls=env->FindClass("com/swmansion/reanimated/HarnessControl"); env->CallStaticVoidMethod(cls,env->GetStaticMethodID(cls,"beforeOperation","()V")); proxy.performOperations(); }
-extern "C" JNIEXPORT void JNICALL Java_com_swmansion_reanimated_NativeProxy_performNonLayoutOperations(JNIEnv*,jobject) { proxy.performNonLayoutOperations(); }
+extern "C" JNIEXPORT void JNICALL Java_com_swmansion_reanimated_NativeProxy_performOperationsCpp(JNIEnv* env,jobject) { jclass cls=env->FindClass("com/swmansion/reanimated/HarnessControl"); env->CallStaticVoidMethod(cls,env->GetStaticMethodID(cls,"beforeOperation","()V")); proxy.performOperations(); }
+extern "C" JNIEXPORT void JNICALL Java_com_swmansion_reanimated_NativeProxy_performNonLayoutOperationsCpp(JNIEnv*,jobject) { proxy.performNonLayoutOperations(); }
 extern "C" JNIEXPORT jint JNICALL Java_com_swmansion_reanimated_NativeProxy_operationCount(JNIEnv*,jobject) { return operationCount; }
 extern "C" JNIEXPORT void JNICALL Java_com_swmansion_reanimated_NativeProxy_invalidateCpp(JNIEnv* env,jobject) { proxy.invalidateCpp(); jclass cls=env->FindClass("com/swmansion/reanimated/HarnessControl"); env->CallStaticVoidMethod(cls,env->GetStaticMethodID(cls,"afterReset","()V")); }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_swmansion_reanimated_NativeProxy_nativeIsAnyHandlerWaitingForEvent(JNIEnv*,jobject) { return proxy.isAnyHandlerWaitingForEvent("onTransitionProgress",1); }
+extern "C" JNIEXPORT jboolean JNICALL Java_com_swmansion_reanimated_NativeProxy_isAnyHandlerWaitingForEventCpp(JNIEnv* env,jobject,jstring,jint) { jclass cls=env->FindClass("com/swmansion/reanimated/HarnessControl"); env->CallStaticVoidMethod(cls,env->GetStaticMethodID(cls,"beforeQuery","()V")); return proxy.isAnyHandlerWaitingForEvent("onTransitionProgress",1); }
 
 extern "C" JNIEXPORT jint JNICALL Java_com_swmansion_reanimated_NativeProxy_operationTypes(JNIEnv*,jobject) { return normalCount*1000+nonLayoutCount; }

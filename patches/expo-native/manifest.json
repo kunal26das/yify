@@ -371,7 +371,7 @@
     },
     {
       "package": "react-native-reanimated",
-      "version": "4.7.0",
+      "version": "4.7.1",
       "file": "compatibility.json",
       "sha256": "928891213b16dad10021e3fd7656e3f579fc066a3b558a520b2bdeebaeb11987",
       "upstream": [
@@ -395,21 +395,21 @@
     },
     {
       "package": "react-native-reanimated",
-      "version": "4.7.0",
+      "version": "4.7.1",
       "file": "android/src/main/java/com/swmansion/reanimated/NativeProxy.kt",
-      "sha256": "f7b7fdc67436c6df24c88f68d2d716e8da2feec127cca54d45c676696abc70c6"
+      "sha256": "d77b6f56b4c58b5583b8f480c560c06a1e89e4867621b8a678262fa2e421cbf0"
     },
     {
       "package": "react-native-reanimated",
-      "version": "4.7.0",
+      "version": "4.7.1",
       "file": "android/src/main/cpp/reanimated/android/NativeProxy.cpp",
-      "sha256": "b2bc505744950c33c51e89504a67f2f0825ae418ec3392a80cc0a7a14ce50915"
+      "sha256": "05314c319c0e33e2fbe2a07c9a72b75a550ddbdf066d58b92fff79b26610489d"
     },
     {
       "package": "react-native-reanimated",
-      "version": "4.7.0",
+      "version": "4.7.1",
       "file": "Common/cpp/reanimated/NativeModules/ReanimatedModuleProxy.cpp",
-      "sha256": "fe25cd9ad6e77ba96e783d20c77e155d58ce536d59f8160a1366afbaac330a24"
+      "sha256": "4d1afb2237e882b90a234dd8c740f6ee7ebc2f4bcbe0a599143ca9656d006ccb"
     },
     {
       "package": "react-native",
@@ -427,9 +427,9 @@
   "files": [
     {
       "package": "react-native-reanimated",
-      "version": "4.7.0",
+      "version": "4.7.1",
       "file": "android/src/main/java/com/swmansion/reanimated/NodesManager.kt",
-      "before": "3e3c9ced9779e8f0b2918325aaee10a70405eff8576c739a9c7c63e4bc1ad6da",
+      "before": "8833991b0566b3b9b558fcf7e580d2efc6c703ac4da7deb891e932241d9b2848",
       "after": "31006b95194cedf5215711aa241ef8b8a2982c3474ecc14d928bfb476686d6e3",
       "patch": "reanimated-nodes-lifecycle.patch",
       "upstream": [

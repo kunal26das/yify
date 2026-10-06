@@ -18,8 +18,9 @@ const installed = [
   'event-window', 'query-window', 'direct-window', 'arriving-frame', 'queued-event',
   'pause-resume', 'reentrant', 'active-background', 'lock-order', 'cancel-lock-order',
   'inflight', 'late-schedule', 'duplicate', 'draw-pass',
+  'upstream-disposed', 'upstream-inflight', 'upstream-trylock',
 ];
-const unsafe = ['frame-window', 'queue-stopped', 'event-window', 'query-window', 'direct-window', 'arriving-frame'];
+const baseline = ['active', 'frame-window', 'queue-stopped', 'event-window', 'query-window', 'direct-window', 'arriving-frame', 'upstream-disposed', 'upstream-inflight', 'upstream-trylock'];
 
 function run(script, args) {
   const result = spawnSync(process.execPath, [path.join(fixture, script), ...args], {
@@ -37,16 +38,15 @@ try {
     const sources = path.join(output, variant, 'sources');
     const proof = path.join(output, variant, 'proof');
     run('prepare.mjs', ['--repo', repo, '--output', sources, '--variant', variant]);
-    const modes = variant === 'installed' ? installed : ['active', ...unsafe];
+    const modes = variant === 'installed' ? installed : baseline;
     const argumentsList = ['--sources', sources, '--output', proof, ...modes.flatMap(mode => ['--mode', mode])];
-    if (variant === 'baseline') argumentsList.push(...unsafe.flatMap(mode => ['--expect-unsafe', mode]));
     run('run.mjs', argumentsList);
     const receipt = JSON.parse(await readFile(path.join(proof, 'toolchain-receipt.json'), 'utf8'));
     if (!receipt.passed || receipt.results.length !== modes.length) {
       throw new Error(`Incomplete ${variant} lifecycle verification`);
     }
   }
-  console.log('Reanimated lifecycle: 20 patched cases passed; unmodified source reproduced all 6 native failures.');
+  console.log('Reanimated lifecycle: 23 installed cases and 10 upstream controls passed; native teardown is guarded and the Nodes patch cancels stale callbacks.');
   if (temporary) await rm(output, { recursive: true, force: true });
 } catch (error) {
   console.error(`${error.message}\nLifecycle evidence retained at ${output}`);
