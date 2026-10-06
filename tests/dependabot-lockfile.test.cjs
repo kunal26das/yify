@@ -38,6 +38,8 @@ async function fixture(options = {}) {
       base: { ref: 'main', repo: { id: REPOSITORY_ID } } }] };
   const writes = [];
   const state = { env, metadata, pr, originalCommit, refreshedCommit, run, followupRun, jobs, writes, regenerate: REGENERATED,
+    baseline: ORIGINAL, baseManifests: { 'package.json': { dependencies: { 'react-native': '0.88.0-rc.3' } }, 'crashreporting/package.json': {}, 'tooling/package.json': {} },
+    headManifests: { 'package.json': { dependencies: { 'react-native': '0.88.0-rc.3' } }, 'crashreporting/package.json': {}, 'tooling/package.json': {} },
     original: ORIGINAL, approvalFailure: false, concurrentCommit: false, lockMode: '100644', directoryMode: '040000', extraCommits: [] };
   state.refresh = () => { pr.commits = 2; pr.head.sha = REFRESHED; };
   if (options.refreshed) { state.refresh(); env.PR_HEAD_SHA = REFRESHED; env.GITHUB_SHA = REFRESHED; }
@@ -64,8 +66,13 @@ async function fixture(options = {}) {
       ...(path.endsWith('9'.repeat(40)) ? [] : [{ path: 'release', type: 'tree', mode: state.directoryMode, sha: '9'.repeat(40) }]),
     ] };
     if (path.startsWith(`repos/${REPOSITORY}/contents/${lockfile}?ref=`)) {
-      const bytes = path.endsWith(SOURCE) ? state.original : state.regenerate;
+      const bytes = path.endsWith('c'.repeat(40)) ? state.baseline : path.endsWith(SOURCE) ? state.original : state.regenerate;
       return { type: 'file', encoding: 'base64', content: bytes.toString('base64') };
+    }
+    const manifestPath = path.match(/\/contents\/(package\.json|crashreporting\/package\.json|tooling\/package\.json)\?ref=([a-f0-9]{40})$/);
+    if (manifestPath) {
+      const manifests = manifestPath[2] === 'c'.repeat(40) ? state.baseManifests : state.headManifests;
+      return { type: 'file', encoding: 'base64', content: Buffer.from(JSON.stringify(manifests[manifestPath[1]])).toString('base64') };
     }
     if (path === `repos/${REPOSITORY}/actions/workflows/ci.yml`) return { id: 12, path: '.github/workflows/ci.yml' };
     if (path === `repos/${REPOSITORY}/actions/workflows/12/runs?event=pull_request&head_sha=${REFRESHED}&per_page=100`) {
@@ -587,7 +594,7 @@ test('only the default-branch maintenance workflow can publish, approve or merge
   assert.deepEqual(steps.filter((step) => step.env?.DEPENDABOT_REBASE_TOKEN).map((step) => step.id), ['merge']);
   const followup = steps.find((step) => step.id === 'followup');
   assert.match(followup.if, /steps\.publish\.outputs\.changed == 'true'/);
-  assert.match(followup.if, /steps\.prepare\.outputs\.automerge == 'true'/);
+  assert.match(followup.if, /\(steps\.publish\.outputs\.automerge \|\| steps\.prepare\.outputs\.automerge\) == 'true'/);
   assert.equal(followup.env.FOLLOWUP_RUN_ID, '${{ steps.publish.outputs.ci_run_id }}');
   assert.equal(followup.env.PR_HEAD_SHA, '${{ steps.publish.outputs.new_sha }}');
   assert.match(followup.run, /wait-followup/);
@@ -814,7 +821,7 @@ test('trusted maintenance binds source checks and exact-attempt artifact before 
   const { prepareMaintenance } = await helpers;
   const state = await maintenanceFixture({ scope: 'release' });
   assert.deepEqual(await prepareMaintenance(state), { ready: true, operation: 'publish', pr: 123, head: SOURCE, source: SOURCE,
-    branch: state.pr.head.ref, scope: 'release', automerge: true, checks_passed: true, source_run_id: '456',
+    branch: state.pr.head.ref, scope: 'release', automerge: true, automerge_reason: 'Release-console updates qualify after all required checks pass.', checks_passed: true, source_run_id: '456',
     source_run_attempt: '1', artifact_name: 'dependabot-clean-install-release-456-1', checks: state.jobs });
   assert.equal(state.writes.length, 0);
 });
@@ -1187,4 +1194,90 @@ test('follow-up completion revalidates lockfile provenance after waiting', async
   };
   await assert.rejects(() => waitFollowup({ ...state, wait }), /refresh digest/);
   assert.equal(state.writes.length, 0);
+});
+
+function approvedRootFixture(state) {
+  const entry = (name, version) => `"${name}@${version}":\n  version "${version}"\n  resolved "https://registry.yarnpkg.com/${name}/-/${name.split('/').at(-1)}-${version}.tgz#${'a'.repeat(40)}"\n  integrity sha512-${Buffer.alloc(64, 1).toString('base64')}\n`;
+  state.baseManifests['package.json'] = { devDependencies: { eslint: '10.11.0' } };
+  state.headManifests['package.json'] = { devDependencies: { eslint: '10.12.0' } };
+  state.baseline = Buffer.from(`# yarn lockfile v1\n\n${entry('eslint', '10.11.0')}`);
+  state.original = Buffer.from(`# yarn lockfile v1\n\n${entry('eslint', '10.12.0')}`);
+  state.regenerate = state.original;
+  return entry;
+}
+
+test('reviewed JavaScript root updates enter the automatic merge path', async () => {
+  const { inspect, prepareMaintenance } = await helpers;
+  const state = await maintenanceFixture();
+  approvedRootFixture(state);
+  const inspected = await inspect(state);
+  assert.equal(inspected.eligible, true);
+  assert.equal(inspected.automerge, true);
+  assert.equal(inspected.scope, 'root');
+  const prepared = await prepareMaintenance(state);
+  assert.equal(prepared.ready, true);
+  assert.equal(prepared.automerge, true);
+  assert.equal(prepared.automerge_reason, inspected.automerge_reason);
+  assert.equal(state.writes.length, 0);
+});
+
+test('root policy compares the complete final lock against the original signed commit parent', async () => {
+  const { inspect, digest, commitMessage } = await helpers;
+  const state = await fixture({ refreshed: true });
+  const entry = approvedRootFixture(state);
+  state.original = Buffer.concat([state.original, Buffer.from(`\n${entry('expo-application', '58.0.4')}`)]);
+  state.regenerate = state.original;
+  state.metadata.lockfile_sha256 = digest(state.regenerate);
+  state.refreshedCommit.commit.message = commitMessage(state.metadata);
+  const inspected = await inspect(state);
+  assert.equal(inspected.eligible, true);
+  assert.equal(inspected.automerge, false);
+  assert.match(inspected.automerge_reason, /expo-application/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a signed refreshed root lock is reclassified before merge even after source eligibility', async () => {
+  const { inspect, digest, commitMessage } = await helpers;
+  const state = await fixture();
+  const entry = approvedRootFixture(state);
+  assert.equal((await inspect(state)).automerge, true);
+  state.regenerate = Buffer.concat([state.original, Buffer.from(`\n${entry('expo-file-system', '58.0.6')}`)]);
+  state.metadata.lockfile_sha256 = digest(state.regenerate);
+  state.refreshedCommit.commit.message = commitMessage(state.metadata);
+  state.refresh();
+  state.env.PR_HEAD_SHA = REFRESHED;
+  const inspected = await inspect(state);
+  assert.equal(inspected.automerge, false);
+  assert.match(inspected.automerge_reason, /expo-file-system/);
+});
+
+test('the root policy decision appears in the maintenance summary', async (t) => {
+  const { prepareMaintenance, writeMaintenanceSummary } = await helpers;
+  const state = await maintenanceFixture();
+  const entry = approvedRootFixture(state);
+  state.original = Buffer.concat([state.original, Buffer.from(`\n${entry('expo-application', '58.0.4')}`)]);
+  const directory = await mkdtemp(join(tmpdir(), 'dependabot-root-summary-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  state.env.GITHUB_STEP_SUMMARY = join(directory, 'summary');
+  const result = await prepareMaintenance(state);
+  await writeMaintenanceSummary({ env: state.env, result });
+  assert.match(await readFile(state.env.GITHUB_STEP_SUMMARY, 'utf8'), /expo-application/);
+});
+
+for (const repaired of [true, false]) test(`publication reports final root policy when regeneration ${repaired ? 'repairs' : 'introduces'} unreviewed drift`, async (t) => {
+  const { inspect, publishWithPolicy, digest } = await helpers;
+  const state = await fixture();
+  const entry = approvedRootFixture(state);
+  const unsafe = Buffer.concat([state.original, Buffer.from(`\n${entry('expo-file-system', '58.0.6')}`)]);
+  if (repaired) state.original = unsafe;
+  else state.regenerate = unsafe;
+  state.metadata.lockfile_sha256 = digest(state.regenerate);
+  assert.equal((await inspect(state)).automerge, !repaired);
+  const directory = await artifact(t, state, { original: state.original, regenerated: state.regenerate });
+  const result = await publishWithPolicy({ ...state, directory });
+  assert.equal(result.changed, true);
+  assert.equal(result.automerge, repaired);
+  assert.equal(result.ci_run_id, FOLLOWUP_ID);
+  assert.equal(result.new_sha, REFRESHED);
+  assert.equal(state.writes.length, 2);
 });

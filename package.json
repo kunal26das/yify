@@ -140,7 +140,23 @@
     "expo-task-manager": "58.0.11",
     "expo-asset": "58.0.11",
     "expo-font": "58.0.6",
-    "expo-modules-jsi": "58.0.8"
+    "expo-modules-jsi": "58.0.8",
+    "expo-application": "58.0.3",
+    "expo-file-system": "58.0.5",
+    "@expo/config": "58.0.2",
+    "@expo/config-plugins": "58.0.5",
+    "@expo/image-utils": "0.12.3",
+    "@expo/inline-modules": "0.2.2",
+    "@expo/local-build-cache-provider": "58.0.2",
+    "@expo/metro-file-map": "58.0.3",
+    "@expo/prebuild-config": "58.0.8",
+    "@expo/require-utils": "58.0.2",
+    "@expo/router-server": "58.0.7",
+    "babel-preset-expo": "58.0.9",
+    "regexpu-core": "6.5.2",
+    "@expo-google-fonts/material-symbols": "0.4.48",
+    "electron-to-chromium": "1.5.444",
+    "regjsparser": "0.13.3"
   },
   "expo": {
     "autolinking": {
