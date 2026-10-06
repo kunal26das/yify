@@ -56,8 +56,8 @@ export async function requestRebase(options) {
   const { api, env } = options;
   const trustedEnv = await maintenanceContext({ api, env, operation: 'merge' });
   const state = await inspect({ api, env: trustedEnv });
-  assert(state.eligible && state.automerge && state.scope === 'release',
-    'Only a verified release-console update may request an automatic rebase.');
+  assert(state.eligible && state.automerge,
+    'Only a verified update eligible for automatic merging may request an automatic rebase.');
   return postRebase({ ...options, trustedEnv, state });
 }
 
@@ -216,15 +216,15 @@ export async function recoverAfterMain(options) {
     .filter((pr) => pr.state === 'open' && !pr.merged && !pr.draft && pr.user?.login === 'dependabot[bot]' &&
       pr.head?.repo?.full_name === env.GITHUB_REPOSITORY && pr.head.repo.id === context.repositoryId &&
       pr.base?.repo?.full_name === env.GITHUB_REPOSITORY && pr.base.repo.id === context.repositoryId && pr.base.ref === 'main' &&
-      pr.head?.ref?.startsWith('dependabot/npm_and_yarn/release/'));
-  assert(candidates.length <= 20, 'More than 20 release-console updates require recovery; inspect the backlog manually.');
+      pr.head?.ref?.startsWith('dependabot/npm_and_yarn/'));
+  assert(candidates.length <= 20, 'More than 20 npm dependency updates require recovery; inspect the backlog manually.');
   const results = [];
   for (const candidate of candidates) {
     const trustedEnv = { ...env, PR_NUMBER: String(candidate.number), PR_HEAD_SHA: candidate.head.sha };
     try {
       const state = await inspect({ api, env: trustedEnv, allowManual: true });
-      if (!state.eligible || !state.automerge || state.scope !== 'release') {
-        results.push({ pr: candidate.number, requested: false, reason: state.reason || 'Not an eligible behind release-console update.' });
+      if (!state.eligible || !state.automerge) {
+        results.push({ pr: candidate.number, requested: false, reason: state.automerge_reason || state.reason || 'Not an update eligible for automatic merging.' });
         continue;
       }
       assert(state.pull_request.head.repo.id === context.repositoryId && state.pull_request.base.repo.id === context.repositoryId,
@@ -259,7 +259,7 @@ export async function recoverAfterMain(options) {
       `Source CI: [run ${env.SOURCE_RUN_ID}, attempt ${env.SOURCE_RUN_ATTEMPT}](https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/${env.SOURCE_RUN_ID}/attempts/${env.SOURCE_RUN_ATTEMPT}).`, '',
       'Recovery requests a rebase only. Fresh PR checks and lockfile verification still control merging.', ''];
     for (const item of results) lines.push(`- #${item.pr}: ${item.requested ? `Dependabot acknowledged rebase (${item.acknowledgement}).` : item.reason}`);
-    if (!results.length) lines.push('No release-console updates require inspection.');
+    if (!results.length) lines.push('No npm dependency updates require inspection.');
     await appendFile(env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
   }
   return result;

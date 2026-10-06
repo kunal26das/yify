@@ -3,6 +3,7 @@ import { appendFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promise
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
+import { evaluateRootUpdate } from './dependabot-root-policy.mjs';
 
 const SHA = /^[a-f0-9]{40}$/;
 const DIGEST = /^[a-f0-9]{64}$/;
@@ -89,11 +90,27 @@ async function list(api, path, key) {
   throw new Error('GitHub list exceeds the supported size.');
 }
 
-async function lockfile(api, repository, sha, scope) {
-  const path = scopeConfig(scope).lockfile;
+async function committedFile(api, repository, sha, path) {
   const file = await api('GET', `repos/${repository}/contents/${path}?ref=${sha}`);
   assert(file.type === 'file' && file.encoding === 'base64' && typeof file.content === 'string', `Unable to read the committed ${path}.`);
   return Buffer.from(file.content, 'base64');
+}
+
+async function lockfile(api, repository, sha, scope) {
+  return committedFile(api, repository, sha, scopeConfig(scope).lockfile);
+}
+
+async function rootMergePolicy(api, repository, base, head) {
+  assert(SHA.test(base || ''), 'The original dependency baseline is invalid.');
+  const snapshots = await Promise.all([base, head].map(async (sha) => {
+    const [lock, ...manifests] = await Promise.all([
+      lockfile(api, repository, sha, 'root'),
+      ...SCOPES.root.manifests.map((path) => committedFile(api, repository, sha, path)),
+    ]);
+    return { lock, manifests: Object.fromEntries(SCOPES.root.manifests.map((path, index) => [path, manifests[index]])) };
+  }));
+  return evaluateRootUpdate({ baseManifests: snapshots[0].manifests, headManifests: snapshots[1].manifests,
+    baseLockfile: snapshots[0].lock, headLockfile: snapshots[1].lock });
 }
 
 async function regularLockfile(api, repository, commit, scope) {
@@ -190,7 +207,9 @@ export async function inspect({ api, env, allowPublishedHead = false, allowManua
   if (env.GITHUB_EVENT_NAME === 'workflow_dispatch') {
     assert(env.GITHUB_SHA === ctx.expected, 'The dispatched workflow is not running on the expected pull request head.');
   }
-  return { eligible: true, automerge: scope === 'release', scope, lockfile: scopeConfig(scope).lockfile,
+  const policy = scope === 'root' ? await rootMergePolicy(api, ctx.repository, original.parents[0].sha, pr.head.sha) :
+    { allowed: true, reason: 'Release-console updates qualify after all required checks pass.' };
+  return { eligible: true, automerge: policy.allowed, automerge_reason: policy.reason, scope, lockfile: scopeConfig(scope).lockfile,
     pr: ctx.pr, head: pr.head.sha, source: source.sha, branch: pr.head.ref, refreshed: commits.length === 2, pull_request: pr, provenance };
 }
 
@@ -243,7 +262,7 @@ export async function prepareMaintenance({ api, env }) {
     return matches.length === 1 && matches[0].status === 'completed' && matches[0].conclusion === 'success';
   });
   const result = { ready: true, operation: 'publish', pr: state.pr, head: state.head, source: run.head_sha,
-    branch: state.branch, scope: state.scope, automerge: state.automerge, checks_passed: checksPassed,
+    branch: state.branch, scope: state.scope, automerge: state.automerge, automerge_reason: state.automerge_reason, checks_passed: checksPassed,
     source_run_id: env.SOURCE_RUN_ID, source_run_attempt: attempt };
   const checkNames = [...REQUIRED_CHECKS, ...(!state.refreshed || state.head !== run.head_sha ? [`Dependabot clean reinstall (${state.scope})`] : [])];
   const checks = checkNames.flatMap((name) => jobs.filter((job) => job.name === name).map((job) => ({
@@ -291,7 +310,8 @@ export async function writeMaintenanceSummary({ env, result }) {
     `Maintenance: **${result.ready ? 'ready' : 'blocked'}**.`,
     `Automatic merge: **${result.automerge ? 'eligible after all required checks pass' : 'not eligible'}**.`];
   if (result.reason) lines.push('', result.reason);
-  if (result.scope === 'root') lines.push('',
+  if (result.automerge_reason) lines.push('', result.automerge_reason);
+  if (result.scope === 'root' && !result.automerge) lines.push('',
     'Application dependencies require native compatibility review and a runtime version update when native code changes. Passing web and JavaScript checks does not authorize an automatic merge.');
   if (result.scope === 'github-actions') lines.push('', 'GitHub Actions updates require manual review.');
   if (result.ready && !result.checks_passed) lines.push('',
@@ -431,6 +451,13 @@ async function approveFollowup({ api, approvalApi, env, ctx, state, metadata, ne
   return run.id;
 }
 
+export async function publishWithPolicy(options) {
+  const result = await publish(options);
+  const state = await inspect({ api: options.api, env: { ...options.env, ALLOW_MERGED: 'false' }, allowPublishedHead: true });
+  assert(state.head === (result.new_sha || options.env.PR_HEAD_SHA), 'Pull request changed after lockfile publication.');
+  return { ...result, automerge: state.automerge, automerge_reason: state.automerge_reason };
+}
+
 export async function publish({ api, approvalApi, env, directory = env.LOCKFILE_REPORT_DIR, wait = delay }) {
   assert(directory, 'LOCKFILE_REPORT_DIR is required.');
   assert(typeof approvalApi === 'function', 'A separate GitHub App approval token is required before committing a lockfile.');
@@ -511,7 +538,7 @@ export async function main(mode, env = process.env) {
     const directory = await mkdtemp(join(env.RUNNER_TEMP, 'dependabot-event-'));
     const eventFile = join(directory, 'event.json');
     await writeFile(eventFile, JSON.stringify({ pull_request: state.pull_request }), { mode: 0o600 });
-    await writeOutputs(env, { eligible: state.eligible, automerge: state.automerge, scope: state.scope, lockfile: state.lockfile,
+    await writeOutputs(env, { eligible: state.eligible, automerge: state.automerge, automerge_reason: state.automerge_reason, scope: state.scope, lockfile: state.lockfile,
       pr: state.pr, head: state.head, source: state.source, branch: state.branch, refreshed: state.refreshed, event_file: eventFile });
     if (state.reason) console.log(`Dependency automation skipped: ${state.reason}`);
     return state;
@@ -519,7 +546,7 @@ export async function main(mode, env = process.env) {
   if (mode === 'publish') {
     assert(env.DEPENDABOT_APPROVAL_TOKEN && env.DEPENDABOT_APPROVAL_TOKEN !== env.GH_TOKEN,
       'DEPENDABOT_APPROVAL_TOKEN must be a separate GitHub App token; configure DEPENDABOT_APP_ID and DEPENDABOT_APP_PRIVATE_KEY before committing a lockfile.');
-    const result = await publish({ api, approvalApi: githubApi(env.DEPENDABOT_APPROVAL_TOKEN), env });
+    const result = await publishWithPolicy({ api, approvalApi: githubApi(env.DEPENDABOT_APPROVAL_TOKEN), env });
     await writeOutputs(env, result);
     return result;
   }

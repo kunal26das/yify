@@ -18,19 +18,26 @@ const LOCK = Buffer.from('# yarn lockfile v1\ntest:\n  version "1.0.1"\n');
 const DATE = '2026-09-25T00:00:00Z';
 const names = ['Typecheck and tests', 'Web exports render and isolate catalog data', 'Typecheck and test release console'];
 
-async function fixture() {
+function rootLock(version) {
+  return Buffer.from(`# yarn lockfile v1\neslint@${version}:\n  version "${version}"\n  resolved "https://registry.yarnpkg.com/eslint/-/eslint-${version}.tgz#${'a'.repeat(40)}"\n  integrity sha512-${Buffer.alloc(64, 1).toString('base64')}\n`);
+}
+
+async function fixture({ scope = 'release' } = {}) {
   const { digest, commitMessage } = await lockfile;
   const repo = { id: REPOSITORY_ID, full_name: REPOSITORY };
+  const lockPath = scope === 'release' ? 'release/yarn.lock' : 'yarn.lock';
+  const manifestPath = scope === 'release' ? 'release/package.json' : 'package.json';
+  const refreshedLock = scope === 'release' ? LOCK : rootLock('10.12.0');
   const pr = { number: 892, state: 'open', merged: false, draft: false, user: { login: 'dependabot[bot]' }, commits: 2,
-    head: { sha: HEAD, ref: 'dependabot/npm_and_yarn/release/types/node-26.6.2', repo: { ...repo } },
+    head: { sha: HEAD, ref: scope === 'release' ? 'dependabot/npm_and_yarn/release/types/node-26.6.2' : 'dependabot/npm_and_yarn/tooling-eslint-10.12.0', repo: { ...repo } },
     base: { ref: 'main', repo: { ...repo } }, mergeable_state: 'behind' };
-  const metadata = { version: 2, repository: REPOSITORY, scope: 'release', lockfile: 'release/yarn.lock',
-    pr: 892, source: SOURCE, run_id: '123', run_attempt: '1', lockfile_sha256: digest(LOCK) };
+  const metadata = { version: 2, repository: REPOSITORY, scope, lockfile: lockPath,
+    pr: 892, source: SOURCE, run_id: '123', run_attempt: '1', lockfile_sha256: digest(refreshedLock) };
   const original = { sha: SOURCE, author: { login: 'dependabot[bot]' }, commit: { verification: { verified: true }, tree: { sha: TREE } },
-    parents: [{ sha: MAIN }], files: [{ filename: 'release/package.json', status: 'modified' }, { filename: 'release/yarn.lock', status: 'modified' }] };
+    parents: [{ sha: MAIN }], files: [{ filename: manifestPath, status: 'modified' }, { filename: lockPath, status: 'modified' }] };
   const refresh = { sha: HEAD, author: { login: 'github-actions[bot]' }, committer: { login: 'web-flow' },
     commit: { verification: { verified: true }, tree: { sha: TREE }, message: commitMessage(metadata) },
-    parents: [{ sha: SOURCE }], files: [{ filename: 'release/yarn.lock', status: 'modified' }] };
+    parents: [{ sha: SOURCE }], files: [{ filename: lockPath, status: 'modified' }] };
   const next = { ...structuredClone(original), sha: NEXT };
   const run = { id: 456, workflow_id: 12, path: '.github/workflows/ci.yml', head_sha: HEAD, head_branch: pr.head.ref,
     repository: { full_name: REPOSITORY }, head_repository: { full_name: REPOSITORY }, event: 'pull_request',
@@ -41,7 +48,12 @@ async function fixture() {
   const env = { GITHUB_REPOSITORY: REPOSITORY, GITHUB_REF: 'refs/heads/main', GITHUB_EVENT_NAME: 'workflow_run',
     GITHUB_SHA: MAIN, PR_NUMBER: '892', PR_HEAD_SHA: HEAD, SOURCE_HEAD_SHA: HEAD,
     SOURCE_RUN_ID: '456', SOURCE_RUN_ATTEMPT: '2', GH_TOKEN: 'builtin-fixture', DEPENDABOT_REBASE_TOKEN: 'owner-fixture' };
-  const state = { env, pr, run, sourceRun, jobs, original, refresh, next, comments: [], reactions: [], writes: [],
+  const state = { env, pr, run, sourceRun, jobs, original, refresh, next, scope, refreshedLock, baseLock: rootLock('10.11.0'),
+    baseManifests: { 'package.json': { name: 'yify', devDependencies: { eslint: '10.11.0' } },
+      'crashreporting/package.json': { name: '@yify/crashreporting' }, 'tooling/package.json': { name: '@yify/tooling' } },
+    headManifests: { 'package.json': { name: 'yify', devDependencies: { eslint: '10.12.0' } },
+      'crashreporting/package.json': { name: '@yify/crashreporting' }, 'tooling/package.json': { name: '@yify/tooling' } },
+    comments: [], reactions: [], writes: [],
     calls: [], main: { ref: 'refs/heads/main', object: { type: 'commit', sha: MAIN } },
     owner: { login: 'kunal26das', type: 'User' }, nextCommentId: 100, now: 0, waits: [],
     comparison: { base_commit: { sha: HEAD }, ahead_by: 1, status: 'diverged' } };
@@ -57,14 +69,21 @@ async function fixture() {
     if (path === `repos/${REPOSITORY}/commits/${SOURCE}?per_page=100`) return structuredClone(original);
     if (path === `repos/${REPOSITORY}/commits/${HEAD}?per_page=100`) return structuredClone(refresh);
     if (path === `repos/${REPOSITORY}/commits/${NEXT}?per_page=100`) return structuredClone(next);
-    if (path === `repos/${REPOSITORY}/git/trees/${TREE}`) return { truncated: false, tree: [{ path: 'release', type: 'tree', mode: '040000', sha: RELEASE_TREE }] };
+    if (path === `repos/${REPOSITORY}/git/trees/${TREE}`) return { truncated: false, tree: scope === 'release' ? [{ path: 'release', type: 'tree', mode: '040000', sha: RELEASE_TREE }] : [{ path: 'yarn.lock', type: 'blob', mode: '100644' }] };
     if (path === `repos/${REPOSITORY}/git/trees/${RELEASE_TREE}`) return { truncated: false, tree: [{ path: 'yarn.lock', type: 'blob', mode: '100644' }] };
-    if (path === `repos/${REPOSITORY}/contents/release/yarn.lock?ref=${HEAD}`) return { type: 'file', encoding: 'base64', content: (state.lock || LOCK).toString('base64') };
+    if (path.startsWith(`repos/${REPOSITORY}/contents/`)) {
+      const url = new URL(`https://api.github.com/${path}`);
+      const filename = url.pathname.slice(`/repos/${REPOSITORY}/contents/`.length);
+      const baseline = url.searchParams.get('ref') === MAIN;
+      const bytes = filename === lockPath ? (baseline ? state.baseLock : state.lock || state.refreshedLock) :
+        Buffer.from(JSON.stringify((baseline ? state.baseManifests : state.headManifests)[filename]));
+      return { type: 'file', encoding: 'base64', content: bytes.toString('base64') };
+    }
     if (path === `repos/${REPOSITORY}/actions/workflows/ci.yml`) return { id: 12, path: '.github/workflows/ci.yml' };
     if (path === `repos/${REPOSITORY}/actions/runs/456` || path === `repos/${REPOSITORY}/actions/runs/456/attempts/2`) return structuredClone(run);
     if (path === `repos/${REPOSITORY}/actions/runs/123/attempts/1`) return structuredClone(sourceRun);
     if (path.startsWith(`repos/${REPOSITORY}/actions/runs/456/attempts/2/jobs?`)) return { jobs: structuredClone(jobs) };
-    if (path.startsWith(`repos/${REPOSITORY}/actions/runs/123/attempts/1/jobs?`)) return { jobs: [{ name: 'Dependabot clean reinstall (release)', status: 'completed', conclusion: 'success' }] };
+    if (path.startsWith(`repos/${REPOSITORY}/actions/runs/123/attempts/1/jobs?`)) return { jobs: [{ name: `Dependabot clean reinstall (${scope})`, status: 'completed', conclusion: 'success' }] };
     if (path === `repos/${REPOSITORY}/git/ref/heads/main`) return structuredClone(state.main);
     if (path.startsWith(`repos/${REPOSITORY}/compare/`)) return structuredClone(state.comparison);
     if (path.startsWith(`repos/${REPOSITORY}/issues/892/comments?`)) {
@@ -111,6 +130,40 @@ test('accepts a new signed Dependabot source without an acknowledgement reaction
   assert.equal(result.requested, true);
   assert.equal(result.acknowledgement, 'signed-head');
   assert.equal(result.new_head, NEXT);
+});
+
+test('a reviewed JavaScript root update can request a rebase after its exact-head checks pass', async () => {
+  const state = await fixture({ scope: 'root' });
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  const result = await state.observe();
+  assert.equal(result.requested, true);
+  assert.equal(result.acknowledgement, 'dependabot-reaction');
+  assert.equal(state.writes.length, 1);
+});
+
+test('a root rebase accepts only a fresh signed head that retains automatic-merge eligibility', async () => {
+  const state = await fixture({ scope: 'root' });
+  state.onPost = state.rebase;
+  assert.equal((await state.observe()).new_head, NEXT);
+  assert.equal(state.writes.length, 1);
+});
+
+test('a signed root update needing native review cannot request an automatic rebase', async () => {
+  const state = await fixture({ scope: 'root' });
+  state.baseManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.3' };
+  state.headManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.4' };
+  await assert.rejects(() => state.observe(), /eligible for automatic merging/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('a root rebase rejects a new signed head that introduces a native update', async () => {
+  const state = await fixture({ scope: 'root' });
+  state.onPost = () => {
+    state.rebase();
+    state.headManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.4' };
+  };
+  await assert.rejects(() => state.observe(), /fresh, verified Dependabot update/);
+  assert.equal(state.writes.length, 1);
 });
 
 for (const [label, mutate] of [
@@ -320,8 +373,8 @@ test('CLI exports a requested result only after acknowledged success', async (t)
   await assert.rejects(() => readFile(state.env.GITHUB_OUTPUT), { code: 'ENOENT' });
 });
 
-async function recoveryFixture() {
-  const state = await fixture();
+async function recoveryFixture(options = {}) {
+  const state = await fixture(options);
   const baseApi = state.api;
   state.env.SOURCE_RUN_ID = '999';
   state.env.SOURCE_RUN_ATTEMPT = '1';
@@ -362,6 +415,35 @@ test('current successful main CI recovers a signed release head with failed PR c
   assert.ok(state.calls.every(({ method }) => method === 'GET'));
 });
 
+test('main recovery rebases a reviewed JavaScript root update with failed exact-head checks', async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, true);
+  assert.equal(result.results[0].failed_run_id, 456);
+  assert.equal(state.writes.length, 1);
+});
+
+test('main recovery reports native root updates as manual without posting a rebase', async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  state.baseManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.3' };
+  state.headManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.4' };
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, false);
+  assert.equal(result.results[0].blocked, undefined);
+  assert.match(result.results[0].reason, /react-native|manual|review/);
+  assert.equal(state.writes.length, 0);
+});
+
+test('healthy JavaScript root updates remain with ordinary maintenance during main recovery', async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  state.run.conclusion = 'success';
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, false);
+  assert.equal(result.results[0].reason, 'Current-head CI has no completed failed required check.');
+  assert.equal(state.writes.length, 0);
+});
+
 for (const [label, mutate] of [
   ['non-default execution branch', (s) => { s.env.GITHUB_REF = 'refs/heads/test'; }],
   ['manual dispatch', (s) => { s.env.GITHUB_EVENT_NAME = 'workflow_dispatch'; }],
@@ -393,7 +475,6 @@ for (const [label, mutate] of [
   ['foreign author', (s) => { s.prs[0].user.login = 'someone'; }],
   ['foreign repository', (s) => { s.prs[0].head.repo.full_name = 'someone/yify'; }],
   ['foreign repository ID', (s) => { s.prs[0].head.repo.id += 1; }],
-  ['application dependency', (s) => { s.prs[0].head.ref = 'dependabot/npm_and_yarn/expo-59'; }],
   ['Actions dependency', (s) => { s.prs[0].head.ref = 'dependabot/github_actions/actions/checkout-8'; }],
 ]) test(`main recovery excludes ${label} proposals`, async () => {
   const state = await recoveryFixture(); mutate(state);
@@ -543,7 +624,7 @@ test('one rejected release proposal cannot prevent inspecting another eligible u
   assert.equal(state.writes.length, 1);
 });
 
-test('main recovery bounds the release backlog before posting any requests', async () => {
+test('main recovery bounds the npm dependency backlog before posting any requests', async () => {
   const state = await recoveryFixture();
   state.prs = Array.from({ length: 21 }, (_, index) => ({ ...structuredClone(state.pr), number: 900 + index }));
   await assert.rejects(() => state.recover(), /More than 20/);
@@ -598,4 +679,40 @@ test('the merge step invokes guarded rebase for behind and conflicted PRs', asyn
   assert.match(step.run, /mergeable_state == "behind" or \.mergeable_state == "dirty"/);
   assert.ok(step.run.indexOf('inspect-maintenance') < step.run.indexOf('node scripts/dependabot-refresh.mjs'));
   assert.match(step.run, /--match-head-commit "\$PR_HEAD_SHA"/);
+});
+
+test('the workflow explains a final manual review decision without interpolating it into shell code', async () => {
+  const { load } = require('js-yaml');
+  const workflow = load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
+  const step = workflow.jobs.maintain.steps.find((candidate) => candidate.env?.AUTOMERGE_REASON);
+  assert.match(step.if, /steps\.inspect\.outputs\.automerge == 'false'/);
+  assert.match(step.if, /steps\.publish\.outputs\.changed == 'true'/);
+  assert.equal(step.env.AUTOMERGE_REASON, '${{ steps.inspect.outputs.automerge_reason || steps.publish.outputs.automerge_reason }}');
+  assert.match(step.run, /process\.env\.GITHUB_STEP_SUMMARY/);
+  assert.match(step.run, /process\.env\.AUTOMERGE_REASON/);
+  assert.doesNotMatch(step.run, /\$\{\{/);
+});
+
+test('the workflow uses final published eligibility for both repaired and regressed lockfiles', async () => {
+  const { load } = require('js-yaml');
+  const { runInNewContext } = require('node:vm');
+  const workflow = load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
+  const stepsById = Object.fromEntries(workflow.jobs.maintain.steps.filter((step) => step.id).map((step) => [step.id, step]));
+  const explain = workflow.jobs.maintain.steps.find((step) => step.env?.AUTOMERGE_REASON);
+  const evaluate = (step, source, published, inspected = '') => runInNewContext(`(${step.if})`, { steps: {
+    prepare: { outputs: { ready: 'true', automerge: source, checks_passed: 'true', operation: 'publish' } },
+    publish: { outputs: { changed: 'true', automerge: published } },
+    followup: { outputs: { ready: 'true' } },
+    inspect: { outputs: { automerge: inspected } },
+  } });
+  for (const step of [stepsById.followup, stepsById.inspect]) {
+    assert.equal(evaluate(step, 'false', 'true'), true, 'A repaired lockfile must reach its exact-head checks.');
+    assert.equal(evaluate(step, 'true', 'false'), false, 'An unsafe regenerated lockfile must override earlier eligibility.');
+    assert.equal(evaluate(step, 'true', ''), true, 'Existing source eligibility remains the fallback without a published decision.');
+    assert.equal(evaluate(step, 'false', ''), false);
+  }
+  assert.equal(evaluate(explain, 'true', 'false'), true);
+  assert.equal(evaluate(explain, 'false', 'true', 'false'), true);
+  assert.equal(evaluate(explain, 'false', 'true', 'true'), false);
+  assert.equal(evaluate(explain, 'false', 'false'), false);
 });
