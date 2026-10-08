@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import path from 'node:path';
-import type {AndroidProductionPublisher, OnLine, ReleaseCli, Workspace} from '../../domain/index.js';
+import type {AndroidProductionPublisher, OnLine, ReleaseCli, SessionStore, Workspace} from '../../domain/index.js';
 import type {CancellationRegistry} from '../process/cancellationRegistry.js';
 import {pumpLines} from '../process/linePump.js';
 
@@ -12,29 +12,101 @@ const UPDATE_URL_METADATA = 'expo.modules.updates.EXPO_UPDATE_URL';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const require = createRequire(import.meta.url);
 
-function validateProfiles(repoRoot: string, runtimeVersion: string): void {
+function validateProfiles(repoRoot: string, runtimeVersion: string) {
     const easJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'eas.json'), 'utf8'));
-    // Use the installed CLI's own resolvers so inheritance, platform overrides,
-    // defaults and credential-path environment expansion match EAS exactly.
     const easRequire = createRequire(require.resolve('eas-cli/package.json'));
     const {resolveBuildProfile} = easRequire('@expo/eas-json/build/build/resolver');
     const {resolveSubmitProfile} = easRequire('@expo/eas-json/build/submit/resolver');
     const build = resolveBuildProfile({easJson, platform: 'android', profileName: 'production'});
     const submit = resolveSubmitProfile({easJson, platform: 'android', profileName: 'play-production'});
-    if (easJson.cli?.appVersionSource !== 'local' || build.credentialsSource !== 'local' ||
+    if (easJson.cli?.appVersionSource !== 'local' || !['local', 'remote'].includes(build.credentialsSource) ||
+        build.withoutCredentials === true || (build.credentialsSource === 'remote' && build.keystoreName !== undefined) ||
         build.buildType !== 'app-bundle' || build.distribution !== 'store' ||
         build.environment !== 'production' || build.env?.EXPO_UPDATE_CHANNEL !== 'Production' ||
         (build.channel !== undefined && build.channel !== 'Production') ||
         (build.autoIncrement !== undefined && build.autoIncrement !== false) ||
         (build.env?.EXPO_RUNTIME_VERSION !== undefined && build.env.EXPO_RUNTIME_VERSION !== runtimeVersion)) {
-        throw new Error('The production EAS build profile must use local versions and credentials, an app bundle, and the Production channel in the production environment without version auto-increment.');
+        throw new Error('The production EAS build profile must use local versions, local signing or the default Expo keystore, an app bundle, and the Production channel in the production environment without version auto-increment.');
     }
     if (submit.track !== 'production' || submit.releaseStatus !== 'completed') {
         throw new Error('The play-production EAS submit profile must target the production track with completed release status.');
     }
     const key = submit.serviceAccountKeyPath;
-    if (typeof key !== 'string' || !key || !fs.existsSync(path.resolve(repoRoot, key)) || !fs.statSync(path.resolve(repoRoot, key)).isFile()) {
-        throw new Error('The Play production service-account key file is missing. Configure play-production.serviceAccountKeyPath before starting a cloud build.');
+    if (key !== undefined) {
+        try {
+            if (typeof key !== 'string' || !key || !fs.statSync(path.resolve(repoRoot, key)).isFile()) throw new Error();
+            const value = JSON.parse(fs.readFileSync(path.resolve(repoRoot, key), 'utf8'));
+            if (value?.type !== 'service_account' || typeof value.private_key !== 'string' || !value.private_key.trim() ||
+                typeof value.client_email !== 'string' || !value.client_email.trim()) throw new Error();
+        } catch {
+            throw new Error('The configured Play service-account key file is missing or invalid. Fix serviceAccountKeyPath, or omit it to use the key stored in Expo.');
+        }
+    }
+    return {managedSigning: build.credentialsSource === 'remote', managedSubmission: key === undefined};
+}
+
+async function verifyManagedCredentials(repoRoot: string, sessionStore: SessionStore, needs: {
+    managedSigning: boolean;
+    managedSubmission: boolean;
+}): Promise<void> {
+    if (!needs.managedSigning && !needs.managedSubmission) return;
+    const token = sessionStore.read()?.token;
+    if (!token) throw new Error('Sign in to Expo before checking managed Android credentials.');
+    const config = JSON.parse(fs.readFileSync(path.join(repoRoot, 'app.json'), 'utf8'));
+    const projectId = config?.expo?.extra?.eas?.projectId;
+    if (typeof projectId !== 'string' || !UUID.test(projectId)) throw new Error('The Expo project ID is missing or invalid.');
+    const gradle = fs.readFileSync(path.join(repoRoot, 'android/app/build.gradle'), 'utf8');
+    const identifiers = [...gradle.matchAll(/^[ \t]*applicationId[ \t]+["']([\w.]+)["'][ \t]*(?:\/\/[^\r\n]*)?\r?$/gm)];
+    if (identifiers.length !== 1 || /\bapplicationIdSuffix\b|\bproductFlavors\b/.test(gradle)) {
+        throw new Error('Could not verify the native Android application ID for managed credentials. Use one literal applicationId without product flavors or suffixes.');
+    }
+    const applicationId = identifiers[0][1];
+    let result: any;
+    try {
+        const response = await fetch('https://api.expo.dev/graphql', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+            signal: AbortSignal.timeout(30_000),
+            body: JSON.stringify({
+                query: `query AndroidCredentialPresence($appId: String!, $applicationId: String!) {
+                    app { byId(appId: $appId) {
+                        id
+                        androidAppCredentials(filter: {applicationIdentifier: $applicationId, legacyOnly: false}) {
+                            applicationIdentifier
+                            isLegacy
+                            googleServiceAccountKeyForSubmissions { id }
+                            androidAppBuildCredentialsList { isDefault androidKeystore { id } }
+                        }
+                    } }
+                }`,
+                variables: {appId: projectId, applicationId},
+            }),
+        });
+        if (!response.ok) throw new Error();
+        result = await response.json();
+    } catch {
+        throw new Error('Could not check Expo-managed Android credentials. Verify the Expo session and network, then retry; no build was started.');
+    }
+    const app = result?.data?.app?.byId;
+    if (result?.errors?.length || app?.id !== projectId || !Array.isArray(app?.androidAppCredentials)) {
+        throw new Error('Could not verify managed credentials for this Expo project. Check the account access before retrying.');
+    }
+    const credentials = app.androidAppCredentials.filter((entry: any) =>
+        entry?.applicationIdentifier === applicationId && entry.isLegacy === false);
+    if (credentials.length !== 1) {
+        throw new Error('Expo has no unambiguous Android credential configuration for this application ID. Configure its existing upload key and Play service account before releasing.');
+    }
+    const credential = credentials[0];
+    if (needs.managedSigning) {
+        const defaults = Array.isArray(credential.androidAppBuildCredentialsList)
+            ? credential.androidAppBuildCredentialsList.filter((entry: any) => entry?.isDefault === true) : [];
+        if (defaults.length !== 1 || typeof defaults[0].androidKeystore?.id !== 'string' || !defaults[0].androidKeystore.id) {
+            throw new Error('Expo is missing the default Android upload keystore. Upload and select the existing Play upload key before releasing; do not generate a replacement.');
+        }
+    }
+    if (needs.managedSubmission && (typeof credential.googleServiceAccountKeyForSubmissions?.id !== 'string' ||
+        !credential.googleServiceAccountKeyForSubmissions.id)) {
+        throw new Error('Expo is missing the Google Play submission service account for this application ID. Assign the existing service account before releasing.');
     }
 }
 
@@ -75,8 +147,6 @@ function synchronizeNative(repoRoot: string, version: string, runtimeVersion: st
     const projectId = config?.expo?.extra?.eas?.projectId;
     if (typeof projectId !== 'string' || !UUID.test(projectId)) throw new Error('The Expo project ID is missing or invalid.');
 
-    // EAS uploads tracked Android sources without prebuilding. Update only known
-    // release fields, and validate every replacement before writing any file.
     const gradlePath = path.join(repoRoot, 'android/app/build.gradle');
     const stringsPath = path.join(repoRoot, 'android/app/src/main/res/values/strings.xml');
     const manifestPath = path.join(repoRoot, 'android/app/src/main/AndroidManifest.xml');
@@ -157,8 +227,9 @@ export function createAndroidProductionPublisher(deps: {
     workspace: Workspace;
     cancellation: CancellationRegistry;
     cli: ReleaseCli;
+    sessionStore: SessionStore;
 }): AndroidProductionPublisher {
-    const {workspace, cancellation, cli} = deps;
+    const {workspace, cancellation, cli, sessionStore} = deps;
 
     function prepareCredentials(onLine: OnLine, label?: string): Promise<boolean> {
         return new Promise((resolve) => {
@@ -195,11 +266,13 @@ export function createAndroidProductionPublisher(deps: {
         };
         try {
             if (cancelled()) return {ok: false};
-            validateProfiles(workspace.repoRoot, runtimeVersion);
+            const credentials = validateProfiles(workspace.repoRoot, runtimeVersion);
+            await verifyManagedCredentials(workspace.repoRoot, sessionStore, credentials);
+            if (cancelled()) return {ok: false};
             const expected = synchronizeNative(workspace.repoRoot, version, runtimeVersion);
             onLine({stream: 'system', text: `Preparing Expo Production build ${version} (${expected.versionCode}), runtime ${runtimeVersion}.`, label});
             if (cancelled()) return {ok: false};
-            const credentialsReady = await prepareCredentials(onLine, label);
+            const credentialsReady = credentials.managedSigning || await prepareCredentials(onLine, label);
             if (cancelled() || !credentialsReady) return {ok: false};
 
             const stdout: string[] = [];

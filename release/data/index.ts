@@ -51,7 +51,7 @@ export function createDataLayer(): DataLayer {
     const ledger = createReleaseLedger({workspace});
     const urlOpener = createUrlOpener();
     const androidPublisher = createAndroidPublisher({workspace, cancellation});
-    const androidProductionPublisher = createAndroidProductionPublisher({workspace, cancellation, cli});
+    const androidProductionPublisher = createAndroidProductionPublisher({workspace, cancellation, cli, sessionStore});
 
     return {
         workspace,
