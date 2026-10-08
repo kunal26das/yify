@@ -15,6 +15,8 @@ import {
 
 const NUDGE_STATE_KEY = 'state';
 const DISCOVERY_DISMISSED_KEY = 'discovery_dismissed';
+const FIRST_HOME_VISIT_KEY = 'first_home_visit';
+const HOME_RETURN_DELAY_MS = 24 * 60 * 60 * 1000;
 
 export interface SupporterNudgeOptions {
     analytics: AnalyticsSink;
@@ -65,6 +67,22 @@ export class SupporterNudgeImpl implements SupporterNudge {
 
     recordAccepted(): void {
         this.write(commitNudgeAccepted(this.state));
+    }
+
+    recordHomeVisit(): boolean {
+        const now = Date.now();
+        if (!Number.isSafeInteger(now) || now <= 0) return false;
+        try {
+            const stored = this.options.store.getString(FIRST_HOME_VISIT_KEY);
+            const firstVisit = stored && /^[1-9]\d*$/.test(stored) ? Number(stored) : NaN;
+            if (!Number.isSafeInteger(firstVisit) || firstVisit > now) {
+                this.options.store.set(FIRST_HOME_VISIT_KEY, String(now));
+                return false;
+            }
+            return now - firstVisit >= HOME_RETURN_DELAY_MS;
+        } catch {
+            return false;
+        }
     }
 
     isDiscoveryDismissed(): boolean {

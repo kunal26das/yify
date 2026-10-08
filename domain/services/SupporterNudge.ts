@@ -9,6 +9,8 @@ export interface SupporterNudge {
 
     recordAccepted(): void;
 
+    recordHomeVisit(): boolean;
+
     isDiscoveryDismissed(): boolean;
 
     dismissDiscovery(): void;

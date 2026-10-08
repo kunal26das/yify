@@ -19,13 +19,22 @@ function nudgeFixture(values = new Map()) {
 async function fixture(t, options = {}) {
     const f = nudgeFixture(options.values);
     const state = {ready: true, available: true, adsRemoved: false, billingIssue: false, ...options.state};
+    const session = {ready: true, available: true, account: null, ...options.session};
+    const offerLoads = [], pendingLoads = [];
+    const repository = {getOffers: placement => {
+        offerLoads.push(placement);
+        return options.deferOffers ? new Promise(resolve => pendingLoads.push(resolve)) : Promise.resolve(options.offers ?? [
+            {id: 'monthly', recurring: true, billingPeriod: 'P1M', autoRenewing: true, priceLabel: '₹99', placement},
+        ]);
+    }};
     const requests = [], events = [], measurements = [];
     const activity = {focused: true, foreground: true};
     const rectangle = {x: 16, y: 900, width: 328, height: 200};
     const viewport = {x: 0, y: 0, width: 360, height: 800};
     const viewportRef = {current: {measureInWindow: callback => callback(...Object.values(viewport))}};
     const handle = React.createRef();
-    const props = {savedCount: options.savedCount ?? 3, topInset: 60, viewportRef, ref: handle};
+    const props = {savedCount: options.savedCount ?? 3, placement: options.placement,
+        returning: options.returning, topInset: 60, viewportRef, ref: handle};
     let closePaywall, paywallVisible = false, cancellations = 0, remounts = 0;
     const paywallListeners = new Set();
     const setPaywallVisible = value => {
@@ -35,8 +44,9 @@ async function fixture(t, options = {}) {
     const {SupporterDiscoveryCard} = loadTypeScript('presentation/purchases/supporter-discovery-card.tsx', {
         'react-native': {View: 'View', Pressable: 'Pressable', StyleSheet: {create: value => value},
             useWindowDimensions: () => ({width: 360, height: 800, fontScale: 1})},
-        '../di/DependenciesContext': {useSupporterNudge: () => f.nudge},
+        '../di/DependenciesContext': {useSupporterNudge: () => f.nudge, usePurchaseRepository: () => repository},
         '../hooks/use-purchases': {usePurchases: () => state},
+        '../hooks/use-auth': {useAuth: () => session},
         '../hooks/use-palette': {usePalette: () => ({colors: new Proxy({}, {get: () => '#123456'})})},
         '../hooks/use-preferences': {usePreferences: () => ({watchRegion: 'IN'})},
         './use-preview-active': {usePreviewActive: enabled => enabled && activity.focused && activity.foreground},
@@ -62,7 +72,7 @@ async function fixture(t, options = {}) {
         }} : null,
     }); });
     t.after(async () => { await act(async () => renderer.unmount()); });
-    return {...f, renderer, requests, events, rectangle, viewport, activity, state, measurements,
+    return {...f, renderer, requests, events, rectangle, viewport, activity, state, session, measurements, offerLoads, pendingLoads,
         paywall: () => ({visible: paywallVisible, cancellations}),
         tick: async milliseconds => act(async () => t.mock.timers.tick(milliseconds)),
         check: async () => act(async () => handle.current.checkVisibility()),
@@ -75,10 +85,11 @@ async function fixture(t, options = {}) {
 
 test('discovery waits for engagement and verified purchasability and excludes subscribers or billing issues', async t => {
     for (const options of [{savedCount: 2}, {state: {ready: false}}, {state: {available: false}},
-        {state: {adsRemoved: true}}, {state: {billingIssue: true}}]) {
+        {state: {adsRemoved: true}}, {state: {billingIssue: true}}, {session: {ready: false}}, {session: {available: false}}]) {
         const f = await fixture(t, options);
         assert.equal(f.renderer.toJSON(), null);
         assert.deepEqual(f.requests, []);
+        assert.deepEqual(f.offerLoads, []);
     }
 });
 
@@ -253,4 +264,76 @@ test('unreadable discovery preference suppresses promotion and failed writes do 
     await card.remount();
     assert.equal(card.renderer.toJSON(), null);
     assert.deepEqual(card.requests, []);
+});
+
+test('home invitation waits for a returning visitor and shows the loaded regional monthly price', async t => {
+    const firstVisit = await fixture(t, {placement: 'home_supporter', savedCount: 0});
+    assert.equal(firstVisit.renderer.toJSON(), null);
+    assert.deepEqual(firstVisit.offerLoads, []);
+    const home = await fixture(t, {placement: 'home_supporter', returning: true, savedCount: 0});
+    assert.deepEqual(home.offerLoads, ['home_supporter']);
+    const text = JSON.stringify(home.renderer.toJSON());
+    assert.match(text, /Enjoy Yify without ads/);
+    assert.match(text, /₹99 every month. Renews automatically until cancelled./);
+    assert.match(text, /YouTube and streaming-service ads are separate/);
+    assert.deepEqual(home.requests, []);
+    await act(async () => home.buttons()[0].props.onPress());
+    assert.deepEqual(home.requests, ['home_supporter']);
+    assert.deepEqual(home.events.map(event => [event.step, event.placement]), [['discovery_opened', 'home_supporter']]);
+});
+
+test('discovery hides when no priced monthly offer is available without inventing a fallback price', async t => {
+    for (const offers of [[], [{recurring: false, billingPeriod: null, priceLabel: '$1'}],
+        [{recurring: true, billingPeriod: 'P1Y', priceLabel: '$10'}],
+        [{recurring: true, billingPeriod: 'P1M', priceLabel: '  '}]]) {
+        const f = await fixture(t, {placement: 'home_supporter', returning: true, offers});
+        assert.equal(f.renderer.toJSON(), null);
+        assert.deepEqual(f.events, []);
+        assert.deepEqual(f.requests, []);
+    }
+});
+
+test('the card labels prepaid access correctly and follows SDK pricing rather than viewing country', async t => {
+    const f = await fixture(t, {offers: [{id: 'prepaid', recurring: true, billingPeriod: 'P1M',
+        autoRenewing: false, priceLabel: '€2,49'}]});
+    const text = JSON.stringify(f.renderer.toJSON());
+    assert.match(text, /€2,49 for 1 month. Prepaid access; does not renew automatically./);
+    assert.doesNotMatch(text, /₹99|Renews automatically/);
+});
+
+test('late offer responses from an earlier account cannot display its price or report exposure', async t => {
+    t.mock.timers.enable({apis: ['setTimeout', 'Date'], now: 1000});
+    const f = await fixture(t, {placement: 'home_supporter', returning: true, deferOffers: true});
+    f.rectangle.y = 200;
+    assert.equal(f.renderer.toJSON(), null);
+    assert.equal(f.pendingLoads.length, 1);
+    f.session.account = {uid: 'next-account'};
+    await f.update();
+    assert.equal(f.pendingLoads.length, 2);
+    await act(async () => f.pendingLoads[0]([{recurring: true, billingPeriod: 'P1M', priceLabel: '$9'}]));
+    await f.tick(2016);
+    assert.equal(f.renderer.toJSON(), null);
+    assert.deepEqual(f.events, []);
+    await act(async () => f.pendingLoads[1]([{recurring: true, billingPeriod: 'P1M', priceLabel: '€2'}]));
+    assert.match(JSON.stringify(f.renderer.toJSON()), /€2 every month/);
+    assert.doesNotMatch(JSON.stringify(f.renderer.toJSON()), /\$9/);
+    await f.tick(16);
+    await f.tick(1000);
+    await f.tick(16);
+    assert.deepEqual(f.events.map(event => [event.step, event.placement]), [['discovery_view', 'home_supporter']]);
+});
+
+test('a supporter or a dismissed invitation stays hidden when a pending offer finishes', async t => {
+    const f = await fixture(t, {placement: 'home_supporter', returning: true, deferOffers: true});
+    f.state.adsRemoved = true;
+    await f.update();
+    await act(async () => f.pendingLoads[0]([{recurring: true, billingPeriod: 'P1M', priceLabel: '$1'}]));
+    assert.equal(f.renderer.toJSON(), null);
+    assert.deepEqual(f.events, []);
+    const home = await fixture(t, {placement: 'home_supporter', returning: true});
+    await act(async () => home.buttons()[1].props.onPress());
+    const watchlist = await fixture(t, {values: home.values});
+    assert.equal(watchlist.renderer.toJSON(), null);
+    assert.deepEqual(watchlist.offerLoads, []);
+    assert.equal(home.nudge.isDiscoveryDismissed(), true);
 });
