@@ -66,9 +66,10 @@ export class WatchHistoryRepositoryImpl implements WatchHistoryRepository {
     }
 
     private write(next: HistoryState): void {
-        this.state = next;
-        this.snapshot = liveHistory(next);
+        const snapshot = liveHistory(next);
         this.store.set(KEY, encodeHistoryState(next));
+        this.state = next;
+        this.snapshot = snapshot;
         this.listeners.forEach((listener) => listener());
     }
 }
