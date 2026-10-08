@@ -224,13 +224,10 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
                 </View>
                 <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
                     {headingInContent ? heading : null}
-                    {!state.adsRemoved ? <ThemedText type="heading">No Yify ads + viewing insights</ThemedText> : null}
+                    {!state.adsRemoved ? <ThemedText type="heading">Remove Yify ads</ThemedText> : null}
                     <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{state.adsRemoved ? supporterStatus(state)
-                        : 'See monthly and all-time recaps, your most-watched genres and personal rating insights. Your journal stays free. YouTube ads are separate.'}</ThemedText>
-                    {!state.adsRemoved ? <>
-                        <SupporterInsightsPreview/>
-                        <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Your journal entries and editing stay free. Supporter access follows your Yify account across devices.</ThemedText>
-                    </> : null}
+                        : 'Browse Yify without ads placed by Yify. YouTube and other external-service ads are separate.'}</ThemedText>
+                    {!state.adsRemoved ? <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Also includes monthly and all-time viewing insights. Your journal entries and editing stay free. Supporter access follows your Yify account across devices.</ThemedText> : null}
                     {!state.adsRemoved && (state.expiresAt || state.billingIssue) ? <ThemedText style={styles.copy}>{supporterStatus(state)}</ThemedText> : null}
                     {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading supporter options"/> : null}
                     {!state.ready ? <ThemedText style={styles.copy}>{state.available
@@ -249,6 +246,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
                             onPress={signIn} disabled={busy || !session.ready || !session.available} primary/>
                     </> : null}
                     {message ? <ThemedText accessibilityLiveRegion="polite" style={[styles.copy, {color: colors.accent}]}>{message}</ThemedText> : null}
+                    {!state.adsRemoved ? <SupporterInsightsPreview/> : null}
                     {!state.adsRemoved && state.ready ? <PaywallButton label="Reload plans" onPress={() => { setReload((value) => value + 1); }} disabled={busy || loading}/> : null}
                     {managementURL ? <PaywallButton label="Manage billing or cancel" onPress={() => { void openLink(managementURL); }} disabled={busy}/> : null}
                     {session.account ? <PaywallButton label={state.restoring ? 'Checking purchases…' : Platform.OS === 'web' ? 'Check account purchases' : 'Restore purchases'}

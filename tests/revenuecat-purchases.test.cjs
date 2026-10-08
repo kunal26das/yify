@@ -421,7 +421,7 @@ test('targeted offerings preserve period, package, placement, and actual impress
     assert.equal(f.calls.find(([name]) => name === 'purchase')[2], afterAd.availablePackages[0]);
 });
 
-for (const placement of ['journal_insights', 'watchlist_supporter', 'supporter_page']) {
+for (const placement of ['journal_insights', 'watchlist_supporter', 'home_supporter', 'supporter_page']) {
 test(`${placement} uses the configured native supporter offering and keeps distinct checkout and impression attribution`, async t => {
     const settings = offering('configured-supporter');
     const f = fixture(t, {country: 'in', offerings: placement => placement === 'settings_supporter' ? settings : null});

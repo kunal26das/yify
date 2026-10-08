@@ -304,7 +304,7 @@ test('placement targeting exclusion remains empty and removes purchaseable offer
     assert.equal(f.calls.some(call => call.method === 'purchase'), false);
 });
 
-for (const placement of ['journal_insights', 'watchlist_supporter', 'supporter_page']) {
+for (const placement of ['journal_insights', 'watchlist_supporter', 'home_supporter', 'supporter_page']) {
 test(`${placement} uses the configured web supporter offering and keeps distinct checkout and impression attribution`, async () => {
     const monthly = pkg('$rc_monthly', 'Monthly supporter');
     monthly.webBillingProduct.productType = 'Subscription';

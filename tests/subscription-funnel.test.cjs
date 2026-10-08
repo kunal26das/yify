@@ -97,7 +97,7 @@ test('categorical dimensions reach Firebase as nonnumeric strings while offer co
     assert.equal(f.events.at(-1).params.offer_count, 2);
 });
 
-for (const [placement, source] of [['journal_insights', 'journal'], ['watchlist_supporter', 'watchlist'], ['supporter_page', 'supporter_page']]) {
+for (const [placement, source] of [['journal_insights', 'journal'], ['watchlist_supporter', 'watchlist'], ['home_supporter', 'home'], ['supporter_page', 'supporter_page']]) {
 test(`${placement} purchase attribution uses its bounded source through the existing funnel`, () => {
     const f = fixture();
     const offer = {placement, recurring: true, billingPeriod: 'P1M'};
