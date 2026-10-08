@@ -383,7 +383,7 @@ async function recoveryFixture(options = {}) {
   state.run.head_repository.id = REPOSITORY_ID;
   state.run.conclusion = 'failure';
   state.jobs[0].conclusion = 'failure';
-  state.mainJobs = names.map((name) => ({ name, status: 'completed', conclusion: 'success' }));
+  state.mainJobs = [...names, 'Verify dependency automation context'].map((name) => ({ name, status: 'completed', conclusion: 'success' }));
   state.mainRun = { ...structuredClone(state.run), id: 999, event: 'push', run_attempt: 1, head_sha: MAIN,
     head_branch: 'main', conclusion: 'success', pull_requests: [] };
   state.prs = [structuredClone(state.pr)];
@@ -413,6 +413,14 @@ test('current successful main CI recovers a signed release head with failed PR c
   assert.equal(result.results[0].failed_run_attempt, 2);
   assert.deepEqual(state.writes, [{ method: 'POST', path: `repos/${REPOSITORY}/issues/892/comments`, body: { body: state.body } }]);
   assert.ok(state.calls.every(({ method }) => method === 'GET'));
+});
+
+test('successful main CI dispatched after an automated merge can recover failed updates', async () => {
+  const state = await recoveryFixture();
+  state.mainRun.event = 'workflow_dispatch';
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  assert.equal((await state.recover()).results[0].requested, true);
+  assert.equal(state.writes.length, 1);
 });
 
 test('main recovery rebases a reviewed JavaScript root update with failed exact-head checks', async () => {
@@ -463,6 +471,7 @@ for (const [label, mutate] of [
   ['failed required main job', (s) => { s.mainJobs[0].conclusion = 'failure'; }],
   ['missing required main job', (s) => { s.mainJobs.pop(); }],
   ['duplicate required main job', (s) => { s.mainJobs.push(s.mainJobs[0]); }],
+  ['skipped dependency context', (s) => { s.mainJobs.at(-1).conclusion = 'skipped'; }],
 ]) test(`main recovery rejects ${label} before writing`, async () => {
   const state = await recoveryFixture(); mutate(state);
   await assert.rejects(() => state.recover());
@@ -585,11 +594,12 @@ test('recovery summary identifies blocked requests without claiming a merge', as
   assert.match(text, /#892: Dependabot has not acknowledged/);
 });
 
-test('the recovery job uses read-only built-in credentials and handles only successful main push CI', async () => {
+test('the recovery job uses read-only built-in credentials and handles successful main push or dispatched CI', async () => {
   const { load } = require('js-yaml');
   const workflow = load(await readFile(join(__dirname, '../.github/workflows/dependabot-maintenance.yml'), 'utf8'));
   const job = workflow.jobs['recover-main'];
-  assert.match(job.if, /github.event.workflow_run.event == 'push'/);
+  assert.match(job.if, /push/);
+  assert.match(job.if, /workflow_dispatch/);
   assert.match(job.if, /github.event.workflow_run.conclusion == 'success'/);
   assert.match(job.if, /github.event.workflow_run.head_branch == 'main'/);
   assert.deepEqual(job.permissions, { contents: 'read', 'pull-requests': 'read', actions: 'read' });

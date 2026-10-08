@@ -3,10 +3,10 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import { githubApi, inspect, maintenanceContext } from './dependabot-lockfile.mjs';
+import { verifyMainCI } from './main-ci.mjs';
 
 const SHA = /^[a-f0-9]{40}$/;
 const OWNER = 'kunal26das';
-const INTEGER = /^[1-9][0-9]*$/;
 const REQUIRED_CHECKS = ['Typecheck and tests', 'Web exports render and isolate catalog data', 'Typecheck and test release console'];
 
 function assert(condition, message) {
@@ -135,39 +135,13 @@ async function postRebase({ api, rebaseApi, env, trustedEnv, state, beforePost, 
   throw new Error(`Dependabot has not acknowledged rebase request ${requests[0].id} within the time limit. The request is pending; rerun maintenance to observe it without posting another comment.`);
 }
 
-async function mainRecoveryContext({ api, env }) {
+export async function mainRecoveryContext({ api, env }) {
   assert(env.GITHUB_REPOSITORY === 'kunal26das/yify' && env.GITHUB_REF === 'refs/heads/main' &&
     env.GITHUB_EVENT_NAME === 'workflow_run' && env.ALLOW_MERGED !== 'true',
   'Main recovery must run from trusted default-branch workflow_run maintenance.');
-  assert(INTEGER.test(env.SOURCE_RUN_ID || '') && INTEGER.test(env.SOURCE_RUN_ATTEMPT || ''),
-    'An exact main CI run and attempt are required.');
-  const root = `repos/${env.GITHUB_REPOSITORY}`;
-  const [latest, run, workflow, main, jobs] = await Promise.all([
-    api('GET', `${root}/actions/runs/${env.SOURCE_RUN_ID}`),
-    api('GET', `${root}/actions/runs/${env.SOURCE_RUN_ID}/attempts/${env.SOURCE_RUN_ATTEMPT}`),
-    api('GET', `${root}/actions/workflows/ci.yml`),
-    api('GET', `${root}/git/ref/heads/main`),
-    list(api, `${root}/actions/runs/${env.SOURCE_RUN_ID}/attempts/${env.SOURCE_RUN_ATTEMPT}/jobs`, 'jobs'),
-  ]);
-  for (const candidate of [latest, run]) {
-    assert(String(candidate.id) === env.SOURCE_RUN_ID && String(candidate.run_attempt) === env.SOURCE_RUN_ATTEMPT &&
-      Number.isSafeInteger(workflow.id) && workflow.id > 0 && candidate.workflow_id === workflow.id &&
-      workflow.path === '.github/workflows/ci.yml' && candidate.path === workflow.path &&
-      candidate.event === 'push' && candidate.head_branch === 'main' &&
-      candidate.status === 'completed' && candidate.conclusion === 'success' &&
-      candidate.repository?.full_name === env.GITHUB_REPOSITORY && candidate.head_repository?.full_name === env.GITHUB_REPOSITORY &&
-      Number.isSafeInteger(candidate.repository?.id) && candidate.repository.id > 0 &&
-      candidate.head_repository?.id === candidate.repository.id &&
-      SHA.test(candidate.head_sha || '') && candidate.head_sha === env.GITHUB_SHA &&
-      main.ref === 'refs/heads/main' && main.object?.type === 'commit' && main.object.sha === candidate.head_sha,
-    'Source run is not the latest successful CI attempt on the current main commit.');
-  }
-  for (const name of REQUIRED_CHECKS) {
-    const matches = jobs.filter((job) => job.name === name);
-    assert(matches.length === 1 && matches[0].status === 'completed' && matches[0].conclusion === 'success',
-      `Main CI has not passed its required check: ${name}.`);
-  }
-  return { main: main.object.sha, repositoryId: run.repository.id, workflowId: workflow.id };
+  const context = await verifyMainCI({ api, env });
+  assert(context.ready, 'Source run is not the latest successful CI attempt on the current main commit.');
+  return { main: context.head, repositoryId: context.repositoryId, workflowId: context.workflowId };
 }
 
 async function failedPullRequestCI({ api, env, state, context }) {

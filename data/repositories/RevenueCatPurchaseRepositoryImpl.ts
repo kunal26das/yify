@@ -78,6 +78,7 @@ function diagnosticCode(error: unknown): string {
             case Purchases.PURCHASES_ERROR_CODE.OFFLINE_CONNECTION_ERROR: return 'offline';
             case Purchases.PURCHASES_ERROR_CODE.STORE_PROBLEM_ERROR: return 'store_problem';
             case Purchases.PURCHASES_ERROR_CODE.CONFIGURATION_ERROR: return 'configuration';
+            case Purchases.PURCHASES_ERROR_CODE.PURCHASE_INVALID_ERROR: return 'purchase_invalid';
             case Purchases.PURCHASES_ERROR_CODE.PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR: return 'product_unavailable';
             case Purchases.PURCHASES_ERROR_CODE.PURCHASE_NOT_ALLOWED_ERROR: return 'purchase_not_allowed';
             case Purchases.PURCHASES_ERROR_CODE.INVALID_CREDENTIALS_ERROR: return 'invalid_credentials';
@@ -145,6 +146,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private linkedRevision = -1;
     private analyticsRevision = 0;
     private retryTimer: ReturnType<typeof setTimeout> | null = null;
+    private retryPhase: string | null = null;
 
     constructor(analytics: AnalyticsSink, cache: KeyValueStore, private readonly diagnostics: Diagnostics = NOOP_DIAGNOSTICS,
         private readonly viewingCountry: () => string | null = () => null,
@@ -524,7 +526,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 span.finish('unavailable', details);
                 return [];
             }
-            if (code === 'configuration') this.clearOffers(placement);
+            if (code === 'configuration' || code === 'purchase_invalid') {
+                this.clearOffers(placement);
+                this.clearRetry('offerings');
+            }
             if (code === 'network' || code === 'offline') span.finish('unavailable', details);
             else span.fail(error, details);
             throw error;
@@ -544,7 +549,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
             return true;
         } catch (error) {
             if (revision === this.revision) {
-                if (diagnosticCode(error) === 'configuration') this.clearRetry();
+                const code = diagnosticCode(error);
+                if (code === 'configuration' || code === 'purchase_invalid') this.clearRetry();
                 else this.scheduleRetry('offerings');
             }
             return false;
@@ -553,19 +559,22 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
 
     private scheduleRetry(phase: string): void {
         this.analytics.trackEvent('revenuecat_sync_failed', {phase});
+        this.retryPhase = phase;
         if (this.retryTimer != null) return;
         const delay = INIT_BACKOFF_MS[Math.min(this.syncFailures, INIT_BACKOFF_MS.length - 1)];
         this.syncFailures += 1;
         this.retryTimer = setTimeout(() => {
             this.retryTimer = null;
+            this.retryPhase = null;
             void this.requestSync();
         }, delay);
     }
 
-    private clearRetry(): void {
-        if (this.retryTimer == null) return;
+    private clearRetry(phase?: string): void {
+        if (this.retryTimer == null || (phase != null && phase !== this.retryPhase)) return;
         clearTimeout(this.retryTimer);
         this.retryTimer = null;
+        this.retryPhase = null;
     }
 
     private async clearFirebaseAnalyticsIfDeclined(): Promise<void> {
