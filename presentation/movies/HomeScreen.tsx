@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState, type ComponentRef} from 'react';
 import {Animated, FlatList, Platform, RefreshControl, ScrollView, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Reanimated from 'react-native-reanimated';
@@ -28,6 +28,9 @@ import type {HomeViewModel, ShelfState} from './useHomeViewModel';
 import type {ShowsViewModel} from './useShowsViewModel';
 import {ShowStrip} from './components/ShowStrip';
 import {useHomeScrollVisibility} from './useHomeScrollVisibility';
+import {SupporterDiscoveryCard, type SupporterDiscoveryHandle} from '../purchases/supporter-discovery-card';
+import {useSupporterNudge} from '../di/DependenciesContext';
+import {usePreviewActive} from '../hooks/use-preview-active';
 
 type HomeRow =
     | {kind: 'shelf'; key: string; shelf: ShelfState}
@@ -78,6 +81,15 @@ export function HomeScreen({
     const watchlist = useWatchlist();
     const goTo = useGoTo();
     const topBarHeight = useTopBarHeight();
+    const nudge = useSupporterNudge();
+    const viewportRef = useRef<ComponentRef<typeof View>>(null);
+    const discoveryRef = useRef<SupporterDiscoveryHandle>(null);
+    const [returning, setReturning] = useState(false);
+    const homeActive = usePreviewActive(!shelvesLoading && heroMovies.length > 0);
+
+    useEffect(() => {
+        if (homeActive) setReturning(nudge.recordHomeVisit());
+    }, [homeActive, nudge]);
 
     const [scrollY] = useState(() => new Animated.Value(0));
     const heroHeight = (isPhone ? 580 : isTablet ? 620 : Math.round(Math.max(460, Math.min(height * 0.68, 560)))) - Spacing.xxl;
@@ -87,6 +99,7 @@ export function HomeScreen({
         () =>
             Animated.event([{nativeEvent: {contentOffset: {y: scrollY}}}], {
                 useNativeDriver: Platform.OS !== 'web',
+                listener: () => discoveryRef.current?.checkVisibility(),
             }),
         [scrollY]
     );
@@ -218,6 +231,8 @@ export function HomeScreen({
         <TopTenProvider movies={topTenMovies}>
             <HoverCardHost>
                 <Screen>
+                    <View ref={viewportRef} collapsable={false} style={{flex: 1}}
+                        onLayout={() => discoveryRef.current?.checkVisibility()}>
                     <AnimatedFlatList
                         data={rows}
                         keyExtractor={(item) => item.key}
@@ -243,6 +258,9 @@ export function HomeScreen({
                                         />
                                     </View>
                                 ) : null}
+                                <SupporterDiscoveryCard ref={discoveryRef} placement="home_supporter" returning={returning}
+                                    viewportRef={viewportRef} topInset={topBarHeight}
+                                    style={{marginHorizontal: gutter, marginBottom: Spacing.xl}}/>
                                 <WebAdvertisement gutter={gutter}/>
                             </>
                         }
@@ -265,6 +283,7 @@ export function HomeScreen({
                         updateCellsBatchingPeriod={40}
                         windowSize={Platform.OS === 'web' ? 21 : 9}
                     />
+                    </View>
                 </Screen>
             </HoverCardHost>
         </TopTenProvider>

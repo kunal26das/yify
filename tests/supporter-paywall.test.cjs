@@ -195,18 +195,19 @@ test('Journal paywall keeps its placement for loading, visibility and purchase w
     assert.equal(f.calls.offers.every(placement => placement === 'journal_insights'), true);
 });
 
-test('benefits and a labelled fictional example precede localized pricing and the single anonymous sign-in action', async t => {
+test('ad removal leads into localized pricing and sign-in before the secondary fictional insights preview', async t => {
     const f = await fixture(t, {offers: [plan('monthly-in', 'supporter', {priceLabel: '₹99.00'})], session: {account: null}});
     await f.open();
     const content = f.text();
-    assert.match(content, /No Yify ads \+ viewing insights/);
-    assert.match(content, /monthly and all-time recaps/);
+    assert.match(content, /Remove Yify ads/);
+    assert.match(content, /Also includes monthly and all-time viewing insights/);
     assert.match(content, /Fictional journal · one month/);
     assert.match(content, /Your insights use the movies and ratings you add to your journal/);
     assert.match(content, /Your journal entries and editing stay free/);
-    assert.match(content, /YouTube ads are separate/);
+    assert.match(content, /YouTube and other external-service ads are separate/);
     assert.match(content, /₹99\.00 every month\. Renews automatically until cancelled/);
-    assert.ok(content.indexOf('Example insights') < content.indexOf('₹99.00 every month'));
+    assert.ok(content.indexOf('Remove Yify ads') < content.indexOf('₹99.00 every month'));
+    assert.ok(content.indexOf('Sign in with Google') < content.indexOf('Example insights'));
     assert.ok(content.indexOf('₹99.00 every month') < content.indexOf('Sign in with Google'));
     assert.match(content, /Signing in does not start a subscription/);
     assert.equal(f.pressable('Continue · ₹99.00'), undefined);
@@ -217,7 +218,7 @@ test('benefits and a labelled fictional example precede localized pricing and th
     assert.deepEqual(f.calls.funnel, []);
     assert.equal(f.renderer.root.findAllByProps({accessibilityLabel: 'Average rating: 4.2 / 5'}).length, 1);
     await f.update({adsRemoved: true});
-    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|No Yify ads \+ viewing insights/);
+    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|Remove Yify ads/);
     assert.equal(f.pressable('Continue · ₹99.00'), undefined);
 });
 

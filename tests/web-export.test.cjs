@@ -388,6 +388,15 @@ test('guide copies must stay identical and remain readable without app scripts',
     assert.match(result.output, /guide content and resolved links must stay identical/);
 });
 
+test('public supporter page sources stay identical after resolving their relative links', t => {
+    const f = fixture(t);
+    for (const file of ['support.html', 'support/index.html']) {
+        f.write(file, fs.readFileSync(path.join(root, 'public', file), 'utf8'));
+    }
+    const result = f.check();
+    assert.equal(result.status, 0, result.output);
+});
+
 test('supporter landing pages require a working upgrade link and no scripts or embeds', t => {
     for (const replacement of [
         '<main><h1>Supporter</h1><p>Benefits</p></main>',
