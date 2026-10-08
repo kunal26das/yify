@@ -122,9 +122,10 @@ export class WatchlistRepositoryImpl implements WatchlistRepository {
     }
 
     private write(next: Movie[]): void {
-        this.snapshot = next;
-        this.ids = new Set(next.map((movie) => movie.id));
+        const ids = new Set(next.map((movie) => movie.id));
         this.store.set(KEY, JSON.stringify(next));
+        this.snapshot = next;
+        this.ids = ids;
         this.listeners.forEach((listener) => listener());
     }
 }
