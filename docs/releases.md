@@ -14,11 +14,28 @@ yarn release
 Sign in through the console. The [EAS wrapper](../scripts/eas.sh) reuses its saved Expo token,
 or an `EXPO_TOKEN` supplied through the environment.
 
-Android signing uses `~/.config/yify/signing.env` (override with `YIFY_SIGNING_ENV`).
-[setup-eas-credentials.sh](../scripts/setup-eas-credentials.sh) validates the upload key and
-generates the gitignored `credentials.json`; the console runs it before production builds.
-Configure the Play service-account path through `YIFY_RELEASE_PLAY_SERVICE_ACCOUNT`, or use
-the default path in [eas.json](../eas.json). Keep credentials outside source control.
+Android production builds use the existing upload keystore stored in Expo. Play submissions use
+the service account assigned to the Android application in Expo. Configure these once with
+`yarn eas credentials --platform android`, selecting the existing Play upload key as the default
+build credential and the existing service account for submission. Do not generate a replacement
+upload key for an already published app. Cloud release runners need an authorized `EXPO_TOKEN`;
+they do not need local copies of these signing and submission files.
+
+The console checks credential assignment through an authenticated, metadata-only Expo request
+before changing native release fields or starting a build. It requires the default keystore for
+the native Android application ID and the assigned Play submission service account. This confirms
+their presence, not Google Play permissions or whether the uploaded key matches Play's registered
+upload certificate; verify those during the one-time setup.
+
+Explicit local credentials remain supported. Set `build.production.android.credentialsSource`
+to `local` in [eas.json](../eas.json) to use `~/.config/yify/signing.env` (override with
+`YIFY_SIGNING_ENV`). [setup-eas-credentials.sh](../scripts/setup-eas-credentials.sh) validates
+that upload key and generates the gitignored `credentials.json`; the console runs it only for
+local signing. To submit with a local Play key, explicitly set `serviceAccountKeyPath` in the
+submit profile, for example `${YIFY_RELEASE_PLAY_SERVICE_ACCOUNT}`. The console validates that
+file before starting a build. Omitting this property uses the key stored in Expo; the environment
+variable alone does not override the stored key. Local signing and local submission can be chosen
+independently. Keep local credentials outside source control.
 
 ## Android store releases
 
@@ -49,8 +66,11 @@ yarn --cwd release tsx scripts/recordRelease.ts android Production <VERSION> <RU
 | `yarn submit:android --id <EAS_BUILD_ID>` | Google Play **internal** track, **draft** status |
 | `yarn submit:android:play --id <EAS_BUILD_ID>` | Google Play **production** track, **completed** rollout |
 
-For manual production builds, prepare signing credentials and synchronize native version/runtime
-fields first; the build command alone does not perform the console's preparation or ledger update.
+For manual production builds, verify the existing default signing and submission credentials in
+Expo and synchronize native version/runtime fields first. For explicit local signing, prepare
+`credentials.json` first. The build command alone does not perform the console's credential
+preflight, native preparation or ledger update; missing remote signing can cause EAS to generate
+a new key, and missing submission credentials can fail after the build has already started.
 Always submit a specific verified build ID. To upload a local AAB to internal/draft instead, use
 `yarn submit:android --path <AAB_PATH>`.
 

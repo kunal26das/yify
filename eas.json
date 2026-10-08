@@ -51,7 +51,7 @@
       },
       "android": {
         "buildType": "app-bundle",
-        "credentialsSource": "local"
+        "credentialsSource": "remote"
       },
       "node": "24.19.0"
     }
@@ -59,7 +59,6 @@
   "submit": {
     "production": {
       "android": {
-        "serviceAccountKeyPath": "${YIFY_RELEASE_PLAY_SERVICE_ACCOUNT:-$HOME/.config/play-publisher/yify-service-account.json}",
         "track": "internal",
         "releaseStatus": "draft"
       }
