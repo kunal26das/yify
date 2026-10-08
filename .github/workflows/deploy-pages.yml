@@ -1,27 +1,67 @@
 name: Deploy web to GitHub Pages
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
+  verify:
+    name: Verify deployment source
+    if: >-
+      github.repository == 'kunal26das/yify' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event) &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      ready: ${{ github.event_name == 'workflow_dispatch' || steps.ci.outputs.ready == 'true' }}
+      head: ${{ steps.ci.outputs.head || github.sha }}
+    steps:
+      - name: Checkout trusted deployment verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify exact successful main CI attempt
+        id: ci
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: node scripts/main-ci.mjs validate
+
   build:
+    needs: verify
+    if: needs.verify.outputs.ready == 'true'
     runs-on: ubuntu-latest
     outputs:
       sentry_release: ${{ steps.release.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.verify.outputs.head }}
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -68,23 +108,38 @@ jobs:
           path: dist
 
   deploy:
-    needs: build
+    needs: [verify, build]
+    concurrency:
+      group: pages-publish
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
-
       - name: Checkout deployment scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.verify.outputs.head }}
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+
+      - name: Recheck current main before production promotion
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          CHECK_CURRENT_MAIN: 'true'
+        run: node scripts/main-ci.mjs current
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
       - name: Record successful deployment in Sentry
         run: node scripts/sentry-release.mjs --github-pages "$DEPLOYMENT_URL" .expo/sentry-pages.published.json

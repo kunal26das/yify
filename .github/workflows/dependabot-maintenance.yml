@@ -34,6 +34,10 @@ jobs:
          github.event.workflow_run.actor.login == 'github-actions[bot]')))
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
+      pr: ${{ steps.prepare.outputs.pr }}
+      head: ${{ steps.followup.outputs.head || steps.prepare.outputs.head }}
     permissions:
       contents: write
       pull-requests: write
@@ -207,11 +211,40 @@ jobs:
           echo "Merge is still blocked; branch protection was not bypassed."
           exit 1
 
+  validate-merged-main:
+    name: Start main CI after automatic merge
+    needs: maintain
+    if: needs.maintain.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: write
+    steps:
+      - name: Checkout trusted default-branch automation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify merged update and dispatch main CI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.maintain.outputs.pr }}
+          PR_HEAD_SHA: ${{ needs.maintain.outputs.head }}
+        run: node scripts/main-ci.mjs dispatch
+
   recover-main:
     name: Refresh eligible failed updates after main CI
     if: >-
       github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main' &&
-      github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' &&
+      github.event_name == 'workflow_run' &&
+      contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event) &&
       github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
