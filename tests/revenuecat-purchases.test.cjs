@@ -88,7 +88,7 @@ function fixture(t, options = {}) {
         },
         PURCHASES_ERROR_CODE: {
             PURCHASE_CANCELLED_ERROR: 'cancelled', PRODUCT_ALREADY_PURCHASED_ERROR: 'already', PAYMENT_PENDING_ERROR: 'pending',
-            PURCHASE_NOT_ALLOWED_ERROR: '3', NETWORK_ERROR: '10', OFFLINE_CONNECTION_ERROR: '35',
+            PURCHASE_NOT_ALLOWED_ERROR: '3', PURCHASE_INVALID_ERROR: '4', NETWORK_ERROR: '10', OFFLINE_CONNECTION_ERROR: '35',
             CONFIGURATION_ERROR: '23', STORE_PROBLEM_ERROR: '2', UNKNOWN_ERROR: '0', TEST_STORE_SIMULATED_PURCHASE_ERROR: '42',
         },
     };
@@ -689,52 +689,119 @@ test('temporary customer network failures retain verified access and recover thr
     assert.equal(operations.filter(entry => entry.operation === 'purchases.sync').at(-1).outcome, 'ok');
 });
 
-test('unavailable store configuration clears stale offers without repeatedly retrying a permanent failure', async t => {
+for (const [code, diagnosticCode] of [['23', 'configuration'], ['4', 'purchase_invalid']]) {
+    test(`${diagnosticCode} clears stale offers without repeatedly retrying a permanent failure`, async t => {
+        const {diagnostics, operations} = diagnosticRecorder();
+        let unavailable = false;
+        const failure = Object.assign(new Error('Permanent store failure'), {code});
+        const f = fixture(t, {diagnostics, infos: [['account-a', customer(true)]], offerings: () => {
+            if (unavailable) throw failure;
+            return offering();
+        }});
+        await f.ready('account-a');
+        const oldId = f.repository.getState().offers[0].id;
+        unavailable = true;
+        await f.repository.refresh();
+        assert.deepEqual(f.repository.getState().offers, []);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        assert.equal(await f.repository.purchase(oldId), false);
+        assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+        assert.deepEqual(operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
+            [['purchases.offerings', failure]]);
+        assert.deepEqual(operations.find(entry => entry.error).finishAttributes,
+            {stage: 'offering_fetch', error_code: diagnosticCode, purchases_error_code: Number(code)});
+        const attempts = f.calls.filter(([name]) => name === 'offers').length;
+        t.mock.timers.tick(300000);
+        await flush();
+        assert.equal(f.calls.filter(([name]) => name === 'offers').length, attempts);
+        unavailable = false;
+        await f.repository.refresh();
+        assert.equal(f.repository.getState().offers.length, 1);
+    });
+
+    test(`initial ${diagnosticCode} failure remains observable and recovers on foreground refresh`, async t => {
+        const {diagnostics, operations} = diagnosticRecorder();
+        let unavailable = true;
+        const f = fixture(t, {diagnostics, offerings: () => {
+            if (unavailable) throw {code};
+            return offering();
+        }});
+        await f.ready();
+        assert.equal(f.repository.getState().ready, true);
+        assert.deepEqual(f.repository.getState().offers, []);
+        t.mock.timers.tick(300000);
+        await flush();
+        assert.equal(f.calls.filter(([name]) => name === 'offers').length, 1);
+        assert.equal(operations.filter(entry => entry.error).length, 1);
+        unavailable = false;
+        f.foreground[0]();
+        await flush();
+        assert.equal(f.repository.getState().offers.length, 1);
+    });
+}
+
+test('an invalid offering request cancels an existing transient retry and recovers on manual plan reload', async t => {
     const {diagnostics, operations} = diagnosticRecorder();
-    let unavailable = false;
-    const failure = Object.assign(new Error('No products in this storefront'), {code: '23'});
+    let code = '10';
     const f = fixture(t, {diagnostics, infos: [['account-a', customer(true)]], offerings: () => {
-        if (unavailable) throw failure;
+        if (code) throw Object.assign(new Error('Store failure'), {code});
         return offering();
     }});
     await f.ready('account-a');
-    const oldId = f.repository.getState().offers[0].id;
-    unavailable = true;
-    await f.repository.refresh();
-    assert.deepEqual(f.repository.getState().offers, []);
-    assert.equal(f.repository.getState().adsRemoved, true);
-    assert.equal(await f.repository.purchase(oldId), false);
-    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
-    assert.deepEqual(operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
-        [['purchases.offerings', failure]]);
+    code = '4';
+    assert.deepEqual(await f.repository.getOffers('settings_supporter'), []);
     const attempts = f.calls.filter(([name]) => name === 'offers').length;
+    assert.equal(attempts, 2);
     t.mock.timers.tick(300000);
     await flush();
     assert.equal(f.calls.filter(([name]) => name === 'offers').length, attempts);
-    unavailable = false;
-    await f.repository.refresh();
-    assert.equal(f.repository.getState().offers.length, 1);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    assert.deepEqual(operations.filter(entry => entry.error).map(entry => entry.finishAttributes),
+        [{stage: 'offering_fetch', error_code: 'purchase_invalid', purchases_error_code: 4}]);
+    code = null;
+    assert.equal((await f.repository.getOffers('settings_supporter')).length, 1);
+    assert.equal(f.repository.getState().adsRemoved, true);
 });
 
-test('initial store configuration failure remains observable and recovers on foreground refresh', async t => {
-    const {diagnostics, operations} = diagnosticRecorder();
-    let unavailable = true;
-    const f = fixture(t, {diagnostics, offerings: () => {
-        if (unavailable) throw {code: '23'};
-        return offering();
-    }});
-    await f.ready();
-    assert.equal(f.repository.getState().ready, true);
-    assert.deepEqual(f.repository.getState().offers, []);
-    t.mock.timers.tick(300000);
-    await flush();
-    assert.equal(f.calls.filter(([name]) => name === 'offers').length, 1);
-    assert.equal(operations.filter(entry => entry.error).length, 1);
-    unavailable = false;
-    f.foreground[0]();
-    await flush();
-    assert.equal(f.repository.getState().offers.length, 1);
-});
+for (const previousOfferingsFailure of [false, true]) {
+    test(`manual plan failure preserves customer recovery with prior offerings retry ${previousOfferingsFailure}`, async t => {
+        let customerUnavailable = false;
+        let offeringCode = null;
+        let managementURL = null;
+        const f = fixture(t, {getCustomerInfo: () => {
+            if (customerUnavailable) throw Object.assign(new Error('No connection'), {code: '10'});
+            return customer(true, {managementURL});
+        }, offerings: () => {
+            if (offeringCode) throw Object.assign(new Error('Store failure'), {code: offeringCode});
+            return offering();
+        }});
+        await f.ready();
+        if (previousOfferingsFailure) {
+            offeringCode = '10';
+            await f.repository.refresh();
+        }
+        customerUnavailable = true;
+        await f.repository.refresh();
+        offeringCode = '4';
+        assert.deepEqual(await f.repository.getOffers('settings_supporter'), []);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        const customerCalls = f.calls.filter(([name]) => name === 'customer').length;
+        customerUnavailable = false;
+        managementURL = 'https://play.google.com/store/account/subscriptions';
+        t.mock.timers.tick(4999);
+        await flush();
+        assert.equal(f.calls.filter(([name]) => name === 'customer').length, customerCalls);
+        t.mock.timers.tick(1);
+        await flush();
+        assert.equal(f.calls.filter(([name]) => name === 'customer').length, customerCalls + 1);
+        assert.equal(f.repository.getState().managementURL, managementURL);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        assert.deepEqual(f.repository.getState().offers, []);
+        t.mock.timers.tick(300000);
+        await flush();
+        assert.equal(f.calls.filter(([name]) => name === 'customer').length, customerCalls + 1);
+    });
+}
 
 test('native checkout emits one attributed non-revenue funnel per coalesced attempt and no renewal on refresh', async t => {
     const pending = deferred();
