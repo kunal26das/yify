@@ -1,0 +1,200 @@
+name: Recover approved Android verification evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/recover-yify-aab-evidence.yml
+
+permissions:
+  actions: read
+
+jobs:
+  recover:
+    if: github.repository == 'kunal26das/yify' && github.event.pull_request.head.repo.full_name == 'kunal26das/yify' && github.event.pull_request.head.ref == 'recover-yify-aab-evidence-97' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify exact successful source run and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          root = 'https://api.github.com/repos/kunal26das/yify'
+          run_id = 37959839532
+          artifact_id = 11631138154
+          head = '100ac559af150e401ea8c8c0608bf5f69711d52a'
+          digest = 'sha256:e9319716b93fa241aeb356d7ff2b14ed029dee0faa6abecefffa6660eae4e8eb'
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, request, fp, code, message, headers, newurl):
+                  raise ValueError('Redirect rejected')
+
+          opener = urllib.request.build_opener(NoRedirect)
+
+          def get_json(path):
+              url = root + path
+              request = urllib.request.Request(url, headers={
+                  'Accept': 'application/vnd.github+json',
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'X-GitHub-Api-Version': '2022-11-28',
+              })
+              with opener.open(request, timeout=20) as response:
+                  if response.status != 200 or response.url != url:
+                      raise ValueError('Unexpected API response')
+                  data = response.read(65537)
+                  if len(data) > 65536:
+                      raise ValueError('API response too large')
+              return json.loads(data)
+
+          run = get_json(f'/actions/runs/{run_id}')
+          if not (run.get('id') == run_id and run.get('run_number') == 4 and
+                  run.get('run_attempt') == 1 and run.get('status') == 'completed' and
+                  run.get('conclusion') == 'success' and run.get('head_sha') == head and
+                  run.get('head_branch') == 'main' and run.get('event') == 'workflow_dispatch' and
+                  run.get('path') == '.github/workflows/verify-production-aab.yml' and
+                  run.get('repository', {}).get('full_name') == 'kunal26das/yify'):
+              raise ValueError('Source run provenance mismatch')
+
+          artifact = get_json(f'/actions/artifacts/{artifact_id}')
+          source = artifact.get('workflow_run') or {}
+          if not (artifact.get('id') == artifact_id and
+                  artifact.get('name') == 'yify-production-aab-verification' and
+                  artifact.get('expired') is False and artifact.get('digest') == digest and
+                  0 < artifact.get('size_in_bytes', 0) <= 1048576 and
+                  source.get('id') == run_id and source.get('head_sha') == head):
+              raise ValueError('Source artifact provenance mismatch')
+          print('Confirmed successful run 37959839532 attempt 1 on 100ac559 and artifact 11631138154')
+          PY
+
+      - name: Download only the verified artifact archive
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          artifact-ids: 11631138154
+          run-id: 37959839532
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/approved-aab-evidence
+          skip-decompress: true
+          digest-mismatch: error
+
+      - name: Validate archive receipt and PNG for review
+        env:
+          EVIDENCE_DIR: ${{ runner.temp }}/approved-aab-evidence
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          import re
+          import struct
+          import zipfile
+          import zlib
+          from pathlib import Path
+
+          directory = Path(os.environ['EVIDENCE_DIR'])
+          archives = list(directory.iterdir())
+          if len(archives) != 1 or not archives[0].is_file() or archives[0].is_symlink():
+              raise ValueError('Expected exactly one downloaded artifact archive')
+          archive = archives[0]
+          if not 0 < archive.stat().st_size <= 1048576:
+              raise ValueError('Artifact archive size invalid')
+          data = archive.read_bytes()
+          if hashlib.sha256(data).hexdigest() != 'e9319716b93fa241aeb356d7ff2b14ed029dee0faa6abecefffa6660eae4e8eb':
+              raise ValueError('Artifact archive digest mismatch')
+
+          names = {'yify-verification-receipt.json', 'yify-verification-screen.png'}
+          with zipfile.ZipFile(archive) as bundle:
+              entries = bundle.infolist()
+              if len(entries) != 2 or {entry.filename for entry in entries} != names:
+                  raise ValueError('Unexpected archive entries')
+              for entry in entries:
+                  kind = (entry.external_attr >> 16) & 0o170000
+                  if entry.flag_bits & 1 or kind not in (0, 0o100000) or entry.is_dir():
+                      raise ValueError('Unsafe archive entry')
+                  limit = 8192 if entry.filename.endswith('.json') else 614400
+                  if entry.file_size > limit:
+                      raise ValueError('Archive entry too large')
+              contents = {entry.filename: bundle.read(entry) for entry in entries}
+
+          raw_receipt = contents['yify-verification-receipt.json']
+          screen = contents['yify-verification-screen.png']
+          if len(raw_receipt) > 8192 or not 5000 <= len(screen) <= 614400:
+              raise ValueError('Evidence file size invalid')
+          receipt = json.loads(raw_receipt)
+          expected_keys = {'buildId', 'packageName', 'abi', 'appPid', 'stableProcessSeconds',
+                           'foregroundActivity', 'ipv4AndIpv6Blocked', 'appUiNodes', 'screenshotSha256'}
+          if set(receipt) != expected_keys or not (
+              receipt['buildId'] == 'ee1be7b3-c44c-4956-a1ac-a676243db901' and
+              receipt['packageName'] == 'io.github.kunal26das.yify' and
+              receipt['abi'] == 'x86_64' and
+              isinstance(receipt['appPid'], str) and re.fullmatch(r'[1-9][0-9]{0,8}', receipt['appPid']) and
+              type(receipt['stableProcessSeconds']) is int and receipt['stableProcessSeconds'] == 20 and
+              receipt['foregroundActivity'] == 'MainActivity' and
+              receipt['ipv4AndIpv6Blocked'] is True and
+              type(receipt['appUiNodes']) is int and receipt['appUiNodes'] > 0 and
+              isinstance(receipt['screenshotSha256'], str) and
+              re.fullmatch(r'[0-9a-f]{64}', receipt['screenshotSha256']) and
+              receipt['screenshotSha256'] == hashlib.sha256(screen).hexdigest()):
+              raise ValueError('Receipt identity or screenshot hash mismatch')
+
+          if not screen.startswith(b'\x89PNG\r\n\x1a\n'):
+              raise ValueError('Screenshot PNG signature invalid')
+          offset = 8
+          chunks = []
+          width = height = None
+          while offset < len(screen):
+              if len(screen) - offset < 12:
+                  raise ValueError('Truncated PNG chunk')
+              length = struct.unpack_from('>I', screen, offset)[0]
+              end = offset + 12 + length
+              if end > len(screen):
+                  raise ValueError('PNG chunk too large')
+              kind = screen[offset + 4:offset + 8]
+              payload = screen[offset + 8:offset + 8 + length]
+              crc = struct.unpack_from('>I', screen, offset + 8 + length)[0]
+              if zlib.crc32(kind + payload) & 0xffffffff != crc:
+                  raise ValueError('PNG CRC mismatch')
+              if not chunks:
+                  if kind != b'IHDR' or length != 13:
+                      raise ValueError('PNG header missing')
+                  width, height = struct.unpack_from('>II', payload)
+                  if not 200 <= width <= 4096 or not 200 <= height <= 4096:
+                      raise ValueError('PNG dimensions invalid')
+              chunks.append(kind)
+              offset = end
+              if kind == b'IEND':
+                  break
+          if offset != len(screen) or chunks[-1] != b'IEND' or b'IDAT' not in chunks:
+              raise ValueError('PNG structure invalid')
+
+          rendered = base64.b64encode(screen).decode()
+          lines = [
+              '## Approved Android verifier evidence',
+              '',
+              'Source run: 37959839532, attempt 1, commit 100ac559af150e401ea8c8c0608bf5f69711d52a',
+              'Artifact: 11631138154, sha256:e9319716b93fa241aeb356d7ff2b14ed029dee0faa6abecefffa6660eae4e8eb',
+              f'Receipt: {len(raw_receipt)} bytes, sha256:{hashlib.sha256(raw_receipt).hexdigest()}',
+              f'Screenshot: {width}×{height}, {len(screen)} bytes, sha256:{receipt["screenshotSha256"]}',
+              '',
+              'Receipt:',
+              '```json',
+              json.dumps(receipt, sort_keys=True, separators=(',', ':')),
+              '```',
+              '',
+              'Screenshot PNG in numbered base64 chunks:',
+              '```text',
+          ]
+          lines.extend(f'{index // 4096 + 1:04d}:{rendered[index:index + 4096]}' for index in range(0, len(rendered), 4096))
+          lines.extend(['```', ''])
+          summary = '\n'.join(lines)
+          if len(summary.encode()) > 921600:
+              raise ValueError('Evidence summary too large')
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text(summary)
+          print('Validated original receipt, bounded archive, and PNG; sanitized evidence is in job summary')
+          PY
