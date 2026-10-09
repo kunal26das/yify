@@ -37,7 +37,7 @@ test('toolchain is derived from exact source pins and rejects drift or absent in
 
 test('SDK packages include both CMake requirements and no unrequested emulator download', async () => {
     const {sdkPackages} = await preflight;
-    assert.deepEqual(sdkPackages(), ['platform-tools', 'platforms;android-37', 'build-tools;37.0.0',
+    assert.deepEqual(sdkPackages(), ['platform-tools', 'platforms;android-37.0', 'build-tools;37.0.0',
         'ndk;27.1.12297006', 'cmake;3.22.1', 'cmake;3.30.5']);
     assert.deepEqual(sdkPackages(true).slice(-2), ['emulator', 'system-images;android-35;google_apis;x86_64']);
 });
@@ -58,11 +58,35 @@ test('matching SDK directory alone never proves a package is usable', async t =>
 test('platform API metadata, platform jar, and exact build tools executables are mandatory', async t => {
     const {sdkPackageStatus} = await preflight;
     const sdk = temporary(t);
-    put(sdk, 'platforms/android-37/source.properties', 'Pkg.Revision=2\nAndroidVersion.ApiLevel=36\n');
-    put(sdk, 'platforms/android-37/android.jar');
-    assert.equal(sdkPackageStatus(sdk, 'platforms;android-37').valid, false);
-    put(sdk, 'platforms/android-37/source.properties', 'Pkg.Revision=2\nAndroidVersion.ApiLevel=37\n');
-    assert.equal(sdkPackageStatus(sdk, 'platforms;android-37').valid, true);
+    const metadata = 'Pkg.Revision=2\nAndroidVersion.ApiLevel=37.0\nPlatform.CodeName=\n' +
+        'AndroidVersion.CodeName=\nAndroidVersion.PreviewSdkInt=0\nAndroidVersion.BetaVersion=\nAndroidVersion.IsBaseSdk=true\n';
+    const identifier = 'platforms;android-37.0';
+    put(sdk, 'platforms/android-37.0/source.properties', metadata);
+    assert.equal(sdkPackageStatus(sdk, identifier).valid, false);
+    put(sdk, 'platforms/android-37.0/android.jar');
+    const status = sdkPackageStatus(sdk, identifier);
+    assert.equal(status.valid, true);
+    assert.equal(status.api, '37.0');
+    assert.equal(status.metadata['AndroidVersion.PreviewSdkInt'], '0');
+    for (const changed of [
+        metadata.replace('ApiLevel=37.0', 'ApiLevel=37'),
+        metadata.replace('ApiLevel=37.0', 'ApiLevel=37.1'),
+        metadata.replace('Pkg.Revision=2', 'Pkg.Revision=3'),
+        metadata.replace('AndroidVersion.CodeName=\n', 'AndroidVersion.CodeName=CinnamonBun\n'),
+        metadata.replace('Platform.CodeName=\n', 'Platform.CodeName=CinnamonBun\n'),
+        metadata.replace('PreviewSdkInt=0', 'PreviewSdkInt=1'),
+        metadata.replace('AndroidVersion.BetaVersion=\n', 'AndroidVersion.BetaVersion=beta3\n'),
+        metadata.replace('IsBaseSdk=true', 'IsBaseSdk=false'),
+        metadata.replace('AndroidVersion.PreviewSdkInt=0\n', ''),
+    ]) {
+        put(sdk, 'platforms/android-37.0/source.properties', changed);
+        assert.equal(sdkPackageStatus(sdk, identifier).valid, false);
+    }
+    for (const alternative of ['37', '37.1', '37.2-beta3']) {
+        put(sdk, `platforms/android-${alternative}/source.properties`, metadata);
+        put(sdk, `platforms/android-${alternative}/android.jar`);
+        assert.equal(sdkPackageStatus(sdk, `platforms;android-${alternative}`).valid, false);
+    }
     put(sdk, 'build-tools/37.0.0/source.properties', 'Pkg.Revision=37.0.0\n');
     for (const binary of ['aapt2', 'apksigner', 'zipalign']) put(sdk, `build-tools/37.0.0/${binary}`, '', true);
     assert.equal(sdkPackageStatus(sdk, 'build-tools;37.0.0').valid, true);
@@ -105,6 +129,11 @@ test('ignored dotenv, SDK and signing overrides block an otherwise clean checkou
 test('setup fails on capacity and license preflight before installation and never accepts licenses', () => {
     const setup = readFileSync(join(root, 'scripts/android-qa/setup-cloud.sh'), 'utf8');
     assert.ok(setup.indexOf('bootstrap >') < setup.indexOf('--install'));
+    assert.ok(setup.indexOf('check-sdk-inventory.sh') < setup.indexOf('--install'));
+    const inventory = readFileSync(join(root, 'scripts/android-qa/check-sdk-inventory.sh'), 'utf8');
+    assert.match(inventory, /--list --channel=0/);
+    assert.match(inventory, /--list --channel=3/);
+    assert.doesNotMatch(inventory, /--install|--licenses|\byes\s*\||\bsudo\b/);
     assert.match(setup, /--install "\$\{PACKAGES\[@\]\}" <\/dev\/null/);
     assert.doesNotMatch(setup, /--licenses|\byes\s*\||\bsudo\b/);
     assert.match(setup, /--frozen-lockfile --non-interactive/);
@@ -171,4 +200,26 @@ test('fresh setup workflow can validate an unmerged same-repository PR at its ex
     assert.match(workflow, /contents: read/);
     assert.match(workflow, /persist-credentials: false/);
     assert.doesNotMatch(workflow, /pull_request_target|secrets\.|contents: write|actions: write|sudo/);
+});
+
+test('SDK inventory distinguishes installed packages from stable availability before any install', async () => {
+    const {sdkInventory, sdkInventoryComparison, sdkPackages} = await preflight;
+    const installed = 'Installed packages:\n  Path | Version | Description | Location\n' +
+        '  platforms;android-37.0 | 2 | Android SDK Platform 37.0 | platforms/android-37.0\n';
+    const available = 'Available Packages:\n  Path | Version | Description\n' +
+        sdkPackages().map(identifier => `  ${identifier} | 2 | package`).join('\n') + '\n';
+    const all = installed + available + '  platforms;android-37.2-beta3 | 3 | preview\n';
+    const parsed = sdkInventory(all);
+    assert.deepEqual(parsed.installed, ['platforms;android-37.0']);
+    assert.ok(parsed.available.includes('platforms;android-37.0'));
+    const passing = sdkInventoryComparison(installed + available, all);
+    assert.equal(passing.passed, true);
+    assert.equal(passing.requested.find(entry => entry.identifier === 'platforms;android-37.0').installed, true);
+    const installedOnly = sdkInventoryComparison(installed, all);
+    assert.equal(installedOnly.passed, false);
+    assert.equal(installedOnly.requested.find(entry => entry.identifier === 'platforms;android-37.0').stableAvailable, false);
+    assert.equal(installedOnly.requested.find(entry => entry.identifier === 'platforms;android-37.0').anyChannelAvailable, true);
+    assert.equal(sdkInventoryComparison('Warning: Failed to download any source lists!', all).passed, false);
+    assert.equal(sdkInventoryComparison(available.replace('platforms;android-37.0', 'platforms;android-37.2-beta3'), all).passed, false);
+    assert.deepEqual(sdkInventory('Available Updates:\n  platforms;android-37.0 | 1 | 2'), {installed: [], available: []});
 });
