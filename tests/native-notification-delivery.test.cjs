@@ -78,9 +78,6 @@ function fixture({platform = 'android', permission = 'granted', restricted = fal
         '../datasources/storage/PersistentCache': {
             PersistentCache: class {constructor(namespace) {this.namespace = namespace;}},
         },
-        '../repositories/MovieRepositoryImpl': {MovieRepositoryImpl: class {}},
-        '../datasources/YtsApiDataSource': {YtsApiDataSource: class {}},
-        './RemoteAppConfig': {RemoteAppConfig: class {}},
         './MovieNotificationCoordinator': {
             MovieNotificationCoordinator: class {constructor(value) {options = value; return coordinator;}},
         },
@@ -100,6 +97,19 @@ function fixture({platform = 'android', permission = 'granted', restricted = fal
         },
     };
 }
+
+test('native background catalog fetch uses only the canonical metadata endpoint', async t => {
+    const requests = [];
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+        requests.push({url, options});
+        return Response.json({movies: [], pageNumber: 1, movieCount: 0, hasMore: false});
+    });
+    const f = fixture();
+    assert.deepEqual(await f.options().fetchMovies('1080p'), []);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, 'https://yify.expo.app/api/catalog/movies?page=1&limit=50&quality=1080p&v=2');
+    assert.equal(requests[0].options.credentials, 'omit');
+});
 
 async function settle() {
     await new Promise(resolve => setImmediate(resolve));
