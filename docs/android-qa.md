@@ -15,6 +15,8 @@ The external state directory must not be inside the checkout. It keeps the isola
 
 The workflow first checks the exact source, clean worktree, absence of ignored dotenv/signing/SDK overrides, compiler module, SDK command-line metadata, existing license receipt, and at least 20 GiB free. It stops before heavy installation if any prerequisite fails. It does not free unrelated files or change KVM permissions. Choose a runner with sufficient free disk rather than repeat an identical capacity failure.
 
+Before installation, `check-sdk-inventory.sh` saves the official manager version and full stable/all-channel inventories. Its comparison distinguishes already-installed packages from packages available on each channel and requires all requested identifiers to be available on the stable channel. Reading all channels is diagnostic only; installation uses the default stable channel. An absent or renamed package stops setup with a complete comparison instead of substituting a different API, NDK or CMake version.
+
 SDK installation reads from closed stdin. No `yes` pipe or SDK license-acceptance command is run. If a package requires terms not already accepted on the runner, installation must stop for the owner to resolve that setup. The scripts do not download a new SDK or JDK into an unprepared machine; the manual workflow provides JDK 17 and relies on the hosted runner's official SDK and previously accepted licenses.
 
 ## Version checks and reuse
@@ -23,14 +25,14 @@ SDK installation reads from closed stdin. No `yes` pipe or SDK license-acceptanc
 
 - Gradle 9.4.1, including its committed SHA-256
 - Expo 58.0.5, React Native 0.88.0-rc.3, and AGP 9.2.1
-- compileSdk 37, targetSdk 36, minSdk 24, and build-tools 37.0.0
+- compileSdk 37 using stable SDK package `platforms;android-37.0` revision 2; targetSdk 36, minSdk 24, and build-tools 37.0.0
 - NDK 27.1.12297006; the dependency-report-only NDK override is not used for compilation
 - React Native CMake 3.30.5, with CMake 3.22.1 also installed for modules using the Android Gradle Plugin default
 - All four release ABIs: armeabi-v7a, arm64-v8a, x86, and x86_64
 
-The required versions are checked against the installed React Native version catalog and native build source, not just copied into documentation. Each SDK package needs matching source.properties, API metadata where applicable, and required executables/files. A directory alone is insufficient.
+The required versions are checked against the installed React Native version catalog and native build source, not just copied into documentation. Each SDK package needs matching source.properties, API metadata where applicable, and required executables/files. The platform records `AndroidVersion.ApiLevel=37.0` as one dotted value; it has no separate minor-version property. The validator requires this exact base API, revision 2, blank platform/Android codenames and beta version, preview SDK integer 0, and a base-SDK marker. Preview, nonzero-minor and incorrectly integer-named packages are rejected. Parsed package metadata is retained in the prerequisite receipt. A directory alone is insufficient.
 
-The hosted image, JDK 17 patch release, platform-tools, command-line tools, and Android platform patch revision are not globally frozen binary images. Their actual revisions are captured in the receipt and must match for reuse. This is a version-checked setup, not a claim of bit-for-bit reproducible Android output.
+The hosted image, JDK 17 patch release, platform-tools and command-line tools are not globally frozen binary images. Their actual revisions are captured in the receipt and must match for reuse. This is a version-checked setup, not a claim of bit-for-bit reproducible Android output.
 
 `setup-cloud.sh` can be run independently with the same three arguments. It validates once and saves `prerequisites.json`. Subsequent runs recheck the current environment and source inputs; installation is skipped only when the receipt fingerprint still matches. Changes to the lockfile, package manifests, setup scripts, wrapper, compatibility scripts and their patch manifests/content, JDK, or SDK metadata invalidate reuse. A receipt never substitutes for tests, a native compile, or fresh artifact verification on a new app commit. SDK downloads remain disabled inside Gradle.
 
