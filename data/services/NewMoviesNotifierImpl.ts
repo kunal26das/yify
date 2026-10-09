@@ -9,9 +9,8 @@ import {PreferencesRepositoryImpl} from '../repositories/PreferencesRepositoryIm
 import {WatchlistRepositoryImpl} from '../repositories/WatchlistRepositoryImpl';
 import {LibraryRepositoryImpl} from '../repositories/LibraryRepositoryImpl';
 import {PersistentCache} from '../datasources/storage/PersistentCache';
-import {MovieRepositoryImpl} from '../repositories/MovieRepositoryImpl';
-import {YtsApiDataSource} from '../datasources/YtsApiDataSource';
-import {RemoteAppConfig} from './RemoteAppConfig';
+import {WebMovieRepositoryImpl} from '../repositories/WebMovieRepositoryImpl';
+import {CANONICAL_CATALOG_BASE_URL, WebCatalogClient} from '../datasources/WebCatalogClient';
 import {NOOP_DIAGNOSTICS} from './NoopDiagnostics';
 import {MovieNotificationCoordinator} from './MovieNotificationCoordinator';
 
@@ -19,7 +18,6 @@ let diagnostics: Diagnostics = NOOP_DIAGNOSTICS;
 let network: NetworkMonitor | undefined;
 export const NEW_MOVIES_TASK = 'yify-new-movies-check';
 const CHANNEL = 'movie-recommendations';
-const appConfig = new RemoteAppConfig();
 const settingsStore = new PersistentCache('settings');
 
 function currentPreferences(): Preferences {
@@ -65,8 +63,7 @@ function owned(request: Notifications.NotificationRequest): boolean {
 }
 
 async function fetchMovies(quality: Quality) {
-    await appConfig.ready();
-    const repository = new MovieRepositoryImpl(new YtsApiDataSource(() => appConfig.getApiBaseUrl(), diagnostics, {network}));
+    const repository = new WebMovieRepositoryImpl(new WebCatalogClient(diagnostics, undefined, CANONICAL_CATALOG_BASE_URL, network));
     return (await repository.listMovies({page: 1, limit: 50, quality})).movies;
 }
 
