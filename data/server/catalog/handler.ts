@@ -23,6 +23,7 @@ interface CatalogHandlerOptions {
     timeoutMs?: number;
     admission?: CatalogAdmission;
     subscriber?: {authorize: (request: Request, signal: AbortSignal) => Promise<{uid: string}>};
+    nativeMetadataOnly?: boolean;
 }
 
 class CatalogTimeout extends Error {}
@@ -46,6 +47,7 @@ export function createCatalogHandler(
     repositories: CatalogRepositories | ((signal: AbortSignal, onResponse?: (body: unknown) => void) => CatalogRepositories),
     options: CatalogHandlerOptions = {},
 ): (request: Request, operation: string) => Promise<Response> {
+    if (options.nativeMetadataOnly && !options.subscriber) throw new Error('Native subscriber catalog requires authorization');
     const timeoutMs = options.timeoutMs ?? 25_000;
     const admission = options.admission ?? createCatalogAdmission();
     const privateResponse = Boolean(options.subscriber);
@@ -69,6 +71,9 @@ export function createCatalogHandler(
             const url = new URL(request.url);
             if (url.search.length > 2048) throw new InvalidCatalogRequest();
             parsed = parseCatalogRequest(operation, url.searchParams);
+            if (options.nativeMetadataOnly && parsed.operation !== 'access' && parsed.operation !== 'anime') {
+                throw new InvalidCatalogRequest();
+            }
         } catch {
             return respond({error: 'Invalid catalog request'}, 400);
         }
@@ -111,15 +116,16 @@ export function createCatalogHandler(
             assertCatalogActive(controller.signal);
             if (options.subscriber) await options.subscriber.authorize(request, controller.signal);
             assertCatalogActive(controller.signal);
-            if (parsed.operation === 'access') return {metadata: {allowed: true}, raw: {responses: []}};
+            if (parsed.operation === 'access') return options.nativeMetadataOnly
+                ? {metadata: {allowed: true}} : {metadata: {allowed: true}, raw: {responses: []}};
             const responses: unknown[] = [];
-            const onResponse = privateResponse ? (body: unknown) => { responses.push(body); } : undefined;
+            const onResponse = privateResponse && !options.nativeMetadataOnly ? (body: unknown) => { responses.push(body); } : undefined;
             const source = typeof repositories === 'function' ? repositories(controller.signal, onResponse) : repositories;
             const metadata = await execute(parsed, source, {
                 includeTorrentMetadata: parsed.version === 2,
             });
             assertCatalogActive(controller.signal);
-            return privateResponse ? {metadata, raw: {responses}} : metadata;
+            return options.nativeMetadataOnly ? {metadata} : privateResponse ? {metadata, raw: {responses}} : metadata;
         });
         void work.then(permit.release, permit.release);
         try {
