@@ -1,6 +1,6 @@
 # Android delivery handoff
 
-Updated 2026-10-09 18:34 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-09 19:33 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
 ## Current source and priority
 
@@ -15,15 +15,16 @@ PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03ef
 - Android `1.8.14` storage OTA was published and its Production/runtime `1.8.14` manifest was verified available. Group `8dd4a8cf-2751-42c4-ab15-7dc5e5dd7b7b`; source `c6cf23e21dd6dd6bad1fd2b693c0efbdce314c3f`. This JavaScript-only update does not contain the newer native crash fix.
 - Web main `737a6986a485dc8542f0c04552c0b2d680f03a71` passed CI and both EAS Hosting and GitHub Pages deployment workflows. Deployment receipts are in the verification record; they are not proof of every rendered journey.
 - Android candidate `1.8.15` / code `97` / runtime `1.8.15`, EAS build `ee1be7b3-c44c-4956-a1ac-a676243db901`, finished building and passed exact-AAB checks plus a 20-second isolated API 35 x86_64 welcome-screen smoke. It was not submitted to Play and is superseded for release by required fixes.
+- Android `1.8.16` / code `98` / runtime `1.8.16`, EAS build `9baaf5ff-3774-4394-9165-4e98c574254b`, succeeded from exact main `737a6986a485dc8542f0c04552c0b2d680f03a71`. Its signed AAB and static four-ABI checks passed; Sentry source-map, Proguard and 16 new native-symbol records were verified server-side. It has not been installed, device-tested or submitted to Play; artifact ingestion does not prove runtime symbolication.
 - Last observed Play production was `1.8.14` / code `96`. No new store availability or crash recovery is established by these build/test receipts.
 
 ## Unresolved release gates and next action
 
 1. Preserve the verified main CI, web deployments and unauthenticated native-endpoint rejection at exact main `737a6986a485dc8542f0c04552c0b2d680f03a71`. Authenticated subscriber behavior remains part of the safe test-service journey gate.
 2. Establish and validate a documented fresh-cloud setup covering pinned Node/Yarn dependencies, JDK, Android SDK/build tools, project NDK, emulator and test prerequisites together. Record failure diagnoses and changes between attempts.
-3. Resolve the first fresh-hosted setup failure: run `37971814065` at source `98963f342f40f9db076281c3334595f9f987defd` could not resolve SDK package `platforms;android-37` and stopped before dependency installation or compilation. Inventory-only run `37972743662` confirmed stable package `platforms;android-37.0` revision 2 and availability of every other requested SDK component. The correction selects this exact package while keeping compileSdk 37, records actual dotted-API/nonpreview metadata, and retains an all-prerequisite inventory gate. Full native compilation and four-ABI packaging remain pending.
+3. Resolve the first fresh-hosted setup failure: run `37971814065` at source `98963f342f40f9db076281c3334595f9f987defd` could not resolve SDK package `platforms;android-37` and stopped before dependency installation or compilation. Inventory-only run `37972743662` confirmed stable package `platforms;android-37.0` revision 2 and availability of every other requested SDK component. The correction selects this exact package while keeping compileSdk 37, records actual dotted-API/nonpreview metadata, and retains an all-prerequisite inventory gate. Corrected run `37976935906` completed the prerequisite setup, frozen install, typecheck, aggregate tests, four network-denied mocked journey groups, real HSDP JVM regression and native graph verification. Its full-build graph then failed closed on a Sentry upload task re-enabled by the pinned plugin. A separately verified real-Gradle guard regression supports the narrow correction; hosted native compilation and QA four-ABI packaging remain pending.
 4. Preserve the independently repeated real-bytecode failure-path regression and extend safe test-service validation through consent, connected startup, browsing, sign-in, purchase and restore. Production defaults make an unspecified test environment unsafe; fail closed. Record untested devices and paths explicitly.
-5. Build the final exact source using existing Expo-managed signing; inspect the established submission route from PR #954. `play-production` targets production/completed; the `production` submission profile targets internal/draft. A successful submission is not Play review approval or user availability.
+5. Preserve the verified production-signed build `9baaf5ff-3774-4394-9165-4e98c574254b` and complete its outstanding device/journey release gates before submission. Inspect the established submission route from PR #954. `play-production` targets production/completed; the `production` submission profile targets internal/draft. A successful submission is not Play review approval or user availability.
 6. Verify the release receipt, Play availability and version-specific crash health separately. Only then start one measured growth experiment; unavailable metrics remain unknown. Keep business metrics and customer information out of this public record.
 
 ## Rollback and compatibility
