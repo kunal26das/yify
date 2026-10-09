@@ -16,7 +16,7 @@ const metadata = url => {
 const env = {GITHUB_REPOSITORY: 'kunal26das/yify', GITHUB_EVENT_NAME: 'schedule', GITHUB_REF: 'refs/heads/main', GITHUB_SHA: sha};
 const event = {repository: {full_name: 'kunal26das/yify', default_branch: 'main'}};
 const reviewedInventory = {
-    'package.json': {dependencies: {expo: '58.0.3', 'react-native-worklets': '0.13.0'}},
+    'package.json': {dependencies: {expo: '58.0.5', 'react-native-worklets': '0.13.0'}},
     'crashreporting/package.json': {},
     'tooling/package.json': {devDependencies: {'@babel/core': '8.0.6', babel7: 'npm:@babel/core@7.29.7'}},
     'release/package.json': {dependencies: {'eas-cli': '24.9.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
@@ -283,7 +283,7 @@ test('exact compatibility reviews remain visible, close the tracking issue and m
     assert.match(text, /eas-cli\/minimatch/);
     assert.match(text, /devDependencies\.babel7 → @babel\/core/);
     assert.match(text, /compatible-reviewed: EAS CLI 24\.9\.0/);
-    assert.match(text, /compatible-reviewed: Expo 58\.0\.3/);
+    assert.match(text, /compatible-reviewed: Expo 58\.0\.5/);
     assert.match(text, /docs\/dependency-pin-review\.md/);
     let issue = {number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'open', body: `${MARKER}\nPrevious findings`};
     const writes = [];
@@ -395,7 +395,7 @@ test('malformed policies fail closed with a visible error and apply no partial r
         policy => { policy.reviews[1].reason = ''; return policy; },
         policy => { policy.reviews[1].evidence = 'https://example.com'; return policy; },
         policy => { policy.reviews[1].consumers = []; return policy; },
-        policy => { policy.reviews[1].consumers[0].version = '^58.0.3'; return policy; },
+        policy => { policy.reviews[1].consumers[0].version = '^58.0.5'; return policy; },
         policy => { policy.reviews[1].consumers.push(policy.reviews[1].consumers[0]); return policy; },
         policy => { policy.reviews[1].consumers[0].optional = true; return policy; },
     ];

@@ -229,3 +229,36 @@ test('every guarded package has an exact installation pin including transitive E
     assert.equal(pins[entry.package], entry.version, `${entry.package} must stay at its reviewed version after a clean resolution`);
   }
 });
+
+test('Expo Core PCH consumers share the guarded owner and ccache ordering', async () => {
+  const common = await reviewedSource('expo-modules-core', 'android/cmake/common.cmake');
+  assert.match(common, /include\(\$\{CMAKE_SOURCE_DIR\}\/cmake\/pch-ccache\.cmake\)/);
+  assert.match(common, /function\(use_expo_pch target_name\)/);
+  assert.match(common, /pch_ccache_owner\(expo-modules-pch\)/);
+  assert.match(common, /pch_ccache_consumer\(\$\{target_name\} expo-modules-pch\)/);
+  assert.ok(common.indexOf('pch_ccache_owner(expo-modules-pch)') < common.indexOf('function(use_expo_pch target_name)'));
+  for (const file of ['main.cmake', 'jsi.cmake', 'worklets.cmake', 'tests.cmake']) {
+    const source = await reviewedSource('expo-modules-core', `android/cmake/${file}`);
+    assert.match(source, /use_expo_pch\(expo-modules-(?:core|jsi|worklets|core-tests)\)/);
+  }
+  const build = await reviewedSource('expo-modules-core', 'android/build.gradle');
+  const plugin = await reviewedSource('expo-modules-core', 'expo-module-gradle-plugin/build.gradle.kts');
+  assert.match(build, /expoModulesV2Version = "0\.2\.4"/);
+  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.4/);
+});
+
+test('Expo iOS scene passes initial properties to React Native factory', async () => {
+  const scene = await reviewedSource('expo', 'ios/Expo/ExpoAppSceneDelegate.swift');
+  assert.match(scene, /open var initialProperties: \[AnyHashable: Any\]\?/);
+  assert.match(scene, /factory\.startReactNative\([\s\S]*initialProperties: initialProperties,/);
+});
+
+test('React Native, Metro tooling and JS polyfills share the Expo SDK runtime', async () => {
+  const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
+  const bundled = JSON.parse(await reviewedSource('expo', 'bundledNativeModules.json'));
+  const reactNative = pkg.dependencies['react-native'];
+  assert.equal(reactNative, bundled['react-native']);
+  assert.equal(pkg.devDependencies['@react-native/metro-config'], reactNative);
+  assert.equal(pkg.devDependencies['@react-native/js-polyfills'], reactNative);
+  assert.equal(pkg.resolutions['@react-native/js-polyfills'], reactNative);
+});
