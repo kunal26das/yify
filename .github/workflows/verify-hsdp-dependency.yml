@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   dependency:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -56,13 +56,24 @@ jobs:
           export PATH="$JAVA_HOME/bin:$PATH"
           test -x "$JAVA_HOME/bin/java"
           test -d "${ANDROID_HOME:?Preinstalled Android SDK is required}/platforms"
+          test -d "$ANDROID_HOME/ndk"
+          printf 'Preinstalled NDK versions:\n'
+          find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+          test -d "$ANDROID_HOME/ndk/27.3.13750724"
+          grep -Eq '^Pkg.Revision[[:space:]]*=[[:space:]]*27\.3\.13750724[[:space:]]*$' \
+            "$ANDROID_HOME/ndk/27.3.13750724/source.properties"
+          echo 'Using preinstalled NDK 27.3.13750724 for dependency reporting only; no native build is run'
           ./gradlew --no-daemon -Dhsdp.verify.androidRoot="$PWD" \
+            -Dhsdp.verify.ndkVersion=27.3.13750724 \
             -Pandroid.builder.sdkDownload=false \
             -I ../scripts/verify-hsdp.gradle :app:verifyHsdpRuntime \
             | tee "$RUNNER_TEMP/hsdp-runtime.txt"
           grep -Eq '^Verified Android minSdk [0-9]+, strict HSDP 2\.2\.0 constraint, and resolved HSDP 2\.2\.0$' \
             "$RUNNER_TEMP/hsdp-runtime.txt"
-          ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
+          ./gradlew --no-daemon -Dhsdp.verify.androidRoot="$PWD" \
+            -Dhsdp.verify.ndkVersion=27.3.13750724 \
+            -Pandroid.builder.sdkDownload=false \
+            -I ../scripts/verify-hsdp.gradle \
             :app:dependencyInsight --configuration releaseRuntimeClasspath \
             --dependency com.google.android.play:hsdp > "$RUNNER_TEMP/hsdp-insight.txt"
           cat "$RUNNER_TEMP/hsdp-insight.txt"
