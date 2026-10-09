@@ -16,7 +16,7 @@ export function verifyPlatform(metadata) {
 }
 export function verifyImage(metadata, api) {
     if (metadata['AndroidVersion.ApiLevel'] !== String(api) || metadata['SystemImage.Abi'] !== 'x86_64' ||
-        metadata['SystemImage.TagId'] !== 'google_apis' || !metadata['Pkg.Revision']) throw new Error('Wrong test image API, ABI or flavor');
+        metadata['SystemImage.TagId'] !== 'default' || !metadata['Pkg.Revision']) throw new Error('Wrong test image API, ABI or flavor');
 }
 const [sdk, api, output] = process.argv.slice(2);
 if (output) {

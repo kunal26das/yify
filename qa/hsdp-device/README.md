@@ -1,6 +1,6 @@
 # HSDP Android framework regression
 
-This is a standalone Android application, not Yify. It isolates the original malformed-intent crash on real Android framework callbacks without React Native, Firebase, ads, billing, telemetry, OTA, accounts or network permissions. The tested device matrix is API 30 and API 35. API 35 is an additional comparison, not the latest Android release; Android 17/API 37 device coverage remains unrun.
+This is a standalone Android application, not Yify. It isolates the original malformed-intent crash on real Android framework callbacks without React Native, Firebase, ads, billing, telemetry, OTA, accounts or network permissions. The intended hosted device matrix is API 30 and API 35; completed receipts are required before either is called tested. API 35 is an additional comparison, not the latest Android release; Android 17/API 37 device coverage remains unrun.
 
 ## Exact boundaries
 
@@ -10,7 +10,7 @@ This is a standalone Android application, not Yify. It isolates the original mal
 - Both use the same driver source, compileSdk 37, targetSdk 36 and minSdk 24. The compile platform is the actual stable SDK package `platforms;android-37.0`, revision 2. No alias directory or lower SDK is substituted.
 - Gradle 9.4.1 uses the repository's checksum-pinned wrapper; AGP 9.2.1, JDK 17, build-tools 37.0.0 and existing command-line tools 12.0 are required. No Expo, Node package installation, NDK, CMake, EAS or signing account is needed.
 - Debug signing is only for the new disposable packages. Release tasks are disabled. Neither APK is published or submitted.
-- The build checks the resolved dependency graph for forbidden service SDKs. The final signed APK must contain the actual HSDP Activity class, both driver classes, zero requested permissions and zero content providers. The original HSDP Activity must remain non-exported.
+- The build checks the resolved dependency graph for forbidden service SDKs. The final signed APK must contain the actual HSDP Activity class, the driver, callback, Application and identity-gate classes, zero requested permissions, no shared UID and no services, receivers, aliases or content providers. The original HSDP Activity must remain non-exported.
 
 ## Cases and evidence
 
@@ -25,20 +25,24 @@ Missing launch, missing window token, a configuration request without a delivere
 
 ## Permission and environment prerequisites
 
-The workflow is `.github/workflows/hsdp-framework-qa.yml`. Review its exact source commit before publication or execution. A same-repository pull request affecting this workflow, `qa/hsdp-device/**`, or `tests/hsdp-device.test.cjs` runs its immutable head SHA on API 30 and API 35 independently. Fork pull requests and push events cannot run it. Manual dispatch remains restricted to the default branch and takes one immutable `source_sha`. Both routes use a credential-free checkout and identical KVM, SDK, APK and device-confinement gates.
+The workflow is `.github/workflows/hsdp-framework-qa.yml`. Review its exact source commit before publication or execution. A same-repository pull request affecting this workflow, `qa/hsdp-device/**`, or `tests/hsdp-device.test.cjs` runs its immutable head SHA on API 30 and API 35 independently. Fork pull requests and push events cannot run it. Manual dispatch remains restricted to the default branch and takes one immutable `source_sha`. Both routes use a credential-free checkout and identical KVM, SDK, APK and app-process isolation gates. A draft PR can run these checks before merge; an unresolved merge conflict, a skipped commit, missing approvals or unavailable runner prerequisites can still block a run. Publication that updates the same-repository PR may immediately start this workflow, so publishing the final workflow also needs execution authorization.
 
 The runner must already have readable and writable `/dev/kvm`. The script checks actual ownership/access and the emulator's acceleration probe; it does not run sudo, chmod, chown, usermod, or modify host firewall/security settings. Missing KVM access is a blocker, not permission to repeat the earlier temporary permission grant.
 
 The runner must have the official SDK, command-line tools 12.0 and existing Android SDK license receipts. Required packages must appear in its stable SDK inventory. `sdkmanager --install` reads from closed stdin; no SDK terms are accepted. The required image identifiers are:
 
-- `system-images;android-30;google_apis;x86_64`
-- `system-images;android-35;google_apis;x86_64`
+- `system-images;android-30;default;x86_64`
+- `system-images;android-35;default;x86_64`
 
 Platform, image, emulator and platform-tool metadata are captured. The image/emulator patch revisions are recorded, not claimed to be globally frozen. A clean source checkout and at least 16 GiB available disk are required. The isolated home/Gradle/AVD state must be a new directory outside the checkout. The runner never reads local production signing files or inherits service credentials into the build.
 
-After the new AVD boots, root adbd must be available. Before either test package is installed or launched, the script confirms the exact disposable AVD identity/API, disables its radios and installs first-rule IPv4 and IPv6 OUTPUT drops inside that emulator only. Independent rule reads and failing IPv4/IPv6 loopback canaries with increasing kernel drop counters verify the boundary without sending test traffic to a public destination. The installed APK hash and absence of INTERNET permission are checked again. Rules are rechecked after every case. The emulator is terminated on exit; no user's device or host permission is altered.
+Boot readiness requires three consecutive responsive package/activity/window probes, with the same system_server PID before, after and across the probes, separated by three-second intervals. The existing nine-minute boot budget bounds all probes; sys.boot_completed alone is insufficient. Continuous boot logcat, per-probe readiness evidence and a bounded failure-logcat snapshot preserve framework failures without changing watchdogs or system settings.
 
-The emulator OS boots before its guest firewall is applied; this workflow does not claim boot-time whole-OS network confinement. The standalone driver is installed only after confinement and has no network permission or production endpoints in either case. If boot-time OS-wide isolation is required too, do not launch this workflow until an independently isolated runner/AVD route is approved.
+After the new AOSP AVD boots, the script verifies its exact disposable identity, API, x86_64 ABI and absence of Google Play Store, Google Play services and Google Services Framework before installing either package. It does not request root adbd, modify radios, firewall rules or other host/guest security settings. The installed APK hash and absence of INTERNET permission are checked again.
+
+At the start of every fresh application process, before driver navigation, `ProbeApplication` records and checks its own `/proc/self/status`, application/package UID, groups, denied INTERNET permission, empty requested-permission list and absent shared UID. It attempts only to create IPv4/IPv6 stream/datagram sockets, with no address, bind, connection or traffic. All four attempts must fail with EACCES or EPERM before HSDP navigation is allowed. The host first launches an identity-only entrypoint and then matches the evidence PID to every case. `run-as` reads the application's saved evidence; its inherited shell groups are never treated as the application's identity. The variants must have distinct application UIDs.
+
+This boundary covers the standalone application's Internet capability. It does not provide whole-OS network confinement, prevent Android's own boot-time traffic, or prove Yify/Firebase/Google integration. The receipt explicitly records `wholeOsNetworkConfinement: false` and `guestFirewallApplied: false`. If whole-OS confinement is required, this route is insufficient and must not be launched as that proof. The emulator is terminated on exit.
 
 ## Run and interpret
 
@@ -49,7 +53,7 @@ bash qa/hsdp-device/run.sh REVIEWED_40_CHARACTER_SHA 30 /new/external/state-api3
 bash qa/hsdp-device/run.sh REVIEWED_40_CHARACTER_SHA 35 /new/external/state-api35
 ```
 
-A successful matrix contains ten validated case results per API in `device-receipt.json`, alongside exact AAR graph/hash receipts, APK hash, source SHA, merged manifest, installed-package evidence, device fingerprint, run IDs/PIDs, structured Activity events, raw PID-filtered logcat and guest firewall evidence. A missing receipt means that device leg did not complete; partial files must not be called a pass. The workflow retains these diagnostics for seven days and does not upload APKs as a release candidate.
+A successful matrix contains ten validated case results per API in `device-receipt.json`, alongside exact AAR graph/hash receipts, APK hash, source SHA, merged manifest, installed-package evidence, device fingerprint, run IDs/PIDs, structured Activity events, raw PID-filtered logcat and per-process identity/socket-denial evidence. A missing receipt means that device leg did not complete; partial files must not be called a pass. The workflow retains these diagnostics for seven days and does not upload APKs as a release candidate.
 
 Local review checks need only Node:
 
@@ -58,4 +62,4 @@ node --test tests/hsdp-device.test.cjs
 bash -n qa/hsdp-device/run.sh qa/hsdp-device/run-isolated.sh
 ```
 
-These validate the evidence classifier and fail-closed policy. They do not compile Java, run Gradle, boot Android or prove actual callback behavior. Those remain gated on the reviewed hosted execution.
+These validate the evidence classifier and fail-closed policy. They do not compile Java, run Gradle, boot Android or prove actual callback behavior. The local-only Java compilation and prior fixture builds do not establish this final hosted APK or device result. Those remain gated on source review and authorized hosted execution.

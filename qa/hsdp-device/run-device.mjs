@@ -5,6 +5,7 @@ import path from 'node:path';
 import {setTimeout} from 'node:timers/promises';
 import {cases, fixedOnlyCases, variants, sourcePattern, images} from './policy.mjs';
 import {verifyCase} from './evidence.mjs';
+import {verifyProcessIdentity} from './process-identity.mjs';
 const [adbPath, serial, project, sourceSha, apiValue, evidence, avdName] = process.argv.slice(2);
 const api = Number(apiValue);
 if (!avdName || !sourcePattern.test(sourceSha ?? '') || !images[apiValue] || !/^emulator-\d+$/.test(serial)) throw new Error('Invalid disposable emulator inputs');
@@ -14,37 +15,30 @@ const identity = adb('emu', 'avd', 'name').split('\n')[0].trim();
 assert(identity === avdName && avdName === `yify-hsdp-${api}-${sourceSha.slice(0, 12)}`, 'Refusing to modify an unowned emulator');
 assert(adb('shell', 'getprop', 'ro.kernel.qemu').trim() === '1', 'Refusing a non-emulator device');
 assert(Number(adb('shell', 'getprop', 'ro.build.version.sdk').trim()) === api, 'Wrong emulator API');
-assert(adb('shell', 'id', '-u').trim() === '0', 'Disposable emulator must already have root adbd');
+assert(adb('shell', 'getprop', 'ro.product.cpu.abi').trim() === 'x86_64', 'Wrong AOSP emulator ABI');
+assert(/aosp|sdk_(?:g)?phone(?:64)?_x86_64/.test(adb('shell', 'getprop', 'ro.build.fingerprint')), 'Unexpected AOSP fingerprint');
 mkdirSync(evidence, {recursive: true});
-adb('shell', 'cmd', 'connectivity', 'airplane-mode', 'enable');
-adb('shell', 'svc', 'wifi', 'disable');
-adb('shell', 'svc', 'data', 'disable');
-for (const command of ['iptables', 'ip6tables']) {
-    adb('shell', command, '-P', 'OUTPUT', 'DROP');
-    adb('shell', command, '-I', 'OUTPUT', '1', '-j', 'DROP');
+const confinement = [];
+function verifyNoGoogleServices() {
+    const packages = adb('shell', 'pm', 'list', 'packages');
+    assert(/^package:android$/m.test(packages), 'Android package inventory is incomplete');
+    assert(!/^package:(com\.android\.vending|com\.google\.android\.(?:gms|gsf))$/m.test(packages), 'Google service package present in AOSP device');
 }
-function verifyNetwork() {
-    for (const command of ['iptables', 'ip6tables']) {
-        const rules = adb('shell', command, '-S', 'OUTPUT').trim().split('\n');
-        assert(rules[0] === '-P OUTPUT DROP' && rules[1] === '-A OUTPUT -j DROP', `${command}: independent egress check failed`);
-        writeFileSync(path.join(evidence, `${command}.txt`), rules.join('\n') + '\n');
-    }
-    assert(adb('shell', 'settings', 'get', 'global', 'airplane_mode_on').trim() === '1', 'Airplane mode did not remain enabled');
+function verifyBoundary(packageName, artifact, requireProcess = true) {
+    verifyNoGoogleServices();
+    const installed = adb('shell', 'dumpsys', 'package', packageName);
+    assert(!installed.includes('android.permission.INTERNET'), 'Installed driver unexpectedly declares Internet permission');
+    const uid = Number(installed.match(/^\s*userId=(\d+)$/m)?.[1]);
+    assert(Number.isInteger(uid) && uid >= 10000, 'Invalid installed application UID');
+    const packagePath = adb('shell', 'pm', 'path', packageName).trim();
+    assert(/^package:\/data\/app\/[^\n]+\/base\.apk$/.test(packagePath), 'Installed package could not be identified');
+    assert(adb('shell', 'sha256sum', packagePath.slice(8)).trim().split(/\s+/)[0] === artifact.apkSha256, 'Installed APK changed after verification');
+    if (!requireProcess) return {uid};
+    const raw = adb('shell', 'run-as', packageName, 'cat', 'files/identity.json');
+    writeFileSync(path.join(evidence, `${packageName}-actual-process-identity.json`), raw);
+    return verifyProcessIdentity(JSON.parse(raw), {sourceSha, packageName, uid, hsdpVersion: artifact.version});
 }
-verifyNetwork();
-for (const [command, host, flag] of [['iptables', '127.0.0.1', '-4'], ['ip6tables', '::1', '-6']]) {
-    const packets = () => {
-        const listing = adb('shell', command, '-nvx', '-L', 'OUTPUT');
-        const rule = listing.split('\n').find(line => /^\s*\d+\s+\d+\s+DROP\b/.test(line));
-        assert(rule, 'Missing first DROP counter');
-        return Number(rule.trim().split(/\s+/)[0]);
-    };
-    const before = packets();
-    let blocked = false;
-    try { adb('shell', 'ping', flag, '-c', '1', '-W', '1', host); }
-    catch (error) { blocked = error.status === 1; }
-    assert(blocked && packets() > before, `${command}: loopback canary did not prove kernel OUTPUT rejection`);
-}
+verifyNoGoogleServices();
 const results = [];
 for (const [variant, target] of Object.entries(variants)) {
     const artifact = JSON.parse(readFileSync(path.join(evidence, `${variant}-artifact.json`), 'utf8'));
@@ -54,10 +48,15 @@ for (const [variant, target] of Object.entries(variants)) {
     const installed = adb('shell', 'dumpsys', 'package', target.packageName);
     writeFileSync(path.join(evidence, `${variant}-installed.txt`), installed);
     assert(!installed.includes('android.permission.INTERNET'), 'Installed driver unexpectedly declares Internet permission');
-    const packagePath = adb('shell', 'pm', 'path', target.packageName).trim();
-    assert(/^package:\/data\/app\/[^\n]+\/base\.apk$/.test(packagePath), 'Installed package could not be identified');
-    const localHash = adb('shell', 'sha256sum', packagePath.slice(8)).trim().split(/\s+/)[0];
-    assert(localHash === artifact.apkSha256, 'Installed APK does not match verified artifact');
+    const installedIdentity = verifyBoundary(target.packageName, artifact, false);
+    assert(!confinement.some(item => item.uid === installedIdentity.uid), 'Both variants unexpectedly share an application UID');
+    adb('shell', 'am', 'force-stop', target.packageName);
+    const identityLaunch = adb('shell', 'am', 'start', '-W', '-n', `${target.packageName}/io.github.kunal26das.hsdpregression.DriverActivity`, '--ez', 'qa_identity_only', 'true');
+    writeFileSync(path.join(evidence, `${variant}-identity-launch.txt`), identityLaunch);
+    assert(identityLaunch.includes('Status: ok'), 'Identity-only driver launch failed');
+    const appIdentity = verifyBoundary(target.packageName, artifact);
+    assert(adb('shell', 'pidof', '-s', target.packageName).trim() === String(appIdentity.pid), 'Identity-only app process did not survive');
+    confinement.push(appIdentity);
     for (const scenario of [...cases, ...(variant === 'fixed' ? fixedOnlyCases : [])]) {
         const run = randomUUID();
         const stem = path.join(evidence, `${variant}-${scenario}`);
@@ -95,7 +94,9 @@ for (const [variant, target] of Object.entries(variants)) {
             const finalLog = adb('logcat', '-d', '--pid', String(result.pid), '-v', 'threadtime');
             assert(!finalLog.includes('FATAL EXCEPTION:'), 'Fixed process crashed after completion');
         }
-        verifyNetwork();
+        const actualIdentity = verifyBoundary(target.packageName, artifact);
+        assert(actualIdentity.pid === result.pid, 'Case evidence and actual process identity PID differ');
+        writeFileSync(`${stem}-identity.json`, JSON.stringify(actualIdentity, null, 2));
         results.push({...result, run, apkSha256: artifact.apkSha256});
         console.log(`${api} ${variant} ${scenario}: ${result.result}`);
     }
@@ -103,7 +104,10 @@ for (const [variant, target] of Object.entries(variants)) {
 writeFileSync(path.join(evidence, 'device-receipt.json'), JSON.stringify({sourceSha, serial, avdName, api,
     deviceFingerprint: adb('shell', 'getprop', 'ro.build.fingerprint').trim(),
     abi: adb('shell', 'getprop', 'ro.product.cpu.abi').trim(),
-    ipv4AndIpv6OutputDropVerified: true, ipv4AndIpv6KernelDropCanariesPassed: true, appInternetPermission: false,
+    execution: 'hosted-aosp-kvm-emulation', hostSecurityChanged: false, guestSecurityChanged: false,
+    wholeOsNetworkConfinement: false, guestFirewallApplied: false, appInternetPermission: false,
+    runAsGroupEvidenceUsed: false, googleServicePackagesAbsent: true,
+    directAppSocketDenialsVerified: confinement.every(item => item.socketCreationProbes.every(probe => probe.created === false && [1, 13].includes(probe.errno))), confinement,
     sdkCallbackProbesUseUnmodifiedSuperclass: true, firebaseIntegrationProven: false,
     results,
 }, null, 2), {flag: 'wx'});

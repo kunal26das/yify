@@ -3,6 +3,8 @@ import {readFileSync, writeFileSync, mkdirSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {verifyManifest} from './evidence.mjs';
+import {normalizeBadging, normalizeManifest} from './aapt-format.mjs';
+import {verifyComponents} from './component-manifest.mjs';
 import {variants, sourcePattern} from './policy.mjs';
 const [project, aapt2, sourceSha, evidence] = process.argv.slice(2);
 if (!evidence || !sourcePattern.test(sourceSha ?? '')) throw new Error('Expected project, aapt2, source SHA, new evidence directory');
@@ -13,12 +15,14 @@ for (const [variant, target] of Object.entries(variants)) {
     const badging = execFileSync(aapt2, ['dump', 'badging', apk], {encoding: 'utf8'});
     const xml = execFileSync(aapt2, ['dump', 'xmltree', '--file', 'AndroidManifest.xml', apk], {encoding: 'utf8'});
     const aarReceipt = JSON.parse(readFileSync(path.join(project, `app/build/evidence/${variant}-aar.json`), 'utf8'));
-    verifyManifest({badging, xml, variant, aarReceipt, sourceSha});
+    verifyManifest({badging: normalizeBadging(badging), xml: normalizeManifest(xml), variant, aarReceipt, sourceSha});
+    verifyComponents(normalizeManifest(xml));
     const entries = execFileSync('unzip', ['-Z1', apk], {encoding: 'utf8'}).trim().split('\n');
     const dex = entries.filter(name => /^classes\d*\.dex$/.test(name)).map(name =>
         execFileSync('unzip', ['-p', apk, name], {maxBuffer: 32 * 1024 * 1024}));
-    if (!dex.some(bytes => bytes.includes(Buffer.from('Lcom/google/android/play/core/hsdp/service/HsdpShimActivity;')))) {
-        throw new Error('Original HSDP Activity class is absent from the APK');
+    for (const required of ['com/google/android/play/core/hsdp/service/HsdpShimActivity',
+        ...['DriverActivity', 'CallbackProbeActivity', 'ProbeApplication', 'IdentityEvidence'].map(name => `io/github/kunal26das/hsdpregression/${name}`)]) {
+        if (!dex.some(bytes => bytes.includes(Buffer.from(`L${required};`)))) throw new Error(`Required class is absent from the APK: ${required}`);
     }
     writeFileSync(path.join(evidence, `${variant}-manifest.txt`), xml);
     writeFileSync(path.join(evidence, `${variant}-badging.txt`), badging);

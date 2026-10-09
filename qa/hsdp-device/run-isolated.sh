@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-IMAGE="system-images;android-$API;google_apis;x86_64"
+IMAGE="system-images;android-$API;default;x86_64"
 "$SDK_MANAGER" --list --channel=0 </dev/null > "$STATE/evidence/sdk-inventory.txt"
 for package in 'platforms;android-37.0' 'build-tools;37.0.0' platform-tools emulator "$IMAGE"; do
     grep -F "$package " "$STATE/evidence/sdk-inventory.txt" >/dev/null || {
@@ -25,9 +25,18 @@ printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -
     -no-audio -no-boot-anim -camera-back none -camera-front none -no-metrics -accel on -gpu swiftshader_indirect \
     > "$STATE/evidence/emulator.log" 2>&1 &
 EMULATOR_PID=$!
+LOGCAT_PID=''
 cleanup() {
-    if [ "$($ANDROID_HOME/platform-tools/adb -s emulator-5580 emu avd name 2>/dev/null | head -n 1 | tr -d '\r')" = "$AVD" ]; then
-        "$ANDROID_HOME/platform-tools/adb" -s emulator-5580 emu kill >/dev/null 2>&1 || true
+    local status=$?
+    if [ "$status" != 0 ]; then
+        timeout 10 "$ANDROID_HOME/platform-tools/adb" -s emulator-5580 logcat -d -b all -v threadtime > "$STATE/evidence/failure-logcat.txt" 2>&1 || true
+    fi
+    if [ -n "$LOGCAT_PID" ]; then
+        kill "$LOGCAT_PID" 2>/dev/null || true
+        wait "$LOGCAT_PID" 2>/dev/null || true
+    fi
+    if [ "$(timeout 10 "$ANDROID_HOME/platform-tools/adb" -s emulator-5580 emu avd name 2>/dev/null | head -n 1 | tr -d '\r')" = "$AVD" ]; then
+        timeout 10 "$ANDROID_HOME/platform-tools/adb" -s emulator-5580 emu kill >/dev/null 2>&1 || true
     fi
     kill "$EMULATOR_PID" 2>/dev/null || true
     wait "$EMULATOR_PID" 2>/dev/null || true
@@ -36,14 +45,11 @@ trap cleanup EXIT
 ADB="$ANDROID_HOME/platform-tools/adb"
 export ANDROID_SERIAL=emulator-5580
 timeout 180 "$ADB" -s "$ANDROID_SERIAL" wait-for-device
-"$ADB" -s "$ANDROID_SERIAL" root
-timeout 180 "$ADB" -s "$ANDROID_SERIAL" wait-for-device
-READY=false
-for attempt in $(seq 1 180); do
-    if [ "$("$ADB" -s "$ANDROID_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then READY=true; break; fi
-    kill -0 "$EMULATOR_PID"
-    sleep 3
-done
-[ "$READY" = true ] || { echo 'Emulator boot did not complete' >&2; exit 1; }
+"$ADB" -s "$ANDROID_SERIAL" logcat -b all -v threadtime > "$STATE/evidence/continuous-boot-logcat.txt" 2>&1 &
+LOGCAT_PID=$!
+"$NODE" "$ROOT/qa/hsdp-device/framework-ready.mjs" "$ADB" "$ANDROID_SERIAL" "$STATE/evidence" "$EMULATOR_PID"
+kill "$LOGCAT_PID" 2>/dev/null || true
+wait "$LOGCAT_PID" 2>/dev/null || true
+LOGCAT_PID=''
 "$NODE" "$ROOT/qa/hsdp-device/run-device.mjs" "$ADB" "$ANDROID_SERIAL" "$ROOT/qa/hsdp-device" \
     "$SOURCE_SHA" "$API" "$STATE/evidence" "$AVD"
