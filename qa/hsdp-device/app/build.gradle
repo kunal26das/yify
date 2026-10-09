@@ -1,0 +1,91 @@
+import java.security.MessageDigest
+
+plugins {
+    id 'com.android.application'
+}
+
+def reviewedSource = providers.gradleProperty('sourceSha').orNull
+if (reviewedSource == null || !(reviewedSource ==~ /[a-f0-9]{40}/)) {
+    throw new GradleException('Pass the independently reviewed immutable sourceSha')
+}
+def versions = [legacy: '2.0.1', fixed: '2.2.0']
+def aarHashes = [
+    '2.0.1': '5e57065e411d985f4e4eb0cd028c617c3a5d3bf836d20fc524ec23a0df39af75',
+    '2.2.0': '39e1e335b512c66b166fd6c74e360a480564541745c57ad4a89bdb581d0bdcdd',
+]
+
+android {
+    namespace 'io.github.kunal26das.hsdpregression'
+    compileSdk 37
+    buildToolsVersion '37.0.0'
+    defaultConfig {
+        applicationId 'io.github.kunal26das.hsdpregression'
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName '1'
+        buildConfigField 'String', 'SOURCE_SHA', '"' + reviewedSource + '"'
+    }
+    buildFeatures { buildConfig true }
+    flavorDimensions += 'hsdp'
+    productFlavors {
+        legacy {
+            dimension 'hsdp'
+            applicationIdSuffix '.legacy'
+            buildConfigField 'String', 'HSDP_VERSION', '"2.0.1"'
+        }
+        fixed {
+            dimension 'hsdp'
+            applicationIdSuffix '.fixed'
+            buildConfigField 'String', 'HSDP_VERSION', '"2.2.0"'
+        }
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+        }
+        release { signingConfig null }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    legacyImplementation('com.google.android.play:hsdp:2.0.1') { version { strictly '2.0.1' } }
+    fixedImplementation('com.google.android.play:hsdp:2.2.0') { version { strictly '2.2.0' } }
+}
+
+versions.each { flavor, version ->
+    def cap = flavor.capitalize()
+    def verification = tasks.register("verify${cap}HsdpAar") {
+        doLast {
+            def artifacts = configurations.getByName("${flavor}DebugRuntimeClasspath").resolvedConfiguration.resolvedArtifacts
+            def hsdp = artifacts.findAll { it.moduleVersion.id.group == 'com.google.android.play' && it.name == 'hsdp' }
+            if (hsdp.size() != 1 || hsdp[0].moduleVersion.id.version != version || hsdp[0].extension != 'aar') {
+                throw new GradleException("Expected one original HSDP ${version} AAR")
+            }
+            def actual = MessageDigest.getInstance('SHA-256').digest(hsdp[0].file.bytes).encodeHex().toString()
+            if (actual != aarHashes[version]) throw new GradleException("HSDP ${version} checksum mismatch")
+            def forbidden = artifacts.findAll {
+                it.moduleVersion.id.group.startsWith('com.google.firebase') ||
+                it.moduleVersion.id.group.startsWith('io.sentry') ||
+                it.moduleVersion.id.group.startsWith('com.revenuecat') ||
+                it.name.startsWith('play-services-ads') || it.name.startsWith('play-services-measurement')
+            }
+            if (!forbidden.empty) throw new GradleException('Forbidden service SDK in the standalone driver graph')
+            def receipt = layout.buildDirectory.file("evidence/${flavor}-aar.json").get().asFile
+            receipt.parentFile.mkdirs()
+            receipt.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([
+                sourceSha: reviewedSource, hsdp: version, aarSha256: actual,
+                dependencies: artifacts.collect { "${it.moduleVersion.id.group}:${it.name}:${it.moduleVersion.id.version}" }.sort(),
+            ]))
+        }
+    }
+    tasks.configureEach {
+        if (name == "pre${cap}DebugBuild") dependsOn verification
+        if (name.toLowerCase().contains('release')) enabled = false
+    }
+}
