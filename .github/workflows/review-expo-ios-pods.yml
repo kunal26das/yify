@@ -83,3 +83,83 @@ jobs:
           path: ${{ runner.temp }}/expo-ios-pods/
           if-no-files-found: warn
           retention-days: 1
+
+      - name: Publish verified iOS patch in run summary
+        if: success()
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          report = Path(os.environ['RUNNER_TEMP']) / 'expo-ios-pods'
+          expected = os.environ['EXPECTED_SHA']
+          if not re.fullmatch(r'[0-9a-f]{40}', expected):
+              raise SystemExit('Invalid expected source SHA')
+          for name in ('source-sha.txt', 'actual-source-sha.txt'):
+              if (report / name).read_text().strip() != expected:
+                  raise SystemExit(f'Source SHA mismatch in {name}')
+          if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != expected:
+              raise SystemExit('Checked-out source SHA changed')
+          if (report / 'pod-install-success.txt').read_text() != 'pod install completed\n':
+              raise SystemExit('Successful pod install was not recorded')
+          if (report / 'generated-Podfile.lock').read_bytes() != Path('ios/Podfile.lock').read_bytes():
+              raise SystemExit('Generated CocoaPods lockfile changed after collection')
+
+          allowed = {
+              'ios/Podfile.lock', 'ios/Podfile', 'ios/Podfile.properties.json',
+              'ios/Yify.xcodeproj/project.pbxproj',
+              'ios/Yify.xcodeproj/xcshareddata/xcschemes/Yify.xcscheme',
+              'ios/Yify.xcworkspace/contents.xcworkspacedata',
+              'ios/Yify/AppDelegate.swift', 'ios/Yify/Info.plist',
+              'ios/Yify/PrivacyInfo.xcprivacy', 'ios/Yify/SceneDelegate.swift',
+              'ios/Yify/SplashScreen.storyboard', 'ios/Yify/Supporting/Expo.plist',
+              'ios/Yify/Yify-Bridging-Header.h', 'ios/Yify/Yify.entitlements',
+          }
+          raw_paths = subprocess.check_output(['git', 'diff', '--name-only', '-z', '--', 'ios'])
+          changed = sorted(path.decode('utf-8') for path in raw_paths.split(b'\0') if path)
+          untracked = sorted((report / 'untracked-ios.txt').read_text().splitlines())
+          if not changed or 'ios/Podfile.lock' not in changed:
+              raise SystemExit('Generated iOS patch must include the CocoaPods lockfile')
+          if set(changed) - allowed or set(untracked) - set(changed):
+              raise SystemExit(f'Unexpected iOS paths: {sorted((set(changed) - allowed) | (set(untracked) - set(changed)))}')
+          numstat = subprocess.check_output(['git', 'diff', '--numstat', '--', 'ios'], text=True)
+          if any(line.startswith('-\t-\t') for line in numstat.splitlines()):
+              raise SystemExit('Binary iOS change requires separate review')
+          patch = (report / 'generated-ios.patch').read_bytes()
+          if patch != subprocess.check_output(['git', 'diff', '--binary', '--', 'ios']):
+              raise SystemExit('Generated iOS patch changed after collection')
+          if not patch or len(patch) > 200 * 1024:
+              raise SystemExit('Generated iOS patch is empty or exceeds 200 KiB')
+          source = patch.decode('utf-8')
+          if 'GIT binary patch' in source or 'Binary files ' in source:
+              raise SystemExit('Binary content requires separate review')
+          secret_patterns = (
+              r'-----BEGIN [A-Z ]*PRIVATE KEY-----',
+              r'(?i)(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}',
+              r'github_pat_[A-Za-z0-9_]{20,}',
+              r'(?i)https?://[^\s/@]+@',
+              r'(?i)[?&](?:access_token|token|password|api_key|x-amz-signature|x-goog-signature|sig)=[^&\s]+',
+          )
+          if any(re.search(pattern, source) for pattern in secret_patterns):
+              raise SystemExit('Potential credential in generated iOS patch')
+
+          encoded = base64.b64encode(patch).decode('ascii')
+          numbered = [f'{index:05d}:{encoded[offset:offset + 76]}'
+                      for index, offset in enumerate(range(0, len(encoded), 76), 1)]
+          digest = hashlib.sha256(patch).hexdigest()
+          summary = (f'## Verified iOS CocoaPods patch for PR 957\n\n'
+                     f'Source SHA: {expected}\n\nRaw bytes: {len(patch)}\n\nSHA-256: {digest}\n\n'
+                     'Changed paths:\n' + ''.join(f'- {path}\n' for path in changed) +
+                     '\nNumbered base64 patch:\n\n```text\n' + '\n'.join(numbered) + '\n```\n')
+          if len(summary.encode('utf-8')) > 900 * 1024:
+              raise SystemExit('Run summary exceeds 900 KiB')
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as output:
+              output.write(summary)
+          print(summary)
+          PY
