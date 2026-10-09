@@ -169,6 +169,12 @@ android {
 }
 
 dependencies {
+    constraints {
+        implementation('com.google.android.play:hsdp') {
+            version { strictly '2.2.0' }
+        }
+    }
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
