@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import {
     BUILD_ID, PACKAGE_NAME, PROJECT_ID, SOURCE_SHA, UPLOAD_CERT_SHA256,
@@ -11,6 +12,17 @@ const metadata = {
     appBuildVersion: '97', runtime: {version: '1.8.15'}, updateChannel: {name: 'Production'}, gitCommitHash: SOURCE_SHA,
     fingerprint: {hash: 'abc'}, artifacts: {buildUrl: 'https://expo.dev/artifacts/eas/build.aab'},
 };
+
+test('installs locked app dependencies before querying EAS build metadata', () => {
+    const workflow = readFileSync(new URL('../.github/workflows/verify-production-aab.yml', import.meta.url), 'utf8');
+    const installStart = workflow.indexOf('      - name: Install locked app dependencies for Expo config\n');
+    const nextStepStart = workflow.indexOf('\n      - name:', installStart + 1);
+    const fetchStart = workflow.indexOf('      - name: Fetch only the approved finished EAS AAB');
+    assert.ok(installStart >= 0 && nextStepStart > installStart && fetchStart > nextStepStart);
+    const install = workflow.slice(installStart, nextStepStart);
+    assert.match(install, /^        run: yarn install --frozen-lockfile --non-interactive$/m);
+    assert.doesNotMatch(install, /^        working-directory:/m);
+});
 
 test('accepts only the exact finished production build', () => {
     assert.equal(verifyBuildMetadata(metadata).pathname, '/artifacts/eas/build.aab');
