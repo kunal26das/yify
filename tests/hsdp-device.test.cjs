@@ -96,13 +96,13 @@ test('SDK metadata keeps source API37.0 stable and separately pins API30/API35 i
     assert.throws(() => verifyImage({'AndroidVersion.ApiLevel':'37','Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'google_apis'},35), /Wrong test image/);
 });
 
-test('workflow remains manual, secret-free and does not change host permissions or accept licenses', () => {
+test('workflow is secret-free and does not change host permissions or accept licenses', () => {
     const workflow = fs.readFileSync(path.join(ROOT,'.github/workflows/hsdp-framework-qa.yml'),'utf8');
     assert.match(workflow, /workflow_dispatch:/);
     assert.match(workflow, /api: \[30, 35\]/);
     const gradle = fs.readFileSync(path.join(ROOT, 'qa/hsdp-device/app/build.gradle'), 'utf8');
     assert.match(gradle, /buildToolsVersion '37\.0\.0'/);
-    assert.doesNotMatch(workflow, /secrets\.|pull_request:|push:/);
+    assert.doesNotMatch(workflow, /secrets\.|pull_request_target:|push:/);
     const scripts = ['run.sh','run-isolated.sh','run-device.mjs'].map(name => fs.readFileSync(path.join(ROOT,'qa/hsdp-device',name),'utf8')).join('\n');
     assert.doesNotMatch(scripts, /sudo|chmod|chown|usermod|--licenses|yes\s*\|/);
     assert.match(scripts, /test -r \/dev\/kvm && test -w \/dev\/kvm/);
@@ -113,4 +113,15 @@ test('workflow remains manual, secret-free and does not change host permissions 
     assert.match(driver, /super\.onAttachedToWindow/);
     assert.match(driver, /super\.onConfigurationChanged/);
     assert.match(driver, /super\.onNewIntent/);
+});
+
+test('workflow limits PR execution to same-repository immutable heads and relevant paths', () => {
+    const workflow = fs.readFileSync(path.join(ROOT, '.github/workflows/hsdp-framework-qa.yml'), 'utf8');
+    assert.match(workflow, /pull_request:\n    paths:\n      - \.github\/workflows\/hsdp-framework-qa\.yml\n      - qa\/hsdp-device\/\*\*\n      - tests\/hsdp-device\.test\.cjs\n  workflow_dispatch:/);
+    assert.match(workflow, /github\.repository == 'kunal26das\/yify' &&\n      \(\(github\.event_name == 'pull_request' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository\) \|\|\n      \(github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'\)\)/);
+    assert.equal(workflow.match(/github\.event\.pull_request\.head\.sha \|\| inputs\.source_sha/g)?.length, 3);
+    assert.match(workflow, /permissions:\n  contents: read/);
+    assert.match(workflow, /persist-credentials: false/);
+    assert.match(workflow, /\[\[ "\$SOURCE_SHA" =~ \^\[a-f0-9\]\{40\}\$ \]\]/);
+    assert.doesNotMatch(workflow, /contents: write|id-token:|pull-requests: write|github\.sha/);
 });
