@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   verify:
-    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main'
+    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main' && github.run_number == 4 && github.run_attempt == 1
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -83,6 +83,12 @@ jobs:
             "$RUNNER_TEMP/universal.apk" > "$RUNNER_TEMP/universal-native-check.json"
           node scripts/verify-production-aab.mjs apks "$RUNNER_TEMP/universal-native-check.json"
           echo 'Verified compressed native libraries and ELF identity for all four ABIs'
+
+      - name: Grant KVM to this one verification attempt
+        run: |
+          test -c /dev/kvm
+          sudo chown "$(id -u)" /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
 
       - name: Install and launch actual bundletool-derived device APKs with traffic blocked
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
