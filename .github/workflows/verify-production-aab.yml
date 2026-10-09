@@ -1,0 +1,102 @@
+name: Verify exact production Android bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-production-aab-ee1be7b3
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout trusted verifier and original source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Setup Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Test verifier
+        run: node --test scripts/verify-production-aab.test.mjs scripts/verify-signed-aab.test.mjs
+
+      - name: Install locked EAS CLI
+        run: yarn install --frozen-lockfile --non-interactive
+        working-directory: release
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+      - name: Fetch only the approved finished EAS AAB
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: node scripts/verify-production-aab.mjs fetch "$RUNNER_TEMP/production.aab"
+
+      - name: Install pinned official bundletool
+        run: |
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 \
+            https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar \
+            --output "$RUNNER_TEMP/bundletool.jar"
+          echo 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  '"$RUNNER_TEMP/bundletool.jar" | sha256sum --check --status
+
+      - name: Verify signed AAB identity and runtime
+        run: node scripts/verify-production-aab.mjs bundle "$RUNNER_TEMP/bundletool.jar" "$RUNNER_TEMP/production.aab"
+
+      - name: Generate ephemeral APK test signer
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/apk-test.jks" -alias isolated-test \
+            -keyalg RSA -keysize 3072 -validity 1 -dname 'CN=Ephemeral APK verification' \
+            -storepass local-verification-only -keypass local-verification-only -noprompt >/dev/null 2>&1
+
+      - name: Verify all four ABIs in a bundletool-derived APK
+        run: |
+          java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
+            --bundle="$RUNNER_TEMP/production.aab" --output="$RUNNER_TEMP/universal.apks" \
+            --mode=universal --ks="$RUNNER_TEMP/apk-test.jks" --ks-key-alias=isolated-test \
+            --ks-pass=pass:local-verification-only --key-pass=pass:local-verification-only
+          unzip -p "$RUNNER_TEMP/universal.apks" universal.apk > "$RUNNER_TEMP/universal.apk"
+          AAPT2=$(find "$ANDROID_HOME/build-tools" -name aapt2 -type f | sort -V | tail -n 1)
+          test -n "$AAPT2"
+          node scripts/check-android-native-libs.mjs \
+            --abis armeabi-v7a,arm64-v8a,x86,x86_64 --aapt2 "$AAPT2" \
+            "$RUNNER_TEMP/universal.apk" > "$RUNNER_TEMP/universal-native-check.json"
+          node scripts/verify-production-aab.mjs apks "$RUNNER_TEMP/universal-native-check.json"
+          echo 'Verified compressed native libraries and ELF identity for all four ABIs'
+
+      - name: Install and launch actual bundletool-derived device APKs with traffic blocked
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-linux-hw-accel: auto
+          emulator-boot-timeout: 900
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/test-production-aab-emulator.sh
+
+      - name: Preserve sanitized receipt and fresh emulator screenshot
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: yify-production-aab-verification
+          path: |
+            ${{ runner.temp }}/yify-verification-receipt.json
+            ${{ runner.temp }}/yify-verification-screen.png
+          if-no-files-found: error
+          retention-days: 7
