@@ -24,7 +24,8 @@ const ROUTES = [
 ];
 const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences', 'upgrade'];
 const PAID_ROUTES = ['anime'];
-const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]', '/api/availability-alerts/status'];
+const CATALOG_API_ROUTES = ['/api/catalog/[operation]', '/api/subscriber-catalog/[operation]',
+    '/api/native-subscriber-catalog/[operation]', '/api/availability-alerts/status'];
 const SERVER_ONLY_MARKERS = [
     'YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID',
     'YIFY_SUBSCRIBER_OWNER_UID',
@@ -73,7 +74,8 @@ if (serverOutput) {
     }
 }
 
-for (const serverPath of ['_expo/functions', '_expo/routes.json', 'api/catalog', 'api/subscriber-catalog', 'api/availability-alerts',
+for (const serverPath of ['_expo/functions', '_expo/routes.json', 'api/catalog', 'api/subscriber-catalog',
+    'api/native-subscriber-catalog', 'api/availability-alerts',
     ...(serverOutput ? [] : ['server', 'client'])]) {
     if (existsSync(join(dir, serverPath))) {
         failures.push(`${serverPath}: server output must not be published as ${serverOutput ? 'public client assets' : 'a static site'}`);
