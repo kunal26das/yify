@@ -29,13 +29,18 @@ jobs:
           package-manager-cache: false
 
       - name: Setup Java
-        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Test verifier
         run: node --test scripts/verify-production-aab.test.mjs scripts/verify-signed-aab.test.mjs
+
+      - name: Install locked app dependencies for Expo config
+        run: yarn install --frozen-lockfile --non-interactive
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Install locked EAS CLI
         run: yarn install --frozen-lockfile --non-interactive
@@ -80,7 +85,7 @@ jobs:
           echo 'Verified compressed native libraries and ELF identity for all four ABIs'
 
       - name: Install and launch actual bundletool-derived device APKs with traffic blocked
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 35
           target: google_apis
