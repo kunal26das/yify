@@ -1,0 +1,85 @@
+name: Review Expo iOS pods for PR 957
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-expo-ios-pods-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  generate-pods:
+    if: >-
+      github.repository == 'kunal26das/yify' &&
+      github.event.pull_request.number == 957 &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_UPDATE_CHANNEL: Production
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify source identity
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          mkdir -p "$RUNNER_TEMP/expo-ios-pods"
+          printf '%s\n' "$EXPECTED_SHA" > "$RUNNER_TEMP/expo-ios-pods/source-sha.txt"
+          cp ios/Podfile.lock "$RUNNER_TEMP/expo-ios-pods/original-Podfile.lock"
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install exact root dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Verify Expo source compatibility
+        run: |
+          node scripts/check-dependency-pins.mjs
+          node scripts/expo-native-compat.mjs --check
+
+      - name: Regenerate iOS project and install pods
+        run: |
+          node node_modules/expo/bin/cli prebuild --platform ios --clean --no-install
+          cp "$RUNNER_TEMP/expo-ios-pods/original-Podfile.lock" ios/Podfile.lock
+          cd ios
+          pod install
+          printf 'pod install completed\n' > "$RUNNER_TEMP/expo-ios-pods/pod-install-success.txt"
+
+      - name: Record generated native changes
+        if: always()
+        run: |
+          report="$RUNNER_TEMP/expo-ios-pods"
+          mkdir -p "$report"
+          git rev-parse HEAD > "$report/actual-source-sha.txt"
+          if [ -f ios/Podfile.lock ]; then cp ios/Podfile.lock "$report/generated-Podfile.lock"; fi
+          git ls-files --others --exclude-standard -- ios > "$report/untracked-ios.txt"
+          git add -N -- ios
+          git status --short -- ios > "$report/ios-status.txt"
+          git diff --stat -- ios > "$report/ios-diff-stat.txt"
+          git diff --binary -- ios > "$report/generated-ios.patch"
+
+      - name: Upload iOS review artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: expo-ios-pods-pr957-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/expo-ios-pods/
+          if-no-files-found: warn
+          retention-days: 1
