@@ -21,6 +21,11 @@
       "expected": "~5.9.1",
       "reason": "Safe-area 5.10.1 preserves the 5.10.0 Android/iOS implementation and fixes SwiftPM package metadata; validate its integration in runtime 1.8.14."
     },
+    "react-native-web": {
+      "version": "0.21.3",
+      "expected": "^0.21.4",
+      "reason": "Retain Expo 58.0.5's bundled ~0.21.3 with the guarded shared asset registry and passing Hosting/Pages exports. React Native Web 0.21.4 adds public AssetRegistry entry points and removes deprecation warnings; adopt it with the coordinated Expo CLI asset-registry update."
+    },
     "@babel/core": {
       "version": "8.0.6",
       "expected": "^7.29.7",
