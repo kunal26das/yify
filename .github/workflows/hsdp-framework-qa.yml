@@ -1,0 +1,52 @@
+name: HSDP Android framework regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Independently reviewed immutable 40-character source SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hsdp-framework-qa
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 35]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify two original HSDP variants on Android API ${{ matrix.api }}
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          TEST_API: ${{ matrix.api }}
+        run: bash qa/hsdp-device/run.sh "$SOURCE_SHA" "$TEST_API" "$RUNNER_TEMP/hsdp-$TEST_API"
+      - name: Preserve exact static and framework evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: hsdp-framework-api-${{ matrix.api }}
+          path: ${{ runner.temp }}/hsdp-${{ matrix.api }}/evidence
+          if-no-files-found: warn
+          retention-days: 7
