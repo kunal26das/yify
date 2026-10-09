@@ -1,0 +1,156 @@
+name: Publish Android 1.8.14 storage OTA
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed commit on release/storage-write-consistency-1.8.14
+        required: true
+        type: string
+      source_ci_run_id:
+        description: Successful CI workflow_dispatch run ID on that source branch
+        required: true
+        type: string
+      source_ci_run_attempt:
+        description: Successful CI attempt number for that exact run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: android-production-ota
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      SOURCE_RUN_ID: ${{ inputs.source_ci_run_id }}
+      SOURCE_RUN_ATTEMPT: ${{ inputs.source_ci_run_attempt }}
+      EXPO_UPDATE_CHANNEL: Production
+      EXPO_RUNTIME_VERSION: '1.8.14'
+      EXPO_PUBLIC_SENTRY_ENVIRONMENT: production
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      CI: '1'
+    steps:
+      - name: Checkout trusted main controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: controller
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Test trusted OTA controller
+        run: node --test controller/tests/android-ota-controller.test.cjs
+
+      - name: Verify exact source-branch CI and current refs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node controller/scripts/android-ota-controller.mjs verify-ci
+
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify reviewed source and native compatibility inputs
+        run: node controller/scripts/android-ota-controller.mjs verify-source candidate
+
+      - name: Verify Yarn Classic
+        run: |
+          node -v
+          yarn --version | grep -E '^1\.'
+
+      - name: Install frozen app dependencies
+        working-directory: candidate
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Install frozen release-console dependencies
+        working-directory: candidate/release
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - name: Check pins, types, tests, and update channel
+        working-directory: candidate
+        run: |
+          node scripts/check-dependency-pins.mjs
+          yarn typecheck
+          yarn test
+          node scripts/check-update-channel.mjs
+          node scripts/check-expo-doctor.mjs
+
+      - name: Check release console
+        working-directory: candidate/release
+        run: |
+          yarn typecheck
+          yarn test
+          yarn build
+
+      - name: Verify candidate remains exact after checks
+        run: node controller/scripts/android-ota-controller.mjs verify-source candidate
+
+      - name: Recheck source-branch CI and refs before release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node controller/scripts/android-ota-controller.mjs verify-ci
+
+      - name: Prepare unique Sentry release plan
+        run: node controller/scripts/android-ota-controller.mjs prepare-plan candidate
+
+      - name: Recheck Production channel and complete Android update history
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: node controller/scripts/android-ota-controller.mjs verify-expo candidate
+
+      - name: Publish exactly one Android Production OTA
+        working-directory: candidate
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DEPLOYMENT_PLAN: .expo/android-ota/${{ github.run_id }}-${{ github.run_attempt }}/plan.json
+        run: >-
+          bash scripts/eas.sh update
+          --channel Production
+          --platform android
+          --environment production
+          --message "1.8.14 storage write consistency ($SOURCE_SHA)"
+          --input-dir .expo/android-ota-export
+          --clear-cache
+          --source-maps true
+          --emit-metadata
+          --non-interactive
+          --json
+
+      - name: Verify published Android group and active Production mapping
+        if: always() && hashFiles('candidate/.expo/android-ota/*/plan.json.eas.json') != ''
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: node controller/scripts/android-ota-controller.mjs verify-publication candidate
+
+      - name: Stage allowlisted publication evidence
+        if: always()
+        run: node controller/scripts/android-ota-controller.mjs stage-artifacts candidate "$RUNNER_TEMP/android-ota-evidence"
+
+      - name: Save export, maps, checksums, and publication receipts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: android-ota-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/android-ota-evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 90
