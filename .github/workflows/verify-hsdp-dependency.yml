@@ -56,8 +56,12 @@ jobs:
           export PATH="$JAVA_HOME/bin:$PATH"
           test -x "$JAVA_HOME/bin/java"
           test -d "${ANDROID_HOME:?Preinstalled Android SDK is required}/platforms"
-          ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
-            -I ../scripts/verify-hsdp.gradle :app:verifyHsdpRuntime
+          ./gradlew --no-daemon -Dhsdp.verify.androidRoot="$PWD" \
+            -Pandroid.builder.sdkDownload=false \
+            -I ../scripts/verify-hsdp.gradle :app:verifyHsdpRuntime \
+            | tee "$RUNNER_TEMP/hsdp-runtime.txt"
+          grep -Eq '^Verified Android minSdk [0-9]+, strict HSDP 2\.2\.0 constraint, and resolved HSDP 2\.2\.0$' \
+            "$RUNNER_TEMP/hsdp-runtime.txt"
           ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
             :app:dependencyInsight --configuration releaseRuntimeClasspath \
             --dependency com.google.android.play:hsdp > "$RUNNER_TEMP/hsdp-insight.txt"
