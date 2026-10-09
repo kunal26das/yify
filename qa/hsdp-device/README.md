@@ -25,7 +25,7 @@ Missing launch, missing window token, a configuration request without a delivere
 
 ## Permission and environment prerequisites
 
-The manual workflow is `.github/workflows/hsdp-framework-qa.yml`. Review its exact source commit before making it executable on the default branch and dispatching it. It takes one immutable `source_sha` and runs API 30 and API 35 independently. It never runs automatically on push or PR events.
+The workflow is `.github/workflows/hsdp-framework-qa.yml`. Review its exact source commit before publication or execution. A same-repository pull request affecting this workflow, `qa/hsdp-device/**`, or `tests/hsdp-device.test.cjs` runs its immutable head SHA on API 30 and API 35 independently. Fork pull requests and push events cannot run it. Manual dispatch remains restricted to the default branch and takes one immutable `source_sha`. Both routes use a credential-free checkout and identical KVM, SDK, APK and device-confinement gates.
 
 The runner must already have readable and writable `/dev/kvm`. The script checks actual ownership/access and the emulator's acceleration probe; it does not run sudo, chmod, chown, usermod, or modify host firewall/security settings. Missing KVM access is a blocker, not permission to repeat the earlier temporary permission grant.
 
