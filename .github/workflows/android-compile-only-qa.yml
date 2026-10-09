@@ -52,33 +52,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Diagnose official SDK package inventory without installing
-        run: |
-          mkdir -p "$RUNNER_TEMP/yify-android-qa/evidence"
-          SDK_MANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          cat "$ANDROID_HOME/cmdline-tools/latest/source.properties" | tee "$RUNNER_TEMP/yify-android-qa/evidence/sdkmanager-metadata.txt"
-          "$SDK_MANAGER" --version | tee "$RUNNER_TEMP/yify-android-qa/evidence/sdkmanager-version.txt"
-          "$SDK_MANAGER" --list --channel=0 2>&1 | tee "$RUNNER_TEMP/yify-android-qa/evidence/sdk-inventory-stable.txt"
-          "$SDK_MANAGER" --list --channel=3 2>&1 | tee "$RUNNER_TEMP/yify-android-qa/evidence/sdk-inventory-all-channels.txt"
-          node scripts/android-qa/preflight.mjs sdk-packages | tee "$RUNNER_TEMP/yify-android-qa/evidence/requested-sdk-packages.txt"
-          node - "$RUNNER_TEMP/yify-android-qa/evidence" <<'JS'
-          const fs = require('node:fs');
-          const path = require('node:path');
-          const directory = process.argv[2];
-          const identifiers = file => fs.readFileSync(path.join(directory, file), 'utf8').split(/\r?\n/)
-            .map(line => line.split('|')[0].trim()).filter(line => /^(platforms;|build-tools;|ndk;|cmake;|platform-tools$|cmdline-tools;)/.test(line));
-          const stable = identifiers('sdk-inventory-stable.txt');
-          const all = identifiers('sdk-inventory-all-channels.txt');
-          const requested = fs.readFileSync(path.join(directory, 'requested-sdk-packages.txt'), 'utf8').trim().split(/\r?\n/);
-          const report = {kind: 'inventory-only', requested: requested.map(identifier => ({identifier,
-            stable: stable.includes(identifier), anyChannel: all.includes(identifier)})),
-            platformCandidates: all.filter(identifier => identifier.startsWith('platforms;android-37'))};
-          fs.writeFileSync(path.join(directory, 'sdk-inventory-comparison.json'), JSON.stringify(report, null, 2) + '\n');
-          console.log(JSON.stringify(report, null, 2));
-          JS
-          echo 'Diagnosis-only run: setup and compilation intentionally remain blocked for independent review.'
-          exit 1
-
       - name: Setup pinned Yarn
         run: npm install --global yarn@1.22.22 --force
 
