@@ -1,0 +1,73 @@
+name: Compile-only Android QA
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/android-compile-only-qa.yml
+      - scripts/android-qa/**
+      - tests/android-qa-prerequisites.test.cjs
+      - docs/android-qa.md
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed 40-character commit containing this QA setup
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-compile-only-${{ github.event.pull_request.head.sha || inputs.source_sha }}
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    if: >-
+      github.repository == 'kunal26das/yify' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Validate immutable source selection
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
+        run: test "${#SOURCE_SHA}" = 40 && [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+
+      - name: Checkout exact reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Setup pinned Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+
+      - name: Setup Java 17
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup pinned Yarn
+        run: npm install --global yarn@1.22.22 --force
+
+      - name: Compile and verify without signing credentials or service uploads
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
+        run: bash scripts/android-qa/run-compile-only.sh "$GITHUB_WORKSPACE" "$SOURCE_SHA" "$RUNNER_TEMP/yify-android-qa"
+
+      - name: Preserve setup diagnosis and verification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: android-compile-only-${{ github.event.pull_request.head.sha || inputs.source_sha }}
+          path: |
+            ${{ runner.temp }}/yify-android-qa/bootstrap.json
+            ${{ runner.temp }}/yify-android-qa/prerequisites.json
+            ${{ runner.temp }}/yify-android-qa/evidence/
+          if-no-files-found: warn
+          retention-days: 7
