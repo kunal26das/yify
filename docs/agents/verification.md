@@ -12,6 +12,48 @@ Two bounded role-context probes ran on 2026-10-08 UTC. `TEAM-QA-001` requested t
 
 Further probes remain pending for independently observable effective settings, global concurrency, rendered design or platform work where relevant, exact-commit review and finding resolution, release decision and credential boundaries, and durable state recovery. Record role, assignment ID, exact commit, actual outputs, and evidence. Never treat a planned check as a pass result.
 
-## Release and business outcomes
+## Release and delivery evidence
 
-Not run. A future authorized release should record its exact commit and receipt, QA and reliability checks, and later analyst evaluation of shipped quality, user outcomes, renewals, net contribution, and reduced owner involvement. No production action is implied by the static policy.
+Reconciled on 2026-10-09 UTC. The earlier “Not run” entry was stale. Historical implementation-environment failures above remain historical and do not override these later exact-source receipts.
+
+### Android storage OTA: published and manifest available
+
+The [successful publication run](https://github.com/kunal26das/yify/actions/runs/37867505562) used controller source `8dee6cb8b8acb45d1fba466d61e6323f7431366e` and published application source `c6cf23e21dd6dd6bad1fd2b693c0efbdce314c3f`, based on `3016dcb96803ff9304bd6fb1bdf8d944230717e0`. These are distinct controller and application identities. The four-file storage-only source delta preserved the native runtime.
+
+[Expo update group](https://expo.dev/accounts/kunal26das/projects/yify/updates/8dd4a8cf-2751-42c4-ab15-7dc5e5dd7b7b): `8dd4a8cf-2751-42c4-ab15-7dc5e5dd7b7b`; Android update `01a11e2f-543d-7362-b65a-9d9b255519f7`; Production channel, runtime `1.8.14`. The Android protocol-v1 manifest returned this update with HTTP 200; referenced bundle/font probes also returned 200. This proves delivery availability at verification time, not adoption by every device or recovery from unrelated native crashes. Source-map ingestion was verified; event-level symbolication was not established.
+
+### Web: both deployment receipts successful
+
+At exact main `6f4df9fdf0480d484c38334e8fffb2018a910aec`, [CI](https://github.com/kunal26das/yify/actions/runs/37964925191), [EAS Hosting](https://github.com/kunal26das/yify/actions/runs/37965380040), and [GitHub Pages](https://github.com/kunal26das/yify/actions/runs/37965380089) completed successfully on 2026-10-09. This includes the storage work and subsequent movie-details stale-state fix. Workflow success does not establish complete rendered-user-journey validation.
+
+### Candidate 97: built and bounded smoke only, not submitted
+
+[EAS build](https://expo.dev/accounts/kunal26das/projects/yify/builds/ee1be7b3-c44c-4956-a1ac-a676243db901) is application source `956d6bdb0d74ed0f63309cf05592d67086d3a843`, Android `1.8.15`, versionCode `97`, runtime `1.8.15`. AAB SHA-256: `0408f252ba4fb84045ae1720f9d9a75685e7af8ff63236aa9b145572c7cc127e`.
+
+[Verifier run 4](https://github.com/kunal26das/yify/actions/runs/37959839532), attempt 1, verifier source `100ac559af150e401ea8c8c0608bf5f69711d52a`, passed static/signature/runtime/native-library checks and installation on an API 35 x86_64 emulator. The observed PID remained stable for 20 seconds with MainActivity foreground, both IP-family egress blocked, and a rendered welcome/consent screen. The screen was inspected. Consent was not completed; connected startup, browsing, sign-in, purchases, restore, the HSDP failure path and physical OnePlus/Android 11 reproduction were not tested by this run.
+
+The one-run runner permission adjustment was removed in [PR #966](https://github.com/kunal26das/yify/pull/966). The bounded artifact-recovery workflow in [PR #967](https://github.com/kunal26das/yify/pull/967) was closed unmerged. Candidate 97 was not submitted to Play and must not be released unchanged because the required native fixes are absent.
+
+### HSDP fix: dependency verification passed, native recovery pending
+
+[PR #968](https://github.com/kunal26das/yify/pull/968), head `5d11dbceecfd3b46d1b26e1c13301efe1c984cd8`, passed [standard CI](https://github.com/kunal26das/yify/actions/runs/37966879766) and [dedicated HSDP verification](https://github.com/kunal26das/yify/actions/runs/37966879890). The latter performs frozen installation, clean zero-drift Android regeneration, resolved release-runtime dependency checks, the strict HSDP `2.2.0` constraint, unresolved-dependency rejection and effective minimum-SDK validation.
+
+Failures were diagnosed before changes: generated Windows-wrapper line endings were reconciled to actual Expo output; the Gradle init hook was restricted to the intended Android root instead of included builds; the dependency-report environment was checked against installed runner NDK inventory. Final reporting uses installed `27.3.13750724` with an exact revision check and explicitly temporary override. It does not install or accept SDK components and does not prove compilation against the project's release NDK. A complete fresh-cloud native setup, device-level crash-path integration, extended isolated journeys, new binary, Play receipt and post-release recovery remain separate gates.
+
+Independent final-commit review of `5d11dbceecfd3b46d1b26e1c13301efe1c984cd8` passed on 2026-10-09. The reviewer fetched remote refs, examined the complete seven-file delta, ran six plugin tests against immutable final-commit blobs, checked non-overlap with current main, and independently read both successful CI receipts. This is code-merge approval, not Android release approval.
+
+### Latest HSDP merge and web receipts
+
+The protected branch update produced final head `af61d335fa0251cc654c7185533ff47cd9a31b68`. Independent review confirmed all seven fix blobs were unchanged and current main's movie fix and verifier cleanup were preserved. [Fresh exact-head CI](https://github.com/kunal26das/yify/actions/runs/37968073058) and [fresh HSDP verification](https://github.com/kunal26das/yify/actions/runs/37968073036) passed before squash merge as `73c699669d244c542cd8c2f2f82c1306e65f0361` at 17:48 UTC on 2026-10-09.
+
+[Main CI](https://github.com/kunal26das/yify/actions/runs/37968868615), [EAS Hosting](https://github.com/kunal26das/yify/actions/runs/37969328552), and [GitHub Pages](https://github.com/kunal26das/yify/actions/runs/37969328048) succeeded for this exact merge. Both deployment summaries checked the current-main SHA before promotion. No Android binary or OTA containing the native HSDP fix has been released by these workflows.
+
+An isolated regression harness subsequently exercised the checksum-pinned, unmodified Google HSDP classes using minimal Android JVM stubs. HSDP 2.0.1 throws the exact `IllegalStateException: targetPackageName is null` in attached-window, configuration-change and new-intent callbacks; 2.2.0 safely finishes for the same cases, repeated callbacks, and empty/null intent creation. An independent reviewer reran the harness successfully. This directly verifies the malformed-input guard, without launching Yify or contacting app services. It does not establish Android 11 vendor lifecycle, Firebase integration, connected journeys, or production recovery. The reusable harness is being incorporated into the Android QA setup.
+
+### Native metadata boundary: merged, main CI blocked by recommendation drift
+
+[PR #969](https://github.com/kunal26das/yify/pull/969) merged as `934455c65bdad11f13cfc78eb3147201aed26d72`, parent `73c699669d244c542cd8c2f2f82c1306e65f0361`. Its complete tree `7552f8d68b0b76e2cb1979ca6aa829b66a63b3b4` is identical to independently reviewed final head `2b38fbfca1499f03efa1d7db39fc8f069fd9915b`, whose required checks passed before merge. [Main CI](https://github.com/kunal26das/yify/actions/runs/37970365497) subsequently failed at Expo doctor because its recommendation for `react-native-web` had changed to `^0.21.4` while the pinned source contains `0.21.3`. The same source tree passed PR checks minutes earlier; main tests, typecheck and web exports passed. Automatic Hosting/Pages deployments did not run, and live native-endpoint verification remains pending. A narrow compatibility-policy correction is under review. This failure is not evidence of an Android runtime regression, and merge alone is not proof of endpoint deployment or release readiness.
+
+## Business outcome evaluation
+
+No causal subscription, retention or net-revenue improvement is established by these engineering receipts. After release health is stable, define one experiment with a verified baseline, success/guardrail metrics, an evaluation window and stopping criteria. Report unavailable measurements and inconclusive outcomes explicitly. Keep financial reports and private customer data outside this public repository.

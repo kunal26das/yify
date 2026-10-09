@@ -1,9 +1,35 @@
-# Team implementation state
+# Android delivery handoff
 
-The portable team policy was prepared in an isolated checkout against baseline `3c91ecbca833aa5230d6fe11bdc41c2e88da5480`. This state file is a sanitized handoff, not a claim that the team has been activated in a managed runtime.
+Updated 2026-10-09 18:08 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-The intended source of truth is `config/agent-team.json`, `docs/agents/team.md`, and the twelve role briefs. `AGENTS.md` points agents to those files and to the pre-existing `CLAUDE.md`. The repository's `.codex/config.toml` and its WebStorm MCP setting are outside this change.
+## Current source and priority
 
-The mechanism is explicit native delegation with a bounded assignment. Whether the executing runtime loads any project role file, supports preferred models, or exposes effective model selection must be checked in that runtime. A role brief does not grant or revoke tools, account permissions, or credentials.
+Last verified main: `934455c65bdad11f13cfc78eb3147201aed26d72` (native metadata boundary, PR #969), preserving the HSDP fix from PR #968 and the movie-details fix from PR #965. Android source declares version/runtime `1.8.16`, versionCode `98`; that declaration is not a store release. The highest-priority unfinished outcome is the Android startup-crash fix, a compatible new binary, Play delivery, and subsequent crash-health verification. The native rewrite is deferred. iOS preparation may continue; publication remains gated on authorized, complete release setup.
 
-Current handoff: obtain independent exact-commit review after the change is committed, then perform live role/delegation probes only in an authorized execution context. Record actual evidence in `docs/agents/verification.md` before claiming those probes passed. No merge, production release, paid-service change, new schedule, or campaign is authorized by this state file.
+PR #968 merged after final-head `af61d335fa0251cc654c7185533ff47cd9a31b68` passed standard CI, clean Android regeneration, HSDP dependency verification and independent review. Main CI and both web deployments also succeeded. The graph report uses preinstalled NDK `27.3.13750724` only to configure dependencies; it does not build native code or establish compatibility with the project's release NDK. A separate isolated JVM harness directly reproduces the missing-extra exception in the unmodified HSDP 2.0.1 AAR and verifies safe completion in 2.2.0; this is not a device or full-app integration test.
+
+PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03efa1d7db39fc8f069fd9915b`. Post-merge main CI failed at Expo doctor after its recommendation for `react-native-web` changed from installed `0.21.3` to `^0.21.4`; tests, typecheck and web exports passed. Automatic web deployments did not run, so the native-specific endpoint is not yet verified live. A focused compatibility-policy correction remains under review. Do not release candidate 97 unchanged.
+
+## Delivery status
+
+- Android `1.8.14` storage OTA was published and its Production/runtime `1.8.14` manifest was verified available. Group `8dd4a8cf-2751-42c4-ab15-7dc5e5dd7b7b`; source `c6cf23e21dd6dd6bad1fd2b693c0efbdce314c3f`. This JavaScript-only update does not contain the newer native crash fix.
+- Web main `73c6996` passed CI and both EAS Hosting and GitHub Pages deployment workflows. Deployment receipts are in the verification record; they are not proof of every rendered journey.
+- Android candidate `1.8.15` / code `97` / runtime `1.8.15`, EAS build `ee1be7b3-c44c-4956-a1ac-a676243db901`, finished building and passed exact-AAB checks plus a 20-second isolated API 35 x86_64 welcome-screen smoke. It was not submitted to Play and is superseded for release by required fixes.
+- Last observed Play production was `1.8.14` / code `96`. No new store availability or crash recovery is established by these build/test receipts.
+
+## Unresolved release gates and next action
+
+1. Resolve the verified Expo-doctor recommendation drift through review and fresh CI, then verify both web deployments and the native-specific server endpoint before a dependent Android release.
+2. Establish and validate a documented fresh-cloud setup covering pinned Node/Yarn dependencies, JDK, Android SDK/build tools, project NDK, emulator and test prerequisites together. Record failure diagnoses and changes between attempts.
+3. Run the new compile-only workflow on a fresh hosted machine, recording its exact source, complete prerequisite receipt, full native compilation and four-ABI packaging result. This is still pending.
+4. Preserve the independently repeated real-bytecode failure-path regression and extend safe test-service validation through consent, connected startup, browsing, sign-in, purchase and restore. Production defaults make an unspecified test environment unsafe; fail closed. Record untested devices and paths explicitly.
+5. Build the final exact source using existing Expo-managed signing; inspect the established submission route from PR #954. `play-production` targets production/completed; the `production` submission profile targets internal/draft. A successful submission is not Play review approval or user availability.
+6. Verify the release receipt, Play availability and version-specific crash health separately. Only then start one measured growth experiment; unavailable metrics remain unknown. Keep business metrics and customer information out of this public record.
+
+## Rollback and compatibility
+
+Keep the existing production binary and compatible OTA as the baseline until new delivery is verified. Never publish native changes into runtime `1.8.14` as an OTA. For a verified OTA regression, use the authenticated Expo rollback/republish route only for the affected compatible runtime after reviewing its receipt; that recovery procedure has not been exercised here. For a binary regression, halt an active rollout where supported and prepare a validated corrective higher-version-code binary. Do not assume an uploaded older AAB can downgrade installed applications. For web, revert the offending source through reviewed CI and verify both deployment targets. Record any actual rollback and its health result before closing the incident.
+
+## Team and runtime
+
+Use one lead and at most three necessary specialists concurrently, without nested delegation by default. Independent reviewers inspect the final proposed commit. Customer-facing experience work requires design before implementation and rendered inspection afterward. The runtime exposes model and effort selection arguments and accepts delegations; independently effective inference settings and technical global concurrency/credential enforcement remain unknown. Repository policy and validators do not create those controls. The lead retains merge and production decisions within the owner's authorization, with one production operation at a time.
