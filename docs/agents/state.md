@@ -1,6 +1,6 @@
 # Android delivery handoff
 
-Updated 2026-10-09 18:08 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-09 18:19 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
 ## Current source and priority
 
@@ -21,7 +21,7 @@ PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03ef
 
 1. Resolve the verified Expo-doctor recommendation drift through review and fresh CI, then verify both web deployments and the native-specific server endpoint before a dependent Android release.
 2. Establish and validate a documented fresh-cloud setup covering pinned Node/Yarn dependencies, JDK, Android SDK/build tools, project NDK, emulator and test prerequisites together. Record failure diagnoses and changes between attempts.
-3. Run the new compile-only workflow on a fresh hosted machine, recording its exact source, complete prerequisite receipt, full native compilation and four-ABI packaging result. This is still pending.
+3. Resolve the first fresh-hosted setup failure: run `37971814065` at source `98963f342f40f9db076281c3334595f9f987defd` could not resolve SDK package `platforms;android-37` and stopped before dependency installation or compilation. Verify the official package inventory and naming before one coherent correction. Full native compilation and four-ABI packaging remain pending.
 4. Preserve the independently repeated real-bytecode failure-path regression and extend safe test-service validation through consent, connected startup, browsing, sign-in, purchase and restore. Production defaults make an unspecified test environment unsafe; fail closed. Record untested devices and paths explicitly.
 5. Build the final exact source using existing Expo-managed signing; inspect the established submission route from PR #954. `play-production` targets production/completed; the `production` submission profile targets internal/draft. A successful submission is not Play review approval or user availability.
 6. Verify the release receipt, Play availability and version-specific crash health separately. Only then start one measured growth experiment; unavailable metrics remain unknown. Keep business metrics and customer information out of this public record.
