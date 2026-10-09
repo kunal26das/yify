@@ -30,6 +30,8 @@ CI=1 EXPO_NO_GIT_STATUS=1 ./node_modules/.bin/expo prebuild --platform android -
     2>&1 | tee "$STATE/evidence/prebuild.log"
 test -z "$(git status --porcelain -- android)"
 node scripts/android-qa/preflight.mjs inspect "$ROOT" "$SOURCE_SHA" build > "$STATE/evidence/build-preflight.json"
+bash scripts/android-qa/test-compile-only-guard.sh "$STATE/evidence/compile-only-guard" \
+    2>&1 | tee "$STATE/evidence/compile-only-guard.log"
 cd android
 ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
     -Dhsdp.verify.androidRoot="$PWD" -Dhsdp.verify.ndkVersion=27.1.12297006 \
