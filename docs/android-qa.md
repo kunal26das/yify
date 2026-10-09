@@ -11,7 +11,7 @@ bash scripts/android-qa/run-compile-only.sh \
   "$CHECKOUT" "$REVIEWED_SOURCE_SHA" "$EXTERNAL_QA_STATE"
 ```
 
-The external state directory must not be inside the checkout. It keeps the isolated home, Gradle cache, downloaded HSDP AARs, prerequisite receipt, and evidence. Do not share it between concurrent runs. The runner removes inherited service credentials and Gradle/Java/Node overrides, disables dotenv loading and Sentry uploads, and blocks enabled upload/publish/deploy/submit Gradle tasks. Crashlytics native-symbol upload is disabled explicitly; its existing release-task dependency is disabled by the guard. These checks apply to the reviewed current build scripts; they are not an OS network sandbox for arbitrary code.
+The external state directory must not be inside the checkout. It keeps the isolated home, Gradle cache, downloaded HSDP AARs, prerequisite receipt, and evidence. Do not share it between concurrent runs. The runner removes inherited service credentials and Gradle/Java/Node overrides, disables dotenv loading and Sentry uploads, and blocks enabled upload/publish/deploy/submit Gradle tasks. After the complete task graph is realized, known Sentry/Crashlytics uploads are disabled and given an unconditional false execution predicate, so a later plugin enable assignment cannot execute them. The catch-all rejects enabled unknown externally mutating tasks at graph readiness and attaches an execution-time rejection to every unknown mutation task, including one initially disabled and re-enabled later. Crashlytics native-symbol upload is disabled explicitly as well. These checks apply to the reviewed current build scripts; they are not an OS network sandbox for arbitrary code.
 
 The workflow first checks the exact source, clean worktree, absence of ignored dotenv/signing/SDK overrides, compiler module, SDK command-line metadata, existing license receipt, and at least 20 GiB free. It stops before heavy installation if any prerequisite fails. It does not free unrelated files or change KVM permissions. Choose a runner with sufficient free disk rather than repeat an identical capacity failure.
 
@@ -43,7 +43,8 @@ The workflow uploads setup diagnosis and test/build evidence for seven days. It 
 1. Root frozen install, dependency pins, typecheck, and complete repository test command.
 2. The explicit mocked-journey groups in `mock-journeys.json`: consent and startup, catalog browsing/recovery, sign-in/session recovery, and purchase/restore. They exercise real application modules against replaced native/network boundaries. A preload refuses live fetch/socket traffic as a guard against accidental network access. These are not device tests, Firebase integration tests, or Billing sandbox tests.
 3. Direct HSDP regression using unmodified, checksum-pinned official 2.0.1 and 2.2.0 AAR class bytes on minimal JVM Android stubs. Version 2.0.1 must reproduce `IllegalStateException: targetPackageName is null` in attached/configuration/new-intent callbacks; 2.2.0 must finish safely, including repeated callbacks and null/empty onCreate paths. This establishes the malformed-intent guard behavior, not Android 11 lifecycle or full-app integration.
-4. Clean Android prebuild parity, actual release runtime graph resolution to HSDP 2.2.0, native release compilation, and four-ABI APK packaging checks. Source and artifact hashes are recorded. A missing `compile-only-receipt.json` means this sequence did not finish successfully.
+4. An SDK-free real-Gradle regression for plugin task-enable overwrites, Sentry finalizers and rejection of unknown upload/publish/deploy/submit tasks. It records successful skipping of known telemetry tasks even after a later graph listener re-enables them, and verifies no actions run in the rejected graph. Each unknown mutation class is also tested disabled at graph readiness and re-enabled by a later listener; execution must still be rejected before its action.
+5. Clean Android prebuild parity, actual release runtime graph resolution to HSDP 2.2.0, native release compilation, and four-ABI APK packaging checks. Source and artifact hashes are recorded. A missing `compile-only-receipt.json` means this sequence did not finish successfully.
 
 Run just the class-byte regression without Android SDK or app dependencies:
 
@@ -52,6 +53,14 @@ bash scripts/android-qa/run-hsdp-regression.sh "$EXTERNAL_AAR_CACHE"
 ```
 
 The harness needs a JDK compiler module. JDK 21 can run this isolated regression, although the native build requires JDK 17. Cached artifacts are checksum-verified before execution; missing AARs are downloaded only from Google's official Maven endpoint.
+
+Run just the Gradle guard regression with the source-pinned wrapper and an external evidence directory:
+
+```sh
+bash scripts/android-qa/test-compile-only-guard.sh "$EXTERNAL_EVIDENCE_DIRECTORY"
+```
+
+The fixture uses no Android SDK or app services and runs Gradle offline after the checksum-pinned wrapper distribution is available. Its initial local regression was verified on JDK 21; the hosted full build runs the same fixture with JDK 17. The local fixture result does not replace full native compilation.
 
 Run the grouped mocked journeys after the frozen install:
 
