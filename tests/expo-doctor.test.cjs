@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {mkdtemp, mkdir, writeFile, rm} = require('node:fs/promises');
+const {mkdtemp, mkdir, readFile, writeFile, rm} = require('node:fs/promises');
 const {tmpdir} = require('node:os');
 const {dirname, join} = require('node:path');
 const helpers = import('../scripts/check-expo-doctor.mjs');
@@ -112,6 +112,38 @@ test('remote patch recommendations can advance while the exact reviewed installe
     for (const bundled of ['~58.0.7', '~57.0.6', '~58.1.0', 'invalid']) {
         assert.throws(() => reviewDeviations([current], policy, '58.0.0', {...installedSdk, bundledNativeModules: {'expo-constants': bundled}}), /Unreviewed/);
     }
+});
+
+test('committed React Native Web policy accepts only the reviewed recommendation and installed version', async () => {
+    const {reviewDeviations, assessDoctor} = await helpers;
+    const committed = JSON.parse(await readFile(join(__dirname, '../scripts/expo-dependency-policy.json'), 'utf8'));
+    const approved = committed.packages['react-native-web'];
+    assert.equal(approved.version, '0.21.3');
+    assert.equal(approved.expected, '^0.21.4');
+    const installedSdk = {
+        expoVersion: '58.0.5',
+        installedVersions: Object.fromEntries(Object.entries(committed.packages).map(([name, entry]) => [name, entry.version])),
+        bundledNativeModules: {'react-native-web': '~0.21.3'},
+    };
+    const current = {packageName: 'react-native-web', actualVersion: '0.21.3', expectedVersionOrRange: '^0.21.4'};
+    assert.match(reviewDeviations([current], committed, '58.0.0', installedSdk)[0], /bundled ~0.21.3.*shared asset registry/);
+    const run = result([dependencyTitle], 'react-native-web  ^0.21.4  0.21.3\n1 package out of date.');
+    assert.deepEqual(assessDoctor(run, {reviewedDependencies: [current]}), [dependencyTitle]);
+    for (const expectedVersionOrRange of ['~0.21.4', '^0.21.3', '^0.21.5', '^0.22.0', '0.21.4', '>=0.21.4', '^0.21.4 || ^0.22.0']) {
+        assert.throws(() => reviewDeviations([{...current, expectedVersionOrRange}], committed, '58.0.0', installedSdk), /Unreviewed/);
+    }
+    for (const actualVersion of ['0.21.2', '0.21.4', '0.22.0']) {
+        assert.throws(() => reviewDeviations([{...current, actualVersion}], committed, '58.0.0', installedSdk), /Unreviewed/);
+        assert.throws(() => reviewDeviations([], committed, '58.0.0', {
+            ...installedSdk, installedVersions: {...installedSdk.installedVersions, 'react-native-web': actualVersion},
+        }), /Unreviewed installed/);
+    }
+    const withoutWeb = {...committed, packages: {...committed.packages}};
+    delete withoutWeb.packages['react-native-web'];
+    assert.throws(() => reviewDeviations([current], withoutWeb, '58.0.0', installedSdk), /Unreviewed/);
+    assert.throws(() => reviewDeviations([current], committed, '59.0.0', installedSdk), /installed SDK/);
+    assert.throws(() => assessDoctor(result([dependencyTitle], 'react-native-web  ^0.21.5  0.21.3\n1 package out of date.'),
+        {reviewedDependencies: [current]}), /findings differ/);
 });
 
 test('an installed SDK default permits patch drift only for a known package with a matching installed version', async () => {
