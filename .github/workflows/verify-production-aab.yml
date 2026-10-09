@@ -37,6 +37,11 @@ jobs:
       - name: Test verifier
         run: node --test scripts/verify-production-aab.test.mjs scripts/verify-signed-aab.test.mjs
 
+      - name: Install locked app dependencies for Expo config
+        run: yarn install --frozen-lockfile --non-interactive
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
       - name: Install locked EAS CLI
         run: yarn install --frozen-lockfile --non-interactive
         working-directory: release
