@@ -44,6 +44,7 @@ jobs:
             ./node_modules/.bin/expo prebuild --platform android --no-install --clean
           if [ -n "$(git status --porcelain -- android)" ]; then
             git status --short -- android
+            git diff -- android/gradlew.bat
             exit 1
           fi
 
