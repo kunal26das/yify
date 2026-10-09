@@ -1,0 +1,24 @@
+{
+  "consent-and-startup": [
+    "tests/privacy-preferences.test.cjs",
+    "tests/privacy-gate.test.cjs",
+    "tests/privacy-bootstrap.test.cjs",
+    "tests/remote-config-recovery.test.cjs",
+    "tests/expo-network-monitor.test.cjs"
+  ],
+  "catalog-browsing-and-recovery": [
+    "tests/browse-presets.test.cjs",
+    "tests/movie-pagination.test.cjs",
+    "tests/catalog-request-recovery.test.cjs",
+    "tests/catalog-response-validation.test.cjs"
+  ],
+  "sign-in-and-session-recovery": [
+    "tests/diagnostics-purchase-auth.test.cjs",
+    "tests/account-sync-deletion.test.cjs"
+  ],
+  "purchase-and-restore": [
+    "tests/revenuecat-purchases.test.cjs",
+    "tests/play-store-services.test.cjs",
+    "tests/revenuecat-ad-tracking.test.cjs"
+  ]
+}
