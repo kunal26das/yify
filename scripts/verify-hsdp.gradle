@@ -1,5 +1,12 @@
+def expectedRootPath = System.getProperty('hsdp.verify.androidRoot')
+if (expectedRootPath == null) throw new GradleException('Expected -Dhsdp.verify.androidRoot for HSDP verification')
+def expectedRoot = new File(expectedRootPath).canonicalFile
+
 gradle.projectsEvaluated {
-    def app = gradle.rootProject.project(':app')
+    if (gradle.rootProject.projectDir.canonicalFile != expectedRoot) return
+    if (gradle.rootProject.name != 'Yify') throw new GradleException('Expected Yify Android root project')
+    def app = gradle.rootProject.findProject(':app')
+    if (app == null) throw new GradleException('Expected :app in Yify Android root project')
     app.tasks.register('verifyHsdpRuntime') {
         doLast {
             def minSdk = app.extensions.getByName('android').defaultConfig.minSdk
