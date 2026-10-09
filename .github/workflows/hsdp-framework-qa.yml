@@ -1,6 +1,11 @@
 name: HSDP Android framework regression
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/hsdp-framework-qa.yml
+      - qa/hsdp-device/**
+      - tests/hsdp-device.test.cjs
   workflow_dispatch:
     inputs:
       source_sha:
@@ -17,7 +22,10 @@ concurrency:
 
 jobs:
   verify:
-    if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main'
+    if: >-
+      github.repository == 'kunal26das/yify' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     strategy:
@@ -25,9 +33,13 @@ jobs:
       matrix:
         api: [30, 35]
     steps:
+      - name: Validate immutable source selection
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
+        run: test "${#SOURCE_SHA}" = 40 && [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
@@ -39,7 +51,7 @@ jobs:
           java-version: '17'
       - name: Verify two original HSDP variants on Android API ${{ matrix.api }}
         env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
           TEST_API: ${{ matrix.api }}
         run: bash qa/hsdp-device/run.sh "$SOURCE_SHA" "$TEST_API" "$RUNNER_TEMP/hsdp-$TEST_API"
       - name: Preserve exact static and framework evidence
