@@ -151,7 +151,28 @@ test('compile-only runner isolates environment and disables telemetry uploads wi
     assert.match(guard, /nativeSymbolUploadEnabled = false/);
     assert.match(guard, /task.enabled = false/);
     assert.match(guard, /gradle.taskGraph.whenReady/);
+    assert.ok(guard.indexOf('gradle.taskGraph.whenReady') < guard.indexOf('task.enabled = false'));
+    assert.ok(guard.indexOf('task.enabled = false') < guard.indexOf('def forbidden'));
+    assert.match(guard, /task.onlyIf\('Compile-only QA blocks telemetry uploads'\) \{ false \}/);
+    assert.match(guard, /task.onlyIf\('Compile-only QA rejects external mutation at execution'\)/);
+    assert.match(guard, /throw new GradleException\("Compile-only QA refuses externally mutating task execution:/);
+    assert.match(guard, /name.contains\('upload'\) \|\| name.startsWith\('publish'\) \|\| name.startsWith\('deploy'\) \|\| name.startsWith\('submit'\)/);
+    assert.ok(script.indexOf('test-compile-only-guard.sh') < script.indexOf(':app:verifyHsdpRuntime'));
     assert.doesNotMatch(script, /eas\.sh|submit:|play-upload|adb /);
+});
+
+test('real Gradle guard fixture checks late enable overwrites and fails unknown mutations before actions', () => {
+    const fixture = readFileSync(join(root, 'scripts/android-qa/test-compile-only-guard.sh'), 'utf8');
+    assert.match(fixture, /tasks.configureEach/);
+    assert.match(fixture, /tasks.register\(name\) \{\n        enabled = true/);
+    assert.match(fixture, /uploads.each \{ tasks.named\(it\).get\(\).enabled = true \}/);
+    assert.match(fixture, /enabled = !providers.gradleProperty\('lateUnknownTask'\).isPresent\(\)/);
+    assert.match(fixture, /tasks.named\(providers.gradleProperty\('lateUnknownTask'\).get\(\)\).get\(\).enabled = true/);
+    assert.match(fixture, /-PlateUnknownTask=\$task/);
+    assert.match(fixture, /finalizedBy\(uploads\[0\]\)/);
+    assert.match(fixture, /test -z "\$\(find "\$FIXTURE" -name '\*\.executed' -print -quit\)"/);
+    for (const name of ['uploadUnknownDestination', 'publishFixture', 'deployFixture', 'submitFixture']) assert.ok(fixture.includes(name));
+    assert.doesNotMatch(fixture, /https?:|curl |fetch\(|credentials|secrets/);
 });
 
 test('mocked QA rejects live fetch and socket connections before loading application fixtures', () => {
