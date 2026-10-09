@@ -9,6 +9,7 @@ public final class ProbeApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        IdentityEvidence.verify(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             public void onActivityCreated(Activity activity, Bundle state) { record("framework_created", activity); }
             public void onActivityStarted(Activity activity) { record("framework_started", activity); }

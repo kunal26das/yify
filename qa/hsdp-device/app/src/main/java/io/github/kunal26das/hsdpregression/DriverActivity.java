@@ -22,6 +22,10 @@ public final class DriverActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (getIntent().getBooleanExtra("qa_identity_only", false)) {
+            finish();
+            return;
+        }
         String scenario = getIntent().getStringExtra("qa_case");
         String run = getIntent().getStringExtra("qa_run");
         if (!CASES.contains(scenario)) throw new IllegalArgumentException("Unsupported QA case");
