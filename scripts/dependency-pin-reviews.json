@@ -33,7 +33,7 @@
           "file": "package.json",
           "section": "dependencies",
           "name": "expo",
-          "version": "58.0.3"
+          "version": "58.0.5"
         },
         {
           "file": "package.json",
@@ -48,7 +48,7 @@
           "version": "8.0.6"
         }
       ],
-      "reason": "Expo 58.0.3 and Worklets 0.13.0 still require Babel 7 APIs. The private compatibility alias coexists with Babel 8.0.6 for mocked test fixtures.",
+      "reason": "Expo 58.0.5 and Worklets 0.13.0 still require Babel 7 APIs. The private compatibility alias coexists with Babel 8.0.6 for mocked test fixtures.",
       "evidence": "docs/dependency-pin-review.md"
     }
   ]
