@@ -1832,10 +1832,10 @@ dunder-proto@^1.0.1:
     es-errors "^1.3.0"
     gopd "^1.2.0"
 
-eas-cli@24.10.0:
-  version "24.10.0"
-  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-24.10.0.tgz#bef738a0550a704f4b6b88340b4561b2cbbdae5c"
-  integrity sha512-RP+l/ZYHHQLGldpqO6kzM4H4uXMO0d3YPq2W7rITABcMJtq/NpoblciT4rc3WtFFOwN8ZRFpYzwDFnM2wEQ1+Q==
+eas-cli@24.11.0:
+  version "24.11.0"
+  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-24.11.0.tgz#f7cd4e2fd423801216ec4ad5cd399e4154e8500d"
+  integrity sha512-aWw6OhIOfjWrJN8/ycT+AAS24ivTt6Xy06U+4mKX9+DRy2+T9EeKkmGzIo0lmj105D8F2Rrk3OkmzWrRu+hL7A==
   dependencies:
     "@expo/apple-utils" "2.2.1"
     "@expo/code-signing-certificates" "0.0.5"
