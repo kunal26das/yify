@@ -1,0 +1,36 @@
+if (System.getenv('SENTRY_DISABLE_AUTO_UPLOAD') != 'true') {
+    throw new GradleException('Compile-only QA requires SENTRY_DISABLE_AUTO_UPLOAD=true')
+}
+
+gradle.projectsEvaluated {
+    def app = gradle.rootProject.findProject(':app')
+    if (app != null && app.plugins.hasPlugin('com.android.application')) {
+        def android = app.extensions.getByName('android')
+        if (android.ndkVersion != '27.1.12297006') throw new GradleException('Compile-only QA refuses an NDK override')
+        if (android.buildToolsVersion != '37.0.0') throw new GradleException('Compile-only QA refuses a build-tools override')
+        if (android.defaultConfig.minSdk != 24 || android.defaultConfig.targetSdk != 36 || android.compileSdk != 37) {
+            throw new GradleException('Compile-only QA refuses Android API level overrides')
+        }
+        android.buildTypes.release.firebaseCrashlytics.nativeSymbolUploadEnabled = false
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        def name = task.name.toLowerCase(java.util.Locale.ROOT)
+        if (name.contains('upload') && (name.contains('crashlytics') || name.contains('sentry'))) {
+            task.enabled = false
+            task.onlyIf('Compile-only QA blocks telemetry uploads') { false }
+        } else if (name.contains('upload') || name.startsWith('publish') || name.startsWith('deploy') || name.startsWith('submit')) {
+            task.onlyIf('Compile-only QA rejects external mutation at execution') {
+                throw new GradleException("Compile-only QA refuses externally mutating task execution: ${task.path}")
+            }
+        }
+    }
+    def forbidden = graph.allTasks.findAll { task ->
+        def name = task.name.toLowerCase(java.util.Locale.ROOT)
+        task.enabled && (name.contains('upload') || name.startsWith('publish') || name.startsWith('deploy') || name.startsWith('submit'))
+    }
+    if (!forbidden.isEmpty()) throw new GradleException("Compile-only QA refuses externally mutating tasks: ${forbidden*.path}")
+    println('Verified compile-only task graph: telemetry uploads disabled and execution-gated; unknown mutation guards installed at graph readiness and execution')
+}
