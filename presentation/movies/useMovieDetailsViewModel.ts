@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Movie, MovieDetails, MovieRepository } from '@/domain';
 import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 
@@ -9,6 +9,18 @@ export function useMovieDetailsViewModel(repository: MovieRepository, movieId: n
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const identity = useRef({repository, movieId});
+  const identityChanged = identity.current.repository !== repository || !Object.is(identity.current.movieId, movieId);
+
+  useEffect(() => {
+    if (identity.current.repository === repository && Object.is(identity.current.movieId, movieId)) return;
+    identity.current = {repository, movieId};
+    setDetails(null);
+    setSuggestions([]);
+    setLoading(true);
+    setRefreshing(false);
+    setError(null);
+  }, [repository, movieId]);
 
   useEffect(() => {
     let active = true;
@@ -53,9 +65,17 @@ export function useMovieDetailsViewModel(repository: MovieRepository, movieId: n
     setReloadKey((k) => k + 1);
   }, []);
 
-  useReloadOnCatalogAccess(refresh, loading || refreshing);
+  useReloadOnCatalogAccess(refresh, identityChanged || loading || refreshing);
 
-  return { details, suggestions, loading, refreshing, error, reload, refresh };
+  return {
+    details: identityChanged ? null : details,
+    suggestions: identityChanged ? [] : suggestions,
+    loading: identityChanged || loading,
+    refreshing: !identityChanged && refreshing,
+    error: identityChanged ? null : error,
+    reload,
+    refresh,
+  };
 }
 
 export type MovieDetailsViewModel = ReturnType<typeof useMovieDetailsViewModel>;
