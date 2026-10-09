@@ -1,0 +1,63 @@
+name: Verify Android HSDP dependency
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/verify-hsdp-dependency.yml
+      - app.json
+      - app.config.js
+      - android/**
+      - package.json
+      - plugins/**
+      - scripts/verify-hsdp.gradle
+      - tests/hsdp-version-plugin.test.cjs
+      - yarn.lock
+
+permissions:
+  contents: read
+
+jobs:
+  dependency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install frozen dependencies
+        run: yarn install --frozen-lockfile --non-interactive
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+      - name: Verify generated Android sources match Expo prebuild
+        run: |
+          set -euo pipefail
+          CI=1 EXPO_NO_TELEMETRY=1 EXPO_NO_GIT_STATUS=1 \
+            ./node_modules/.bin/expo prebuild --platform android --no-install --clean
+          if [ -n "$(git status --porcelain -- android)" ]; then
+            git status --short -- android
+            exit 1
+          fi
+
+      - name: Verify HSDP release runtime graph and minimum SDK
+        working-directory: android
+        run: |
+          set -euo pipefail
+          export JAVA_HOME="${JAVA_HOME_17_X64:?Preinstalled JDK 17 is required}"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          test -x "$JAVA_HOME/bin/java"
+          test -d "${ANDROID_HOME:?Preinstalled Android SDK is required}/platforms"
+          ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
+            -I ../scripts/verify-hsdp.gradle :app:verifyHsdpRuntime
+          ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
+            :app:dependencyInsight --configuration releaseRuntimeClasspath \
+            --dependency com.google.android.play:hsdp > "$RUNNER_TEMP/hsdp-insight.txt"
+          cat "$RUNNER_TEMP/hsdp-insight.txt"
