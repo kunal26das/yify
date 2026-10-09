@@ -1,7 +1,8 @@
-import type {KeyValueStore, Movie, NewMoviesNotification, NotificationPreferences, Preferences, Quality} from '@/domain';
+import type {KeyValueStore, Movie, NewMoviesNotification, NotificationPreferences, Preferences} from '@/domain';
 import {
     DEFAULT_NOTIFICATION_PREFERENCES,
     NOTIFICATION_BURST_LIMIT,
+    Quality,
     buildDailyMoviePicks,
     buildNotificationBatch,
     filterNotifiableMovies,
@@ -11,6 +12,7 @@ import {
     selectNewMovies,
 } from '@/domain';
 import {SeenMoviesRepositoryImpl} from '../repositories/SeenMoviesRepositoryImpl';
+import {projectMovie} from '../server/catalog/projections';
 
 export interface ScheduledMovieNotification {
     identifier: string;
@@ -93,6 +95,9 @@ function catalogMovies(value: unknown): Movie[] {
             !Array.isArray(movie.genres) || movie.genres.some((genre: unknown) => typeof genre !== 'string') || seen.has(movie.id)) return false;
         seen.add(movie.id);
         return true;
+    }).map(movie => {
+        const projected = projectMovie(movie);
+        return {...projected, genres: projected.genres.filter((genre): genre is string => typeof genre === 'string')};
     });
 }
 
@@ -114,6 +119,7 @@ export class MovieNotificationCoordinator {
 
     constructor(private readonly options: CoordinatorOptions) {
         this.seen = new SeenMoviesRepositoryImpl(options.store);
+        for (const quality of Object.values(Quality)) this.cachedCatalog(quality);
     }
 
     invalidate(): void {
@@ -235,10 +241,17 @@ export class MovieNotificationCoordinator {
     }
 
     private cachedCatalog(quality: Quality): Catalog | null {
-        const raw = readJSON(this.options.store, CATALOG_PREFIX + (quality || 'all'));
+        const key = CATALOG_PREFIX + (quality || 'all');
+        const raw = readJSON(this.options.store, key);
         if (!raw || typeof raw !== 'object' || !('fetchedAt' in raw) || !('movies' in raw) ||
-            typeof raw.fetchedAt !== 'number' || !Number.isFinite(raw.fetchedAt)) return null;
-        return {fetchedAt: raw.fetchedAt, movies: catalogMovies(raw.movies)};
+            typeof raw.fetchedAt !== 'number' || !Number.isFinite(raw.fetchedAt)) {
+            if (this.options.store.getString(key) !== undefined) this.options.store.delete(key);
+            return null;
+        }
+        const catalog = {fetchedAt: raw.fetchedAt, movies: catalogMovies(raw.movies)};
+        const clean = JSON.stringify(catalog);
+        if (this.options.store.getString(key) !== clean) this.options.store.set(key, clean);
+        return catalog;
     }
 
     private async catalog(quality: Quality, now: Date, force: boolean) {

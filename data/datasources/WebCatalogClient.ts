@@ -243,6 +243,7 @@ export class WebCatalogClient {
         private readonly subscriberAccess?: SubscriberCatalogAccess,
         private readonly baseUrl?: string,
         private readonly network?: NetworkMonitor,
+        private readonly subscriberBaseUrl?: string,
     ) {}
 
     listMovies(params: ListMoviesParams): Promise<ListMoviesResult> {
@@ -297,7 +298,9 @@ export class WebCatalogClient {
         params.set('v', '2');
         const url = `${this.baseUrl ?? webCatalogBaseUrl()}/${endpoint}?${params}`;
         if (this.subscriberAccess) {
-            const subscriberUrl = url.replace('/api/catalog/', '/api/subscriber-catalog/');
+            const subscriberUrl = this.subscriberBaseUrl
+                ? `${this.subscriberBaseUrl}/${endpoint}?${params}`
+                : url.replace('/api/catalog/', '/api/subscriber-catalog/');
             return this.subscriberAccess.load(subscriberUrl, value => {
                 metadataOnly(value);
                 return parse(value);

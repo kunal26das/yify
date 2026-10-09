@@ -295,19 +295,26 @@ test('web notification checks use the metadata repository independently of the m
     assert.deepEqual(requests, [`${base}/movies?page=1&limit=50&quality=1080p&v=2`]);
 });
 
-test('native catalog factory retains its configured source and native torrent metadata', async t => {
+test('native catalog factory uses only canonical projected metadata routes', async t => {
     const requests = [];
     t.mock.method(globalThis, 'fetch', async url => {
         requests.push(url);
-        return {ok: true, status: 200, json: async () => ({status: 'ok', data: {movie: {
-            id: 42, title: 'Native', genres: [], torrents: [{url: 'https://provider.example/file.torrent',
-                hash: 'a'.repeat(40), quality: '1080p', date_uploaded_unix: 1}],
-        }}})};
+        const operation = new URL(url).pathname.split('/').at(-1);
+        return Response.json({movies: {movies: [movie()], pageNumber: 1, movieCount: 1, hasMore: false},
+            movie: details(), suggestions: [movie()], 'parental-guides': [],
+            shows: {shows: [show()], pageNumber: 1, hasMore: false}, episodes: [episode()]}[operation]);
     });
     const {createCatalogRepositories} = loadTypeScript('data/di/catalogRepositories.ts');
-    const repositories = createCatalogRepositories({getApiBaseUrl: () => 'https://configured.example/api/v2'});
+    const repositories = createCatalogRepositories({getApiBaseUrl() {assert.fail('Native reached provider configuration');}});
+    assert.equal((await repositories.movies.listMovies({page: 1})).movies[0].id, 42);
     const detail = await repositories.movies.getMovieDetails(42);
-    assert.equal(detail.torrents[0].hash, 'a'.repeat(40));
-    assert.equal(detail.torrents[0].url, 'https://provider.example/file.torrent');
-    assert.ok(requests[0].startsWith('https://configured.example/api/v2/'));
+    assert.equal(detail.torrents[0].hash, '');
+    assert.equal(detail.torrents[0].url, '');
+    await repositories.movies.getMovieSuggestions(42);
+    await repositories.movies.getMovieParentalGuides(42);
+    await repositories.shows.listShows({page: 1});
+    assert.equal((await repositories.shows.listEpisodes('1234567'))[0].magnetUrl, '');
+    assert.deepEqual(requests.map(url => new URL(url).pathname),
+        ['movies', 'movie', 'suggestions', 'parental-guides', 'shows', 'episodes'].map(operation => `/api/catalog/${operation}`));
+    assert.ok(requests.every(url => new URL(url).origin === 'https://yify.expo.app'));
 });

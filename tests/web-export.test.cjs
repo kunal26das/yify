@@ -12,7 +12,7 @@ const markers = ['movies-api.accel.li', 'eztvx.to', 'nyaa.si', 'list_movies.json
 const subscriberMarkers = ['YIFY_SUBSCRIBER_FIREBASE_PROJECT_ID', 'YIFY_SUBSCRIBER_OWNER_UID', 'YIFY_SUBSCRIBER_REVENUECAT_API_KEY',
     'YIFY_SUBSCRIBER_REVENUECAT_PRODUCT_IDS', 'AVAILABILITY_ALERTS_PILOT_UIDS', 'TMDB_COMMERCIAL_LICENSE_CONFIRMED', 'https://api.revenuecat.com/v2/projects/',
     'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'];
-const apiRoutes = ['catalog', 'subscriber-catalog'].map(name => ({
+const apiRoutes = ['catalog', 'subscriber-catalog', 'native-subscriber-catalog'].map(name => ({
     page: `/api/${name}/[operation]`, file: `_expo/functions/api/${name}/[operation]+api.js`,
 })).concat([{page: '/api/availability-alerts/status', file: '_expo/functions/api/availability-alerts/status+api.js'}]);
 
@@ -248,7 +248,8 @@ for (const server of [false, true]) {
     test(`${server ? 'Hosting' : 'Pages'} export excludes subscriber server artifacts from public assets`, (t) => {
         const f = fixture(t, server);
         for (const file of ['_expo/functions/api/subscriber-catalog/[operation]+api.js', '_expo/routes.json',
-            'api/subscriber-catalog/[operation]+api.js', 'api/availability-alerts/status+api.js']) {
+            'api/subscriber-catalog/[operation]+api.js', 'api/native-subscriber-catalog/[operation]+api.js',
+            'api/availability-alerts/status+api.js']) {
             f.write(file, 'server implementation');
             const result = f.check();
             assert.equal(result.status, 1);

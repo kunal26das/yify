@@ -427,3 +427,22 @@ test('an off-cancellation failure does not block other cancellations and remains
     assert.equal(f.state.pending.size, 0);
     assert.equal(f.state.fetches.length, 0);
 });
+
+test('startup migrates only legacy notification catalog entries to safe projected movie fields', () => {
+    const f = fixture();
+    const hash = '0123456789abcdef0123456789abcdef01234567';
+    const cached = {...movie(42), title: `Movie magnet:?xt=urn:btih:${hash}`,
+        torrents: [{url: 'https://provider.invalid/file.torrent', hash}],
+        posterUrls: ['https://provider.invalid/file.torrent']};
+    f.values.set('notification-catalog:1080p', JSON.stringify({fetchedAt: f.state.now.getTime(), movies: [cached], raw: {hash}}));
+    f.values.set('notification-catalog:720p', '{broken');
+    f.values.set('daily-pick-history', '[42]');
+    f.values.set('user-settings', 'keep');
+    new MovieNotificationCoordinator(f.coordinatorOptions);
+    const migrated = f.store.getString('notification-catalog:1080p');
+    assert.equal(JSON.parse(migrated).movies[0].id, 42);
+    assert.ok(!/magnet|\.torrent|hash|torrents|0123456789abcdef/i.test(migrated));
+    assert.equal(f.store.getString('notification-catalog:720p'), undefined);
+    assert.equal(f.store.getString('daily-pick-history'), '[42]');
+    assert.equal(f.store.getString('user-settings'), 'keep');
+});

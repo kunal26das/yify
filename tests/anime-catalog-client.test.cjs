@@ -133,7 +133,8 @@ test('native uses canonical production access and Anime endpoints even with a lo
     const api = fixture({native: true});
     await api.subscriberAccess.refresh();
     await api.anime.listAnime({query: 'sample'});
-    assert.deepEqual(requests, [`${base}/access?v=2`, `${base}/anime?query=sample&v=2`]);
+    assert.deepEqual(requests, ['https://yify.expo.app/api/native-subscriber-catalog/access?v=2',
+        'https://yify.expo.app/api/native-subscriber-catalog/anime?query=sample&v=2']);
 });
 
 test('web access checks follow preview origin while Pages uses the canonical origin', async t => {
