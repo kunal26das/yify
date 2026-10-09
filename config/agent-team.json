@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "activation": "explicit_native_delegation",
+  "limits": {
+    "maxConcurrentSpecialists": 3,
+    "maxConcurrentProductionOperations": 1,
+    "nestedDelegationByDefault": false
+  },
+  "authority": {
+    "decisionMaker": "lead",
+    "leadOnlyDecisions": ["merge", "production_release", "recurring_schedule"],
+    "specialistProhibitedActions": ["merge", "publish", "production_release", "production_config_change", "campaign_launch", "recurring_schedule"]
+  },
+  "routineReadOnlyPreference": {
+    "model": "gpt-6-luna",
+    "effort": "medium"
+  },
+  "roles": [
+    { "id": "lead", "title": "Product and Business Lead", "preferredModel": "gpt-6-astra", "defaultEffort": "high", "instructions": "docs/agents/roles/lead.md" },
+    { "id": "designer", "title": "Product Designer — UX, UI and Accessibility", "preferredModel": "gpt-6-astra", "defaultEffort": "high", "instructions": "docs/agents/roles/designer.md" },
+    { "id": "app_engineer", "title": "Android, iOS and Web Engineer", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/app_engineer.md" },
+    { "id": "backend_engineer", "title": "Backend and Data Engineer", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/backend_engineer.md" },
+    { "id": "qa", "title": "Quality and Accessibility Engineer", "preferredModel": "gpt-6-sol", "defaultEffort": "medium", "instructions": "docs/agents/roles/qa.md" },
+    { "id": "reliability", "title": "Reliability and Performance Engineer", "preferredModel": "gpt-6-astra", "defaultEffort": "high", "instructions": "docs/agents/roles/reliability.md" },
+    { "id": "security_privacy", "title": "Security and Privacy Engineer", "preferredModel": "gpt-6-astra", "defaultEffort": "high", "instructions": "docs/agents/roles/security_privacy.md" },
+    { "id": "reviewer", "title": "Independent Code and Architecture Reviewer", "preferredModel": "gpt-6-astra", "defaultEffort": "high", "instructions": "docs/agents/roles/reviewer.md" },
+    { "id": "release_engineer", "title": "Release, CI and Developer Experience Engineer", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/release_engineer.md" },
+    { "id": "growth", "title": "Growth and Customer Acquisition Strategist", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/growth.md" },
+    { "id": "analyst", "title": "Product and Revenue Analyst", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/analyst.md" },
+    { "id": "monetization", "title": "Subscriptions, Advertising and Store Operations Specialist", "preferredModel": "gpt-6-sol", "defaultEffort": "high", "instructions": "docs/agents/roles/monetization.md" }
+  ]
+}
