@@ -1,6 +1,14 @@
 def expectedRootPath = System.getProperty('hsdp.verify.androidRoot')
 if (expectedRootPath == null) throw new GradleException('Expected -Dhsdp.verify.androidRoot for HSDP verification')
 def expectedRoot = new File(expectedRootPath).canonicalFile
+def expectedNdkVersion = System.getProperty('hsdp.verify.ndkVersion')
+if (expectedNdkVersion == null) throw new GradleException('Expected -Dhsdp.verify.ndkVersion for HSDP verification')
+
+gradle.beforeProject { project ->
+    if (project.projectDir.canonicalFile != expectedRoot) return
+    if (project != project.rootProject || project.name != 'Yify') throw new GradleException('Expected Yify Android root project')
+    project.ext.ndkVersion = expectedNdkVersion
+}
 
 gradle.projectsEvaluated {
     if (gradle.rootProject.projectDir.canonicalFile != expectedRoot) return
