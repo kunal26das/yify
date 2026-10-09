@@ -99,6 +99,7 @@
         }
       ],
       "./plugins/withGoogleServicesVersion",
+      "./plugins/withHsdpVersion",
       "./plugins/withFirebaseSceneStartup",
       "@react-native-firebase/crashlytics",
       "./plugins/withCrashlyticsNdk",
