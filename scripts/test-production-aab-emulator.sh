@@ -6,9 +6,7 @@ BUNDLETOOL="$RUNNER_TEMP/bundletool.jar"
 AAB="$RUNNER_TEMP/production.aab"
 KEYSTORE="$RUNNER_TEMP/apk-test.jks"
 
-adb root >/dev/null
-adb wait-for-device
-test "$(adb shell id -u | tr -d '\r')" = 0
+bash scripts/wait-production-aab-emulator-ready.sh
 adb shell cmd connectivity airplane-mode enable
 adb shell svc wifi disable
 adb shell svc data disable
@@ -69,6 +67,10 @@ fi
 adb shell uiautomator dump /sdcard/yify-verification-ui.xml >/dev/null
 adb pull /sdcard/yify-verification-ui.xml "$RUNNER_TEMP/yify-verification-ui.xml" >/dev/null
 adb exec-out screencap -p > "$RUNNER_TEMP/yify-verification-screen.png"
+adb shell iptables -S OUTPUT | tr -d '\r' | grep -qx -- '-P OUTPUT DROP'
+adb shell ip6tables -S OUTPUT | tr -d '\r' | grep -qx -- '-P OUTPUT DROP'
+test "$(adb shell iptables -S OUTPUT | tr -d '\r' | sed -n '2p')" = '-A OUTPUT -j DROP'
+test "$(adb shell ip6tables -S OUTPUT | tr -d '\r' | sed -n '2p')" = '-A OUTPUT -j DROP'
 APP_PID="$INITIAL_PID" node --input-type=module <<'NODE'
 import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync} from 'node:fs';
@@ -87,8 +89,4 @@ writeFileSync(`${directory}/yify-verification-receipt.json`, JSON.stringify({
     ipv4AndIpv6Blocked: true, appUiNodes: nodeCount, screenshotSha256: createHash('sha256').update(screen).digest('hex'),
 }, null, 2));
 NODE
-adb shell iptables -S OUTPUT | tr -d '\r' | grep -qx -- '-P OUTPUT DROP'
-adb shell ip6tables -S OUTPUT | tr -d '\r' | grep -qx -- '-P OUTPUT DROP'
-test "$(adb shell iptables -S OUTPUT | tr -d '\r' | sed -n '2p')" = '-A OUTPUT -j DROP'
-test "$(adb shell ip6tables -S OUTPUT | tr -d '\r' | sed -n '2p')" = '-A OUTPUT -j DROP'
 echo 'Installed and rendered AAB-derived x86_64 split APKs; original app process survived 20 seconds with IPv4 and IPv6 egress blocked'
