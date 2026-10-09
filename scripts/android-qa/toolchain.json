@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "node": "24.19.0",
+  "yarn": "1.22.22",
+  "javaMajor": 17,
+  "gradle": "9.4.1",
+  "expo": "58.0.5",
+  "reactNative": "0.88.0-rc.3",
+  "agp": "9.2.1",
+  "compileSdk": 37,
+  "targetSdk": 36,
+  "minSdk": 24,
+  "buildTools": "37.0.0",
+  "ndk": "27.1.12297006",
+  "cmake": [
+    "3.22.1",
+    "3.30.5"
+  ],
+  "emulatorApi": 35,
+  "emulatorImage": "system-images;android-35;google_apis;x86_64",
+  "bundletool": "1.18.3",
+  "bundletoolSha256": "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29",
+  "releaseAbis": [
+    "armeabi-v7a",
+    "arm64-v8a",
+    "x86",
+    "x86_64"
+  ],
+  "gradleSha256": "2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb",
+  "reactNativeCmake": "3.30.5",
+  "minimumFreeGiB": 20
+}
