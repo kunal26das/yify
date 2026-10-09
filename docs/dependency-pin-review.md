@@ -54,4 +54,8 @@ The 1.8.14 upgrade in PR #941 resolved all eleven Expo findings from the previou
 
 Direct dependencies, resolution pins and source guards advanced together, both lockfiles were regenerated and committed, and native projects were regenerated. Validation covered 1,999 tests, the exact-pin checker, Expo doctor, both web exports, a signed Android build with device smoke checks, and an unsigned iOS simulator build. Runtime 1.8.14 / Android build 96 was submitted to Google Play. The obsolete query-string override was removed because the updated Expo Router no longer uses it.
 
+## Expo 58.0.5 tooling review
+
+Runtime 1.8.16 updates Expo to 58.0.5 while retaining Worklets 0.13.0 and the Babel 7 compatibility alias. The installed tooling compatibility test passes an actual native Worklets transform through Babel 7 and confirms Babel 8 still compiles the mocked TypeScript and JSX fixtures. The dependency-watch tests also accept the updated, exact Expo consumer version. This evidence supports the tooling alias only; Android and iOS native builds remain separate release gates for the new runtime.
+
 The tracking issue can close when a fresh scan has no unreviewed findings or incomplete checks. Future findings reopen the same issue; registry version checks remain enabled for every pin.

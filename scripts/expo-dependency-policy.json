@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.3",
-      "expected": "~58.0.3",
-      "reason": "Use the coordinated Expo 58.0.3 / React Native 0.88.0-rc.3 dependency set under runtime 1.8.14. Preserve source guards, lifecycle regression coverage and native build validation."
+      "version": "58.0.5",
+      "expected": "~58.0.5",
+      "reason": "Use the coordinated Expo 58.0.5 / React Native 0.88.0-rc.3 dependency set under runtime 1.8.16. Preserve source guards, lifecycle regression coverage and native build validation before release."
     },
     "@sentry/react-native": {
       "version": "8.29.0",
