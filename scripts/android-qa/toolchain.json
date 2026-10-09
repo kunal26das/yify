@@ -8,6 +8,8 @@
   "reactNative": "0.88.0-rc.3",
   "agp": "9.2.1",
   "compileSdk": 37,
+  "sdkPlatform": "37.0",
+  "sdkPlatformRevision": "2",
   "targetSdk": 36,
   "minSdk": 24,
   "buildTools": "37.0.0",

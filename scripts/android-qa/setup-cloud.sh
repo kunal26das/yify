@@ -14,6 +14,7 @@ if node "$SCRIPT_DIRECTORY/preflight.mjs" reuse "$ROOT" "$SOURCE_SHA" build "$ST
     echo 'Reusing verified prerequisites; source, package metadata, executables, and toolchain fingerprint still match'
     exit 0
 fi
+bash "$SCRIPT_DIRECTORY/check-sdk-inventory.sh" "$ANDROID_HOME" "$STATE/evidence"
 mapfile -t PACKAGES < <(node "$SCRIPT_DIRECTORY/preflight.mjs" sdk-packages)
 "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "${PACKAGES[@]}" </dev/null
 cd "$ROOT"

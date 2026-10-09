@@ -13,6 +13,7 @@ export const stages = [
 
 export function sourceProblems(pkg, wrapper, catalog, reactAndroid) {
     const failures = [];
+    if (toolchain.sdkPlatform !== `${toolchain.compileSdk}.0`) failures.push('SDK platform package differs from the source API base release');
     if (pkg.dependencies?.expo !== toolchain.expo) failures.push('Expo pin differs from audited toolchain');
     if (pkg.dependencies?.['react-native'] !== toolchain.reactNative) failures.push('React Native pin differs from audited toolchain');
     if (!wrapper.includes(`gradle-${toolchain.gradle}-bin.zip`)) failures.push('Gradle wrapper differs from audited toolchain');
@@ -32,7 +33,7 @@ export function sourceProblems(pkg, wrapper, catalog, reactAndroid) {
 }
 
 export function sdkPackages(includeDevice = false) {
-    return ['platform-tools', `platforms;android-${toolchain.compileSdk}`, `build-tools;${toolchain.buildTools}`,
+    return ['platform-tools', `platforms;android-${toolchain.sdkPlatform}`, `build-tools;${toolchain.buildTools}`,
         `ndk;${toolchain.ndk}`, ...toolchain.cmake.map(version => `cmake;${version}`),
         ...(includeDevice ? ['emulator', toolchain.emulatorImage] : [])];
 }
@@ -60,6 +61,10 @@ export function sdkPackageStatus(sdk, identifier) {
     const api = kind === 'platforms' || kind === 'system-images' ? version.slice('android-'.length) : null;
     const revisionOkay = Boolean(metadata['Pkg.Revision']) && (!expectedRevision || metadata['Pkg.Revision'] === expectedRevision);
     const apiOkay = !api || metadata['AndroidVersion.ApiLevel'] === api;
+    const platformOkay = kind !== 'platforms' || (identifier === `platforms;android-${toolchain.sdkPlatform}` &&
+        metadata['Pkg.Revision'] === toolchain.sdkPlatformRevision && metadata['Platform.CodeName'] === '' &&
+        metadata['AndroidVersion.CodeName'] === '' && metadata['AndroidVersion.PreviewSdkInt'] === '0' &&
+        metadata['AndroidVersion.BetaVersion'] === '' && metadata['AndroidVersion.IsBaseSdk'] === 'true');
     const requiredFiles = {
         'platform-tools': ['adb'], 'build-tools': ['aapt2', 'apksigner', 'zipalign'],
         ndk: ['toolchains/llvm/prebuilt/linux-x86_64/bin/clang'], cmake: ['bin/cmake', 'bin/ninja'],
@@ -68,9 +73,37 @@ export function sdkPackageStatus(sdk, identifier) {
     const missing = requiredFiles.filter(file => !path ||
         (file.endsWith('.jar') || file.endsWith('.img') ? !existsSync(join(path, file)) : !executable(join(path, file))));
     const imageOkay = kind !== 'system-images' || (metadata['SystemImage.Abi'] === 'x86_64' && metadata['SystemImage.TagId'] === 'google_apis');
-    return {identifier, revision: metadata['Pkg.Revision'] ?? null,
+    return {identifier, revision: metadata['Pkg.Revision'] ?? null, metadata,
         ...(api ? {api: metadata['AndroidVersion.ApiLevel'] ?? null} : {}),
-        valid: revisionOkay && apiOkay && imageOkay && missing.length === 0, missing};
+        valid: revisionOkay && apiOkay && platformOkay && imageOkay && missing.length === 0, missing};
+}
+
+export function sdkInventory(text) {
+    const result = {installed: [], available: []};
+    let section;
+    for (const line of text.split(/\r?\n/)) {
+        if (line.trim() === 'Installed packages:') section = 'installed';
+        else if (line.trim() === 'Available Packages:') section = 'available';
+        else if (/^Available Updates:/.test(line.trim())) section = undefined;
+        else if (section) {
+            const columns = line.split('|').map(value => value.trim());
+            if (columns.length === (section === 'installed' ? 4 : 3) &&
+                /^(platforms;|build-tools;|ndk;|cmake;|platform-tools$|cmdline-tools;)/.test(columns[0])) {
+                result[section].push(columns[0]);
+            }
+        }
+    }
+    return result;
+}
+
+export function sdkInventoryComparison(stableText, allChannelsText) {
+    const stable = sdkInventory(stableText);
+    const all = sdkInventory(allChannelsText);
+    const requested = sdkPackages().map(identifier => ({identifier,
+        installed: stable.installed.includes(identifier), stableAvailable: stable.available.includes(identifier),
+        anyChannelAvailable: all.available.includes(identifier)}));
+    return {kind: 'sdk-package-inventory', passed: requested.every(entry => entry.stableAvailable), requested,
+        platformCandidates: [...new Set(all.available.filter(identifier => identifier.startsWith(`platforms;android-${toolchain.compileSdk}`)))]};
 }
 
 function command(executable_, arguments_, cwd) {
@@ -89,7 +122,7 @@ export function localOverrides(root) {
 
 export const setupInputs = ['package.json', 'yarn.lock', 'tooling/package.json', 'crashreporting/package.json',
     'android/gradle/wrapper/gradle-wrapper.properties', 'scripts/android-qa/toolchain.json',
-    'scripts/android-qa/preflight.mjs', 'scripts/android-qa/setup-cloud.sh', 'scripts/expo-native-compat.mjs',
+    'scripts/android-qa/preflight.mjs', 'scripts/android-qa/setup-cloud.sh', 'scripts/android-qa/check-sdk-inventory.sh', 'scripts/expo-native-compat.mjs',
     'scripts/apply-tooling-compatibility.mjs', 'tooling/compatibility-patches.json'];
 
 export function setupInputHashes(root) {
@@ -169,6 +202,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const [action, root = '.', expectedSha, mode = 'build', receipt] = process.argv.slice(2);
     if (action === 'sdk-packages') {
         process.stdout.write(sdkPackages(root === 'device').join('\n') + '\n');
+    } else if (action === 'inventory') {
+        const result = sdkInventoryComparison(readFileSync(join(root, 'sdk-inventory-stable.txt'), 'utf8'),
+            readFileSync(join(root, 'sdk-inventory-all-channels.txt'), 'utf8'));
+        writeFileSync(join(root, 'sdk-inventory-comparison.json'), JSON.stringify(result, null, 2) + '\n');
+        console.log(JSON.stringify(result, null, 2));
+        if (!result.passed) process.exitCode = 1;
     } else if (['inspect', 'save', 'reuse'].includes(action)) {
         const result = inspect(resolve(root), expectedSha, mode);
         if (action === 'save') {
@@ -181,6 +220,6 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         } else console.log(JSON.stringify(result, null, 2));
         if (!result.passed) process.exitCode = 1;
     } else {
-        throw new Error('Usage: preflight.mjs inspect|save|reuse <checkout> <source-sha> [audit|bootstrap|build|device|connected] [receipt], or sdk-packages [device]');
+        throw new Error('Usage: preflight.mjs inspect|save|reuse <checkout> <source-sha> [audit|bootstrap|build|device|connected] [receipt], or sdk-packages [device], or inventory <evidence-directory>');
     }
 }
