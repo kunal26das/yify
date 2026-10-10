@@ -84,6 +84,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Validate OpenSpec artifacts
+        env:
+          OPENSPEC_TELEMETRY: '0'
+        run: |
+          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec doctor --json
+          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec validate --all --strict --json --no-interactive
+          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec validate --archived --strict --json --no-interactive
+
       - name: Check exact dependency pins
         run: node scripts/check-dependency-pins.mjs
 

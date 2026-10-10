@@ -1,32 +1,36 @@
 schema: spec-driven
-
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+context: |
+  Follow AGENTS.md and CLAUDE.md for architecture, commands, and release safeguards.
+  Prioritize reliable delivery, usable design, retention, and sustainable paid subscriptions.
+  Cover Android, web, and iOS behavior where affected; prepare iOS without publishing it
+  until its release setup and publication are authorized.
+  Preserve adult-only onboarding, optional analytics choices, server-side entitlements,
+  and existing customer access. Keep secrets and customer or financial account data out of specs.
+  The owner prefers autonomous completion within authorized scope and concise updates.
+  Planning-only requests stay planning-only; assess existing user authorization before adding gates.
+  Use one lead and at most three relevant specialists, with independent review of the final change.
+  Use the designer for customer-facing changes and inspect rendered results on affected layouts.
+  Revenue goals are objectives, not forecasts. A discussed spending ceiling does not authorize spending.
+rules:
+  proposal:
+    - State the customer or operational problem, observable success criteria, scope, and non-goals concisely.
+    - Separate verified current behavior from assumptions and proposed behavior; link existing evidence.
+  specs:
+    - Describe observable outcomes with concrete success and relevant failure or recovery scenarios.
+    - Preserve entitlement, consent, data-boundary, and native-runtime behavior where affected.
+  design:
+    - Reuse existing code and workflows; record relevant platform, accessibility, and rendered design checks.
+    - Identify validation evidence, release targets, rollback, and material access or service constraints.
+    - For growth changes, define the baseline, success metric, evaluation window, and stopping criteria.
+  tasks:
+    - Give every task an observable verification result; reference existing completed work without redoing it.
+    - Distinguish code, tests, publication, user availability, and observed recovery; leave unverified work unchecked.
+operations:
+  apply:
+    guidance:
+      - Recheck external state before consequential actions and update the plan when evidence changes.
+      - Preserve meaningful checks and collect evidence proportional to the change.
+  archive:
+    guidance:
+      - Review implementation against scenarios and reconcile every tracked task before archiving.
+      - Keep incomplete releases or experiments active and synchronize implemented requirements only.

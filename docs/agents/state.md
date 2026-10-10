@@ -1,8 +1,22 @@
 # Android delivery handoff
 
-Updated 2026-10-09 21:38 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-10 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-## Current source and priority
+## Current reconciliation
+
+The active release plan is [Finish Android crash release](../../openspec/changes/finish-android-crash-release/design.md). Current verified main is `0f27e88ecab833078339b3f8dbfd7ca68c63fe61`, with [successful CI](https://github.com/kunal26das/yify/actions/runs/38053519887). The changes since candidate 98's source are QA tooling, documentation and OpenSpec configuration; they do not themselves require rebuilding the existing binary.
+
+- [PR #970](https://github.com/kunal26das/yify/pull/970) merged as `21d3b2d38d26d73f190fa214a035d624b369df0e`. Final head `c203ab7b103b5f5136211a188862266757416e6f` passed [hosted compile-only QA](https://github.com/kunal26das/yify/actions/runs/37997593146) and standard CI. The final artifact's independently read receipt confirms compilation and four-ABI packaging, with `productionReady: false`; device and provider journeys remain untested by that run.
+- Fresh EAS metadata confirms production [candidate 98](https://expo.dev/accounts/kunal26das/projects/yify/builds/9baaf5ff-3774-4394-9165-4e98c574254b) is `FINISHED`, source `737a6986a485dc8542f0c04552c0b2d680f03a71`, version/runtime `1.8.16`, code `98`, channel `Production`. Its previously recorded static and Sentry evidence does not establish installation, connected journeys or runtime crash recovery.
+- [PR #972](https://github.com/kunal26das/yify/pull/972) remains draft at `ad8a85a9b1bf0e2093d690b562ae4dee7f476dc8`. Standard CI passed, but [both API 30/API 35 framework jobs](https://github.com/kunal26das/yify/actions/runs/37999577475) failed before device cases because the runner lacked existing KVM access. This is an infrastructure blocker, not a candidate 98 failure.
+
+Next, complete exact-candidate installation and device/journey evidence, followed by the authorized release decision, submission, Play availability and version-specific crash-health verification. The existing production-AAB verifier is pinned to candidate 97 and cannot establish candidate 98 readiness unchanged. Play production code 96 and code 98's unsubmitted status were last observed on 2026-10-09 at 20:35 UTC; Play was not reread during this reconciliation. See the [current verification record](verification.md#current-release-reconciliation-2026-10-10) for receipts and limits.
+
+## Historical handoff: 2026-10-09 21:38 UTC
+
+The following snapshot is preserved for provenance. Its pending branch updates, draft status and next actions describe that time; use the current reconciliation and active release plan above for remaining work.
+
+### Source and priority at that snapshot
 
 Last verified main: `737a6986a485dc8542f0c04552c0b2d680f03a71` (reviewed Expo-doctor compatibility correction, PR #971), preserving the native metadata boundary from PR #969, the HSDP fix from PR #968 and the movie-details fix from PR #965. Android source declares version/runtime `1.8.16`, versionCode `98`; that declaration is not a store release. The highest-priority unfinished outcome is the Android startup-crash fix, a compatible new binary, Play delivery, and subsequent crash-health verification. The native rewrite is deferred. iOS preparation may continue; publication remains gated on authorized, complete release setup.
 
@@ -10,7 +24,7 @@ PR #968 merged after final-head `af61d335fa0251cc654c7185533ff47cd9a31b68` passe
 
 PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03efa1d7db39fc8f069fd9915b`. Post-merge main CI failed at Expo doctor after its recommendation for `react-native-web` changed from installed `0.21.3` to `^0.21.4`; tests, typecheck and web exports passed. That failed run did not deploy the native-specific endpoint. A focused compatibility-policy correction subsequently merged as PR #971 after green required CI; its fresh main CI, EAS Hosting and GitHub Pages deployments succeeded at exact main `737a6986a485dc8542f0c04552c0b2d680f03a71`. The deployed native access endpoint returned the expected unauthenticated HTTP 401 JSON sign-in error with private/no-store caching and no catalog payload. Do not release candidate 97 unchanged.
 
-## Delivery status
+### Delivery status at that snapshot
 
 - Android `1.8.14` storage OTA was published and its Production/runtime `1.8.14` manifest was verified available. Group `8dd4a8cf-2751-42c4-ab15-7dc5e5dd7b7b`; source `c6cf23e21dd6dd6bad1fd2b693c0efbdce314c3f`. This JavaScript-only update does not contain the newer native crash fix.
 - Web main `737a6986a485dc8542f0c04552c0b2d680f03a71` passed CI and both EAS Hosting and GitHub Pages deployment workflows. Deployment receipts are in the verification record; they are not proof of every rendered journey.
@@ -18,7 +32,7 @@ PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03ef
 - Android `1.8.16` / code `98` / runtime `1.8.16`, EAS build `9baaf5ff-3774-4394-9165-4e98c574254b`, succeeded from exact main `737a6986a485dc8542f0c04552c0b2d680f03a71`. Its signed AAB and static four-ABI checks passed; Sentry source-map, Proguard and 16 new native-symbol records were verified server-side. It has not been installed, device-tested or submitted to Play; artifact ingestion does not prove runtime symbolication.
 - Last observed Play production was `1.8.14` / code `96`. No new store availability or crash recovery is established by these build/test receipts.
 
-## Unresolved release gates and next action
+### Release gates and next action at that snapshot
 
 1. Preserve the verified main CI, web deployments and unauthenticated native-endpoint rejection at exact main `737a6986a485dc8542f0c04552c0b2d680f03a71`. Authenticated subscriber behavior remains a journey gate, using verified test services or the explicitly authorized bounded owner-account production checks.
 2. Reuse the documented compile-only setup validated on a fresh hosted Ubuntu 24.04 runner at exact QA head `90f7e823ababf451ad5562cb1473e118b94175cd`. Pinned dependencies, JDK 17, source-required Android SDK/build tools/NDK/CMake, full release compilation and four-ABI APK packaging passed. Separate local API 30 software-emulator validation reached boot with stable core services in a low-memory configuration, but SystemUI reported an ANR. The legacy HSDP fixture APK was installed and its bytes verified; zero HSDP cases ran because the driver incorrectly treated the shell-inherited `inet` group reported by `run-as` as the app process's network group. A narrow test-only correction is under independent review. This incomplete driver run does not establish a candidate 98 failure or a device regression pass.
@@ -27,10 +41,10 @@ PR #969 merged after exact-head CI and independent review of `2b38fbfca1499f03ef
 5. Preserve the verified production-signed build `9baaf5ff-3774-4394-9165-4e98c574254b` and complete its outstanding device/journey release gates before submission. The established submission route from PR #954 was checked in the authenticated consoles at 20:35 UTC: Play production remains code 96, with no pending changes or code 98 bundle, no displayed policy issues, managed publishing off, and existing EAS signing/submission assignments present. `play-production` targets production/completed; the `production` submission profile targets internal/draft. Code 98 has not been submitted. A successful submission is not Play review approval or user availability.
 6. Verify the release receipt, Play availability and version-specific crash health separately. Only then start one measured growth experiment; unavailable metrics remain unknown. Keep business metrics and customer information out of this public record.
 
-## Rollback and compatibility
+### Rollback and compatibility
 
 Keep the existing production binary and compatible OTA as the baseline until new delivery is verified. Never publish native changes into runtime `1.8.14` as an OTA. For a verified OTA regression, use the authenticated Expo rollback/republish route only for the affected compatible runtime after reviewing its receipt; that recovery procedure has not been exercised here. For a binary regression, halt an active rollout where supported and prepare a validated corrective higher-version-code binary. Do not assume an uploaded older AAB can downgrade installed applications. For web, revert the offending source through reviewed CI and verify both deployment targets. Record any actual rollback and its health result before closing the incident.
 
-## Team and runtime
+### Team and runtime
 
 Use one lead and at most three necessary specialists concurrently, without nested delegation by default. Independent reviewers inspect the final proposed commit. Customer-facing experience work requires design before implementation and rendered inspection afterward. The runtime exposes model and effort selection arguments and accepts delegations; independently effective inference settings and technical global concurrency/credential enforcement remain unknown. Repository policy and validators do not create those controls. The lead retains merge and production decisions within the owner's authorization, with one production operation at a time.
