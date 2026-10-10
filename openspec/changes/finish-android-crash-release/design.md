@@ -2,7 +2,7 @@
 
 ## Context
 
-Evidence reconciled on 2026-10-10; see `proposal.md` for motivation. Main inspected was `0f27e88ecab833078339b3f8dbfd7ca68c63fe61`. Changes since candidate 98's source are QA, documentation and OpenSpec setup, not app/native changes. Recheck that comparison before reusing the candidate.
+Evidence refreshed for the 2026-10-10 deployment request; see `proposal.md` for motivation. Release source is `f6064f0f0e5322d7b2df137db700b8953eb6c650`. Compared with candidate 98's original source, native/config/dependency inputs are unchanged, but PR #975 adds app recovery, account feedback and accessibility fixes. A fresh production build (`5adeee2b-643f-44a2-b2ab-f10a697da949`) therefore replaces the old candidate for this delivery. It retains the unused versionCode 98 and runtime/version 1.8.16. EAS finished this build at 2026-10-10 14:54:08 UTC. Its signed artifact passed identity and packaging checks, but actual device startup failed; it must not be submitted.
 
 | Evidence | Verified result and boundary |
 | --- | --- |
@@ -14,6 +14,18 @@ Evidence reconciled on 2026-10-10; see `proposal.md` for motivation. Main inspec
 | Play and credentials | Last recorded authenticated check: 2026-10-09 20:35 UTC, production 1.8.14/code 96, no code 98 submitted, existing EAS signing/submission assignments present. This is a historical snapshot, not a fresh store check. |
 
 Candidate 97's isolated API 35 welcome-screen smoke is superseded evidence. The existing `scripts/verify-production-aab.mjs` and its workflow still identify 97; adapt them rather than inventing another verifier. The compile-only artifacts are debug-signed and are not candidate 98.
+
+The exact release source passed CI [38058350181](https://github.com/kunal26das/yify/actions/runs/38058350181): 2,252 app tests, 51 crash-reporting workspace tests and 150 release-console tests, plus typechecks and both web-export checks. Both web targets subsequently deployed and passed live desktop/mobile browsing checks. On 2026-10-10 at 14:30 UTC, the Play API still showed production 1.8.14/code 96 and no uploaded code 98; the temporary read-only inspection edit was deleted. Expo showed no submission newer than October 5.
+
+The owner explicitly requested keeping PR #972 closed. Framework validation continues separately on disposable local Android devices; none of that PR's implementation is required to merge for this release.
+
+## Latest candidate result
+
+Build `5adeee2b-643f-44a2-b2ab-f10a697da949` produced a 99,920,698-byte AAB with SHA-256 `d81e0f21a6cb0f4d763811d10e438b6d6b40c218e5bc498049a31ddef17872a1`. Independent verification confirmed source identity, package/version/runtime/channel, every signed entry, upload certificate, compressed native libraries and all four ABIs. Bundletool 1.18.3 generated ephemeral-test-signed device APKs; installed APK bytes matched the generated APKs on a fresh API 37 ARM64 emulator with 16 KB pages and font scale 1.3. These checks do not constitute a startup pass.
+
+The installed app exited immediately with `Cannot find native module 'ExpoApplication'`. The React Native fatal bridge logged the failure locally and terminated the process; no Play submission occurred. The emulator remained offline and no production crash was deliberately uploaded. The failed build is retained as diagnostic evidence and must be replaced by a verified build after the native-module cause is repaired. Build logs report successful Sentry source-map upload and completed Crashlytics/Sentry mapping and native-symbol tasks; this is upload evidence, not proof of production crash recovery.
+
+The explicit-candidate verifier also now accepts both legacy and build-tools 37 APK certificate output, while rejecting missing or conflicting signer fingerprints. Its tests cover the format change observed on the actual generated APK.
 
 ## Decisions
 

@@ -1,11 +1,11 @@
 # Tasks
 
-The build and compile work in `design.md` is existing evidence, not work to repeat. All tasks below remain unverified; artifact completion means this plan is ready, not that Android has shipped.
+The build and compile work in `design.md` is existing evidence, not work to repeat. Only checked tasks have supporting evidence in `design.md`; planning and static artifact checks do not mean Android has shipped.
 
 ## 1. Candidate verification
 
-- [ ] 1.1 Refresh EAS and Play state and compare current app/native inputs with candidate 98's source; record whether that exact candidate remains usable, its downloaded hash and whether any submission already exists.
-- [ ] 1.2 Extend the existing production AAB verifier and workflow to accept the intended candidate identity; add passing identity and source/hash/signature/version/runtime mismatch tests and record their results.
+- [x] 1.1 Refresh EAS and Play state and compare current app/native inputs with candidate 98's source; record whether that exact candidate remains usable, its downloaded hash and whether any submission already exists.
+- [x] 1.2 Extend the existing production AAB verifier and workflow to accept the intended candidate identity; add passing identity and source/hash/signature/version/runtime mismatch tests and record their results.
 - [ ] 1.3 Verify the signed bundle's four ABIs and packaging, generate device APKs with bundletool and install them; preserve package/signature/version identity, device configuration, logs and rendered evidence for this candidate.
 
 ## 2. Framework and app journeys

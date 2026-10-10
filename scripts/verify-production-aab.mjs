@@ -155,6 +155,13 @@ export function verifyApkResult(result, candidate) {
         result.artifacts.some(artifact => !/^[0-9a-f]{64}$/.test(artifact.sha256))) throw new Error('Missing APK hashes');
 }
 
+export function parseApkSigner(output) {
+    const fingerprints = [...output.matchAll(/^(?:Signer #\d+ |V[123](?:\.\d+)? Signer: )certificate SHA-256 digest: ([a-f0-9]{64})\s*$/gmi)]
+        .map(match => match[1].toLowerCase());
+    if (!fingerprints.length || new Set(fingerprints).size !== 1) throw new Error('Missing or ambiguous APK signer');
+    return fingerprints[0];
+}
+
 export function verifyInstallEvidence(apkResult, installedHashes, signers, packageDump, candidate) {
     verifyApkResult(apkResult, candidate);
     const generated = apkResult.artifacts.map(artifact => artifact.sha256).sort();

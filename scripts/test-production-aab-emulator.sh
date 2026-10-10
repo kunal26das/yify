@@ -44,7 +44,7 @@ OTHER_APKS=()
 : > "$RUNNER_TEMP/device-apk-signers.txt"
 for apk in "${APKS[@]}"; do
     "$(dirname "$AAPT2")/apksigner" verify --print-certs "$apk" | \
-        sed -n 's/^Signer #1 certificate SHA-256 digest: //p' >> "$RUNNER_TEMP/device-apk-signers.txt"
+        node --input-type=module -e "import {readFileSync} from 'node:fs'; import {parseApkSigner} from './scripts/verify-production-aab.mjs'; console.log(parseApkSigner(readFileSync(0, 'utf8')));" >> "$RUNNER_TEMP/device-apk-signers.txt"
     if [ "$apk" != "$BASE_APK" ]; then OTHER_APKS+=("$apk"); fi
 done
 adb install-multiple --no-streaming "$BASE_APK" "${OTHER_APKS[@]}" >/dev/null

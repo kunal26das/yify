@@ -6,7 +6,7 @@ import {test} from 'node:test';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
-    isAllowedDownloadUrl, loadCandidate, validateCandidate, verifyAabHash, verifyApkResult,
+    isAllowedDownloadUrl, loadCandidate, parseApkSigner, validateCandidate, verifyAabHash, verifyApkResult,
     verifyBuildMetadata, verifyBundleManifest, verifyCertificate, verifyInstallEvidence, verifyRuntimeResources, verifySourceFiles,
 } from './verify-production-aab.mjs';
 
@@ -24,6 +24,17 @@ const metadata = {
     appBuildVersion: candidate.versionCode, runtime: {version: candidate.runtime}, updateChannel: {name: 'Production'}, gitCommitHash: candidate.sourceSha,
     fingerprint: {hash: 'abc'}, artifacts: {buildUrl: 'https://expo.dev/artifacts/eas/build.aab'},
 };
+
+test('parses legacy and current apksigner output without accepting missing or conflicting signers', () => {
+    const fingerprint = 'ab'.repeat(32);
+    const legacy = `Signer #1 certificate SHA-256 digest: ${fingerprint}\n`;
+    const current = `V3.0 Signer: certificate SHA-256 digest: ${fingerprint.toUpperCase()}\r\n`;
+    assert.equal(parseApkSigner(legacy), fingerprint);
+    assert.equal(parseApkSigner(current), fingerprint);
+    assert.equal(parseApkSigner(legacy + current), fingerprint);
+    assert.throws(() => parseApkSigner('certificate SHA-1 digest: 1234'), /Missing or ambiguous/);
+    assert.throws(() => parseApkSigner(legacy + current.replaceAll('AB', 'CD')), /Missing or ambiguous/);
+});
 
 test('installs locked app dependencies before querying EAS build metadata', () => {
     const workflow = readFileSync(new URL('../.github/workflows/verify-production-aab.yml', import.meta.url), 'utf8');
