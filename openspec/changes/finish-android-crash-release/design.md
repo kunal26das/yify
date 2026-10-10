@@ -27,6 +27,12 @@ The installed app exited immediately with `Cannot find native module 'ExpoApplic
 
 The explicit-candidate verifier also now accepts both legacy and build-tools 37 APK certificate output, while rejecting missing or conflicting signer fingerprints. Its tests cover the format change observed on the actual generated APK.
 
+## Framework device evidence
+
+Separate HSDP tests completed on disposable AOSP ARM64 emulators for API 30 and API 36 using local harness commit `476a8f3be991d16b29a0b06632c8c85af5046740`. Each API passed four legacy 2.0.1 crash controls and six corrected 2.2.0 safe finishes, including actual configuration and new-intent callbacks, malformed creation and repeat calls. Saved events were replayed against the classifier; installed APK hashes and process identities matched. Both test apps lacked INTERNET permission, and app-process socket creation was denied. This establishes the focused framework regression result, not Firebase integration or production recovery.
+
+Receipt SHA-256: API 30 `fea993964751a81fa8345ad105449ca0ddac99e5d96c31eb3646f94bb31a7459`; API 36 `25f7d609086a1546637ebe4532636cd935aa2e0bc5f3ee0247f0ecdf51b44602`. Local adaptations changed the image ABI to ARM64, checked the installed command-line tools 22.0 and labeled execution as local HVF. PR #972 remains closed; its repaired harness is local and is not being merged. The obsolete hosted run `38060121705` was cancelled after local validation; it is not passing device evidence.
+
 ## Decisions
 
 1. **Reuse the signed candidate if its relevant source is unchanged.** Compare app/native/config/dependency inputs and verify its receipt and downloaded hash. A new build is warranted by a required source fix or failed candidate, not newer documentation commits. Preserve successful compile receipts instead of replaying them as a substitute for missing device checks.

@@ -10,7 +10,7 @@ The build and compile work in `design.md` is existing evidence, not work to repe
 
 ## 2. Framework and app journeys
 
-- [ ] 2.1 Execute the reviewed HSDP legacy failure control and corrected malformed, repeated and lifecycle cases on API 30 and a current Android target; preserve per-case results and label infrastructure-blocked cases not executed.
+- [x] 2.1 Execute the reviewed HSDP legacy failure control and corrected malformed, repeated and lifecycle cases on API 30 and a current Android target; preserve per-case results and label infrastructure-blocked cases not executed.
 - [ ] 2.2 Verify consent with analytics declined, restart, connected startup and browsing on the installed candidate; record persisted choice, observed requests, logs and rendered small-screen/enlarged-text results without public customer data.
 - [ ] 2.3 Verify sign-in, subscriber access and account switching using an applicable authorized test path; record expected entitlement acceptance/rejection and absence of previous-account access.
 - [ ] 2.4 Verify purchase and restore through a compatible Play installer/signature and billing test account; preserve sandbox results and explicitly record any untested path without real charges or refunds.
