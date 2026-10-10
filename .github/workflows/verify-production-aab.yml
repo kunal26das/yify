@@ -66,6 +66,9 @@ jobs:
       - name: Verify signed AAB identity and runtime
         run: node scripts/verify-production-aab.mjs bundle scripts/android-qa/production-aab-candidate.json "$RUNNER_TEMP/bundletool.jar" "$RUNNER_TEMP/production.aab"
 
+      - name: Verify reflected Expo modules survived release optimization
+        run: EXPO_V2_R8_AAB="$RUNNER_TEMP/production.aab" EXPO_V2_R8_EXPECT=present node --test tests/expo-v2-r8-artifact.test.cjs
+
       - name: Generate ephemeral APK test signer
         run: |
           keytool -genkeypair -keystore "$RUNNER_TEMP/apk-test.jks" -alias isolated-test \

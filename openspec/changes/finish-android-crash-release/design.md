@@ -27,6 +27,12 @@ The installed app exited immediately with `Cannot find native module 'ExpoApplic
 
 The explicit-candidate verifier also now accepts both legacy and build-tools 37 APK certificate output, while rejecting missing or conflicting signer fingerprints. Its tests cover the format change observed on the actual generated APK.
 
+## Native startup correction
+
+The pre-R8 registry generated from source contained `ApplicationModule` and `HapticsModule`, while the failed code 98 AAB defined neither module nor `ExpoModulesV2ModuleList`. The registry is loaded by reflection. The correction preserves that registry and Expo v2 module subclasses through `app.json` ProGuard rules, then regenerates Android. Version/runtime 1.8.17 and code 99 isolate this native change from older binaries.
+
+A guarded local release minification succeeded. A DEX class-definition and method-table check passed on its actual optimized output and rejected the failed code 98 AAB. The production verification workflow now runs this check explicitly against the downloaded AAB before generating test APKs. Local optimized output is not a replacement for verification and device testing of the new signed EAS artifact.
+
 ## Framework device evidence
 
 Separate HSDP tests completed on disposable AOSP ARM64 emulators for API 30 and API 36 using local harness commit `476a8f3be991d16b29a0b06632c8c85af5046740`. Each API passed four legacy 2.0.1 crash controls and six corrected 2.2.0 safe finishes, including actual configuration and new-intent callbacks, malformed creation and repeat calls. Saved events were replayed against the classifier; installed APK hashes and process identities matched. Both test apps lacked INTERNET permission, and app-process socket creation was denied. This establishes the focused framework regression result, not Firebase integration or production recovery.
