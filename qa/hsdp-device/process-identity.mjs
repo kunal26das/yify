@@ -1,4 +1,10 @@
 import assert from 'node:assert/strict';
+export function installedApplicationUid(packageDump) {
+    const ids = [...packageDump.matchAll(/^\s*(?:userId|appId)=(\d+)$/gm)].map(match => Number(match[1]));
+    assert(ids.length > 0 && ids.every(id => Number.isSafeInteger(id) && id >= 10000 && id === ids[0]),
+        'Invalid or ambiguous installed application UID');
+    return ids[0];
+}
 export function verifyProcessIdentity(value, expected) {
     assert.equal(value.evidenceVersion, 1);
     for (const key of ['sourceSha', 'hsdpVersion', 'packageName', 'uid']) assert.equal(value[key], expected[key], `Unexpected identity ${key}`);

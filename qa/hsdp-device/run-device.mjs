@@ -5,7 +5,7 @@ import path from 'node:path';
 import {setTimeout} from 'node:timers/promises';
 import {cases, fixedOnlyCases, variants, sourcePattern, images} from './policy.mjs';
 import {verifyCase} from './evidence.mjs';
-import {verifyProcessIdentity} from './process-identity.mjs';
+import {installedApplicationUid, verifyProcessIdentity} from './process-identity.mjs';
 const [adbPath, serial, project, sourceSha, apiValue, evidence, avdName] = process.argv.slice(2);
 const api = Number(apiValue);
 const hostKvmAccessChanged = process.env.HOST_KVM_ACCESS_CHANGED === 'true';
@@ -29,8 +29,7 @@ function verifyBoundary(packageName, artifact, requireProcess = true) {
     verifyNoGoogleServices();
     const installed = adb('shell', 'dumpsys', 'package', packageName);
     assert(!installed.includes('android.permission.INTERNET'), 'Installed driver unexpectedly declares Internet permission');
-    const uid = Number(installed.match(/^\s*userId=(\d+)$/m)?.[1]);
-    assert(Number.isInteger(uid) && uid >= 10000, 'Invalid installed application UID');
+    const uid = installedApplicationUid(installed);
     const packagePath = adb('shell', 'pm', 'path', packageName).trim();
     assert(/^package:\/data\/app\/[^\n]+\/base\.apk$/.test(packagePath), 'Installed package could not be identified');
     assert(adb('shell', 'sha256sum', packagePath.slice(8)).trim().split(/\s+/)[0] === artifact.apkSha256, 'Installed APK changed after verification');

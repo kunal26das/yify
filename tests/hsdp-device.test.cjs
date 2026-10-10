@@ -158,6 +158,17 @@ function identityFixture() {
         internetPermission: -1, requestedPermissions: [], sharedUserId: null}};
 }
 
+test('installed UID accepts legacy userId and current appId package dumps without ambiguity', async () => {
+    const {installedApplicationUid} = await import('../qa/hsdp-device/process-identity.mjs');
+    assert.equal(installedApplicationUid('  userId=10130\n'), 10130);
+    assert.equal(installedApplicationUid('    appId=10150\n'), 10150);
+    assert.equal(installedApplicationUid('  userId=10130\n    appId=10130\n'), 10130);
+    for (const invalid of ['', '    appId=2000\n', '    appId=10130\n    userId=10131\n',
+        '    appId=not-a-number\n', '    appId=10130 extra\n']) {
+        assert.throws(() => installedApplicationUid(invalid), /Invalid or ambiguous/);
+    }
+});
+
 test('in-process identity requires distinct application UID and denied Internet capability', async () => {
     const {verifyProcessIdentity} = await import('../qa/hsdp-device/process-identity.mjs');
     const {expected, value} = identityFixture();
