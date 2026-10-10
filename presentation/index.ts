@@ -129,3 +129,4 @@ export {Colors, Fonts, FontFamily, Gradients, Spacing, Radius, Typography} from 
 export type {Palette} from './constants/theme';
 export {JournalScreen} from './journal/JournalScreen';
 export {PrivacyGate} from './components/privacy-gate';
+export {getWebStartupScript, WebStartupPlaceholder, clearWebStartupPlaceholder} from './components/web-startup-placeholder';

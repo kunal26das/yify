@@ -1,0 +1,20 @@
+# Tasks
+
+## 1. Connectivity
+
+- [x] 1.1 Implement web reachability corroboration and verify browser false positives, genuine offline/reconnect, SSR, provider failures, timeout and event races with focused tests. The monitor/request suite passes 39 tests; a live-network browser with a forced negative connectivity flag loads catalog content without an offline banner.
+
+## 2. Startup
+
+- [x] 2.1 Remove the web font readiness barrier and verify delayed/failed font rendering without changing native startup. Browser QA with font requests aborted still renders the consent controls and homepage content.
+- [x] 2.2 Keep the real home list mounted while the hero loads and verify visible shelves load independently, partial failures remain recoverable and refresh keeps content. The home/consent regression tests pass; browser QA delaying the hero by five seconds shows a usable shelf and preserves the same list scroll element through hero completion.
+- [ ] 2.3 Verify first-ever and returning privacy journeys, phone/desktop layouts, slow loading and reduced motion in rendered previews; record evidence.
+
+## 3. Integration and delivery
+
+- [ ] 3.1 Pass typecheck, full tests, export checks and OpenSpec validation; obtain independent code and scenario review.
+- [ ] 3.2 Commit, merge through passing CI and verify live Hosting and Pages startup/connectivity behavior.
+
+## Workflow follow-up
+
+- Archive and synchronize the spec after verified delivery.

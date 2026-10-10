@@ -14,6 +14,7 @@ import {usePalette} from '../hooks/use-palette';
 import {useReloadWhenOnline} from '../hooks/use-reload-when-online';
 import {useResponsive} from '../hooks/use-responsive';
 import {HeroBillboard} from './components/HeroBillboard';
+import {HeroSkeleton} from './components/HeroSkeleton';
 import {HomeFooter} from './components/HomeFooter';
 import {HoverCardHost} from './components/HoverCard';
 import {MovieRail} from './components/MovieRail';
@@ -194,7 +195,7 @@ export function HomeScreen({
         ]
     );
 
-    if (shelvesLoading && !hasUsableContent && !shelvesError) {
+    if (Platform.OS !== 'web' && shelvesLoading && !hasUsableContent && !shelvesError) {
         return (
             <Screen>
                 <HomeSkeleton
@@ -284,7 +285,8 @@ export function HomeScreen({
                                             onRequestTrailer={requestHeroTrailer}
                                         />
                                     </View>
-                                ) : null}
+                                ) : Platform.OS === 'web' && shelvesLoading
+                                    ? <HeroSkeleton width={width} height={heroHeight} gutter={gutter}/> : null}
                                 <SupporterDiscoveryCard ref={discoveryRef} placement="home_supporter" returning={returning}
                                     viewportRef={viewportRef} topInset={topBarHeight}
                                     style={{marginHorizontal: gutter, marginBottom: Spacing.xl}}/>

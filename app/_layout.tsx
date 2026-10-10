@@ -8,7 +8,7 @@ import {ReduceMotion, ReducedMotionConfig} from 'react-native-reanimated';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {Platform, StyleSheet, View} from 'react-native';
 import {SafeAreaInsetsContext, SafeAreaProvider} from 'react-native-safe-area-context';
-import {useFonts} from 'expo-font';
+import {FontDisplay, useFonts} from 'expo-font';
 import {HankenGrotesk_400Regular} from '@expo-google-fonts/hanken-grotesk/400Regular';
 import {HankenGrotesk_500Medium} from '@expo-google-fonts/hanken-grotesk/500Medium';
 import {HankenGrotesk_600SemiBold} from '@expo-google-fonts/hanken-grotesk/600SemiBold';
@@ -53,18 +53,23 @@ function handleNotificationData(data: unknown) {
 
 const DESKTOP_TOP_INSET = 48;
 
+const TEXT_FONTS = {
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    HankenGrotesk_800ExtraBold,
+    Lora_600SemiBold,
+    Lora_700Bold,
+};
+const FONTS = Platform.OS === 'web'
+    ? {...Ionicons.font, ...Object.fromEntries(Object.entries(TEXT_FONTS)
+        .map(([family, uri]) => [family, {uri, display: FontDisplay.SWAP}]))}
+    : TEXT_FONTS;
+
 function RootLayout() {
-    const [fontsLoaded, fontError] = useFonts({
-        ...(Platform.OS === 'web' ? Ionicons.font : {}),
-        HankenGrotesk_400Regular,
-        HankenGrotesk_500Medium,
-        HankenGrotesk_600SemiBold,
-        HankenGrotesk_700Bold,
-        HankenGrotesk_800ExtraBold,
-        Lora_600SemiBold,
-        Lora_700Bold,
-    });
-    if (!fontsLoaded && !fontError) return null;
+    const [fontsLoaded, fontError] = useFonts(FONTS);
+    if (Platform.OS !== 'web' && !fontsLoaded && !fontError) return null;
     return (
         <DependenciesProvider dependencies={dependencies}>
             <PrivacyGate><AppShell/></PrivacyGate>

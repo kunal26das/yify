@@ -10,6 +10,7 @@ const {useHomeViewModel} = loadTypeScript('presentation/movies/useHomeViewModel.
     '../hooks/use-reload-on-catalog-access': {useReloadOnCatalogAccess() {}},
 });
 const {createHomeShelfSelector} = loadTypeScript('presentation/movies/homeShelfSelection.ts');
+const {HERO_LIMIT} = loadTypeScript('presentation/movies/constants/homeShelves.ts');
 
 function deferred() {
     let resolve;
@@ -135,7 +136,7 @@ test('an exhausted shelf with only duplicate titles does not leave an empty rail
     assert.deepEqual(pending.needsMore, [{key: 'first', next: 2}]);
 });
 
-test('Home passes retained shelf movies to MovieRail without a loading skeleton', async t => {
+function loadHomeScreen(platform = 'web') {
     const FlatList = props => React.createElement('List', null, props.ListHeaderComponent,
         props.data.map(item => React.createElement(React.Fragment, {key: item.key}, props.renderItem({item}))),
         props.ListFooterComponent);
@@ -143,7 +144,7 @@ test('Home passes retained shelf movies to MovieRail without a loading skeleton'
         '@expo/vector-icons/Ionicons': 'Icon',
         'react-native': {
             Animated: {Value: class {}, event: () => () => {}, createAnimatedComponent: component => component},
-            FlatList, Platform: {OS: 'web'}, RefreshControl: 'RefreshControl', ScrollView: 'ScrollView',
+            FlatList, Platform: {OS: platform}, RefreshControl: 'RefreshControl', ScrollView: 'ScrollView',
             StyleSheet: {create: value => value}, View: 'View',
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 0, bottom: 0})},
@@ -160,6 +161,7 @@ test('Home passes retained shelf movies to MovieRail without a loading skeleton'
         '../hooks/use-responsive': {useResponsive: () => ({width: 360, height: 720, isPhone: true,
             isTablet: false, gutter: 16})},
         './components/HeroBillboard': {HeroBillboard: 'Hero'},
+        './components/HeroSkeleton': {HeroSkeleton: 'HeroSkeleton'},
         './components/HomeFooter': {HomeFooter: 'Footer'},
         './components/HoverCard': {HoverCardHost: ({children}) => React.createElement('HoverCardHost', null, children)},
         './components/MovieRail': {MovieRail: props => React.createElement('Rail', props)},
@@ -175,6 +177,11 @@ test('Home passes retained shelf movies to MovieRail without a loading skeleton'
         '../di/DependenciesContext': {useSupporterNudge: () => ({recordHomeVisit: () => false})},
         '../hooks/use-preview-active': {usePreviewActive: () => false},
     });
+    return HomeScreen;
+}
+
+test('Home passes retained shelf movies to MovieRail without a loading skeleton', async t => {
+    const HomeScreen = loadHomeScreen();
     const first = {id: 1, title: 'Retained title'};
     const hero = {id: 100, title: 'Hero title'};
     const actions = {loadInitial() {}, loadShelf() {}, retryShelf() {}, reload() {}, requestHeroTrailer() {}};
@@ -190,4 +197,39 @@ test('Home passes retained shelf movies to MovieRail without a loading skeleton'
     assert.ok(rail);
     assert.equal(rail.props.loading, false);
     assert.deepEqual(rail.props.movies.map(movie => movie.id), [1]);
+});
+
+test('web home loads and renders shelves before the hero resolves without replacing its list', async t => {
+    const HomeScreen = loadHomeScreen();
+    const requests = [];
+    const repository = {listMovies: params => {
+        const pending = deferred();
+        requests.push({params, ...pending});
+        return pending.promise;
+    }};
+    let model;
+    function Home() {
+        model = useHomeViewModel(repository);
+        return React.createElement(HomeScreen, {shelves: model});
+    }
+    let renderer;
+    await act(async () => {renderer = create(React.createElement(Home));});
+    t.after(async () => {await act(async () => renderer.unmount());});
+    const list = renderer.root.findByType('List');
+    assert.equal(renderer.root.findAllByType('HeroSkeleton').length, 1);
+    const heroRequest = requests.find(request => request.params.limit === HERO_LIMIT);
+    const shelfRequest = requests.find(request => request.params.limit !== HERO_LIMIT);
+    assert.ok(heroRequest, 'hero request starts');
+    assert.ok(shelfRequest, 'visible shelf request starts without waiting for hero');
+    await act(async () => shelfRequest.resolve(result(200)));
+    assert.equal(model.loading, true);
+    assert.equal(renderer.root.findByType('List'), list);
+    const loadedRail = renderer.root.findAllByType('Rail').find(node => node.props.movies.some(movie => movie.id === 200));
+    assert.ok(loadedRail, 'completed shelf is usable while hero remains pending');
+    assert.equal(loadedRail.props.loading, false);
+    assert.equal(renderer.root.findAllByType('HeroSkeleton').length, 1);
+    await act(async () => heroRequest.resolve(result(100)));
+    assert.equal(renderer.root.findByType('List'), list);
+    assert.equal(renderer.root.findAllByType('HeroSkeleton').length, 0);
+    assert.deepEqual(renderer.root.findByType('Hero').props.movies.map(movie => movie.id), [100]);
 });
