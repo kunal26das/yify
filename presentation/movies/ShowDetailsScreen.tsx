@@ -243,7 +243,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
                             )}
                         </View>
                         <View style={styles.headerText}>
-                            <ThemedText type="title" style={[styles.title, isPhone && styles.phoneTitle, {color: colors.text}]} numberOfLines={3}>
+                            <ThemedText accessibilityRole="header" type="title" style={[styles.title, isPhone && styles.phoneTitle, {color: colors.text}]} numberOfLines={3}>
                                 {title}
                             </ThemedText>
                             <ThemedText style={[Typography.videoMeta, {color: colors.textMuted}]}>
@@ -289,7 +289,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
 
                     <WatchProviders imdbCode={imdbCode} title={title} media="tv" pad={gutter}/>
 
-                    <ThemedText type="heading" style={[styles.sectionHeading, {color: colors.text}]}>
+                    <ThemedText accessibilityRole="header" type="heading" style={[styles.sectionHeading, {color: colors.text}]}>
                         Episodes
                     </ThemedText>
 
@@ -332,7 +332,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
                                     pressedOpacity={0.7}
                                     contentStyle={[styles.seasonRow, {borderBottomColor: colors.border}]}
                                 >
-                                    <ThemedText type="heading" style={[styles.seasonTitle, {color: colors.text}]}>
+                                    <ThemedText accessibilityRole="header" type="heading" style={[styles.seasonTitle, {color: colors.text}]}>
                                         {group.season > 0 ? `Season ${group.season}` : 'Other releases'}
                                     </ThemedText>
                                     <View style={styles.seasonRight}>

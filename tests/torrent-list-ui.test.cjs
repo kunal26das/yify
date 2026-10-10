@@ -144,3 +144,42 @@ for (const platform of ['web', 'android']) {
         await verifyNotice(renderer, row);
     });
 }
+
+for (const platform of ['web', 'android']) {
+    test(`${platform} movie details retain content during a failed refresh and recover on retry`, async t => {
+        const dependencies = mocks(platform);
+        const {useMovieDetailsViewModel} = loadTypeScript('presentation/movies/useMovieDetailsViewModel.ts', dependencies);
+        const {WatchScreen} = loadTypeScript('presentation/movies/WatchScreen.tsx', dependencies);
+        const requests = [];
+        const repository = {
+            getMovieDetails: () => new Promise((resolve, reject) => requests.push({resolve, reject})),
+            getMovieSuggestions: async () => [],
+        };
+        let viewModel;
+        function Harness() {
+            viewModel = useMovieDetailsViewModel(repository, 42);
+            return React.createElement(WatchScreen, {viewModel});
+        }
+        const renderer = await mount(t, Harness, {});
+        await act(async () => requests[0].reject(new Error('Initial failure')));
+        assert.ok(textValues(renderer.root).includes("Couldn't load this movie"));
+        const retry = label => renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel === label);
+        await act(async () => retry('Try again').props.onPress());
+        const details = {id: 42, title: 'Loaded movie', titleLong: 'Loaded movie (2026)', year: 2026,
+            rating: 8, runtimeMinutes: 120, genres: ['Drama'], posterUrls: [],
+            torrents: [], cast: [], screenshotUrls: [], screenshotThumbUrls: []};
+        await act(async () => requests[1].resolve(details));
+        await act(async () => viewModel.refresh());
+        await act(async () => requests[2].reject(new Error('Refresh failure')));
+        assert.ok(textValues(renderer.root).includes('Loaded movie'));
+        assert.ok(!textValues(renderer.root).includes("Couldn't load this movie"));
+        assert.ok(textValues(renderer.root).some(text => text.includes('Showing previously loaded details')));
+        assert.equal(renderer.root.findAllByType('WatchProviders').length, 1);
+        await act(async () => retry('Retry movie refresh').props.onPress());
+        assert.equal(retry('Retry movie refresh').props.disabled, true);
+        assert.ok(textValues(renderer.root).includes('Loaded movie'));
+        await act(async () => requests[3].resolve({...details, title: 'Refreshed movie'}));
+        assert.ok(textValues(renderer.root).includes('Refreshed movie'));
+        assert.equal(retry('Retry movie refresh'), undefined);
+    });
+}

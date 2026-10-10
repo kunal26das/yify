@@ -37,7 +37,7 @@ export function PickerSheet<T>({title, onClose, backdropLabel, maxWidth = 480, l
 
     const heading = (
         <View style={styles.heading}>
-            <ThemedText type="heading" style={styles.title}>{title}</ThemedText>
+            <ThemedText accessibilityRole="header" type="heading" style={styles.title}>{title}</ThemedText>
             <PressableScale onPress={close} accessibilityRole="button" accessibilityLabel="Close" contentStyle={styles.close}>
                 <Ionicons name="close" size={24} color={colors.text}/>
             </PressableScale>

@@ -57,8 +57,8 @@ export function WatchlistSheet({visible, title, onClose, children, contentKey}: 
 
     const header = (
         <View style={styles.heading}>
-            <ThemedText type="heading" numberOfLines={2} style={styles.title}>{title}</ThemedText>
-            <PressableScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Close watchlist controls"
+            <ThemedText accessibilityRole="header" type="heading" numberOfLines={2} style={styles.title}>{title}</ThemedText>
+            <PressableScale onPress={onClose} accessibilityRole="button" accessibilityLabel={`Close ${title}`}
                             contentStyle={styles.close}>
                 <Ionicons name="close" size={22} color={colors.text}/>
             </PressableScale>

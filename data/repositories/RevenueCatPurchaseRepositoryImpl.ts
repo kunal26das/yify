@@ -137,6 +137,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private syncedRevision = -1;
     private queue: Promise<unknown> = Promise.resolve();
     private refreshPromise: Promise<void> | null = null;
+    private accessRefresh: {revision: number; promise: Promise<boolean>} | null = null;
+    private verifiedSyncs = 0;
     private forceRefresh = false;
     private customerUpdatePending = false;
     private customerSignature: string | null = null;
@@ -180,8 +182,16 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         return this.requestSync();
     }
 
-    refresh(): Promise<void> {
-        return this.requestSync(true);
+    refresh(): Promise<boolean> {
+        const revision = this.revision;
+        if (this.accessRefresh?.revision === revision) return this.accessRefresh.promise;
+        const verifiedSyncs = this.verifiedSyncs;
+        const promise = this.requestSync(true).then(() => revision === this.revision &&
+            this.verifiedSyncs > verifiedSyncs && this.store.get().ready, () => false).finally(() => {
+            if (this.accessRefresh?.promise === promise) this.accessRefresh = null;
+        });
+        this.accessRefresh = {revision, promise};
+        return promise;
     }
 
     identify(account: Account | null): Promise<void> {
@@ -438,6 +448,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                     this.syncFailures = 0;
                 }
                 span.finish(offersLoaded ? 'ok' : 'error', {stage: offersLoaded ? 'customer' : 'offerings'});
+                this.verifiedSyncs += 1;
                 return;
             } catch (error) {
                 if (revision !== this.revision) continue;

@@ -158,20 +158,20 @@ export class FirebaseAuthRepositoryImpl implements AuthRepository {
 
     async signOut(): Promise<void> {
         const span = this.diagnostics.start('auth.sign_out', {provider: 'google'});
-        let failure: {error: unknown; stage: string} | undefined;
-        try {
-            if (this.configured) await GoogleSignin.signOut();
-        } catch (error) {
-            failure = {error, stage: 'google'};
-        }
         try {
             await signOut(getAuth());
         } catch (error) {
-            failure ??= {error, stage: 'firebase'};
+            span.fail(error, {stage: 'firebase', error_code: diagnosticCode(error)});
+            throw new Error('Sign-out could not be completed');
         }
         this.store.set({account: null});
-        if (failure) span.fail(failure.error, {stage: failure.stage, error_code: diagnosticCode(failure.error)});
-        else span.finish('ok');
+        try {
+            if (this.configured) await GoogleSignin.signOut();
+        } catch (error) {
+            span.fail(error, {stage: 'google', error_code: diagnosticCode(error)});
+            return;
+        }
+        span.finish('ok');
     }
 
     async deleteAccount(): Promise<boolean> {

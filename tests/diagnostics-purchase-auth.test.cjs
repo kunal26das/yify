@@ -37,7 +37,7 @@ function fixture(platform, t, options = {}) {
             if (options.tokenError) throw options.tokenError;
             return options.token ? options.token(user) : 'private-token';
         },
-        signOut: async () => { calls.push('firebase_sign_out'); if (options.signOutError) throw options.signOutError; },
+        signOut: async () => { calls.push('firebase_sign_out'); if (options.signOutError) throw options.signOutError; auth.currentUser = null; authListener(null); },
     };
     let Repository;
     if (platform === 'native') {
@@ -204,14 +204,19 @@ for (const platform of ['native', 'web']) {
         assert.doesNotMatch(metadata, /private|token|credential|email|uid|displayName/);
     });
 
-    test(`${platform} auth diagnostics report a swallowed sign-out failure without changing local sign-out`, async t => {
+    test(`${platform} failed sign-out preserves authentication and a successful retry clears it`, async t => {
         const error = failure('auth/network-request-failed');
         const f = fixture(platform, t, {signOutError: error});
-        await f.repository.signOut();
-        assert.equal(f.repository.getSession().account, null);
+        await assert.rejects(f.repository.signOut(), /Sign-out could not be completed/);
+        assert.equal(f.repository.getSession().account.uid, account.uid);
+        assert.equal(await f.repository.getIdToken(), 'private-token');
         assert.deepEqual(f.operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
             [['auth.sign_out', error]]);
         assert.equal(f.operations.at(-1).finishAttributes.error_code, 'network_request_failed');
+        f.options.signOutError = null;
+        await f.repository.signOut();
+        assert.equal(f.repository.getSession().account, null);
+        assert.equal(await f.repository.getIdToken(), null);
     });
 
     test(`${platform} deletion owns a failed retry once while successful reauthentication stays successful`, async t => {
@@ -268,4 +273,13 @@ test('native account deletion reports cleanup failure while preserving successfu
     assert.equal(f.operations.find(entry => entry.operation === 'auth.delete').outcome, 'ok');
     assert.deepEqual(f.operations.filter(entry => entry.error).map(entry => [entry.operation, entry.error]),
         [['auth.delete_cleanup', error]]);
+});
+
+test('native Google cleanup failure does not undo successful Firebase sign-out', async t => {
+    const f = fixture('native', t, {googleSignOutError: failure('cleanup')});
+    await f.repository.signOut();
+    assert.equal(f.repository.getSession().account, null);
+    assert.equal(await f.repository.getIdToken(), null);
+    assert.deepEqual(f.calls.slice(0, 2), ['firebase_sign_out', 'google_sign_out']);
+    assert.equal(f.operations.find(entry => entry.operation === 'auth.sign_out').finishAttributes.stage, 'google');
 });

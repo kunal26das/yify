@@ -47,7 +47,7 @@ async function fixture(t, options = {}) {
             return options.purchase ? options.purchase(id) : false;
         },
         async restore() { calls.restore++; return options.restore ? options.restore() : false; },
-        async refresh() { calls.refresh++; if (options.refresh) await options.refresh(state); },
+        async refresh() { calls.refresh++; return options.refresh ? options.refresh(state) : true; },
         trackPaywallImpression: id => calls.impressions.push(id),
     };
     const auth = {
@@ -592,3 +592,18 @@ test('paywall funnel measures actual visibility, ready offers and one explicit c
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_closed').length, 1);
     assert.equal(f.calls.funnel.every(({country}) => country === 'GB'), true);
 });
+
+for (const platform of ['android', 'web']) {
+    test(`${platform} a failed refresh reports failure while retaining access, and retry reports verification`, async t => {
+        let verified = false;
+        const f = await fixture(t, {platform, state: {ready: true, adsRemoved: true}, refresh: async () => verified});
+        await f.open();
+        await f.press('Refresh access');
+        assert.match(f.text(), /Access could not be refreshed/);
+        assert.equal(f.state.get().adsRemoved, true);
+        verified = true;
+        await f.press('Refresh access');
+        assert.doesNotMatch(f.text(), /Access could not be refreshed/);
+        assert.match(f.text(), /supporter access is active/);
+    });
+}

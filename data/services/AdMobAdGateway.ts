@@ -168,12 +168,14 @@ export class AdMobAdGateway implements AdGateway {
 
     private async updatePrivacyOptions(): Promise<void> {
         await this.readyPromise;
+        let formFailed = false;
         try {
             await AdsConsent.showPrivacyOptionsForm();
         } catch {
+            formFailed = true;
         }
         const info = await Promise.resolve().then(() => AdsConsent.getConsentInfo()).catch(() => null);
-        this.canRequestAds = info?.canRequestAds === true;
+        this.canRequestAds = !formFailed && info?.canRequestAds === true;
         if (info != null) {
             this.privacyRequired = info.privacyOptionsRequirementStatus ===
                 AdsConsentPrivacyOptionsRequirementStatus.REQUIRED;
@@ -190,6 +192,7 @@ export class AdMobAdGateway implements AdGateway {
             this.failures = 0;
             this.requestNext();
         }
+        if (formFailed) throw new Error('Ad privacy choices could not be opened');
     }
 
     private async doInit(): Promise<void> {

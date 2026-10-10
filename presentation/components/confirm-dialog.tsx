@@ -221,7 +221,7 @@ function ConfirmDialog({request, onClose}: {request: ConfirmRequest | null; onCl
                     />
                 </Reanimated.View>
                 <Reanimated.View entering={enterRise(1)}>
-                    <ThemedText type="heading" style={styles.title}>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.title}>
                         {shown?.title}
                     </ThemedText>
                 </Reanimated.View>

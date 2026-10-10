@@ -323,13 +323,13 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
         );
     }
 
-    if (error || !details) {
+    if (!details) {
         return (
             <Screen>
                 <View style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Animated.View entering={enterRise()} style={styles.errorBox}>
                         <Ionicons name="cloud-offline-outline" size={52} color={colors.textFaint}/>
-                        <ThemedText style={[Typography.watchTitle, styles.errorTitle, {color: colors.text}]}>
+                        <ThemedText accessibilityRole="header" style={[Typography.watchTitle, styles.errorTitle, {color: colors.text}]}>
                             Couldn&apos;t load this movie
                         </ThemedText>
                         <ThemedText style={[styles.errorMessage, {color: colors.textMuted}]}>
@@ -360,6 +360,25 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
 
     const primary = (
         <>
+            {error ? (
+                <View style={[styles.refreshNotice, {backgroundColor: colors.surface, borderColor: colors.border}]}>
+                    <ThemedText accessibilityLiveRegion="polite" style={[styles.refreshMessage, {color: colors.textMuted}]}>
+                        Couldn&apos;t refresh. Showing previously loaded details.
+                    </ThemedText>
+                    <PressableScale
+                        accessibilityRole="button"
+                        accessibilityLabel="Retry movie refresh"
+                        accessibilityState={{disabled: refreshing, busy: refreshing}}
+                        disabled={refreshing}
+                        onPress={() => {Analytics.retry('details'); refresh();}}
+                        contentStyle={styles.refreshAction}
+                    >
+                        <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>
+                            {refreshing ? 'Refreshing…' : 'Try again'}
+                        </ThemedText>
+                    </PressableScale>
+                </View>
+            ) : null}
             <Headline
                 details={details}
                 expanded={titleExpanded}
@@ -567,6 +586,7 @@ function Headline({
             >
                 <ThemedText
                     type="title"
+                    accessibilityRole="header"
                     numberOfLines={expanded ? undefined : 2}
                     style={[styles.title, {color: colors.text}]}
                 >
@@ -588,7 +608,7 @@ function Headline({
 function SectionHeading({title}: {title: string}) {
     const {colors} = usePalette();
     return (
-        <ThemedText type="heading" style={[styles.sectionHeading, {color: colors.text}]}>
+        <ThemedText type="heading" accessibilityRole="header" style={[styles.sectionHeading, {color: colors.text}]}>
             {title}
         </ThemedText>
     );
@@ -886,6 +906,9 @@ const styles = StyleSheet.create({
         marginTop: Spacing.xl,
     },
     retryLabel: {fontSize: 15, fontWeight: '600'},
+    refreshNotice: {borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, padding: Spacing.md, gap: Spacing.xs},
+    refreshMessage: {...Typography.body},
+    refreshAction: {minHeight: 44, justifyContent: 'center', paddingVertical: Spacing.sm},
 
     reserved: {position: 'absolute', zIndex: 20},
     dragStrip: {position: 'absolute', height: DRAG_STRIP_HEIGHT, zIndex: 20},

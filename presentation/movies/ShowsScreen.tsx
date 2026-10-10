@@ -130,7 +130,7 @@ export function ShowsScreen({viewModel}: {viewModel: ShowsViewModel}) {
                     <View style={[styles.glyph, {backgroundColor: colors.surfaceSunken}]}>
                         <Ionicons name="tv-outline" size={34} color={colors.accent}/>
                     </View>
-                    <ThemedText type="heading" style={styles.title}>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.title}>
                         {status === 'unavailable' ? 'Shows couldn’t load' : 'No series listed yet'}
                     </ThemedText>
                     <ThemedText style={[styles.body, {color: colors.textMuted}]}>

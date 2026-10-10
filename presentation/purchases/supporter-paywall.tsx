@@ -185,9 +185,9 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     };
     const refresh = async () => {
         try {
-            await purchases.refresh();
-            if (mounted.current) setNotice(purchases.getState().ready ? supporterStatus(purchases.getState())
-                : 'Supporter options could not connect. Check your connection and try again.');
+            const verified = await purchases.refresh();
+            if (mounted.current) setNotice(verified ? supporterStatus(purchases.getState())
+                : 'Access could not be refreshed. Check your connection and try again.');
         } catch { if (mounted.current) setNotice('Access could not be refreshed. Please try again.'); }
     };
     const openLink = async (url: string) => {

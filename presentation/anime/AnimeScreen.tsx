@@ -80,7 +80,7 @@ export function AnimeScreen({viewModel}: {viewModel: AnimeViewModel}) {
         </ScrollView>
         <View style={styles.feedHeading}>
             <View style={styles.headingText}>
-                <ThemedText type="section">{query ? 'Search results' : 'Recent uploads'}</ThemedText>
+                <ThemedText accessibilityRole="header" type="section">{query ? 'Search results' : 'Recent uploads'}</ThemedText>
                 <ThemedText type="caption" style={{color: colors.textMuted}}>
                     {query ? `For “${query}” on Nyaa` : 'Latest anime listings from Nyaa'}
                 </ThemedText>
@@ -116,7 +116,7 @@ export function AnimeScreen({viewModel}: {viewModel: AnimeViewModel}) {
                 <ThemedText style={{color: colors.textMuted}}>Loading uploads…</ThemedText>
             </View> : <View style={styles.empty}>
                 <Ionicons name={status === 'unavailable' ? 'cloud-offline-outline' : 'search-outline'} size={30} color={colors.accent}/>
-                <ThemedText type="heading">{status === 'unavailable' ? 'Anime uploads couldn’t load' : 'No matching uploads'}</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">{status === 'unavailable' ? 'Anime uploads couldn’t load' : 'No matching uploads'}</ThemedText>
                 <ThemedText style={[styles.emptyText, {color: colors.textMuted}]}>
                     {status === 'unavailable' ? 'The upload feed is unavailable right now. Try again.'
                         : query ? 'Try another title or choose a different category.' : 'Try a different category or check again for new uploads.'}

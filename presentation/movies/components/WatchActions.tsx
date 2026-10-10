@@ -142,7 +142,8 @@ export function WatchActions({
 const styles = StyleSheet.create({
     row: {flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm},
     pill: {
-        height: 36,
+        minHeight: 44,
+        paddingVertical: Spacing.sm,
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,

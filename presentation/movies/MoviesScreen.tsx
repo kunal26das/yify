@@ -396,7 +396,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                         ) : error ? (
                             <View style={styles.stateBox}>
                                 <Ionicons name="cloud-offline-outline" size={48} color={colors.textFaint}/>
-                                <ThemedText type="heading">Movies couldn’t load</ThemedText>
+                                <ThemedText accessibilityRole="header" type="heading">Movies couldn’t load</ThemedText>
                                 <PressableScale onPress={() => {Analytics.retry('browse'); loadInitial();}} accessibilityRole="button"
                                     accessibilityLabel="Try again" contentStyle={[styles.stateOutlineAction, {borderColor: colors.border}]}>
                                     <ThemedText style={[styles.stateActionLabel, {color: colors.accent}]}>Try again</ThemedText>
@@ -404,7 +404,7 @@ export function MoviesScreen({viewModel, autoFocus}: MoviesScreenProps) {
                             </View>
                         ) : <Animated.View entering={enterRise()} style={styles.stateBox}>
                             <Ionicons name="search-outline" size={48} color={colors.textFaint}/>
-                            <ThemedText style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
+                            <ThemedText accessibilityRole="header" style={[Typography.sectionTitle, styles.stateTitle, {color: colors.text}]}>
                                 No results found
                             </ThemedText>
                             <ThemedText style={[Typography.videoMeta, styles.stateMessage, {color: colors.textMuted}]}>

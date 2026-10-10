@@ -320,11 +320,13 @@ test('explicit refresh invalidates the SDK cache once and preserves verified acc
     const first = f.repository.refresh();
     assert.equal(f.repository.refresh(), first);
     assert.equal(f.repository.getState().refreshing, true);
-    await first;
+    assert.equal(await first, false);
     assert.equal(f.repository.getState().refreshing, false);
     assert.equal(f.repository.getState().ready, true);
     assert.equal(f.repository.getState().adsRemoved, true);
     assert.equal(f.calls.filter(([name]) => name === 'invalidate').length, 1);
+    fail = false;
+    assert.equal(await f.repository.refresh(), true);
 });
 
 test('customer changes arriving after the snapshot during offerings loading are refreshed before completion', async (t) => {
@@ -991,4 +993,20 @@ test('withdrawing analytics clears RevenueCat while an existing customer refresh
     await refresh;
     await flush();
     assert.equal(f.repository.getState().ready, true);
+});
+
+test('explicit native refresh cannot confirm access for an account that changed during verification', async t => {
+    const pending = deferred();
+    let hold = false;
+    const f = fixture(t, {getCustomerInfo: () => hold ? pending.promise : customer(true)});
+    await f.ready('account-a');
+    hold = true;
+    const refresh = f.repository.refresh();
+    await flush();
+    const changed = f.repository.identify(account('account-b'));
+    hold = false;
+    pending.resolve(customer(true));
+    assert.equal(await refresh, false);
+    await changed;
+    assert.equal(await f.repository.refresh(), true);
 });
