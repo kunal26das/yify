@@ -57,10 +57,33 @@ function definitions(bytes) {
     const typeCount = number(64);
     const typeOffset = number(68);
     for (let index = 0; index < typeCount; index++) types.push(strings[number(typeOffset + index * 4)]);
+    const fields = [];
+    const fieldCount = number(80);
+    const fieldOffset = number(84);
+    for (let index = 0; index < fieldCount; index++) {
+        fields.push({type: types[number(fieldOffset + index * 8 + 2, 2)], name: strings[number(fieldOffset + index * 8 + 4)]});
+    }
+    const protos = [];
+    const protoCount = number(72);
+    const protoOffset = number(76);
+    for (let index = 0; index < protoCount; index++) {
+        const entry = protoOffset + index * 12;
+        const parametersOffset = number(entry + 8);
+        const parameters = [];
+        if (parametersOffset) {
+            const count = number(parametersOffset);
+            for (let parameter = 0; parameter < count; parameter++) {
+                parameters.push(types[number(parametersOffset + 4 + parameter * 2, 2)]);
+            }
+        }
+        protos.push(`(${parameters.join('')})${types[number(entry + 4)]}`);
+    }
     const methods = [];
     const methodCount = number(88);
     const methodOffset = number(92);
-    for (let index = 0; index < methodCount; index++) methods.push(strings[number(methodOffset + index * 8 + 4)]);
+    for (let index = 0; index < methodCount; index++) {
+        methods.push({name: strings[number(methodOffset + index * 8 + 4)], signature: protos[number(methodOffset + index * 8 + 2, 2)]});
+    }
     const classes = new Map();
     const classCount = number(96);
     const classOffset = number(100);
@@ -68,16 +91,21 @@ function definitions(bytes) {
         const entry = classOffset + index * 32;
         const descriptor = types[number(entry)];
         const dataOffset = number(entry + 24);
-        const names = new Set();
+        const definition = {fields: new Map(), methods: new Map()};
         if (dataOffset) {
             const state = {offset: dataOffset};
             const staticFields = leb(state);
             const instanceFields = leb(state);
             const directMethods = leb(state);
             const virtualMethods = leb(state);
-            for (let field = 0; field < staticFields + instanceFields; field++) {
-                leb(state);
-                leb(state);
+            for (const count of [staticFields, instanceFields]) {
+                let fieldIndex = 0;
+                for (let field = 0; field < count; field++) {
+                    fieldIndex += leb(state);
+                    leb(state);
+                    const entry = fields[fieldIndex];
+                    definition.fields.set(entry.name, entry.type);
+                }
             }
             for (const count of [directMethods, virtualMethods]) {
                 let methodIndex = 0;
@@ -85,19 +113,97 @@ function definitions(bytes) {
                     methodIndex += leb(state);
                     leb(state);
                     leb(state);
-                    names.add(methods[methodIndex]);
+                    const entry = methods[methodIndex];
+                    if (!definition.methods.has(entry.name)) definition.methods.set(entry.name, new Set());
+                    definition.methods.get(entry.name).add(entry.signature);
                 }
             }
         }
-        classes.set(descriptor, names);
+        classes.set(descriptor, definition);
     }
     return classes;
 }
 
-test('minified Android artifact retains reflected Expo v2 class definitions and constructors', {
+function assertJniContract(classes) {
+    const descriptors = [
+        'io/github/expo/kolibri/NativeObject',
+        'io/github/expo/kolibri/binary/BinaryBuffer',
+        'io/github/expo/modules/v2/ExpoObject',
+        'io/github/expo/modules/v2/SharedObject',
+        'io/github/expo/modules/v2/args/Trampoline',
+        'io/github/expo/modules/v2/async/AsyncContext',
+        'io/github/expo/modules/v2/async/Promise',
+        'io/github/expo/modules/v2/errors/ThrowableHelper',
+        'io/github/expo/modules/v2/events/EventNatives',
+        'io/github/expo/modules/v2/events/EventSupport',
+        'io/github/expo/modules/v2/jsi/AttachedRuntime',
+        'io/github/expo/modules/v2/jsi/JavaScriptObject',
+        'io/github/expo/modules/v2/jsi/JavaScriptRuntime',
+        'io/github/expo/modules/v2/jsi/JavaScriptValue',
+        'io/github/expo/modules/v2/modules/ModuleRegistry',
+        'io/github/expo/modules/v2/react/ReactRuntime',
+        'io/github/expo/modules/v2/records/RecordRegistry',
+        'io/github/expo/modules/v2/records/RecordSchemaData',
+        'io/github/expo/modules/v2/sharedobjects/SharedObjectRegistry',
+        'io/github/expo/modules/v2/types/DynamicTypes',
+    ];
+    const fields = new Map([
+        ['io/github/expo/kolibri/NativeObject', {nativePointer: 'J'}],
+        ['io/github/expo/modules/v2/ExpoObject', {objectId: 'J'}],
+        ['io/github/expo/modules/v2/records/RecordSchemaData', {
+            name: 'Ljava/lang/String;',
+            jniDescriptor: 'Ljava/lang/String;',
+            bufferSafe: 'Z',
+            fieldNames: '[Ljava/lang/String;',
+            fieldTypes: '[I',
+            fieldOptional: '[Z',
+        }],
+    ]);
+    for (const [name, members] of fields) {
+        const definition = classes.get(`L${name};`);
+        assert.ok(definition, `Missing JNI class L${name};`);
+        const declared = definition.fields;
+        for (const [member, type] of Object.entries(members)) {
+            assert.equal(declared.get(member), type, `Missing JNI field ${name}.${member}:${type}`);
+        }
+    }
+    for (const name of descriptors) assert.ok(classes.has(`L${name};`), `Missing JNI class L${name};`);
+
+    const methods = new Map([
+        ['io/github/expo/kolibri/NativeObject', {nativeDestroy: '(J)V'}],
+        ['io/github/expo/kolibri/binary/BinaryBuffer', {nativeGetBuffer: '()Ljava/nio/ByteBuffer;'}],
+        ['io/github/expo/modules/v2/modules/ModuleRegistry', {
+            encodeModule: '(Ljava/lang/String;)Ljava/lang/Object;',
+            encodeModuleNames: '()I',
+        }],
+        ['io/github/expo/modules/v2/async/AsyncContext', {
+            createPromise: '(J)Lio/github/expo/modules/v2/async/Promise;',
+            invalidate: '()V',
+            drainInlineSettles: '()V',
+            nativeResolveBuffered: '(JJI)V',
+            nativeResolve: '(JJLjava/lang/Object;)V',
+            nativeReject: '(JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V',
+        }],
+        ['io/github/expo/modules/v2/args/Trampoline', {
+            takeOverflowResult: '()Ljava/lang/Object;',
+            prepareOverflowArguments: '()[Ljava/lang/Object;',
+        }],
+        ['io/github/expo/modules/v2/react/ReactRuntime', {
+            nativeCreate: '(JLio/github/expo/modules/v2/modules/ModuleRegistry;Lio/github/expo/modules/v2/async/AsyncContext;Ljava/lang/String;)J',
+        }],
+    ]);
+    for (const [name, members] of methods) {
+        const declared = classes.get(`L${name};`).methods;
+        for (const [member, signature] of Object.entries(members)) {
+            assert.ok(declared.get(member)?.has(signature), `Missing JNI method ${name}.${member}${signature}`);
+        }
+    }
+}
+
+test('minified Android artifact retains reflected Expo and Kolibri JNI contract', {
     skip: !aab && !apk && !dexDirectory,
 }, () => {
-    assert.ok(expected === 'present' || expected === 'absent');
+    assert.ok(['present', 'absent', 'missing-jni'].includes(expected));
     assert.equal([aab, apk, dexDirectory].filter(Boolean).length, 1, 'Supply one artifact source');
     const classes = new Map(dexFiles().flatMap(bytes => [...definitions(bytes)]));
     const required = new Map([
@@ -110,7 +216,11 @@ test('minified Android artifact retains reflected Expo v2 class definitions and 
         if (expected === 'absent') assert.equal(found, undefined, `Unexpected old-candidate class ${descriptor}`);
         else {
             assert.ok(found, `Missing R8 class ${descriptor}`);
-            for (const method of methods) assert.ok(found.has(method), `Missing R8 method ${descriptor}.${method}`);
+            for (const method of methods) assert.ok(found.methods.has(method), `Missing R8 method ${descriptor}.${method}`);
         }
+    }
+    if (expected === 'present') assertJniContract(classes);
+    if (expected === 'missing-jni') {
+        assert.throws(() => assertJniContract(classes), /Missing JNI field io\/github\/expo\/kolibri\/NativeObject\.nativePointer:J/);
     }
 });

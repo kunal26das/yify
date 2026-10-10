@@ -21,6 +21,8 @@
 -keep class com.google.android.gms.internal.consent_sdk.** { *; }
 -keep class expo.modules.ExpoModulesV2ModuleList { *; }
 -keep class * extends io.github.expo.modules.v2.Module { *; }
+-keep class io.github.expo.kolibri.** { *; }
+-keep class io.github.expo.modules.v2.** { *; }
 -keepattributes SourceFile,LineNumberTable
 -keepattributes *Annotation*
 

@@ -22,16 +22,21 @@ test('release R8 retains the reflected Expo v2 registry and module implementatio
     for (const rule of [
         '-keep class expo.modules.ExpoModulesV2ModuleList { *; }',
         '-keep class * extends io.github.expo.modules.v2.Module { *; }',
+        '-keep class io.github.expo.kolibri.** { *; }',
+        '-keep class io.github.expo.modules.v2.** { *; }',
     ]) {
         assert.ok(rules.includes(rule), `Missing source R8 rule: ${rule}`);
         assert.ok(generated.split('\n').includes(rule), `Missing generated R8 rule: ${rule}`);
     }
-    assert.ok(pkg.versionCode > 98);
+    assert.ok(pkg.versionCode > 99);
     const [major, minor, patch] = pkg.version.split('.').map(Number);
-    assert.ok(major > 1 || major === 1 && (minor > 8 || minor === 8 && patch > 16));
+    assert.ok(major > 1 || major === 1 && (minor > 8 || minor === 8 && patch > 17));
     const resolved = require('../app.config.js').expo;
     assert.equal(resolved.runtimeVersion, pkg.version);
     assert.equal(resolved.android.versionCode, pkg.versionCode);
     assert.ok(read('android/app/build.gradle').includes(`versionCode ${pkg.versionCode}\n        versionName "${pkg.version}"`));
     assert.ok(read('android/app/src/main/res/values/strings.xml').includes(`name="expo_runtime_version">${pkg.version}<`));
+    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleShortVersionString</key>\n\t<string>${pkg.version}</string>`));
+    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleVersion</key>\n\t<string>${pkg.versionCode}</string>`));
+    assert.ok(read('ios/Yify/Supporting/Expo.plist').includes(`<key>EXUpdatesRuntimeVersion</key>\n    <string>${pkg.version}</string>`));
 });
