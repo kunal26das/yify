@@ -13,7 +13,7 @@
 ## 3. Integration and delivery
 
 - [x] 3.1 Pass typecheck, full tests, export checks and OpenSpec validation; obtain independent code and scenario review. Typecheck, Hosting/Pages exports and strict OpenSpec validation pass. Full suite: 2,274 app tests and 51 crashreporting tests passed, one existing test skipped. Independent code/security/privacy review approved d576984; rendered QA and design review passed. Changed-file lint matches the base revision's four existing findings.
-- [ ] 3.2 Commit, merge through passing CI and verify live Hosting and Pages startup/connectivity behavior.
+- [x] 3.2 Commit, merge through passing CI and verify live Hosting and Pages startup/connectivity behavior. PR #980 merged as b79e862 after green reviewed-head CI. Main CI 38078671974 and deployments 38078986099 (Hosting) / 38078986090 (Pages) succeeded on October 10 UTC. Guarded live checks passed first consent with analytics off, returning hydration, forced false browser-offline with real catalog responses, genuine offline/recovery and actual hero images on both targets. No browser page errors were observed.
 
 ## Workflow follow-up
 

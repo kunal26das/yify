@@ -1,8 +1,14 @@
-# Android delivery handoff
+# Delivery handoff
 
 Updated 2026-10-10 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-## Current reconciliation
+## Web startup delivery
+
+[PR #980](https://github.com/kunal26das/yify/pull/980) merged as `b79e86235a2c0b999304c1a776a302f8b2245f4d`. [Main CI](https://github.com/kunal26das/yify/actions/runs/38078671974), [EAS Hosting deployment](https://github.com/kunal26das/yify/actions/runs/38078986099) and [Pages deployment](https://github.com/kunal26das/yify/actions/runs/38078986090) passed. Both web sites were verified live after publication: real catalog requests succeed when a browser incorrectly reports offline, genuine offline/recovery still works, returning saved-consent visits avoid the incorrect welcome-dialog flash, and hero artwork loads. No browser page errors were observed. Native startup, runtime and store releases are unchanged by this web fix.
+
+Local validation passed typecheck, both web exports, strict OpenSpec validation, 2,274 app tests and 51 crashreporting tests; one existing test was skipped. Independent code/security/privacy and rendered design reviews passed. Delayed hero data left shelves usable in the same list; invalid or revoked privacy receipts retained the required gate; stalled scripts exposed accessible recovery links. An extreme CSS-zoom title-overflow observation remains unconfirmed as a regression or OS text-scaling issue. Roll back a confirmed web regression by reverting PR #980 through reviewed CI and verifying both web targets.
+
+## Android reconciliation
 
 Use [Finish Android crash release](../../openspec/changes/finish-android-crash-release/design.md) for current evidence and remaining work. Main `af54441c2aab5adfc67fac714c8ddbc6f3ab86ef` contains the reviewed Android JNI fix from PR #978. CI passed 2,457 tests across the app and workspaces; the artifact-dependent check was separately executed on the optimized APK. Both web targets deployed version 1.8.18 and passed guarded mobile checks on October 10, preserving earlier desktop and detail checks of unchanged web behavior.
 
