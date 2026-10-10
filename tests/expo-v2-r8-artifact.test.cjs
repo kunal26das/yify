@@ -125,7 +125,6 @@ function definitions(bytes) {
 }
 
 function assertJniContract(classes) {
-    // Fixed class descriptors in the pinned Kolibri 0.2.0 and Expo Modules v2 0.2.4 C++ JNI headers.
     const descriptors = [
         'io/github/expo/kolibri/NativeObject',
         'io/github/expo/kolibri/binary/BinaryBuffer',
