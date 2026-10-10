@@ -86,12 +86,13 @@ export function isAllowedDownloadUrl(url) {
         /^[a-z0-9.-]+\.s3(?:\.[a-z0-9-]+)?\.amazonaws\.com$/.test(host);
 }
 
-export function verifySourceFiles(candidate) {
+export function verifySourceFiles(candidate, directory = process.cwd()) {
     validateCandidate(candidate);
-    run('git', ['cat-file', '-e', `${candidate.sourceSha}^{commit}`]);
-    const pkg = JSON.parse(run('git', ['show', `${candidate.sourceSha}:package.json`]));
-    const app = JSON.parse(run('git', ['show', `${candidate.sourceSha}:app.json`]));
-    const eas = JSON.parse(run('git', ['show', `${candidate.sourceSha}:eas.json`]));
+    const options = {cwd: directory};
+    run('git', ['cat-file', '-e', `${candidate.sourceSha}^{commit}`], options);
+    const pkg = JSON.parse(run('git', ['show', `${candidate.sourceSha}:package.json`], options));
+    const app = JSON.parse(run('git', ['show', `${candidate.sourceSha}:app.json`], options));
+    const eas = JSON.parse(run('git', ['show', `${candidate.sourceSha}:eas.json`], options));
     requireEqual(pkg.version, candidate.version, 'Source version');
     requireEqual(String(pkg.versionCode), candidate.versionCode, 'Source version code');
     requireEqual(app.expo.android.package, candidate.packageName, 'Source package');

@@ -176,9 +176,27 @@ test('requires complete trusted identity and rejects a different AAB hash', () =
 });
 
 test('rejects source metadata and APK identity mismatches', () => {
-    assert.doesNotThrow(() => verifySourceFiles(candidate));
-    assert.throws(() => verifySourceFiles({...candidate, version: '1.8.15'}), /Source version mismatch/);
-    assert.throws(() => verifySourceFiles({...candidate, projectId: '00000000-0000-0000-0000-000000000000'}), /Source project mismatch/);
+    const directory = mkdtempSync(join(tmpdir(), 'yify-source-identity-'));
+    const git = (...args) => {
+        const result = spawnSync('git', args, {cwd: directory, encoding: 'utf8'});
+        assert.equal(result.status, 0, result.stderr);
+        return result.stdout.trim();
+    };
+    try {
+        git('init', '--quiet');
+        writeFileSync(join(directory, 'package.json'), JSON.stringify({version: candidate.version, versionCode: Number(candidate.versionCode)}));
+        writeFileSync(join(directory, 'app.json'), JSON.stringify({expo: {android: {package: candidate.packageName}, extra: {eas: {projectId: candidate.projectId}}}}));
+        writeFileSync(join(directory, 'eas.json'), JSON.stringify({build: {production: {env: {EXPO_UPDATE_CHANNEL: 'Production'}, android: {buildType: 'app-bundle', credentialsSource: 'remote'}}}}));
+        git('add', '.');
+        git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--no-gpg-sign', '--quiet', '-m', 'Fixture');
+        const fixture = {...candidate, sourceSha: git('rev-parse', 'HEAD')};
+        assert.doesNotThrow(() => verifySourceFiles(fixture, directory));
+        assert.throws(() => verifySourceFiles({...fixture, version: '1.8.15'}, directory), /Source version mismatch/);
+        assert.throws(() => verifySourceFiles({...fixture, projectId: '00000000-0000-0000-0000-000000000000'}, directory), /Source project mismatch/);
+        assert.throws(() => verifySourceFiles({...fixture, sourceSha: '0'.repeat(40)}, directory), /git failed/);
+    } finally {
+        rmSync(directory, {recursive: true, force: true});
+    }
     const apk = {packageName: candidate.packageName, longVersionCode: '98', extractNativeLibs: true,
         artifacts: [{sha256: candidate.aabSha256}]};
     assert.doesNotThrow(() => verifyApkResult(apk, candidate));
