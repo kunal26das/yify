@@ -20,7 +20,7 @@ export function verifyImage(metadata, api) {
 }
 const [sdk, api, output] = process.argv.slice(2);
 if (output) {
-    if (!images[api]) throw new Error('Only API30/API35 are reviewed for this incident');
+    if (!images[api]) throw new Error('Only API30/API36 are reviewed for this incident');
     const metadata = relative => properties(readFileSync(path.join(sdk, relative, 'source.properties'), 'utf8'));
     const platform = metadata('platforms/android-37.0');
     const image = metadata(images[api].replaceAll(';', '/'));

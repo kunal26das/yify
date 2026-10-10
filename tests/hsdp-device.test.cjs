@@ -10,8 +10,10 @@ function eventFixture(variant, scenario) {
     const raw = scenario === 'raw-missing';
     const activity = raw ? 'com.google.android.play.core.hsdp.service.HsdpShimActivity' : 'io.github.kunal26das.hsdpregression.CallbackProbeActivity';
     const entries = ['driver_started', 'launch_requested'];
-    if (!raw) entries.push('probe_create_enter', 'probe_create_exit');
+    if (!raw) entries.push('probe_create_enter');
     entries.push('framework_created');
+    if (!raw) entries.push('probe_create_exit');
+    entries.push('framework_post_created');
     if (!scenario.endsWith('-create') && !raw) {
         entries.push('framework_attached');
         if (scenario === 'configuration') entries.push('sdk_attach_deferred', 'framework_configuration');
@@ -23,7 +25,9 @@ function eventFixture(variant, scenario) {
     return entries.map((event, index) => ({run: RUN, case: scenario, event,
         version: variant === 'legacy' ? '2.0.1' : '2.2.0', sourceSha: SHA, api: 30, pid: 123,
         elapsedNanos: index, activity, windowToken: true,
-        finishing: variant === 'fixed', detail: event === 'sdk_callback_throw'
+        finishing: variant === 'fixed' && (scenario.endsWith('-create') || raw
+            ? ['probe_create_exit', 'framework_post_created', 'framework_destroyed'].includes(event)
+            : ['sdk_callback_exit', 'sdk_callback_repeat_exit', 'framework_destroyed'].includes(event)), detail: event === 'sdk_callback_throw'
             ? 'java.lang.IllegalStateException: targetPackageName is null' : scenario,
     }));
 }
@@ -54,6 +58,17 @@ test('absence of launch, callback, token, repeat, crash or destruction cannot pa
     assert.throws(() => verifyCase(missingWindow), /attached Android window/);
     assert.throws(() => verifyCase({...evidence('legacy', 'attached'), logcat: ''}), /process crash/);
     assert.throws(() => verifyCase({...evidence('fixed', 'attached'), logcat: 'FATAL EXCEPTION: main'}), /crashed/);
+    for (const scenario of ['raw-missing', 'empty-create', 'null-create']) {
+        const withoutPost = evidence('fixed', scenario);
+        withoutPost.events = withoutPost.events.filter(item => item.event !== 'framework_post_created');
+        assert.throws(() => verifyCase(withoutPost), /after SDK initialization/);
+        const withoutFinish = evidence('fixed', scenario);
+        withoutFinish.events.find(item => item.event === 'framework_post_created').finishing = false;
+        assert.throws(() => verifyCase(withoutFinish), /after SDK initialization/);
+        const earlyFinish = evidence('fixed', scenario);
+        earlyFinish.events.find(item => item.event === 'framework_created').finishing = true;
+        assert.throws(() => verifyCase(earlyFinish), /after SDK initialization/);
+    }
 });
 
 test('stale identity, other exceptions and wrong callback crashes cannot pass', async () => {
@@ -84,7 +99,7 @@ test('merged APK gate rejects network access, providers, wrong graph/hash and ex
     assert.throws(() => verifyManifest({...good, aarReceipt: {...good.aarReceipt, dependencies: [...good.aarReceipt.dependencies, 'com.google.firebase:firebase-common:1.0']}}), /Forbidden/);
 });
 
-test('SDK metadata keeps source API37.0 stable and separately pins API30/API35 images', async () => {
+test('SDK metadata keeps source API37.0 stable and separately pins API30/API36 images', async () => {
     const {verifyPlatform, verifyImage} = await import('../qa/hsdp-device/check-sdk.mjs');
     const platform = {'AndroidVersion.ApiLevel':'37.0','Pkg.Revision':'2','Platform.CodeName':'',
         'AndroidVersion.CodeName':'','AndroidVersion.PreviewSdkInt':'0','AndroidVersion.BetaVersion':'','AndroidVersion.IsBaseSdk':'true'};
@@ -92,21 +107,25 @@ test('SDK metadata keeps source API37.0 stable and separately pins API30/API35 i
     for (const [key,value] of [['AndroidVersion.ApiLevel','37.1'],['AndroidVersion.MinorApiLevel','1'],['AndroidVersion.PreviewSdkInt','1'],['Pkg.Revision','1']]) {
         assert.throws(() => verifyPlatform({...platform,[key]:value}), /stable source/);
     }
-    for (const api of [30,35]) verifyImage({'AndroidVersion.ApiLevel':String(api),'Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'default'}, api);
-    assert.throws(() => verifyImage({'AndroidVersion.ApiLevel':'35','Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'google_apis'},35), /Wrong test image/);
-    assert.throws(() => verifyImage({'AndroidVersion.ApiLevel':'37','Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'default'},35), /Wrong test image/);
+    for (const api of [30,36]) verifyImage({'AndroidVersion.ApiLevel':String(api),'Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'default'}, api);
+    assert.throws(() => verifyImage({'AndroidVersion.ApiLevel':'36','Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'google_apis'},36), /Wrong test image/);
+    assert.throws(() => verifyImage({'AndroidVersion.ApiLevel':'37','Pkg.Revision':'1','SystemImage.Abi':'x86_64','SystemImage.TagId':'default'},36), /Wrong test image/);
 });
 
-test('workflow is secret-free and does not change security settings or accept licenses', () => {
+test('workflow grants only its runner KVM access and does not accept licenses', () => {
     const workflow = fs.readFileSync(path.join(ROOT,'.github/workflows/hsdp-framework-qa.yml'),'utf8');
     assert.match(workflow, /workflow_dispatch:/);
-    assert.match(workflow, /api: \[30, 35\]/);
+    assert.match(workflow, /api: \[30, 36\]/);
     const gradle = fs.readFileSync(path.join(ROOT, 'qa/hsdp-device/app/build.gradle'), 'utf8');
     assert.match(gradle, /buildToolsVersion '37\.0\.0'/);
     assert.doesNotMatch(workflow, /secrets\.|pull_request_target:|push:/);
+    assert.match(workflow, /sudo chown "\$\(id -u\):\$\(id -g\)" \/dev\/kvm/);
+    assert.match(workflow, /sudo chmod 0600 \/dev\/kvm/);
+    assert.match(workflow, /HOST_KVM_ACCESS_CHANGED: 'true'/);
     const scripts = ['run.sh','run-isolated.sh','run-device.mjs'].map(name => fs.readFileSync(path.join(ROOT,'qa/hsdp-device',name),'utf8')).join('\n');
     assert.doesNotMatch(scripts, /sudo|chmod|chown|usermod|--licenses|yes\s*\||iptables|ip6tables|airplane-mode|svc.*(?:wifi|data)|\"\$ANDROID_SERIAL\" root/);
-    assert.match(scripts, /test -r \/dev\/kvm && test -w \/dev\/kvm/);
+    assert.match(scripts, /if \[\[ ! -r \/dev\/kvm \|\| ! -w \/dev\/kvm \]\]; then[\s\S]*?exit 1/);
+    assert.match(scripts, /hostSecurityChanged: hostKvmAccessChanged/);
     assert.match(scripts, /--install[^\n]+<\/dev\/null/);
     assert.match(scripts, /Refusing to modify an unowned emulator/);
     const driver = fs.readFileSync(path.join(ROOT,'qa/hsdp-device/app/src/main/java/io/github/kunal26das/hsdpregression/CallbackProbeActivity.java'),'utf8');
@@ -114,6 +133,10 @@ test('workflow is secret-free and does not change security settings or accept li
     assert.match(driver, /super\.onAttachedToWindow/);
     assert.match(driver, /super\.onConfigurationChanged/);
     assert.match(driver, /super\.onNewIntent/);
+    const application = fs.readFileSync(path.join(ROOT, 'qa/hsdp-device/app/src/main/java/io/github/kunal26das/hsdpregression/ProbeApplication.java'), 'utf8');
+    assert.match(application, /onActivityPostCreated\(Activity activity, Bundle state\) \{ record\("framework_post_created", activity\); \}/);
+    const manifest = fs.readFileSync(path.join(ROOT, 'qa/hsdp-device/app/src/main/AndroidManifest.xml'), 'utf8');
+    assert.match(manifest, /configChanges="[^"]*smallestScreenSize/);
 });
 
 test('workflow limits PR execution to same-repository immutable heads and relevant paths', () => {

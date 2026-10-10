@@ -8,6 +8,7 @@ import {verifyCase} from './evidence.mjs';
 import {verifyProcessIdentity} from './process-identity.mjs';
 const [adbPath, serial, project, sourceSha, apiValue, evidence, avdName] = process.argv.slice(2);
 const api = Number(apiValue);
+const hostKvmAccessChanged = process.env.HOST_KVM_ACCESS_CHANGED === 'true';
 if (!avdName || !sourcePattern.test(sourceSha ?? '') || !images[apiValue] || !/^emulator-\d+$/.test(serial)) throw new Error('Invalid disposable emulator inputs');
 const adb = (...args) => execFileSync(adbPath, ['-s', serial, ...args], {encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024}).replaceAll('\r', '');
 const assert = (value, message) => { if (!value) throw new Error(message); };
@@ -104,7 +105,7 @@ for (const [variant, target] of Object.entries(variants)) {
 writeFileSync(path.join(evidence, 'device-receipt.json'), JSON.stringify({sourceSha, serial, avdName, api,
     deviceFingerprint: adb('shell', 'getprop', 'ro.build.fingerprint').trim(),
     abi: adb('shell', 'getprop', 'ro.product.cpu.abi').trim(),
-    execution: 'hosted-aosp-kvm-emulation', hostSecurityChanged: false, guestSecurityChanged: false,
+    execution: 'hosted-aosp-kvm-emulation', hostSecurityChanged: hostKvmAccessChanged, guestSecurityChanged: false,
     wholeOsNetworkConfinement: false, guestFirewallApplied: false, appInternetPermission: false,
     runAsGroupEvidenceUsed: false, googleServicePackagesAbsent: true,
     directAppSocketDenialsVerified: confinement.every(item => item.socketCreationProbes.every(probe => probe.created === false && [1, 13].includes(probe.errno))), confinement,

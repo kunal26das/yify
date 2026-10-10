@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api: [30, 35]
+        api: [30, 36]
     steps:
       - name: Validate immutable source selection
         env:
@@ -49,10 +49,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Grant the runner exclusive KVM device access
+        run: |
+          test -c /dev/kvm
+          sudo chown "$(id -u):$(id -g)" /dev/kvm
+          sudo chmod 0600 /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
       - name: Verify two original HSDP variants on Android API ${{ matrix.api }}
         env:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || inputs.source_sha }}
           TEST_API: ${{ matrix.api }}
+          HOST_KVM_ACCESS_CHANGED: 'true'
         run: bash qa/hsdp-device/run.sh "$SOURCE_SHA" "$TEST_API" "$RUNNER_TEMP/hsdp-$TEST_API"
       - name: Preserve exact static and framework evidence
         if: always()

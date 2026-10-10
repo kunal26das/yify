@@ -19,7 +19,8 @@ export function verifyCase({events, logcat, variant, scenario, run, sourceSha, a
     const expectedActivity = scenario === 'raw-missing'
         ? 'com.google.android.play.core.hsdp.service.HsdpShimActivity'
         : 'io.github.kunal26das.hsdpregression.CallbackProbeActivity';
-    requireTrue(sdkEvents.some(item => item.event === 'framework_created' && item.activity === expectedActivity), 'Framework did not create the intended Activity');
+    const created = sdkEvents.find(item => item.event === 'framework_created' && item.activity === expectedActivity);
+    requireTrue(created, 'Framework did not create the intended Activity');
     if (scenario !== 'raw-missing') requireTrue(find('probe_create_exit'), 'Probe did not finish SDK onCreate');
     if (callbackNames[scenario]) {
         const actualCallback = {attached: 'framework_attached', configuration: 'framework_configuration', 'new-intent': 'framework_new_intent'}[scenario];
@@ -43,7 +44,10 @@ export function verifyCase({events, logcat, variant, scenario, run, sourceSha, a
     if (callbackNames[scenario]) {
         requireTrue(find('sdk_callback_exit')?.finishing === true && find('sdk_callback_repeat_exit')?.finishing === true, 'Fixed callback and controlled repeated call did not finish safely');
     } else {
-        requireTrue(sdkEvents.some(item => item.event === 'framework_created' && item.finishing === true), 'Malformed onCreate did not finish safely');
+        const postCreated = sdkEvents.find(item => item.event === 'framework_post_created' && item.activity === expectedActivity);
+        requireTrue(created.finishing === false && postCreated?.finishing === true && postCreated.elapsedNanos > created.elapsedNanos,
+            'Malformed onCreate did not finish safely after SDK initialization');
+        if (scenario !== 'raw-missing') requireTrue(find('probe_create_exit')?.finishing === true, 'SDK onCreate did not return finishing');
     }
     return {scenario, version: target.version, pid, result: 'finished-safely', callback: callbackNames[scenario] ?? 'onCreate',
         repeatedInvocation: Boolean(callbackNames[scenario])};

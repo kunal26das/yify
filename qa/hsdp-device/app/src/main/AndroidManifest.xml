@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
     <application android:name=".ProbeApplication" android:label="HSDP Framework QA" android:allowBackup="false" android:usesCleartextTraffic="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity android:name=".DriverActivity" android:exported="true" android:excludeFromRecents="true" />
-        <activity android:name=".CallbackProbeActivity" android:exported="false" android:excludeFromRecents="true" android:launchMode="singleTop" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" android:theme="@style/Theme.HsdpServiceTransparent" />
+        <activity android:name=".CallbackProbeActivity" android:exported="false" android:excludeFromRecents="true" android:launchMode="singleTop" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" android:theme="@style/Theme.HsdpServiceTransparent" />
         <provider android:name="androidx.startup.InitializationProvider" tools:node="remove" />
     </application>
 </manifest>

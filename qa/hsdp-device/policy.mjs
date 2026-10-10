@@ -9,7 +9,7 @@ export const cases = ['raw-missing', 'attached', 'configuration', 'new-intent'];
 export const fixedOnlyCases = ['empty-create', 'null-create'];
 export const images = {
     '30': 'system-images;android-30;default;x86_64',
-    '35': 'system-images;android-35;default;x86_64',
+    '36': 'system-images;android-36;default;x86_64',
 };
 export const toolchain = {java: 17, sdkToolsJava: 17, cmdlineTools: '12.0', buildTools: '37.0.0',
     platform: 'platforms;android-37.0', gradle: '9.4.1', agp: '9.2.1'};

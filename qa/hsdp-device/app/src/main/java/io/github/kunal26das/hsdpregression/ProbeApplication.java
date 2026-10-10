@@ -12,6 +12,7 @@ public final class ProbeApplication extends Application {
         IdentityEvidence.verify(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             public void onActivityCreated(Activity activity, Bundle state) { record("framework_created", activity); }
+            public void onActivityPostCreated(Activity activity, Bundle state) { record("framework_post_created", activity); }
             public void onActivityStarted(Activity activity) { record("framework_started", activity); }
             public void onActivityResumed(Activity activity) { record("framework_resumed", activity); }
             public void onActivityPaused(Activity activity) { record("framework_paused", activity); }
