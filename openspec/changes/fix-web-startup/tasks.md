@@ -8,11 +8,11 @@
 
 - [x] 2.1 Remove the web font readiness barrier and verify delayed/failed font rendering without changing native startup. Browser QA with font requests aborted still renders the consent controls and homepage content.
 - [x] 2.2 Keep the real home list mounted while the hero loads and verify visible shelves load independently, partial failures remain recoverable and refresh keeps content. The home/consent regression tests pass; browser QA delaying the hero by five seconds shows a usable shelf and preserves the same list scroll element through hero completion.
-- [ ] 2.3 Verify first-ever and returning privacy journeys, phone/desktop layouts, slow loading and reduced motion in rendered previews; record evidence.
+- [x] 2.3 Verify first-ever and returning privacy journeys, phone/desktop layouts, slow loading and reduced motion in rendered previews; record evidence. Slow-script returning visits keep the inert home layout without a false dialog. Missing, malformed, outdated, unavailable or revoked receipts restore the required gate; stalled scripts expose focusable recovery links. Independent rendered design review passed for phone/desktop. Reduced-motion startup passed; extreme CSS zoom exposed a possible existing title overflow that is not established as a regression or as OS text-scaling behavior.
 
 ## 3. Integration and delivery
 
-- [ ] 3.1 Pass typecheck, full tests, export checks and OpenSpec validation; obtain independent code and scenario review.
+- [x] 3.1 Pass typecheck, full tests, export checks and OpenSpec validation; obtain independent code and scenario review. Typecheck, Hosting/Pages exports and strict OpenSpec validation pass. Full suite: 2,274 app tests and 51 crashreporting tests passed, one existing test skipped. Independent code/security/privacy review approved d576984; rendered QA and design review passed. Changed-file lint matches the base revision's four existing findings.
 - [ ] 3.2 Commit, merge through passing CI and verify live Hosting and Pages startup/connectivity behavior.
 
 ## Workflow follow-up
