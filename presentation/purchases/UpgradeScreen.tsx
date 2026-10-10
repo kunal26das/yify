@@ -31,7 +31,7 @@ export function UpgradeScreen() {
     }, [focused, showPaywall]);
 
     return <Screen><ScrollView contentContainerStyle={[styles.content, {paddingTop: top + Spacing.xl}]}>
-        <ThemedText type="heading">Yify Supporter</ThemedText>
+        <ThemedText accessibilityRole="header" type="heading">Yify Supporter</ThemedText>
         <ThemedText style={{color: colors.textMuted}}>Personal viewing insights and no Yify ads. Choose a plan to see its price and billing terms.</ThemedText>
         <Pressable accessibilityRole="button" onPress={() => router.replace('/watchlist')} style={styles.button}>
             <ThemedText type="link">Keep browsing</ThemedText>

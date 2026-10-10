@@ -30,7 +30,7 @@ export function SubscriberAnimeScreen() {
         <View style={[styles.pending, {paddingTop: top + Spacing.xl}]}>
             {status === 'checking' ? <ActivityIndicator color={colors.accent} accessibilityLabel="Checking subscription"/>
                 : <>
-                    <ThemedText type="heading">Couldn’t verify your subscription</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading">Couldn’t verify your subscription</ThemedText>
                     <ThemedText style={styles.message}>Please try again in a moment.</ThemedText>
                     <PressableScale onPress={() => void refresh()} accessibilityRole="button" accessibilityLabel="Retry subscription check"
                         contentStyle={[styles.retry, {backgroundColor: colors.accentStrong}]}>

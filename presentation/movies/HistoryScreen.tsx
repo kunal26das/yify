@@ -58,6 +58,7 @@ function ControlButton({
             pressedScale={0.95}
             pressedOpacity={0.85}
             hoveredScale={1.03}
+            style={styles.controlWrap}
             contentStyle={[
                 styles.control,
                 {
@@ -152,7 +153,7 @@ export function HistoryScreen() {
         ({item}: { item: Row }) => {
             if (item.type === 'heading') {
                 return (
-                    <ThemedText type="heading" style={styles.heading}>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.heading}>
                         {item.label}
                     </ThemedText>
                 );
@@ -168,7 +169,7 @@ export function HistoryScreen() {
 
     const header = (
         <View style={styles.header}>
-            <ThemedText type="title">History</ThemedText>
+            <ThemedText accessibilityRole="header" type="title">History</ThemedText>
             <View style={[styles.search, {backgroundColor: colors.surfaceSunken, borderColor: colors.border}]}>
                 <Ionicons name="search" size={16} color={colors.textMuted}/>
                 <TextInput
@@ -224,7 +225,7 @@ export function HistoryScreen() {
         entries.length === 0 ? (
             <Animated.View entering={enterRise()} style={styles.empty}>
                 <Ionicons name="time-outline" size={48} color={colors.textFaint}/>
-                <ThemedText type="heading" style={styles.emptyTitle}>
+                <ThemedText accessibilityRole="header" type="heading" style={styles.emptyTitle}>
                     No watch history yet
                 </ThemedText>
                 <ThemedText style={[styles.emptyBody, {color: colors.textMuted}]}>
@@ -242,6 +243,7 @@ export function HistoryScreen() {
                     pressedScale={0.95}
                     pressedOpacity={0.85}
                     hoveredScale={1.03}
+                    style={styles.controlWrap}
                     contentStyle={[styles.cta, {backgroundColor: colors.accentStrong}]}
                 >
                     <Ionicons name="search" size={16} color={colors.onAccent}/>
@@ -290,25 +292,27 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
-        height: 40,
+        minHeight: 44,
         paddingHorizontal: Spacing.md,
         borderRadius: Radius.pill,
         borderWidth: StyleSheet.hairlineWidth,
     },
-    searchInput: {flex: 1, fontSize: 14, padding: 0},
-    searchClear: {width: 24, height: 24, alignItems: 'center', justifyContent: 'center'},
+    searchInput: {flex: 1, minWidth: 0, fontSize: 14, paddingVertical: Spacing.sm},
+    searchClear: {width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center'},
     chips: {marginHorizontal: -Spacing.xs},
     controls: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    controlWrap: {maxWidth: '100%'},
     control: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
-        height: 36,
+        minHeight: 44,
+        paddingVertical: Spacing.sm,
         paddingHorizontal: Spacing.lg,
         borderRadius: Radius.pill,
         borderWidth: StyleSheet.hairlineWidth,
     },
-    controlLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500'},
+    controlLabel: {fontSize: 14, lineHeight: 18, fontWeight: '500', flexShrink: 1},
     paused: {fontSize: 13, lineHeight: 18},
 
     heading: {marginTop: Spacing.lg, marginBottom: Spacing.sm},
@@ -321,10 +325,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: Spacing.sm,
-        height: 40,
+        minHeight: 44,
+        paddingVertical: Spacing.sm,
         paddingHorizontal: 20,
         borderRadius: Radius.pill,
         marginTop: Spacing.lg,
     },
-    ctaLabel: {fontSize: 14, lineHeight: 18, fontWeight: '600'},
+    ctaLabel: {fontSize: 14, lineHeight: 18, fontWeight: '600', flexShrink: 1},
 });

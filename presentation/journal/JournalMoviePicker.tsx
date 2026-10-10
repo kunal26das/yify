@@ -70,7 +70,7 @@ function MovieChoices({repository, savedMovies, onSelect}: Omit<Props, 'visible'
             onPress={() => {setDraft(''); void search('');}} contentStyle={styles.clear}>
             <ThemedText type="caption" style={{color: colors.accent}}>Back to saved movies</ThemedText>
         </PressableScale> : null}
-        <ThemedText type="defaultSemiBold">{query ? 'Search results' : 'Saved movies'}</ThemedText>
+        <ThemedText accessibilityRole="header" type="defaultSemiBold">{query ? 'Search results' : 'Saved movies'}</ThemedText>
         {loading ? <ActivityIndicator color={colors.accent} accessibilityLabel="Searching movies"/> : failed ? <View style={styles.content}>
             <ThemedText accessibilityRole="alert" style={{color: colors.textMuted}}>Movies could not be loaded. Your saved movies are still available.</ThemedText>
             <PressableScale accessibilityRole="button" accessibilityLabel="Retry journal movie search" onPress={() => void search(query)}

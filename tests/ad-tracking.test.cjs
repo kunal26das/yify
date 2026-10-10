@@ -701,7 +701,7 @@ test('a privacy form failure still refreshes consent instead of reusing permissi
     });
     await f.gateway.init();
     f.ads[0].emit('loaded');
-    await assert.doesNotReject(f.gateway.showPrivacyOptions());
+    await assert.rejects(f.gateway.showPrivacyOptions(), /privacy choices could not be opened/);
     assert.equal(f.gateway.show('movie_open'), null);
     f.setForeground(true);
     assert.equal(f.ads.length, 1);
@@ -819,4 +819,20 @@ test('privacy options never cover an active ad, including after its navigation t
     ad.emit('closed');
     await f.gateway.showPrivacyOptions();
     assert.equal(forms, 1);
+});
+
+test('failed privacy form reports failure, blocks ads and permits a successful retry', async t => {
+    let failing = true;
+    const f = fixture(t, {
+        showPrivacyOptionsForm: async () => { if (failing) throw new Error('form unavailable'); },
+        getConsentInfo: async () => ({canRequestAds: true}),
+    });
+    await f.gateway.init();
+    await assert.rejects(f.gateway.showPrivacyOptions(), /privacy choices could not be opened/);
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.setForeground(true);
+    assert.equal(f.ads.length, 1);
+    failing = false;
+    await f.gateway.showPrivacyOptions();
+    assert.equal(f.ads.length, 2);
 });

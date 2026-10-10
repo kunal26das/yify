@@ -666,3 +666,34 @@ test('RevenueCat automatic web analytics and campaign metadata stay disabled reg
         assert.equal(f.repository.getState().ready, true);
     }
 });
+
+test('explicit web refresh reports failure without revoking cached access and can retry', async () => {
+    let failing = false;
+    const f = fixture({overrides: {info: () => {
+        if (failing) throw new Error('offline');
+        return grantedInfo(true);
+    }}});
+    await f.repository.identify(null);
+    failing = true;
+    assert.deepEqual(await Promise.all([f.repository.refresh(), f.repository.refresh()]), [false, false]);
+    assert.equal(f.repository.getState().ready, true);
+    assert.equal(f.repository.getState().adsRemoved, true);
+    failing = false;
+    assert.equal(await f.repository.refresh(), true);
+});
+
+test('explicit web refresh cannot confirm access for an account that changed during verification', async () => {
+    const pending = deferred();
+    let hold = false;
+    const f = fixture({overrides: {info: () => hold ? pending.promise : grantedInfo(true)}});
+    await f.repository.identify(account('account-a'));
+    hold = true;
+    const refresh = f.repository.refresh();
+    await tick();
+    const changed = f.repository.identify(account('account-b'));
+    hold = false;
+    pending.resolve(grantedInfo(true));
+    assert.equal(await refresh, false);
+    await changed;
+    assert.equal(await f.repository.refresh(), true);
+});

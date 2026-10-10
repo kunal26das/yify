@@ -54,7 +54,7 @@ export function JournalScreen() {
         <ScrollView contentContainerStyle={[styles.guest, {paddingHorizontal: gutter, paddingTop: top + Spacing.xxl}]}>
             {!session.ready ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading your account"/> : <>
                 <Ionicons name="book-outline" size={36} color={colors.accent}/>
-                <ThemedText type="heading">Your movie journal</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">Your movie journal</ThemedText>
                 <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Keep watch dates, personal ratings and private notes together. Sign in to start your free journal.</ThemedText>
                 <Action label={session.signingIn ? 'Signing in…' : 'Sign in with Google'} onPress={() => void signIn()}
                     primary disabled={session.signingIn || !session.available}/>
@@ -124,7 +124,7 @@ function JournalContent() {
     const header = <View style={styles.header}>
         <View style={styles.heading}>
             <View style={styles.headingText}>
-                <ThemedText type="heading">Journal</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">Journal</ThemedText>
                 <ThemedText type="caption" style={{color: colors.textMuted}}>Your private movie diary.</ThemedText>
             </View>
             <View style={styles.headingActions}>
@@ -170,7 +170,7 @@ function JournalContent() {
                 </PressableScale>
             </View> : null}
             {insights.totalWatches === 0 ? <View style={styles.empty}>
-                <ThemedText type="heading">No watches logged {month ? 'this month' : 'yet'}</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">No watches logged {month ? 'this month' : 'yet'}</ThemedText>
                 <ThemedText style={{color: colors.textMuted}}>Log a movie you have watched to see your viewing patterns.</ThemedText>
             </View> : <View style={[styles.insights, {backgroundColor: colors.surface, borderColor: colors.border}]}>
                 <View style={styles.metrics}>
@@ -180,7 +180,7 @@ function JournalContent() {
                     <Metric label="Your average rating" value={insights.averageRating === null ? 'Unrated' : `${insights.averageRating.toFixed(1)} / 5`}/>
                 </View>
                 <View style={styles.section}>
-                    <ThemedText type="defaultSemiBold">Logged runtime</ThemedText>
+                    <ThemedText accessibilityRole="header" type="defaultSemiBold">Logged runtime</ThemedText>
                     <ThemedText>{Math.floor(insights.knownRuntimeMinutes / 60)}h {insights.knownRuntimeMinutes % 60}m</ThemedText>
                     <ThemedText type="caption" style={{color: colors.textMuted}}>
                         {insights.unknownRuntimeCount ? `${insights.unknownRuntimeCount} ${insights.unknownRuntimeCount === 1 ? 'entry has' : 'entries have'} no runtime. ` : ''}
@@ -189,7 +189,7 @@ function JournalContent() {
                     <ThemedText type="caption" style={{color: colors.textMuted}}>Average rating uses {insights.ratedWatches} rated {insights.ratedWatches === 1 ? 'entry' : 'entries'}.</ThemedText>
                 </View>
                 {insights.topGenres.length ? <View style={styles.section}>
-                    <ThemedText type="heading">Most watched genres</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading">Most watched genres</ThemedText>
                     {insights.topGenres.map(genre => <View key={genre.name} style={styles.breakdown}>
                         <ThemedText style={styles.flex}>{genre.name}</ThemedText>
                         <ThemedText type="defaultSemiBold">{genre.count}</ThemedText>
@@ -197,7 +197,7 @@ function JournalContent() {
                     <ThemedText type="caption" style={{color: colors.textMuted}}>A movie can count toward more than one genre.</ThemedText>
                 </View> : null}
                 {insights.topRated.length ? <View style={styles.section}>
-                    <ThemedText type="heading">Your highest rated</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading">Your highest rated</ThemedText>
                     {insights.topRated.map(item => <View key={item.movie.id} style={styles.breakdown}>
                         <ThemedText style={styles.flex}>{item.movie.title}</ThemedText>
                         <ThemedText style={{color: colors.accent}}>★ {item.rating}</ThemedText>
@@ -205,7 +205,7 @@ function JournalContent() {
                     <ThemedText type="caption" style={{color: colors.textMuted}}>Uses your latest rating for each movie in this period.</ThemedText>
                 </View> : null}
                 {!month && insights.months.length ? <View style={styles.section}>
-                    <ThemedText type="heading">Watches by month</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading">Watches by month</ThemedText>
                     {insights.months.map(item => <View key={item.month} style={styles.breakdown}>
                         <ThemedText type="caption" style={styles.monthLabel}>{item.month}</ThemedText>
                         <View style={[styles.barTrack, {backgroundColor: colors.surfaceSunken}]}>
@@ -219,7 +219,7 @@ function JournalContent() {
             </View>}
         </> : <View style={[styles.upgrade, {backgroundColor: colors.surface, borderColor: colors.border}]}>
             <Ionicons name="stats-chart-outline" size={28} color={colors.accent}/>
-            <ThemedText type="heading">See your viewing patterns</ThemedText>
+            <ThemedText accessibilityRole="header" type="heading">See your viewing patterns</ThemedText>
             <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Supporters get monthly recaps, favorite genres and personal rating insights. Your journal entries and editing stay free.</ThemedText>
             <Action label="Explore supporter access" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
         </View> : null}
@@ -240,7 +240,7 @@ function JournalContent() {
         <FlatList data={tab === 'journal' && journal.ready ? journal.entries : []} keyExtractor={entry => entry.id}
             ListHeaderComponent={header} ListEmptyComponent={tab === 'journal' && journal.ready ? <View style={styles.empty}>
                 <Ionicons name="book-outline" size={36} color={colors.accent}/>
-                <ThemedText type="heading">Remember your next movie</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">Remember your next movie</ThemedText>
                 <ThemedText style={{color: colors.textMuted}}>Choose a movie you watched. Add the date, your rating or a private note.</ThemedText>
                 <View style={styles.start}><Action label="Log your first movie" primary onPress={chooseMovie}/></View>
             </View> : undefined}

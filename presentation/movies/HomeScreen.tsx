@@ -76,6 +76,7 @@ export function HomeScreen({
         error: shelvesError,
         loadInitial: loadShelvesInitial,
         loadShelf,
+        retryShelf,
         reload: reloadShelves,
     } = shelves;
     const watchlist = useWatchlist();
@@ -136,6 +137,16 @@ export function HomeScreen({
         reloadShelves();
     }, [reloadShelves]);
 
+    const handleShelfRetry = useCallback((key: string, page: number) => {
+        Analytics.retry('home');
+        retryShelf(key, page);
+    }, [retryShelf]);
+
+    const hasUsableContent = heroMovies.length > 0 || watchlist.length > 0 || (shows?.shows.length ?? 0) > 0 ||
+        shelfStates.some((shelf) => shelf.movies.length > 0);
+    const firstShelvesSettled = shelfStates.slice(0, 3).every((shelf) =>
+        shelf.status === 'error' || shelf.status === 'empty');
+
     useReloadWhenOnline(handleRetry, !!shelvesError);
 
     const renderRow = useCallback(
@@ -148,6 +159,7 @@ export function HomeScreen({
                         gutter={gutter}
                         skeletons={skeletons}
                         onLoad={loadShelf}
+                        onRetry={handleShelfRetry}
                         onNavigate={goTo}
                     />
                 );
@@ -176,12 +188,13 @@ export function HomeScreen({
             gutter,
             skeletons,
             loadShelf,
+            handleShelfRetry,
             goTo,
             shows?.shows,
         ]
     );
 
-    if (shelvesLoading && heroMovies.length === 0 && !shelvesError) {
+    if (shelvesLoading && !hasUsableContent && !shelvesError) {
         return (
             <Screen>
                 <HomeSkeleton
@@ -196,11 +209,11 @@ export function HomeScreen({
         );
     }
 
-    if (shelvesError && heroMovies.length === 0) {
+    if (shelvesError && !hasUsableContent && firstShelvesSettled) {
         const message = (
                 <Reanimated.View entering={enterRise()} style={[styles.centered, {paddingTop: topBarHeight}]}>
                     <Ionicons name="cloud-offline-outline" size={56} color={colors.textMuted}/>
-                    <ThemedText type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.stateTitle}>Something went wrong</ThemedText>
                     <ThemedText style={[styles.stateMessage, {color: colors.textMuted}]}>
                         {shelvesError}
                     </ThemedText>
@@ -242,6 +255,20 @@ export function HomeScreen({
                         showsVerticalScrollIndicator={false}
                         ListHeaderComponent={
                             <>
+                                {shelvesError ? (
+                                    <View style={[styles.failureNotice, {marginHorizontal: gutter, borderColor: colors.border,
+                                        backgroundColor: colors.surfaceSunken}]}>
+                                        <ThemedText style={{color: colors.textMuted, flexShrink: 1}}>
+                                            {hasUsableContent ? 'Some home titles couldn’t refresh. Showing available titles.'
+                                                : 'Home couldn’t load. Try again to see the latest titles.'}
+                                        </ThemedText>
+                                        <PressableScale onPress={handleRetry} accessibilityRole="button"
+                                            accessibilityLabel="Retry home refresh"
+                                            contentStyle={[styles.retryAction, {borderColor: colors.border}]}>
+                                            <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>Try again</ThemedText>
+                                        </PressableScale>
+                                    </View>
+                                ) : null}
                                 {heroMovies.length > 0 ? (
                                     <View
                                         style={styles.heroWrap}
@@ -296,6 +323,7 @@ function ShelfRow({
                       gutter,
                       skeletons,
                       onLoad,
+                      onRetry,
                       onNavigate,
                   }: {
     shelf: ShelfState;
@@ -303,8 +331,10 @@ function ShelfRow({
     gutter: number;
     skeletons: number;
     onLoad: (key: string) => void;
+    onRetry: (key: string, page: number) => void;
     onNavigate: (href: string) => void;
 }) {
+    const {colors} = usePalette();
     useEffect(() => {
         if (shelf.needsRequest) onLoad(shelf.key);
     }, [shelf.needsRequest, shelf.key, onLoad]);
@@ -313,10 +343,24 @@ function ShelfRow({
         if (shelf.status === 'loaded' && shelf.movies.length > 0) Analytics.shelfImpression(shelf.key);
     }, [shelf.status, shelf.key, shelf.movies.length]);
 
-    if (shelf.status === 'empty' || shelf.status === 'error') return null;
+    if (shelf.status === 'empty') return null;
 
     return (
-        <MovieRail
+        <>
+        {shelf.status === 'error' ? (
+            <View style={[styles.failureNotice, {marginHorizontal: gutter, borderColor: colors.border,
+                backgroundColor: colors.surfaceSunken}]}>
+                <ThemedText style={{color: colors.text, flexShrink: 1}}>
+                    {shelf.title} couldn’t {shelf.movies.length > 0 ? 'refresh' : 'load'}.
+                </ThemedText>
+                <PressableScale onPress={() => onRetry(shelf.key, shelf.page + 1)} accessibilityRole="button"
+                    accessibilityLabel={`Retry ${shelf.title}`}
+                    contentStyle={[styles.retryAction, {borderColor: colors.border}]}>
+                    <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>Try again</ThemedText>
+                </PressableScale>
+            </View>
+        ) : null}
+        {shelf.movies.length > 0 || shelf.status !== 'error' ? <MovieRail
             title={shelf.title}
             subtitle={shelf.subtitle}
             movies={shelf.movies}
@@ -324,13 +368,14 @@ function ShelfRow({
             markNew={shelf.markNew}
             posterWidth={posterWidth}
             gutter={gutter}
-            loading={shelf.status !== 'loaded'}
+            loading={shelf.movies.length === 0 && shelf.status !== 'error'}
             skeletonCount={skeletons}
             onSeeAll={() => {
                 Analytics.shelfSeeAll(shelf.title);
                 onNavigate(buildBrowseHref(shelf.query));
             }}
-        />
+        /> : null}
+        </>
     );
 }
 
@@ -412,6 +457,11 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     ctaLabel: {fontSize: 15, fontFamily: FontFamily.bold},
+    failureNotice: {borderWidth: 1, borderRadius: Radius.md, padding: Spacing.md,
+        marginBottom: Spacing.md, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.sm},
+    retryAction: {minHeight: 44, borderWidth: 1, borderRadius: Radius.pill,
+        paddingHorizontal: Spacing.md, justifyContent: 'center', alignItems: 'center'},
+    retryLabel: {fontSize: 14, fontFamily: FontFamily.bold},
 
     heroSkeletonContent: {gap: Spacing.md},
     heroSkeletonTitle: {width: '85%', height: 44, borderRadius: Radius.sm},

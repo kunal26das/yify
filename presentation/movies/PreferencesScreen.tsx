@@ -666,7 +666,7 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                     <Row
                         icon="help-circle-outline"
                         title="Confirm removals"
-                        subtitle="Ask before the ✕ on a poster removes a title."
+                        subtitle="Ask before removing a title from your watchlist."
                         colors={colors}
                         gutter={gutter}
                         trailing={
@@ -793,7 +793,8 @@ export function PreferencesScreen({viewModel}: {viewModel?: PreferencesViewModel
                             gutter={gutter}
                             onPress={() => {
                                 Analytics.websiteOpen('settings');
-                                void WebBrowser.openBrowserAsync(WEBSITE_URL, {enableBarCollapsing: true});
+                                void WebBrowser.openBrowserAsync(WEBSITE_URL, {enableBarCollapsing: true})
+                                    .catch(() => toast('Could not open the website. Please try again.', 'alert-circle-outline'));
                             }}
                             accessibilityRole="link"
                             accessibilityLabel="Open Yify on the web"
@@ -854,52 +855,88 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const accountSync = useAccountSync();
     const confirm = useConfirm();
     const goTo = useGoTo();
-    const [deleting, setDeleting] = useState(false);
+    const toast = useToast();
+    const [pendingAction, setPendingAction] = useState<'delete' | 'signout' | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+    const actionPending = useRef(false);
+    const deleting = pendingAction === 'delete';
 
     const unavailable = ready && !available;
 
-    const signOut = () => {
-        Analytics.signOut();
-        void auth.signOut();
+    const signOut = async () => {
+        if (actionPending.current) return;
+        actionPending.current = true;
+        setPendingAction('signout');
+        setNotice(null);
+        try {
+            await auth.signOut();
+            Analytics.signOut();
+            toast('Signed out.');
+        } catch {
+            setNotice('Sign-out could not be completed. Please try again.');
+        } finally {
+            actionPending.current = false;
+            setPendingAction(null);
+        }
     };
 
     const runDelete = async () => {
-        setDeleting(true);
+        if (actionPending.current) return;
+        actionPending.current = true;
+        setPendingAction('delete');
+        setNotice(null);
         const uid = account?.uid;
         let stage: 'sync' | 'auth' = 'sync';
+        const partialFailure = 'Your synced data was deleted, but your account is still active. Deletion was cancelled or could not finish. Try Delete account again.';
         try {
             await accountSync.pause();
             if (!uid || auth.getSession().account?.uid !== uid) {
                 Analytics.accountDeleteFailed('auth');
+                setNotice('Your account changed before deletion finished. Check the current account before trying again.');
                 return;
             }
             const cleared = await accountSync.deleteRemote();
             if (!cleared) {
                 Analytics.accountDeleteFailed('sync');
+                setNotice('Your account could not be deleted. Some data may already have been removed. Please try again.');
                 return;
             }
             stage = 'auth';
             if (auth.getSession().account?.uid !== uid) {
                 Analytics.accountDeleteFailed('auth');
+                setNotice('Synced data for the previous account was deleted. Your account changed before deletion finished.');
                 return;
             }
             const deleted = await auth.deleteAccount();
-            if (deleted) Analytics.accountDeleted();
-            else Analytics.accountDeleteFailed('auth');
+            if (deleted) {
+                Analytics.accountDeleted();
+                toast('Your account was deleted.');
+            } else {
+                Analytics.accountDeleteFailed('auth');
+                setNotice(partialFailure);
+            }
         } catch {
             Analytics.accountDeleteFailed(stage);
+            setNotice(stage === 'auth' ? partialFailure
+                : 'Your account could not be deleted. Some data may already have been removed. Please try again.');
         } finally {
-            accountSync.setAccount(auth.getSession().account?.uid ?? null);
-            accountSync.resume();
-            setDeleting(false);
+            try {
+                accountSync.setAccount(auth.getSession().account?.uid ?? null);
+                accountSync.resume();
+            } catch {
+                setNotice('Account sync could not restart. Close and reopen Yify.');
+            }
+            actionPending.current = false;
+            setPendingAction(null);
         }
     };
 
     const confirmDelete = () => {
+        if (actionPending.current) return;
         confirm({
             title: 'Delete account?',
             message:
-                'This permanently deletes your account, private movie journal, and the watchlist, history and settings synced to it. Other titles saved on this device stay until you clear them.',
+                'This permanently deletes your account, private movie journal, and the watchlist, history and settings synced to it. Other titles saved on this device stay until you clear them. Deleting your account does not cancel a subscription. Use Yify support options to manage billing before deleting.',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             icon: 'trash-outline',
@@ -936,10 +973,12 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitle={account.email ?? undefined}
                         colors={colors}
                         gutter={gutter}
-                        onPress={signOut}
+                        onPress={() => void signOut()}
                         accessibilityLabel="Sign out"
+                        accessibilityState={{disabled: pendingAction !== null}}
                         trailing={
-                            <ThemedText style={[styles.value, {color: colors.accent}]}>Sign out</ThemedText>
+                            pendingAction === 'signout' ? <ActivityIndicator color={colors.accent}/>
+                                : <ThemedText style={[styles.value, {color: colors.accent}]}>Sign out</ThemedText>
                         }
                     />
                     <SyncRow colors={colors} gutter={gutter}/>
@@ -958,9 +997,9 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitleStyle={error ? {color: colors.peer} : undefined}
                         colors={colors}
                         gutter={gutter}
-                        onPress={signingIn || unavailable ? undefined : () => void auth.signIn()}
+                        onPress={() => void auth.signIn()}
                         accessibilityLabel="Sign in with Google"
-                        accessibilityState={{disabled: unavailable}}
+                        accessibilityState={{disabled: !ready || signingIn || unavailable || pendingAction !== null}}
                         trailing={
                             signingIn ? (
                                 <ActivityIndicator color={colors.accent}/>
@@ -992,8 +1031,9 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitle="Removes your account and everything synced to it."
                         colors={colors}
                         gutter={gutter}
-                        onPress={deleting ? undefined : confirmDelete}
+                        onPress={confirmDelete}
                         accessibilityLabel="Delete account"
+                        accessibilityState={{disabled: pendingAction !== null}}
                         trailing={
                             deleting ? (
                                 <ActivityIndicator color={colors.accent}/>
@@ -1003,6 +1043,8 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         }
                     />
                 ) : null}
+                {notice ? <ThemedText accessibilityRole="alert" style={[styles.subtitle,
+                    {color: colors.peer, paddingHorizontal: gutter, paddingBottom: Spacing.md}]}>{notice}</ThemedText> : null}
             </Group>
         </>
     );
@@ -1015,6 +1057,7 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
     const config = useAppConfig();
     const coffeeUrl = config.getSupportUrl();
     const showCoffee = coffeeUrl.startsWith('https://');
+    const toast = useToast();
 
     if (!state.available && !state.adsRemoved && !showCoffee && !ads.privacyOptionsRequired()) return null;
 
@@ -1043,7 +1086,8 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         gutter={gutter}
                         onPress={() => {
                             Analytics.coffeeOpen('settings');
-                            void WebBrowser.openBrowserAsync(coffeeUrl, {enableBarCollapsing: true});
+                            void WebBrowser.openBrowserAsync(coffeeUrl, {enableBarCollapsing: true})
+                                .catch(() => toast('Could not open the support page. Please try again.', 'alert-circle-outline'));
                         }}
                         accessibilityRole="link"
                         accessibilityLabel="Buy me a coffee"
@@ -1057,7 +1101,8 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
                         subtitle="Change how ads are personalised for you."
                         colors={colors}
                         gutter={gutter}
-                        onPress={() => void ads.showPrivacyOptions()}
+                        onPress={() => void ads.showPrivacyOptions()
+                            .catch(() => toast('Could not open ad privacy choices. Please try again.', 'alert-circle-outline'))}
                         accessibilityLabel="Ad privacy choices"
                         trailing={<Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>}
                     />
@@ -1083,7 +1128,7 @@ function SectionHeader({
             entering={enterRise(index)}
             style={[styles.sectionHeader, {paddingHorizontal: gutter}]}
         >
-            <ThemedText type="micro" style={[styles.sectionTitle, {color: colors.accent}]}>{title}</ThemedText>
+            <ThemedText accessibilityRole="header" type="micro" style={[styles.sectionTitle, {color: colors.accent}]}>{title}</ThemedText>
         </Animated.View>
     );
 }
@@ -1115,6 +1160,7 @@ function Row({
                  leading,
                  title,
                  titleType = 'default',
+                 titleHeading = false,
                  titleStyle,
                  subtitle,
                  subtitleStyle,
@@ -1130,6 +1176,7 @@ function Row({
     leading?: React.ReactNode;
     title: string;
     titleType?: ThemedTextType;
+    titleHeading?: boolean;
     titleStyle?: StyleProp<TextStyle>;
     subtitle?: string;
     subtitleStyle?: StyleProp<TextStyle>;
@@ -1145,7 +1192,8 @@ function Row({
         <View style={styles.rowContent}>
             {leading ?? (icon ? <Ionicons name={icon} size={GLYPH_SIZE} color={colors.textMuted} style={subtitle ? styles.leadingIcon : undefined}/> : null)}
             <View style={styles.rowText}>
-                <ThemedText type={titleType} style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
+                <ThemedText accessibilityRole={titleHeading ? 'header' : undefined} type={titleType}
+                    style={[styles.rowTitle, titleStyle, {color: colors.text}]}>{title}</ThemedText>
                 {subtitle ? (
                     <ThemedText style={[styles.subtitle, {color: colors.textMuted}, subtitleStyle]}>{subtitle}</ThemedText>
                 ) : null}
@@ -1161,6 +1209,7 @@ function Row({
     return (
         <PressableScale
             onPress={onPress}
+            disabled={accessibilityState?.disabled}
             accessibilityRole={accessibilityRole}
             accessibilityLabel={accessibilityLabel}
             accessibilityState={accessibilityState}
@@ -1291,6 +1340,7 @@ function SettingsSection({
             <Row
                 title={title}
                 titleType="heading"
+                titleHeading
                 titleStyle={styles.sectionRowTitle}
                 colors={colors}
                 gutter={gutter}

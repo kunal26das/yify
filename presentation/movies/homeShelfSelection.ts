@@ -28,10 +28,12 @@ export function createHomeShelfSelector() {
 
             const exhausted = !shelf.hasMore || shelf.page >= MAX_SHELF_PAGES;
             const thin = shelf.status === 'loaded' && visible.length < MIN_SHELF_MOVIES && !exhausted;
-            const own: ShelfStatus = shelf.status === 'loaded' && thin ? 'loading' : shelf.status;
+            const own: ShelfStatus = shelf.status === 'loaded'
+                ? thin ? 'loading' : visible.length === 0 ? 'empty' : 'loaded'
+                : shelf.status;
             if (thin && shelf.page > 0) needsMore.push({key: shelf.key, next: shelf.page + 1});
 
-            const status = aboveSettled ? own : 'loading';
+            const status = own === 'error' || aboveSettled ? own : 'loading';
             aboveSettled = aboveSettled && (own === 'loaded' || own === 'empty' || own === 'error');
             const old = previous.get(shelf.key);
             const unchanged = old?.source === shelf && old.visible.status === status &&

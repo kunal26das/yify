@@ -31,7 +31,7 @@ export function ShowStrip({
     return (
         <View style={styles.strip}>
             <View style={[styles.header, {paddingHorizontal: gutter}]}>
-                <ThemedText type="heading">Just Added Episodes</ThemedText>
+                <ThemedText accessibilityRole="header" type="heading">Just Added Episodes</ThemedText>
                 <PressableScale
                     onPress={() => goTo('/shows')}
                     accessibilityRole="link"

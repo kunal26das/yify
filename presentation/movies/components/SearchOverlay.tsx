@@ -41,9 +41,10 @@ export function SearchOverlay({
     const submit = useCallback(
         (term: string) => {
             const trimmed = term.trim();
-            if (!trimmed) return;
-            searchHistory.remember(trimmed);
-            Analytics.search(trimmed);
+            if (trimmed) {
+                searchHistory.remember(trimmed);
+                Analytics.search(trimmed);
+            }
             onSubmit(trimmed);
             onClose();
         },
@@ -116,6 +117,7 @@ export function SearchOverlay({
                                 onPress={() => {
                                     Analytics.searchCleared();
                                     setQuery('');
+                                    onSubmit('');
                                     inputRef.current?.focus();
                                 }}
                                 accessibilityRole="button"

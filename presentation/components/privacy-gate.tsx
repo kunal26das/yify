@@ -88,7 +88,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
             <View ref={cardRef} role={Platform.OS === 'web' ? 'dialog' : undefined} aria-modal accessibilityViewIsModal
                 accessibilityLabel="Welcome to Yify" tabIndex={-1}
                 style={[styles.card, {borderColor: colors.border, backgroundColor: colors.surfaceElevated}]}>
-                <ThemedText type="title">Welcome to Yify</ThemedText>
+                <ThemedText accessibilityRole="header" type="title">Welcome to Yify</ThemedText>
                 <ThemedText>Yify is for adults aged 18 and over.</ThemedText>
                 <View style={styles.row}>
                     <ThemedText style={styles.label}>I am 18 or older</ThemedText>

@@ -89,7 +89,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private revision = 0;
     private queue: Promise<void> = Promise.resolve();
     private initializing: PendingWork<void> | null = null;
-    private refreshing: PendingWork<void> | null = null;
+    private refreshing: PendingWork<boolean> | null = null;
     private restoring: PendingWork<boolean> | null = null;
     private checkout: (PendingWork<boolean> & {offerId: string}) | null = null;
     private reportedAdsRemoved: boolean | undefined;
@@ -164,16 +164,17 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         await this.init();
     }
 
-    async refresh(): Promise<void> {
-        if (!this.canStart()) return;
+    async refresh(): Promise<boolean> {
+        if (!this.canStart()) return false;
         const revision = this.revision;
         if (this.refreshing?.revision === revision) return this.refreshing.promise;
         this.setState({refreshing: true});
         const promise = this.enqueue(async () => {
             try {
                 await this.synchronize(revision);
+                return this.isCurrent(revision) && this.store.get().ready;
             } catch {
-                // Keep the current account's last verified result during transient outages.
+                return false;
             } finally {
                 if (this.isCurrent(revision)) this.setState({refreshing: false});
             }
@@ -181,7 +182,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         const work = {revision, promise};
         this.refreshing = work;
         try {
-            await promise;
+            return await promise;
         } finally {
             if (this.refreshing === work) this.refreshing = null;
         }

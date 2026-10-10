@@ -279,7 +279,7 @@ export function MovieRail({
         <View style={styles.rail}>
             <Animated.View entering={enterRise()} style={[styles.header, {paddingHorizontal: gutter}]}>
                 <View style={styles.headerText}>
-                    <ThemedText type={titleType} style={styles.title}>{title}</ThemedText>
+                    <ThemedText accessibilityRole="header" type={titleType} style={styles.title}>{title}</ThemedText>
                     {subtitle ? (
                         <ThemedText style={[styles.subtitle, {color: colors.textMuted}]}>
                             {subtitle}

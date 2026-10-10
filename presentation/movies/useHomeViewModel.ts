@@ -27,6 +27,7 @@ const SHELF_ORDER = new Map(HOME_SHELVES.map((shelf, i) => [shelf.key, i]));
 interface QueuedPage {
     key: string;
     page: number;
+    generation: number;
 }
 
 function takeNextInShelfOrder(queue: QueuedPage[]): QueuedPage | undefined {
@@ -53,26 +54,27 @@ export function useHomeViewModel(repository: MovieRepository) {
     const [fetchingShelves, setFetchingShelves] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const heroLoadingRef = useRef(false);
+    const generationRef = useRef(0);
+    const heroLoadingRef = useRef<number | null>(null);
     const requestedRef = useRef<Set<string>>(new Set());
 
     const loadHero = useCallback(async () => {
-        if (heroLoadingRef.current) return;
-        heroLoadingRef.current = true;
+        const generation = generationRef.current;
+        if (heroLoadingRef.current === generation) return;
+        heroLoadingRef.current = generation;
         try {
             const {movies} = await repository.listMovies({page: 1, limit: HERO_LIMIT, ...HERO_QUERY});
+            if (generation !== generationRef.current) return;
             const withArt = movies.filter((m) => m.backgroundImageUrl);
             const heroToShow = withArt.length > 0 ? withArt : movies;
-            if (heroToShow.length > 0) {
-                setHeroMovies(heroToShow);
-                setError(null);
-            } else {
-                setError('Failed to load movies');
-            }
+            setHeroMovies(heroToShow);
+            setError(null);
         } catch (e) {
+            if (generation !== generationRef.current) return;
             setError(e instanceof Error ? e.message : 'Failed to load movies');
         } finally {
-            heroLoadingRef.current = false;
+            if (generation !== generationRef.current) return;
+            heroLoadingRef.current = null;
             setLoading(false);
             setRefreshing(false);
         }
@@ -83,9 +85,11 @@ export function useHomeViewModel(repository: MovieRepository) {
         (movieId: number) => {
             if (trailerAskedRef.current.has(movieId)) return;
             trailerAskedRef.current.add(movieId);
+            const generation = generationRef.current;
             repository
                 .getMovieDetails(movieId)
                 .then((details) => {
+                    if (generation !== generationRef.current) return;
                     setHeroTrailers((prev) => ({...prev, [movieId]: details.ytTrailerCode || null}));
                     setHeroBackdrops((prev) => ({
                         ...prev,
@@ -93,6 +97,7 @@ export function useHomeViewModel(repository: MovieRepository) {
                     }));
                 })
                 .catch(() => {
+                    if (generation !== generationRef.current) return;
                     setHeroTrailers((prev) => ({...prev, [movieId]: null}));
                 });
         },
@@ -101,20 +106,21 @@ export function useHomeViewModel(repository: MovieRepository) {
 
     const inFlightRef = useRef<Set<string>>(new Set());
     const queueRef = useRef<QueuedPage[]>([]);
-    const busyRef = useRef(false);
+    const busyRef = useRef<number | null>(null);
 
     const runFetch = useCallback(
-        (key: string, page: number) => {
+        (key: string, page: number, generation: number) => {
             const shelf = HOME_SHELVES.find((s) => s.key === key);
             if (!shelf) return Promise.resolve();
             return repository
                 .listMovies({page, limit: API_MAX_LIMIT, ...shelf.query})
                 .then((r) => {
-                    setShelves((prev) =>
+                    if (generation !== generationRef.current) return;
+                    setShelves((prev) => generation !== generationRef.current ? prev :
                         prev.map((s) => {
                             if (s.key !== key) return s;
-                            const seen = new Set(s.movies.map((m) => m.id));
-                            const movies = [...s.movies, ...r.movies.filter((m) => !seen.has(m.id))];
+                            const seen = new Set(page === 1 ? [] : s.movies.map((m) => m.id));
+                            const movies = [...(page === 1 ? [] : s.movies), ...r.movies.filter((m) => !seen.has(m.id))];
                             return {
                                 ...s,
                                 movies,
@@ -126,9 +132,10 @@ export function useHomeViewModel(repository: MovieRepository) {
                     );
                 })
                 .catch(() => {
+                    if (generation !== generationRef.current) return;
                     requestedRef.current.delete(key);
-                    setShelves((prev) =>
-                        prev.map((s) => (s.key === key && s.page === 0 ? {...s, status: 'error'} : s))
+                    setShelves((prev) => generation !== generationRef.current ? prev :
+                        prev.map((s) => (s.key === key ? {...s, status: 'error'} : s))
                     );
                 });
         },
@@ -136,13 +143,18 @@ export function useHomeViewModel(repository: MovieRepository) {
     );
 
     const pump = useCallback(function pumpQueue() {
-        if (busyRef.current) return;
+        if (busyRef.current === generationRef.current) return;
         const next = takeNextInShelfOrder(queueRef.current);
         if (!next) return;
-        busyRef.current = true;
+        if (next.generation !== generationRef.current) {
+            pumpQueue();
+            return;
+        }
+        busyRef.current = next.generation;
         setFetchingShelves(true);
-        void runFetch(next.key, next.page).finally(() => {
-            busyRef.current = false;
+        void runFetch(next.key, next.page, next.generation).finally(() => {
+            if (next.generation !== generationRef.current) return;
+            busyRef.current = null;
             setFetchingShelves(false);
             inFlightRef.current.delete(next.key);
             pumpQueue();
@@ -153,8 +165,8 @@ export function useHomeViewModel(repository: MovieRepository) {
         (key: string, page: number) => {
             if (inFlightRef.current.has(key)) return;
             inFlightRef.current.add(key);
-            queueRef.current.push({key, page});
-            setShelves((prev) => prev.map((s) => (s.key === key && s.page === 0 ? {...s, status: 'loading'} : s)));
+            queueRef.current.push({key, page, generation: generationRef.current});
+            setShelves((prev) => prev.map((s) => (s.key === key ? {...s, status: 'loading'} : s)));
             pump();
         },
         [pump]
@@ -174,14 +186,25 @@ export function useHomeViewModel(repository: MovieRepository) {
     }, [loadHero]);
 
     const reload = useCallback(() => {
+        generationRef.current += 1;
         setError(null);
         setRefreshing(true);
         requestedRef.current.clear();
         inFlightRef.current.clear();
         queueRef.current = [];
-        setShelves(initialShelves());
+        busyRef.current = null;
+        setFetchingShelves(false);
+        trailerAskedRef.current.clear();
+        setShelves((previous) => previous.map((shelf) => ({
+            ...shelf, page: 0, hasMore: true, status: 'idle',
+        })));
         void loadHero();
     }, [loadHero]);
+
+    const retryShelf = useCallback((key: string, page: number) => {
+        requestedRef.current.add(key);
+        fetchPage(key, page);
+    }, [fetchPage]);
 
     useReloadOnCatalogAccess(reload, loading || refreshing || fetchingShelves);
 
@@ -206,6 +229,7 @@ export function useHomeViewModel(repository: MovieRepository) {
         error,
         loadInitial,
         loadShelf,
+        retryShelf,
         reload,
     };
 }

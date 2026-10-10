@@ -349,7 +349,7 @@ export function WatchlistScreen() {
                     ListEmptyComponent={
                         <Animated.View entering={enterRise()} style={styles.empty}>
                             <Ionicons name={movies.length === 0 ? 'bookmark-outline' : 'search-outline'} size={42} color={colors.textFaint}/>
-                            <ThemedText type="heading" style={styles.emptyTitle}>
+                            <ThemedText accessibilityRole="header" type="heading" style={styles.emptyTitle}>
                                 {movies.length === 0 ? 'Your list is empty' : streaming.filterActive ? 'No checked matches yet' : 'No matching titles'}
                             </ThemedText>
                             <ThemedText style={[styles.emptyBody, {color: colors.textMuted}]}>

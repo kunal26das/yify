@@ -12,7 +12,7 @@ export interface PurchaseRepository {
 
     restore(): Promise<boolean>;
 
-    refresh(): Promise<void>;
+    refresh(): Promise<boolean>;
 
     getOffers(placement: PurchasePlacement): Promise<PurchaseOffer[]>;
 
