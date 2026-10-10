@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yify Product Audit"
+  short_description: "Find and close gaps in existing Yify journeys"
+  default_prompt: "Use $yify-product-audit to review existing app journeys and fix confirmed gaps within my requested scope."
