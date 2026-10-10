@@ -1,0 +1,11 @@
+{
+  "buildId": "5adeee2b-643f-44a2-b2ab-f10a697da949",
+  "sourceSha": "f6064f0f0e5322d7b2df137db700b8953eb6c650",
+  "aabSha256": null,
+  "projectId": "130cfded-cef0-49b3-94a4-82d3a3852ef5",
+  "packageName": "io.github.kunal26das.yify",
+  "version": "1.8.16",
+  "versionCode": "98",
+  "runtime": "1.8.16",
+  "uploadCertSha256": "EC97730BA790E825A7F777507AA2E7188F7EF2104CF64F9FCCA8BBFF8902E79F"
+}

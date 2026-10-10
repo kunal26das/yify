@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: verify-production-aab-ee1be7b3
+  group: verify-production-aab
   cancel-in-progress: false
 
 jobs:
@@ -37,6 +37,9 @@ jobs:
       - name: Test verifier
         run: node --test scripts/verify-production-aab.test.mjs scripts/verify-signed-aab.test.mjs
 
+      - name: Check explicit trusted candidate identity
+        run: node scripts/verify-production-aab.mjs candidate scripts/android-qa/production-aab-candidate.json
+
       - name: Install locked app dependencies for Expo config
         run: yarn install --frozen-lockfile --non-interactive
         env:
@@ -51,7 +54,7 @@ jobs:
       - name: Fetch only the approved finished EAS AAB
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: node scripts/verify-production-aab.mjs fetch "$RUNNER_TEMP/production.aab"
+        run: node scripts/verify-production-aab.mjs fetch scripts/android-qa/production-aab-candidate.json "$RUNNER_TEMP/production.aab"
 
       - name: Install pinned official bundletool
         run: |
@@ -61,7 +64,7 @@ jobs:
           echo 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  '"$RUNNER_TEMP/bundletool.jar" | sha256sum --check --status
 
       - name: Verify signed AAB identity and runtime
-        run: node scripts/verify-production-aab.mjs bundle "$RUNNER_TEMP/bundletool.jar" "$RUNNER_TEMP/production.aab"
+        run: node scripts/verify-production-aab.mjs bundle scripts/android-qa/production-aab-candidate.json "$RUNNER_TEMP/bundletool.jar" "$RUNNER_TEMP/production.aab"
 
       - name: Generate ephemeral APK test signer
         run: |
@@ -71,6 +74,7 @@ jobs:
 
       - name: Verify all four ABIs in a bundletool-derived APK
         run: |
+          node scripts/verify-production-aab.mjs candidate scripts/android-qa/production-aab-candidate.json
           java -jar "$RUNNER_TEMP/bundletool.jar" build-apks \
             --bundle="$RUNNER_TEMP/production.aab" --output="$RUNNER_TEMP/universal.apks" \
             --mode=universal --ks="$RUNNER_TEMP/apk-test.jks" --ks-key-alias=isolated-test \
@@ -81,7 +85,7 @@ jobs:
           node scripts/check-android-native-libs.mjs \
             --abis armeabi-v7a,arm64-v8a,x86,x86_64 --aapt2 "$AAPT2" \
             "$RUNNER_TEMP/universal.apk" > "$RUNNER_TEMP/universal-native-check.json"
-          node scripts/verify-production-aab.mjs apks "$RUNNER_TEMP/universal-native-check.json"
+          node scripts/verify-production-aab.mjs apks scripts/android-qa/production-aab-candidate.json "$RUNNER_TEMP/production.aab" "$RUNNER_TEMP/universal-native-check.json"
           echo 'Verified compressed native libraries and ELF identity for all four ABIs'
 
       - name: Install and launch actual bundletool-derived device APKs with traffic blocked

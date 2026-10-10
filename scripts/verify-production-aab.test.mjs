@@ -1,23 +1,35 @@
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {test} from 'node:test';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
-    BUILD_ID, PACKAGE_NAME, PROJECT_ID, SOURCE_SHA, UPLOAD_CERT_SHA256,
-    isAllowedDownloadUrl, verifyBuildMetadata, verifyBundleManifest, verifyCertificate, verifyRuntimeResources,
+    isAllowedDownloadUrl, loadCandidate, validateCandidate, verifyAabHash, verifyApkResult,
+    verifyBuildMetadata, verifyBundleManifest, verifyCertificate, verifyInstallEvidence, verifyRuntimeResources, verifySourceFiles,
 } from './verify-production-aab.mjs';
 
+const candidate = {
+    buildId: '5adeee2b-643f-44a2-b2ab-f10a697da949',
+    sourceSha: 'f6064f0f0e5322d7b2df137db700b8953eb6c650',
+    aabSha256: '5a9cdab10e58faf3ec4083b2f91d2fef8c0a9e4da2b78ad45ac0e5dd0c159ec9',
+    projectId: '130cfded-cef0-49b3-94a4-82d3a3852ef5',
+    packageName: 'io.github.kunal26das.yify', version: '1.8.16', versionCode: '98', runtime: '1.8.16',
+    uploadCertSha256: 'EC97730BA790E825A7F777507AA2E7188F7EF2104CF64F9FCCA8BBFF8902E79F',
+};
 const metadata = {
-    id: BUILD_ID, status: 'FINISHED', platform: 'ANDROID', app: {id: PROJECT_ID},
-    appIdentifier: PACKAGE_NAME, buildProfile: 'production', appVersion: '1.8.15',
-    appBuildVersion: '97', runtime: {version: '1.8.15'}, updateChannel: {name: 'Production'}, gitCommitHash: SOURCE_SHA,
+    id: candidate.buildId, status: 'FINISHED', platform: 'ANDROID', app: {id: candidate.projectId},
+    appIdentifier: candidate.packageName, buildProfile: 'production', appVersion: candidate.version,
+    appBuildVersion: candidate.versionCode, runtime: {version: candidate.runtime}, updateChannel: {name: 'Production'}, gitCommitHash: candidate.sourceSha,
     fingerprint: {hash: 'abc'}, artifacts: {buildUrl: 'https://expo.dev/artifacts/eas/build.aab'},
 };
 
 test('installs locked app dependencies before querying EAS build metadata', () => {
     const workflow = readFileSync(new URL('../.github/workflows/verify-production-aab.yml', import.meta.url), 'utf8');
+    assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
+    assert.match(workflow, /verify-production-aab\.mjs candidate scripts\/android-qa\/production-aab-candidate\.json/);
+    assert.doesNotMatch(workflow, /github\.event\.inputs|workflow_dispatch:\s*\n\s*inputs:/);
     const installStart = workflow.indexOf('      - name: Install locked app dependencies for Expo config\n');
     const nextStepStart = workflow.indexOf('\n      - name:', installStart + 1);
     const fetchStart = workflow.indexOf('      - name: Fetch only the approved finished EAS AAB');
@@ -32,6 +44,7 @@ test('waits for stable root, boot and Android services after adbd restarts', () 
     try {
         const adb = join(directory, 'adb');
         const sleep = join(directory, 'sleep');
+        const timeout = join(directory, 'timeout');
         const count = join(directory, 'count');
         const calls = join(directory, 'calls');
         writeFileSync(adb, `#!/usr/bin/env bash
@@ -60,8 +73,10 @@ case "$*" in
 esac
 `);
         writeFileSync(sleep, '#!/usr/bin/env bash\nexit 0\n');
+        writeFileSync(timeout, '#!/usr/bin/env bash\nshift\nexec "$@"\n');
         chmodSync(adb, 0o700);
         chmodSync(sleep, 0o700);
+        chmodSync(timeout, 0o700);
         const run = (mode, attempts) => {
             writeFileSync(count, '0');
             writeFileSync(calls, '');
@@ -99,11 +114,13 @@ test('requires network isolation before APK install and before success receipt',
 });
 
 test('accepts only the exact finished production build', () => {
-    assert.equal(verifyBuildMetadata(metadata).pathname, '/artifacts/eas/build.aab');
-    for (const [field, value] of [['status', 'IN_PROGRESS'], ['buildProfile', 'preview'], ['gitCommitHash', 'wrong'], ['appBuildVersion', '98'], ['updateChannel', {name: 'Staging'}]]) {
-        assert.throws(() => verifyBuildMetadata({...metadata, [field]: value}));
+    assert.equal(verifyBuildMetadata(metadata, candidate).pathname, '/artifacts/eas/build.aab');
+    for (const [field, value] of [['id', 'wrong'], ['status', 'IN_PROGRESS'], ['platform', 'IOS'], ['app', {id: 'wrong'}],
+        ['appIdentifier', 'wrong'], ['buildProfile', 'preview'], ['appVersion', '1.8.15'], ['runtime', {version: '1.8.15'}],
+        ['gitCommitHash', 'wrong'], ['appBuildVersion', '97'], ['updateChannel', {name: 'Staging'}]]) {
+        assert.throws(() => verifyBuildMetadata({...metadata, [field]: value}, candidate), field);
     }
-    assert.throws(() => verifyBuildMetadata({...metadata, artifacts: {buildUrl: 'https://example.com/build.aab'}}));
+    assert.throws(() => verifyBuildMetadata({...metadata, artifacts: {buildUrl: 'https://example.com/build.aab'}}, candidate));
     assert.equal(isAllowedDownloadUrl(new URL('https://expo-user-files.s3.amazonaws.com/app.aab')), true);
     assert.equal(isAllowedDownloadUrl(new URL('https://storage.googleapis.com/app.aab')), true);
     assert.equal(isAllowedDownloadUrl(new URL('http://storage.googleapis.com/app.aab')), false);
@@ -111,20 +128,55 @@ test('accepts only the exact finished production build', () => {
 });
 
 test('checks compiled bundle identity and channel', () => {
-    const xml = `<manifest package="${PACKAGE_NAME}" android:versionCode="97" android:versionName="1.8.15"><application><meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/><meta-data android:name="expo.modules.updates.UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY" android:value="{&quot;expo-channel-name&quot;:&quot;Production&quot;}"/></application></manifest>`;
-    assert.doesNotThrow(() => verifyBundleManifest(xml, '0x7f120001'));
-    assert.doesNotThrow(() => verifyBundleManifest(xml.replace('@string/expo_runtime_version', '@0x7f120001'), '0x7f120001'));
-    assert.throws(() => verifyBundleManifest(xml.replace('@string/expo_runtime_version', '@0x7f120002'), '0x7f120001'));
-    assert.throws(() => verifyBundleManifest(xml.replace('Production', 'Staging'), '0x7f120001'));
-    assert.throws(() => verifyBundleManifest(xml.replace('versionCode="97"', 'versionCode="98"'), '0x7f120001'));
+    const xml = `<manifest package="${candidate.packageName}" android:versionCode="98" android:versionName="1.8.16"><application><meta-data android:name="expo.modules.updates.EXPO_RUNTIME_VERSION" android:value="@string/expo_runtime_version"/><meta-data android:name="expo.modules.updates.UPDATES_CONFIGURATION_REQUEST_HEADERS_KEY" android:value="{&quot;expo-channel-name&quot;:&quot;Production&quot;}"/></application></manifest>`;
+    assert.doesNotThrow(() => verifyBundleManifest(xml, '0x7f120001', candidate));
+    assert.doesNotThrow(() => verifyBundleManifest(xml.replace('@string/expo_runtime_version', '@0x7f120001'), '0x7f120001', candidate));
+    assert.throws(() => verifyBundleManifest(xml.replace('@string/expo_runtime_version', '@0x7f120002'), '0x7f120001', candidate));
+    assert.throws(() => verifyBundleManifest(xml.replace('Production', 'Staging'), '0x7f120001', candidate));
+    assert.throws(() => verifyBundleManifest(xml.replace('versionCode="98"', 'versionCode="97"'), '0x7f120001', candidate));
+    assert.throws(() => verifyBundleManifest(xml.replace(candidate.packageName, 'wrong.package'), '0x7f120001', candidate));
 });
 
 test('checks runtime and upload certificate', () => {
-    const resources = `Package '${PACKAGE_NAME}':\n0x7f120001 - string/expo_runtime_version\n\t(default) - [STR] "1.8.15"\n\tlocale: "fr" - [STR] "1.8.15"`;
-    assert.equal(verifyRuntimeResources(resources), '0x7f120001');
-    assert.throws(() => verifyRuntimeResources(resources.replace('fr" - [STR] "1.8.15"', 'fr" - [STR] "1.8.14"')));
-    assert.throws(() => verifyRuntimeResources(resources.replace('"1.8.15"', '"1.8.14"')));
-    const fingerprint = UPLOAD_CERT_SHA256.match(/../g).join(':');
-    assert.doesNotThrow(() => verifyCertificate(`SHA256: ${fingerprint}`));
-    assert.throws(() => verifyCertificate(`SHA256: ${fingerprint.replace('EC', '00')}`));
+    const resources = `Package '${candidate.packageName}':\n0x7f120001 - string/expo_runtime_version\n\t(default) - [STR] "1.8.16"\n\tlocale: "fr" - [STR] "1.8.16"`;
+    assert.equal(verifyRuntimeResources(resources, candidate), '0x7f120001');
+    assert.throws(() => verifyRuntimeResources(resources.replace('fr" - [STR] "1.8.16"', 'fr" - [STR] "1.8.14"'), candidate));
+    assert.throws(() => verifyRuntimeResources(resources.replace(candidate.packageName, 'wrong.package'), candidate));
+    const fingerprint = candidate.uploadCertSha256.match(/../g).join(':');
+    assert.doesNotThrow(() => verifyCertificate(`SHA256: ${fingerprint}`, candidate));
+    assert.throws(() => verifyCertificate(`SHA256: ${fingerprint.replace('EC', '00')}`, candidate));
+});
+
+test('requires complete trusted identity and rejects a different AAB hash', () => {
+    assert.doesNotThrow(() => validateCandidate(candidate));
+    assert.throws(() => validateCandidate({...candidate, unknown: 'yes'}));
+    assert.throws(() => validateCandidate({...candidate, aabSha256: null}));
+    const directory = mkdtempSync(join(tmpdir(), 'yify-aab-hash-'));
+    try {
+        const manifest = join(directory, 'candidate.json');
+        writeFileSync(manifest, JSON.stringify({...candidate, aabSha256: null}));
+        assert.throws(() => loadCandidate(manifest), /Invalid candidate aabSha256/);
+        const path = join(directory, 'candidate.aab');
+        writeFileSync(path, Buffer.alloc(1024, 7));
+        assert.throws(() => verifyAabHash(path, candidate), /AAB SHA256 mismatch/);
+        const hash = createHash('sha256').update(Buffer.alloc(1024, 7)).digest('hex');
+        assert.equal(verifyAabHash(path, {...candidate, aabSha256: hash}), hash);
+    } finally { rmSync(directory, {recursive: true, force: true}); }
+});
+
+test('rejects source metadata and APK identity mismatches', () => {
+    assert.doesNotThrow(() => verifySourceFiles(candidate));
+    assert.throws(() => verifySourceFiles({...candidate, version: '1.8.15'}), /Source version mismatch/);
+    assert.throws(() => verifySourceFiles({...candidate, projectId: '00000000-0000-0000-0000-000000000000'}), /Source project mismatch/);
+    const apk = {packageName: candidate.packageName, longVersionCode: '98', extractNativeLibs: true,
+        artifacts: [{sha256: candidate.aabSha256}]};
+    assert.doesNotThrow(() => verifyApkResult(apk, candidate));
+    assert.throws(() => verifyApkResult({...apk, packageName: 'wrong.package'}, candidate), /APK package mismatch/);
+    assert.throws(() => verifyApkResult({...apk, longVersionCode: '97'}, candidate), /APK version code mismatch/);
+    const ephemeralSigner = 'a'.repeat(64);
+    const installedPackage = 'versionCode=98 minSdk=24\nversionName=1.8.16';
+    assert.equal(verifyInstallEvidence(apk, [candidate.aabSha256], [ephemeralSigner], installedPackage, candidate), ephemeralSigner);
+    assert.throws(() => verifyInstallEvidence(apk, ['b'.repeat(64)], [ephemeralSigner], installedPackage, candidate), /Installed APK bytes/);
+    assert.throws(() => verifyInstallEvidence(apk, [candidate.aabSha256], [ephemeralSigner], installedPackage.replace('98', '97'), candidate), /Installed version/);
+    assert.throws(() => verifyInstallEvidence(apk, [candidate.aabSha256], [candidate.uploadCertSha256], installedPackage, candidate), /Ephemeral APK signer/);
 });
