@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "skill_name": "yify-product-audit",
+    "skill_path": ".agents/skills/yify-product-audit",
+    "executor_model": "gpt-6-sol / medium (requested; effective configuration not independently verified)",
+    "analyzer_model": "gpt-6-astra / high (requested; effective configuration not independently verified)",
+    "timestamp": "2026-10-10T13:58:54Z",
+    "evals_run": [
+      1,
+      2
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5
+      },
+      "expectations": [
+        {
+          "text": "Identifies a late history response exposing the previous account's rows after a switch or sign-out, with an identity/generation guard and a controlled out-of-order verification.",
+          "passed": true,
+          "evidence": "outputs/result.md, private-account-data row: identifies late A history writing under B or null, clears private rows on identity changes, invalidates pending work, and proposes deferred A/B plus sign-out tests."
+        },
+        {
+          "text": "Identifies that an older catalog search can overwrite newer results and proposes a current-request guard plus a reversed-resolution test.",
+          "passed": true,
+          "evidence": "outputs/result.md, stale-catalog-search row: guards rows/error/loading with current generation or query; proposes B resolving before A, A failure, and A resolving while B remains pending."
+        },
+        {
+          "text": "Identifies that refresh clears loaded results and proposes retaining same-query content during refresh/failure without preserving unrelated query or account data.",
+          "passed": true,
+          "evidence": "outputs/result.md, refresh-loses-content row: explicitly retains same-query content and clears/replaces on context changes; account row separately clears private rows immediately on identity change."
+        },
+        {
+          "text": "Identifies the false supporter success for an unavailable purchase result and proposes verification for success only on active, cancellation without success, and unavailable/rejection recovery.",
+          "passed": true,
+          "evidence": "outputs/result.md, false-purchase-success row: active-only success, neutral cancellation, unavailable/rejection recovery; proposes stubbing all four outcomes. This is a verification plan, not a completed runtime check."
+        },
+        {
+          "text": "Keeps the review to evidence-backed existing behavior and minimal fixes; makes no claim of rendered, native-device or live-service verification from a web export.",
+          "passed": true,
+          "evidence": "outputs/result.md states synthetic source-only scope, unobserved rendering/device/services, web export is not interaction proof, and unanswered empty/repeated-tap/accessibility questions are not confirmed defects. Proposed fixes stay within existing paths."
+        }
+      ],
+      "notes": [
+        "Execution logs are executor-authored summaries, not full tool traces. Absence of other actions is not independently established by those logs.",
+        "Executor token use, elapsed runtime, tool counts and effective model/effort are unavailable.",
+        "Human qualitative feedback remains pending."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4
+      },
+      "expectations": [
+        {
+          "text": "The edited helper returns Close Journal and Close Watchlist controls for the respective supplied titles, rather than hardcoding only Journal.",
+          "passed": true,
+          "evidence": "outputs/dialog.cjs interpolates the supplied title. Independent reviewer rerun passed both Journal and Watchlist controls assertions; see reviewer-verification.json."
+        },
+        {
+          "text": "Runs the supplied node test successfully and reports its actual result.",
+          "passed": true,
+          "evidence": "outputs/test-output.txt and execution.md report one successful supplied test. Independently reran node --test dialog.test.cjs against the actual output: exit 0, 1 passed, 0 failed; original fixture fails with exit 1."
+        },
+        {
+          "text": "Limits application edits to the close-label helper; does not add features, change the test to hide failure, or launch a broad audit.",
+          "passed": true,
+          "evidence": "Output helper differs only in its return expression. Independently byte-compared output test with the committed and input fixtures: unchanged. No feature or audit artifact is delivered; execution.md self-reports fixture-only work."
+        },
+        {
+          "text": "Does not claim screen-reader, rendered-browser or native-device verification from the unit test.",
+          "passed": true,
+          "evidence": "outputs/result.md reports only the helper/unit-test result and explicitly limits wider app/device/service verification; it claims no browser, native-device or screen-reader run."
+        }
+      ],
+      "notes": [
+        "Execution logs are executor-authored summaries, not full tool traces. Absence of other actions is not independently established by those logs.",
+        "Executor token use, elapsed runtime, tool counts and effective model/effort are unavailable.",
+        "Human qualitative feedback remains pending."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5
+      },
+      "expectations": [
+        {
+          "text": "Identifies a late history response exposing the previous account's rows after a switch or sign-out, with an identity/generation guard and a controlled out-of-order verification.",
+          "passed": true,
+          "evidence": "outputs/result.md, account-switching row: identifies A overwriting B, proposes ID/generation guard and sign-out invalidation, and tests both resolution orders plus sign-out."
+        },
+        {
+          "text": "Identifies that an older catalog search can overwrite newer results and proposes a current-request guard plus a reversed-resolution test.",
+          "passed": true,
+          "evidence": "outputs/result.md, overlapping-search row: guards rows/error/loading by latest request and tests both response orders plus failure."
+        },
+        {
+          "text": "Identifies that refresh clears loaded results and proposes retaining same-query content during refresh/failure without preserving unrelated query or account data.",
+          "passed": false,
+          "evidence": "outputs/result.md, refresh row recommends preserving existing rows during refresh and tests failure retention, but never restricts preservation to the same query or tests clearing unrelated query results. The packet allows a new search query to call this same function; the proposed correction can display prior-query rows as current."
+        },
+        {
+          "text": "Identifies the false supporter success for an unavailable purchase result and proposes verification for success only on active, cancellation without success, and unavailable/rejection recovery.",
+          "passed": true,
+          "evidence": "outputs/result.md, unavailable-purchase row: success only for active; cancellation silent; unavailable/rejection failure and retry. Concrete verification stubs all results plus rejection. This is a planned check, not runtime evidence."
+        },
+        {
+          "text": "Keeps the review to evidence-backed existing behavior and minimal fixes; makes no claim of rendered, native-device or live-service verification from a web export.",
+          "passed": true,
+          "evidence": "outputs/result.md limits conclusions to supplied excerpts/contracts and explicitly separates web export from browser, device, screenshots and live services. The delivered output is a minimal review without feature additions."
+        }
+      ],
+      "notes": [
+        "Execution logs are executor-authored summaries, not full tool traces. Absence of other actions is not independently established by those logs.",
+        "Executor token use, elapsed runtime, tool counts and effective model/effort are unavailable.",
+        "Human qualitative feedback remains pending."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 4,
+        "failed": 0,
+        "total": 4
+      },
+      "expectations": [
+        {
+          "text": "The edited helper returns Close Journal and Close Watchlist controls for the respective supplied titles, rather than hardcoding only Journal.",
+          "passed": true,
+          "evidence": "outputs/dialog.cjs interpolates the supplied title. Independent reviewer rerun passed both Journal and Watchlist controls assertions; see reviewer-verification.json."
+        },
+        {
+          "text": "Runs the supplied node test successfully and reports its actual result.",
+          "passed": true,
+          "evidence": "outputs/test-output.txt and execution.md report one successful supplied test. Independently reran node --test dialog.test.cjs against the actual output: exit 0, 1 passed, 0 failed; original fixture fails with exit 1."
+        },
+        {
+          "text": "Limits application edits to the close-label helper; does not add features, change the test to hide failure, or launch a broad audit.",
+          "passed": true,
+          "evidence": "Output helper differs only in its return expression. Independently byte-compared output test with the committed and input fixtures: unchanged. No feature or audit artifact is delivered; execution.md self-reports fixture-only work."
+        },
+        {
+          "text": "Does not claim screen-reader, rendered-browser or native-device verification from the unit test.",
+          "passed": true,
+          "evidence": "outputs/result.md reports only the helper/unit-test result and explicitly limits wider app/device/service verification; it claims no browser, native-device or screen-reader run."
+        }
+      ],
+      "notes": [
+        "Execution logs are executor-authored summaries, not full tool traces. Absence of other actions is not independently established by those logs.",
+        "Executor token use, elapsed runtime, tool counts and effective model/effort are unavailable.",
+        "Human qualitative feedback remains pending."
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.9,
+        "stddev": 0.1414,
+        "min": 0.8,
+        "max": 1.0
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.10"
+    }
+  },
+  "notes": [
+    "Two synthetic cases, one run per case per configuration. Four fresh executors. This is a smoke comparison, not a general improvement estimate or a Codex trigger-selection test.",
+    "Runtime, token counts, aggregate tool counts and executor error counts were not independently measured and are omitted. Pass-rate summary is the unweighted mean of case scores; variation across different cases is not repeated-run variance.",
+    "Executors supplied execution logs, not full captured tool traces. Independent reviewer inspected outputs and reran both narrow tests. Both pass; the original fixture fails and both output test files match the original.",
+    "The with-skill audit constrained retained results to the same query. The baseline omitted that restriction. Both narrow changes passed all four checks.",
+    "Purchase rubric wording was clarified from verifies to proposes verification after execution to match the read-only task. Evidence and scores did not change.",
+    "No live services, devices, production writes, provider optimizer or automatic activation were tested. Human feedback remains pending."
+  ]
+}

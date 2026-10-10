@@ -1,0 +1,35 @@
+{
+  "skill_name": "yify-product-audit",
+  "evals": [
+    {
+      "id": 1,
+      "name": "existing-journey-review",
+      "prompt": "Review the supplied synthetic packet for product gaps across the existing account and catalog journeys. Give prioritized findings with evidence, minimal fixes and concrete verification. Review only; do not edit application files or add features. Distinguish what is proven from what remains untested.",
+      "files": [
+        "evals/files/audit/packet.md"
+      ],
+      "expectations": [
+        "Identifies a late history response exposing the previous account's rows after a switch or sign-out, with an identity/generation guard and a controlled out-of-order verification.",
+        "Identifies that an older catalog search can overwrite newer results and proposes a current-request guard plus a reversed-resolution test.",
+        "Identifies that refresh clears loaded results and proposes retaining same-query content during refresh/failure without preserving unrelated query or account data.",
+        "Identifies the false supporter success for an unavailable purchase result and proposes verification for success only on active, cancellation without success, and unavailable/rejection recovery.",
+        "Keeps the review to evidence-backed existing behavior and minimal fixes; makes no claim of rendered, native-device or live-service verification from a web export."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "narrow-dialog-fix",
+      "prompt": "Fix only the close-label helper so it identifies the dialog using its supplied title. A Journal dialog must say Close Journal; existing Watchlist controls must still be named correctly. Keep this change narrow, run the supplied test and report what you actually verified. Do not audit or redesign the rest of the app.",
+      "files": [
+        "evals/files/narrow/dialog.cjs",
+        "evals/files/narrow/dialog.test.cjs"
+      ],
+      "expectations": [
+        "The edited helper returns Close Journal and Close Watchlist controls for the respective supplied titles, rather than hardcoding only Journal.",
+        "Runs the supplied node test successfully and reports its actual result.",
+        "Limits application edits to the close-label helper; does not add features, change the test to hide failure, or launch a broad audit.",
+        "Does not claim screen-reader, rendered-browser or native-device verification from the unit test."
+      ]
+    }
+  ]
+}
