@@ -1,16 +1,16 @@
 # Tasks
 
-The build and compile work in `design.md` is existing evidence, not work to repeat. All tasks below remain unverified; artifact completion means this plan is ready, not that Android has shipped.
+The build and compile work in `design.md` is existing evidence, not work to repeat. Only checked tasks have supporting evidence in `design.md`; planning and static artifact checks do not mean Android has shipped.
 
 ## 1. Candidate verification
 
-- [ ] 1.1 Refresh EAS and Play state and compare current app/native inputs with candidate 98's source; record whether that exact candidate remains usable, its downloaded hash and whether any submission already exists.
-- [ ] 1.2 Extend the existing production AAB verifier and workflow to accept the intended candidate identity; add passing identity and source/hash/signature/version/runtime mismatch tests and record their results.
+- [x] 1.1 Refresh EAS and Play state and compare current app/native inputs with candidate 98's source; record whether that exact candidate remains usable, its downloaded hash and whether any submission already exists.
+- [x] 1.2 Extend the existing production AAB verifier and workflow to accept the intended candidate identity; add passing identity and source/hash/signature/version/runtime mismatch tests and record their results.
 - [ ] 1.3 Verify the signed bundle's four ABIs and packaging, generate device APKs with bundletool and install them; preserve package/signature/version identity, device configuration, logs and rendered evidence for this candidate.
 
 ## 2. Framework and app journeys
 
-- [ ] 2.1 Execute the reviewed HSDP legacy failure control and corrected malformed, repeated and lifecycle cases on API 30 and a current Android target; preserve per-case results and label infrastructure-blocked cases not executed.
+- [x] 2.1 Execute the reviewed HSDP legacy failure control and corrected malformed, repeated and lifecycle cases on API 30 and a current Android target; preserve per-case results and label infrastructure-blocked cases not executed.
 - [ ] 2.2 Verify consent with analytics declined, restart, connected startup and browsing on the installed candidate; record persisted choice, observed requests, logs and rendered small-screen/enlarged-text results without public customer data.
 - [ ] 2.3 Verify sign-in, subscriber access and account switching using an applicable authorized test path; record expected entitlement acceptance/rejection and absence of previous-account access.
 - [ ] 2.4 Verify purchase and restore through a compatible Play installer/signature and billing test account; preserve sandbox results and explicitly record any untested path without real charges or refunds.

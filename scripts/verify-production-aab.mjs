@@ -5,15 +5,36 @@ import {pipeline} from 'node:stream/promises';
 import {Readable, Transform} from 'node:stream';
 import {fileURLToPath} from 'node:url';
 
-export const BUILD_ID = 'ee1be7b3-c44c-4956-a1ac-a676243db901';
-export const SOURCE_SHA = '956d6bdb0d74ed0f63309cf05592d67086d3a843';
-export const PROJECT_ID = '130cfded-cef0-49b3-94a4-82d3a3852ef5';
-export const PACKAGE_NAME = 'io.github.kunal26das.yify';
-export const VERSION = '1.8.15';
-export const VERSION_CODE = '97';
-export const RUNTIME = '1.8.15';
-export const UPLOAD_CERT_SHA256 = 'EC97730BA790E825A7F777507AA2E7188F7EF2104CF64F9FCCA8BBFF8902E79F';
 const MAX_AAB_BYTES = 1024 * 1024 * 1024;
+const CANDIDATE_FIELDS = ['buildId', 'sourceSha', 'aabSha256', 'projectId', 'packageName', 'version', 'versionCode', 'runtime', 'uploadCertSha256'];
+
+export function validateCandidate(candidate) {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate) ||
+        Object.keys(candidate).sort().join(',') !== [...CANDIDATE_FIELDS].sort().join(',')) {
+        throw new Error('Candidate identity fields are incomplete or unexpected');
+    }
+    for (const field of CANDIDATE_FIELDS) {
+        if (typeof candidate[field] !== 'string' || !candidate[field]) throw new Error(`Invalid candidate ${field}`);
+    }
+    if (!/^[0-9a-f]{40}$/.test(candidate.sourceSha) || !/^[0-9a-f]{64}$/.test(candidate.aabSha256) ||
+        !/^[0-9A-F]{64}$/.test(candidate.uploadCertSha256) || !/^[1-9][0-9]*$/.test(candidate.versionCode) ||
+        !/^[0-9a-f-]{36}$/.test(candidate.buildId) || !/^[0-9a-f-]{36}$/.test(candidate.projectId)) {
+        throw new Error('Candidate identity has invalid format');
+    }
+    return candidate;
+}
+
+export function loadCandidate(path) {
+    return validateCandidate(JSON.parse(readFileSync(path, 'utf8')));
+}
+
+export function verifyAabHash(path, candidate) {
+    const bytes = readFileSync(path);
+    if (bytes.length < 1024 || bytes.length > MAX_AAB_BYTES) throw new Error('AAB size is invalid');
+    const actual = createHash('sha256').update(bytes).digest('hex');
+    requireEqual(actual, candidate.aabSha256, 'AAB SHA256');
+    return actual;
+}
 
 function requireEqual(actual, expected, label) {
     if (actual !== expected) throw new Error(`${label} mismatch`);
@@ -25,18 +46,19 @@ function run(command, args, options = {}) {
     return result.stdout.trim();
 }
 
-export function verifyBuildMetadata(build) {
-    requireEqual(build?.id, BUILD_ID, 'Build ID');
+export function verifyBuildMetadata(build, candidate) {
+    validateCandidate(candidate);
+    requireEqual(build?.id, candidate.buildId, 'Build ID');
     requireEqual(build?.status, 'FINISHED', 'Build status');
     requireEqual(build?.platform, 'ANDROID', 'Platform');
-    requireEqual(build?.app?.id, PROJECT_ID, 'Expo project ID');
-    requireEqual(build?.appIdentifier, PACKAGE_NAME, 'Package');
+    requireEqual(build?.app?.id, candidate.projectId, 'Expo project ID');
+    requireEqual(build?.appIdentifier, candidate.packageName, 'Package');
     requireEqual(build?.buildProfile, 'production', 'Build profile');
-    requireEqual(build?.appVersion, VERSION, 'Version');
-    requireEqual(String(build?.appBuildVersion), VERSION_CODE, 'Version code');
-    requireEqual(build?.runtime?.version, RUNTIME, 'Runtime');
+    requireEqual(build?.appVersion, candidate.version, 'Version');
+    requireEqual(String(build?.appBuildVersion), candidate.versionCode, 'Version code');
+    requireEqual(build?.runtime?.version, candidate.runtime, 'Runtime');
     requireEqual(build?.updateChannel?.name, 'Production', 'Update channel');
-    requireEqual(build?.gitCommitHash, SOURCE_SHA, 'Source commit');
+    requireEqual(build?.gitCommitHash, candidate.sourceSha, 'Source commit');
     if (typeof build?.fingerprint?.hash !== 'string' || !build.fingerprint.hash) throw new Error('Missing build fingerprint');
     const artifact = build?.artifacts?.buildUrl;
     if (typeof artifact !== 'string') throw new Error('Missing AAB URL');
@@ -64,27 +86,29 @@ export function isAllowedDownloadUrl(url) {
         /^[a-z0-9.-]+\.s3(?:\.[a-z0-9-]+)?\.amazonaws\.com$/.test(host);
 }
 
-export function verifySourceFiles() {
-    run('git', ['cat-file', '-e', `${SOURCE_SHA}^{commit}`]);
-    const pkg = JSON.parse(run('git', ['show', `${SOURCE_SHA}:package.json`]));
-    const app = JSON.parse(run('git', ['show', `${SOURCE_SHA}:app.json`]));
-    const eas = JSON.parse(run('git', ['show', `${SOURCE_SHA}:eas.json`]));
-    requireEqual(pkg.version, VERSION, 'Source version');
-    requireEqual(String(pkg.versionCode), VERSION_CODE, 'Source version code');
-    requireEqual(app.expo.android.package, PACKAGE_NAME, 'Source package');
-    requireEqual(app.expo.extra.eas.projectId, PROJECT_ID, 'Source project');
+export function verifySourceFiles(candidate, directory = process.cwd()) {
+    validateCandidate(candidate);
+    const options = {cwd: directory};
+    run('git', ['cat-file', '-e', `${candidate.sourceSha}^{commit}`], options);
+    const pkg = JSON.parse(run('git', ['show', `${candidate.sourceSha}:package.json`], options));
+    const app = JSON.parse(run('git', ['show', `${candidate.sourceSha}:app.json`], options));
+    const eas = JSON.parse(run('git', ['show', `${candidate.sourceSha}:eas.json`], options));
+    requireEqual(pkg.version, candidate.version, 'Source version');
+    requireEqual(String(pkg.versionCode), candidate.versionCode, 'Source version code');
+    requireEqual(app.expo.android.package, candidate.packageName, 'Source package');
+    requireEqual(app.expo.extra.eas.projectId, candidate.projectId, 'Source project');
     requireEqual(eas.build.production.env.EXPO_UPDATE_CHANNEL, 'Production', 'Source update channel');
     requireEqual(eas.build.production.android.buildType, 'app-bundle', 'Source build type');
     requireEqual(eas.build.production.android.credentialsSource, 'remote', 'Source credential source');
 }
 
-export function verifyBundleManifest(xml, runtimeResourceId) {
+export function verifyBundleManifest(xml, runtimeResourceId, candidate) {
     const opening = xml.match(/<manifest\b[^>]*>/)?.[0];
     if (!opening) throw new Error('Missing bundle manifest');
     const attr = (element, name) => element.match(new RegExp(`(?:^|\\s)(?:android:)?${name}="([^"]+)"`))?.[1];
-    requireEqual(attr(opening, 'package'), PACKAGE_NAME, 'Bundle package');
-    requireEqual(attr(opening, 'versionCode'), VERSION_CODE, 'Bundle version code');
-    requireEqual(attr(opening, 'versionName'), VERSION, 'Bundle version name');
+    requireEqual(attr(opening, 'package'), candidate.packageName, 'Bundle package');
+    requireEqual(attr(opening, 'versionCode'), candidate.versionCode, 'Bundle version code');
+    requireEqual(attr(opening, 'versionName'), candidate.version, 'Bundle version name');
     const metadata = [...xml.matchAll(/<meta-data\b[^>]*>/g)].map(match => match[0]);
     const entry = name => {
         const matching = metadata.filter(element => attr(element, 'name') === name);
@@ -101,8 +125,8 @@ export function verifyBundleManifest(xml, runtimeResourceId) {
     requireEqual(channel['expo-channel-name'], 'Production', 'Bundle update channel');
 }
 
-export function verifyRuntimeResources(resources) {
-    if (!resources.includes(`Package '${PACKAGE_NAME}':`)) throw new Error('Bundle runtime resource package mismatch');
+export function verifyRuntimeResources(resources, candidate) {
+    if (!resources.includes(`Package '${candidate.packageName}':`)) throw new Error('Bundle runtime resource package mismatch');
     const lines = resources.split(/\r?\n/);
     const headers = lines.flatMap((line, index) => /^0x([0-9a-fA-F]{8}) - string\/expo_runtime_version$/.test(line) ? [index] : []);
     if (headers.length !== 1) throw new Error('Missing unique bundle runtime resource');
@@ -112,16 +136,47 @@ export function verifyRuntimeResources(resources) {
         if (/^(?:0x[0-9a-fA-F]{8} - |Package ')/.test(line)) break;
         if (line.includes(' - [')) values.push(line.trim());
     }
-    if (!values.length || values.some(value => !value.endsWith(` - [STR] "${RUNTIME}"`))) {
+    if (!values.length || values.some(value => !value.endsWith(` - [STR] "${candidate.runtime}"`))) {
         throw new Error('Bundle runtime resource config mismatch');
     }
     return resourceId;
 }
 
-export function verifyCertificate(text) {
+export function verifyCertificate(text, candidate) {
     const match = text.match(/SHA256:\s*((?:[0-9A-F]{2}:){31}[0-9A-F]{2})/i);
     if (!match) throw new Error('Missing upload certificate fingerprint');
-    requireEqual(match[1].replaceAll(':', '').toUpperCase(), UPLOAD_CERT_SHA256, 'Upload certificate');
+    requireEqual(match[1].replaceAll(':', '').toUpperCase(), candidate.uploadCertSha256, 'Upload certificate');
+}
+
+export function verifyApkResult(result, candidate) {
+    requireEqual(result.packageName, candidate.packageName, 'APK package');
+    requireEqual(result.longVersionCode, candidate.versionCode, 'APK version code');
+    requireEqual(result.extractNativeLibs, true, 'Native extraction');
+    if (!Array.isArray(result.artifacts) || !result.artifacts.length ||
+        result.artifacts.some(artifact => !/^[0-9a-f]{64}$/.test(artifact.sha256))) throw new Error('Missing APK hashes');
+}
+
+export function parseApkSigner(output) {
+    const fingerprints = [...output.matchAll(/^(?:Signer #\d+ |V[123](?:\.\d+)? Signer: )certificate SHA-256 digest: ([a-f0-9]{64})\s*$/gmi)]
+        .map(match => match[1].toLowerCase());
+    if (!fingerprints.length || new Set(fingerprints).size !== 1) throw new Error('Missing or ambiguous APK signer');
+    return fingerprints[0];
+}
+
+export function verifyInstallEvidence(apkResult, installedHashes, signers, packageDump, candidate) {
+    verifyApkResult(apkResult, candidate);
+    const generated = apkResult.artifacts.map(artifact => artifact.sha256).sort();
+    if (JSON.stringify([...installedHashes].sort()) !== JSON.stringify(generated)) {
+        throw new Error('Installed APK bytes differ from generated APKs');
+    }
+    if (!packageDump.includes(`versionCode=${candidate.versionCode} `) ||
+        !packageDump.includes(`versionName=${candidate.version}`)) throw new Error('Installed version mismatch');
+    const normalized = signers.map(value => value.toLowerCase());
+    if (normalized.length !== generated.length || normalized.some(value => !/^[0-9a-f]{64}$/.test(value)) ||
+        new Set(normalized).size !== 1 || normalized[0].toUpperCase() === candidate.uploadCertSha256) {
+        throw new Error('Ephemeral APK signer mismatch');
+    }
+    return normalized[0];
 }
 
 async function fetchAab(url, path) {
@@ -159,35 +214,41 @@ async function fetchAab(url, path) {
 }
 
 async function main() {
-    const [mode, ...args] = process.argv.slice(2);
-    if (mode === 'fetch' && args.length === 1) {
+    const [mode, candidatePath, ...args] = process.argv.slice(2);
+    if (!candidatePath) throw new Error('Expected candidate manifest path');
+    const candidate = loadCandidate(candidatePath);
+    if (mode === 'candidate' && args.length === 0) {
+        verifySourceFiles(candidate);
+        console.log(`Trusted candidate ${candidate.buildId}; source ${candidate.sourceSha}; AAB SHA256 ${candidate.aabSha256}`);
+    } else if (mode === 'fetch' && args.length === 1) {
         if (!process.env.EXPO_TOKEN) throw new Error('EXPO_TOKEN is unavailable');
-        verifySourceFiles();
-        const stdout = run('bash', ['scripts/eas.sh', 'build:view', BUILD_ID, '--json'], {
+        verifySourceFiles(candidate);
+        const stdout = run('bash', ['scripts/eas.sh', 'build:view', candidate.buildId, '--json'], {
             env: {...process.env, EXPO_TOKEN: process.env.EXPO_TOKEN},
         });
         let build;
         try { build = JSON.parse(stdout); } catch { throw new Error('EAS build metadata is invalid'); }
-        const url = verifyBuildMetadata(build);
+        const url = verifyBuildMetadata(build, candidate);
         const downloaded = await fetchAab(url, args[0]);
+        requireEqual(downloaded.sha256, candidate.aabSha256, 'AAB SHA256');
         console.log(`Verified exact finished EAS build; AAB bytes ${downloaded.size}; SHA256 ${downloaded.sha256}`);
     } else if (mode === 'bundle' && args.length === 2) {
         const [jar, aab] = args;
+        verifyAabHash(aab, candidate);
         const resources = run('java', ['-jar', jar, 'dump', 'resources', `--bundle=${aab}`, '--resource=string/expo_runtime_version', '--values']);
-        const runtimeResourceId = verifyRuntimeResources(resources);
+        const runtimeResourceId = verifyRuntimeResources(resources, candidate);
         const manifest = run('java', ['-jar', jar, 'dump', 'manifest', `--bundle=${aab}`]);
-        verifyBundleManifest(manifest, runtimeResourceId);
-        run('java', ['scripts/VerifySignedAab.java', aab, UPLOAD_CERT_SHA256]);
-        verifyCertificate(run('keytool', ['-printcert', '-jarfile', aab]));
+        verifyBundleManifest(manifest, runtimeResourceId, candidate);
+        run('java', ['scripts/VerifySignedAab.java', aab, candidate.uploadCertSha256]);
+        verifyCertificate(run('keytool', ['-printcert', '-jarfile', aab]), candidate);
         console.log('Verified AAB manifest, runtime resource, every signed entry and upload certificate');
-    } else if (mode === 'apks' && args.length === 1) {
-        const result = JSON.parse(readFileSync(args[0], 'utf8'));
-        requireEqual(result.packageName, PACKAGE_NAME, 'APK package');
-        requireEqual(result.longVersionCode, VERSION_CODE, 'APK version code');
-        requireEqual(result.extractNativeLibs, true, 'Native extraction');
+    } else if (mode === 'apks' && args.length === 2) {
+        verifyAabHash(args[0], candidate);
+        const result = JSON.parse(readFileSync(args[1], 'utf8'));
+        verifyApkResult(result, candidate);
         console.log('Verified APK package, version code and native extraction');
     } else {
-        throw new Error('Usage: verify-production-aab.mjs fetch <aab> | bundle <bundletool.jar> <aab> | apks <native-check.json>');
+        throw new Error('Usage: verify-production-aab.mjs <fetch|bundle|apks> <candidate.json> <mode arguments>');
     }
 }
 

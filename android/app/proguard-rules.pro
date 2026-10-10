@@ -19,6 +19,8 @@
 -keep class com.margelo.nitro.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 -keep class com.google.android.gms.internal.consent_sdk.** { *; }
+-keep class expo.modules.ExpoModulesV2ModuleList { *; }
+-keep class * extends io.github.expo.modules.v2.Module { *; }
 -keepattributes SourceFile,LineNumberTable
 -keepattributes *Annotation*
 
