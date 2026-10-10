@@ -1,4 +1,4 @@
-import {type ComponentRef, type ReactNode, useEffect, useRef, useState} from 'react';
+import {type ComponentRef, type ReactNode, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {Platform, Pressable, ScrollView, StyleSheet, Switch, View} from 'react-native';
 import {Link, usePathname} from 'expo-router';
 import Head from 'expo-router/head';
@@ -10,6 +10,7 @@ import {Radius, Spacing} from '../constants/theme';
 import {ThemedText} from './themed-text';
 import {canonicalUrl} from '../constants/site';
 import {PrivacyHomeBackdrop} from './privacy-home-backdrop';
+import {clearWebStartupPlaceholder} from './web-startup-placeholder';
 
 const PAGE_TITLES: Record<string, string> = {
     '/': 'Yify — Discover Movies', '/movies': 'Browse Movies — Yify', '/shows': 'Shows — Yify',
@@ -28,8 +29,12 @@ export function PrivacyGate({children}: {children: ReactNode}) {
     const [error, setError] = useState<string | null>(null);
     const cardRef = useRef<ComponentRef<typeof View>>(null);
 
+    useLayoutEffect(() => {
+        if (choices === privacy.getChoices()) clearWebStartupPlaceholder();
+    }, [choices, privacy]);
+
     useEffect(() => {
-        if (Platform.OS !== 'web' || choices.adultConfirmed) return;
+        if (Platform.OS !== 'web' || choices.adultConfirmed || choices !== privacy.getChoices()) return;
         const card = cardRef.current as unknown as HTMLElement | null;
         if (!card) return;
         const previous = document.activeElement;
@@ -58,7 +63,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
             card.removeEventListener('keydown', trapFocus);
             if (previous instanceof HTMLElement && previous.isConnected) previous.focus({preventScroll: true});
         };
-    }, [choices.adultConfirmed]);
+    }, [choices, privacy]);
 
     if (choices.adultConfirmed) return children;
 

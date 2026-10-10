@@ -98,14 +98,14 @@ export const Radius = {
 } as const;
 
 export const FontFamily = {
-    regular: 'HankenGrotesk_400Regular',
-    medium: 'HankenGrotesk_500Medium',
-    semibold: 'HankenGrotesk_600SemiBold',
-    bold: 'HankenGrotesk_700Bold',
-    extrabold: 'HankenGrotesk_800ExtraBold',
-    displaySemibold: 'Lora_600SemiBold',
-    displayBold: 'Lora_700Bold',
-    displayExtra: 'Lora_700Bold',
+    regular: Platform.OS === 'web' ? 'HankenGrotesk_400Regular, system-ui, sans-serif' : 'HankenGrotesk_400Regular',
+    medium: Platform.OS === 'web' ? 'HankenGrotesk_500Medium, system-ui, sans-serif' : 'HankenGrotesk_500Medium',
+    semibold: Platform.OS === 'web' ? 'HankenGrotesk_600SemiBold, system-ui, sans-serif' : 'HankenGrotesk_600SemiBold',
+    bold: Platform.OS === 'web' ? 'HankenGrotesk_700Bold, system-ui, sans-serif' : 'HankenGrotesk_700Bold',
+    extrabold: Platform.OS === 'web' ? 'HankenGrotesk_800ExtraBold, system-ui, sans-serif' : 'HankenGrotesk_800ExtraBold',
+    displaySemibold: Platform.OS === 'web' ? 'Lora_600SemiBold, Georgia, serif' : 'Lora_600SemiBold',
+    displayBold: Platform.OS === 'web' ? 'Lora_700Bold, Georgia, serif' : 'Lora_700Bold',
+    displayExtra: Platform.OS === 'web' ? 'Lora_700Bold, Georgia, serif' : 'Lora_700Bold',
 } as const;
 
 export const Typography = {

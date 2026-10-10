@@ -1,6 +1,6 @@
 import {ScrollViewStyleReset} from 'expo-router/html';
 import type {PropsWithChildren} from 'react';
-import {SITE_URL} from '@/presentation';
+import {SITE_URL, getWebStartupScript, WebStartupPlaceholder} from '@/presentation';
 
 const BASE_URL = process.env.EXPO_WEB_BASE_URL ?? '';
 const TITLE = 'Yify — Movie Discovery App for iPhone, Android & Web';
@@ -28,6 +28,7 @@ export default function Root({children}: PropsWithChildren) {
         <html lang="en">
             <head>
                 <meta charSet="utf-8" />
+                <script dangerouslySetInnerHTML={{__html: getWebStartupScript(BASE_URL)}}/>
                 <meta name="google-adsense-account" content="ca-pub-2292299294214510"/>
                 <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
                 <meta name="viewport"
@@ -60,6 +61,7 @@ export default function Root({children}: PropsWithChildren) {
                 <ScrollViewStyleReset />
             </head>
             <body>
+                <WebStartupPlaceholder baseUrl={BASE_URL}/>
                 <noscript>
                     <style>{'html,body{height:auto;overflow:auto}#root{display:none}'}</style>
                     <div style={{padding: 24, fontFamily: 'sans-serif', lineHeight: 1.6}}>
