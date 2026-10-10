@@ -15,12 +15,12 @@
 ## 3. Existing controls
 
 - [x] 3.1 Make mobile search reset apply while preserving other filters; verify empty queries never enter history and inspect mobile and desktop behavior.
-- [ ] 3.2 Correct contextual labels, preference copy, actual heading roles and compact action dimensions; verify accessibility tree and narrow/enlarged-text rendering.
+- [x] 3.2 Correct contextual labels, preference copy, actual heading roles and compact action dimensions; verify accessibility tree and narrow/enlarged-text rendering.
 
 ## 4. Whole-product review
 
-- [ ] 4.1 Record journey coverage and rendered results on isolated previews, including loading/empty/error/recovery and explicit untested native/live-service paths.
-- [ ] 4.2 Run affected regressions, typecheck and required app/release/web checks; independently review the exact final commit and resolve findings.
+- [x] 4.1 Record journey coverage and rendered results on isolated previews, including loading/empty/error/recovery and explicit untested native/live-service paths.
+- [x] 4.2 Run affected regressions, typecheck and required app/release/web checks; independently review the exact final commit and resolve findings.
 
 ## Workflow follow-up
 
