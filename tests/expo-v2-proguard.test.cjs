@@ -36,7 +36,7 @@ test('release R8 retains the reflected Expo v2 registry and module implementatio
     assert.equal(resolved.android.versionCode, pkg.versionCode);
     assert.ok(read('android/app/build.gradle').includes(`versionCode ${pkg.versionCode}\n        versionName "${pkg.version}"`));
     assert.ok(read('android/app/src/main/res/values/strings.xml').includes(`name="expo_runtime_version">${pkg.version}<`));
-    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleShortVersionString</key>\n\t<string>${pkg.version}</string>`));
-    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleVersion</key>\n\t<string>${pkg.versionCode}</string>`));
+    assert.match(read('ios/Yify/Info.plist'), new RegExp(`<key>CFBundleShortVersionString</key>\\s*<string>${pkg.version.replaceAll('.', '\\.')}<\\/string>`));
+    assert.match(read('ios/Yify/Info.plist'), new RegExp(`<key>CFBundleVersion</key>\\s*<string>${pkg.versionCode}<\\/string>`));
     assert.ok(read('ios/Yify/Supporting/Expo.plist').includes(`<key>EXUpdatesRuntimeVersion</key>\n    <string>${pkg.version}</string>`));
 });

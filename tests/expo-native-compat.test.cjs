@@ -131,6 +131,28 @@ test('Expo server frame shim schedules no work and preserves browser/native APIs
   assert.equal(native.requestAnimationFrame, existing);
 });
 
+test('Expo native bootstrap uses the current setup entry and retains older platform fallback', async () => {
+  const source = await reviewedSource('expo', 'src/winter/setupReactNativeEnvironment.ts');
+  const installed = await reviewedSource('react-native', 'src/setup-env.js');
+  assert.match(installed, /setUpDefaultReactNativeEnvironment/);
+  const load = new Function('require', source);
+  const current = [];
+  load((name) => current.push(name));
+  assert.deepEqual(current, ['react-native/setup-env']);
+  const older = [];
+  load((name) => {
+    older.push(name);
+    if (name === 'react-native/setup-env') throw new Error('older platform');
+  });
+  assert.deepEqual(older, ['react-native/setup-env', 'react-native/Libraries/Core/InitializeCore']);
+  const runtime = await reviewedSource('expo', 'src/winter/runtime.native.ts');
+  assert.match(runtime, /import '\.\/setupReactNativeEnvironment'/);
+  const cli = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
+  assert.match(cli, /doReplace\(`\$\{hostPackage\}\/src\/setup-env\.js`, undefined\)/);
+  const metro = await reviewedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
+  assert.match(metro, /resolveFrom\(reactNativeHostPath, '\.\/src\/setup-env'\)/);
+});
+
 test('Metro and React Native share the same asset registry and accepted import routes', async () => {
   const source = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
   const registry = /const ASSET_REGISTRY_SRC = `([^`]+)`;/.exec(source)?.[1];
@@ -256,9 +278,14 @@ test('Expo iOS scene passes initial properties to React Native factory', async (
 test('React Native, Metro tooling and JS polyfills share the Expo SDK runtime', async () => {
   const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
   const bundled = JSON.parse(await reviewedSource('expo', 'bundledNativeModules.json'));
+  const policy = JSON.parse(await fs.readFile(path.join(repository, 'scripts/expo-dependency-policy.json'), 'utf8'));
   const reactNative = pkg.dependencies['react-native'];
-  assert.equal(reactNative, bundled['react-native']);
+  assert.equal(policy.packages['react-native'].version, reactNative);
+  assert.equal(policy.packages['react-native'].expected, bundled['react-native']);
   assert.equal(pkg.devDependencies['@react-native/metro-config'], reactNative);
   assert.equal(pkg.devDependencies['@react-native/js-polyfills'], reactNative);
-  assert.equal(pkg.resolutions['@react-native/js-polyfills'], reactNative);
+  for (const name of ['@react-native/js-polyfills', '@react-native/asset-utils', '@react-native/dev-middleware',
+    '@react-native/babel-plugin-codegen', '@react-native/codegen', '@react-native/normalize-colors']) {
+    assert.equal(pkg.resolutions[name], reactNative);
+  }
 });

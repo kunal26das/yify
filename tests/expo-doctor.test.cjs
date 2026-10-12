@@ -121,7 +121,7 @@ test('committed React Native Web policy accepts only the reviewed recommendation
     assert.equal(approved.version, '0.21.3');
     assert.equal(approved.expected, '^0.21.4');
     const installedSdk = {
-        expoVersion: '58.0.5',
+        expoVersion: '58.0.6',
         installedVersions: Object.fromEntries(Object.entries(committed.packages).map(([name, entry]) => [name, entry.version])),
         bundledNativeModules: {'react-native-web': '~0.21.3'},
     };
