@@ -164,9 +164,9 @@ test('Metro and React Native share the same asset registry and accepted import r
   assert.equal(exports.AssetRegistry.getAssetByID(exports.registerAsset(asset)), asset);
   assert.equal(exports.getAssetByID(exports.AssetRegistry.registerAsset(asset)), asset);
   const start = source.indexOf('if (moduleName === config.transformer.assetRegistryPath ||');
-  const end = source.indexOf("if (platform === 'web'", start);
+  const end = source.indexOf('return null;', start);
   assert.ok(start >= 0 && end > start);
-  const resolve = new Function('moduleName', 'context', 'config', 'getAssetRegistryModule', source.slice(start, end));
+  const resolve = new Function('moduleName', 'context', 'config', 'getAssetRegistryModule', 'platform', source.slice(start, end));
   const config = { transformer: { assetRegistryPath: 'custom-registry' } };
   for (const specifier of ['custom-registry', 'react-native/asset-registry', '@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js', 'react-native/Libraries/Image/AssetRegistry', 'react-native/Libraries/Image/AssetRegistry.js']) {
     assert.equal(resolve(specifier, {}, config, () => 'shared'), 'shared');
@@ -176,6 +176,14 @@ test('Metro and React Native share the same asset registry and accepted import r
     ['..\\..\\src\\private\\assets\\AssetRegistry.js', 'C:\\app\\node_modules\\react-native\\src\\Image.js'],
   ]) assert.equal(resolve(specifier, { originModulePath: origin }, config, () => 'shared'), 'shared');
   assert.equal(resolve('../../src/private/assets/AssetRegistry', { originModulePath: '/app/other/Image.js' }, config, () => 'shared'), undefined);
+  assert.equal(resolve('../../modules/AssetRegistry', {
+    originModulePath: '/app/node_modules/react-native-web/dist/cjs/exports/AssetRegistry/index.js',
+  }, config, () => 'shared', 'web'), 'shared');
+  const webRegistry = require('react-native-web/asset-registry');
+  const {AssetRegistry} = require('react-native-web');
+  const webAsset = {uri: 'public-registry.png'};
+  assert.equal(AssetRegistry.getAssetByID(webRegistry.registerAsset(webAsset)), webAsset);
+  assert.equal(webRegistry.getAssetByID(AssetRegistry.registerAsset(webAsset)), webAsset);
 });
 
 test('native Metro polyfills resolve the matching supported package', async () => {

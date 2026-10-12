@@ -7,9 +7,9 @@
       "reason": "Use the coordinated Expo 58.0.6 / React Native 0.88.0-rc.4 native dependency set under runtime 1.8.21. Preserve source guards, lifecycle regression coverage, regenerated native projects and native build validation before release."
     },
     "@sentry/react-native": {
-      "version": "8.29.0",
+      "version": "8.30.0",
       "expected": "~8.28.0",
-      "reason": "Sentry 8.29 updates native Android/Cocoa SDKs, replay registration and iOS linking. This upgrade is coupled to runtime 1.8.14 and native project regeneration; retain crash-reporting and symbol upload validation."
+      "reason": "Sentry 8.30 updates Android SDK 8.59.0 to 8.60.0, Cocoa SDK 9.30.0 to 9.30.1 and JavaScript SDK 10.75.2 to 10.76.0. Its Expo Gradle integration resolves the SDK from the Android project, and runtime 1.8.21 regenerates native projects while preserving crash mirroring, consent and symbol uploads."
     },
     "react-native-gesture-handler": {
       "version": "3.3.0",
@@ -22,9 +22,9 @@
       "reason": "Safe-area 5.10.1 preserves the 5.10.0 Android/iOS implementation and fixes SwiftPM package metadata; validate its integration in runtime 1.8.14."
     },
     "react-native-web": {
-      "version": "0.21.3",
+      "version": "0.21.4",
       "expected": "^0.21.4",
-      "reason": "Retain Expo 58.0.6's bundled ~0.21.3 with the guarded shared asset registry and passing Hosting/Pages exports. React Native Web 0.21.4 adds public AssetRegistry entry points and removes deprecation warnings; adopt it with a separately reviewed coordinated update."
+      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.5 routes both Metro-generated assets and React Native Web's internal registry import through the reviewed shared registry; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
       "version": "8.0.7",
