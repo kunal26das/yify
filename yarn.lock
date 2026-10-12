@@ -2851,15 +2851,7 @@
   resolved "https://registry.yarnpkg.com/@react-native/asset-utils/-/asset-utils-0.88.0-rc.4.tgz#aa9a700da6d18a5701f0588c182f9c3cf6d0aef8"
   integrity sha512-75ePgfFR7Ro0b/CuGOcdfz6CTVmMtyHwJsxLLwKvI2fVBV2FaoaN/763j/PzODQcaA3mGNrmw9vlIeYG0ypTHw==
 
-"@react-native/babel-plugin-codegen@0.88.0-rc.3":
-  version "0.88.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@react-native/babel-plugin-codegen/-/babel-plugin-codegen-0.88.0-rc.3.tgz#f20b772afc8f93a172eb04000f37ded44d4dc5ce"
-  integrity sha512-v68EZUjkcs2ZLL1ayA2aQ79imy7BGlc6uAteKMDhA8vf0QKT92YHkSFMGA1+df38d3/v3R+AB6X6XFhixQ1EEQ==
-  dependencies:
-    "@babel/traverse" "^7.29.0"
-    "@react-native/codegen" "0.88.0-rc.3"
-
-"@react-native/babel-plugin-codegen@0.88.0-rc.4":
+"@react-native/babel-plugin-codegen@0.88.0-rc.3", "@react-native/babel-plugin-codegen@0.88.0-rc.4":
   version "0.88.0-rc.4"
   resolved "https://registry.yarnpkg.com/@react-native/babel-plugin-codegen/-/babel-plugin-codegen-0.88.0-rc.4.tgz#7cd59e0adfb90285a5d80dbf62abf4d4e316d2dd"
   integrity sha512-XrbXubYD+2XOLfCy7mwbaWT3tkpP+7VWcjRr4dz0LW3EfR6bbD6Y4bHnLQDVEmlOoefowRrcabTKYJYUBviQMg==
@@ -2905,19 +2897,6 @@
     babel-plugin-transform-flow-enums "^0.0.2"
     flow-parser "0.327.0"
     react-refresh "^0.14.0"
-
-"@react-native/codegen@0.88.0-rc.3":
-  version "0.88.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@react-native/codegen/-/codegen-0.88.0-rc.3.tgz#afd346210558434f022aedb2035dc07b1185a8e6"
-  integrity sha512-fjDCsaVPTlrYHelSogo/J9RbeeJ+dfokyw57VdtFa3HMWssCSqBmgnSoKKexQAO6U4fppAm91550DC8+02pL4A==
-  dependencies:
-    "@babel/core" "^7.25.2"
-    "@babel/parser" "^7.29.0"
-    flow-parser "0.327.0"
-    invariant "^2.2.4"
-    nullthrows "^1.1.1"
-    tinyglobby "^0.2.15"
-    yargs "^17.6.2"
 
 "@react-native/codegen@0.88.0-rc.4":
   version "0.88.0-rc.4"
@@ -3005,20 +2984,10 @@
     metro-config "^0.87.1"
     metro-runtime "^0.87.1"
 
-"@react-native/normalize-colors@0.88.0-rc.3":
-  version "0.88.0-rc.3"
-  resolved "https://registry.yarnpkg.com/@react-native/normalize-colors/-/normalize-colors-0.88.0-rc.3.tgz#310a5acb7996187ce49db23641fadd408d599763"
-  integrity sha512-el4NZ16vfh2quo56hB5G8cD8Bbk8N2+hamMfeaSWE5XCQC4vyTWGrE4FORjTdLAjv4Uh8LMuX87iMgwt2adArg==
-
-"@react-native/normalize-colors@0.88.0-rc.4":
+"@react-native/normalize-colors@0.88.0-rc.3", "@react-native/normalize-colors@0.88.0-rc.4", "@react-native/normalize-colors@^0.74.1":
   version "0.88.0-rc.4"
   resolved "https://registry.yarnpkg.com/@react-native/normalize-colors/-/normalize-colors-0.88.0-rc.4.tgz#be854124295235d6994e08d15e4a9dfd4a7aba9a"
   integrity sha512-MDD2OXJwccKSB7ceVFw+ZFf1lomWrQODbwsKYwAhuf8mTiOArAea1c2fRJ9zpPp9IZmi3O3wSfGRBKqWcBCNDA==
-
-"@react-native/normalize-colors@^0.74.1":
-  version "0.74.89"
-  resolved "https://registry.yarnpkg.com/@react-native/normalize-colors/-/normalize-colors-0.74.89.tgz#b8ac17d1bbccd3ef9a1f921665d04d42cff85976"
-  integrity sha512-qoMMXddVKVhZ8PA1AbUCk83trpd6N+1nF2A6k1i6LsQObyS92fELuk8kU/lQs6M7BsMHwqyLCpQJ1uFgNvIQXg==
 
 "@react-native/virtualized-lists@0.88.0-rc.4":
   version "0.88.0-rc.4"
