@@ -8,11 +8,11 @@
 ## 2. Billing and web integration
 
 - [x] 2.1 Review RevenueCat 10.12.2 and RN Web 0.21.4, reconcile the asset-registry guard, regenerate native projects under runtime 1.8.20, and pass fresh installation, billing/privacy tests and both web export checks.
-- [ ] 2.2 Integrate the preceding merge, independently review the exact repaired #984 head and merge after required CI succeeds; record rendered fixture checks and platform gaps.
+- [x] 2.2 Integrate the preceding merge, independently review the exact repaired #984 head and merge after required CI succeeds; record rendered fixture checks and platform gaps.
 
 ## 3. Expo and React Native integration
 
-- [ ] 3.1 Rebase the proposed Expo/RN dependency set and source guards against upstream, regenerate native projects under runtime 1.8.21, and pass fresh installation, compatibility and native lifecycle regressions.
+- [x] 3.1 Rebase the proposed Expo/RN dependency set and source guards against upstream, regenerate native projects under runtime 1.8.21, and pass fresh installation, compatibility and native lifecycle regressions.
 - [ ] 3.2 Integrate the preceding merges, independently review the exact repaired #982 head and merge after required CI succeeds; record full application validation and native compilation evidence.
 
 ## 4. Integrated verification
@@ -42,3 +42,15 @@
 - Fresh no-lock standalone install and combined frozen install pass. Combined source guards (67), doctor, pins, typecheck, 2,288 app tests (one expected skip), 51 crashreporting tests, Pages/Hosting exports and catalog isolation checks pass.
 - Desktop 1365px and mobile 390px fixture browser checks pass for welcome/home/movies/preferences with outbound telemetry blocked and analytics off. Rendered artifacts were captured for review. No production purchase occurred.
 - Clean native regeneration and CocoaPods resolve RNSentry 8.30.0, RNPurchases 10.12.2, PurchasesHybridCommon 19.10.0 and RevenueCat 5.94.0. Generated Xcode project UUID churn has no semantic setting changes. The plist regression now parses values rather than asserting generated whitespace. Existing incremental Android prebuild anchor limitation remains; clean prebuild passes.
+
+- Billing/web PR #984 merged as `da929483c155dde6f130222ca6431b647426e710` after all required exact-head checks passed. Independent review of `96cee191afd3124788af2e5a8937959ba34dc709` passed 168 focused tests and found no actionable findings. Lead inspected the actual combined desktop/mobile fixture screenshots. The original signed bot ancestry was retained after Dependabot rebased during repair; verification rules remain unchanged.
+
+### Expo and React Native
+
+- Standalone Expo source `3d3d35d76c28e9508137ca3c3fe3a86e0b628795`; final combined source `4533b07290f99e69c163cb1348107000d4d45658`. Runtime 1.8.21/code 103 combines all three upgrades. Original nine Expo dependency changes are retained, with matching Expo/RN transitive pins and reviewed React Native rc.4 exception.
+- All prior source guards and the Reanimated lifecycle patch remain; 70 source guards now cover the current Expo/RN bootstrap and server replacement. Independent reviewer passed 192 combined focused tests and found no actionable findings.
+- Combined frozen install, pins, reviewed doctor, typecheck and full application suite pass: 2,289 app tests, one expected skip, plus 51 crashreporting tests. Clean native generation and CocoaPods resolution pass. Final Android four-ABI release compile, clean-lock replay and web rendering verification are in progress; they are not yet release evidence.
+- iOS compilation, live store purchase/restore, production crash injection, production signing, store publication and OTA publication have not been performed by this change.
+
+- Final fresh no-lock replay found stale selectors for three React Native transitive packages. The regenerated lockfile removes unused rc.3/0.74 records and maps remaining selectors to the already installed rc.4 resolutions; no new version is introduced. Commit the generated lock diff. Resolution probes from both React Native and Expo CLI confirm codegen, babel-plugin-codegen and normalize-colors all use rc.4. Fresh install applies all 70 guards successfully.
+- Both final web export checks and desktop/mobile fixture browser journeys pass; the lead inspected actual home, catalog and preferences screenshots. The isolated Sentry emulator cold-start/recovery evidence remains valid for that earlier runtime; final runtime launch awaits its APK.
