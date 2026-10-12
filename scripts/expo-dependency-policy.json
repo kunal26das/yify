@@ -27,9 +27,9 @@
       "reason": "Retain Expo 58.0.5's bundled ~0.21.3 with the guarded shared asset registry and passing Hosting/Pages exports. React Native Web 0.21.4 adds public AssetRegistry entry points and removes deprecation warnings; adopt it with the coordinated Expo CLI asset-registry update."
     },
     "@babel/core": {
-      "version": "8.0.6",
+      "version": "8.0.7",
       "expected": "^7.29.7",
-      "reason": "Babel 8 compiles test fixtures. Expo and Worklets retain an explicit Babel 7 adapter until those upstream transforms support Babel 8."
+      "reason": "Babel 8.0.7 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs."
     },
     "typescript": {
       "version": "7.0.2",
