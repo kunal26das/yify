@@ -65,7 +65,7 @@ async function fixture({ scope = 'release' } = {}) {
     assert.equal(method, 'GET', 'The built-in token must remain read-only in the refresh helper.');
     if (state.beforeApi) await state.beforeApi(method, path, body);
     if (path === `repos/${REPOSITORY}/pulls/892`) return structuredClone(pr);
-    if (path.startsWith(`repos/${REPOSITORY}/pulls/892/commits?`)) return structuredClone(pr.head.sha === NEXT ? [next] : [original, refresh]);
+    if (path.startsWith(`repos/${REPOSITORY}/pulls/892/commits?`)) return structuredClone(pr.commits === 1 ? [pr.head.sha === NEXT ? next : original] : [original, refresh]);
     if (path === `repos/${REPOSITORY}/commits/${SOURCE}?per_page=100`) return structuredClone(original);
     if (path === `repos/${REPOSITORY}/commits/${HEAD}?per_page=100`) return structuredClone(refresh);
     if (path === `repos/${REPOSITORY}/commits/${NEXT}?per_page=100`) return structuredClone(next);
@@ -403,6 +403,21 @@ async function recoveryFixture(options = {}) {
   return state;
 }
 
+function unrefreshedRecovery(state) {
+  state.pr.commits = 1;
+  state.pr.head.sha = SOURCE;
+  state.prs[0].commits = 1;
+  state.prs[0].head.sha = SOURCE;
+  state.run.head_sha = SOURCE;
+  state.run.actor.login = 'dependabot[bot]';
+  state.run.pull_requests[0].head.sha = SOURCE;
+  state.runList[0].head_sha = SOURCE;
+  state.runList[0].actor.login = 'dependabot[bot]';
+  state.runList[0].pull_requests[0].head.sha = SOURCE;
+  state.comparison.base_commit.sha = SOURCE;
+  state.body = `@dependabot rebase\n\n<!-- dependabot-rebase:v2:${SOURCE}:${MAIN} -->`;
+}
+
 test('current successful main CI recovers a signed release head with failed PR checks', async () => {
   const state = await recoveryFixture();
   state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
@@ -432,6 +447,49 @@ test('main recovery rebases a reviewed JavaScript root update with failed exact-
   assert.equal(state.writes.length, 1);
 });
 
+test('main recovery rebases an eligible unrefreshed root update after only its clean reinstall fails', async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  unrefreshedRecovery(state);
+  state.jobs[0].conclusion = 'success';
+  state.jobs.push({ name: 'Dependabot clean reinstall (root)', status: 'completed', conclusion: 'failure' });
+  state.reactions.push({ content: '+1', user: { login: 'dependabot[bot]' } });
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, true);
+  assert.equal(result.results[0].failed_run_id, 456);
+  assert.equal(result.results[0].failed_run_attempt, 2);
+  assert.equal(state.writes.length, 1);
+});
+
+for (const [label, mutate] of [
+  ['pending', (s) => { s.jobs[3].status = 'in_progress'; s.jobs[3].conclusion = null; }],
+  ['cancelled', (s) => { s.jobs[3].conclusion = 'cancelled'; }],
+  ['skipped', (s) => { s.jobs[3].conclusion = 'skipped'; }],
+  ['successful', (s) => { s.jobs[3].conclusion = 'success'; }],
+  ['missing', (s) => { s.jobs.pop(); }],
+  ['duplicate', (s) => { s.jobs.push({ ...s.jobs[3] }); }],
+  ['wrong scope', (s) => { s.jobs[3].name = 'Dependabot clean reinstall (release)'; }],
+  ['incomplete required check', (s) => { s.jobs[0].status = 'in_progress'; }],
+  ['skipped required check', (s) => { s.jobs[0].conclusion = 'skipped'; }],
+]) test(`main recovery ignores ${label} clean-reinstall evidence`, async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  unrefreshedRecovery(state);
+  state.jobs[0].conclusion = 'success';
+  state.jobs.push({ name: 'Dependabot clean reinstall (root)', status: 'completed', conclusion: 'failure' });
+  mutate(state);
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, false);
+  assert.equal(state.writes.length, 0);
+});
+
+test('main recovery does not use a failed required check to hide an invalid unrefreshed clean reinstall', async () => {
+  const state = await recoveryFixture({ scope: 'root' });
+  unrefreshedRecovery(state);
+  state.jobs.push({ name: 'Dependabot clean reinstall (root)', status: 'completed', conclusion: 'skipped' });
+  const result = await state.recover();
+  assert.equal(result.results[0].requested, false);
+  assert.equal(state.writes.length, 0);
+});
+
 test('main recovery reports native root updates as manual without posting a rebase', async () => {
   const state = await recoveryFixture({ scope: 'root' });
   state.baseManifests['package.json'].dependencies = { 'react-native': '0.88.0-rc.3' };
@@ -448,7 +506,7 @@ test('healthy JavaScript root updates remain with ordinary maintenance during ma
   state.run.conclusion = 'success';
   const result = await state.recover();
   assert.equal(result.results[0].requested, false);
-  assert.equal(result.results[0].reason, 'Current-head CI has no completed failed required check.');
+  assert.equal(result.results[0].reason, 'Current-head CI has no completed failed required check or clean reinstall.');
   assert.equal(state.writes.length, 0);
 });
 

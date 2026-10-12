@@ -170,7 +170,14 @@ async function failedPullRequestCI({ api, env, state, context }) {
   const checks = REQUIRED_CHECKS.map((name) => jobs.filter((job) => job.name === name));
   assert(checks.every((matches) => matches.length === 1 && matches[0].status === 'completed'),
     'Failed pull-request CI is missing unique completed required checks.');
-  if (!checks.some(([job]) => job.conclusion === 'failure')) return null;
+  let failedClean = false;
+  if (!state.refreshed) {
+    if (state.head !== state.source) return null;
+    const clean = jobs.filter((job) => job.name === `Dependabot clean reinstall (${state.scope})`);
+    if (clean.length !== 1 || clean[0].status !== 'completed' || !['success', 'failure'].includes(clean[0].conclusion)) return null;
+    failedClean = clean[0].conclusion === 'failure';
+  }
+  if (!checks.some(([job]) => job.conclusion === 'failure') && !(failedClean && checks.every(([job]) => job.conclusion === 'success'))) return null;
   return { id: run.id, attempt: run.run_attempt };
 }
 
@@ -209,7 +216,7 @@ export async function recoverAfterMain(options) {
       }
       const failed = await failedPullRequestCI({ api, env, state, context });
       if (!failed) {
-        results.push({ pr: state.pr, requested: false, reason: 'Current-head CI has no completed failed required check.' });
+        results.push({ pr: state.pr, requested: false, reason: 'Current-head CI has no completed failed required check or clean reinstall.' });
         continue;
       }
       const beforePost = async () => {
