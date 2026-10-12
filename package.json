@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.18",
-  "versionCode": 100,
+  "version": "1.8.19",
+  "versionCode": 101,
   "private": true,
   "workspaces": [
     "crashreporting",
@@ -57,7 +57,7 @@
     "@react-native-firebase/remote-config": "26.4.0",
     "@react-native-google-signin/google-signin": "16.1.5",
     "@revenuecat/purchases-js": "1.70.0",
-    "@sentry/react-native": "8.29.0",
+    "@sentry/react-native": "8.30.0",
     "@xmldom/xmldom": "0.9.12",
     "@yify/crashreporting": "0.1.0",
     "expo": "58.0.5",
