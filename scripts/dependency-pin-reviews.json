@@ -25,8 +25,8 @@
       "selector": "devDependencies.babel7",
       "name": "@babel/core",
       "current": "7.29.7",
-      "latest": "8.0.6",
-      "newestStable": "8.0.6",
+      "latest": "8.0.7",
+      "newestStable": "8.0.7",
       "sameMajor": "7.29.7",
       "consumers": [
         {
@@ -45,10 +45,10 @@
           "file": "tooling/package.json",
           "section": "devDependencies",
           "name": "@babel/core",
-          "version": "8.0.6"
+          "version": "8.0.7"
         }
       ],
-      "reason": "Expo 58.0.5 and Worklets 0.13.0 still require Babel 7 APIs. The private compatibility alias coexists with Babel 8.0.6 for mocked test fixtures.",
+      "reason": "Expo 58.0.5 and Worklets 0.13.0 still require Babel 7 APIs. The private compatibility alias coexists with Babel 8.0.7 for mocked test fixtures.",
       "evidence": "docs/dependency-pin-review.md"
     }
   ]
