@@ -74,8 +74,9 @@ export async function verifyMainCI({ api, env }) {
   return { ...result, ready: true };
 }
 
-export async function dispatchMergedMainCI({ api, env }) {
+export async function dispatchMergedMainCI({ api, dispatchApi, env }) {
   trustedMain(env);
+  assert(typeof dispatchApi === 'function', 'A separate GitHub App dispatch client is required.');
   assert(['workflow_run', 'workflow_dispatch'].includes(env.GITHUB_EVENT_NAME) &&
     INTEGER.test(env.PR_NUMBER || '') && SHA.test(env.PR_HEAD_SHA || ''),
   'A verified Dependabot pull request and tested head are required for main CI dispatch.');
@@ -92,7 +93,7 @@ export async function dispatchMergedMainCI({ api, env }) {
   if (mainCommit(await api('GET', `${root}/git/ref/heads/main`)) !== head) {
     return { dispatched: false, head, pr: pr.number, reason: 'The merged dependency update has been superseded on main.' };
   }
-  await api('POST', `${root}/actions/workflows/ci.yml/dispatches`, { ref: 'main' });
+  await dispatchApi('POST', `${root}/actions/workflows/ci.yml/dispatches`, { ref: 'main' });
   return { dispatched: true, head, pr: pr.number };
 }
 
@@ -110,11 +111,16 @@ export async function checkCurrentMain({ api, env }) {
   return { ready: true, head: current };
 }
 
-export async function main(env = process.env, mode = process.argv[2], api) {
+export async function main(env = process.env, mode = process.argv[2], api, dispatchApi) {
   assert(['dispatch', 'validate', 'current'].includes(mode), 'Unsupported main CI command.');
   const operation = { dispatch: dispatchMergedMainCI, validate: verifyMainCI, current: checkCurrentMain }[mode];
   const connection = api || (mode === 'current' && env.CHECK_CURRENT_MAIN !== 'true' ? undefined : githubApi(env.GH_TOKEN));
-  const result = await operation({ env, api: connection });
+  if (mode === 'dispatch' && !dispatchApi) {
+    assert(env.MAIN_CI_DISPATCH_TOKEN && env.MAIN_CI_DISPATCH_TOKEN !== env.GH_TOKEN,
+      'A separate GitHub App dispatch token is required.');
+  }
+  const writeConnection = mode === 'dispatch' ? dispatchApi || githubApi(env.MAIN_CI_DISPATCH_TOKEN) : undefined;
+  const result = await operation({ env, api: connection, dispatchApi: writeConnection });
   if (env.GITHUB_OUTPUT) {
     await appendFile(env.GITHUB_OUTPUT, Object.entries(result).map(([key, value]) => {
       assert(!/[\r\n]/.test(String(value)), 'Invalid multiline main CI output.');
