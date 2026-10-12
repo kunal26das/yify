@@ -2,9 +2,19 @@ const assert = require('node:assert/strict');
 const {readFileSync} = require('node:fs');
 const {join} = require('node:path');
 const {test} = require('node:test');
+const {DOMParser} = require('@xmldom/xmldom');
 
 const root = join(__dirname, '..');
 const read = path => readFileSync(join(root, path), 'utf8');
+const plistString = (path, name) => {
+    const document = new DOMParser().parseFromString(read(path), 'application/xml');
+    const keys = Array.from(document.getElementsByTagName('key')).filter(key => key.textContent === name);
+    assert.equal(keys.length, 1);
+    let value = keys[0].nextSibling;
+    while (value && value.nodeType !== 1) value = value.nextSibling;
+    assert.equal(value?.tagName, 'string');
+    return value.textContent;
+};
 
 test('release R8 retains the reflected Expo v2 registry and module implementations', () => {
     const config = require('../app.json');
@@ -36,7 +46,7 @@ test('release R8 retains the reflected Expo v2 registry and module implementatio
     assert.equal(resolved.android.versionCode, pkg.versionCode);
     assert.ok(read('android/app/build.gradle').includes(`versionCode ${pkg.versionCode}\n        versionName "${pkg.version}"`));
     assert.ok(read('android/app/src/main/res/values/strings.xml').includes(`name="expo_runtime_version">${pkg.version}<`));
-    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleShortVersionString</key>\n\t<string>${pkg.version}</string>`));
-    assert.ok(read('ios/Yify/Info.plist').includes(`<key>CFBundleVersion</key>\n\t<string>${pkg.versionCode}</string>`));
-    assert.ok(read('ios/Yify/Supporting/Expo.plist').includes(`<key>EXUpdatesRuntimeVersion</key>\n    <string>${pkg.version}</string>`));
+    assert.equal(plistString('ios/Yify/Info.plist', 'CFBundleShortVersionString'), pkg.version);
+    assert.equal(plistString('ios/Yify/Info.plist', 'CFBundleVersion'), String(pkg.versionCode));
+    assert.equal(plistString('ios/Yify/Supporting/Expo.plist', 'EXUpdatesRuntimeVersion'), pkg.version);
 });
