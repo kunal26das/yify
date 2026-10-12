@@ -1832,10 +1832,10 @@ dunder-proto@^1.0.1:
     es-errors "^1.3.0"
     gopd "^1.2.0"
 
-eas-cli@24.11.0:
-  version "24.11.0"
-  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-24.11.0.tgz#f7cd4e2fd423801216ec4ad5cd399e4154e8500d"
-  integrity sha512-aWw6OhIOfjWrJN8/ycT+AAS24ivTt6Xy06U+4mKX9+DRy2+T9EeKkmGzIo0lmj105D8F2Rrk3OkmzWrRu+hL7A==
+eas-cli@24.12.1:
+  version "24.12.1"
+  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-24.12.1.tgz#4166e5e48006bfdfed783c475bae06061e9da533"
+  integrity sha512-yLjpZbTkPRobwZUc+APRLVNcVvxiLO1f4UCaLB0rw5BiSnM1NTgsUikl9WTQXsnXxT/3J8iuRbo7JDJFmEm9HQ==
   dependencies:
     "@expo/apple-utils" "2.2.1"
     "@expo/code-signing-certificates" "0.0.5"
@@ -1952,10 +1952,10 @@ electron-to-chromium@^1.5.439:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.451.tgz#864347c1a8e7041ef0a6a70372b6cbaa66564c14"
   integrity sha512-vUNKPrUzw8ByEMOxloq0a71iD/mPuPxVkbDm3G5YhnxTzOw/I6qAg2MUS0cYj/c267lWmw26yW4Vv7foxTxPLg==
 
-electron@44.5.1:
-  version "44.5.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-44.5.1.tgz#6a1d94f24886ce61a16946b4a9c688e61cec2e40"
-  integrity sha512-lx7AYoFIiyvEvgvpyWO9kOC60xtNPpiPZAth6Fmg9NutzpCAMLwpUlaBY2EXfZyIgUdzEmLMj9KvK0Vrokl1yQ==
+electron@44.7.0:
+  version "44.7.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-44.7.0.tgz#038bc7ad4c88ef04ea18a792c8ea510908e11979"
+  integrity sha512-aUq9/zLAAFYc+a9gy6cd0C3Y/N/RmovLCD8TV8LhIzNhuND6HEgsu96jJz9cbAxvckSPv+Trf2PKEjktoZgFkw==
   dependencies:
     "@electron-internal/extract-zip" "^1.0.1"
     "@electron/get" "^5.0.0"
