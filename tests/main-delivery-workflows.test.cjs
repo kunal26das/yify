@@ -14,13 +14,29 @@ test('only confirmed automatic merges can dispatch main CI with a separate write
     assert.equal(merge.outputs.merged, '${{ steps.merge.outputs.merged }}');
     assert.equal(dispatch.needs, 'maintain');
     assert.equal(dispatch.if, "needs.maintain.outputs.merged == 'true'");
-    assert.deepEqual(dispatch.permissions, {contents: 'read', 'pull-requests': 'read', actions: 'write'});
+    assert.deepEqual(dispatch.permissions, {contents: 'read', 'pull-requests': 'read', actions: 'read'});
     assert.equal(dispatch.steps[0].with.ref, '${{ github.sha }}');
     assert.equal(dispatch.steps[0].with['persist-credentials'], false);
+    const credentialCheck = dispatch.steps.find(step => step.name === 'Check workflow dispatch credentials');
+    assert.equal(credentialCheck.env.DEPENDABOT_APP_ID, '${{ vars.DEPENDABOT_APP_ID }}');
+    assert.equal(credentialCheck.env.DEPENDABOT_APP_PRIVATE_KEY, '${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}');
+    assert.match(credentialCheck.run, /exit 1/);
+    const appToken = dispatch.steps.find(step => step.id === 'dispatch-token');
+    assert.match(appToken.uses, /^actions\/create-github-app-token@[a-f0-9]{40}$/);
+    assert.deepEqual(appToken.with, {
+        'app-id': '${{ vars.DEPENDABOT_APP_ID }}',
+        'private-key': '${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}',
+        owner: '${{ github.repository_owner }}',
+        repositories: '${{ github.event.repository.name }}',
+        'permission-actions': 'write',
+    });
     const action = dispatch.steps.find(step => step.run === 'node scripts/main-ci.mjs dispatch');
     assert.equal(action.env.PR_NUMBER, '${{ needs.maintain.outputs.pr }}');
     assert.equal(action.env.PR_HEAD_SHA, '${{ needs.maintain.outputs.head }}');
     assert.equal(action.env.GH_TOKEN, '${{ secrets.GITHUB_TOKEN }}');
+    assert.equal(action.env.MAIN_CI_DISPATCH_TOKEN, '${{ steps.dispatch-token.outputs.token }}');
+    assert.ok(dispatch.steps.indexOf(credentialCheck) < dispatch.steps.indexOf(appToken));
+    assert.ok(dispatch.steps.indexOf(appToken) < dispatch.steps.indexOf(action));
     assert.ok(dispatch.steps.every(step => !/yarn|npm|npx/.test(step.run ?? '')));
 });
 

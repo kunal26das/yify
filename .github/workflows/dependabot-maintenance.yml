@@ -220,7 +220,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-      actions: write
+      actions: read
     steps:
       - name: Checkout trusted default-branch automation
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -232,9 +232,28 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
+      - name: Check workflow dispatch credentials
+        env:
+          DEPENDABOT_APP_ID: ${{ vars.DEPENDABOT_APP_ID }}
+          DEPENDABOT_APP_PRIVATE_KEY: ${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "$DEPENDABOT_APP_ID" ] || [ -z "$DEPENDABOT_APP_PRIVATE_KEY" ]; then
+            echo "Configure the DEPENDABOT_APP_ID repository variable and DEPENDABOT_APP_PRIVATE_KEY Actions secret before dispatching main CI."
+            exit 1
+          fi
+      - name: Create repository-scoped workflow dispatch token
+        id: dispatch-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.DEPENDABOT_APP_ID }}
+          private-key: ${{ secrets.DEPENDABOT_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
       - name: Verify merged update and dispatch main CI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAIN_CI_DISPATCH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
           PR_NUMBER: ${{ needs.maintain.outputs.pr }}
           PR_HEAD_SHA: ${{ needs.maintain.outputs.head }}
         run: node scripts/main-ci.mjs dispatch

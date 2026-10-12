@@ -31,12 +31,6 @@ function fixture() {
   state.api = async (method, path, body) => {
     state.calls.push({ method, path, body });
     if (state.beforeApi) await state.beforeApi(method, path, body);
-    if (method === 'POST') {
-      assert.equal(path, `repos/${REPOSITORY}/actions/workflows/ci.yml/dispatches`);
-      state.writes.push({ path, body });
-      if (state.dispatchError) throw new Error('Dispatch rejected');
-      return null;
-    }
     assert.equal(method, 'GET');
     if (path === `repos/${REPOSITORY}/pulls/950`) return structuredClone(state.pr);
     if (path === `repos/${REPOSITORY}/git/ref/heads/main`) return structuredClone(state.branch);
@@ -48,6 +42,15 @@ function fixture() {
       return { jobs: structuredClone(state.jobPages ? state.jobPages[page - 1] || [] : state.jobs) };
     }
     throw new Error(`Unexpected API request: ${method} ${path}`);
+  };
+  state.dispatchApi = async (method, path, body) => {
+    if (method === 'POST') {
+      assert.equal(path, `repos/${REPOSITORY}/actions/workflows/ci.yml/dispatches`);
+      state.writes.push({ path, body });
+      if (state.dispatchError) throw new Error('Dispatch rejected');
+      return null;
+    }
+    throw new Error(`Dispatch client cannot read: ${method} ${path}`);
   };
   return state;
 }
@@ -139,7 +142,44 @@ test('rejects a CI attempt rerun while its job evidence is being read', async ()
 test('dispatches normal main CI only after verifying a current bot-merged PR', async () => {
   const state = fixture();
   assert.deepEqual(await (await helpers).dispatchMergedMainCI(state), { dispatched: true, head: MAIN, pr: 950 });
+  assert.deepEqual(state.calls.map(({ method }) => method), ['GET', 'GET']);
   assert.deepEqual(state.writes, [{ path: `repos/${REPOSITORY}/actions/workflows/ci.yml/dispatches`, body: { ref: 'main' } }]);
+});
+
+test('dispatch refuses a missing separate write client before reading PR data', async () => {
+  const state = fixture(); delete state.dispatchApi;
+  await assert.rejects(async () => (await helpers).dispatchMergedMainCI(state), /separate GitHub App dispatch client/);
+  assert.equal(state.calls.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test('CLI dispatch refuses a missing or reused App token before reading PR data', async () => {
+  const state = fixture(); state.env.GH_TOKEN = 'read-token';
+  await assert.rejects(async () => (await helpers).main(state.env, 'dispatch', state.api), /separate GitHub App dispatch token/);
+  state.env.MAIN_CI_DISPATCH_TOKEN = state.env.GH_TOKEN;
+  await assert.rejects(async () => (await helpers).main(state.env, 'dispatch', state.api), /separate GitHub App dispatch token/);
+  assert.equal(state.calls.length, 0);
+  assert.equal(state.writes.length, 0);
+});
+
+test('CLI reads merged PR and main with GITHUB_TOKEN but dispatches with the App token', async (t) => {
+  const state = fixture();
+  state.env.GH_TOKEN = 'read-token';
+  state.env.MAIN_CI_DISPATCH_TOKEN = 'app-token';
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    const path = url.replace('https://api.github.com/', '');
+    if (options.method === 'GET') {
+      assert.equal(options.headers.Authorization, 'Bearer read-token');
+      const body = await state.api(options.method, path);
+      return { ok: true, status: 200, json: async () => body };
+    }
+    assert.equal(options.headers.Authorization, 'Bearer app-token');
+    await state.dispatchApi(options.method, path, JSON.parse(options.body));
+    return { ok: true, status: 204 };
+  });
+  assert.deepEqual(await (await helpers).main(state.env, 'dispatch'), { dispatched: true, head: MAIN, pr: 950 });
+  assert.deepEqual(state.calls.map(({ method }) => method), ['GET', 'GET']);
+  assert.equal(state.writes.length, 1);
 });
 
 test('superseded automated merges do not dispatch stale main CI', async () => {
@@ -241,6 +281,6 @@ test('CLI does not emit success output when dispatch fails', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'main-ci-test-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   state.env.GITHUB_OUTPUT = join(directory, 'output');
-  await assert.rejects(async () => (await helpers).main(state.env, 'dispatch', state.api), /Dispatch rejected/);
+  await assert.rejects(async () => (await helpers).main(state.env, 'dispatch', state.api, state.dispatchApi), /Dispatch rejected/);
   await assert.rejects(() => readFile(state.env.GITHUB_OUTPUT), { code: 'ENOENT' });
 });
