@@ -2686,7 +2686,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (8.29.0):
+  - RNSentry (8.30.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3478,7 +3478,7 @@ SPEC CHECKSUMS:
   RNPurchases: 5c8606bc3715d6eb35502ab65d3b167ca33ed1d2
   RNReanimated: 5c641cc430b7255eae87c8039204eb0f816ea1b8
   RNScreens: 79f648b45411882349444a9dd7453ca23c62356e
-  RNSentry: 0e309c7d99437e0c2b0f3fd5bb704ece27d51716
+  RNSentry: d633fc711055e6d51da5407bd5bf7c2e6d6963e1
   RNWorklets: 488806637a21eb17812a48dadca7cb8c698c8cfd
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
