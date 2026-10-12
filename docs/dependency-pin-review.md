@@ -28,9 +28,9 @@ Validation includes the app and crash-reporting tests, typechecks, exact-pin che
 | Pin | Why it remains | When to revisit |
 | --- | --- | --- |
 | `release/package.json`: `eas-cli/minimatch` 5.1.9 | EAS 24.9.0 calls the default export as a function when matching an iOS provisioning profile's bundle identifier. Minimatch 10 exports an object with a named function. Replacing 5 with 10 makes a valid profile fail validation. | EAS changes this caller, or a separately reviewed adapter passes exact and wildcard provisioning-profile checks. |
-| `tooling/package.json`: `babel7` 7.29.7 | Worklets 0.13.0 uses Babel 7 presets that assert a Babel 7 compiler. A Babel 8 replacement fails the actual transform with `Requires Babel "^7.0.0-0"`. Expo's Babel 7 syntax plugin also rejects Babel 8. The root tools already use Babel 8.0.6. | The upstream presets/plugins support Babel 8, and Worklets transforms, web exports and native builds pass together. |
+| `tooling/package.json`: `babel7` 7.29.7 | Worklets 0.13.0 uses Babel 7 presets that assert a Babel 7 compiler. A Babel 8 replacement fails the actual transform with `Requires Babel "^7.0.0-0"`. Expo's Babel 7 syntax plugin also rejects Babel 8. The root tools already use Babel 8.0.7. | The upstream presets/plugins support Babel 8, and Worklets transforms, web exports and native builds pass together. |
 
-The reviewed registry candidates are minimatch 10.2.6 and Babel 8.0.6; the newest releases in the required majors are 5.1.9 and 7.29.7 respectively. Nine release compatibility tests and ten tooling tests pass against the installed 1.8.14 dependencies. Replacing the Worklets compiler with Babel 8 in an isolated in-memory probe still reproduces the Babel 7 version assertion.
+The reviewed registry candidates are minimatch 10.2.6 and Babel 8.0.7; the retained compatible-major pins are 5.1.9 and 7.29.7 respectively. Nine release compatibility tests and ten tooling tests pass against the installed 1.8.14 dependencies. Replacing the Worklets compiler with Babel 8 in an isolated in-memory probe still reproduces the Babel 7 version assertion. Later Babel 7 releases require a separate pin review.
 
 The watcher reads `scripts/dependency-pin-reviews.json`. A review applies only when the manifest, selector, package, pinned version, all three reported registry versions and every recorded consumer version match exactly. Matching rows remain visible as `compatible-reviewed`, with the reason and this evidence. A new release, a compatible-major patch, a changed consumer or a changed pin requires another review. Missing or malformed review data and failed registry lookups keep the issue open. This is not a range exclusion or a claim that an older major is universally safe.
 
@@ -57,5 +57,9 @@ Direct dependencies, resolution pins and source guards advanced together, both l
 ## Expo 58.0.5 tooling review
 
 Runtime 1.8.16 updates Expo to 58.0.5 while retaining Worklets 0.13.0 and the Babel 7 compatibility alias. The installed tooling compatibility test passes an actual native Worklets transform through Babel 7 and confirms Babel 8 still compiles the mocked TypeScript and JSX fixtures. The dependency-watch tests also accept the updated, exact Expo consumer version. This evidence supports the tooling alias only; Android and iOS native builds remain separate release gates for the new runtime.
+
+## Babel 8.0.7 review — 12 October 2026
+
+[Babel's 8.0.7 release notes](https://github.com/babel/babel/releases/tag/v8.0.7) list compiler core, parser, helper and transform fixes, with no listed change to the TypeScript preset. This app retains the separate Babel 7 compiler for Expo and Worklets; Babel 8.0.7 compiles mocked TypeScript, TSX and CommonJS fixtures. On the exact PR dependency tree, a frozen install, app and crash-reporting typechecks, full tests and the online Expo doctor pass with the reviewed 8.0.7 deviation. The tooling test also verifies the native Worklets transform still runs through Babel 7. This is a build-tool update and does not change the app's native runtime.
 
 The tracking issue can close when a fresh scan has no unreviewed findings or incomplete checks. Future findings reopen the same issue; registry version checks remain enabled for every pin.

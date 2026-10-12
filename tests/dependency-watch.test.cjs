@@ -18,13 +18,13 @@ const event = {repository: {full_name: 'kunal26das/yify', default_branch: 'main'
 const reviewedInventory = {
     'package.json': {dependencies: {expo: '58.0.5', 'react-native-worklets': '0.13.0'}},
     'crashreporting/package.json': {},
-    'tooling/package.json': {devDependencies: {'@babel/core': '8.0.6', babel7: 'npm:@babel/core@7.29.7'}},
+    'tooling/package.json': {devDependencies: {'@babel/core': '8.0.7', babel7: 'npm:@babel/core@7.29.7'}},
     'release/package.json': {dependencies: {'eas-cli': '24.9.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
 };
 const reviewedMetadata = url => {
     const name = decodeURIComponent(new URL(url).pathname.slice(1));
     if (name === 'minimatch') return document(name, ['5.1.9', '10.2.6']);
-    if (name === '@babel/core') return document(name, ['7.29.7', '8.0.6']);
+    if (name === '@babel/core') return document(name, ['7.29.7', '8.0.7']);
     return metadata(url);
 };
 const reviewedPolicy = async () => JSON.parse(await readFile(join(__dirname, '../scripts/dependency-pin-reviews.json'), 'utf8'));
@@ -302,12 +302,12 @@ test('exact compatibility reviews remain visible, close the tracking issue and m
 });
 
 for (const [label, name, versions, latest] of [
-    ['new Babel stable release', '@babel/core', ['7.29.7', '8.0.6', '8.0.7'], '8.0.7'],
-    ['new compatible Babel patch', '@babel/core', ['7.29.7', '7.29.8', '8.0.6'], '8.0.6'],
-    ['changed Babel latest tag', '@babel/core', ['7.29.7', '8.0.6'], '7.29.7'],
+    ['new Babel stable release', '@babel/core', ['7.29.7', '8.0.7', '8.0.8'], '8.0.8'],
+    ['new compatible Babel patch', '@babel/core', ['7.29.7', '7.29.8', '8.0.7'], '8.0.7'],
+    ['changed Babel latest tag', '@babel/core', ['7.29.7', '8.0.7'], '7.29.7'],
     ['new minimatch stable release', 'minimatch', ['5.1.9', '10.2.6', '10.2.7'], '10.2.7'],
     ['new compatible minimatch patch', 'minimatch', ['5.1.9', '5.1.10', '10.2.6'], '10.2.6'],
-    ['new latest prerelease', '@babel/core', ['7.29.7', '8.0.6', '9.0.0-beta.1'], '9.0.0-beta.1'],
+    ['new latest prerelease', '@babel/core', ['7.29.7', '8.0.7', '9.0.0-beta.1'], '9.0.0-beta.1'],
 ]) {
     test(`${label} invalidates only its exact compatibility review and reopens tracking`, async () => {
         const {scan, syncIssue, markdown, MARKER, TITLE} = await api;
@@ -329,7 +329,7 @@ for (const [label, name, versions, latest] of [
 for (const [label, change, name] of [
     ['Expo consumer update', inventory => { inventory['package.json'].dependencies.expo = '58.0.4'; }, '@babel/core'],
     ['Worklets consumer update', inventory => { inventory['package.json'].dependencies['react-native-worklets'] = '0.13.1'; }, '@babel/core'],
-    ['Babel 8 consumer update', inventory => { inventory['tooling/package.json'].devDependencies['@babel/core'] = '8.0.7'; }, '@babel/core'],
+    ['Babel 8 consumer update', inventory => { inventory['tooling/package.json'].devDependencies['@babel/core'] = '8.0.8'; }, '@babel/core'],
     ['EAS consumer update', inventory => { inventory['release/package.json'].dependencies['eas-cli'] = '24.10.0'; }, 'minimatch'],
     ['removed consumer', inventory => { delete inventory['release/package.json'].dependencies['eas-cli']; }, 'minimatch'],
     ['changed pin', inventory => { inventory['release/package.json'].resolutions['eas-cli/minimatch'] = '5.1.8'; }, 'minimatch'],
