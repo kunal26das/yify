@@ -2,7 +2,7 @@
 
 ## 1. Sentry integration
 
-- [ ] 1.1 Review Sentry 8.30 upstream changes, update its compatibility policy, regenerate native projects under runtime 1.8.19, and pass install, doctor, typecheck and crash-reporting regressions.
+- [x] 1.1 Review Sentry 8.30 upstream changes, update its compatibility policy, regenerate native projects under runtime 1.8.19, and pass install, doctor, typecheck and crash-reporting regressions.
 - [ ] 1.2 Independently review the exact repaired #983 head and merge after required CI succeeds; record the commit and actual checks.
 
 ## 2. Billing and web integration
@@ -23,3 +23,13 @@
 ## Workflow follow-up
 
 - Archive once every tracked implementation and verification task has evidence.
+
+## Evidence
+
+### Sentry
+
+- Source repair: `c85841e2aed1a0a5a0e6ad01825bf05fc4d8fe7a`; integration `163682085061ec6a9b5a869ab90fb553d729f53f` has the identical application/native tree, plus this OpenSpec change.
+- Independent lead review verified package and lock deltas, generated runtime 1.8.19/code 101, Sentry Gradle working-directory fix, unchanged Android permissions, and semantic iOS dependency/project changes. Original Dependabot package/lock delta is retained exactly.
+- Fresh no-lock resolution produces the committed lockfile; frozen install, exact pins, Expo doctor, typecheck, 2,288 application tests (one expected skip), 51 crashreporting tests and 74 focused Sentry tests pass.
+- Local JDK 17 compile-only arm64-v8a release APK succeeds: 2,309 Gradle tasks. SDK upload tasks are skipped by the existing compile-only guard. APK SHA256 `865ab21cd5799131acc08b518db5fdc71eb16430c173231b02d63c23485a40c9`; native packaging verifier confirms 37 arm64 libraries and `extractNativeLibs=true`. All-ABI integrated compilation and isolated emulator verification remain pending.
+- CocoaPods resolves successfully. Only RNSentry changes in parsed PODS (8.29.0 to 8.30.0); vendored Sentry Cocoa advances to 9.30.1. Local podspec checksums and generated project UUIDs are regenerated; semantic project settings/phases remain unchanged. iOS compilation has not been performed for this repair.
