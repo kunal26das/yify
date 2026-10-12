@@ -1,6 +1,18 @@
 # Delivery handoff
 
-Updated 2026-10-10 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-12 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+
+## Current delivery: 2026-10-12
+
+Main `83bbba9381fbda953ed45abcfcb97bb992393c6e` is the reviewed 1.8.21/code 103/runtime 1.8.21 dependency integration. Required CI `38232880736` passed; final Linux compile `38231309280` passed against an identical source tree, including isolated mocked journeys and four-ABI packaging. Local verification passed 2,289 app tests plus 51 crashreporting tests, with one expected skip. Both web deployments passed: EAS Hosting `38233398667` (deployment `e1iecv0lm4`) and Pages `38233398643`; live mobile/desktop guest catalog and Preferences checks passed.
+
+Android [EAS build 103](https://expo.dev/accounts/kunal26das/projects/yify/builds/8444576b-a089-445c-91f4-1051e56bdfb8) finished successfully. The exact signed AAB passed identity, signature, JNI, four-ABI packaging, installed-byte verification, API36/4KB startup and bounded analytics-off consent/restart/catalog/detail/local-watchlist journeys. Independent review passed within that scope. Live account/billing/provider checks, a code103 16KB device test and post-release crash recovery remain unverified. The previous 1.8.18/code100 release is now directly verified Available on Google Play at 100% across all 171 configured regions; its ledger entry is reconciled.
+
+[Code103 submission](https://expo.dev/accounts/kunal26das/projects/yify/submissions/777bd452-3cea-43e2-9f1d-694182da109a) finished successfully at 11:51:54 UTC via the established `play-production` profile. The 11:52:31 UTC Play API read verifies production code103 and the exact tested AAB hash. Play publishing overview separately shows 1.8.21 / Start full rollout running pre-review checks with managed publishing off. Google approval and user availability remain pending. Inspect this completed submission and Play publishing state before any further production action; do not submit code103 again. Use [the active release evidence](../../openspec/changes/finish-android-crash-release/design.md) for exact hashes and remaining tasks. No native update was published as an OTA to older runtimes; iOS publication remains out of scope.
+
+## Previous delivery: 2026-10-10
+
+The following web and Android reconciliation describes October 10. The current delivery above supersedes its pending availability and source statements.
 
 ## Web startup delivery
 

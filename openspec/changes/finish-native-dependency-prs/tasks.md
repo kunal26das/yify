@@ -13,12 +13,12 @@
 ## 3. Expo and React Native integration
 
 - [x] 3.1 Rebase the proposed Expo/RN dependency set and source guards against upstream, regenerate native projects under runtime 1.8.21, and pass fresh installation, compatibility and native lifecycle regressions.
-- [ ] 3.2 Integrate the preceding merges, independently review the exact repaired #982 head and merge after required CI succeeds; record full application validation and native compilation evidence.
+- [x] 3.2 Integrate the preceding merges, independently review the exact repaired #982 head and merge after required CI succeeds; record full application validation and native compilation evidence.
 
 ## 4. Integrated verification
 
-- [ ] 4.1 Verify the combined Android native graph, packaging and isolated emulator startup; record actual ABIs, source commit, commands and any iOS gaps.
-- [ ] 4.2 Verify final main CI, both web publication receipts and public routes; confirm no requested PR remains open and the primary checkout is clean.
+- [x] 4.1 Verify the combined Android native graph, packaging and isolated emulator startup; record actual ABIs, source commit, commands and any iOS gaps.
+- [x] 4.2 Verify final main CI, both web publication receipts and public routes; confirm no requested PR remains open and the primary checkout is clean.
 
 ## Workflow follow-up
 
@@ -54,3 +54,10 @@
 
 - Final fresh no-lock replay found stale selectors for three React Native transitive packages. The regenerated lockfile removes unused rc.3/0.74 records and maps remaining selectors to the already installed rc.4 resolutions; no new version is introduced. Commit the generated lock diff. Resolution probes from both React Native and Expo CLI confirm codegen, babel-plugin-codegen and normalize-colors all use rc.4. Fresh install applies all 70 guards successfully.
 - Both final web export checks and desktop/mobile fixture browser journeys pass; the lead inspected actual home, catalog and preferences screenshots. The isolated Sentry emulator cold-start/recovery evidence remains valid for that earlier runtime; final runtime launch awaits its APK.
+
+### Completed integration and web delivery, 2026-10-12
+
+- PR #982 merged as `83bbba9381fbda953ed45abcfcb97bb992393c6e`; #983 and #984 receipts appear above. GitHub had zero open PRs and the primary checkout was clean on final main. Exact final-head fresh-lock/frozen installation, typecheck, 2,289 app tests plus 51 workspace tests, and independent review passed. The lockfile diff was committed in `3e0d5fb5b428f3c00a4b3e3cc3845dd13133d5bf`; its tree is identical to merged main.
+- Local JDK 17 compile-only release APK and AAB passed for all four ABIs; native packaging found 37 compressed libraries per ABI and `extractNativeLibs=true`. Isolated API 35 arm64 clean launch and upgrade checks passed with all outbound traffic blocked. Linux compile-only run [38231309280](https://github.com/kunal26das/yify/actions/runs/38231309280) subsequently succeeded on the final PR head. No production signing or store publication is claimed by those checks.
+- Main CI [38232880736](https://github.com/kunal26das/yify/actions/runs/38232880736), Hosting [38233398667](https://github.com/kunal26das/yify/actions/runs/38233398667) and Pages [38233398643](https://github.com/kunal26das/yify/actions/runs/38233398643) succeeded. Hosting deployment `e1iecv0lm4` and Pages publish version 1.8.21 with Sentry release metadata. Live mobile Hosting and desktop Pages guest checks rendered the actual catalog, homepage and Preferences without browser runtime errors, with optional analytics off. An initial shows-API 502 recovered on recheck against both current and prior deployments.
+- The owner's subsequent Android deployment request is tracked in `finish-android-crash-release`; it does not change this dependency-integration result. Native build 103 and later store availability need their own signed-artifact and delivery receipts.

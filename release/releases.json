@@ -363,6 +363,13 @@
       "version": "1.8.14",
       "runtimeVersion": "1.8.14",
       "releasedAt": "2026-10-05T20:09:53.316Z"
+    },
+    {
+      "platform": "android",
+      "channel": "Production",
+      "version": "1.8.18",
+      "runtimeVersion": "1.8.18",
+      "releasedAt": "2026-10-12T10:58:11.275Z"
     }
   ]
 }
