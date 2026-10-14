@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.21",
-  "versionCode": 103,
+  "version": "1.8.22",
+  "versionCode": 104,
   "private": true,
   "workspaces": [
     "crashreporting",
@@ -100,7 +100,7 @@
     "react-native-purchases": "10.12.2",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "5.10.1",
-    "react-native-screens": "4.28.0",
+    "react-native-screens": "4.29.0",
     "react-native-web": "0.21.4",
     "react-native-web-webview": "1.0.2",
     "react-native-webview": "14.0.1",
@@ -144,7 +144,7 @@
     "expo-modules-jsi": "58.0.9",
     "expo-application": "58.0.4",
     "expo-file-system": "58.0.7",
-    "react-native-screens": "4.28.0",
+    "react-native-screens": "4.29.0",
     "@expo/config": "58.0.3",
     "@expo/config-plugins": "58.0.6",
     "@expo/image-utils": "0.12.4",
