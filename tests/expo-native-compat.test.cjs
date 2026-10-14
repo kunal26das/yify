@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const semver = require('semver');
 const vm = require('node:vm');
 const { test } = require('node:test');
 
@@ -155,30 +156,20 @@ test('Expo native bootstrap uses the current setup entry and retains older platf
 
 test('Metro and React Native share the same asset registry and accepted import routes', async () => {
   const source = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
-  const registry = /const ASSET_REGISTRY_SRC = `([^`]+)`;/.exec(source)?.[1];
-  assert.ok(registry);
-  const context = vm.createContext({ module: { exports: {} } });
-  vm.runInContext(registry, context);
-  const exports = context.module.exports;
-  const asset = { uri: 'catalog.png' };
-  assert.equal(exports.AssetRegistry.getAssetByID(exports.registerAsset(asset)), asset);
-  assert.equal(exports.getAssetByID(exports.AssetRegistry.registerAsset(asset)), asset);
-  const start = source.indexOf('if (moduleName === config.transformer.assetRegistryPath ||');
+  assert.ok(source.includes("'react-native/asset-registry': 'react-native-web/asset-registry'"));
+  const start = source.indexOf('if (/^@react-native');
   const end = source.indexOf('return null;', start);
   assert.ok(start >= 0 && end > start);
-  const resolve = new Function('moduleName', 'context', 'config', 'getAssetRegistryModule', 'platform', source.slice(start, end));
-  const config = { transformer: { assetRegistryPath: 'custom-registry' } };
-  for (const specifier of ['custom-registry', 'react-native/asset-registry', '@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js', 'react-native/Libraries/Image/AssetRegistry', 'react-native/Libraries/Image/AssetRegistry.js']) {
-    assert.equal(resolve(specifier, {}, config, () => 'shared'), 'shared');
+  const resolve = new Function('moduleName', 'context', 'platform', 'getStrictResolver', source.slice(start, end));
+  for (const platform of ['web', 'ios', 'android']) {
+    const expected = platform === 'web' ? 'react-native-web/asset-registry' : 'react-native/asset-registry';
+    for (const specifier of ['@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js', 'react-native/Libraries/Image/AssetRegistry', 'react-native/Libraries/Image/AssetRegistry.js']) {
+      assert.equal(resolve(specifier, {}, platform, () => (name) => name), expected);
+    }
   }
-  for (const [specifier, origin] of [
-    ['../../src/private/assets/AssetRegistry', '/app/node_modules/react-native/Libraries/Image/source.js'],
-    ['..\\..\\src\\private\\assets\\AssetRegistry.js', 'C:\\app\\node_modules\\react-native\\src\\Image.js'],
-  ]) assert.equal(resolve(specifier, { originModulePath: origin }, config, () => 'shared'), 'shared');
-  assert.equal(resolve('../../src/private/assets/AssetRegistry', { originModulePath: '/app/other/Image.js' }, config, () => 'shared'), undefined);
-  assert.equal(resolve('../../modules/AssetRegistry', {
-    originModulePath: '/app/node_modules/react-native-web/dist/cjs/exports/AssetRegistry/index.js',
-  }, config, () => 'shared', 'web'), 'shared');
+  assert.equal(resolve('other', {}, 'web', () => (name) => name), undefined);
+  const native = JSON.parse(await fs.readFile(path.join(repository, 'node_modules/react-native/package.json'), 'utf8'));
+  assert.equal(native.exports['./asset-registry'].default, './src/asset-registry.js');
   const webRegistry = require('react-native-web/asset-registry');
   const {AssetRegistry} = require('react-native-web');
   const webAsset = {uri: 'public-registry.png'};
@@ -257,6 +248,26 @@ test('every guarded package has an exact installation pin including transitive E
   assert.equal(pins['react-native'], manifest.reactNative);
   for (const entry of [...manifest.sources, ...manifest.files]) {
     assert.equal(pins[entry.package], entry.version, `${entry.package} must stay at its reviewed version after a clean resolution`);
+  }
+});
+
+test('coordinated Expo resolutions satisfy their installed parent requirements', async () => {
+  const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
+  const pairs = [
+    ['expo-modules-core', 'expo-modules-jsi'],
+    ['@expo/cli', '@expo/inline-modules'],
+    ['@expo/cli', '@expo/prebuild-config'],
+    ['@expo/cli', '@expo/router-server'],
+  ];
+  for (const [parent, child] of pairs) {
+    const parentPkg = JSON.parse(await fs.readFile(path.join(repository, 'node_modules', parent, 'package.json'), 'utf8'));
+    const childPkg = JSON.parse(await fs.readFile(path.join(repository, 'node_modules', child, 'package.json'), 'utf8'));
+    const required = parentPkg.dependencies[child];
+    const pinned = pkg.resolutions[child];
+    assert.ok(required, `${parent} must declare ${child}`);
+    assert.ok(pinned && semver.valid(pinned), `${child} must have an exact resolution`);
+    assert.ok(semver.satisfies(pinned, required), `${parent}@${parentPkg.version} requires ${child}@${required}; pinned ${pinned}`);
+    assert.equal(childPkg.version, pinned, `${child} installation must match its exact resolution`);
   }
 });
 
