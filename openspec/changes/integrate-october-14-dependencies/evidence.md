@@ -11,7 +11,14 @@
 ## Local release-console verification
 
 - Frozen installation and typecheck pass for #996.
-- Initial full suite: 149/150 pass. The TUI recovery test observed `confirm` before a queued render committed `result`; its single `setImmediate()` wait is being investigated. No production release was attempted by these mocked tests.
+- Initial full suite: 149/150 pass. The TUI recovery test observed `confirm` before a queued render committed `result`; its single `setImmediate()` wait did not reliably synchronize with React.
+- The test repair uses React `act()` for the asynchronous release transition and Ink's render-flush API. Targeted tests pass 3/3; the full release-console suite passes 150/150; typecheck and build pass. The repair is included with the screens baseline, keeping #996's dependency-only provenance intact. No production release was attempted by these mocked tests.
+
+## Screens validation
+
+- Implementation `d27b80b5924999531c387bce2d341773aaa1ac21` pins screens 4.29.0, narrows the Yarn diff to that dependency, regenerates runtime 1.8.22/code 104, and resolves RNScreens 4.29.0 through CocoaPods.
+- Frozen install, typecheck, dependency pins, reviewed Expo Doctor, clean prebuild and pod install pass. App suite: 2,289 pass, one skip, zero failures; crash-reporting workspace: 51 pass, zero failures.
+- Independent review of that implementation found no actionable issues. Android debug compilation is still running; iOS compilation and device validation remain unverified.
 
 ## Delivery boundaries
 

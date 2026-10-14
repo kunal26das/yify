@@ -13,6 +13,7 @@ Make each PR independently reviewable with committed lockfiles, passing required
 - Integrate screens first as runtime 1.8.22/code 104. It repairs the baseline recommendation mismatch that blocks the release-only PR. Narrow its lockfile to the reviewed package instead of carrying unrelated fresh-resolution churn.
 - Integrate Expo next as runtime 1.8.23/code 105 after the screens baseline. Inspect upstream guarded sources and dependency recommendations before updating guards. Merely relaxing version assertions would conceal compatibility assumptions.
 - Rebase and validate the release-console PR against the repaired main branch. Keep its scope separate rather than adding an unrelated app dependency to it. Let normal automation merge it if all eligibility and required checks pass.
+- Repair the preexisting TUI test synchronization with the screens baseline so the release-console PR can retain its verified Dependabot provenance. Await React state and Ink render completion instead of a single event-loop turn.
 - Regenerate native projects through Expo and configuration plugins. Validate JavaScript, the release console, doctor checks and affected native builds; record any untested device or live-service behavior explicitly.
 - Independently review the final diff before pushing and merge through normal required checks. Observe main CI and the existing automatic web workflow; no manual force-merge or redundant production deployment.
 
