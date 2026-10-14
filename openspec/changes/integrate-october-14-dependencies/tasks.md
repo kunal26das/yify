@@ -11,7 +11,7 @@
 
 ## 3. Release console
 
-- [ ] 3.1 Verify the release-console update with its typecheck and tests, refresh it against the repaired main baseline, and observe passing final-head checks and merge of PR #996.
+- [x] 3.1 Verify the release-console update with its typecheck and tests, refresh it against the repaired main baseline, and observe passing final-head checks and merge of PR #996.
 
 ## 4. Coordinated Expo update
 
