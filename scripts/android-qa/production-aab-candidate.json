@@ -1,11 +1,11 @@
 {
-  "buildId": "8444576b-a089-445c-91f4-1051e56bdfb8",
-  "sourceSha": "83bbba9381fbda953ed45abcfcb97bb992393c6e",
+  "buildId": "99bbce6d-1267-45a2-a50d-062ed9a63eb5",
+  "sourceSha": "68c9459f87ec7b05376e3a1e5450fb2ada5dc343",
   "projectId": "130cfded-cef0-49b3-94a4-82d3a3852ef5",
   "packageName": "io.github.kunal26das.yify",
-  "version": "1.8.21",
-  "versionCode": "103",
-  "runtime": "1.8.21",
+  "version": "1.8.23",
+  "versionCode": "105",
+  "runtime": "1.8.23",
   "uploadCertSha256": "EC97730BA790E825A7F777507AA2E7188F7EF2104CF64F9FCCA8BBFF8902E79F",
-  "aabSha256": "440c76dc85dbdf4c3bbd5b07ab360eb6f685da34734bbcfa84469160555036b7"
+  "aabSha256": "7be3d6edf2437451525289e29addc7af6ad4539a0afbd8a5864ae644e4d692f6"
 }

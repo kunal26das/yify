@@ -19,7 +19,7 @@ The build and compile work in `design.md` is existing evidence, not work to repe
 
 - [x] 3.1 Consolidate scenario evidence, refresh affected required checks, obtain independent review of the exact release source and candidate, and document rollback; record findings and their resolution before publication.
 - [x] 3.2 Recheck live release state and submit the verified candidate once through the existing authorized EAS route; record submission receipt and profile/track separately from store availability.
-- [ ] 3.3 Verify Play availability for the intended version and track, and update the release ledger/handoff with actual receipts; do not mark this complete on submission acceptance alone.
+- [x] 3.3 Verify Play availability for the intended version and track, and update the release ledger/handoff with actual receipts; do not mark this complete on submission acceptance alone.
 - [ ] 3.4 Review at least 24 hours of version-specific Sentry and Crashlytics health after availability, with exposure and matching signatures; record recovery or regression, leave insufficient evidence inconclusive, and close only validated incidents.
 
 ## Workflow follow-up
