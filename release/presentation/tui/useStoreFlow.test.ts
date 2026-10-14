@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import {PassThrough, Writable} from 'node:stream';
-import {setImmediate} from 'node:timers/promises';
 import test from 'node:test';
-import React from 'react';
+import React, {act} from 'react';
 import {render} from 'ink';
 import type {ReleaseCoverage, RunStoreReleaseOptions} from '../../domain/index.js';
 import {StoreConfirm} from './StoreConfirm.js';
@@ -75,20 +74,20 @@ async function fixture(t: TestContext, options: {
         stdin.destroy();
         stdout.destroy();
     });
-    await setImmediate();
+    await app.waitUntilRenderFlush();
     const vm = () => {
         assert.ok(current);
         return current;
     };
     vm().choosePlatforms(['android']);
-    await setImmediate();
-    return {vm, output, calls};
+    await app.waitUntilRenderFlush();
+    return {vm, output, calls, settle: app.waitUntilRenderFlush};
 }
 
 test('TUI offers recovery when coverage cannot load without claiming a release is absent', async (t) => {
     const f = await fixture(t);
     await f.vm().submitChannels(['Production']);
-    await setImmediate();
+    await f.settle();
     assert.equal(f.vm().step, 'confirm');
     assert.equal(f.vm().error, '');
     assert.equal(f.vm().version, '1.8.1');
@@ -98,8 +97,18 @@ test('TUI offers recovery when coverage cannot load without claiming a release i
     assert.match(f.output.join(''), /Release history is unavailable/);
     assert.equal(f.output.join('').includes('No release recorded for this runtime version.'), false);
     assert.deepEqual(f.calls, []);
-    await f.vm().start();
-    await setImmediate();
+    const actEnvironment = globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT?: boolean};
+    const previousActEnvironment = actEnvironment.IS_REACT_ACT_ENVIRONMENT;
+    actEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
+    try {
+        await act(async () => {
+            await f.vm().start();
+        });
+    } finally {
+        if (previousActEnvironment === undefined) delete actEnvironment.IS_REACT_ACT_ENVIRONMENT;
+        else actEnvironment.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
+    }
+    await f.settle();
     assert.equal(f.vm().step, 'result');
     assert.equal(f.vm().ok, false);
     assert.equal(f.vm().queuedCount, 0);
@@ -121,11 +130,11 @@ test('TUI keeps known release coverage and clears a previous advisory failure on
         }
     });
     await f.vm().submitChannels(['Production']);
-    await setImmediate();
+    await f.settle();
     assert.notEqual(f.vm().coverageWarning, '');
     unavailable = false;
     await f.vm().submitChannels(['Production']);
-    await setImmediate();
+    await f.settle();
     assert.equal(f.vm().coverageWarning, '');
     assert.equal(f.vm().allCovered, true);
     assert.equal(f.vm().existingSummary, 'Production (android)');
@@ -138,7 +147,7 @@ test('TUI exits validation with the actual input error instead of leaving an unh
         coverage: async () => assert.fail('Invalid inputs must not reach coverage'),
     });
     await f.vm().submitChannels(['Production']);
-    await setImmediate();
+    await f.settle();
     assert.equal(f.vm().step, 'confirm');
     assert.equal(f.vm().error, 'Could not read package.json');
     assert.equal(f.vm().version, '');
