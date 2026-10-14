@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.6",
-      "expected": "~58.0.6",
-      "reason": "Use the coordinated Expo 58.0.6 / React Native 0.88.0-rc.4 native dependency set under runtime 1.8.21. Preserve source guards, lifecycle regression coverage, regenerated native projects and native build validation before release."
+      "version": "58.0.7",
+      "expected": "~58.0.7",
+      "reason": "Use Expo 58.0.7 with React Native 0.88.0-rc.4 under runtime 1.8.23. Its bundled native-module recommendations and the upgraded Expo package sources are reviewed; preserve source guards, lifecycle regression coverage, regenerated native projects and native build validation before release."
     },
     "@sentry/react-native": {
       "version": "8.30.0",
@@ -24,7 +24,7 @@
     "react-native-web": {
       "version": "0.21.4",
       "expected": "^0.21.4",
-      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.5 routes both Metro-generated assets and React Native Web's internal registry import through the reviewed shared registry; verify Pages and Hosting exports before delivery."
+      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.6 resolves legacy registry imports through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
       "version": "8.0.7",
@@ -43,7 +43,7 @@
     },
     "react-native": {
       "version": "0.88.0-rc.4",
-      "expected": "0.88.0-rc.3",
+      "expected": "0.88.0-rc.4",
       "reason": "React Native 0.88.0-rc.4 fixes Android Pressable accessibility-state reset and generated type augmentation. The matching Metro config, JS polyfills and transitive React Native packages are pinned together under runtime 1.8.21 with source guards and native build validation."
     }
   }
