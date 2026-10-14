@@ -98,6 +98,15 @@ Android release verification includes bundletool-generated APKs, not only the AA
 
 `.env` is optional — with no keys the app falls back to the default API URL and hides the account section. See `.env.example`.
 
+## Task completion
+
+Cleanup is part of finishing every task, including delegated work. The lead verifies it before handing back to the user:
+
+- Reuse a suitable existing checkout. After work is merged or intentionally closed, stop task-owned helpers and remove temporary worktrees; use the Codex archive tool for managed worktrees.
+- Inspect tracked, untracked and needed ignored files before removal. Preserve unfinished work, credentials and release evidence. Verify squash-merge or superseded-work provenance before deleting a branch that Git reports as unmerged; keep a verified private recovery bundle when needed.
+- Delete completed local and remote task branches, then prune stale remote references. Keep the default branch, open-PR branches and work still owned by an active task. Never force-remove a dirty worktree or discard unrelated changes merely to clean up.
+- Finish on a clean, current default checkout where possible. Report anything deliberately retained and why. Do not create another worktree just to document cleanup.
+
 ## Other agent configs
 
 This repo contains a `.codex/` directory. If you want its user-level items (MCP servers, slash commands, subagents, skills, instructions) available in Claude Code, reply `/import` to scan and list what's importable, then `/import --yes=<digest>` with the digest from the scan output to apply it. If `/import` isn't available on this surface, run `claude import` from a terminal.
