@@ -18,7 +18,15 @@
 
 - Implementation `d27b80b5924999531c387bce2d341773aaa1ac21` pins screens 4.29.0, narrows the Yarn diff to that dependency, regenerates runtime 1.8.22/code 104, and resolves RNScreens 4.29.0 through CocoaPods.
 - Frozen install, typecheck, dependency pins, reviewed Expo Doctor, clean prebuild and pod install pass. App suite: 2,289 pass, one skip, zero failures; crash-reporting workspace: 51 pass, zero failures.
-- Independent review of that implementation found no actionable issues. Android debug compilation is still running; iOS compilation and device validation remain unverified.
+- Independent review found no actionable issues at final head `02535fa60cdf01c9a1ba61b9e0d635d07aecb8a8`. Android debug assembly succeeded with JDK 17; APK SHA-256 `49b32873a74b68288633fbdccbdcc4c8e91e2508d7ba5ee5c2beed138b2c80c4`. iOS compilation and device validation remain unverified.
+- All required checks in CI [38563794322](https://github.com/kunal26das/yify/actions/runs/38563794322) and Android dependency verification [38563794435](https://github.com/kunal26das/yify/actions/runs/38563794435) passed. PR #995 merged as `5d3ee0cc889fd8d5b5892b5d4ac5addaeb1262cb` on 14 October. Main CI [38564617710](https://github.com/kunal26das/yify/actions/runs/38564617710) passed.
+
+## Expo validation
+
+- Fix `1dadf000a68a68bbf5770f098c7b44ed7dbcfb9c` and integration merge `1d3a1ab2209809bd1e5c9e6b58809b8143744196` preserve both signed Dependabot commits and the screens baseline. The integration merge changes no app/native/dependency files relative to the validated fix.
+- A preliminary independent review found four retained resolutions below their upgraded parents' requirements. All four are aligned, including expo-modules-jsi 58.0.10, whose upstream fixes include iOS CPU busy-spinning and Swift 6.4 build compatibility. A parent-requirement regression test now guards those pairs.
+- Frozen install/postinstall, exact pins, all 71 source guards, typecheck, and reviewed Expo Doctor pass. App tests: 2,290 pass, one skip, zero failures; crash-reporting workspace: 51 pass. Pages and Hosting exports and their output checks pass. Post-pod native/proguard tests: 22 pass.
+- CocoaPods generation succeeds with 189 pods. JDK 17 Android offline debug assembly succeeds (1,318 tasks). Generated native metadata declares runtime 1.8.23/code 105. iOS compilation and device QA remain unverified; final independent review and GitHub checks remain required before merge.
 
 ## Delivery boundaries
 
