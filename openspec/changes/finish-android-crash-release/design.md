@@ -111,3 +111,8 @@ A fresh 11:49:27 UTC Play read still showed production 1.8.18/code 100 and no co
 
 
 Expo marked submission `777bd452-3cea-43e2-9f1d-694182da109a` FINISHED at 11:51:54 UTC. The 11:52:31 UTC Play API read independently listed production 1.8.21/code 103 with SHA-256 `440c76dc85dbdf4c3bbd5b07ab360eb6f685da34734bbcfa84469160555036b7`, exactly matching the tested signed AAB. The authenticated publishing overview shows 1.8.21 / Start full rollout under Changes in review, currently running pre-review quality checks, with managed publishing off. Changes will be sent for review after these checks succeed. This verifies upload and submission, not availability or crash recovery. The ledger intentionally records only previously confirmed code 100 until code 103 becomes available.
+
+
+### Code 103 availability reconciliation, 14 October
+
+The authenticated Play production release list confirms 1.8.21 as **Available on Google Play**, released October 12 at 18:15 IST, with 100% rollout across the 171 configured countries/regions. The publishing overview has no unpublished changes. The production API still identifies code 103 and the exact tested AAB hash. The release ledger now records runtime 1.8.21 from this availability evidence. Play's release crash and ANR values are unavailable; that absence does not establish recovery, and the provider and version-specific health tasks remain open. The separately authorized code 105 build is tracked in `integrate-october-14-dependencies`.

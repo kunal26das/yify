@@ -1,8 +1,18 @@
 # Delivery handoff
 
-Updated 2026-10-12 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-14 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-## Current delivery: 2026-10-12
+## Current delivery: 2026-10-14
+
+Main `68c9459f87ec7b05376e3a1e5450fb2ada5dc343` integrates reviewed PRs #994, #995 and #996 as version/runtime 1.8.23/code 105. Required final-head checks and independent review passed, followed by main CI `38568992413`, Hosting `38569570932` (deployment `hpjuwp9dro`) and Pages `38569571170`. Both web targets rendered after publication. The eligible #996 bot merge independently proved the GitHub App dispatch → successful main CI → both automatic web deployments path.
+
+The owner authorized Android publication. Production build [99bbce6d-1267-45a2-a50d-062ed9a63eb5](https://expo.dev/accounts/kunal26das/projects/yify/builds/99bbce6d-1267-45a2-a50d-062ed9a63eb5) finished from that exact source at 13:58 UTC. Independent signed-artifact/JNI/four-ABI verification and isolated API36/4KB plus API37/16KB device checks passed. Both devices retained analytics-off consent across restart; API36 also passed bounded live catalog/detail/local-watchlist checks. Live billing, account, ads and external-provider journeys remain unverified.
+
+Expo submission workers `8992a626-ff14-4dff-9d23-60c020e95d90` and `ad374111-535c-4e9d-93c7-a194e2335524` failed before upload. The independently reviewed existing-credential Play fallback uploaded the unchanged Expo-built AAB once and committed production at 14:33:20 UTC. A separate Play API read confirms code 105 and exact tested SHA-256 `7be3d6edf2437451525289e29addc7af6ad4539a0afbd8a5864ae644e4d692f6`. The authenticated Console shows **1.8.23 — In review**; automated pre-review checks are running for Start full rollout, with managed publishing off. Approval and user availability remain pending; code 105 is not yet in the shipped-runtime ledger. Do not duplicate the build/submission or send native changes as an OTA to older runtimes. [Current release evidence](../../openspec/changes/integrate-october-14-dependencies/evidence.md) records the exact receipts and remaining tasks.
+
+A fresh Play UI check confirms previous 1.8.21/code 103 is Available on Google Play at 100% across all 171 configured regions, released October 12 at 18:15 IST. The ledger now records that shipped runtime. No unpublished changes were present before code 105. Existing [YIFY-2R](https://kudos-labs.sentry.io/issues/YIFY-2R), an imperative-router availability race observed on code 103, is not fixed by this dependency release and remains open. Bounded navigation tests did not reproduce the fatal exception; post-release health remains unverified. iOS publication remains out of scope.
+
+## Previous delivery: 2026-10-12
 
 Main `83bbba9381fbda953ed45abcfcb97bb992393c6e` is the reviewed 1.8.21/code 103/runtime 1.8.21 dependency integration. Required CI `38232880736` passed; final Linux compile `38231309280` passed against an identical source tree, including isolated mocked journeys and four-ABI packaging. Local verification passed 2,289 app tests plus 51 crashreporting tests, with one expected skip. Both web deployments passed: EAS Hosting `38233398667` (deployment `e1iecv0lm4`) and Pages `38233398643`; live mobile/desktop guest catalog and Preferences checks passed.
 
