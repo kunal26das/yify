@@ -7,14 +7,14 @@
 
 ## 2. Candidate validation
 
-- [ ] 2.1 Verify the signed AAB source, hash, certificate, runtime/channel, all four ABIs and optimized JNI/packaging checks; retain candidate-specific receipts.
-- [ ] 2.2 Install bundletool-generated candidate APKs and verify actual installed identity, startup, analytics-off consent/restart and bounded browsing on disposable devices; label unexecuted account/billing/provider checks explicitly.
-- [ ] 2.3 Obtain independent review of the exact artifact and device evidence before submission; resolve any blocking findings.
+- [x] 2.1 Verify the signed AAB source, hash, certificate, runtime/channel, all four ABIs and optimized JNI/packaging checks; retain candidate-specific receipts.
+- [x] 2.2 Install bundletool-generated candidate APKs and verify actual installed identity, startup, analytics-off consent/restart and bounded browsing on disposable devices; label unexecuted account/billing/provider checks explicitly.
+- [x] 2.3 Obtain independent review of the exact artifact and device evidence before submission; resolve any blocking findings.
 
 ## 3. Delivery
 
-- [ ] 3.1 Recheck live state, submit the verified candidate once through the existing release route and record Expo/Play receipts and tested AAB identity.
-- [ ] 3.2 Check authenticated Play availability and reconcile only confirmed shipped runtimes in the ledger; keep this task open if review is pending.
+- [x] 3.1 Recheck live state, submit the verified candidate once through the existing release route and record Expo/Play receipts and tested AAB identity.
+- [x] 3.2 Check authenticated Play availability and reconcile only confirmed shipped runtimes in the ledger; keep this task open if review is pending.
 - [ ] 3.3 Update the sanitized handoff and release evidence through reviewed CI, verify any automatic web publication, and clean task-owned helpers/branches/worktrees while preserving unfinished migration work.
 
 ## Workflow follow-up

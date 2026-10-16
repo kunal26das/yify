@@ -1,6 +1,6 @@
 # Design
 
-## Context
+## Context at preflight
 
 Source `69c60b1e69c3535743b7fa3a82c878132e988061` passed main CI 38913531664. Hosting 38914134757 and Pages 38914134964 succeeded; live startup checks passed on both. Previous source verification covers typechecks, app/workspace/release tests and Android Debug plus iOS Simulator compilation. These checks do not establish a signed release startup pass.
 
