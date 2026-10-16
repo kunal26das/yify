@@ -14,10 +14,10 @@
           "file": "release/package.json",
           "section": "dependencies",
           "name": "eas-cli",
-          "version": "24.9.0"
+          "version": "24.13.0"
         }
       ],
-      "reason": "EAS CLI 24.9.0 calls minimatch as a CommonJS function; minimatch 10 exports an object. Keep the reviewed 5.1.9 compatibility pin.",
+      "reason": "EAS CLI 24.13.0 calls minimatch as a CommonJS function; minimatch 10 exports an object. Keep the reviewed 5.1.9 compatibility pin.",
       "evidence": "docs/dependency-pin-review.md"
     },
     {

@@ -63,3 +63,9 @@ Runtime 1.8.16 updates Expo to 58.0.5 while retaining Worklets 0.13.0 and the Ba
 [Babel's 8.0.7 release notes](https://github.com/babel/babel/releases/tag/v8.0.7) list compiler core, parser, helper and transform fixes, with no listed change to the TypeScript preset. This app retains the separate Babel 7 compiler for Expo and Worklets; Babel 8.0.7 compiles mocked TypeScript, TSX and CommonJS fixtures. On the exact PR dependency tree, a frozen install, app and crash-reporting typechecks, full tests and the online Expo doctor pass with the reviewed 8.0.7 deviation. The tooling test also verifies the native Worklets transform still runs through Babel 7. This is a build-tool update and does not change the app's native runtime.
 
 The tracking issue can close when a fresh scan has no unreviewed findings or incomplete checks. Future findings reopen the same issue; registry version checks remain enabled for every pin.
+
+## EAS 24.13.0 review — 16 October 2026
+
+PR #1003 updates the release console to EAS CLI 24.13.0, Nano ID 6.0.2, protobufjs 8.8.1 and UUID 14.0.3. A frozen install, typecheck, all 150 release-console tests, build and exact-pin checks pass. The nine EAS compatibility tests exercise the installed consumers, including provisioning-profile matching and configuration schemas.
+
+EAS 24.13.0 still calls the default minimatch export as a function. Keep the exact 5.1.9 override; version 10.2.6 exports an object and is not a compatible replacement. The watcher review now records the actual EAS consumer version, so subsequent consumer or registry changes trigger another review. These release-tool changes do not alter the mobile runtime.
