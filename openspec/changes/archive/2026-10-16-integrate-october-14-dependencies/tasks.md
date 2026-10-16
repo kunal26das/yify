@@ -27,4 +27,4 @@
 - [x] 6.1 Refresh Expo/Play state and remote credential presence, validate live privacy URLs, and start one production build from the verified main commit without automatic submission.
 - [x] 6.2 Verify the finished signed AAB identity, certificate, runtime, four-ABI payload and generated APKs; install those APKs on an isolated emulator and record actual startup, consent/restart and bounded catalog journey evidence.
 - [x] 6.3 Obtain independent candidate/evidence review, refresh duplicate-submission state, submit that exact build to production without duplicate uploads, and verify the completed upload plus matching Play bundle/track receipt. Record failed Expo attempts, confirm their outcome before retrying, and independently review any existing-credential direct-publisher fallback.
-- [ ] 6.4 Verify Google Play availability and record the actual shipped runtime in the ledger; keep pending review distinct from availability and update the sanitized handoff.
+- [x] 6.4 Verify Google Play availability and record the actual shipped runtime in the ledger; keep pending review distinct from availability and update the sanitized handoff.
