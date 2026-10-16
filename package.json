@@ -94,7 +94,7 @@
     "jose": "6.2.12",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-native": "0.88.0-rc.4",
+    "react-native": "0.88.0-rc.5",
     "react-native-gesture-handler": "3.3.0",
     "react-native-google-mobile-ads": "17.2.0",
     "react-native-purchases": "10.12.2",
@@ -109,7 +109,7 @@
   },
   "devDependencies": {
     "@babel/core": "8.0.7",
-    "@react-native/metro-config": "0.88.0-rc.4",
+    "@react-native/metro-config": "0.88.0-rc.5",
     "@types/react": "19.3.0",
     "electron": "44.7.0",
     "electron-builder": "26.15.3",
@@ -124,7 +124,7 @@
     "@babel/preset-react": "8.0.1",
     "@babel/plugin-transform-modules-commonjs": "8.0.1",
     "@babel/plugin-transform-dynamic-import": "8.0.1",
-    "@react-native/js-polyfills": "0.88.0-rc.4"
+    "@react-native/js-polyfills": "0.88.0-rc.5"
   },
   "resolutions": {
     "**/xcode/uuid": "14.0.2",
@@ -155,7 +155,7 @@
     "@expo/require-utils": "58.0.3",
     "@expo/router-server": "58.0.11",
     "babel-preset-expo": "58.0.12",
-    "@react-native/js-polyfills": "0.88.0-rc.4",
+    "@react-native/js-polyfills": "0.88.0-rc.5",
     "regexpu-core": "6.5.2",
     "@babel/helper-create-regexp-features-plugin": "7.29.7",
     "@expo-google-fonts/material-symbols": "0.4.48",
