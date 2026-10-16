@@ -29,17 +29,17 @@
     "typescript": "7.0.2"
   },
   "resolutions": {
-    "protobufjs": "8.8.0",
+    "protobufjs": "8.8.1",
     "adm-zip": "0.6.1",
     "parse-duration": "2.1.9",
-    "uuid": "14.0.2",
+    "uuid": "14.0.3",
     "esbuild": "0.28.2",
     "tar": "7.5.22",
     "joi": "18.2.9",
     "yaml": "2.9.1",
     "ajv": "8.20.0",
     "eas-cli/minimatch": "5.1.9",
-    "nanoid": "6.0.1",
+    "nanoid": "6.0.2",
     "diff": "9.0.0",
     "ts-deepmerge": "8.0.0"
   }
