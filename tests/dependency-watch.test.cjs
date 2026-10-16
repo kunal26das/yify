@@ -19,7 +19,7 @@ const reviewedInventory = {
     'package.json': {dependencies: {expo: '58.0.12', 'react-native-worklets': '0.13.0'}},
     'crashreporting/package.json': {},
     'tooling/package.json': {devDependencies: {'@babel/core': '8.0.7', babel7: 'npm:@babel/core@7.29.7'}},
-    'release/package.json': {dependencies: {'eas-cli': '24.9.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
+    'release/package.json': {dependencies: {'eas-cli': '24.13.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
 };
 const reviewedMetadata = url => {
     const name = decodeURIComponent(new URL(url).pathname.slice(1));
@@ -286,7 +286,7 @@ test('exact compatibility reviews remain visible, close the tracking issue and m
     assert.match(text, /0 pins need review\. 0 checks could not complete/);
     assert.match(text, /eas-cli\/minimatch/);
     assert.match(text, /devDependencies\.babel7 → @babel\/core/);
-    assert.match(text, /compatible-reviewed: EAS CLI 24\.9\.0/);
+    assert.match(text, /compatible-reviewed: EAS CLI 24\.13\.0/);
     assert.match(text, /compatible-reviewed: Expo 58\.0\.12/);
     assert.match(text, /docs\/dependency-pin-review\.md/);
     let issue = {number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'open', body: `${MARKER}\nPrevious findings`};
