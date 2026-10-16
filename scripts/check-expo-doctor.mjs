@@ -187,7 +187,7 @@ export async function main({root = projectRoot, spawn = spawnSync, log = console
         bundledNativeModules,
     });
     for (const message of reviewed) log(`Reviewed Expo deviation: ${message}`);
-    const doctor = require.resolve('expo-doctor/bin/expo-doctor.js');
+    const doctor = join(dirname(require.resolve('expo-doctor/package.json')), 'bin/expo-doctor.js');
     const run = spawn(process.execPath, [doctor], options);
     log(`${run.stdout ?? ''}${run.stderr ?? ''}`);
     const tolerated = assessDoctor(run, {reviewedDependencies: dependencies});
