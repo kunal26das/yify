@@ -1,8 +1,18 @@
 # Delivery handoff
 
-Updated 2026-10-14 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-16 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-## Current delivery: 2026-10-14
+## Current delivery: 2026-10-16
+
+Main `ca8e8d123972c6ef10e42f222e191951393a69ed` integrates PRs #999–#1003 as source version/runtime 1.8.25, build 107. Expo 58.0.12, stable React Native 0.88.0 and RevenueCat 10.13.0 are aligned with reviewed native source guards. The Expo Doctor entrypoint and streaming HTML document compatibility are repaired. All three required checks and independent final-head reviews passed; final PR CI reports 2,293 app tests passed, one skipped, and 51 crashreporting tests passed. Android arm64 Debug and unsigned iOS Simulator builds passed; no store artifact or device billing/restore verification is claimed.
+
+Main CI `38910835228`, EAS Hosting `38911517459` (deployment `zai5atttz6`) and Pages `38911517812` (deployment `7120809639`) succeeded at this exact code commit. Fresh browser checks verified both live startup pages, script/font loading, hydrated React and default-off consent without analytics/vendor traffic. Hosting live catalog preflight passed; Pages cannot serve same-origin API routes, and full post-consent Pages/provider/purchase journeys were not exercised.
+
+Dependency watcher `38910941787` found zero unreviewed pins and zero incomplete checks on final code main; issue #921 is closed. All five PRs are merged. Completed task branches and temporary review worktrees were removed after a verified private recovery bundle. Only the primary checkout and the unfinished Compose migration worktree remain; preserve the migration's uncommitted work.
+
+No Android store submission or OTA was published on October 16. Runtime 1.8.25 needs a fresh validated binary before OTA publication. The October 14 Play availability and crash-health observations below are historical and were not rechecked in this maintenance task. iOS publication remains out of scope. [Completed integration evidence](../../openspec/changes/archive/2026-10-16-integrate-october-16-dependencies/evidence.md) records receipts and limits.
+
+## Previous delivery: 2026-10-14
 
 Main `68c9459f87ec7b05376e3a1e5450fb2ada5dc343` integrates reviewed PRs #994, #995 and #996 as version/runtime 1.8.23/code 105. Required final-head checks and independent review passed, followed by main CI `38568992413`, Hosting `38569570932` (deployment `hpjuwp9dro`) and Pages `38569571170`. Both web targets rendered after publication. The eligible #996 bot merge independently proved the GitHub App dispatch → successful main CI → both automatic web deployments path.
 
