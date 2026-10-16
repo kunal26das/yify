@@ -16,7 +16,7 @@ const metadata = url => {
 const env = {GITHUB_REPOSITORY: 'kunal26das/yify', GITHUB_EVENT_NAME: 'schedule', GITHUB_REF: 'refs/heads/main', GITHUB_SHA: sha};
 const event = {repository: {full_name: 'kunal26das/yify', default_branch: 'main'}};
 const reviewedInventory = {
-    'package.json': {dependencies: {expo: '58.0.5', 'react-native-worklets': '0.13.0'}},
+    'package.json': {dependencies: {expo: '58.0.12', 'react-native-worklets': '0.13.0'}},
     'crashreporting/package.json': {},
     'tooling/package.json': {devDependencies: {'@babel/core': '8.0.7', babel7: 'npm:@babel/core@7.29.7'}},
     'release/package.json': {dependencies: {'eas-cli': '24.9.0'}, resolutions: {'eas-cli/minimatch': '5.1.9'}},
@@ -27,7 +27,11 @@ const reviewedMetadata = url => {
     if (name === '@babel/core') return document(name, ['7.29.7', '8.0.7']);
     return metadata(url);
 };
-const reviewedPolicy = async () => JSON.parse(await readFile(join(__dirname, '../scripts/dependency-pin-reviews.json'), 'utf8'));
+const reviewedPolicy = async () => {
+    const policy = JSON.parse(await readFile(join(__dirname, '../scripts/dependency-pin-reviews.json'), 'utf8'));
+    (await api).compatibilityReviews(policy);
+    return {...policy, reviews: policy.reviews.filter(review => ['eas-cli/minimatch', 'devDependencies.babel7'].includes(review.selector))};
+};
 
 for (const [selector, expected] of [['uuid', 'uuid'], ['**/xcode/uuid', 'uuid'], ['eas-cli/minimatch', 'minimatch'], ['@scope/pkg', '@scope/pkg'], ['@scope/parent/@other/child', '@other/child'], ['**/@scope/pkg', '@scope/pkg']]) {
     test(`resolution selector ${selector} identifies ${expected}`, async () => assert.equal((await api).resolutionPackage(selector), expected));
@@ -283,7 +287,7 @@ test('exact compatibility reviews remain visible, close the tracking issue and m
     assert.match(text, /eas-cli\/minimatch/);
     assert.match(text, /devDependencies\.babel7 → @babel\/core/);
     assert.match(text, /compatible-reviewed: EAS CLI 24\.9\.0/);
-    assert.match(text, /compatible-reviewed: Expo 58\.0\.5/);
+    assert.match(text, /compatible-reviewed: Expo 58\.0\.12/);
     assert.match(text, /docs\/dependency-pin-review\.md/);
     let issue = {number: 921, title: TITLE, user: {login: 'github-actions[bot]'}, state: 'open', body: `${MARKER}\nPrevious findings`};
     const writes = [];

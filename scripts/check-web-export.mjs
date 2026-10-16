@@ -134,6 +134,9 @@ for (const [file, expectTitle] of ROUTES) {
     } else if (!firstTitle.includes(expectTitle)) {
         failures.push(`${file}: first <title> is "${firstTitle}", expected it to contain "${expectTitle}"`);
     }
+    if (!/<script\b[^>]*\bsrc=(["'])[^"']*\/_expo\/static\/js\/web\/[^"']+\.js(?:\?[^"']*)?\1/i.test(html)) {
+        failures.push(`${file}: client JavaScript script tag missing from static rendering`);
+    }
     if (!html.includes('@font-face')) {
         failures.push(`${file}: no @font-face rules inlined — fonts will flash`);
     }
