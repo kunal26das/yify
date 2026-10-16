@@ -9,21 +9,16 @@ import {LEGAL_LINKS, openLegalPage} from '../constants/legal';
 import {Radius, Spacing} from '../constants/theme';
 import {ThemedText} from './themed-text';
 import {canonicalUrl} from '../constants/site';
+import {getWebPageMeta} from '../constants/web-page-meta';
 import {PrivacyHomeBackdrop} from './privacy-home-backdrop';
 import {clearWebStartupPlaceholder} from './web-startup-placeholder';
-
-const PAGE_TITLES: Record<string, string> = {
-    '/': 'Yify — Discover Movies', '/movies': 'Browse Movies — Yify', '/shows': 'Shows — Yify',
-    '/preferences': 'Preferences — Yify', '/watchlist': 'Watchlist — Yify', '/history': 'History — Yify',
-    '/journal': 'Journal — Yify', '/anime': 'Anime — Yify',
-    '/upgrade': 'Supporter options — Yify',
-};
 
 export function PrivacyGate({children}: {children: ReactNode}) {
     const choices = usePrivacyChoices();
     const privacy = usePrivacyPreferences();
     const {colors} = usePalette();
     const pathname = usePathname();
+    const pageMeta = getWebPageMeta(pathname);
     const [adult, setAdult] = useState(false);
     const [analytics, setAnalytics] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -80,10 +75,9 @@ export function PrivacyGate({children}: {children: ReactNode}) {
     return (
         <View style={[styles.fill, {backgroundColor: colors.background}]}>
             <Head>
-                <title>{PAGE_TITLES[pathname] ?? 'Yify — Movie Discovery'}</title>
-                <meta name="robots" content={pathname === '/anime' ? 'noindex,nofollow'
-                    : ['/preferences', '/watchlist', '/history', '/journal', '/upgrade'].includes(pathname) ? 'noindex,follow' : 'index,follow'}/>
-                <link rel="canonical" href={canonicalUrl(pathname)}/>
+                <title>{pageMeta.title}</title>
+                <meta name="robots" content={pageMeta.robots}/>
+                <link rel="canonical" href={canonicalUrl(pageMeta.pathname)}/>
             </Head>
             <View pointerEvents="none" aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
                 style={StyleSheet.absoluteFill}>
