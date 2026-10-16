@@ -64,6 +64,12 @@ Runtime 1.8.16 updates Expo to 58.0.5 while retaining Worklets 0.13.0 and the Ba
 
 The tracking issue can close when a fresh scan has no unreviewed findings or incomplete checks. Future findings reopen the same issue; registry version checks remain enabled for every pin.
 
+## EAS 24.13.0 review — 16 October 2026
+
+PR #1003 updates the release console to EAS CLI 24.13.0, Nano ID 6.0.2, protobufjs 8.8.1 and UUID 14.0.3. A frozen install, typecheck, all 150 release-console tests, build and exact-pin checks pass. The nine EAS compatibility tests exercise the installed consumers, including provisioning-profile matching and configuration schemas.
+
+EAS 24.13.0 still calls the default minimatch export as a function. Keep the exact 5.1.9 override; version 10.2.6 exports an object and is not a compatible replacement. The watcher review now records the actual EAS consumer version, so subsequent consumer or registry changes trigger another review. These release-tool changes do not alter the mobile runtime.
+
 ## 16 October 2026 coordinated review
 
 The fresh registry scan found 40 unreviewed pins, including newer Expo patches beyond the old issue snapshot. Runtime 1.8.24 aligns Expo 58.0.12 and its current SDK 58 modules with stable React Native 0.88.0 and Screens 4.30.0. Three React Native guarded files are byte-identical to rc.4; the published React Native runtime changes are version metadata and AssetRegistry type declarations. The matching Metro, polyfill, codegen and Gradle plugin packages change metadata only.
