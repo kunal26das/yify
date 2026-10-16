@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const {createRoutesManifest} = require('@expo/router-server/build/routes-manifest');
+const {getWebPageMeta} = require('../presentation/constants/web-page-meta.ts');
 
 const root = path.dirname(require.resolve('../package.json'));
 const checker = path.join(root, 'scripts/check-web-export.mjs');
@@ -30,6 +31,31 @@ function expoConfig(output, baseUrl = '') {
 const routerOptions = expoConfig('server').plugins.find(plugin => Array.isArray(plugin) && plugin[0] === 'expo-router')[1];
 const legalRedirects = createRoutesManifest(['./_layout.tsx', './index.tsx'], routerOptions).redirects;
 
+test('web document metadata follows route titles and indexing policy across base paths', () => {
+    for (const [pathname, title, robots] of [
+        ['/', 'Yify — Discover Movies', 'index,follow'],
+        ['/movies', 'Browse Movies — Yify', 'index,follow'],
+        ['/shows', 'Shows — Yify', 'index,follow'],
+        ['/anime', 'Anime — Yify', 'noindex,nofollow'],
+        ['/watchlist', 'Watchlist — Yify', 'noindex,follow'],
+        ['/history', 'History — Yify', 'noindex,follow'],
+        ['/journal', 'Journal — Yify', 'noindex,follow'],
+        ['/preferences', 'Preferences — Yify', 'noindex,follow'],
+        ['/upgrade', 'Supporter options — Yify', 'noindex,follow'],
+    ]) {
+        assert.deepEqual(getWebPageMeta(pathname), {pathname, title, robots});
+        assert.deepEqual(getWebPageMeta(`/yify${pathname}`, '/yify/'), {pathname, title, robots});
+    }
+    assert.deepEqual(getWebPageMeta('/yify', '/yify'), getWebPageMeta('/'));
+    assert.deepEqual(getWebPageMeta('/yify/anime/', '/yify'), getWebPageMeta('/anime'));
+    assert.deepEqual(getWebPageMeta('/yify-extra/anime', '/yify'), {
+        pathname: '/yify-extra/anime', title: 'Yify — Movie Discovery', robots: 'index,follow',
+    });
+    assert.deepEqual(getWebPageMeta('/unknown/route', '/yify'), {
+        pathname: '/unknown/route', title: 'Yify — Movie Discovery', robots: 'index,follow',
+    });
+});
+
 function fixture(t, server = false) {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'yify-web-export-'));
     t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
@@ -49,7 +75,7 @@ function fixture(t, server = false) {
             : ['watchlist.html', 'history.html', 'journal.html', 'preferences.html', 'upgrade.html'].includes(file)
                 ? '<meta name="robots" content="noindex,follow">' : '';
         const links = ['movies', 'shows', 'guide/', 'privacy/', 'terms/'].map(route => `<a href="/${route}">${route}</a>`).join('');
-        write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}</body></html>`, htmlDirectory);
+        write(file, `<html><head><title>${title}</title>${robots}<style>@font-face {font-family: ionicons; src: url(ionicons.ttf);}</style></head><body>${links}${'Content '.repeat(600)}<script src="/_expo/static/js/web/entry-app.js"></script></body></html>`, htmlDirectory);
     }
     for (const asset of ['manifest.json', 'robots.txt', 'sitemap.xml', 'og-card.png', '.well-known/assetlinks.json', 'legal.css', 'availability-worker.js']) write(asset, '');
     write('sitemap.xml', '<urlset><url><loc>https://yify.expo.app/guide/</loc></url></urlset>');
@@ -124,6 +150,8 @@ for (const server of [false, true]) {
         }
         fs.writeFileSync(page, html.replace('<title>Anime</title>', '<title>Shows</title>'));
         assert.match(f.check().output, /anime\.html: first <title> is "Shows", expected it to contain "Anime"/);
+        fs.writeFileSync(page, html.replace('<title>Anime</title>', '<title>Shows</title><title>Anime</title>'));
+        assert.match(f.check().output, /anime\.html: first <title> is "Shows", expected it to contain "Anime"/);
         fs.unlinkSync(page);
         assert.match(f.check().output, /anime\.html: missing from the export/);
     });
@@ -135,6 +163,15 @@ for (const server of [false, true]) {
         const result = f.check();
         assert.equal(result.status, 1);
         assert.match(result.output, /index\.html: icon font missing from static rendering/);
+    });
+
+    test(`${server ? 'Hosting' : 'Pages'} gate rejects HTML without a client script`, (t) => {
+        const f = fixture(t, server);
+        const page = path.join(f.htmlDirectory, 'index.html');
+        fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace('<script src="/_expo/static/js/web/entry-app.js"></script>', ''));
+        const result = f.check();
+        assert.equal(result.status, 1);
+        assert.match(result.output, /index\.html: client JavaScript script tag missing from static rendering/);
     });
 }
 

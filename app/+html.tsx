@@ -1,6 +1,6 @@
-import {ScrollViewStyleReset} from 'expo-router/html';
+import {ScrollViewStyleReset, useServerDocumentContext} from 'expo-router/html';
 import type {PropsWithChildren} from 'react';
-import {SITE_URL, getWebStartupScript, WebStartupPlaceholder} from '@/presentation';
+import {SITE_URL, canonicalUrl, getWebPageMeta, getWebStartupScript, WebStartupPlaceholder} from '@/presentation';
 
 const BASE_URL = process.env.EXPO_WEB_BASE_URL ?? '';
 const TITLE = 'Yify — Movie Discovery App for iPhone, Android & Web';
@@ -23,9 +23,11 @@ const JSON_LD = JSON.stringify({
     description: DESCRIPTION,
 });
 
-export default function Root({children}: PropsWithChildren) {
+export default function Root({children, pathname = '/'}: PropsWithChildren<{pathname?: string}>) {
+    const {htmlAttributes, headNodes, bodyAttributes, bodyNodes} = useServerDocumentContext();
+    const pageMeta = getWebPageMeta(pathname, BASE_URL);
     return (
-        <html lang="en">
+        <html lang="en" {...htmlAttributes}>
             <head>
                 <meta charSet="utf-8" />
                 <script dangerouslySetInnerHTML={{__html: getWebStartupScript(BASE_URL)}}/>
@@ -35,8 +37,10 @@ export default function Root({children}: PropsWithChildren) {
                       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/>
                 <link rel="preconnect" href="https://wsrv.nl" crossOrigin="anonymous"/>
                 <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous"/>
-                <title>{TITLE}</title>
+                <title>{pageMeta.title}</title>
                 <meta name="description" content={DESCRIPTION} />
+                <meta name="robots" content={pageMeta.robots}/>
+                <link rel="canonical" href={canonicalUrl(pageMeta.pathname)}/>
                 <link rel="manifest" href={`${BASE_URL}/manifest.json`}/>
                 <link rel="apple-touch-icon" sizes="180x180" href={`${BASE_URL}/icons/apple-touch-icon.png`}/>
                 <meta name="theme-color" content="#F3F0E9" media="(prefers-color-scheme: light)"/>
@@ -59,8 +63,9 @@ export default function Root({children}: PropsWithChildren) {
                 <meta name="twitter:image" content={OG_IMAGE}/>
                 <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON_LD}} />
                 <ScrollViewStyleReset />
+                {headNodes}
             </head>
-            <body>
+            <body {...bodyAttributes}>
                 <WebStartupPlaceholder baseUrl={BASE_URL}/>
                 <noscript>
                     <style>{'html,body{height:auto;overflow:auto}#root{display:none}'}</style>
@@ -71,6 +76,7 @@ export default function Root({children}: PropsWithChildren) {
                     </div>
                 </noscript>
                 {children}
+                {bodyNodes}
             </body>
         </html>
     );

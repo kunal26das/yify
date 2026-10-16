@@ -2,6 +2,7 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {mkdtemp, mkdir, readFile, writeFile, rm} = require('node:fs/promises');
 const {tmpdir} = require('node:os');
+const {createRequire} = require('node:module');
 const {dirname, join} = require('node:path');
 const helpers = import('../scripts/check-expo-doctor.mjs');
 const pins = import('../scripts/check-dependency-pins.mjs');
@@ -127,7 +128,7 @@ test('committed React Native Web policy accepts only the reviewed recommendation
     };
     const current = {packageName: 'react-native-web', actualVersion: '0.21.4', expectedVersionOrRange: '^0.21.4'};
     assert.deepEqual(reviewDeviations([], committed, '58.0.0', installedSdk), []);
-    assert.match(reviewDeviations([current], committed, '58.0.0', installedSdk)[0], /Expo CLI 58.1.6.*public React Native and React Native Web registries/);
+    assert.match(reviewDeviations([current], committed, '58.0.0', installedSdk)[0], /Expo CLI 58.1.10.*public React Native and React Native Web registries/);
     assert.deepEqual(assessDoctor(result(), {reviewedDependencies: []}), []);
     for (const expectedVersionOrRange of ['~0.21.4', '^0.21.3', '^0.21.5', '^0.22.0', '0.21.4', '>=0.21.4', '^0.21.4 || ^0.22.0']) {
         assert.throws(() => reviewDeviations([{...current, expectedVersionOrRange}], committed, '58.0.0', installedSdk), /Unreviewed/);
@@ -281,9 +282,16 @@ test('unrelated release and type updates still run full network doctor when remo
         save('node_modules/expo-constants/package.json', {version: '58.0.6'}),
         save('node_modules/react-native/package.json', {version: '0.88.0-rc.1'}),
         save('node_modules/@types/node/package.json', {version: '26.0.0'}),
+        save('node_modules/expo-doctor/package.json', {
+            version: '1.21.4',
+            bin: './bin/expo-doctor.js',
+            exports: {'.': './build/index.js', './package.json': './package.json'},
+        }),
         save('node_modules/expo-doctor/bin/expo-doctor.js', {}),
         save('release/package.json', {dependencies: {vite: '8.0.0'}}),
     ]);
+    assert.throws(() => createRequire(join(root, 'package.json')).resolve('expo-doctor/bin/expo-doctor.js'),
+        {code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'});
     const bypasses = ['EXPO_OFFLINE', 'EXPO_NO_DEPENDENCY_VALIDATION', 'EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK', 'EXPO_DOCTOR_WARN_ON_NETWORK_ERRORS'];
     const previousEnv = Object.fromEntries(bypasses.map((name) => [name, process.env[name]]));
     t.after(() => {

@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.7",
-      "expected": "~58.0.7",
-      "reason": "Use Expo 58.0.7 with React Native 0.88.0-rc.4 under runtime 1.8.23. Its bundled native-module recommendations and the upgraded Expo package sources are reviewed; preserve source guards, lifecycle regression coverage, regenerated native projects and native build validation before release."
+      "version": "58.0.12",
+      "expected": "~58.0.12",
+      "reason": "Use Expo 58.0.12 with stable React Native 0.88.0 under runtime 1.8.24. Review guarded Expo sources, preserve lifecycle regression coverage, regenerate native projects and validate native builds before release."
     },
     "@sentry/react-native": {
       "version": "8.30.0",
@@ -24,7 +24,7 @@
     "react-native-web": {
       "version": "0.21.4",
       "expected": "^0.21.4",
-      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.6 resolves legacy registry imports through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
+      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.10 resolves legacy registry imports through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
       "version": "8.0.7",
@@ -42,9 +42,9 @@
       "reason": "Reanimated 4.7.1 supports React Native 0.88 and Worklets 0.13 and adds native teardown and layout-animation crash fixes. Runtime 1.8.15 regenerates native projects, rebases the callback-cleanup patch and verifies the upstream native-state guard with lifecycle tests and Android/iOS builds."
     },
     "react-native": {
-      "version": "0.88.0-rc.4",
-      "expected": "0.88.0-rc.4",
-      "reason": "React Native 0.88.0-rc.4 fixes Android Pressable accessibility-state reset and generated type augmentation. The matching Metro config, JS polyfills and transitive React Native packages are pinned together under runtime 1.8.21 with source guards and native build validation."
+      "version": "0.88.0",
+      "expected": "0.88.0",
+      "reason": "React Native 0.88.0 stable retains the reviewed rc.4 runtime and guarded choreographer/setup sources, with version metadata and AssetRegistry type updates. Pin its Metro config, JS polyfills and transitive packages together under runtime 1.8.24."
     }
   }
 }
