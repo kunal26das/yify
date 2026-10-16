@@ -151,7 +151,21 @@ test('Expo native bootstrap uses the current setup entry and retains older platf
   const cli = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
   assert.match(cli, /doReplace\(`\$\{hostPackage\}\/src\/setup-env\.js`, undefined\)/);
   const metro = await reviewedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
-  assert.match(metro, /resolveFrom\(reactNativeHostPath, '\.\/src\/setup-env'\)/);
+  const body = /getModulesRunBeforeMainModule: \(\)\s*=>\{([\s\S]*?)\n            \},\n            getPolyfills/.exec(metro)?.[1];
+  assert.ok(body);
+  const prepare = new Function('projectRoot', 'getReactNativeHostPath', '_requireutils', '_events', 'getExpoMetroRuntimeOptional', body);
+  for (const entry of ['react-native/setup-env', './src/setup-env.js', 'Libraries/Core/InitializeCore']) {
+    const calls = [];
+    const resolveFrom = (root, name) => {
+      calls.push([root, name]);
+      return name === entry ? '/native/setup.js' : name === 'expo/build/winter' ? '/expo/winter.js' : null;
+    };
+    const result = prepare('/app', () => '/native', () => ({resolveFrom}), {event: () => assert.fail('missing runtime')}, () => '/expo/metro.js');
+    assert.deepEqual(result, ['/native/setup.js', '/expo/winter.js', '/expo/metro.js']);
+    assert.deepEqual(calls[0], ['/app', 'react-native/setup-env']);
+    if (entry !== 'react-native/setup-env') assert.deepEqual(calls[1], ['/native', './src/setup-env.js']);
+    if (entry === 'Libraries/Core/InitializeCore') assert.deepEqual(calls[2], ['/native', entry]);
+  }
 });
 
 test('Metro and React Native share the same asset registry and accepted import routes', async () => {
@@ -284,8 +298,8 @@ test('Expo Core PCH consumers share the guarded owner and ccache ordering', asyn
   }
   const build = await reviewedSource('expo-modules-core', 'android/build.gradle');
   const plugin = await reviewedSource('expo-modules-core', 'expo-module-gradle-plugin/build.gradle.kts');
-  assert.match(build, /expoModulesV2Version = "0\.2\.4"/);
-  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.4/);
+  assert.match(build, /expoModulesV2Version = "0\.2\.5"/);
+  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.5/);
 });
 
 test('Expo iOS scene passes initial properties to React Native factory', async () => {
