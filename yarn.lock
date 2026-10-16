@@ -5485,10 +5485,10 @@ expo-device-corner-radius@0.1.1:
   resolved "https://registry.yarnpkg.com/expo-device-corner-radius/-/expo-device-corner-radius-0.1.1.tgz#945c90bf4bb0b335e2b5445f353907868142a2ca"
   integrity sha512-b4EwP8rxZK2ZBmyaDSYCPrFoNtKp+O1Ai/QUQTAehNiiRmigT+IN5n0b3cbuT8gpAWwnIxRh5WrxJUsJIUflYg==
 
-expo-doctor@1.20.4:
-  version "1.20.4"
-  resolved "https://registry.yarnpkg.com/expo-doctor/-/expo-doctor-1.20.4.tgz#195f91dfeaf63fd841d91bb9a22b1906f0ed8293"
-  integrity sha512-Jm1lIqVdO8br9wiqTg5QhJ1u4zLWAhoue4bXsEuzW543vC3XY+U0cpEOmiLkvJhTTgZgIK+24l4i8VzyZ2VLMg==
+expo-doctor@1.21.4:
+  version "1.21.4"
+  resolved "https://registry.yarnpkg.com/expo-doctor/-/expo-doctor-1.21.4.tgz#7a5946f75cb7072224b167dda85aa43c63ab1914"
+  integrity sha512-JA2TeT7/o5WmSX+DHWkf4EfgdOsJ1RnRFX5OptlMXywo88j7T4IYPRRtM5ONVSvfGH/nL/3xBmhBgJ8t4fDE9w==
 
 expo-eas-client@~58.0.2:
   version "58.0.2"
