@@ -4,7 +4,7 @@
     "expo": {
       "version": "58.0.12",
       "expected": "~58.0.12",
-      "reason": "Use Expo 58.0.12 with stable React Native 0.88.0 under runtime 1.8.24. Review guarded Expo sources, preserve lifecycle regression coverage, regenerate native projects and validate native builds before release."
+      "reason": "Use Expo 58.0.12 with stable React Native 0.88.0 under runtime 1.8.25. Review guarded Expo sources, preserve lifecycle regression coverage, regenerate native projects and validate native builds before release. Runtime 1.8.25 includes Purchases 10.13.0 and refreshed native RevenueCat libraries."
     },
     "@sentry/react-native": {
       "version": "8.30.0",
