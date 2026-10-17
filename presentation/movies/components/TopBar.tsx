@@ -61,6 +61,13 @@ export function TopBar() {
     const navViewport = useRef(0);
     const navOffset = useRef(0);
     const navItems = useRef(new Map<NavKey, {x: number; width: number}>());
+    const setNavScroll = useCallback((node: ComponentRef<typeof ScrollView> | null) => {
+        if (navScroll.current === node) return;
+        navScroll.current = node;
+        navOffset.current = 0;
+        navViewport.current = 0;
+        navItems.current.clear();
+    }, []);
     const revealLink = useCallback((key?: NavKey) => {
         if (!key) return;
         const item = navItems.current.get(key);
@@ -286,7 +293,7 @@ export function TopBar() {
                     <>
                         {stacked ? <View style={styles.spacer}/> : (
                             <ScrollView
-                                ref={navScroll}
+                                ref={setNavScroll}
                                 onLayout={event => { navViewport.current = event.nativeEvent.layout.width; revealLink(active); }}
                                 onScroll={event => { navOffset.current = event.nativeEvent.contentOffset.x; }}
                                 onContentSizeChange={() => revealLink(active)}
@@ -326,7 +333,7 @@ export function TopBar() {
             </View>
 
             {stacked ? (
-                <ScrollView ref={navScroll} horizontal showsHorizontalScrollIndicator={false}
+                <ScrollView ref={setNavScroll} horizontal showsHorizontalScrollIndicator={false}
                     onLayout={event => { navViewport.current = event.nativeEvent.layout.width; revealLink(active); }}
                     onScroll={event => { navOffset.current = event.nativeEvent.contentOffset.x; }}
                     onContentSizeChange={() => revealLink(active)} scrollEventThrottle={16}
