@@ -226,8 +226,8 @@ function JournalContent({requestedTab, onTabChange}: {requestedTab: JournalTab; 
         </> : <View style={[styles.upgrade, {backgroundColor: colors.surface, borderColor: colors.border}]}>
             <Ionicons name="stats-chart-outline" size={28} color={colors.accent}/>
             <ThemedText accessibilityRole="header" type="heading">Your viewing patterns</ThemedText>
-            <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Supporters get monthly recaps, favorite genres and personal rating insights. Your journal entries and editing stay free.</ThemedText>
-            <Action label="View Supporter" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
+            <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Plus includes monthly recaps, favorite genres and personal rating insights. Your journal entries and editing stay free.</ThemedText>
+            <Action label="View Plus" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
         </View> : null}
     </View>;
     return <Screen overlays={<WatchlistSheet visible={choosingMovie || !!selectedMovie}
@@ -285,17 +285,17 @@ function SupporterAccessRecovery() {
         setError('');
         try {
             await repository.refresh();
-            if (!repository.getState().ready) setError('Supporter access could not connect. Check your connection and try again.');
+            if (!repository.getState().ready) setError('Plus access could not connect. Check your connection and try again.');
         } catch {
-            setError('Supporter access could not be refreshed. Please try again.');
+            setError('Plus access could not be refreshed. Please try again.');
         }
     };
     return <View style={styles.notice}>
-        {purchases.available && purchases.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Checking supporter access"/> : null}
+        {purchases.available && purchases.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Checking Plus access"/> : null}
         <ThemedText style={{color: colors.textMuted}}>{!purchases.available
-            ? 'Supporter access is unavailable in this version of the app. Your journal entries and editing stay free.'
-            : purchases.refreshing ? 'Checking supporter access…'
-                : 'Supporter access is not connected yet. Refresh access to try again. Your journal entries and editing stay free.'}</ThemedText>
+            ? 'Plus access is unavailable in this version of the app. Your journal entries and editing stay free.'
+            : purchases.refreshing ? 'Checking Plus access…'
+                : 'Plus access is not connected yet. Refresh access to try again. Your journal entries and editing stay free.'}</ThemedText>
         {error ? <ThemedText accessibilityRole="alert" style={{color: colors.danger}}>{error}</ThemedText> : null}
         <Action label={purchases.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => void refresh()}
             disabled={!purchases.available || purchases.refreshing}/>

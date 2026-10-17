@@ -49,3 +49,7 @@ Pause expansion immediately for incorrect charges/access, impossible restore/can
 ## Open questions
 
 Actual store/client offer availability and prices, the release-specific measured baseline and eventual retention impact remain unverified despite the read-only catalog inventory. These do not change the actual-recurring-offer contract or authorize production billing tests. Actual publication, client receipt and rendered acceptance remain tasks until evidence is supplied.
+
+## Follow-up name
+
+The owner selected a paid-tier rename on October 17; the chosen customer-facing brand is **Yify Plus**. This is a copy/metadata-only refinement: benefits, free access, product/entitlement identifiers, analytics placement IDs, routes, legal anchors and billing configuration remain the same. Existing paid and legacy grants retain access. Store checkout titles and current RevenueCat display names use the new brand; historical receipt names are not rewritten. Validation and publication are recorded in the follow-up PR.

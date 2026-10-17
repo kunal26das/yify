@@ -41,7 +41,7 @@ test('web document metadata follows route titles and indexing policy across base
         ['/history', 'History — Yify', 'noindex,follow'],
         ['/journal', 'Journal — Yify', 'noindex,follow'],
         ['/preferences', 'Preferences — Yify', 'noindex,follow'],
-        ['/upgrade', 'Supporter options — Yify', 'noindex,follow'],
+        ['/upgrade', 'Plus options — Yify', 'noindex,follow'],
     ]) {
         assert.deepEqual(getWebPageMeta(pathname), {pathname, title, robots});
         assert.deepEqual(getWebPageMeta(`/yify${pathname}`, '/yify/'), {pathname, title, robots});

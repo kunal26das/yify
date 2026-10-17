@@ -132,7 +132,7 @@ test('web: legal and public navigation links remain available without unlocking 
         assert.equal(node.props.target, '_blank');
         assert.equal(node.props.rel, 'noopener noreferrer');
     }
-    assert.equal(f.renderer.root.findByType('title').children.join(''), 'Supporter options — Yify');
+    assert.equal(f.renderer.root.findByType('title').children.join(''), 'Plus options — Yify');
     assert.equal(f.renderer.root.findByProps({name: 'robots'}).props.content, 'noindex,follow');
     assert.deepEqual(f.counts(), {mounted: 0, starts: 0});
 });

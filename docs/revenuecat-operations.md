@@ -2,6 +2,10 @@
 
 Catalog rechecked read-only on 2026-10-17; older infrastructure sections retain their dated evidence. This records dashboard and infrastructure configuration, separately from the app's purchase and ad-tracking implementation. It contains no credentials.
 
+## Yify Plus name — October 17, 2026
+
+The customer-facing membership name is Yify Plus. Google Play's existing monthly product title and RevenueCat's current monthly product/offering display names were renamed without changing SKU identifiers, prices, billing periods, availability or entitlement relationships. Historical product names below describe earlier configuration; legacy one-time purchases remain valid and are not offered for new sales. `/support/`, `#supporter-purchases` and analytics placement IDs remain stable for compatibility.
+
 ## Project and products
 
 RevenueCat project: [Yify (`8b6ff243`)](https://app.revenuecat.com/projects/8b6ff243/overview).
@@ -10,7 +14,7 @@ RevenueCat project: [Yify (`8b6ff243`)](https://app.revenuecat.com/projects/8b6f
 - Web Billing app: `app28ce2d8b73`; an existing Stripe account is connected.
 - No native iOS RevenueCat app is configured in this project. iOS purchase support requires the actual App Store app, products and credentials before it can be treated as operational.
 
-The current/default offering is [Support Yify (`default`, `ofrng79abbf96a9`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/offerings/ofrng79abbf96a9):
+The current/default offering is [Yify Plus (`default`, `ofrng79abbf96a9`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/offerings/ofrng79abbf96a9):
 
 | Package | Android product | Web product |
 | --- | --- | --- |

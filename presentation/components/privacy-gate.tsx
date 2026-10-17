@@ -117,7 +117,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
                     <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>Continue</ThemedText>
                 </Pressable>
                 {Platform.OS === 'web' ? <View style={styles.links}>
-                    {[['Movies', '/movies'], ['Shows', '/shows'], ['About Yify', '/guide/'], ['Yify Supporter', '/support/']].map(([label, path]) =>
+                    {[['Movies', '/movies'], ['Shows', '/shows'], ['About Yify', '/guide/'], ['Yify Plus', '/support/']].map(([label, path]) =>
                         <Link key={path} href={canonicalUrl(path)}><ThemedText type="link">{label}</ThemedText></Link>)}
                 </View> : null}
             </View>

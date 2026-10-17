@@ -144,7 +144,7 @@ test('billing copy uses actual monthly, annual, multi-month, prepaid, and one-ti
 test('status distinguishes active renewal, cancelled access, lapsed access and payment issues', () => {
     const future = '2035-01-15T00:00:00Z';
     const date = new Date(future).toLocaleDateString();
-    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: future, willRenew: true}), `Your support renews on ${date}.`);
+    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: future, willRenew: true}), `Your Plus membership renews on ${date}.`);
     assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: future}), `Your access continues until ${date}.`);
     assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, expiresAt: '2020-01-01T00:00:00Z'}), /access ended on/);
     assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, billingIssue: true}), /payment issue/);
@@ -236,7 +236,7 @@ test('the offer shows two concrete benefits and localized terms before sign-in w
     assert.deepEqual(f.calls.funnel, []);
     await f.update({adsRemoved: true});
     assert.match(f.text(), /Your benefits are active/);
-    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|Monthly Supporter/);
+    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|Monthly Plus/);
     assert.equal(f.pressable('Subscribe for ₹99.00 / month'), undefined);
 });
 
@@ -286,7 +286,7 @@ test('restore reports a recovered purchase and distinguishes web account checks 
     await mobile.open();
     await mobile.press('Restore purchases');
     assert.equal(mobile.calls.restore, 1);
-    assert.match(mobile.text(), /Your supporter access is active/);
+    assert.match(mobile.text(), /Your Plus access is active/);
     const web = await fixture(t, {platform: 'web'});
     await web.open();
     await web.press('Check account purchases');
@@ -332,8 +332,8 @@ test('a signed-out existing member can sign in and restore even when no sale off
         signIn: session => {session.set({account: user('returning')}); return true;},
         restore: async () => true});
     await f.open();
-    assert.match(f.text(), /Supporter plans are unavailable right now/);
-    assert.match(f.text(), /Already a Supporter\? Sign in to check your account access/);
+    assert.match(f.text(), /Plus plans are unavailable right now/);
+    assert.match(f.text(), /Already have Plus\? Sign in to check your account access/);
     assert.ok(f.pressable('Sign in with Google'));
     assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     await f.press('Sign in with Google');
@@ -342,7 +342,7 @@ test('a signed-out existing member can sign in and restore even when no sale off
     assert.ok(f.pressable('Restore purchases'));
     await f.press('Restore purchases');
     assert.equal(f.calls.restore, 1);
-    assert.match(f.text(), /Your supporter access is active/);
+    assert.match(f.text(), /Your Plus access is active/);
     assert.deepEqual(f.calls.purchase, []);
 });
 
@@ -369,8 +369,8 @@ test('signed-in checkout offers only actual monthly and yearly SDK subscriptions
     ]});
     await f.open();
     await f.show();
-    assert.match(f.text(), /Monthly Supporter/);
-    assert.match(f.text(), /Yearly Supporter/);
+    assert.match(f.text(), /Monthly Plus/);
+    assert.match(f.text(), /Yearly Plus/);
     assert.match(f.text(), /€24,99 every year/);
     assert.doesNotMatch(f.text(), /€49,99|€8,99/);
     assert.ok(f.pressable('Subscribe for €2,99 / month'));
@@ -417,7 +417,7 @@ test('an open modal obscures inline membership until it closes', async t => {
     await f.show();
     await f.setActive(true);
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_view' && event.placement === 'supporter_page').length, 0);
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_view' && event.placement === 'supporter_page').length, 1);
     assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
@@ -443,7 +443,7 @@ test('an accepted sign-in attempt finishes once across account remounts and neve
     const signIn = f.pressable('Sign in with Google').props.onPress;
     await act(async () => {signIn(); signIn();});
     assert.equal(f.calls.signIn, 1);
-    assert.equal(f.pressable('Close supporter options').props.disabled, true);
+    assert.equal(f.pressable('Close Plus options').props.disabled, true);
     f.setOffers([plan('signed-in-monthly', 'supporter', {priceLabel: '₹89.00'})]);
     await f.update(null, {account: user('B'), signingIn: false});
     assert.equal(f.pressable('Subscribe for ₹89.00 / month').props.disabled, true);
@@ -530,9 +530,9 @@ test('repeated purchase taps make one request and close waits for it to settle',
     assert.deepEqual(f.calls.purchase, ['monthly']);
     assert.deepEqual(closed, []);
     await act(async () => { pending.resolve(true); });
-    assert.match(f.text(), /Thank you for supporting/);
+    assert.match(f.text(), /Welcome to Yify Plus/);
     await f.update({adsRemoved: true});
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.deepEqual(closed, [true]);
 });
 
@@ -546,7 +546,7 @@ test('changing accounts drops old asynchronous purchase notices and starts a fre
     await f.update({ready: true, adsRemoved: false}, {account: user('B')});
     await f.show();
     await act(async () => { pending.resolve(true); });
-    assert.doesNotMatch(f.text(), /Thank you for supporting/);
+    assert.doesNotMatch(f.text(), /Welcome to Yify Plus/);
     assert.deepEqual(f.calls.impressions, ['monthly', 'B-monthly']);
 });
 
@@ -571,7 +571,7 @@ test('overlapping paywall requests preserve both callbacks and old close handler
     await act(async () => { oldClose(); oldClose(); });
     assert.deepEqual(closed, [['first', false]]);
     assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.deepEqual(closed, [['first', false], ['second', false]]);
     assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
@@ -588,9 +588,9 @@ test('provider visibility survives caller remounts and stays active until the fi
     assert.equal(f.modal(), originalModal);
     assert.deepEqual(f.calls.offers, ['settings_supporter']);
     await f.open('journal_insights');
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.equal(f.visible(), true);
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.equal(f.visible(), false);
 });
 
@@ -611,11 +611,11 @@ test('cancelling a queued owner removes only its request and never invokes its c
     const cancel = await f.open('supporter_page', result => closed.push(['cancelled', result]));
     await f.open('journal_insights', result => closed.push(['last', result]));
     await act(async () => { cancel(); cancel(); });
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.deepEqual(closed, [['first', false]]);
     assert.deepEqual(f.calls.offers, ['settings_supporter', 'journal_insights']);
     await act(async () => cancel());
-    await f.press('Close supporter options');
+    await f.press('Close Plus options');
     assert.deepEqual(closed, [['first', false], ['last', false]]);
 });
 
@@ -646,13 +646,13 @@ for (const action of ['purchase', 'restore', 'signIn']) {
         await f.update(null, {account: user('B')});
         assert.equal(f.visible(), true);
         assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
-        assert.equal(f.pressable('Close supporter options').props.disabled, true);
+        assert.equal(f.pressable('Close Plus options').props.disabled, true);
         assert.equal(f.calls.offers.includes('journal_insights'), false);
         await act(async () => pending.resolve(true));
         assert.equal(f.renderer.root.findAllByType('Modal').length, 1);
         assert.equal(f.calls.offers.includes('journal_insights'), true);
         assert.deepEqual(closed, []);
-        await f.press('Close supporter options');
+        await f.press('Close Plus options');
         assert.deepEqual(closed, [['next', false]]);
         assert.equal(f.visible(), false);
     });
@@ -667,8 +667,8 @@ test('small windows bound the scrolling content and retain an accessible close c
     const scroll = f.renderer.root.findByType('ScrollView');
     assert.equal(flattenStyle(scroll.props.style).flexShrink, 1);
     assert.equal(flattenStyle(scroll.props.style).minHeight, 0);
-    assert.equal(scroll.findAllByProps({accessibilityLabel: 'Close supporter options'}).length, 0);
-    const close = f.pressable('Close supporter options');
+    assert.equal(scroll.findAllByProps({accessibilityLabel: 'Close Plus options'}).length, 0);
+    const close = f.pressable('Close Plus options');
     assert.ok(flattenStyle(close.props.style).minHeight >= 44);
     assert.equal(f.renderer.root.findAllByProps({accessibilityRole: 'header'}).length, 1);
 });
@@ -679,10 +679,10 @@ test('large text on narrow screens puts the title inside the scroll while keepin
     const scroll = f.renderer.root.findByType('ScrollView');
     const headings = scroll.findAllByProps({accessibilityRole: 'header'});
     assert.equal(headings.length, 1);
-    assert.equal(nodeText(headings[0]), 'Yify Supporter');
+    assert.equal(nodeText(headings[0]), 'Yify Plus');
     assert.equal(flattenStyle(headings[0].props.style).flex, undefined);
-    assert.equal(scroll.findAllByProps({accessibilityLabel: 'Close supporter options'}).length, 0);
-    await f.press('Close supporter options');
+    assert.equal(scroll.findAllByProps({accessibilityLabel: 'Close Plus options'}).length, 0);
+    await f.press('Close Plus options');
     assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
 });
 
@@ -699,7 +699,7 @@ test('paywall funnel measures actual visibility, ready offers and one explicit c
     await act(async () => loading.resolve([plan()]));
     assert.equal(f.pressable('Reload plans'), undefined);
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'offers_visible').length, 1);
-    const close = f.pressable('Close supporter options').props.onPress;
+    const close = f.pressable('Close Plus options').props.onPress;
     await act(async () => {close(); close();});
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_closed').length, 1);
     assert.equal(f.calls.funnel.every(({country}) => country === 'GB'), true);
@@ -716,7 +716,7 @@ for (const platform of ['android', 'web']) {
         verified = true;
         await f.press('Refresh access');
         assert.doesNotMatch(f.text(), /Access could not be refreshed/);
-        assert.match(f.text(), /supporter access is active/);
+        assert.match(f.text(), /Plus access is active/);
     });
 }
 

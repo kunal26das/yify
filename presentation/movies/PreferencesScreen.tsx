@@ -936,7 +936,7 @@ function AccountSection({colors, gutter}: {colors: Colors; gutter: number}) {
         confirm({
             title: 'Delete account?',
             message:
-                'This permanently deletes your account, private movie journal, and the watchlist, history and settings synced to it. Other titles saved on this device stay until you clear them. Deleting your account does not cancel a subscription. Use Yify support options to manage billing before deleting.',
+                'This permanently deletes your account, private movie journal, and the watchlist, history and settings synced to it. Other titles saved on this device stay until you clear them. Deleting your account does not cancel a subscription. Use Yify Plus options to manage billing before deleting.',
             confirmLabel: 'Delete',
             cancelLabel: 'Cancel',
             icon: 'trash-outline',
@@ -1067,14 +1067,14 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
             <Group colors={colors} index={1}>
                 {state.available || state.adsRemoved ? <Row
                     icon={state.adsRemoved ? 'heart' : 'heart-outline'}
-                    title={state.adsRemoved ? 'Your Supporter access' : 'Yify Supporter'}
+                    title={state.adsRemoved ? 'Your Plus access' : 'Yify Plus'}
                     subtitle={state.adsRemoved
                         ? supporterStatus(state)
                         : 'Viewing insights and no Yify ads. Manage your access.'}
                     colors={colors}
                     gutter={gutter}
                     onPress={() => showSupporter('settings_supporter')}
-                    accessibilityLabel={state.adsRemoved ? 'Manage Yify support' : 'View Yify Supporter options and restore purchases'}
+                    accessibilityLabel={state.adsRemoved ? 'Manage Yify Plus' : 'View Yify Plus options and restore purchases'}
                     trailing={<Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>}
                 /> : null}
                 {showCoffee ? (

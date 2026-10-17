@@ -31,10 +31,10 @@ export function supporterStatus(state: PurchaseState): string {
     const date = state.expiresAt ? new Date(state.expiresAt) : null;
     const formatted = date && Number.isFinite(date.getTime()) ? date.toLocaleDateString() : null;
     if (state.adsRemoved && formatted) {
-        return state.willRenew ? `Your support renews on ${formatted}.` : `Your access continues until ${formatted}.`;
+        return state.willRenew ? `Your Plus membership renews on ${formatted}.` : `Your access continues until ${formatted}.`;
     }
-    if (state.adsRemoved) return 'Thank you. Your supporter access is active and Yify ads are off.';
-    if (formatted && date!.getTime() <= Date.now()) return `Your supporter access ended on ${formatted}. Restore purchases or open billing settings to check your subscription.`;
+    if (state.adsRemoved) return 'Thank you. Your Plus access is active and Yify ads are off.';
+    if (formatted && date!.getTime() <= Date.now()) return `Your Plus access ended on ${formatted}. Restore purchases or open billing settings to check your subscription.`;
     return 'Already paid? Restore your purchases or check your account access below.';
 }
 

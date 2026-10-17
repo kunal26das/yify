@@ -29,13 +29,15 @@ Validation evidence (October 17): `yarn typecheck` passed; `yarn test` passed 2,
 
 ## 5. Production delivery
 
-- [ ] 5.1 Merge through the normal reviewed PR and required CI; record merge source, prior rollback targets and successful CI receipts.
-- [ ] 5.2 Verify both production web targets on that source, including deployment receipts, startup/catalog checks and rendered membership behavior; distinguish export success from user availability.
+- [x] 5.1 Merge through the normal reviewed PR and required CI; record merge source, prior rollback targets and successful CI receipts.
+- [x] 5.2 Verify both production web targets on that source, including deployment receipts, startup/catalog checks and rendered membership behavior; distinguish export success from user availability.
 - [ ] 5.3 Publish Android Production OTA for runtime 1.8.25/code 107 through the existing release workflow; record group/runtime/channel and verify receipt and behavior on a compatible installed client without synthetic production purchases/ad engagement.
-- [ ] 5.4 Record sanitized release evidence, actual observation start dates or remaining prerequisites, and task-owned cleanup; leave any unverified availability or recovery outcome explicitly pending.
+- [x] 5.4 Record sanitized release evidence, actual observation start dates or remaining prerequisites, and task-owned cleanup; leave any unverified availability or recovery outcome explicitly pending.
 
 ## Workflow follow-up
 
 - Sync only implemented requirements, and archive after tracked delivery work is complete. Keep unrelated unfinished changes active.
 - Evaluate a complete 14-day release window after event/release validation and a full monthly renewal cycle; commercial outcomes remain unknown until measured.
 - Yearly product creation, exact regional pricing, entitlement/package attachment and store availability validation are separate commercial setup work. October 17 read-only evidence found no yearly product/package; a ten-month-price proposal is not an active offer.
+
+Delivery reconciliation: PR #1005 merged as `4626232a`; exact-source main CI 39029077348 and Hosting/Pages runs 39029346355/39029346412 succeeded. Android runtime 1.8.25 OTA group `2a92387a-d08d-4a4c-9f82-22cb8265d2ef` was published with maps and Sentry deployment metadata, and its Production manifest was verified. [Closure receipt](https://github.com/kunal26das/yify/pull/1005#issuecomment-6233475667) records live checks and cleanup. Task 5.3 remains unchecked only because no connected device was available to verify installed-client receipt. The subsequent Yify Plus rename is a copy/metadata refinement tracked in its PR; no yearly commercial setup or measured growth result is implied.

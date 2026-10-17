@@ -185,7 +185,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         void runAction(async () => {
             try {
                 const granted = await purchases.purchase(offer.id);
-                return granted ? 'Thank you for supporting Yify. Your access is now active.' : purchaseFailureMessage(purchases.getState().failure);
+                return granted ? 'Welcome to Yify Plus. Your access is now active.' : purchaseFailureMessage(purchases.getState().failure);
             } catch { return 'The payment could not be completed. Check access before trying again.'; }
         });
     };
@@ -194,7 +194,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         void runAction(async () => {
             try {
                 const restored = await purchases.restore();
-                return restored ? 'Your supporter access is active.' : purchaseFailureMessage(purchases.getState().failure) ?? (Platform.OS === 'web'
+                return restored ? 'Your Plus access is active.' : purchaseFailureMessage(purchases.getState().failure) ?? (Platform.OS === 'web'
                     ? 'No active purchase was found for this Yify account. Sign in with the account you used to pay. For an App Store or Google Play purchase, restore in the mobile app.'
                     : 'No active purchase was found. Check that you are using the store account you used to pay.');
             } catch { return 'We could not restore purchases. Please try again.'; }
@@ -239,7 +239,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     };
     const managementURL = safeManagementURL(state.managementURL);
     const message = notice ?? (state.adsRemoved ? null : purchaseFailureMessage(state.failure));
-    const heading = <ThemedText accessibilityRole="header" type="heading" style={[styles.title, !headingInContent && !inline ? styles.heading : undefined]}>{state.adsRemoved ? 'Your Supporter access' : 'Yify Supporter'}</ThemedText>;
+    const heading = <ThemedText accessibilityRole="header" type="heading" style={[styles.title, !headingInContent && !inline ? styles.heading : undefined]}>{state.adsRemoved ? 'Your Plus access' : 'Yify Plus'}</ThemedText>;
     const openJournal = (insights: boolean) => {
         if (busy || operationRef.current || request.cancelled || closed.current || (inline && !active)) return;
         if (inline) (insights ? onOpenInsights : onOpenJournal)?.();
@@ -259,21 +259,21 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
             <PaywallButton label="Open movie journal" onPress={() => openJournal(false)} disabled={busy}/>
             <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Start by logging a movie in your free journal. Your insights grow with the watches and ratings you add.</ThemedText>
         </> : null}
-        {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading supporter options"/> : null}
+        {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading Plus options"/> : null}
         {!state.available || !state.ready ? <ThemedText style={styles.copy}>{state.available
-            ? 'Supporter options are not connected yet. Use Refresh access below to try again.'
+            ? 'Plus options are not connected yet. Use Refresh access below to try again.'
             : 'Purchases are unavailable in this version of the app. Your free features are still available.'}</ThemedText> : null}
         {!state.adsRemoved && state.ready && !loading && !paymentUnconfirmed ? offers.map((offer) => <View key={offer.id} style={[styles.plan, {borderColor: colors.border}]}>
-            <ThemedText style={styles.planTitle}>{offer.billingPeriod === 'P1Y' ? 'Yearly Supporter' : 'Monthly Supporter'}</ThemedText>
+            <ThemedText style={styles.planTitle}>{offer.billingPeriod === 'P1Y' ? 'Yearly Plus' : 'Monthly Plus'}</ThemedText>
             <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{offerDisclosure(offer)}</ThemedText>
             {session.account ? <PaywallButton label={state.purchasing === offer.id ? 'Processing…' : purchaseLabel(offer)}
                 onPress={() => buy(offer)} disabled={busy} primary/> : null}
         </View>) : null}
-        {!state.adsRemoved && state.available && state.ready && !loading && offers.length === 0 ? <ThemedText style={styles.copy}>Supporter plans are unavailable right now. You can still check an existing purchase below.</ThemedText> : null}
+        {!state.adsRemoved && state.available && state.ready && !loading && offers.length === 0 ? <ThemedText style={styles.copy}>Plus plans are unavailable right now. You can still check an existing purchase below.</ThemedText> : null}
         {!state.adsRemoved && state.available && !session.account && !paymentUnconfirmed ? <>
             <ThemedText style={styles.copy}>{offers.length > 0
-                ? 'Sign in to keep supporter access with your Yify account. Signing in does not start a subscription.'
-                : 'Already a Supporter? Sign in to check your account access. Signing in does not start a subscription.'}</ThemedText>
+                ? 'Sign in to keep Plus access with your Yify account. Signing in does not start a subscription.'
+                : 'Already have Plus? Sign in to check your account access. Signing in does not start a subscription.'}</ThemedText>
             <PaywallButton label={session.signingIn ? 'Signing in…' : session.available ? 'Sign in with Google' : 'Sign-in unavailable'}
                 onPress={signIn} disabled={busy || !session.ready || !session.available} primary/>
         </> : null}
@@ -299,7 +299,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
                 accessibilityViewIsModal onAccessibilityEscape={close}>
                 <View style={styles.header}>
                     {headingInContent ? <View style={styles.heading}/> : heading}
-                    <Pressable onPress={close} disabled={busy} accessibilityRole="button" accessibilityLabel="Close supporter options"
+                    <Pressable onPress={close} disabled={busy} accessibilityRole="button" accessibilityLabel="Close Plus options"
                         accessibilityState={{disabled: busy}} style={styles.close}>
                         <ThemedText style={{color: colors.accent, fontWeight: '700'}}>{state.adsRemoved ? 'Done' : 'Close'}</ThemedText>
                     </Pressable>
