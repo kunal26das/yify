@@ -29,3 +29,8 @@ No Android device is connected in this session. Native license-test purchase, re
 Normal required CI, merge, both automatic web deployments and one compatible Android OTA are pending at this committed checkpoint. Record exact final source, deployment/update receipts, final catalog mapping, validation-offering archive and cleanup in the delivery PR closure. Do not archive this change while the provider/device checks remain incomplete. No new binary, native dependency or runtime change is included.
 
 The previous rollback references are Hosting `g13f4ikaow`, Pages deployment `7139204711`, Android OTA group `db46773f-685e-4be8-bbd4-62bfcd1b0144`, update `01a149b7-929b-7c56-8802-717cb1a45bdb`, runtime 1.8.25/code 107. Provider receipts, sanitized SDK events, browser evidence and logs are retained in private task evidence; no credential or customer data belongs in this public record.
+
+
+## Publication reconciliation
+
+[PR #1007 closure](https://github.com/kunal26das/yify/pull/1007#issuecomment-6234075702) records final source `8cb416336b1f9cacfeb557f094c009466170bde9`, successful required CI and both web publications, Android OTA publication/endpoint readback, Android-only annual package attachment, archived validation offering and completed task-owned cleanup. The pre-publication snapshot above remains provenance. Native transactions/receipt and web checkout recovery remain unverified, so this change remains active rather than archived.
