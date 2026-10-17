@@ -49,7 +49,7 @@ function fixture(t, options = {}) {
     const sdk = {
         setLogLevel: () => {},
         configure: async config => { calls.push(['configure', config]); await options.configure?.(); },
-        getAppUserID: async () => sdkUid,
+        getAppUserID: async () => options.getAppUserID ? options.getAppUserID(sdkUid) : sdkUid,
         isAnonymous: async () => sdkUid.startsWith('$RCAnonymousID:'),
         addCustomerInfoUpdateListener: (listener) => { listeners.push(listener); },
         logIn: async (uid) => {
@@ -110,11 +110,93 @@ function fixture(t, options = {}) {
     }, options.diagnostics, () => options.country ?? null, options.privacy ?? privacyFixture(true));
     return {repository, calls, listeners, foreground, infos, cache, defaultOffering,
         uid: () => sdkUid,
+        setUid: uid => { sdkUid = uid; },
         ready: async (uid = null) => {
             await Promise.all([repository.init(), repository.identify(uid == null ? null : account(uid))]);
         },
     };
 }
+
+test('unresolved and anonymous native customers cannot start checkout but retain offer and restore access', async t => {
+    const f = fixture(t);
+    await f.repository.init();
+    assert.equal(await f.repository.purchase('unresolved'), false);
+    await f.ready();
+    const offer = f.repository.getState().offers[0];
+    assert.ok(offer);
+    assert.equal(await f.repository.purchase(offer.id), false);
+    assert.equal(f.repository.getState().purchasing, null);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+    assert.equal(f.calls.some(([name, event]) => name === 'analytics' && event === 'remove_ads_purchase_start'), false);
+    assert.equal(await f.repository.restore(), true);
+    assert.equal(f.calls.filter(([name]) => name === 'restore').length, 1);
+});
+
+for (const uid of ['', '   ']) {
+    test(`native checkout rejects a blank account UID of length ${uid.length}`, async t => {
+        const f = fixture(t);
+        await f.ready(uid);
+        const offer = f.repository.getState().offers[0];
+        assert.ok(offer);
+        assert.equal(await f.repository.purchase(offer.id), false);
+        assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+    });
+}
+
+test('native checkout checks the actual SDK customer and rejects an unexpected identity', async t => {
+    const f = fixture(t);
+    await f.ready('account-a');
+    const offer = f.repository.getState().offers[0];
+    f.setUid('$RCAnonymousID:unexpected');
+    assert.equal(await f.repository.purchase(offer.id), false);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+    assert.equal(f.repository.getState().purchasing, null);
+    f.setUid('account-a');
+    assert.equal(await f.repository.purchase(offer.id), true);
+});
+
+for (const next of [null, 'account-b']) {
+    test(`native checkout queued before ${next ? 'an account switch' : 'sign-out'} never opens billing`, async t => {
+        const pending = deferred();
+        const f = fixture(t, {offerings: placement => placement === 'post_ad_supporter' ? pending.promise : offering()});
+        await f.ready('account-a');
+        const offer = f.repository.getState().offers[0];
+        const loading = f.repository.getOffers('post_ad_supporter');
+        await flush();
+        const purchase = f.repository.purchase(offer.id);
+        const identifying = f.repository.identify(next ? account(next) : null);
+        pending.resolve(offering());
+        await Promise.all([loading, identifying]);
+        assert.equal(await purchase, false);
+        assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+        assert.equal(f.repository.getState().purchasing, null);
+    });
+}
+
+test('native sign-out during the last SDK identity read prevents checkout', async t => {
+    let pending;
+    const f = fixture(t, {getAppUserID: uid => pending ? pending.promise : uid});
+    await f.ready('account-a');
+    pending = deferred();
+    const purchase = f.repository.purchase(f.repository.getState().offers[0].id);
+    await flush();
+    const identifying = f.repository.identify(null);
+    const lastRead = pending;
+    pending = undefined;
+    lastRead.resolve('account-a');
+    await identifying;
+    assert.equal(await purchase, false);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+});
+
+test('failed native identification cannot purchase with the prior anonymous offer', async t => {
+    const f = fixture(t, {login: async () => { throw Error('unavailable'); }});
+    await f.ready();
+    const offer = f.repository.getState().offers[0];
+    await f.repository.identify(account('account-a'));
+    assert.equal(await f.repository.purchase(offer.id), false);
+    assert.equal(f.calls.some(([name]) => name === 'purchase'), false);
+});
 
 test('configuration is shared and entitlement readiness waits for the initial auth identity', async (t) => {
     const {repository, calls, listeners, foreground} = fixture(t, {cache: [['ads_removed', 'true']]});
@@ -234,7 +316,7 @@ test('signed-out customers receive a fresh anonymous identity and never another 
 test('concurrent purchase taps share one native purchase and block a conflicting restore', async (t) => {
     const pendingPurchase = deferred();
     const f = fixture(t, {purchase: () => pendingPurchase.promise});
-    await f.ready();
+    await f.ready('account-a');
     const offer = f.repository.getState().offers[0];
     const first = f.repository.purchase(offer.id);
     assert.equal(f.repository.purchase(offer.id), first);
@@ -286,7 +368,7 @@ test('explicit restores are single-flight and report progress without automatic 
 test('purchase cancellation and pending payment retain their actionable failure reason', async (t) => {
     let error = {code: 'pending'};
     const f = fixture(t, {purchase: async () => { throw error; }});
-    await f.ready();
+    await f.ready('account-a');
     const offerId = f.repository.getState().offers[0].id;
     assert.equal(await f.repository.purchase(offerId), false);
     assert.equal(f.repository.getState().failure, 'pending');
@@ -407,7 +489,7 @@ test('targeted offerings preserve period, package, placement, and actual impress
     const settings = offering('settings-offering');
     const afterAd = offering('after-ad-offering');
     const f = fixture(t, {offerings: (placement) => placement === 'settings_supporter' ? settings : afterAd});
-    await f.ready();
+    await f.ready('account-a');
     const settingsOffer = f.repository.getState().offers[0];
     const [adOffer] = await f.repository.getOffers('post_ad_supporter');
     assert.notEqual(settingsOffer.id, adOffer.id);
@@ -493,7 +575,7 @@ test('a purchase queued behind targeting exclusion cannot use the removed packag
     const pendingOffers = deferred();
     let refreshOffers = false;
     const f = fixture(t, {offerings: () => refreshOffers ? pendingOffers.promise : offering()});
-    await f.ready();
+    await f.ready('account-a');
     const oldOffer = f.repository.getState().offers[0];
     refreshOffers = true;
     const offers = f.repository.getOffers('settings_supporter');
@@ -583,7 +665,7 @@ test('purchase diagnostics preserve coalescing and classify pending, cancelled a
     let failure = {code: 'cancelled'};
     const result = deferred();
     const f = fixture(t, {diagnostics, purchase: async () => { await result.promise; throw failure; }});
-    await f.ready();
+    await f.ready('account-a');
     const id = f.repository.getState().offers[0].id;
     const first = f.repository.purchase(id);
     assert.equal(f.repository.purchase(id), first);

@@ -321,6 +321,29 @@ test('missing purchase configuration clearly disables retry and checkout', async
     assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
 });
 
+for (const platform of ['android', 'ios', 'web']) {
+    for (const inline of [false, true]) {
+        test(`${platform} ${inline ? 'membership page' : 'modal'} requires sign-in then an explicit checkout tap`, async t => {
+            const f = await fixture(t, {platform, inline, session: {account: null},
+                offers: [plan(), plan('yearly', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'})],
+                signIn: session => { session.set({account: user('A')}); return true; }});
+            if (!inline) await f.open();
+            assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+            assert.equal(f.pressable('Subscribe for $29.99 / year'), undefined);
+            await f.press('Sign in with Google');
+            assert.deepEqual(f.calls.purchase, []);
+            await f.select('Monthly Plus');
+            const stale = f.pressable('Subscribe for $2.99 / month').props.onPress;
+            await f.press('Subscribe for $2.99 / month');
+            assert.deepEqual(f.calls.purchase, ['monthly']);
+            await f.update(null, {account: null});
+            await act(async () => { stale(); });
+            assert.deepEqual(f.calls.purchase, ['monthly']);
+            assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+        });
+    }
+}
+
 test('sign-in gates purchases and reports rejected sign-in without an unhandled promise', async t => {
     const f = await fixture(t, {session: {account: null}, signIn: async () => { throw Error('offline'); }});
     await f.open();

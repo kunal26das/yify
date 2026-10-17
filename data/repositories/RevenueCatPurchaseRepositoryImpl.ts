@@ -261,6 +261,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     purchase(offerId: string): Promise<boolean> {
+        if (!this.canPurchase(this.revision, this.activeSdkUid)) {
+            this.diagnostics.event('purchases.purchase', {outcome: 'unavailable'});
+            return Promise.resolve(false);
+        }
         const kind = `purchase:${offerId}`;
         if (this.mutation) {
             return this.mutation.kind === kind ? this.mutation.promise : Promise.resolve(false);
@@ -277,14 +281,16 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         this.setState({purchasing: offerId, failure: null});
         return this.runMutation(kind, async () => {
             const span = this.diagnostics.start('purchases.purchase', {provider: 'revenuecat'});
-            if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
+            if (!this.canPurchase(revision, uid)) { span.finish('skipped'); return false; }
             if (!this.packages.has(offerId)) {
                 this.setState({failure: 'offer_unavailable'});
                 span.finish('unavailable');
                 return false;
             }
-            this.trackFunnel({step: 'checkout_started', offer: entry.offer});
             try {
+                const sdkUid = await Purchases.getAppUserID();
+                if (!this.canPurchase(revision, uid) || sdkUid !== uid) { span.finish('skipped'); return false; }
+                this.trackFunnel({step: 'checkout_started', offer: entry.offer});
                 const {customerInfo} = await Purchases.purchasePackage(entry.pkg);
                 if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const purchased = hasRemoveAds(customerInfo);
@@ -473,6 +479,11 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     private isCurrent(revision: number, uid: string | null): boolean {
         return uid != null && revision === this.revision && this.syncedRevision === revision &&
             this.activeSdkUid === uid && this.store.get().ready;
+    }
+
+    private canPurchase(revision: number, uid: string | null): boolean {
+        return typeof this.desiredUid === 'string' && this.desiredUid.trim().length > 0 &&
+            this.desiredUid === uid && this.isCurrent(revision, uid);
     }
 
     private cacheKey(uid: string): string {

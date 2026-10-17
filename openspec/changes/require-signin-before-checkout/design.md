@@ -1,0 +1,9 @@
+# Design
+
+AccountLink is the sole production purchase-identity writer. It supplies confirmed Firebase accounts and synchronously invalidates purchase identity/revision when a resolved account changes. The existing shared modal/inline Plus content checks the current auth session and offer before calling purchase.
+
+Add purchase-only guards to both repository implementations. A new purchase needs a nonempty identified account UID, ready state and current revision. The native account must match its last verified SDK identity; immediately before billing, read the actual SDK UID and recheck identity/revision after that asynchronous read. Web checks the synchronous SDK UID against the account and desired user at entry and at the queued SDK boundary. Blocked attempts return false without opening checkout or recording checkout-start analytics. Existing mutation coalescing and stale-result suppression remain.
+
+Do not tighten shared initialization, offer, refresh or restore helpers: anonymous customers must retain those existing behaviors. The normal sign-in journey and its layout remain unchanged. Tests cover both repository boundaries, queued changes and existing shared Android/iOS/web modal/inline UI behavior using mocks. Native device delivery and real transactions require separate evidence.
+
+Validate focused regressions, typecheck, full tests, both exports and strict specs. Obtain independent security/source review and QA at the exact candidate. Merge through required checks; existing main CI publishes both sites automatically. Publish only a compatible Android Production OTA for shipped runtime 1.8.25/code 107, verifying receipts separately from device delivery. Previous rollback source is 502a6a40929d6f0ba5397ae791d82c6bb1d7f042, Hosting txc9bi60ve, Pages deployment 7140062669 and Android OTA group d5e871e9-0d25-4762-b5ad-e305a27a88a9. No iOS release.

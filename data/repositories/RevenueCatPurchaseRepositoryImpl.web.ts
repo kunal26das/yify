@@ -221,6 +221,10 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
 
     async purchase(offerId: string): Promise<boolean> {
         const revision = this.revision;
+        if (!this.canPurchase(revision)) {
+            this.diagnostics.event('purchases.purchase', {outcome: 'unavailable'});
+            return false;
+        }
         if (this.checkout) {
             return this.checkout.revision === revision && this.checkout.offerId === offerId
                 ? this.checkout.promise : false;
@@ -239,7 +243,11 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         this.setState({purchasing: offerId, failure: null});
         const promise = this.enqueue(async () => {
             const span = this.diagnostics.start('purchases.purchase', {provider: 'revenuecat'});
-            if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
+            if (!this.canPurchase(revision)) {
+                if (this.isCurrent(revision)) this.setState({purchasing: null});
+                span.finish('skipped');
+                return false;
+            }
             if (!this.packages.has(offerId)) {
                 this.setState({purchasing: null, failure: 'offer_unavailable'});
                 span.finish('unavailable');
@@ -335,6 +343,12 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
 
     private isCurrent(revision: number): boolean {
         return revision === this.revision;
+    }
+
+    private canPurchase(revision: number): boolean {
+        const uid = this.account?.uid;
+        return typeof uid === 'string' && uid.trim().length > 0 && uid === this.desiredUserId &&
+            this.isCurrent(revision) && this.store.get().ready && this.sdk?.getAppUserId() === uid;
     }
 
     private enqueue<T>(run: () => Promise<T>): Promise<T> {
