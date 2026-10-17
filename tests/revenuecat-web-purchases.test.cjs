@@ -112,6 +112,85 @@ function fixture({values = new Map(), overrides = {}, apiKey = 'rcb_public_test_
 
 const selectedOffer = repository => repository.getState().offers[0].id;
 
+test('unresolved and anonymous web customers cannot checkout but retain offer and account-check access', async () => {
+    const f = fixture();
+    await f.repository.init();
+    assert.equal(await f.repository.purchase('unresolved'), false);
+    await f.repository.identify(null);
+    const offer = selectedOffer(f.repository);
+    assert.ok(offer);
+    assert.equal(await f.repository.purchase(offer), false);
+    assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+    assert.equal(f.events.some(event => event.name === 'remove_ads_purchase_start'), false);
+    assert.equal(f.repository.getState().purchasing, null);
+    const before = f.calls.filter(call => call.method === 'info').length;
+    await f.repository.restore();
+    assert.equal(f.calls.filter(call => call.method === 'info').length, before + 1);
+});
+
+for (const uid of ['', '   ']) {
+    test(`web checkout rejects a blank account UID of length ${uid.length}`, async () => {
+        const f = fixture();
+        await f.repository.identify(account(uid));
+        assert.equal(await f.repository.purchase(selectedOffer(f.repository)), false);
+        assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+    });
+}
+
+test('web checkout rejects an SDK customer that differs from the signed-in account', async () => {
+    const f = fixture();
+    await f.repository.identify(account('A'));
+    const offer = selectedOffer(f.repository);
+    f.sdk.userId = '$RCAnonymousID:unexpected';
+    assert.equal(await f.repository.purchase(offer), false);
+    assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+    f.sdk.userId = 'A';
+    assert.equal(await f.repository.purchase(offer), true);
+});
+
+for (const next of [null, 'B']) {
+    test(`web checkout queued before ${next ? 'an account switch' : 'sign-out'} never opens billing`, async () => {
+        const pending = deferred();
+        const f = fixture({overrides: {offers: placement => placement === 'post_ad_supporter' ? pending.promise : offering()}});
+        await f.repository.identify(account('A'));
+        const offer = selectedOffer(f.repository);
+        const loading = f.repository.getOffers('post_ad_supporter');
+        await tick();
+        const purchase = f.repository.purchase(offer);
+        const identifying = f.repository.identify(next ? account(next) : null);
+        pending.resolve(offering());
+        await Promise.all([loading, identifying]);
+        assert.equal(await purchase, false);
+        assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+        assert.equal(f.repository.getState().purchasing, null);
+    });
+}
+
+test('web checkout rechecks the SDK identity after waiting for queued work', async () => {
+    const pending = deferred();
+    const f = fixture({overrides: {offers: placement => placement === 'post_ad_supporter' ? pending.promise : offering()}});
+    await f.repository.identify(account('A'));
+    const offer = selectedOffer(f.repository);
+    const loading = f.repository.getOffers('post_ad_supporter');
+    await tick();
+    const purchase = f.repository.purchase(offer);
+    f.sdk.userId = '$RCAnonymousID:unexpected';
+    pending.resolve(offering());
+    await loading;
+    assert.equal(await purchase, false);
+    assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+    assert.equal(f.repository.getState().purchasing, null);
+});
+
+test('failed web identification cannot purchase with the prior anonymous offer', async () => {
+    const f = fixture({overrides: {identify: async () => { throw Error('unavailable'); }}});
+    await f.repository.identify(null);
+    const offer = selectedOffer(f.repository);
+    await f.repository.identify(account('A'));
+    assert.equal(await f.repository.purchase(offer), false);
+    assert.equal(f.calls.some(call => call.method === 'purchase'), false);
+});
+
 test('web initialization waits for resolved auth and configures once across concurrent callers', async () => {
     const f = fixture();
     await Promise.all([f.repository.init(), f.repository.init()]);
@@ -350,7 +429,7 @@ test('a checkout queued behind placement exclusion cannot use the removed packag
     const pendingOffers = deferred();
     let refreshOffers = false;
     const f = fixture({overrides: {offers: () => refreshOffers ? pendingOffers.promise : offering()}});
-    await f.repository.identify(null);
+    await f.repository.identify(account('A'));
     const oldOffer = selectedOffer(f.repository);
     refreshOffers = true;
     const offers = f.repository.getOffers('settings_supporter');
@@ -388,7 +467,7 @@ test('placement packages preserve price, period, offering and exact purchase/imp
     const postAdPackage = pkg('$rc_monthly', 'Other placement product');
     const postAd = offering('post-ad', [postAdPackage]);
     const f = fixture({overrides: {offers: placement => placement === 'settings_supporter' ? settings : postAd}});
-    await f.repository.identify(null);
+    await f.repository.identify(account('A'));
     const settingsOffer = f.repository.getState().offers[0];
     const [other] = await f.repository.getOffers('post_ad_supporter');
     assert.notEqual(settingsOffer.id, other.id);
@@ -426,7 +505,7 @@ test('checkout failure reasons retain cancellation, pending and already-purchase
     for (const [code, reason] of [[1, 'cancelled'], [6, 'already_purchased'], [20, 'pending'], [0, 'unknown']]) {
         let f;
         f = fixture({overrides: {purchase: () => { throw new f.PurchasesError(code); }}});
-        await f.repository.identify(null);
+        await f.repository.identify(account('A'));
         assert.equal(await f.repository.purchase(selectedOffer(f.repository)), false);
         assert.equal(f.repository.getState().purchasing, null);
         assert.equal(f.repository.getState().failure, reason);
