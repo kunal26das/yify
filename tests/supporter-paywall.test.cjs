@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const React = require('react');
 const {act, create} = require('react-test-renderer');
+const createDOMProps = require('react-native-web/dist/cjs/modules/createDOMProps');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -440,6 +441,21 @@ test('a settled removed selection falls back to a real plan and announces review
     assert.deepEqual(f.calls.purchase, ['annual']);
 });
 
+test('the initially selected yearly plan is remembered and its removal requires review', async t => {
+    const f = await fixture(t, {offers: [
+        plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]});
+    await f.open();
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true, false]);
+    f.setOffers([plan('monthly')]);
+    await f.update({failure: 'offer_unavailable'});
+    await f.press('Reload plans');
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true]);
+    assert.match(f.text(), /Your selected plan is no longer available\. Review the available plan before subscribing\./);
+    assert.ok(f.pressable('Subscribe for $2.99 / month'));
+    assert.deepEqual(f.calls.purchase, []);
+});
+
 test('account remount resets selection and rejects a prior account checkout handler', async t => {
     const f = await fixture(t, {offers: [
         plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
@@ -461,6 +477,7 @@ test('web radios rove tab focus and change selection with arrows and Space witho
     await f.open();
     assert.equal(f.renderer.root.findAllByProps({accessibilityRole: 'radiogroup'}).length, 1);
     assert.deepEqual(f.radios().map(node => node.props.tabIndex), [0, -1]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [true, false]);
     const pressKey = async (index, key) => {
         let prevented = false;
         await act(async () => f.radios()[index].props.onKeyDown({nativeEvent: {key}, preventDefault() {prevented = true;}}));
@@ -468,9 +485,13 @@ test('web radios rove tab focus and change selection with arrows and Space witho
     };
     await pressKey(0, 'ArrowDown');
     assert.deepEqual(f.radios().map(node => node.props.tabIndex), [-1, 0]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [false, true]);
     await pressKey(0, ' ');
     assert.deepEqual(f.radios().map(node => node.props.tabIndex), [0, -1]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [true, false]);
     assert.deepEqual(f.calls.purchase, []);
+    await f.update({refreshing: true});
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-disabled']), [true, true]);
 });
 
 test('a sole real prepaid yearly offer uses its localized prepaid terms without a monthly placeholder', async t => {

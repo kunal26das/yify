@@ -139,6 +139,11 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     }, [state.adsRemoved]);
 
     useEffect(() => {
+        if (loading || !state.ready || !state.available || !selectedOffer || selectedId !== null) return;
+        setSelectedId(current => current ?? selectedOffer.id);
+    }, [loading, state.ready, state.available, selectedOffer, selectedId]);
+
+    useEffect(() => {
         if (loading || !state.ready || !state.available || !selectedMissing || !selectedOffer) return;
         setSelectedId(selectedOffer.id);
         setNotice('Your selected plan is no longer available. Review the available plan before subscribing.');
@@ -313,6 +318,8 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
                 const label = `${offer.billingPeriod === 'P1Y' ? 'Yearly Plus' : 'Monthly Plus'}. ${offerDisclosure(offer)}`;
                 return <Pressable key={offer.id} ref={node => { if (node) planRefs.current.set(offer.id, node); else planRefs.current.delete(offer.id); }}
                     accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{checked, disabled: selectionDisabled}}
+                    aria-checked={Platform.OS === 'web' ? checked : undefined}
+                    aria-disabled={Platform.OS === 'web' ? selectionDisabled : undefined}
                     disabled={selectionDisabled} tabIndex={Platform.OS === 'web' ? checked ? 0 : -1 : undefined}
                     onFocus={() => setFocusedId(offer.id)} onBlur={() => setFocusedId(current => current === offer.id ? null : current)}
                     onKeyDown={Platform.OS === 'web' ? event => {
