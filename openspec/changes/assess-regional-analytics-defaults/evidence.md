@@ -43,7 +43,9 @@ node --test tests/privacy-preferences.test.cjs tests/privacy-gate.test.cjs tests
 
 This checks current mocked behavior, not the proposed policy, live vendor requests or legal compliance. No code changed; repeating the app suite or exports would not validate a new regional configuration.
 
-Source-only privacy and UX reviews found the legacy-refusal migration risk and recommended preserving current runtime behavior while preparing this specification. Requested review settings were Astra/high for privacy and design, Sol/medium for baseline QA; effective model/effort was not independently exposed. Final artifact review and strict validation are recorded after completion.
+Source-only privacy and UX reviews found the legacy-refusal migration risk and recommended preserving current runtime behavior while preparing this specification. Both accepted planning commit `5537e6327b73708f7248d4636b74310b18bc1b31`. Independent artifact review found one omission: future public-policy reconciliation and deployed-notice verification were not explicit release prerequisites. The follow-up adds those requirements without changing the current public policy. Final acceptance and draft-delivery receipts are recorded in the PR.
+
+Strict OpenSpec validation passed all 13 active/canonical items and six archived changes; doctor reported a healthy root with no findings. Requested review settings were Astra/high for privacy, design and independent review, Sol/medium for baseline QA; effective model/effort was not independently exposed. These are planning and current-behavior checks, not a completed regional rollout.
 
 ## Remaining prerequisites
 

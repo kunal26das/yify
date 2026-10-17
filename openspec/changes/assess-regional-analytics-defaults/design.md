@@ -41,6 +41,8 @@ Do not reuse the streaming-country preference, language or payment country as pr
 
 Retain the existing welcome card and Preferences layout. Product analytics and advertising purposes need accurately separated controls and provider descriptions. The default-on state must say it is a regional default and offer immediate refusal. Continue with an untouched switch is not affirmative consent. Displayed or submitted choices take precedence over a later policy lookup.
 
+Before activating any cohort, reconcile `public/privacy.html`, the processing register and affected store disclosures with the actual implemented purposes and defaults. Verify the deployed public notice rather than only the local file. The existing policy's opt-in promise remains accurate and unchanged during this planning work.
+
 Where eligibility is unresolved, entry remains possible with analytics off. The adult declaration does not become analytics consent. Keep YouTube permission and Google UMP/CMP decisions independent. Honor relevant platform restrictions and privacy signals for the processing to which they apply; do not assume GPC bans every form of first-party statistics or ignore it for regulated sharing.
 
 ### Keep rollout evidence distinct from permission evidence
@@ -63,6 +65,6 @@ The baseline is globally opt-in measurement with no approved regional default. S
 2. Implement and independently test receipt migration before any default can become active. Keep a kill switch that disables regional defaults without erasing explicit decisions.
 3. Implement the separated purpose decisions and accurate notices. Recheck provider contracts/configuration, runtime compatibility and actual outbound traffic with isolated fixtures before bounded live verification.
 4. After review, release web through existing CI and compatible Android code through the established OTA route. Native SDK default changes require a new runtime/binary; no OTA may claim to change pre-JavaScript defaults. iOS release remains outside current authorization/setup.
-5. Verify receipt migration and actual delivery before enabling an assessed cohort. Roll back by disabling the affected default and confirming transport shutdown; restore the prior tested release for a code regression. Preserve explicit refusals throughout.
+5. Verify receipt migration, deployed public disclosures and actual delivery before enabling an assessed cohort. Roll back by disabling the affected default and confirming transport shutdown; restore the prior tested release for a code regression. Preserve explicit refusals throughout.
 
 No implementation or deployment is performed by this planning change. The [tasks](tasks.md) separate completed preparation from prerequisite evidence, code, publication and observed outcomes.

@@ -49,12 +49,16 @@ The system SHALL distinguish defined product analytics from advertising measurem
 
 ### Requirement: Defaults and explicit choices are explained accurately
 
-The system SHALL explain the enabled purpose, providers and available refusal before optional collection starts. Users SHALL be able to enter and use the app with optional analytics off. Continuing with an untouched default-on control SHALL NOT be recorded as affirmative consent.
+The system SHALL explain the enabled purpose, providers and available refusal before optional collection starts. App notices and the published privacy policy SHALL accurately describe the same effective behavior. Users SHALL be able to enter and use the app with optional analytics off. Continuing with an untouched default-on control SHALL NOT be recorded as affirmative consent.
 
 #### Scenario: A permitted default is displayed
 - **WHEN** a new user is eligible for a regional default
 - **THEN** the control explains that the measurement is on by regional default and can be turned off immediately or in Privacy preferences
 - **AND** keyboard and assistive-technology users can make the same choice
+
+#### Scenario: Public disclosures still describe the prior opt-in behavior
+- **WHEN** a proposed cohort would use defaults or separated purposes inconsistent with the published privacy policy
+- **THEN** cohort activation waits until the deployed policy and affected disclosures accurately describe that behavior
 
 ### Requirement: Changes stop stale optional work
 

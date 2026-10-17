@@ -20,12 +20,13 @@ This change prepares a policy and implementation contract. No regional collectio
 - [ ] 3.1 Implement per-purpose receipt provenance and migration; document the schema and prove old refusals survive notice upgrades, travel and account changes, while corrupt/unwritable records cannot authorize defaults.
 - [ ] 3.2 Implement the domain eligibility policy and separated native/web sink decisions; document the boundaries and test policy expiry, absent entries, asynchronous withdrawal/regrant, stale queues, ad independence and requested services with analytics off.
 - [ ] 3.3 Implement accurate welcome/Preferences notices in existing layouts; document copy and inspect Android/web/applicable iOS renders for keyboard/focus, screen readers, large text, narrow screens, themes and storage-error recovery.
-- [ ] 3.4 Verify provider request/storage behavior for the approved exact configurations with isolated test services followed by bounded authorized live checks; record refused/approved/withdrawn states, GPC where relevant, and actual provider configuration without secrets.
+- [ ] 3.4 Reconcile public/privacy.html, the processing register and affected store disclosures with the implemented purposes/defaults; verify their accuracy and the deployed public notice before any assessed cohort activates.
+- [ ] 3.5 Verify provider request/storage behavior for the approved exact configurations with isolated test services followed by bounded authorized live checks; record refused/approved/withdrawn states, GPC where relevant, and actual provider configuration without secrets.
 
 ## 4. Later release and observation
 
 - [ ] 4.1 Complete independent final-code review and required app/typecheck/export/spec gates; release only reviewed targets through established CI/EAS routes and record exact source, runtime, deployment and delivery receipts. Native configuration changes require a new binary/runtime; no iOS publication is included.
-- [ ] 4.2 Enable only the assessed cohort after notice/migration verification; verify kill-switch shutdown, preserve explicit choices and observe a seven-day pilot. Stop on unapproved payloads, overridden refusal or stale-event leakage; record the actual result before calling the rollout complete.
+- [ ] 4.2 Enable only the assessed cohort after deployed public-notice and receipt-migration verification; verify kill-switch shutdown, preserve explicit choices and observe a seven-day pilot. Stop on unapproved payloads, overridden refusal or stale-event leakage; record the actual result before calling the rollout complete.
 
 ## Workflow follow-up
 
