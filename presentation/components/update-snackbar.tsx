@@ -88,8 +88,9 @@ export function UpdateSnackbar() {
                         pressedScale={0.92}
                         pressedOpacity={0.7}
                         hoveredScale={1.05}
+                        contentStyle={[styles.action, {backgroundColor: colors.accentStrong}]}
                     >
-                        <ThemedText style={[styles.action, {color: colors.accentSecondary}]}>
+                        <ThemedText style={[styles.actionText, {color: colors.onAccent}]}>
                             Restart
                         </ThemedText>
                     </PressableScale>
@@ -142,5 +143,6 @@ const styles = StyleSheet.create({
     message: {color: '#fff', fontSize: 14, fontFamily: FontFamily.semibold},
     track: {height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)', overflow: 'hidden'},
     fill: {height: 3, borderRadius: 2},
-    action: {fontSize: 14, fontFamily: FontFamily.bold},
+    action: {minHeight: 44, paddingHorizontal: Spacing.md, justifyContent: 'center', alignItems: 'center', borderRadius: Radius.pill},
+    actionText: {fontSize: 14, fontFamily: FontFamily.bold},
 });

@@ -1,0 +1,13 @@
+# Design
+
+Preserve Lora display/Hanken Grotesk body typography, existing light/dark tokens, rounded surfaces and responsive gutters. Use accentStrong/onAccent for filled primary actions; accent remains appropriate for decoration and text where already intended.
+
+Compact navigation uses full-label horizontal scrolling rather than compressing four destinations into equal narrow slots. Share text-scale-aware row dimensions with content's header offset; reveal active/focused destinations and preserve at least 44 logical pixels of hit area. Journal actions/tabs/periods wrap within their actual available width, grow vertically for text and center button labels. Guest Journal uses a readable centered maximum width with safe bottom spacing. Onboarding keeps every disclosure/default unchanged but places the optional analytics description below its heading/switch row.
+
+Keep one Plus plan/action group with actual billing disclosures and single checkout/sign-in action. Separate existing-purchase utilities with a restrained divider and context heading. Notices are in-flow, polite and visually distinct. A cached ad-free grant still suppresses duplicate checkout and ads but does not assert verified active benefits or renewal information. Recovery wording must name a real available action. Existing payment-pending and account/session guards remain unchanged.
+
+A missing series gets an honest unavailable state with existing browse/retry actions. A successful valid title with no episodes remains a different state. Free journal save offers 'Explore Plus insights'; verified members retain 'View insights'. No artificial urgency, fictional usage, savings badge or automatic purchase is introduced.
+
+Validate source behavior and affected regression tests, typecheck/full suite, strict specs, exact pins/native guards and both web exports. Independently inspect final source and rendered 320px, short-landscape, desktop, enlarged-text and theme states with production services blocked. Isolated browser rendering does not prove native typography/assistive technology or payment service behavior. Deliver through required PR CI and normal web/compatible Android OTA workflow within standing authority; retain exact receipts and rollback source. Preserve unfinished Compose work and clean task helpers/branches.
+
+Use the existing release-specific growth measurement window rather than introduce a new experiment or analytics event. No measured conversion baseline or uplift is established here. Roll back affected presentation for navigation, account, checkout, privacy, startup or playback regressions.

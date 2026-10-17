@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {usePathname} from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {Platform, ScrollView, StyleSheet, TextInput, View} from 'react-native';
+import {Platform, ScrollView, StyleSheet, TextInput, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ThemedText} from '../../components/themed-text';
 import {PressableScale} from '../../components/motion';
@@ -37,8 +37,14 @@ const NAV_LINKS: readonly NavLink[] = DESTINATIONS.filter(
     (destination) => destination.key !== 'home' && destination.key !== 'history'
 );
 
-function usesStackedNavigation(width: number): boolean {
-    return width > 0 && width < 520;
+function navigationMetrics(width: number, fontScale: number) {
+    const scale = Number.isFinite(fontScale) ? Math.max(1, fontScale) : 1;
+    return {
+        stacked: width > 0 && width / scale < 520,
+        compact: width / scale < 900,
+        rowHeight: Math.max(TOP_BAR_ROW_HEIGHT, 34 * scale + 24),
+        navHeight: Math.max(STACKED_NAV_HEIGHT, 20 * scale + 24),
+    };
 }
 
 export function TopBar() {
@@ -49,8 +55,27 @@ export function TopBar() {
     const insets = useSafeAreaInsets();
     const {colors} = usePalette();
     const {width, isPhone, gutter} = useResponsive();
-    const compact = width < 900;
-    const stacked = usesStackedNavigation(width);
+    const {fontScale} = useWindowDimensions();
+    const {compact, stacked, rowHeight, navHeight} = navigationMetrics(width, fontScale);
+    const navScroll = useRef<ScrollView>(null);
+    const navViewport = useRef(0);
+    const navOffset = useRef(0);
+    const navItems = useRef(new Map<NavKey, {x: number; width: number}>());
+    const revealLink = useCallback((key?: NavKey) => {
+        if (!key) return;
+        const item = navItems.current.get(key);
+        const width = navViewport.current;
+        if (!item || width <= 0 || !navScroll.current) return;
+        const current = navOffset.current;
+        const edge = Spacing.md;
+        const target = item.x < current + edge ? Math.max(0, item.x - edge) : item.x + item.width > current + width - edge
+            ? Math.max(0, item.x + item.width - width + edge) : current;
+        if (target !== current) {
+            navOffset.current = target;
+            navScroll.current.scrollTo({x: target, animated: false});
+        }
+    }, []);
+    useEffect(() => { revealLink(active); }, [active, compact, stacked, fontScale, revealLink]);
     const goTo = useGoTo();
     const [query, setQuery] = useState(searchValue ?? '');
     const [searchFocused, setSearchFocused] = useState(false);
@@ -110,7 +135,12 @@ export function TopBar() {
                 accessibilityState={{selected}}
                 pressedScale={0.98}
                 pressedOpacity={0.6}
-                style={stacked ? styles.stackedLinkHit : undefined}
+                style={styles.navLinkHit}
+                onFocus={() => revealLink(link.key)}
+                onLayout={event => {
+                    navItems.current.set(link.key, event.nativeEvent.layout);
+                    if (selected) revealLink(link.key);
+                }}
                 contentStyle={styles.link}
             >
                 <ThemedText
@@ -235,7 +265,7 @@ export function TopBar() {
 
     return (
         <View style={[styles.bar, {paddingTop: insets.top, backgroundColor: colors.background, borderBottomColor: colors.border}]}>
-            <View style={[styles.row, isPhone && styles.rowPhone, {paddingHorizontal: gutter}]}>
+            <View style={[styles.row, isPhone && styles.rowPhone, {paddingHorizontal: gutter, height: rowHeight}]}>
                 <NavigationLink
                     href="/"
                     onNavigate={() => navigate('home', '/')}
@@ -256,6 +286,11 @@ export function TopBar() {
                     <>
                         {stacked ? <View style={styles.spacer}/> : (
                             <ScrollView
+                                ref={navScroll}
+                                onLayout={event => { navViewport.current = event.nativeEvent.layout.width; revealLink(active); }}
+                                onScroll={event => { navOffset.current = event.nativeEvent.contentOffset.x; }}
+                                onContentSizeChange={() => revealLink(active)}
+                                scrollEventThrottle={16}
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                                 contentContainerStyle={[styles.links, styles.linksCompact]}
@@ -291,9 +326,13 @@ export function TopBar() {
             </View>
 
             {stacked ? (
-                <View style={[styles.stackedLinks, {paddingHorizontal: gutter}]}>
+                <ScrollView ref={navScroll} horizontal showsHorizontalScrollIndicator={false}
+                    onLayout={event => { navViewport.current = event.nativeEvent.layout.width; revealLink(active); }}
+                    onScroll={event => { navOffset.current = event.nativeEvent.contentOffset.x; }}
+                    onContentSizeChange={() => revealLink(active)} scrollEventThrottle={16}
+                    style={{height: navHeight}} contentContainerStyle={[styles.stackedLinks, {paddingHorizontal: gutter}]}>
                     {links.map(renderLink)}
-                </View>
+                </ScrollView>
             ) : null}
 
             {below}
@@ -313,7 +352,9 @@ export function TopBar() {
 export function useTopBarHeight(): number {
     const insets = useSafeAreaInsets();
     const {width} = useResponsive();
-    return insets.top + TOP_BAR_ROW_HEIGHT + (usesStackedNavigation(width) ? STACKED_NAV_HEIGHT : 0);
+    const {fontScale} = useWindowDimensions();
+    const {rowHeight, navHeight, stacked} = navigationMetrics(width, fontScale);
+    return insets.top + rowHeight + (stacked ? navHeight : 0);
 }
 
 const styles = StyleSheet.create({
@@ -345,8 +386,8 @@ const styles = StyleSheet.create({
     wordmarkPhone: {fontSize: 23, lineHeight: 30, letterSpacing: -1},
     links: {flexDirection: 'row', alignItems: 'center', gap: Spacing.xl},
     linksCompact: {gap: Spacing.md},
-    stackedLinks: {height: STACKED_NAV_HEIGHT, flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
-    stackedLinkHit: {flex: 1},
+    stackedLinks: {flexGrow: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.md},
+    navLinkHit: {flexShrink: 0},
     spacer: {flex: 1},
     phoneLinks: {flex: 1, minWidth: 0},
     link: {minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.sm, flexShrink: 0},

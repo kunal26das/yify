@@ -27,7 +27,10 @@ export function purchaseLabel(offer: PurchaseOffer): string {
 }
 
 export function supporterStatus(state: PurchaseState): string {
-    if (state.billingIssue) return 'There is a payment issue. Open billing settings to update your payment method.';
+    if (!state.ready && state.adsRemoved) return 'Your saved Plus access needs to be verified. Refresh access to confirm it.';
+    if (state.billingIssue) return safeManagementURL(state.managementURL)
+        ? 'There is a payment issue. Choose Manage billing or cancel to update your payment method.'
+        : 'There is a payment issue. Check your subscription in the store where you paid, then refresh access.';
     const date = state.expiresAt ? new Date(state.expiresAt) : null;
     const formatted = date && Number.isFinite(date.getTime()) ? date.toLocaleDateString() : null;
     if (state.adsRemoved && formatted) {

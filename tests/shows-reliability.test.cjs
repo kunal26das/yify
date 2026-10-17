@@ -158,6 +158,7 @@ test('replacing the series repository resets the visible feed before the replace
     assert.equal(hook.value.status, 'ready');
 });
 
+const detailNavigations = [];
 const nativeMocks = {
     ...dependencies,
     'react-native': {
@@ -180,6 +181,8 @@ const nativeMocks = {
     './useWatchHistory': {useRecordHistory: () => noop},
     './components/TorrentNoticeSheet': {TorrentNoticeSheet: 'TorrentNoticeSheet'},
     './components/WatchProviders': {WatchProviders: 'WatchProviders'},
+    './components/TopBar': {useTopBarHeight: () => 60},
+    './constants/destinations': {useGoTo: () => href => detailNavigations.push(href)},
 };
 const {ShowDetailsScreen} = loadTypeScript('presentation/movies/ShowDetailsScreen.tsx', nativeMocks);
 const nodeText = node => typeof node === 'string' ? node : node.children?.map(nodeText).join('') ?? '';
@@ -207,6 +210,38 @@ test('episode failures show a retry instead of a successful empty result', async
     fail = false;
     const retry = renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel === 'Retry episode releases');
     await act(async () => retry.props.onPress());
+    assert.ok(hasText(renderer, 'No episode releases are listed for this series.'));
+});
+
+test('a missing series has its own recovery state instead of a generic empty episode list', async t => {
+    const renderer = await mountDetails(t, {
+        imdbId: '404',
+        shows: {async listShows() { return result(null); }, async listEpisodes() { return []; }},
+        artwork: {async findByImdbCode() { return null; }},
+    });
+    assert.ok(hasText(renderer, 'Series not found'));
+    assert.equal(hasText(renderer, 'No episode releases are listed for this series.'), false);
+    const browse = renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel === 'Browse shows');
+    await act(async () => browse.props.onPress());
+    assert.equal(detailNavigations.at(-1), '/shows');
+});
+
+test('failed series lookup with no episode data offers retry rather than claiming no series exists', async t => {
+    let fail = true;
+    const renderer = await mountDetails(t, {
+        imdbId: '1',
+        shows: {
+            async listShows() { if (fail) throw new Error('offline'); return result(1); },
+            async listEpisodes() { return []; },
+        },
+        artwork: {async findByImdbCode() { return null; }},
+    });
+    assert.ok(hasText(renderer, 'Series information couldn’t load'));
+    assert.equal(hasText(renderer, 'Series not found'), false);
+    fail = false;
+    const retry = renderer.root.findAllByType('PressableScale').find(node => node.props.accessibilityLabel === 'Retry series information');
+    await act(async () => retry.props.onPress());
+    assert.ok(hasText(renderer, 'Series 1'));
     assert.ok(hasText(renderer, 'No episode releases are listed for this series.'));
 });
 

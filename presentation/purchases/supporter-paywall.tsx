@@ -287,7 +287,10 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         planRefs.current.get(next.id)?.focus();
         return true;
     };
-    const heading = <ThemedText accessibilityRole="header" type="heading" style={[styles.title, !headingInContent && !inline ? styles.heading : undefined]}>{state.adsRemoved ? 'Your Plus access' : 'Yify Plus'}</ThemedText>;
+    const canReload = !state.adsRemoved && state.available && state.ready && (offers.length === 0 || state.failure === 'offer_unavailable');
+    const canRefresh = !state.ready || state.adsRemoved || !!message || !!state.expiresAt || state.billingIssue;
+    const hasUtilities = !!managementURL || !!session.account || canReload || canRefresh;
+    const heading = <ThemedText accessibilityRole="header" type="heading" style={[styles.title, !headingInContent && !inline ? styles.heading : undefined]}>{paymentUnconfirmed ? 'Checking your purchase' : state.adsRemoved ? 'Your Plus access' : 'Yify Plus'}</ThemedText>;
     const openJournal = (insights: boolean) => {
         if (busy || operationRef.current || request.cancelled || closed.current || (inline && !active)) return;
         if (inline) (insights ? onOpenInsights : onOpenJournal)?.();
@@ -299,18 +302,20 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     const body = <>
         {inline || headingInContent ? heading : null}
         {state.adsRemoved ? <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{supporterStatus(state)}</ThemedText> : null}
-        <SupporterBenefits active={state.adsRemoved}/>
+        <SupporterBenefits active={state.ready && state.adsRemoved}/>
         {!state.adsRemoved ? <ThemedText style={[styles.copy, {color: colors.textMuted}]}>Browsing, watchlists and journal entries stay free.</ThemedText> : null}
         {!state.adsRemoved && (state.expiresAt || state.billingIssue) ? <ThemedText style={styles.copy}>{supporterStatus(state)}</ThemedText> : null}
         {state.adsRemoved ? <>
-            <PaywallButton label="Open viewing insights" onPress={() => openJournal(true)} disabled={busy} primary/>
+            <PaywallButton label="Open viewing insights" onPress={() => openJournal(true)} disabled={busy || !state.ready} primary/>
             <PaywallButton label="Open movie journal" onPress={() => openJournal(false)} disabled={busy}/>
             <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Start by logging a movie in your free journal. Your insights grow with the watches and ratings you add.</ThemedText>
         </> : null}
         {loading || state.refreshing ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading Plus options"/> : null}
-        {!state.available || !state.ready ? <ThemedText style={styles.copy}>{state.available
+        {!state.adsRemoved && (!state.available || !state.ready) ? <ThemedText style={styles.copy}>{state.available
             ? 'Plus options are not connected yet. Use Refresh access below to try again.'
             : 'Purchases are unavailable in this version of the app. Your free features are still available.'}</ThemedText> : null}
+        {!state.adsRemoved && !paymentUnconfirmed && ((!loading && state.ready && state.available) || (!session.account && state.available)) ? <View style={styles.planSection}>
+            {!state.adsRemoved && !loading && !paymentUnconfirmed && offers.length > 1 ? <ThemedText type="defaultSemiBold">Choose your plan</ThemedText> : null}
         {!state.adsRemoved && state.ready && !loading && !paymentUnconfirmed && offers.length > 0 ? <View
             accessibilityRole="radiogroup" accessibilityLabel="Choose your Plus plan" style={styles.plans}>
             {offers.map((offer, index) => {
@@ -355,12 +360,18 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
             <PaywallButton label={session.signingIn ? 'Signing in…' : session.available ? 'Sign in with Google' : 'Sign-in unavailable'}
                 onPress={signIn} disabled={busy || !session.ready || !session.available} primary/>
         </> : null}
-        {message ? <ThemedText accessibilityLiveRegion="polite" style={[styles.copy, {color: colors.accent}]}>{message}</ThemedText> : null}
-        {!state.adsRemoved && state.available && state.ready && (offers.length === 0 || state.failure === 'offer_unavailable') ? <PaywallButton label="Reload plans" onPress={() => { setReload((value) => value + 1); }} disabled={busy || loading}/> : null}
-        {managementURL ? <PaywallButton label="Manage billing or cancel" onPress={() => { void openLink(managementURL); }} disabled={busy}/> : null}
-        {session.account ? <PaywallButton label={state.restoring ? 'Checking purchases…' : Platform.OS === 'web' ? 'Check account purchases' : 'Restore purchases'}
-            onPress={restore} disabled={busy || !state.ready || !state.available}/> : null}
-        {!state.ready || state.adsRemoved || message || state.expiresAt || state.billingIssue ? <PaywallButton label={state.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => { void refresh(); }} disabled={busy || !state.available}/> : null}
+        </View> : null}
+        {message ? <View style={[styles.notice, {backgroundColor: colors.accentSoft, borderColor: colors.border}]}>
+            <ThemedText accessibilityLiveRegion="polite" style={styles.copy}>{message}</ThemedText>
+        </View> : null}
+        {hasUtilities ? <View style={[styles.utilities, {borderTopColor: colors.border}]}>
+            <ThemedText type="defaultSemiBold">{paymentUnconfirmed ? 'Check your purchase' : state.adsRemoved ? 'Manage your access' : 'Already have Plus?'}</ThemedText>
+            {canReload ? <PaywallButton label="Reload plans" onPress={() => { setReload((value) => value + 1); }} disabled={busy || loading}/> : null}
+            {managementURL ? <PaywallButton label="Manage billing or cancel" onPress={() => { void openLink(managementURL); }} disabled={busy}/> : null}
+            {session.account ? <PaywallButton label={state.restoring ? 'Checking purchases…' : Platform.OS === 'web' ? 'Check account purchases' : 'Restore purchases'}
+                onPress={restore} disabled={busy || !state.ready || !state.available}/> : null}
+            {canRefresh ? <PaywallButton label={state.refreshing ? 'Checking access…' : 'Refresh access'} onPress={() => { void refresh(); }} disabled={busy || !state.available}/> : null}
+        </View> : null}
         <ThemedText style={[styles.fine, {color: colors.textMuted}]}>Any eligible trial or introductory offer and final billing details are confirmed at checkout. Manage or cancel a subscription in the store where you paid. Cancellation keeps access until the paid period ends.</ThemedText>
         <View style={styles.legal}>
             {LEGAL_LINKS.map(link => <Pressable key={link.url} accessibilityRole="link"
@@ -411,6 +422,9 @@ const styles = StyleSheet.create({
     heading: {flex: 1, minWidth: 0}, close: {minHeight: 44, minWidth: 48, flexShrink: 0, alignItems: 'center', justifyContent: 'center'},
     scroll: {flexShrink: 1, minHeight: 0},
     content: {padding: 20, paddingTop: 0, gap: 14}, copy: {fontSize: 15, lineHeight: 22},
+    planSection: {gap: 14},
+    utilities: {gap: 12, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 16},
+    notice: {padding: 14, borderWidth: 1, borderRadius: 14},
     plans: {gap: 12},
     plan: {padding: 16, borderWidth: 1, borderRadius: 16}, planRow: {flexDirection: 'row', gap: 12, alignItems: 'flex-start'},
     planCopy: {flex: 1, minWidth: 0, gap: 8}, planTitle: {fontSize: 18, fontWeight: '700'},

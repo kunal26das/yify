@@ -152,11 +152,11 @@ test('billing copy uses actual monthly, annual, multi-month, prepaid, and one-ti
 test('status distinguishes active renewal, cancelled access, lapsed access and payment issues', () => {
     const future = '2035-01-15T00:00:00Z';
     const date = new Date(future).toLocaleDateString();
-    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: future, willRenew: true}), `Your Plus membership renews on ${date}.`);
-    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: future}), `Your access continues until ${date}.`);
+    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, ready: true, adsRemoved: true, expiresAt: future, willRenew: true}), `Your Plus membership renews on ${date}.`);
+    assert.equal(supporterStatus({...INITIAL_PURCHASE_STATE, ready: true, adsRemoved: true, expiresAt: future}), `Your access continues until ${date}.`);
     assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, expiresAt: '2020-01-01T00:00:00Z'}), /access ended on/);
     assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, billingIssue: true}), /payment issue/);
-    assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: true, expiresAt: 'invalid'}), /access is active/);
+    assert.match(supporterStatus({...INITIAL_PURCHASE_STATE, ready: true, adsRemoved: true, expiresAt: 'invalid'}), /access is active/);
     assert.doesNotMatch(supporterStatus({...INITIAL_PURCHASE_STATE, adsRemoved: false, expiresAt: 'invalid'}), /access is active/);
 });
 
@@ -847,4 +847,27 @@ test('a confirmed grant after a pending payment replaces stale pending copy with
     assert.doesNotMatch(f.text(), /payment is pending|do not need to pay again/);
     assert.ok(f.pressable('Open viewing insights'));
     assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+});
+
+
+test('cached Plus access is not described as verified and cannot start another payment', async t => {
+    const f = await fixture(t, {inline: true, state: {ready: false, adsRemoved: true, expiresAt: '2030-01-01T00:00:00Z', willRenew: true}});
+    assert.match(f.text(), /saved Plus access needs to be verified/);
+    assert.doesNotMatch(f.text(), /Your benefits are active|membership renews on|access is now active/);
+    assert.equal(f.pressable('Open viewing insights').props.disabled, true);
+    assert.equal(f.radios().length, 0);
+    assert.equal(f.calls.purchase.length, 0);
+    await f.update({ready: true});
+    assert.match(f.text(), /Your benefits are active/);
+    assert.equal(f.pressable('Open viewing insights').props.disabled, false);
+});
+
+test('billing recovery copy names an available action or the original store', () => {
+    const state = {...INITIAL_PURCHASE_STATE, ready: true, billingIssue: true};
+    assert.match(supporterStatus({...state, managementURL: 'https://billing.example.test/manage'}), /Choose Manage billing or cancel/);
+    for (const managementURL of [null, 'javascript:alert(1)', 'https://user:password@example.test']) {
+        const copy = supporterStatus({...state, managementURL});
+        assert.match(copy, /store where you paid, then refresh access/);
+        assert.doesNotMatch(copy, /Choose Manage billing/);
+    }
 });

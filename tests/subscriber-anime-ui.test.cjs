@@ -19,7 +19,7 @@ function fixture({width = 390} = {}) {
     const auth = {useAuth: () => ({ready: true, account})};
     const responsive = {useResponsive: () => ({width, isPhone: width < 600, gutter: 16})};
     const palette = {usePalette: () => ({colors: new Proxy({}, {get: () => '#333333'})})};
-    const native = {ActivityIndicator: 'Spinner', View: 'View', ScrollView: 'ScrollView', TextInput: 'Input',
+    const native = {useWindowDimensions: () => ({width, height: 800, fontScale: 1}), ActivityIndicator: 'Spinner', View: 'View', ScrollView: 'ScrollView', TextInput: 'Input',
         Platform: {OS: 'web', select: values => values.web ?? values.default},
         StyleSheet: {create: value => value, hairlineWidth: 1}};
     const destinations = loadTypeScript('presentation/movies/constants/destinations.ts', {

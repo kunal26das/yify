@@ -135,7 +135,7 @@ for (const platform of ['android', 'ios']) {
         assert.equal(f.calls.saved.length, 1); assert.equal(f.calls.saved[0].movie.id, movie.id);
         assert.equal(f.renderer.root.findAllByType('Sheet').length, 0);
         assert.deepEqual(f.calls.sheetOrder.map(([action]) => action), ['present', 'dismiss']);
-        assert.ok(f.button('View insights'));
+        assert.ok(f.button('Explore Plus insights'));
         assert.deepEqual(f.calls.watched, []); assert.deepEqual(f.calls.removed, []);
     });
 }
@@ -150,7 +150,7 @@ test('large iOS journal selection keeps the same visible native modal until save
     await f.press('Save entry');
     assert.deepEqual(f.calls.modalVisibility, [[1, false], [1, true], [1, false]]);
     assert.equal(f.calls.saved.length, 1);
-    assert.ok(f.button('View insights'));
+    assert.ok(f.button('Explore Plus insights'));
 });
 
 for (const {platform, large} of [{platform: 'android', large: false}, {platform: 'ios', large: true}]) {

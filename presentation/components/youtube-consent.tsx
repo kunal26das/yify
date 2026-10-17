@@ -33,7 +33,7 @@ export function YoutubeConsent({children}: {children: ReactNode}) {
             </ThemedText>
             <View style={styles.actions}>
                 <Pressable accessibilityRole="button" accessibilityLabel="Allow YouTube trailers"
-                    onPress={allow} style={[styles.button, {backgroundColor: colors.accent}]}>
+                    onPress={allow} style={[styles.button, {backgroundColor: colors.accentStrong}]}>
                     <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>Allow YouTube</ThemedText>
                 </Pressable>
                 <Pressable accessibilityRole="link" accessibilityLabel="YouTube privacy policy"

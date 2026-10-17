@@ -18,6 +18,6 @@ export function SupporterBenefits({active = false}: {active?: boolean}) {
 }
 
 const styles = StyleSheet.create({
-    benefit: {gap: 4, paddingTop: 12},
-    preview: {padding: 14, borderWidth: 1, borderRadius: 16, gap: 4},
+    benefit: {gap: 4},
+    preview: {padding: 14, borderWidth: 1, borderRadius: 16, gap: 16},
 });
