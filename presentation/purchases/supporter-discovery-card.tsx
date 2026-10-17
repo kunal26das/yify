@@ -77,16 +77,16 @@ export function SupporterDiscoveryCard({savedCount = 0, placement = 'watchlist_s
 
     return <View ref={targetRef} collapsable={false} onLayout={checkVisibility}
         style={[styles.card, {backgroundColor: colors.surface, borderColor: colors.border}, style]}>
-        <ThemedText type="defaultSemiBold">Yify Supporter</ThemedText>
+        <ThemedText type="defaultSemiBold">Yify Plus</ThemedText>
         <ThemedText style={{color: colors.textMuted}}>No Yify ads, plus insights from your movie journal.</ThemedText>
         <ThemedText type="defaultSemiBold">{offerDisclosure(offer)}</ThemedText>
         <ThemedText type="caption" style={{color: colors.textMuted}}>YouTube and streaming-service ads are separate.</ThemedText>
         <View style={styles.actions}>
             <Pressable accessibilityRole="button" onPress={open}
                 style={[styles.button, {backgroundColor: colors.accentStrong}]}>
-                <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>View Supporter</ThemedText>
+                <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>View Plus</ThemedText>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Dismiss supporter suggestion" onPress={dismiss}
+            <Pressable accessibilityRole="button" accessibilityLabel="Dismiss Plus suggestion" onPress={dismiss}
                 style={styles.button}>
                 <ThemedText style={{color: colors.textMuted}}>Not now</ThemedText>
             </Pressable>

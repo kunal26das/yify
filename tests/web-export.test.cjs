@@ -41,7 +41,7 @@ test('web document metadata follows route titles and indexing policy across base
         ['/history', 'History — Yify', 'noindex,follow'],
         ['/journal', 'Journal — Yify', 'noindex,follow'],
         ['/preferences', 'Preferences — Yify', 'noindex,follow'],
-        ['/upgrade', 'Supporter options — Yify', 'noindex,follow'],
+        ['/upgrade', 'Plus options — Yify', 'noindex,follow'],
     ]) {
         assert.deepEqual(getWebPageMeta(pathname), {pathname, title, robots});
         assert.deepEqual(getWebPageMeta(`/yify${pathname}`, '/yify/'), {pathname, title, robots});
@@ -69,7 +69,7 @@ function fixture(t, server = false) {
     };
     for (const [file, title] of [
         ['index.html', 'Yify'], ['movies.html', 'Browse Movies'], ['shows.html', 'Shows'], ['anime.html', 'Anime'],
-        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'], ['upgrade.html', 'Supporter options'],
+        ['watchlist.html', 'Watchlist'], ['history.html', 'History'], ['journal.html', 'Journal'], ['preferences.html', 'Preferences'], ['upgrade.html', 'Plus options'],
     ]) {
         const robots = file === 'anime.html' ? '<meta name="robots" content="noindex,nofollow">'
             : ['watchlist.html', 'history.html', 'journal.html', 'preferences.html', 'upgrade.html'].includes(file)

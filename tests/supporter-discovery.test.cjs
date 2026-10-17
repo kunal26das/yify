@@ -273,11 +273,11 @@ test('home invitation waits for a returning visitor and shows the loaded regiona
     const home = await fixture(t, {placement: 'home_supporter', returning: true, savedCount: 0});
     assert.deepEqual(home.offerLoads, ['home_supporter']);
     const text = JSON.stringify(home.renderer.toJSON());
-    assert.match(text, /Yify Supporter/);
+    assert.match(text, /Yify Plus/);
     assert.match(text, /No Yify ads, plus insights from your movie journal/);
     assert.match(text, /₹99 every month. Renews automatically until cancelled./);
     assert.match(text, /YouTube and streaming-service ads are separate/);
-    assert.match(text, /View Supporter/);
+    assert.match(text, /View Plus/);
     assert.match(text, /Not now/);
     assert.deepEqual(home.requests, []);
     await act(async () => home.buttons()[0].props.onPress());

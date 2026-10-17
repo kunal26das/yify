@@ -9,7 +9,7 @@ const PAGE_TITLES: Record<string, string> = {
     '/history': 'History — Yify',
     '/journal': 'Journal — Yify',
     '/anime': 'Anime — Yify',
-    '/upgrade': 'Supporter options — Yify',
+    '/upgrade': 'Plus options — Yify',
 };
 
 const UTILITY_PATHS = new Set(['/preferences', '/watchlist', '/history', '/journal', '/upgrade']);
