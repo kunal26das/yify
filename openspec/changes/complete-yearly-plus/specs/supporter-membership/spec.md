@@ -22,7 +22,11 @@ The membership page and voluntary modal SHALL present only delivered supported r
 
 ### Requirement: Yearly catalog changes preserve existing purchases
 
-Verified yearly store and Web Billing products SHALL grant the existing Plus entitlement through a yearly package, while current monthly prices, billing periods, package links and legacy purchase ownership remain intact. No existing subscriber SHALL be automatically migrated or repriced.
+Verified yearly products SHALL grant the existing Plus entitlement. A platform SHALL expose a yearly package only after its catalog and release readiness checks pass; a provider-blocked web product SHALL remain unoffered. Current monthly prices, billing periods, package links and legacy purchase ownership SHALL remain intact. No existing subscriber SHALL be automatically migrated or repriced.
+
+#### Scenario: Web checkout is blocked by its provider
+- **WHEN** the provider rejects sandbox checkout for account configuration requirements
+- **THEN** the new web yearly product remains outside the current offering until provider setup and checkout are verified, without silently removing or repricing monthly sales
 
 #### Scenario: Yearly is unavailable or removed from sale
 - **WHEN** no verified yearly package is returned or yearly sales are rolled back
