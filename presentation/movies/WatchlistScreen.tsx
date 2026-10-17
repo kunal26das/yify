@@ -367,6 +367,7 @@ export function WatchlistScreen() {
                                 Analytics.browseAllOpen('my_list_empty');
                                 goTo('/movies');
                             }} accessibilityRole="button" accessibilityLabel={movies.length === 0 ? 'Find something to watch' : 'Clear watchlist filters'}
+                                            style={styles.ctaPressable}
                                             contentStyle={[styles.cta, {backgroundColor: colors.accentStrong}]}>
                                 <ThemedText style={[styles.ctaLabel, {color: colors.onAccent}]}>
                                     {movies.length === 0 ? 'Find something to watch' : 'Clear filters'}
@@ -454,14 +455,19 @@ const styles = StyleSheet.create({
     empty: {alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 64, gap: Spacing.xs},
     emptyTitle: {marginTop: Spacing.md},
     emptyBody: {fontSize: 14, lineHeight: 20, textAlign: 'center'},
+    ctaPressable: {maxWidth: '100%'},
     cta: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: Spacing.sm,
-        height: 40,
+        minHeight: 48,
+        minWidth: 0,
+        maxWidth: '100%',
         paddingHorizontal: 20,
+        paddingVertical: Spacing.md,
         borderRadius: Radius.pill,
         marginTop: Spacing.lg,
     },
-    ctaLabel: {fontSize: 14, lineHeight: 18, fontWeight: '600'},
+    ctaLabel: {fontSize: 14, lineHeight: 18, fontWeight: '600', minWidth: 0, flexShrink: 1, textAlign: 'center'},
 });

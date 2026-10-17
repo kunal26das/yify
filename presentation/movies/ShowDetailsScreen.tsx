@@ -16,6 +16,8 @@ import {usePreferences} from '../hooks/use-preferences';
 import {useResponsive} from '../hooks/use-responsive';
 import {useReloadOnCatalogAccess} from '../hooks/use-reload-on-catalog-access';
 import {useRecordHistory} from './useWatchHistory';
+import {useGoTo} from './constants/destinations';
+import {useTopBarHeight} from './components/TopBar';
 import {TorrentNoticeSheet} from './components/TorrentNoticeSheet';
 import {WatchProviders} from './components/WatchProviders';
 
@@ -58,6 +60,8 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
     const {colors} = usePalette();
     const insets = useSafeAreaInsets();
     const {width, gutter, contentMaxWidth, isPhone} = useResponsive();
+    const topBarHeight = useTopBarHeight();
+    const goTo = useGoTo();
     const recordHistory = useRecordHistory();
     const {historyPaused} = usePreferences();
     const recordedIdRef = useRef<string | null>(null);
@@ -152,6 +156,38 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
             }))
             .sort((a, b) => b.season - a.season);
     }, [episodes]);
+
+    if (!show && showStatus !== 'loading' && episodeStatus !== 'loading' && episodes.length === 0) {
+        const notFound = showStatus === 'ready' && episodeStatus === 'ready';
+        return <Screen>
+            <ScrollView contentContainerStyle={[styles.emptyPage, {paddingTop: topBarHeight + Spacing.xl,
+                paddingBottom: insets.bottom + Spacing.xl}]}>
+                <Animated.View entering={enterRise()} style={[styles.emptyState, {maxWidth: contentMaxWidth}]}>
+                    <View style={[styles.emptyGlyph, {backgroundColor: colors.surfaceSunken}]}>
+                        <Ionicons name={notFound ? 'tv-outline' : 'cloud-offline-outline'} size={34} color={colors.accent}/>
+                    </View>
+                    <ThemedText accessibilityRole="header" type="heading" style={styles.emptyTitle}>
+                        {notFound ? 'Series not found' : 'Series information couldn’t load'}
+                    </ThemedText>
+                    <ThemedText style={[styles.emptyCopy, {color: colors.textMuted}]}>
+                        {notFound
+                            ? 'This series is not listed in the catalog. Browse other shows or try again.'
+                            : 'We couldn’t check this series right now. Check your connection and try again.'}
+                    </ThemedText>
+                    <View style={styles.emptyActions}>
+                        <PressableScale onPress={reload} accessibilityRole="button" accessibilityLabel="Retry series information" style={styles.emptyActionHit}
+                            contentStyle={[styles.emptyAction, {backgroundColor: notFound ? colors.accentSoft : colors.accentStrong}]}>
+                            <ThemedText style={[styles.retryLabel, {color: notFound ? colors.accent : colors.onAccent}]}>Try again</ThemedText>
+                        </PressableScale>
+                        <PressableScale onPress={() => goTo('/shows')} accessibilityRole="link" accessibilityLabel="Browse shows" style={styles.emptyActionHit}
+                            contentStyle={[styles.emptyAction, {backgroundColor: notFound ? colors.accentStrong : colors.accentSoft}]}>
+                            <ThemedText style={[styles.retryLabel, {color: notFound ? colors.onAccent : colors.accent}]}>Browse shows</ThemedText>
+                        </PressableScale>
+                    </View>
+                </Animated.View>
+            </ScrollView>
+        </Screen>;
+    }
 
     const toEpisodeTorrent = (episode: ShowEpisode): Torrent => ({
         url: episode.magnetUrl,
@@ -279,7 +315,7 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
                             <PressableScale
                                 onPress={reload}
                                 accessibilityRole="button"
-                                accessibilityLabel="Retry series information"
+                                accessibilityLabel="Retry series information" style={styles.emptyActionHit}
                                 contentStyle={[styles.retry, {backgroundColor: colors.accentSoft}]}
                             >
                                 <ThemedText style={[styles.retryLabel, {color: colors.accent}]}>Try again</ThemedText>
@@ -411,6 +447,14 @@ function ShowDetailsContent({imdbId, shows, artwork}: ShowDetailsProps) {
 }
 
 const styles = StyleSheet.create({
+    emptyPage: {flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.lg},
+    emptyState: {alignItems: 'center', gap: Spacing.md},
+    emptyGlyph: {width: 68, height: 68, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center'},
+    emptyTitle: {textAlign: 'center'},
+    emptyCopy: {textAlign: 'center', maxWidth: 440},
+    emptyActions: {flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', maxWidth: '100%', gap: Spacing.sm},
+    emptyActionHit: {maxWidth: '100%', flexShrink: 1},
+    emptyAction: {minHeight: 48, maxWidth: '100%', paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderRadius: Radius.pill, justifyContent: 'center'},
     container: {flex: 1},
     backdrop: {width: '100%', overflow: 'hidden'},
     header: {flexDirection: 'row', gap: Spacing.xl, alignItems: 'flex-end'},
@@ -460,7 +504,7 @@ const styles = StyleSheet.create({
     loader: {marginTop: Spacing.lg},
     statusBox: {gap: Spacing.sm, marginTop: Spacing.md},
     retry: {alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', borderRadius: Radius.pill, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md},
-    retryLabel: {fontSize: 14, fontFamily: FontFamily.bold},
+    retryLabel: {fontSize: 14, fontFamily: FontFamily.bold, flexShrink: 1, textAlign: 'center'},
     episode: {
         flexDirection: 'row',
         gap: Spacing.md,

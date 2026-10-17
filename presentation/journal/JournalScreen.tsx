@@ -31,9 +31,10 @@ function Action({label, onPress, primary = false, disabled = false}: {
 }) {
     const {colors} = usePalette();
     return <PressableScale onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label}
+        style={styles.actionPressable}
         accessibilityState={{disabled}} contentStyle={[styles.action, {borderColor: primary ? colors.accentStrong : colors.border,
             backgroundColor: primary ? colors.accentStrong : colors.surfaceSunken, opacity: disabled ? 0.5 : 1}]}>
-        <ThemedText type="defaultSemiBold" style={{color: primary ? colors.onAccent : colors.text}}>{label}</ThemedText>
+        <ThemedText type="defaultSemiBold" style={[styles.actionText, {color: primary ? colors.onAccent : colors.text}]}>{label}</ThemedText>
     </PressableScale>;
 }
 
@@ -46,6 +47,7 @@ export function JournalScreen({requestedTab = 'journal', onTabChange}: {
     const auth = useAuthRepository();
     const {colors} = usePalette();
     const {gutter} = useResponsive();
+    const insets = useSafeAreaInsets();
     const top = useTopBarHeight();
     const [error, setError] = useState('');
     useEffect(() => {Analytics.journal('opened');}, []);
@@ -55,18 +57,21 @@ export function JournalScreen({requestedTab = 'journal', onTabChange}: {
         try {await auth.signIn();} catch {setError('Sign-in could not be completed. Try again.');}
     };
     return <Screen>
-        <ScrollView contentContainerStyle={[styles.guest, {paddingHorizontal: gutter, paddingTop: top + Spacing.xxl}]}>
-            {!session.ready ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading your account"/> : <>
-                <Ionicons name="book-outline" size={36} color={colors.accent}/>
-                <ThemedText accessibilityRole="header" type="heading">Your movie journal</ThemedText>
-                <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Keep watch dates, personal ratings and private notes together. Sign in to start your free journal.</ThemedText>
-                <Action label={session.signingIn ? 'Signing in…' : 'Sign in with Google'} onPress={() => void signIn()}
-                    primary disabled={session.signingIn || !session.available}/>
-                {!session.available ? <ThemedText style={{color: colors.textMuted}}>Sign-in is unavailable on this device.</ThemedText> : null}
-                {error || session.error ? <ThemedText accessibilityRole="alert" style={{color: colors.danger}}>
-                    {error || 'Sign-in could not be completed. Try again.'}
-                </ThemedText> : null}
-            </>}
+        <ScrollView contentContainerStyle={[styles.guest, {paddingHorizontal: gutter,
+            paddingTop: top + Spacing.xxl, paddingBottom: insets.bottom + 96}]}>
+            <View style={styles.guestContent}>
+                {!session.ready ? <ActivityIndicator color={colors.accent} accessibilityLabel="Loading your account"/> : <>
+                    <Ionicons name="book-outline" size={36} color={colors.accent}/>
+                    <ThemedText accessibilityRole="header" type="heading">Your movie journal</ThemedText>
+                    <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Keep watch dates, personal ratings and private notes together. Sign in to start your free journal.</ThemedText>
+                    <Action label={session.signingIn ? 'Signing in…' : 'Sign in with Google'} onPress={() => void signIn()}
+                        primary disabled={session.signingIn || !session.available}/>
+                    {!session.available ? <ThemedText style={{color: colors.textMuted}}>Sign-in is unavailable on this device.</ThemedText> : null}
+                    {error || session.error ? <ThemedText accessibilityRole="alert" style={{color: colors.danger}}>
+                        {error || 'Sign-in could not be completed. Try again.'}
+                    </ThemedText> : null}
+                </>}
+            </View>
         </ScrollView>
     </Screen>;
 }
@@ -138,14 +143,16 @@ function JournalContent({requestedTab, onTabChange}: {requestedTab: JournalTab; 
                 <Action label="Log a movie" onPress={chooseMovie} primary disabled={!journal.ready}/>
             </View>
         </View>
-        {saved && tab === 'journal' ? <JournalSavedNotice updated={saved === 'updated'} actionLabel="View insights"
+        {saved && tab === 'journal' ? <JournalSavedNotice updated={saved === 'updated'}
+            actionLabel={premium ? 'View insights' : 'Explore Plus insights'}
             onPress={() => switchTab('insights')}/> : null}
         <View style={styles.tabs}>
             {(['journal', 'insights'] as const).map(value => <PressableScale key={value} onPress={() => switchTab(value)}
                 accessibilityRole="tab" accessibilityLabel={value === 'journal' ? 'Entries' : 'Insights'}
+                style={styles.tabPressable}
                 accessibilityState={{selected: tab === value}} contentStyle={[styles.tab, {borderColor: colors.border,
                     backgroundColor: tab === value ? colors.accentSoft : 'transparent'}]}>
-                <ThemedText type="defaultSemiBold" style={{color: tab === value ? colors.accent : colors.textMuted}}>
+                <ThemedText type="defaultSemiBold" style={[styles.tabText, {color: tab === value ? colors.accent : colors.textMuted}]}>
                     {value === 'journal' ? 'Entries' : 'Insights'}
                 </ThemedText>
             </PressableScale>)}
@@ -310,16 +317,23 @@ function Metric({label, value}: {label: string; value: string}) {
 
 const styles = StyleSheet.create({
     flex: {flex: 1, minWidth: 0},
-    guest: {gap: Spacing.lg, alignItems: 'flex-start', paddingBottom: 96},
+    guest: {flexGrow: 1, alignItems: 'center'},
+    guestContent: {width: '100%', maxWidth: 640, gap: Spacing.lg, alignItems: 'flex-start'},
     readable: {maxWidth: 680},
     header: {gap: Spacing.lg, paddingBottom: Spacing.lg},
     heading: {flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.md},
     headingText: {flex: 1, minWidth: 120},
-    headingActions: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    headingActions: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, maxWidth: '100%', minWidth: 0},
     start: {alignItems: 'flex-start'},
-    action: {minHeight: 44, paddingHorizontal: Spacing.lg, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderRadius: Radius.pill},
-    tabs: {flexDirection: 'row', gap: Spacing.sm},
-    tab: {minHeight: 44, paddingHorizontal: Spacing.xl, justifyContent: 'center', borderRadius: Radius.pill, borderWidth: 1},
+    actionPressable: {maxWidth: '100%', flexShrink: 1},
+    action: {minHeight: 44, minWidth: 0, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
+        justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderRadius: Radius.pill},
+    actionText: {minWidth: 0, flexShrink: 1, textAlign: 'center'},
+    tabs: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    tabPressable: {maxWidth: '100%', flexShrink: 1},
+    tab: {minHeight: 44, minWidth: 0, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm,
+        justifyContent: 'center', borderRadius: Radius.pill, borderWidth: 1},
+    tabText: {minWidth: 0, flexShrink: 1, textAlign: 'center'},
     notice: {gap: Spacing.sm, alignItems: 'flex-start'},
     empty: {paddingVertical: Spacing.xxl, gap: Spacing.md, maxWidth: 560},
     entry: {padding: Spacing.lg, borderRadius: Radius.lg, borderWidth: 1, gap: Spacing.md, marginBottom: Spacing.md},
@@ -327,9 +341,9 @@ const styles = StyleSheet.create({
     poster: {width: 48, height: 72, borderRadius: Radius.sm},
     entryActions: {flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.sm},
     delete: {minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center'},
-    periods: {flexDirection: 'row', gap: Spacing.sm},
-    monthNavigation: {flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
-    periodLabel: {flex: 1, textAlign: 'center'},
+    periods: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm},
+    monthNavigation: {flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minWidth: 0},
+    periodLabel: {flex: 1, minWidth: 0, flexShrink: 1, textAlign: 'center'},
     upgrade: {gap: Spacing.lg, alignItems: 'flex-start', borderWidth: 1, borderRadius: Radius.xl, padding: Spacing.xl},
     insights: {borderRadius: Radius.xl, borderWidth: 1, padding: Spacing.lg, gap: Spacing.xl},
     metrics: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg},

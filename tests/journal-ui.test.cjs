@@ -338,12 +338,24 @@ test('an empty journal logs a saved movie and confirms success without automatic
     assert.match(f.text(), /Saved to your journal/);
     assert.deepEqual(f.calls.paywalls, []);
     assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created']);
-    await f.press('View insights');
+    await f.press('Explore Plus insights');
     assert.match(f.text(), /editing stay free/);
     assert.deepEqual(f.calls.paywalls, []);
     await f.press('View Plus');
     assert.deepEqual(f.calls.paywalls, ['journal_insights']);
     assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created', 'insights_opened', 'upgrade_opened']);
+});
+
+test('saved journal notice gives supporters a direct insights action', async t => {
+    const f = await fixture(t, {purchase: {adsRemoved: true}, snapshot: {entries: []}, savedMovies: [movie]});
+    await f.press('Log your first movie');
+    await f.press('Log A private favorite (2024)');
+    await f.press('Save entry');
+    assert.match(f.text(), /Saved to your journal/);
+    assert.equal(f.button('Explore Plus insights'), undefined);
+    await f.press('View insights');
+    assert.match(f.text(), /No watches logged/);
+    assert.deepEqual(f.calls.paywalls, []);
 });
 
 test('editing reports an update and never counts as a new journal entry', async t => {

@@ -93,12 +93,12 @@ export function PrivacyGate({children}: {children: ReactNode}) {
                     <ThemedText style={styles.label}>I am 18 or older</ThemedText>
                     <Switch value={adult} onValueChange={setAdult} accessibilityLabel="I am 18 or older"/>
                 </View>
-                <View style={styles.row}>
-                    <View style={styles.label}>
-                        <ThemedText type="defaultSemiBold">Optional usage analytics</ThemedText>
-                        <ThemedText style={{color: colors.textMuted}}>Share app activity and purchase or ad measurements with Google Firebase and RevenueCat, and performance measurements with Sentry. You can change this in Preferences → Privacy.</ThemedText>
+                <View style={styles.analytics}>
+                    <View style={styles.row}>
+                        <ThemedText type="defaultSemiBold" style={styles.label}>Optional usage analytics</ThemedText>
+                        <Switch value={analytics} onValueChange={setAnalytics} accessibilityLabel="Optional usage analytics"/>
                     </View>
-                    <Switch value={analytics} onValueChange={setAnalytics} accessibilityLabel="Optional usage analytics"/>
+                    <ThemedText style={{color: colors.textMuted}}>Share app activity and purchase or ad measurements with Google Firebase and RevenueCat, and performance measurements with Sentry. You can change this in Preferences → Privacy.</ThemedText>
                 </View>
                 <ThemedText style={{color: colors.textMuted}}>You can continue with analytics off. Account, billing and crash diagnostics are explained in our privacy policy. Advertising choices are handled separately.</ThemedText>
                 <View style={styles.links}>
@@ -113,7 +113,7 @@ export function PrivacyGate({children}: {children: ReactNode}) {
                 </View>
                 {error ? <ThemedText accessibilityRole="alert">{error}</ThemedText> : null}
                 <Pressable disabled={!adult} accessibilityRole="button" accessibilityState={{disabled: !adult}}
-                    onPress={proceed} style={[styles.button, {backgroundColor: colors.accent, opacity: adult ? 1 : 0.45}]}>
+                    onPress={proceed} style={[styles.button, {backgroundColor: colors.accentStrong, opacity: adult ? 1 : 0.45}]}>
                     <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>Continue</ThemedText>
                 </Pressable>
                 {Platform.OS === 'web' ? <View style={styles.links}>
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     card: {width: '100%', maxWidth: 560, borderWidth: 1, borderRadius: Radius.lg, padding: Spacing.xl, gap: Spacing.lg},
     row: {flexDirection: 'row', alignItems: 'center', gap: Spacing.md},
     label: {flex: 1},
+    analytics: {gap: Spacing.sm},
     links: {flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg},
     button: {minHeight: 48, alignItems: 'center', justifyContent: 'center', padding: Spacing.md, borderRadius: Radius.md},
 });

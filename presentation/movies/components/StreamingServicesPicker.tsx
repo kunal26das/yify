@@ -136,7 +136,7 @@ export function StreamingServicesPicker({country, selected, onSelect, onClose}: 
                     </PressableScale> : null}
                 </View>
                 <PressableScale onPress={onClose} accessibilityRole="button"
-                    contentStyle={[styles.done, {backgroundColor: colors.accent}]}>
+                    contentStyle={[styles.done, {backgroundColor: colors.accentStrong}]}>
                     <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>Done</ThemedText>
                 </PressableScale>
                     </View>}
