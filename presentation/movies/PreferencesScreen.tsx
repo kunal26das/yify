@@ -1067,14 +1067,14 @@ function SupporterSection({colors, gutter}: {colors: Colors; gutter: number}) {
             <Group colors={colors} index={1}>
                 {state.available || state.adsRemoved ? <Row
                     icon={state.adsRemoved ? 'heart' : 'heart-outline'}
-                    title={state.adsRemoved ? 'Your Yify support' : 'Support Yify'}
+                    title={state.adsRemoved ? 'Your Supporter access' : 'Yify Supporter'}
                     subtitle={state.adsRemoved
                         ? supporterStatus(state)
                         : 'Viewing insights and no Yify ads. Manage your access.'}
                     colors={colors}
                     gutter={gutter}
                     onPress={() => showSupporter('settings_supporter')}
-                    accessibilityLabel={state.adsRemoved ? 'Manage Yify support' : 'Support Yify and restore purchases'}
+                    accessibilityLabel={state.adsRemoved ? 'Manage Yify support' : 'View Yify Supporter options and restore purchases'}
                     trailing={<Ionicons name="chevron-forward" size={16} color={colors.textMuted}/>}
                 /> : null}
                 {showCoffee ? (

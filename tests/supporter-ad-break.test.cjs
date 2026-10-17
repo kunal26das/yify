@@ -2,65 +2,69 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 const flush = () => new Promise(resolve => setImmediate(resolve));
-function deferred() { let resolve; const promise = new Promise(r => { resolve = r; }); return {promise, resolve}; }
-function fixture(options = {}) {
+
+function deferred() {
+    let resolve;
+    const promise = new Promise(res => { resolve = res; });
+    return {promise, resolve};
+}
+
+function fixture(show) {
     const calls = [];
-    const pending = options.pending ?? Promise.resolve(true);
-    let finish;
     const {useAdBreak} = loadTypeScript('presentation/player/use-ad-break.ts', {
         react: {useCallback: fn => fn, useRef: current => ({current})},
-        '../analytics/events': {Analytics: {supporterNudgeDeclined: () => calls.push('declined-event')}},
-        '../purchases/supporter-paywall': {useSupporterPaywall: () => (placement, callback) => {
-            calls.push(placement); finish = callback;
-        }},
         '../di/DependenciesContext': {
-            useAdGateway: () => ({show: () => pending}),
-            useAuthRepository: () => ({getSession: () => ({account: {uid: 'a'}, available: true})}),
-            usePurchaseRepository: () => ({
-                getOffers: placement => { calls.push(`offers:${placement}`); return typeof options.offers === 'function' ? options.offers() : options.offers ?? Promise.resolve([{id: 'monthly'}, {id: 'lifetime'}]); },
-                getState: () => ({adsRemoved: Boolean(options.supported)}),
-            }),
-            useSupporterNudge: () => ({
-                recordAdShown: () => calls.push('ad'), shouldPrompt: () => true,
-                recordPrompted: () => calls.push('prompted'), recordAccepted: () => calls.push('accepted'),
-                recordDeclined: () => calls.push('declined'),
-            }),
+            useAdGateway: () => ({show}),
+            useSupporterNudge: () => ({recordAdShown: () => calls.push('ad')}),
+            useAuthRepository: () => { throw new Error('auth must not be read'); },
+            usePurchaseRepository: () => { throw new Error('offers must not be read'); },
+        },
+        '../purchases/supporter-paywall': {
+            useSupporterPaywall: () => { throw new Error('paywall must not open'); },
         },
     });
-    return {run: useAdBreak(), calls, close: supported => finish(supported)};
+    return {run: useAdBreak(), calls};
 }
-test('post-ad prompt uses its targeted offering and resumes once after dismissal', async () => {
-    const f = fixture(); let done = 0;
-    f.run('movie_open', () => done++); await flush();
-    assert.deepEqual(f.calls, ['ad', 'offers:post_ad_supporter', 'prompted', 'post_ad_supporter']);
-    assert.equal(done, 0);
-    f.close(false); f.close(false);
+
+test('an unavailable ad resumes playback immediately', () => {
+    const f = fixture(() => null);
+    let done = 0;
+    f.run('movie_open', () => done++);
     assert.equal(done, 1);
+    assert.deepEqual(f.calls, []);
 });
-test('supporting through the post-ad paywall records acceptance and resumes playback', async () => {
-    const f = fixture(); let done = 0;
-    f.run('movie_open', () => done++); await flush(); f.close(true);
-    assert.equal(done, 1); assert.ok(f.calls.includes('accepted'));
+
+test('a visible ad resumes playback exactly once after settlement', async () => {
+    const ad = deferred();
+    const f = fixture(() => ad.promise);
+    let done = 0;
+    f.run('movie_open', () => done++);
+    assert.equal(done, 0);
+    ad.resolve(true);
+    await flush();
+    assert.equal(done, 1);
+    assert.deepEqual(f.calls, ['ad']);
 });
-test('targeting exclusions, failed offer requests and existing supporters do not block playback', async () => {
-    for (const options of [{offers: Promise.resolve([])}, {offers: () => Promise.reject(Error('offline'))}, {supported: true}]) {
-        const f = fixture(options); let done = 0;
-        f.run('movie_open', () => done++); await flush();
-        assert.equal(done, 1); assert.ok(!f.calls.includes('prompted'));
+
+test('callers sharing a visible ad each resume once and record one impression', async () => {
+    const ad = deferred();
+    const f = fixture(() => ad.promise);
+    const done = [0, 0];
+    f.run('movie_open', () => done[0]++);
+    f.run('movie_open', () => done[1]++);
+    ad.resolve(true);
+    await flush();
+    assert.deepEqual(done, [1, 1]);
+    assert.deepEqual(f.calls, ['ad']);
+});
+
+test('failed or rejected ads resume playback without recording an impression', async () => {
+    for (const result of [() => Promise.resolve(false), () => Promise.reject(new Error('show failed'))]) {
+        const f = fixture(result);
+        let done = 0;
+        f.run('movie_open', () => done++);
+        await flush();
+        assert.equal(done, 1);
+        assert.deepEqual(f.calls, []);
     }
-});
-test('a slow optional offering lookup cannot hold playback indefinitely', async t => {
-    t.mock.timers.enable({apis: ['setTimeout']});
-    const offers = deferred(); const f = fixture({offers: offers.promise}); let done = 0;
-    f.run('movie_open', () => done++); await flush();
-    t.mock.timers.tick(1500); await flush(); assert.equal(done, 1);
-    offers.resolve([{id: 'late'}]); await flush();
-    assert.equal(done, 1); assert.ok(!f.calls.includes('prompted'));
-});
-test('callers sharing an ad result show one supporter prompt', async () => {
-    const ad = deferred(); const f = fixture({pending: ad.promise}); let done = 0;
-    f.run('movie_open', () => done++); f.run('movie_open', () => done++);
-    ad.resolve(true); await flush();
-    assert.equal(f.calls.filter(c => c === 'prompted').length, 1);
-    assert.equal(done, 1); f.close(false); assert.equal(done, 2);
 });

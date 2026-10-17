@@ -11,7 +11,7 @@ import {useSupporterPaywall, useSupporterPaywallVisible} from './supporter-paywa
 import {usePreferences} from '../hooks/use-preferences';
 import {useVisibleImpression} from '../hooks/use-visible-impression';
 import {Analytics} from '../analytics/events';
-import {offerDisclosure} from './offer-copy';
+import {offerDisclosure, subscriptionOffers} from './offer-copy';
 
 export type SupporterDiscoveryHandle = {checkVisibility: () => void};
 
@@ -49,7 +49,8 @@ export function SupporterDiscoveryCard({savedCount = 0, placement = 'watchlist_s
         if (!loadKey.eligible) return;
         let active = true;
         void loadKey.repository.getOffers(loadKey.placement).then(offers => {
-            if (active) setLoaded({key: loadKey, offer: offers.find(item => item.recurring && item.billingPeriod === 'P1M' && item.priceLabel.trim())});
+            const subscriptions = subscriptionOffers(offers);
+            if (active) setLoaded({key: loadKey, offer: subscriptions.find(item => item.billingPeriod === 'P1M') ?? subscriptions[0]});
         }, () => { if (active) setLoaded({key: loadKey}); });
         return () => { active = false; };
     }, [loadKey]);
@@ -76,18 +77,18 @@ export function SupporterDiscoveryCard({savedCount = 0, placement = 'watchlist_s
 
     return <View ref={targetRef} collapsable={false} onLayout={checkVisibility}
         style={[styles.card, {backgroundColor: colors.surface, borderColor: colors.border}, style]}>
-        <ThemedText type="defaultSemiBold">Enjoy Yify without ads</ThemedText>
-        <ThemedText style={{color: colors.textMuted}}>Remove Yify ads with Supporter. Personal viewing insights are included.</ThemedText>
+        <ThemedText type="defaultSemiBold">Yify Supporter</ThemedText>
+        <ThemedText style={{color: colors.textMuted}}>No Yify ads, plus insights from your movie journal.</ThemedText>
         <ThemedText type="defaultSemiBold">{offerDisclosure(offer)}</ThemedText>
         <ThemedText type="caption" style={{color: colors.textMuted}}>YouTube and streaming-service ads are separate.</ThemedText>
         <View style={styles.actions}>
             <Pressable accessibilityRole="button" onPress={open}
                 style={[styles.button, {backgroundColor: colors.accentStrong}]}>
-                <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>View ad-free plan</ThemedText>
+                <ThemedText type="defaultSemiBold" style={{color: colors.onAccent}}>View Supporter</ThemedText>
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Dismiss supporter suggestion" onPress={dismiss}
                 style={styles.button}>
-                <ThemedText style={{color: colors.textMuted}}>Keep using free</ThemedText>
+                <ThemedText style={{color: colors.textMuted}}>Not now</ThemedText>
             </Pressable>
         </View>
     </View>;

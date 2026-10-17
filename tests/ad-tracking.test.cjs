@@ -8,6 +8,11 @@ const eventTypes = Object.fromEntries(
 const productionUnit = 'ca-app-pub-2292299294214510/8726265265';
 const paid = (value = 0.004567, precision = 3, currency = 'USD') => ({value, precision, currency});
 
+function primeForAd(gateway) {
+    assert.equal(gateway.show('movie_open'), null);
+    assert.equal(gateway.show('movie_open'), null);
+}
+
 function fixture(t, {dev = false, show, load, diagnostics, online = true, refresh, foreground = true,
     gatherConsent = async () => ({canRequestAds: true}),
     getConsentInfo = async () => ({canRequestAds: true}),
@@ -121,6 +126,7 @@ test('preload tracking does not wait for identity, while showing waits for known
     assert.equal(showCount, 0);
 
     state = {ready: true, adsRemoved: false};
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     assert.equal(showCount, 1);
     ad.emit('opened');
@@ -142,12 +148,105 @@ test('load failures are tracked while identity and entitlement are still unresol
     assert.equal(gateway.show('movie_open'), null);
 });
 
+test('cached paid access suppresses preload before entitlement refresh completes', async t => {
+    const f = fixture(t, {entitlement: () => ({ready: false, adsRemoved: true})});
+    await f.gateway.init();
+    f.setForeground(false);
+    f.setForeground(true);
+    t.mock.timers.tick(120000);
+    assert.equal(f.ads.length, 0);
+    assert.equal(f.gateway.show('movie_open'), null);
+});
+
+test('cached paid access prevents failed-load retries', async t => {
+    let state = {ready: true, adsRemoved: false};
+    const f = fixture(t, {entitlement: () => state});
+    await f.gateway.init();
+    state = {ready: false, adsRemoved: true};
+    f.ads[0].emit('error', {code: 'googleMobileAds/no-fill'});
+    t.mock.timers.tick(120000);
+    assert.equal(f.ads.length, 1);
+});
+
+test('cached paid access prevents a delayed connectivity refresh from loading an ad', async t => {
+    let finishRefresh;
+    let state = {ready: true, adsRemoved: false};
+    const delayed = fixture(t, {entitlement: () => state, refresh: () => new Promise(resolve => {finishRefresh = resolve;})});
+    await delayed.gateway.init();
+    state = {ready: false, adsRemoved: true};
+    finishRefresh(true);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(delayed.ads.length, 0);
+});
+
+test('visible ads require three movie opens and 120 seconds; no-fill does not consume the opportunity', async t => {
+    let now = 1000000;
+    t.mock.method(Date, 'now', () => now);
+    let shows = 0;
+    const f = fixture(t, {show: async () => {shows++;}});
+    await f.gateway.init();
+    primeForAd(f.gateway);
+    assert.equal(f.gateway.show('movie_open'), null);
+    f.ads[0].emit('loaded');
+    const first = f.gateway.show('movie_open');
+    f.ads[0].emit('opened');
+    f.ads[0].emit('opened');
+    f.ads[0].emit('closed');
+    assert.equal(await first, true);
+    f.ads.at(-1).emit('loaded');
+    now += 120000;
+    assert.equal(f.gateway.show('queue_advance'), null);
+    primeForAd(f.gateway);
+    const second = f.gateway.show('movie_open');
+    const ad = f.ads.at(-1);
+    ad.emit('opened');
+    ad.emit('closed');
+    assert.equal(await second, true);
+    f.ads.at(-1).emit('loaded');
+    primeForAd(f.gateway);
+    assert.equal(f.gateway.show('movie_open'), null);
+    now += 119999;
+    assert.equal(f.gateway.show('movie_open'), null);
+    assert.equal(shows, 2);
+    now += 1;
+    const third = f.gateway.show('movie_open');
+    f.ads.at(-1).emit('closed');
+    assert.equal(await third, false);
+    assert.equal(shows, 3);
+});
+
+test('a late OPENED after the navigation timeout still starts the visible-ad cooldown', async t => {
+    let now = 1000000;
+    t.mock.method(Date, 'now', () => now);
+    const f = fixture(t);
+    await f.gateway.init();
+    f.ads[0].emit('loaded');
+    primeForAd(f.gateway);
+    const completion = f.gateway.show('movie_open');
+    t.mock.timers.tick(8000);
+    assert.equal(await completion, false);
+    now += 9000;
+    f.ads[0].emit('opened');
+    f.ads[0].emit('closed');
+    f.ads.at(-1).emit('loaded');
+    primeForAd(f.gateway);
+    assert.equal(f.gateway.show('movie_open'), null);
+    now += 120000;
+    const next = f.gateway.show('movie_open');
+    assert.ok(next instanceof Promise);
+    f.ads.at(-1).emit('closed');
+    assert.equal(await next, false);
+});
+
 test('load, display, click, and revenue share one impression and movie placement', async (t) => {
     const {gateway, ads, tracked} = fixture(t);
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
     ad.emit('loaded');
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     ad.emit('opened');
     ad.emit('opened');
@@ -217,6 +316,7 @@ test('invalid paid payloads are ignored without blocking a later valid zero reve
 test('all AdMob revenue precision values retain their meaning', async (t) => {
     const {gateway, ads, tracked} = fixture(t);
     await gateway.init();
+    primeForAd(gateway);
     for (const precision of [0, 1, 2, 3, 99]) {
         const ad = ads.at(-1);
         ad.emit('loaded');
@@ -234,6 +334,7 @@ test('revenue arriving after close keeps the completed impression context and is
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     ad.emit('opened');
     ad.emit('closed');
@@ -260,6 +361,7 @@ test('missing paid callbacks release listeners after the post-close grace period
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     ad.emit('closed');
     await completion;
@@ -279,6 +381,7 @@ test('navigation timeout does not lose later clicks or revenue while the ad rema
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     ad.emit('opened');
     t.mock.timers.tick(8000);
@@ -302,6 +405,7 @@ test('missing terminal callbacks cannot retain tracking listeners indefinitely',
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
+    primeForAd(gateway);
     const completion = gateway.show('movie_open');
     ad.emit('opened');
     t.mock.timers.tick(30 * 60 * 1000);
@@ -315,6 +419,7 @@ test('show rejection is not mislabeled as a load failure and releases tracking a
     await gateway.init();
     const ad = ads[0];
     ad.emit('loaded');
+    primeForAd(gateway);
     assert.equal(await gateway.show('movie_open'), false);
     assert.deepEqual(tracked.map(({method}) => method), ['trackLoaded']);
     t.mock.timers.tick(60000);
@@ -367,6 +472,7 @@ test('background ad presentation is unavailable without reporting an exception',
     }});
     await gateway.init();
     ads[0].emit('loaded');
+    primeForAd(gateway);
     assert.equal(await gateway.show('movie_open'), false);
     const present = records.find(record => record.operation === 'ads.present');
     assert.equal(present.outcome, 'unavailable');
@@ -640,6 +746,7 @@ test('privacy updates share one form and suspend initialization, queued events a
     assert.equal(f.ads[0].destroyCount, 1);
     assert.equal(f.gateway.show('movie_open'), null);
     f.ads[1].emit('loaded');
+    assert.equal(f.gateway.show('movie_open'), null);
     const shown = f.gateway.show('movie_open');
     assert.ok(shown instanceof Promise);
     f.ads[1].emit('closed');
@@ -807,6 +914,7 @@ test('privacy options never cover an active ad, including after its navigation t
     await f.gateway.init();
     const ad = f.ads[0];
     ad.emit('loaded');
+    primeForAd(f.gateway);
     const shown = f.gateway.show('movie_open');
     ad.emit('opened');
     await f.gateway.showPrivacyOptions();

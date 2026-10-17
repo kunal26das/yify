@@ -70,7 +70,7 @@ async function fixture(t, options = {}) {
     };
     const Component = options.editor ? loadTypeScript('presentation/journal/JournalEditor.tsx', mocks).JournalEditor
         : loadTypeScript('presentation/journal/JournalScreen.tsx', mocks).JournalScreen;
-    let props = options.editor ? {visible: true, movie, onClose: () => calls.closed++, onSaved: kind => calls.confirmations.push(kind), ...options.props} : {};
+    let props = options.editor ? {visible: true, movie, onClose: () => calls.closed++, onSaved: kind => calls.confirmations.push(kind), ...options.props} : {...options.props};
     let renderer;
     await act(async () => {renderer = create(React.createElement(Component, props));});
     t.after(async () => {await act(async () => renderer.unmount());});
@@ -97,16 +97,42 @@ test('free accounts can read, edit and delete; only explicit insights upgrade op
     await f.press('Insights'); assert.match(f.text(), /editing stay free/);
     assert.deepEqual(f.calls.paywalls, []);
     assert.doesNotMatch(f.text(), /Watches logged|Your highest rated/);
-    await f.press('Explore supporter access');
+    await f.press('View Supporter');
     assert.deepEqual(f.calls.paywalls, ['journal_insights']);
     assert.deepEqual(f.calls.events, ['opened', 'entry_deleted', 'insights_opened', 'upgrade_opened']);
+});
+
+test('an insights deep link remains on insights after a guest signs in', async t => {
+    const f = await fixture(t, {session: {account: null}, props: {requestedTab: 'insights'}});
+    assert.match(f.text(), /Sign in to start your free journal/);
+    assert.equal(f.button('View Supporter'), undefined);
+    await f.update(f.session, {account: {uid: 'alice'}});
+    assert.match(f.text(), /Your viewing patterns/);
+    assert.ok(f.button('View Supporter'));
+    assert.doesNotMatch(f.text(), /My private note/);
+    assert.deepEqual(f.calls.paywalls, []);
+    await f.press('View Supporter');
+    assert.deepEqual(f.calls.paywalls, ['journal_insights']);
+});
+
+test('a mounted journal follows a changed requested tab and keeps manual tab changes usable', async t => {
+    const f = await fixture(t);
+    assert.match(f.text(), /My private note/);
+    await f.props({requestedTab: 'insights'});
+    assert.ok(f.button('View Supporter'));
+    assert.doesNotMatch(f.text(), /My private note/);
+    await f.press('Entries');
+    assert.match(f.text(), /My private note/);
+    await f.props({requestedTab: 'journal'});
+    await f.props({requestedTab: 'insights'});
+    assert.ok(f.button('View Supporter'));
 });
 
 test('loading entitlements do not flash an upgrade prompt or hide free entries', async t => {
     const f = await fixture(t, {purchase: {ready: false, refreshing: true, adsRemoved: false}});
     assert.match(f.text(), /My private note/);
     await f.press('Insights');
-    assert.equal(f.button('Explore supporter access'), undefined);
+    assert.equal(f.button('View Supporter'), undefined);
     assert.equal(f.renderer.root.findAllByType('Spinner').length, 1);
     assert.equal(f.button('Checking access…').props.disabled, true);
     await f.update(f.purchase, {ready: true, adsRemoved: true});
@@ -121,7 +147,7 @@ test('unavailable supporter access stops loading and keeps free journal entries 
     assert.match(f.text(), /Supporter access is unavailable in this version/);
     assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
     assert.equal(f.button('Refresh access').props.disabled, true);
-    assert.equal(f.button('Explore supporter access'), undefined);
+    assert.equal(f.button('View Supporter'), undefined);
     await f.press('Entries');
     assert.match(f.text(), /My private note/);
     await f.press('Edit entry');
@@ -136,7 +162,7 @@ for (const supporter of [true, false]) {
         await f.press('Insights');
         assert.match(f.text(), /Supporter access is not connected yet/);
         assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
-        assert.equal(f.button('Explore supporter access'), undefined);
+        assert.equal(f.button('View Supporter'), undefined);
         await f.press('Refresh access');
         assert.equal(f.calls.refreshes, 1);
         assert.equal(f.button('Refresh access'), undefined);
@@ -144,7 +170,7 @@ for (const supporter of [true, false]) {
             await f.press('All time');
             assert.match(f.text(), /Watches logged/);
         } else {
-            assert.ok(f.button('Explore supporter access'));
+            assert.ok(f.button('View Supporter'));
         }
         assert.deepEqual(f.calls.paywalls, []);
     });
@@ -159,7 +185,7 @@ test('unsuccessful access checks show safe recovery feedback and allow another a
     await f.press('Refresh access');
     assert.match(f.text(), /could not connect/);
     assert.equal(f.renderer.root.findAllByType('Spinner').length, 0);
-    assert.equal(f.button('Explore supporter access'), undefined);
+    assert.equal(f.button('View Supporter'), undefined);
     await f.press('Refresh access');
     assert.match(f.text(), /could not be refreshed/);
     assert.doesNotMatch(f.text(), /Private upstream failure/);
@@ -315,7 +341,7 @@ test('an empty journal logs a saved movie and confirms success without automatic
     await f.press('View insights');
     assert.match(f.text(), /editing stay free/);
     assert.deepEqual(f.calls.paywalls, []);
-    await f.press('Explore supporter access');
+    await f.press('View Supporter');
     assert.deepEqual(f.calls.paywalls, ['journal_insights']);
     assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created', 'insights_opened', 'upgrade_opened']);
 });
@@ -379,4 +405,17 @@ test('movie search stays explicit inside the journal and successful results can 
     await f.press('Save entry');
     assert.equal(f.calls.saved[0].movie.id, movie.id);
     assert.deepEqual(f.calls.events, ['opened', 'picker_opened', 'entry_created']);
+});
+
+test('manual journal tabs update route selection so a later insights link can select Insights again', async t => {
+    const tabs = [];
+    const f = await fixture(t);
+    await f.props({requestedTab: 'insights', onTabChange: tab => tabs.push(tab)});
+    assert.ok(f.button('View Supporter'));
+    await f.press('Entries');
+    assert.deepEqual(tabs, ['journal']);
+    await f.props({requestedTab: 'journal'});
+    assert.match(f.text(), /My private note/);
+    await f.props({requestedTab: 'insights'});
+    assert.ok(f.button('View Supporter'));
 });

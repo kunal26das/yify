@@ -1,6 +1,6 @@
 # RevenueCat operations
 
-Verified on 2026-09-09. This records dashboard and infrastructure configuration, separately from the app's purchase and ad-tracking implementation. It contains no credentials.
+Catalog rechecked read-only on 2026-10-17; older infrastructure sections retain their dated evidence. This records dashboard and infrastructure configuration, separately from the app's purchase and ad-tracking implementation. It contains no credentials.
 
 ## Project and products
 
@@ -18,6 +18,16 @@ The current/default offering is [Support Yify (`default`, `ofrng79abbf96a9`)](ht
 
 The offering is monthly-only. On 2026-09-09, `$rc_lifetime` was removed from the default offering for Android and Web at the owner's request. Reloading the app's plans confirmed that only the monthly subscription remained. Current and older app versions read their packages from this offering, so no OTA or native build is needed; already-open/cached paywalls update when offerings refresh.
 
+### October 17 catalog check and yearly readiness
+
+The lead's read-only catalog inspection confirmed Android app `app92a1e3ba4c`, Web Billing app `app28ce2d8b73`, and Test Store app `appb982f2aa15`. Current default offering `ofrng79abbf96a9` contains only `$rc_monthly` package `pkge66f1602b59`: Android product `prod4a474db633` (`remove_ads_monthly:p1m`) and web product `prod3b9edb236c` (`remove_ads_monthly_web`). Legacy one-time products remain in the catalog. No yearly product or package was configured. This check did not verify exact prices, regional store availability or a completed checkout.
+
+The membership UI can present actual monthly (`P1M`) and yearly (`P1Y`) recurring SDK offers. That readiness does not create a yearly plan. A suggested yearly charge equal to ten monthly payments for twelve months is a pricing proposal only, not a live price or published discount. Before offering yearly checkout, separately configure the appropriate store/Web Billing products and regional prices, attach them to the existing entitlement and offering, and verify availability and actual terms on each affected platform. Do not display a yearly placeholder or claim savings before real localized terms support the claim.
+
+Yearly general Supporter access must not be marketed as Anime/raw access: server subscriber checks currently allowlist the monthly product IDs below. Extending server eligibility would require a deliberate separate authorization/configuration review; a new package alone does not change it.
+
+`scripts/revenuecat-setup.sh` is retired. Its former `--apply` flow created lifetime-sale products/packages and advised removing monthly sales, contrary to the current contract. All invocations now exit nonzero with guidance before reading credentials or making network requests. Do not revive that migration or detach/delete legacy entitlement attachments. Use a separately reviewed read-only catalog check for future inspection; no catalog mutation is part of this release.
+
 The monthly products and previously sold lifetime products still grant the [Supporter entitlement (`remove_ads`, `entl2b0b9c6396`)](https://app.revenuecat.com/projects/8b6ff243/product-catalog/entitlements/entl2b0b9c6396). The unoffered lifetime products `remove_ads_lifetime`, `remove_ads_web` and `remove_ads_lifetime_web` remain attached so existing purchasers retain access and can restore purchases. Do not detach or delete these legacy products to stop new sales; the offering controls which options are displayed.
 
 The subscriber catalog API separately requires a current production subscription to Android
@@ -29,7 +39,7 @@ lifetime entitlement alone. The separately configured owner can access the catal
 verified Firebase identity without a subscription; this does not change RevenueCat entitlements
 or customer billing rules. [Deployment configuration](releases.md#web)
 
-[Targeting](https://app.revenuecat.com/projects/8b6ff243/targeting) has no rules. This is valid: RevenueCat returns the project's default offering when no targeting rule matches a placement. The app's `settings_supporter` and `post_ad_supporter` placements can use the existing offering without creating a new product or experiment. See [placements documentation](https://www.revenuecat.com/docs/tools/targeting/placements).
+[Targeting](https://app.revenuecat.com/projects/8b6ff243/targeting) has no rules. This is valid: RevenueCat returns the project's default offering when no targeting rule matches a placement. The app's voluntary supporter placements reuse `settings_supporter` without creating a new product or experiment. `post_ad_supporter` remains historical attribution; this release removes its automatic prompt. See [placements documentation](https://www.revenuecat.com/docs/tools/targeting/placements).
 
 No managed RevenueCat Paywall or Web Purchase Link is attached to the offering. The app uses its own purchase UI. Adding a native Customer Center or RevenueCat Paywalls UI would require the separate native UI package and a new store build; it is not required for the monthly subscription and legacy purchase-restoration flows.
 

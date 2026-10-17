@@ -94,6 +94,8 @@ export class AdMobAdGateway implements AdGateway {
     private loadGeneration = 0;
     private privacyRequired = false;
     private canRequestAds = false;
+    private movieOpensSinceVisible = 0;
+    private lastVisibleAt: number | null = null;
 
     constructor(options: AdMobAdGatewayOptions) {
         this.options = options;
@@ -122,10 +124,16 @@ export class AdMobAdGateway implements AdGateway {
         if (this.privacyActive) return null;
         if (this.showing || this.presentedAd != null) return this.pending;
         const entitlement = this.options.entitlement();
+        if (trigger === 'movie_open' && entitlement.ready && !entitlement.adsRemoved) {
+            this.movieOpensSinceVisible += 1;
+        }
         const decision = decideAd({
             trigger,
             entitlementKnown: entitlement.ready,
             adsRemoved: entitlement.adsRemoved,
+            movieOpensSinceVisible: this.movieOpensSinceVisible,
+            lastVisibleAt: this.lastVisibleAt,
+            now: Date.now(),
             loaded: this.canRequestAds && this.loaded && !this.showing && this.interstitial != null,
         });
         if (decision !== 'show') {
@@ -262,7 +270,7 @@ export class AdMobAdGateway implements AdGateway {
     private canPreload(): boolean {
         const entitlement = this.options.entitlement();
         return this.initialized && this.canRequestAds && !this.privacyActive &&
-            !(entitlement.ready && entitlement.adsRemoved) &&
+            !entitlement.adsRemoved &&
             isForeground() && this.options.network?.isOnline() !== false &&
             !this.loading && !this.loaded && !this.showing && this.presentedAd == null;
     }
@@ -294,15 +302,12 @@ export class AdMobAdGateway implements AdGateway {
                 this.loading = false;
                 this.failures += 1;
                 this.options.analytics.trackEvent('trailer_ad_failed', {reason: 'load'});
-                // The native bridge exposes symbolic errors, not AdMob's numeric code.
                 if (!loadReported) {
                     this.options.adRevenue.trackFailedToLoad({adUnitId: unitId, placement: AD_PLACEMENT});
                 }
                 this.teardownAd();
                 this.scheduleRetry();
             };
-            // Android may deliver network callbacks late while suspended. Confirm connectivity
-            // before treating the SDK's generic internal error as a provider failure.
             if (adErrorCode(error) === 'internal_error' && this.options.network?.refresh) {
                 this.loading = true;
                 void this.options.network.refresh().catch(() => this.options.network?.isOnline()).then(failed);
@@ -374,7 +379,6 @@ export class AdMobAdGateway implements AdGateway {
             offClosed();
             offError();
             if (timer != null) clearTimeout(timer);
-            // PAID may cross the native bridge after CLOSED. Failed loads cannot earn revenue.
             if (started && !paid) timer = setTimeout(dispose, LATE_REVENUE_GRACE_MS);
             else dispose();
         };
@@ -388,7 +392,8 @@ export class AdMobAdGateway implements AdGateway {
         const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
             if (disposed || displayed) return;
             displayed = true;
-            // AdMob OPENED means visible; RevenueCat OPENED means the user clicked.
+            this.movieOpensSinceVisible = 0;
+            this.lastVisibleAt = Date.now();
             this.options.adRevenue.trackDisplayed(impression);
         });
         const offClicked = ad.addAdEventListener(AdEventType.CLICKED, () => {
@@ -402,7 +407,6 @@ export class AdMobAdGateway implements AdGateway {
         return {
             start: () => {
                 started = true;
-                // Keep tracking a visible ad beyond the navigation timeout, but bound orphaned listeners.
                 timer = setTimeout(dispose, MAX_TRACKING_DURATION_MS);
             },
             finish,
@@ -453,6 +457,7 @@ export class AdMobAdGateway implements AdGateway {
             };
 
             const offOpened = ad.addAdEventListener(AdEventType.OPENED, () => {
+                if (opened) return;
                 opened = true;
                 this.options.analytics.trackEvent('trailer_ad_shown', {trigger});
             });
@@ -509,7 +514,7 @@ export class AdMobAdGateway implements AdGateway {
         this.clearRetry();
         if (this.privacyActive || !this.canRequestAds) return;
         const entitlement = this.options.entitlement();
-        if (entitlement.ready && entitlement.adsRemoved) return;
+        if (entitlement.adsRemoved) return;
         if (!isForeground() || this.options.network?.isOnline() === false) return;
         const index = Math.min(Math.max(this.failures - 1, 0), LOAD_BACKOFF_MS.length - 1);
         this.retryTimer = setTimeout(() => {

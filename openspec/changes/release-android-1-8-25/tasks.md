@@ -15,7 +15,7 @@
 
 - [x] 3.1 Recheck live state, submit the verified candidate once through the existing release route and record Expo/Play receipts and tested AAB identity.
 - [x] 3.2 Check authenticated Play availability and reconcile only confirmed shipped runtimes in the ledger; keep this task open if review is pending.
-- [ ] 3.3 Update the sanitized handoff and release evidence through reviewed CI, verify any automatic web publication, and clean task-owned helpers/branches/worktrees while preserving unfinished migration work.
+- [x] 3.3 Update the sanitized handoff and release evidence through reviewed CI, verify any automatic web publication, and clean task-owned helpers/branches/worktrees while preserving unfinished migration work. Reconciled on October 17 from the [owner's completion receipt](https://github.com/kunal26das/yify/pull/1004#issuecomment-6221194975): exact merge `88543e4c1e2e2c96450587ae144fe1eeb1fd2aca`, successful CI/both web publications, confirmed Play availability and task cleanup. This records the existing receipt, not a new device test or crash-recovery verification.
 
 ## Workflow follow-up
 

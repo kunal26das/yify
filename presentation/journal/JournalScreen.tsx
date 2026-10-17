@@ -37,7 +37,11 @@ function Action({label, onPress, primary = false, disabled = false}: {
     </PressableScale>;
 }
 
-export function JournalScreen() {
+type JournalTab = 'journal' | 'insights';
+
+export function JournalScreen({requestedTab = 'journal', onTabChange}: {
+    requestedTab?: JournalTab; onTabChange?: (tab: JournalTab) => void;
+}) {
     const session = useAuth();
     const auth = useAuthRepository();
     const {colors} = usePalette();
@@ -45,7 +49,7 @@ export function JournalScreen() {
     const top = useTopBarHeight();
     const [error, setError] = useState('');
     useEffect(() => {Analytics.journal('opened');}, []);
-    if (session.ready && session.account) return <JournalContent key={session.account.uid}/>;
+    if (session.ready && session.account) return <JournalContent key={session.account.uid} requestedTab={requestedTab} onTabChange={onTabChange}/>;
     const signIn = async () => {
         setError('');
         try {await auth.signIn();} catch {setError('Sign-in could not be completed. Try again.');}
@@ -67,7 +71,7 @@ export function JournalScreen() {
     </Screen>;
 }
 
-function JournalContent() {
+function JournalContent({requestedTab, onTabChange}: {requestedTab: JournalTab; onTabChange?: (tab: JournalTab) => void}) {
     const {colors} = usePalette();
     const {width, contentMaxWidth, gutter, isPhone} = useResponsive();
     const insets = useSafeAreaInsets();
@@ -82,7 +86,8 @@ function JournalContent() {
     const showPaywall = useSupporterPaywall();
     const confirm = useConfirm();
     const goTo = useGoTo();
-    const [tab, setTab] = useState<'journal' | 'insights'>('journal');
+    const [tab, setTab] = useState<'journal' | 'insights'>(requestedTab);
+    useEffect(() => {setTab(requestedTab);}, [requestedTab]);
     const [editing, setEditing] = useState<JournalEntry | null>(null);
     const [newMovie, setNewMovie] = useState<JournalMovie | null>(null);
     const [choosingMovie, setChoosingMovie] = useState(false);
@@ -105,6 +110,7 @@ function JournalContent() {
     const switchTab = (value: typeof tab) => {
         if (value === 'insights' && tab !== value) Analytics.journal('insights_opened');
         setTab(value);
+        onTabChange?.(value);
     };
     const chooseMovie = () => {
         setSaved(null);
@@ -219,9 +225,9 @@ function JournalContent() {
             </View>}
         </> : <View style={[styles.upgrade, {backgroundColor: colors.surface, borderColor: colors.border}]}>
             <Ionicons name="stats-chart-outline" size={28} color={colors.accent}/>
-            <ThemedText accessibilityRole="header" type="heading">See your viewing patterns</ThemedText>
+            <ThemedText accessibilityRole="header" type="heading">Your viewing patterns</ThemedText>
             <ThemedText style={[styles.readable, {color: colors.textMuted}]}>Supporters get monthly recaps, favorite genres and personal rating insights. Your journal entries and editing stay free.</ThemedText>
-            <Action label="Explore supporter access" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
+            <Action label="View Supporter" primary onPress={() => {Analytics.journal('upgrade_opened'); showPaywall('journal_insights');}}/>
         </View> : null}
     </View>;
     return <Screen overlays={<WatchlistSheet visible={choosingMovie || !!selectedMovie}

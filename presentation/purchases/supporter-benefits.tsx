@@ -2,29 +2,22 @@ import {StyleSheet, View} from 'react-native';
 import {ThemedText} from '../components/themed-text';
 import {usePalette} from '../hooks/use-palette';
 
-export function SupporterInsightsPreview() {
+export function SupporterBenefits({active = false}: {active?: boolean}) {
     const {colors} = usePalette();
     return <View style={[styles.preview, {backgroundColor: colors.surfaceSunken, borderColor: colors.border}]}>
-        <ThemedText type="defaultSemiBold">Example insights</ThemedText>
-        <ThemedText type="caption" style={{color: colors.textMuted}}>Fictional journal · one month</ThemedText>
-        <View style={styles.metrics}>
-            {[
-                {label: 'Watches logged', value: '8'},
-                {label: 'Top genre', value: 'Drama'},
-                {label: 'Average rating', value: '4.2 / 5'},
-            ].map(metric => <View key={metric.label} style={styles.metric} accessible
-                accessibilityLabel={`${metric.label}: ${metric.value}`}>
-                <ThemedText type="defaultSemiBold" style={styles.value}>{metric.value}</ThemedText>
-                <ThemedText type="caption" style={{color: colors.textMuted}}>{metric.label}</ThemedText>
-            </View>)}
+        {active ? <ThemedText type="defaultSemiBold">Your benefits are active</ThemedText> : null}
+        <View style={styles.benefit}>
+            <ThemedText type="defaultSemiBold">No Yify ads</ThemedText>
+            <ThemedText style={{color: colors.textMuted}}>Browse without ads placed by Yify. YouTube and streaming-service ads are separate.</ThemedText>
         </View>
-        <ThemedText type="caption" style={{color: colors.textMuted}}>Your insights use the movies and ratings you add to your journal.</ThemedText>
+        <View style={styles.benefit}>
+            <ThemedText type="defaultSemiBold">Your viewing insights</ThemedText>
+            <ThemedText style={{color: colors.textMuted}}>See monthly and all-time watches, time watched, top genres and personal ratings from your movie journal.</ThemedText>
+        </View>
     </View>;
 }
 
 const styles = StyleSheet.create({
+    benefit: {gap: 4, paddingTop: 12},
     preview: {padding: 14, borderWidth: 1, borderRadius: 16, gap: 4},
-    metrics: {flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingVertical: 8},
-    metric: {flexGrow: 1, flexBasis: 72, minWidth: 0, gap: 2},
-    value: {fontSize: 20, lineHeight: 28},
 });

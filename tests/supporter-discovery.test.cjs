@@ -273,24 +273,41 @@ test('home invitation waits for a returning visitor and shows the loaded regiona
     const home = await fixture(t, {placement: 'home_supporter', returning: true, savedCount: 0});
     assert.deepEqual(home.offerLoads, ['home_supporter']);
     const text = JSON.stringify(home.renderer.toJSON());
-    assert.match(text, /Enjoy Yify without ads/);
+    assert.match(text, /Yify Supporter/);
+    assert.match(text, /No Yify ads, plus insights from your movie journal/);
     assert.match(text, /₹99 every month. Renews automatically until cancelled./);
     assert.match(text, /YouTube and streaming-service ads are separate/);
+    assert.match(text, /View Supporter/);
+    assert.match(text, /Not now/);
     assert.deepEqual(home.requests, []);
     await act(async () => home.buttons()[0].props.onPress());
     assert.deepEqual(home.requests, ['home_supporter']);
     assert.deepEqual(home.events.map(event => [event.step, event.placement]), [['discovery_opened', 'home_supporter']]);
 });
 
-test('discovery hides when no priced monthly offer is available without inventing a fallback price', async t => {
+test('discovery hides when no priced monthly or yearly offer is available without inventing a fallback price', async t => {
     for (const offers of [[], [{recurring: false, billingPeriod: null, priceLabel: '$1'}],
-        [{recurring: true, billingPeriod: 'P1Y', priceLabel: '$10'}],
+        [{recurring: true, billingPeriod: null, priceLabel: '$10'}],
+        [{recurring: true, billingPeriod: 'P3M', priceLabel: '$10'}],
         [{recurring: true, billingPeriod: 'P1M', priceLabel: '  '}]]) {
         const f = await fixture(t, {placement: 'home_supporter', returning: true, offers});
         assert.equal(f.renderer.toJSON(), null);
         assert.deepEqual(f.events, []);
         assert.deepEqual(f.requests, []);
     }
+});
+
+test('discovery prefers a real monthly offer and falls back to a real yearly offer', async t => {
+    const annual = {id: 'annual', recurring: true, billingPeriod: 'P1Y', autoRenewing: true, priceLabel: '€29,99'};
+    const monthly = {id: 'monthly', recurring: true, billingPeriod: 'P1M', autoRenewing: true, priceLabel: '€2,99'};
+    const mixed = await fixture(t, {offers: [annual, monthly]});
+    const mixedText = JSON.stringify(mixed.renderer.toJSON());
+    assert.match(mixedText, /€2,99 every month/);
+    assert.doesNotMatch(mixedText, /€29,99/);
+    const annualOnly = await fixture(t, {offers: [annual]});
+    const annualText = JSON.stringify(annualOnly.renderer.toJSON());
+    assert.match(annualText, /€29,99 every year/);
+    assert.doesNotMatch(annualText, /€2,99/);
 });
 
 test('the card labels prepaid access correctly and follows SDK pricing rather than viewing country', async t => {
