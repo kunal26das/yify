@@ -43,7 +43,7 @@ function promptSource(value: unknown): string {
 function planKind(offer?: CheckoutOffer): string {
     if (!offer) return 'unknown';
     if (!offer.recurring) return 'one_time';
-    return offer.billingPeriod === 'P1M' ? 'monthly' : 'recurring';
+    return offer.billingPeriod === 'P1M' ? 'monthly' : offer.billingPeriod === 'P1Y' ? 'yearly' : 'recurring';
 }
 
 export function trackSubscriptionFunnel(
