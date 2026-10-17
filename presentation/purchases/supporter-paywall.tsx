@@ -1,4 +1,4 @@
-import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react';
+import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ElementRef, type ReactNode, type RefObject} from 'react';
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {router} from 'expo-router';
@@ -94,7 +94,15 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         [state.ready, reload, request.placement, purchases]);
     const [loaded, setLoaded] = useState<{key: typeof loadKey; offers: PurchaseOffer[]} | null>(null);
     const loading = state.ready && loaded?.key !== loadKey;
-    const offers = subscriptionOffers(!loading && state.ready && state.available ? loaded?.offers ?? NO_OFFERS : NO_OFFERS);
+    const offers = subscriptionOffers(!loading && state.ready && state.available ? loaded?.offers ?? NO_OFFERS : NO_OFFERS)
+        .sort((left, right) => Number(right.billingPeriod === 'P1Y') - Number(left.billingPeriod === 'P1Y'));
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [focusedId, setFocusedId] = useState<string | null>(null);
+    const planRefs = useRef(new Map<string, ElementRef<typeof Pressable>>());
+    const selectedMissing = selectedId != null && offers.length > 0 && !offers.some(offer => offer.id === selectedId);
+    const selectedOffer = offers.find(offer => offer.id === selectedId) ?? offers[0];
+    const checkoutRef = useRef({loadKey, offers, selectedOfferId: selectedOffer?.id, loading, selectedMissing});
+    checkoutRef.current = {loadKey, offers, selectedOfferId: selectedOffer?.id, loading, selectedMissing};
     const [visible, setVisible] = useState(false);
     const [notice, setNotice] = useState<string | null>(null);
     const mounted = useRef(true);
@@ -129,6 +137,17 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     useEffect(() => {
         if (state.adsRemoved) setNotice(null);
     }, [state.adsRemoved]);
+
+    useEffect(() => {
+        if (loading || !state.ready || !state.available || !selectedOffer || selectedId !== null) return;
+        setSelectedId(current => current ?? selectedOffer.id);
+    }, [loading, state.ready, state.available, selectedOffer, selectedId]);
+
+    useEffect(() => {
+        if (loading || !state.ready || !state.available || !selectedMissing || !selectedOffer) return;
+        setSelectedId(selectedOffer.id);
+        setNotice('Your selected plan is no longer available. Review the available plan before subscribing.');
+    }, [loading, state.ready, state.available, selectedMissing, selectedOffer]);
 
     useEffect(() => {
         if (!request.cancelled || busy || operationRef.current || closed.current) return;
@@ -181,7 +200,16 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         }
     };
     const buy = (offer: PurchaseOffer) => {
-        if (!state.ready || !state.available || !session.ready || !session.account || paymentUnconfirmed || state.adsRemoved || (inline && !active)) return;
+        const current = purchases.getState();
+        const currentSession = auth.getSession();
+        const checkout = checkoutRef.current;
+        if (!mounted.current || checkout.loading || checkout.selectedMissing || checkout.selectedOfferId !== offer.id ||
+            checkout.loadKey !== loadKey || loaded?.key !== loadKey ||
+            !checkout.offers.some(item => item.id === offer.id) || busy ||
+            !current.ready || !current.available || current.adsRemoved || current.purchasing != null ||
+            current.restoring || current.refreshing || current.failure === 'pending' || current.failure === 'not_granted' ||
+            !session.ready || !session.account || !currentSession.ready || currentSession.signingIn ||
+            currentSession.account?.uid !== session.account.uid || paymentUnconfirmed || (inline && !active)) return;
         void runAction(async () => {
             try {
                 const granted = await purchases.purchase(offer.id);
@@ -239,6 +267,26 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     };
     const managementURL = safeManagementURL(state.managementURL);
     const message = notice ?? (state.adsRemoved ? null : purchaseFailureMessage(state.failure));
+    const selectionDisabled = busy || loading || !state.ready || !state.available || !session.ready || paymentUnconfirmed || state.adsRemoved;
+    const selectPlan = (offer: PurchaseOffer) => {
+        if (selectionDisabled || !offers.some(item => item.id === offer.id)) return;
+        setSelectedId(offer.id);
+        setNotice(null);
+    };
+    const handlePlanKey = (key: string, index: number) => {
+        if (selectionDisabled) return false;
+        if (key === ' ' || key === 'Spacebar') {
+            selectPlan(offers[index]);
+            return true;
+        }
+        const forward = key === 'ArrowRight' || key === 'ArrowDown';
+        const backward = key === 'ArrowLeft' || key === 'ArrowUp';
+        if (!forward && !backward) return false;
+        const next = offers[(index + (forward ? 1 : -1) + offers.length) % offers.length];
+        selectPlan(next);
+        planRefs.current.get(next.id)?.focus();
+        return true;
+    };
     const heading = <ThemedText accessibilityRole="header" type="heading" style={[styles.title, !headingInContent && !inline ? styles.heading : undefined]}>{state.adsRemoved ? 'Your Plus access' : 'Yify Plus'}</ThemedText>;
     const openJournal = (insights: boolean) => {
         if (busy || operationRef.current || request.cancelled || closed.current || (inline && !active)) return;
@@ -263,12 +311,42 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
         {!state.available || !state.ready ? <ThemedText style={styles.copy}>{state.available
             ? 'Plus options are not connected yet. Use Refresh access below to try again.'
             : 'Purchases are unavailable in this version of the app. Your free features are still available.'}</ThemedText> : null}
-        {!state.adsRemoved && state.ready && !loading && !paymentUnconfirmed ? offers.map((offer) => <View key={offer.id} style={[styles.plan, {borderColor: colors.border}]}>
-            <ThemedText style={styles.planTitle}>{offer.billingPeriod === 'P1Y' ? 'Yearly Plus' : 'Monthly Plus'}</ThemedText>
-            <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{offerDisclosure(offer)}</ThemedText>
-            {session.account ? <PaywallButton label={state.purchasing === offer.id ? 'Processing…' : purchaseLabel(offer)}
-                onPress={() => buy(offer)} disabled={busy} primary/> : null}
-        </View>) : null}
+        {!state.adsRemoved && state.ready && !loading && !paymentUnconfirmed && offers.length > 0 ? <View
+            accessibilityRole="radiogroup" accessibilityLabel="Choose your Plus plan" style={styles.plans}>
+            {offers.map((offer, index) => {
+                const checked = selectedOffer?.id === offer.id;
+                const label = `${offer.billingPeriod === 'P1Y' ? 'Yearly Plus' : 'Monthly Plus'}. ${offerDisclosure(offer)}`;
+                return <Pressable key={offer.id} ref={node => { if (node) planRefs.current.set(offer.id, node); else planRefs.current.delete(offer.id); }}
+                    accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{checked, disabled: selectionDisabled}}
+                    aria-checked={Platform.OS === 'web' ? checked : undefined}
+                    aria-disabled={Platform.OS === 'web' ? selectionDisabled : undefined}
+                    disabled={selectionDisabled} tabIndex={Platform.OS === 'web' ? checked ? 0 : -1 : undefined}
+                    onFocus={() => setFocusedId(offer.id)} onBlur={() => setFocusedId(current => current === offer.id ? null : current)}
+                    onKeyDown={Platform.OS === 'web' ? event => {
+                        if (handlePlanKey(event.nativeEvent.key, index)) event.preventDefault();
+                    } : undefined}
+                    onPress={() => selectPlan(offer)} style={[styles.plan, {
+                        borderColor: checked || focusedId === offer.id ? colors.accent : colors.border,
+                        borderWidth: focusedId === offer.id && Platform.OS === 'web' ? 2 : 1,
+                        backgroundColor: checked ? colors.accentSoft : colors.surfaceSunken,
+                        opacity: selectionDisabled ? 0.5 : 1,
+                    }]}>
+                    <View style={styles.planRow} accessible={false}>
+                        <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                            style={[styles.radio, {borderColor: checked ? colors.accent : colors.borderStrong}]}>
+                            {checked ? <View style={[styles.radioDot, {backgroundColor: colors.accent}]}/> : null}
+                        </View>
+                        <View style={styles.planCopy} accessible={false}>
+                            <ThemedText style={styles.planTitle}>{offer.billingPeriod === 'P1Y' ? 'Yearly Plus' : 'Monthly Plus'}</ThemedText>
+                            <ThemedText style={[styles.copy, {color: colors.textMuted}]}>{offerDisclosure(offer)}</ThemedText>
+                        </View>
+                    </View>
+                </Pressable>;
+            })}
+        </View> : null}
+        {!state.adsRemoved && state.ready && !loading && !paymentUnconfirmed && session.account && selectedOffer ?
+            <PaywallButton label={state.purchasing === selectedOffer.id ? 'Processing…' : purchaseLabel(selectedOffer)}
+                onPress={() => buy(selectedOffer)} disabled={busy || selectedMissing || !session.ready || !state.available || (inline && !active)} primary/> : null}
         {!state.adsRemoved && state.available && state.ready && !loading && offers.length === 0 ? <ThemedText style={styles.copy}>Plus plans are unavailable right now. You can still check an existing purchase below.</ThemedText> : null}
         {!state.adsRemoved && state.available && !session.account && !paymentUnconfirmed ? <>
             <ThemedText style={styles.copy}>{offers.length > 0
@@ -333,7 +411,11 @@ const styles = StyleSheet.create({
     heading: {flex: 1, minWidth: 0}, close: {minHeight: 44, minWidth: 48, flexShrink: 0, alignItems: 'center', justifyContent: 'center'},
     scroll: {flexShrink: 1, minHeight: 0},
     content: {padding: 20, paddingTop: 0, gap: 14}, copy: {fontSize: 15, lineHeight: 22},
-    plan: {padding: 16, borderWidth: 1, borderRadius: 16, gap: 12}, planTitle: {fontSize: 18, fontWeight: '700'},
+    plans: {gap: 12},
+    plan: {padding: 16, borderWidth: 1, borderRadius: 16}, planRow: {flexDirection: 'row', gap: 12, alignItems: 'flex-start'},
+    planCopy: {flex: 1, minWidth: 0, gap: 8}, planTitle: {fontSize: 18, fontWeight: '700'},
+    radio: {width: 22, height: 22, borderWidth: 2, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 2},
+    radioDot: {width: 10, height: 10, borderRadius: 5},
     button: {minHeight: 48, padding: 14, borderWidth: 1, borderRadius: 14, justifyContent: 'center'},
     buttonText: {fontWeight: '700', textAlign: 'center'}, fine: {fontSize: 12, lineHeight: 18},
     privacy: {minHeight: 44, justifyContent: 'center', alignItems: 'center'},

@@ -73,6 +73,20 @@ test('checkout events preserve existing event names and safe placement without m
     assert.doesNotMatch(JSON.stringify(f.events), /private|price|revenue|currency|transaction|email|uid|renewal/);
 });
 
+test('P1Y checkout is labeled yearly while other recurring periods retain the generic label', () => {
+    const f = fixture();
+    for (const billingPeriod of ['P1Y', 'P3M']) {
+        const offer = {placement: 'supporter_page', recurring: true, billingPeriod, priceLabel: 'private charge'};
+        trackSubscriptionFunnel(f.analytics, {step: 'checkout_started', offer}, f.context());
+        trackSubscriptionFunnel(f.analytics, {step: 'checkout_finished', offer, outcome: 'granted'}, f.context());
+    }
+    assert.deepEqual(f.events.map(({name, params}) => [name, params.plan_kind]), [
+        ['remove_ads_purchase_start', 'yearly'], ['remove_ads_purchase_done', 'yearly'],
+        ['remove_ads_purchase_start', 'recurring'], ['remove_ads_purchase_done', 'recurring'],
+    ]);
+    assert.doesNotMatch(JSON.stringify(f.events), /private|price|charge|transaction|currency/);
+});
+
 test('categorical dimensions reach Firebase as nonnumeric strings while offer counts remain numeric', () => {
     const f = fixture();
     for (const value of [true, false]) {

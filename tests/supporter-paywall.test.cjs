@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const React = require('react');
 const {act, create} = require('react-test-renderer');
+const createDOMProps = require('react-native-web/dist/cjs/modules/createDOMProps');
 const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -102,6 +103,13 @@ async function fixture(t, options = {}) {
     const modal = () => renderer.root.findByType('Modal');
     const pressable = label => renderer.root.findAllByType('Pressable').find(node =>
         node.props.accessibilityLabel === label || nodeText(node) === label);
+    const radios = () => renderer.root.findAllByType('Pressable').filter(node => node.props.accessibilityRole === 'radio');
+    const select = async title => {
+        const radio = radios().find(node => node.props.accessibilityLabel.startsWith(`${title}. `));
+        assert.ok(radio, `${title} radio exists`);
+        assert.equal(Boolean(radio.props.disabled), false, `${title} radio is enabled`);
+        await act(async () => { radio.props.onPress(); });
+    };
     const press = async label => {
         const button = pressable(label);
         assert.ok(button, `button ${label} exists`);
@@ -109,7 +117,7 @@ async function fixture(t, options = {}) {
         await act(async () => { button.props.onPress(); });
     };
     return {
-        renderer, state, session, calls, purchases, open, modal, press, pressable,
+        renderer, state, session, calls, purchases, open, modal, press, pressable, radios, select,
         visible: () => visible,
         remountCaller: () => act(async () => {callerKey++; renderer.update(tree());}),
         setActive: value => act(async () => {inlineActive = value; renderer.update(tree());}),
@@ -356,6 +364,9 @@ test('anonymous users can compare multiple localized plans without any checkout 
     assert.match(f.text(), /€29,99 every year\. Renews automatically until cancelled/);
     assert.match(f.text(), /Manage or cancel a subscription in the store where you paid/);
     assert.equal(f.renderer.root.findAllByType('Pressable').some(node => nodeText(node).startsWith('Continue ·')), false);
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true, false]);
+    await f.select('Monthly Plus');
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [false, true]);
     assert.equal(f.calls.signIn, 0);
     assert.deepEqual(f.calls.purchase, []);
 });
@@ -373,12 +384,114 @@ test('signed-in checkout offers only actual monthly and yearly SDK subscriptions
     assert.match(f.text(), /Yearly Plus/);
     assert.match(f.text(), /€24,99 every year/);
     assert.doesNotMatch(f.text(), /€49,99|€8,99/);
-    assert.ok(f.pressable('Subscribe for €2,99 / month'));
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityLabel), [
+        'Yearly Plus. €24,99 every year. Renews automatically until cancelled.',
+        'Monthly Plus. €2,99 every month. Renews automatically until cancelled.',
+    ]);
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true, false]);
     assert.ok(f.pressable('Subscribe for €24,99 / year'));
+    assert.equal(f.pressable('Subscribe for €2,99 / month'), undefined);
     assert.equal(f.pressable('Reload plans'), undefined);
-    await f.press('Subscribe for €24,99 / year');
-    assert.deepEqual(f.calls.purchase, ['annual']);
+    await f.select('Monthly Plus');
+    assert.deepEqual(f.calls.purchase, []);
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [false, true]);
+    assert.equal(f.pressable('Subscribe for €24,99 / year'), undefined);
+    await f.press('Subscribe for €2,99 / month');
+    assert.deepEqual(f.calls.purchase, ['monthly']);
     assert.deepEqual(f.calls.impressions, ['annual']);
+});
+
+test('explicit monthly selection survives a loading gap, reorder and newly arriving yearly plan', async t => {
+    const pending = deferred();
+    let next = [plan('monthly', 'supporter', {priceLabel: '$2.99'})];
+    const f = await fixture(t, {getOffers: () => next});
+    await f.open();
+    await f.select('Monthly Plus');
+    const staleBuy = f.pressable('Subscribe for $2.99 / month').props.onPress;
+    next = pending.promise;
+    await f.update({failure: 'offer_unavailable'});
+    await f.press('Reload plans');
+    assert.equal(f.radios().length, 0);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+    await act(async () => staleBuy());
+    assert.deepEqual(f.calls.purchase, []);
+    await act(async () => pending.resolve([
+        plan('monthly', 'supporter', {priceLabel: '$2.99'}),
+        plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]));
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [false, true]);
+    assert.ok(f.pressable('Subscribe for $2.99 / month'));
+    assert.equal(f.pressable('Subscribe for $29.99 / year'), undefined);
+});
+
+test('a settled removed selection falls back to a real plan and announces review before checkout', async t => {
+    const f = await fixture(t, {offers: [
+        plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]});
+    await f.open();
+    await f.select('Monthly Plus');
+    f.setOffers([plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'})]);
+    await f.update({failure: 'offer_unavailable'});
+    await f.press('Reload plans');
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true]);
+    assert.match(f.text(), /Your selected plan is no longer available\. Review the available plan before subscribing\./);
+    assert.ok(f.renderer.root.findAllByType('Text').some(node => node.props.accessibilityLiveRegion === 'polite'));
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+    await f.press('Subscribe for $29.99 / year');
+    assert.deepEqual(f.calls.purchase, ['annual']);
+});
+
+test('the initially selected yearly plan is remembered and its removal requires review', async t => {
+    const f = await fixture(t, {offers: [
+        plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]});
+    await f.open();
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true, false]);
+    f.setOffers([plan('monthly')]);
+    await f.update({failure: 'offer_unavailable'});
+    await f.press('Reload plans');
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true]);
+    assert.match(f.text(), /Your selected plan is no longer available\. Review the available plan before subscribing\./);
+    assert.ok(f.pressable('Subscribe for $2.99 / month'));
+    assert.deepEqual(f.calls.purchase, []);
+});
+
+test('account remount resets selection and rejects a prior account checkout handler', async t => {
+    const f = await fixture(t, {offers: [
+        plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]});
+    await f.open();
+    await f.select('Monthly Plus');
+    const oldBuy = f.pressable('Subscribe for $2.99 / month').props.onPress;
+    await f.update(null, {account: user('B')});
+    await act(async () => oldBuy());
+    assert.deepEqual(f.calls.purchase, []);
+    assert.deepEqual(f.radios().map(node => node.props.accessibilityState.checked), [true, false]);
+    assert.ok(f.pressable('Subscribe for $29.99 / year'));
+});
+
+test('web radios rove tab focus and change selection with arrows and Space without checkout', async t => {
+    const f = await fixture(t, {platform: 'web', offers: [
+        plan('monthly'), plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '$29.99'}),
+    ]});
+    await f.open();
+    assert.equal(f.renderer.root.findAllByProps({accessibilityRole: 'radiogroup'}).length, 1);
+    assert.deepEqual(f.radios().map(node => node.props.tabIndex), [0, -1]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [true, false]);
+    const pressKey = async (index, key) => {
+        let prevented = false;
+        await act(async () => f.radios()[index].props.onKeyDown({nativeEvent: {key}, preventDefault() {prevented = true;}}));
+        assert.equal(prevented, true);
+    };
+    await pressKey(0, 'ArrowDown');
+    assert.deepEqual(f.radios().map(node => node.props.tabIndex), [-1, 0]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [false, true]);
+    await pressKey(0, ' ');
+    assert.deepEqual(f.radios().map(node => node.props.tabIndex), [0, -1]);
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-checked']), [true, false]);
+    assert.deepEqual(f.calls.purchase, []);
+    await f.update({refreshing: true});
+    assert.deepEqual(f.radios().map(node => createDOMProps('div', node.props)['aria-disabled']), [true, true]);
 });
 
 test('a sole real prepaid yearly offer uses its localized prepaid terms without a monthly placeholder', async t => {
@@ -514,6 +627,8 @@ test('pending payments are visible and a failed restore provides recovery copy',
     const f = await fixture(t, {state: {failure: 'pending'}, restore: async () => { throw Error('offline'); }});
     await f.open();
     assert.match(f.text(), /do not need to pay again/);
+    assert.equal(f.radios().length, 0);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     await f.press('Restore purchases');
     assert.match(f.text(), /could not restore purchases/);
     assert.ok(f.renderer.root.findAllByType('Text').some(node => node.props.accessibilityLiveRegion === 'polite'));
@@ -528,6 +643,7 @@ test('repeated purchase taps make one request and close waits for it to settle',
     const close = f.modal().props.onRequestClose;
     await act(async () => { buy(); buy(); close(); });
     assert.deepEqual(f.calls.purchase, ['monthly']);
+    assert.equal(f.radios()[0].props.disabled, true);
     assert.deepEqual(closed, []);
     await act(async () => { pending.resolve(true); });
     assert.match(f.text(), /Welcome to Yify Plus/);

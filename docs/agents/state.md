@@ -1,8 +1,16 @@
 # Delivery handoff
 
-Updated 2026-10-16 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-17 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
-## Current delivery: 2026-10-16
+## Current delivery: 2026-10-17
+
+PRs #1005 and #1006 delivered the revised monetization flow and Yify Plus naming. The previous production source is `d64f4afb1190273db2bbe6f8fd3267515f042531`, with Hosting deployment `g13f4ikaow`, Pages deployment `7139204711`, and Android Production OTA group `db46773f-685e-4be8-bbd4-62bfcd1b0144` / update `01a149b7-929b-7c56-8802-717cb1a45bdb` for shipped runtime 1.8.25/code 107. These are publication receipts, not an installed-device receipt. [PR #1006 closure](https://github.com/kunal26das/yify/pull/1006#issuecomment-6233662531) records delivery details.
+
+The active [yearly Plus change](../../openspec/changes/complete-yearly-plus/evidence.md) adds actual-offer radio selection and one checkout action. Application source `6ec18e3a593557a60f1bbed909c0a359ff63991b` passed independent source and rendered design review, typecheck, 2,321 app tests with one native-artifact skip, 51 crashreporting tests, and both exports. Final merge, both automatic web publications and compatible Android OTA are still pending at this snapshot.
+
+Google Play yearly product/base plan `yify_plus_yearly:p1y` is active with 172 mirrored product regional prices at ten monthly payments; the original monthly configuration is unchanged. Both new annual RevenueCat products grant existing `remove_ads` ownership. The planned default annual package contains only Android after verified application release. Web annual is prepared but must remain unoffered: actual sandbox SDK metadata passed, while Stripe rejected checkout on provider account requirements. Complete the provider setup and successful web transaction/recovery checks before enabling it. No native purchase/restore/renewal or new installed OTA receipt was verified; no suitable device was connected. Preserve the unrelated unfinished Compose migration worktree. The active evidence and eventual PR closure must reconcile final release receipts and cleanup.
+
+## Previous delivery: 2026-10-16
 
 Release source `69c60b1e69c3535743b7fa3a82c878132e988061` has the same application bytes as `ca8e8d123972c6ef10e42f222e191951393a69ed`, integrating PRs #999–#1003 as version/runtime 1.8.25, build 107. Expo 58.0.12, stable React Native 0.88.0 and RevenueCat 10.13.0 are aligned with reviewed native guards. Required CI and independent source reviews passed; integration CI reports 2,293 app tests passed, one skipped, and 51 crashreporting tests passed. Android arm64 Debug and unsigned iOS Simulator builds also passed.
 
