@@ -8,6 +8,9 @@ function input(overrides: Partial<AdGateInput> = {}): AdGateInput {
         trigger: 'movie_open',
         entitlementKnown: true,
         adsRemoved: false,
+        movieOpensSinceVisible: 3,
+        lastVisibleAt: null,
+        now: 120000,
         loaded: true,
         ...overrides,
     };
@@ -33,8 +36,17 @@ test('a loaded ad on a movie open for a non-paying user shows', () => {
     assert.equal(decideAd(input()), 'show');
 });
 
-test('back-to-back movie opens are never throttled', () => {
-    assert.equal(decideAd(input()), 'show');
-    assert.equal(decideAd(input()), 'show');
-    assert.equal(decideAd(input()), 'show');
+test('the first two eligible movie opens after an impression are free', () => {
+    assert.equal(decideAd(input({movieOpensSinceVisible: 1})), 'paced_actions');
+    assert.equal(decideAd(input({movieOpensSinceVisible: 2})), 'paced_actions');
+    assert.equal(decideAd(input({movieOpensSinceVisible: 3})), 'show');
+});
+
+test('an eligible third open waits 120 seconds from the last visible ad', () => {
+    assert.equal(decideAd(input({lastVisibleAt: 1000, now: 120999})), 'paced_time');
+    assert.equal(decideAd(input({lastVisibleAt: 1000, now: 121000})), 'show');
+});
+
+test('an unfilled eligible open stays unfilled after action and time gates pass', () => {
+    assert.equal(decideAd(input({loaded: false, lastVisibleAt: 1000, now: 121000})), 'unfilled');
 });

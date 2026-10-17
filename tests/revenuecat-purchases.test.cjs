@@ -1010,3 +1010,51 @@ test('explicit native refresh cannot confirm access for an account that changed 
     await changed;
     assert.equal(await f.repository.refresh(), true);
 });
+
+for (const reason of ['pending', 'not_granted']) {
+    test(`native ${reason} payment survives empty and failed restore until verified access arrives`, async t => {
+        let restoration = deferred();
+        let granted = false;
+        const f = fixture(t, {
+            purchase: async () => {
+                if (reason === 'pending') throw {code: 'pending'};
+                return {customerInfo: customer(false)};
+            },
+            restore: () => restoration.promise,
+            getCustomerInfo: async () => customer(granted),
+        });
+        await f.ready('A');
+        await f.repository.purchase(f.repository.getState().offers[0].id);
+        assert.equal(f.repository.getState().failure, reason);
+        const failed = f.repository.restore();
+        assert.equal(f.repository.getState().failure, reason);
+        restoration.reject(new Error('offline'));
+        assert.equal(await failed, false);
+        assert.equal(f.repository.getState().failure, reason);
+        restoration = deferred();
+        const empty = f.repository.restore();
+        restoration.resolve(customer(false));
+        assert.equal(await empty, false);
+        assert.equal(f.repository.getState().failure, reason);
+        assert.equal(f.repository.getState().restoring, false);
+        granted = true;
+        assert.equal(await f.repository.refresh(), true);
+        assert.equal(f.repository.getState().adsRemoved, true);
+        assert.equal(f.repository.getState().failure, null);
+    });
+}
+
+test('native unresolved restore cannot transfer its failure to another account', async t => {
+    const restoration = deferred();
+    const f = fixture(t, {purchase: async () => {throw {code: 'pending'};}, restore: () => restoration.promise});
+    await f.ready('A');
+    await f.repository.purchase(f.repository.getState().offers[0].id);
+    const restoring = f.repository.restore();
+    await flush();
+    const identifying = f.repository.identify(account('B'));
+    restoration.reject(new Error('offline'));
+    await Promise.all([restoring, identifying]);
+    assert.equal(f.uid(), 'B');
+    assert.equal(f.repository.getState().failure, null);
+    assert.equal(f.repository.getState().adsRemoved, false);
+});

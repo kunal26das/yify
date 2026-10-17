@@ -54,6 +54,10 @@ function customerState(info: CustomerInfo): Pick<PurchaseState,
     };
 }
 
+function unresolvedPayment(failure: PurchaseFailure | null): PurchaseFailure | null {
+    return failure === 'pending' || failure === 'not_granted' ? failure : null;
+}
+
 function purchaseFailureReason(error: unknown): PurchaseFailure {
     const {userCancelled, code} = (error ?? {}) as {userCancelled?: boolean | null; code?: string};
     if (userCancelled) return 'cancelled';
@@ -302,17 +306,18 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     restore(): Promise<boolean> {
+        const unresolved = unresolvedPayment(this.store.get().failure);
         if (this.mutation) {
             return this.mutation.kind === 'restore' ? this.mutation.promise : Promise.resolve(false);
         }
         if (!this.store.get().ready) {
-            this.setState({failure: 'restore_failed'});
+            this.setState({failure: unresolved ?? 'restore_failed'});
             this.diagnostics.event('purchases.restore', {outcome: 'unavailable'});
             return Promise.resolve(false);
         }
         const revision = this.revision;
         const uid = this.activeSdkUid;
-        this.setState({restoring: true, failure: null});
+        this.setState({restoring: true, failure: unresolved});
         return this.runMutation('restore', async () => {
             const span = this.diagnostics.start('purchases.restore', {provider: 'revenuecat'});
             if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
@@ -321,7 +326,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 if (!this.isCurrent(revision, uid)) { span.finish('skipped'); return false; }
                 const restored = hasRemoveAds(info);
                 this.applyCustomerInfo(info, uid!);
-                this.setState({failure: null});
+                this.setState({failure: restored ? null : unresolved});
                 this.analytics.trackEvent('remove_ads_restore', {result: restored ? 'restored' : 'none'});
                 span.finish(restored ? 'ok' : 'empty');
                 return restored;
@@ -330,7 +335,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 const reason = purchaseFailureReason(error);
                 if (reason === 'unknown') span.fail(error, {error_code: diagnosticCode(error)});
                 else span.finish(reason === 'cancelled' ? 'cancelled' : reason === 'pending' ? 'pending' : 'skipped', {error_code: reason});
-                this.setState({failure: 'restore_failed'});
+                this.setState({failure: unresolved ?? 'restore_failed'});
                 this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
                 return false;
             }
@@ -492,7 +497,8 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         const next = customerState(info);
         this.customerSignature = JSON.stringify(next);
         this.cache.set(this.cacheKey(uid), JSON.stringify({adsRemoved, expiresAt: next.expiresAt}));
-        this.setState({ready: true, ...next});
+        this.setState({ready: true, ...next,
+            ...(adsRemoved && unresolvedPayment(this.store.get().failure) ? {failure: null} : {})});
         const reported = `${uid}:${adsRemoved}`;
         if (this.reportedEntitlement !== reported) {
             this.reportedEntitlement = reported;

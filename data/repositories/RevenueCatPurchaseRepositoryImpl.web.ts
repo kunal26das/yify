@@ -32,6 +32,10 @@ const APP_USER_ID_KEY = 'app_user_id';
 const apiKey = process.env.EXPO_PUBLIC_REVENUECAT_WEB_KEY;
 const SETTINGS_PLACEMENT: PurchasePlacement = 'settings_supporter';
 
+function unresolvedPayment(failure: PurchaseFailure | null): PurchaseFailure | null {
+    return failure === 'pending' || failure === 'not_granted' ? failure : null;
+}
+
 function purchaseFailureReason(error: unknown): PurchaseFailure {
     if (!(error instanceof PurchasesError)) return 'unknown';
     switch (error.errorCode) {
@@ -270,13 +274,14 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
     }
 
     async restore(): Promise<boolean> {
+        const unresolved = unresolvedPayment(this.store.get().failure);
         if (!this.canStart() || this.checkout) {
             this.diagnostics.event('purchases.restore', {outcome: this.checkout ? 'skipped' : 'unavailable'});
             return false;
         }
         const revision = this.revision;
         if (this.restoring?.revision === revision) return this.restoring.promise;
-        this.setState({restoring: true, failure: null});
+        this.setState({restoring: true, failure: unresolved});
         const promise = this.enqueue(async () => {
             const span = this.diagnostics.start('purchases.restore', {provider: 'revenuecat'});
             if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
@@ -284,14 +289,14 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
                 // Web purchases belong to the RevenueCat customer; there is no store restore API.
                 const restored = await this.synchronize(revision);
                 if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
-                this.setState({failure: null});
+                this.setState({failure: restored ? null : unresolved});
                 this.analytics.trackEvent('remove_ads_restore', {result: restored ? 'restored' : 'none'});
                 span.finish(restored ? 'ok' : 'empty');
                 return restored;
             } catch {
                 if (!this.isCurrent(revision)) { span.finish('skipped'); return false; }
                 span.finish('error', {stage: 'sync'});
-                this.setState({failure: 'restore_failed'});
+                this.setState({failure: unresolved ?? 'restore_failed'});
                 this.analytics.trackEvent('remove_ads_restore', {result: 'error'});
                 return false;
             } finally {
@@ -386,6 +391,7 @@ export class RevenueCatPurchaseRepositoryImpl implements PurchaseRepository {
         this.setState({
             ready: true,
             adsRemoved,
+            ...(adsRemoved && unresolvedPayment(this.store.get().failure) ? {failure: null} : {}),
             managementURL: info.managementURL ?? null,
             expiresAt,
             willRenew: entitlement?.willRenew ?? false,

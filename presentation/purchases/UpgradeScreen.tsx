@@ -1,45 +1,24 @@
-import {useEffect} from 'react';
-import {Pressable, ScrollView, StyleSheet} from 'react-native';
+import {ScrollView, StyleSheet} from 'react-native';
 import {router, useIsFocused} from 'expo-router';
-import {ThemedText} from '../components/themed-text';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Screen} from '../components/screen';
-import {usePalette} from '../hooks/use-palette';
 import {useTopBarHeight} from '../movies/components/TopBar';
 import {Spacing} from '../constants/theme';
-import {useSupporterPaywall} from './supporter-paywall';
+import {useResponsive} from '../hooks/use-responsive';
+import {SupporterMembership} from './supporter-paywall';
 
 export function UpgradeScreen() {
-    const showPaywall = useSupporterPaywall();
-    const {colors} = usePalette();
     const top = useTopBarHeight();
     const focused = useIsFocused();
-
-    useEffect(() => {
-        if (!focused) return;
-        let active = true;
-        let cancel: (() => void) | undefined;
-        void Promise.resolve().then(() => {
-            if (!active) return;
-            cancel = showPaywall('supporter_page', () => {
-                if (active) router.replace('/watchlist');
-            });
-        });
-        return () => {
-            active = false;
-            cancel?.();
-        };
-    }, [focused, showPaywall]);
-
-    return <Screen><ScrollView contentContainerStyle={[styles.content, {paddingTop: top + Spacing.xl}]}>
-        <ThemedText accessibilityRole="header" type="heading">Yify Supporter</ThemedText>
-        <ThemedText style={{color: colors.textMuted}}>Personal viewing insights and no Yify ads. Choose a plan to see its price and billing terms.</ThemedText>
-        <Pressable accessibilityRole="button" onPress={() => router.replace('/watchlist')} style={styles.button}>
-            <ThemedText type="link">Keep browsing</ThemedText>
-        </Pressable>
+    const insets = useSafeAreaInsets();
+    const {gutter} = useResponsive();
+    return <Screen><ScrollView contentContainerStyle={[styles.content, {
+        paddingHorizontal: gutter, paddingTop: top + Spacing.xl, paddingBottom: insets.bottom + Spacing.xxl,
+    }]}>
+        <SupporterMembership active={focused}
+            onOpenJournal={() => router.push('/journal')}
+            onOpenInsights={() => router.push('/journal?tab=insights')}/>
     </ScrollView></Screen>;
 }
 
-const styles = StyleSheet.create({
-    content: {padding: Spacing.xl, gap: Spacing.md},
-    button: {alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center'},
-});
+const styles = StyleSheet.create({content: {paddingVertical: Spacing.xl}});

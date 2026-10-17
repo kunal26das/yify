@@ -17,6 +17,15 @@ export function offerDisclosure(offer: PurchaseOffer): string {
     return `${offer.priceLabel}${period ? ` every ${period}` : ' per billing period'}. Renews automatically until cancelled.`;
 }
 
+export function subscriptionOffers(offers: PurchaseOffer[]): PurchaseOffer[] {
+    return offers.filter(offer => offer.recurring && (offer.billingPeriod === 'P1M' || offer.billingPeriod === 'P1Y') && offer.priceLabel.trim());
+}
+
+export function purchaseLabel(offer: PurchaseOffer): string {
+    const period = offer.billingPeriod === 'P1Y' ? 'year' : 'month';
+    return offer.autoRenewing === false ? `Get 1 ${period} for ${offer.priceLabel}` : `Subscribe for ${offer.priceLabel} / ${period}`;
+}
+
 export function supporterStatus(state: PurchaseState): string {
     if (state.billingIssue) return 'There is a payment issue. Open billing settings to update your payment method.';
     const date = state.expiresAt ? new Date(state.expiresAt) : null;

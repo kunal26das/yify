@@ -6,7 +6,7 @@ const {loadTypeScript} = require('./helpers/load-typescript.cjs');
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const {INITIAL_PURCHASE_STATE} = loadTypeScript('domain/entities/Entitlement.ts');
-const {billingPeriodLabel, offerDisclosure, supporterStatus, purchaseFailureMessage, safeManagementURL} =
+const {billingPeriodLabel, offerDisclosure, subscriptionOffers, purchaseLabel, supporterStatus, purchaseFailureMessage, safeManagementURL} =
     loadTypeScript('presentation/purchases/offer-copy.ts');
 const user = uid => ({uid, name: null, email: null, photoUrl: null});
 const plan = (id = 'monthly', offeringId = 'supporter', overrides = {}) => ({
@@ -34,7 +34,7 @@ async function fixture(t, options = {}) {
     const state = observable({...INITIAL_PURCHASE_STATE, available: true, ready: true, ...options.state});
     const session = observable({ready: true, signingIn: false, available: true, account: user('A'), error: null, ...options.session});
     let offers = options.offers ?? [plan()];
-    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], funnel: [], links: [], browsers: []};
+    const calls = {offers: [], purchase: [], restore: 0, refresh: 0, signIn: 0, impressions: [], prompts: [], funnel: [], links: [], browsers: [], navigation: []};
     const purchases = {
         getState: state.get,
         subscribe: state.subscribe,
@@ -56,7 +56,7 @@ async function fixture(t, options = {}) {
         async signIn() { calls.signIn++; return options.signIn ? options.signIn(session) : false; },
     };
     const colors = new Proxy({}, {get: () => '#123456'});
-    const {SupporterProvider, useSupporterPaywall, useSupporterPaywallVisible} = loadTypeScript('presentation/purchases/supporter-paywall.tsx', {
+    const {SupporterProvider, SupporterMembership, useSupporterPaywall, useSupporterPaywallVisible} = loadTypeScript('presentation/purchases/supporter-paywall.tsx', {
         'react-native': {
             ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Pressable: 'Pressable',
             ScrollView: 'ScrollView', View: 'View', Platform: {OS: options.platform ?? 'android'},
@@ -65,6 +65,7 @@ async function fixture(t, options = {}) {
             Linking: {async openURL(url) { calls.links.push(url); if (options.openURL) await options.openURL(url); }},
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 20, bottom: 10, left: 0, right: 0})},
+        'expo-router': {router: {push: path => calls.navigation.push(path)}},
         'expo-web-browser': {async openBrowserAsync(url, options) { calls.browsers.push({url, options}); return {type: 'opened'}; }},
         '../di/DependenciesContext': {
             usePurchaseRepository: () => purchases, useAuthRepository: () => auth,
@@ -82,9 +83,14 @@ async function fixture(t, options = {}) {
         }}},
     });
     let show, visible;
+    let inlineActive = options.active ?? true;
     let callerKey = 0;
     function Probe() { show = useSupporterPaywall(); visible = useSupporterPaywallVisible(); return null; }
-    const tree = () => React.createElement(SupporterProvider, null, React.createElement(Probe, {key: callerKey}));
+    const tree = () => React.createElement(SupporterProvider, null, React.createElement(React.Fragment, null,
+        React.createElement(Probe, {key: callerKey}), options.inline ? React.createElement(SupporterMembership, {
+            active: inlineActive, onOpenJournal: () => calls.navigation.push('/journal'),
+            onOpenInsights: () => calls.navigation.push('/journal?tab=insights'),
+        }) : null));
     let renderer;
     await act(async () => { renderer = create(tree()); });
     t.after(async () => { await act(async () => { renderer.unmount(); }); });
@@ -106,6 +112,7 @@ async function fixture(t, options = {}) {
         renderer, state, session, calls, purchases, open, modal, press, pressable,
         visible: () => visible,
         remountCaller: () => act(async () => {callerKey++; renderer.update(tree());}),
+        setActive: value => act(async () => {inlineActive = value; renderer.update(tree());}),
         show: () => act(async () => { modal().props.onShow(); }),
         text: () => renderer.root.findAllByType('Text').map(nodeText).join('\n'),
         update: async (patch, authPatch) => act(async () => {
@@ -124,6 +131,14 @@ test('billing copy uses actual monthly, annual, multi-month, prepaid, and one-ti
     assert.equal(offerDisclosure(plan('once', 'supporter', {recurring: false})), '$2.99 once. No renewal.');
     assert.equal(offerDisclosure(plan('unknown', 'supporter', {billingPeriod: null})), '$2.99 per billing period. Renews automatically until cancelled.');
     for (const period of ['P0M', 'P-1M', 'P1Q', 'P999999999999999999999M', null]) assert.equal(billingPeriodLabel(period), null);
+    assert.deepEqual(subscriptionOffers([plan(), plan('annual', 'supporter', {billingPeriod: 'P1Y'}),
+        plan('lifetime', 'supporter', {recurring: false, billingPeriod: null}),
+        plan('unknown', 'supporter', {billingPeriod: null}),
+        plan('blank', 'supporter', {priceLabel: '  '})]).map(offer => offer.id), ['monthly', 'annual']);
+    assert.equal(purchaseLabel(plan()), 'Subscribe for $2.99 / month');
+    assert.equal(purchaseLabel(plan('annual', 'supporter', {billingPeriod: 'P1Y'})), 'Subscribe for $2.99 / year');
+    assert.equal(purchaseLabel(plan('prepaid', 'supporter', {autoRenewing: false})), 'Get 1 month for $2.99');
+    assert.equal(purchaseLabel(plan('prepaid-year', 'supporter', {autoRenewing: false, billingPeriod: 'P1Y'})), 'Get 1 year for $2.99');
 });
 
 test('status distinguishes active renewal, cancelled access, lapsed access and payment issues', () => {
@@ -159,7 +174,9 @@ test('impressions wait for the visible modal and loaded plans, then dedupe by of
     assert.deepEqual(f.calls.impressions, ['monthly']);
     await f.show();
     assert.deepEqual(f.calls.prompts, ['settings']);
+    assert.equal(f.pressable('Reload plans'), undefined);
     initial = false;
+    await f.update({failure: 'offer_unavailable'});
     await f.press('Reload plans');
     assert.deepEqual(f.calls.impressions, ['monthly']);
 });
@@ -171,9 +188,10 @@ test('each offering is attributed once and an excluded placement has no impressi
     assert.deepEqual(f.calls.impressions, ['one', 'two']);
     assert.deepEqual(f.calls.prompts, ['post_ad']);
     f.setOffers([]);
+    await f.update({failure: 'offer_unavailable'});
     await f.press('Reload plans');
     assert.match(f.text(), /plans are unavailable/);
-    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     assert.deepEqual(f.calls.impressions, ['one', 'two']);
 });
 
@@ -186,40 +204,40 @@ test('Journal paywall keeps its placement for loading, visibility and purchase w
     assert.deepEqual(f.calls.prompts, ['journal']);
     assert.deepEqual(f.calls.impressions, ['journal-monthly']);
     assert.equal(f.calls.funnel.every(({event}) => event.placement === 'journal_insights'), true);
-    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     assert.deepEqual(f.calls.purchase, []);
     await f.update(null, {account: user('A')});
     await f.show();
-    await f.press('Continue · $2.99');
+    await f.press('Subscribe for $2.99 / month');
     assert.deepEqual(f.calls.purchase, ['journal-monthly']);
     assert.equal(f.calls.offers.every(placement => placement === 'journal_insights'), true);
 });
 
-test('ad removal leads into localized pricing and sign-in before the secondary fictional insights preview', async t => {
+test('the offer shows two concrete benefits and localized terms before sign-in without invented metrics', async t => {
     const f = await fixture(t, {offers: [plan('monthly-in', 'supporter', {priceLabel: '₹99.00'})], session: {account: null}});
     await f.open();
     const content = f.text();
-    assert.match(content, /Remove Yify ads/);
-    assert.match(content, /Also includes monthly and all-time viewing insights/);
-    assert.match(content, /Fictional journal · one month/);
-    assert.match(content, /Your insights use the movies and ratings you add to your journal/);
-    assert.match(content, /Your journal entries and editing stay free/);
-    assert.match(content, /YouTube and other external-service ads are separate/);
+    assert.match(content, /No Yify ads/);
+    assert.match(content, /Your viewing insights/);
+    assert.match(content, /monthly and all-time watches, time watched, top genres and personal ratings/);
+    assert.doesNotMatch(content, /Example insights|Fictional journal|4\.2 \/ 5|Top genre: Drama/);
+    assert.match(content, /journal entries stay free/);
+    assert.match(content, /YouTube and streaming-service ads are separate/);
     assert.match(content, /₹99\.00 every month\. Renews automatically until cancelled/);
-    assert.ok(content.indexOf('Remove Yify ads') < content.indexOf('₹99.00 every month'));
-    assert.ok(content.indexOf('Sign in with Google') < content.indexOf('Example insights'));
+    assert.ok(content.indexOf('No Yify ads') < content.indexOf('₹99.00 every month'));
+    assert.ok(content.indexOf('Your viewing insights') < content.indexOf('₹99.00 every month'));
     assert.ok(content.indexOf('₹99.00 every month') < content.indexOf('Sign in with Google'));
     assert.match(content, /Signing in does not start a subscription/);
-    assert.equal(f.pressable('Continue · ₹99.00'), undefined);
+    assert.equal(f.pressable('Subscribe for ₹99.00 / month'), undefined);
     assert.equal(f.pressable('Restore purchases'), undefined);
     assert.equal(f.renderer.root.findAllByType('Pressable').filter(node => nodeText(node) === 'Sign in with Google').length, 1);
     assert.deepEqual(f.calls.purchase, []);
     assert.deepEqual(f.calls.impressions, []);
     assert.deepEqual(f.calls.funnel, []);
-    assert.equal(f.renderer.root.findAllByProps({accessibilityLabel: 'Average rating: 4.2 / 5'}).length, 1);
     await f.update({adsRemoved: true});
-    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|Remove Yify ads/);
-    assert.equal(f.pressable('Continue · ₹99.00'), undefined);
+    assert.match(f.text(), /Your benefits are active/);
+    assert.doesNotMatch(f.text(), /Example insights|Fictional journal|Monthly Supporter/);
+    assert.equal(f.pressable('Subscribe for ₹99.00 / month'), undefined);
 });
 
 test('active access shows manage and restore actions without recording a sales impression', async t => {
@@ -230,7 +248,7 @@ test('active access shows manage and restore actions without recording a sales i
     await f.open();
     await f.show();
     assert.match(f.text(), /access continues until/);
-    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     assert.deepEqual(f.calls.impressions, []);
     assert.equal(f.calls.funnel.some(({event}) => event.step === 'offers_visible'), false);
     assert.equal(f.calls.funnel.find(({event}) => event.step === 'paywall_view').event.supporter, true);
@@ -283,7 +301,7 @@ test('unready services offer a working retry instead of an endless loading indic
     assert.equal(f.pressable('Restore purchases').props.disabled, true);
     await f.press('Refresh access');
     assert.equal(f.calls.refresh, 1);
-    assert.ok(f.pressable('Continue · $2.99'));
+    assert.ok(f.pressable('Subscribe for $2.99 / month'));
 });
 
 test('missing purchase configuration clearly disables retry and checkout', async t => {
@@ -292,13 +310,13 @@ test('missing purchase configuration clearly disables retry and checkout', async
     assert.match(f.text(), /Purchases are unavailable/);
     assert.equal(f.pressable('Refresh access').props.disabled, true);
     assert.equal(f.pressable('Restore purchases').props.disabled, true);
-    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
 });
 
 test('sign-in gates purchases and reports rejected sign-in without an unhandled promise', async t => {
     const f = await fixture(t, {session: {account: null}, signIn: async () => { throw Error('offline'); }});
     await f.open();
-    assert.equal(f.pressable('Continue · $2.99'), undefined);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
     assert.equal(f.pressable('Restore purchases'), undefined);
     await f.press('Sign in with Google');
     assert.equal(f.calls.signIn, 1);
@@ -307,6 +325,25 @@ test('sign-in gates purchases and reports rejected sign-in without an unhandled 
         {event: {step: 'sign_in_started', placement: 'settings_supporter'}, country: 'IN'},
         {event: {step: 'sign_in_finished', placement: 'settings_supporter', outcome: 'failed'}, country: 'IN'},
     ]);
+});
+
+test('a signed-out existing member can sign in and restore even when no sale offer loads', async t => {
+    const f = await fixture(t, {session: {account: null}, offers: [],
+        signIn: session => {session.set({account: user('returning')}); return true;},
+        restore: async () => true});
+    await f.open();
+    assert.match(f.text(), /Supporter plans are unavailable right now/);
+    assert.match(f.text(), /Already a Supporter\? Sign in to check your account access/);
+    assert.ok(f.pressable('Sign in with Google'));
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+    await f.press('Sign in with Google');
+    assert.deepEqual(f.calls.purchase, []);
+    assert.equal(f.calls.signIn, 1);
+    assert.ok(f.pressable('Restore purchases'));
+    await f.press('Restore purchases');
+    assert.equal(f.calls.restore, 1);
+    assert.match(f.text(), /Your supporter access is active/);
+    assert.deepEqual(f.calls.purchase, []);
 });
 
 test('anonymous users can compare multiple localized plans without any checkout action before signing in', async t => {
@@ -323,6 +360,79 @@ test('anonymous users can compare multiple localized plans without any checkout 
     assert.deepEqual(f.calls.purchase, []);
 });
 
+test('signed-in checkout offers only actual monthly and yearly SDK subscriptions with their own prices', async t => {
+    const f = await fixture(t, {offers: [
+        plan('lifetime', 'supporter', {recurring: false, billingPeriod: null, priceLabel: '€49,99'}),
+        plan('unknown', 'supporter', {billingPeriod: null, priceLabel: '€8,99'}),
+        plan('annual', 'supporter', {billingPeriod: 'P1Y', priceLabel: '€24,99'}),
+        plan('monthly', 'supporter', {priceLabel: '€2,99'}),
+    ]});
+    await f.open();
+    await f.show();
+    assert.match(f.text(), /Monthly Supporter/);
+    assert.match(f.text(), /Yearly Supporter/);
+    assert.match(f.text(), /€24,99 every year/);
+    assert.doesNotMatch(f.text(), /€49,99|€8,99/);
+    assert.ok(f.pressable('Subscribe for €2,99 / month'));
+    assert.ok(f.pressable('Subscribe for €24,99 / year'));
+    assert.equal(f.pressable('Reload plans'), undefined);
+    await f.press('Subscribe for €24,99 / year');
+    assert.deepEqual(f.calls.purchase, ['annual']);
+    assert.deepEqual(f.calls.impressions, ['annual']);
+});
+
+test('a sole real prepaid yearly offer uses its localized prepaid terms without a monthly placeholder', async t => {
+    const f = await fixture(t, {offers: [plan('annual-prepaid', 'supporter', {
+        billingPeriod: 'P1Y', autoRenewing: false, priceLabel: '₹899',
+    })]});
+    await f.open();
+    assert.match(f.text(), /₹899 for 1 year\. Prepaid access; does not renew automatically/);
+    assert.ok(f.pressable('Get 1 year for ₹899'));
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+    await f.press('Get 1 year for ₹899');
+    assert.deepEqual(f.calls.purchase, ['annual-prepaid']);
+});
+
+test('inline membership records a loaded offer only while focused and shows real benefits', async t => {
+    const f = await fixture(t, {inline: true, active: false});
+    assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
+    assert.match(f.text(), /No Yify ads/);
+    assert.match(f.text(), /Your viewing insights/);
+    assert.ok(f.pressable('Subscribe for $2.99 / month'));
+    assert.deepEqual(f.calls.funnel, []);
+    assert.deepEqual(f.calls.impressions, []);
+    await f.setActive(true);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step === 'paywall_view').map(({event}) => event.placement), ['supporter_page']);
+    assert.deepEqual(f.calls.funnel.filter(({event}) => event.step === 'offers_visible').map(({event}) => event.placement), ['supporter_page']);
+    assert.deepEqual(f.calls.impressions, ['monthly']);
+    await f.setActive(false);
+    await f.setActive(true);
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_view').length, 1);
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'offers_visible').length, 1);
+});
+
+test('an open modal obscures inline membership until it closes', async t => {
+    const f = await fixture(t, {inline: true, active: false});
+    await f.open('settings_supporter');
+    await f.show();
+    await f.setActive(true);
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_view' && event.placement === 'supporter_page').length, 0);
+    await f.press('Close supporter options');
+    assert.equal(f.calls.funnel.filter(({event}) => event.step === 'paywall_view' && event.placement === 'supporter_page').length, 1);
+    assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
+});
+
+test('active inline members can open their journal or insights without a modal', async t => {
+    const f = await fixture(t, {inline: true, state: {adsRemoved: true}});
+    assert.match(f.text(), /Your benefits are active/);
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+    await f.press('Open viewing insights');
+    await f.press('Open movie journal');
+    assert.deepEqual(f.calls.navigation, ['/journal?tab=insights', '/journal']);
+    assert.equal(f.renderer.root.findAllByType('Modal').length, 0);
+    assert.deepEqual(f.calls.impressions, []);
+});
+
 test('an accepted sign-in attempt finishes once across account remounts and never starts a purchase', async t => {
     const pending = deferred();
     const f = await fixture(t, {session: {account: null}, signIn: session => {
@@ -336,10 +446,10 @@ test('an accepted sign-in attempt finishes once across account remounts and neve
     assert.equal(f.pressable('Close supporter options').props.disabled, true);
     f.setOffers([plan('signed-in-monthly', 'supporter', {priceLabel: '₹89.00'})]);
     await f.update(null, {account: user('B'), signingIn: false});
-    assert.equal(f.pressable('Continue · ₹89.00').props.disabled, true);
+    assert.equal(f.pressable('Subscribe for ₹89.00 / month').props.disabled, true);
     assert.deepEqual(f.calls.purchase, []);
     await act(async () => pending.resolve(true));
-    assert.equal(f.pressable('Continue · ₹89.00').props.disabled, false);
+    assert.equal(f.pressable('Subscribe for ₹89.00 / month').props.disabled, false);
     await act(async () => signIn());
     assert.equal(f.calls.signIn, 1);
     assert.deepEqual(f.calls.funnel.filter(({event}) => event.step.startsWith('sign_in')), [
@@ -347,7 +457,7 @@ test('an accepted sign-in attempt finishes once across account remounts and neve
         {event: {step: 'sign_in_finished', placement: 'journal_insights', outcome: 'signed_in'}, country: 'IN'},
     ]);
     assert.deepEqual(f.calls.purchase, []);
-    await f.press('Continue · ₹89.00');
+    await f.press('Subscribe for ₹89.00 / month');
     assert.deepEqual(f.calls.purchase, ['signed-in-monthly']);
 });
 
@@ -391,6 +501,8 @@ test('session restoration and access refresh do not masquerade as paywall sign-i
     const f = await fixture(t, {session: {account: null}});
     await f.open();
     await f.update(null, {account: user('restored')});
+    assert.equal(f.pressable('Refresh access'), undefined);
+    await f.update({failure: 'restore_failed'});
     await f.press('Refresh access');
     await f.press('Restore purchases');
     assert.equal(f.calls.signIn, 0);
@@ -412,7 +524,7 @@ test('repeated purchase taps make one request and close waits for it to settle',
     const closed = [];
     const f = await fixture(t, {purchase: () => pending.promise});
     await f.open('settings_supporter', result => closed.push(result));
-    const buy = f.pressable('Continue · $2.99').props.onPress;
+    const buy = f.pressable('Subscribe for $2.99 / month').props.onPress;
     const close = f.modal().props.onRequestClose;
     await act(async () => { buy(); buy(); close(); });
     assert.deepEqual(f.calls.purchase, ['monthly']);
@@ -429,7 +541,7 @@ test('changing accounts drops old asynchronous purchase notices and starts a fre
     const f = await fixture(t, {purchase: () => pending.promise});
     await f.open();
     await f.show();
-    await f.press('Continue · $2.99');
+    await f.press('Subscribe for $2.99 / month');
     f.setOffers([plan('B-monthly')]);
     await f.update({ready: true, adsRemoved: false}, {account: user('B')});
     await f.show();
@@ -441,13 +553,13 @@ test('changing accounts drops old asynchronous purchase notices and starts a fre
 test('late offer results from a previous identity cannot replace the current account plans', async t => {
     const pending = deferred();
     let usePending = true;
-    const f = await fixture(t, {getOffers: () => usePending ? pending.promise : [plan('B', 'B-offering', {title: 'B plan'})]});
+    const f = await fixture(t, {getOffers: () => usePending ? pending.promise : [plan('B', 'B-offering', {priceLabel: '€4.99'})]});
     await f.open();
     usePending = false;
     await f.update(null, {account: user('B')});
-    await act(async () => { pending.resolve([plan('A', 'A-offering', {title: 'A plan'})]); });
-    assert.match(f.text(), /B plan/);
-    assert.doesNotMatch(f.text(), /A plan/);
+    await act(async () => { pending.resolve([plan('A', 'A-offering', {priceLabel: '$9.99'})]); });
+    assert.match(f.text(), /€4\.99 every month/);
+    assert.doesNotMatch(f.text(), /\$9\.99/);
 });
 
 test('overlapping paywall requests preserve both callbacks and old close handlers cannot dismiss the next', async t => {
@@ -527,7 +639,7 @@ for (const action of ['purchase', 'restore', 'signIn']) {
         const f = await fixture(t, {[action]: () => pending.promise,
             ...(action === 'signIn' ? {session: {account: null}} : {})});
         const cancel = await f.open('supporter_page', value => closed.push(['cancelled', value]));
-        await f.press(action === 'purchase' ? 'Continue · $2.99'
+        await f.press(action === 'purchase' ? 'Subscribe for $2.99 / month'
             : action === 'restore' ? 'Restore purchases' : 'Sign in with Google');
         await act(async () => cancel());
         await f.open('journal_insights', value => closed.push(['next', value]));
@@ -585,7 +697,7 @@ test('paywall funnel measures actual visibility, ready offers and one explicit c
         step: 'paywall_view', placement: 'post_ad_supporter', signedIn: true, supporter: false,
     }, country: 'GB'}]);
     await act(async () => loading.resolve([plan()]));
-    await f.press('Reload plans');
+    assert.equal(f.pressable('Reload plans'), undefined);
     assert.equal(f.calls.funnel.filter(({event}) => event.step === 'offers_visible').length, 1);
     const close = f.pressable('Close supporter options').props.onPress;
     await act(async () => {close(); close();});
@@ -607,3 +719,16 @@ for (const platform of ['android', 'web']) {
         assert.match(f.text(), /supporter access is active/);
     });
 }
+
+test('a confirmed grant after a pending payment replaces stale pending copy with usable member access', async t => {
+    const f = await fixture(t, {state: {failure: 'pending'}, refresh: async state => {
+        state.set({adsRemoved: true, failure: null});
+        return true;
+    }});
+    await f.open();
+    assert.match(f.text(), /do not need to pay again/);
+    await f.press('Refresh access');
+    assert.doesNotMatch(f.text(), /payment is pending|do not need to pay again/);
+    assert.ok(f.pressable('Open viewing insights'));
+    assert.equal(f.pressable('Subscribe for $2.99 / month'), undefined);
+});
