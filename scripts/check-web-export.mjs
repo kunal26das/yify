@@ -19,7 +19,7 @@ const ROUTES = [
     ['watchlist.html', 'Watchlist'],
     ['history.html', 'History'],
     ['journal.html', 'Journal'],
-    ['upgrade.html', 'Supporter options'],
+    ['upgrade.html', 'Plus options'],
     ['preferences.html', 'Preferences'],
 ];
 const UTILITY_ROUTES = ['watchlist', 'history', 'journal', 'preferences', 'upgrade'];
