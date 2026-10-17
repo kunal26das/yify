@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState, type ComponentRef} from 'react';
 import {usePathname} from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
@@ -57,7 +57,7 @@ export function TopBar() {
     const {width, isPhone, gutter} = useResponsive();
     const {fontScale} = useWindowDimensions();
     const {compact, stacked, rowHeight, navHeight} = navigationMetrics(width, fontScale);
-    const navScroll = useRef<ScrollView>(null);
+    const navScroll = useRef<ComponentRef<typeof ScrollView>>(null);
     const navViewport = useRef(0);
     const navOffset = useRef(0);
     const navItems = useRef(new Map<NavKey, {x: number; width: number}>());
