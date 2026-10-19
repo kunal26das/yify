@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, readFileSync} = require('node:fs');
+const {mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, readFileSync, existsSync, readdirSync} = require('node:fs');
 const {spawnSync} = require('node:child_process');
 const {tmpdir} = require('node:os');
 const {join, resolve} = require('node:path');
@@ -33,6 +33,13 @@ test('toolchain is derived from exact source pins and rejects drift or absent in
     assert.match(sourceProblems(pkg, wrapper.replace(t.gradleSha256, '0'.repeat(64)), catalog, react).join(';'), /checksum/);
     assert.match(sourceProblems(pkg, wrapper, catalog.replace(t.ndk, '27.3.13750724'), react).join(';'), /ndkVersion/);
     assert.match(sourceProblems(pkg, wrapper, catalog, react.replace(t.reactNativeCmake, '9.9.9')).join(';'), /CMake/);
+});
+
+test('audited Expo and React Native pins match the root manifest', async () => {
+    const {toolchain} = await preflight;
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    assert.equal(pkg.dependencies.expo, toolchain.expo);
+    assert.equal(pkg.dependencies['react-native'], toolchain.reactNative);
 });
 
 test('SDK packages include both CMake requirements and no unrequested emulator download', async () => {
@@ -114,6 +121,54 @@ test('saved prerequisites are reusable only while both current checks and the ex
     assert.equal(reusable(receipt, {...receipt, fingerprint: {files: {lock: 'changed'}}}), false);
     assert.equal(reusable({...receipt, mode: 'audit'}, receipt), false);
     assert.equal(reusable(null, receipt), false);
+});
+
+test('failed save preserves blocked checks without creating a reusable receipt or exposing command output', async t => {
+    const {setupInputs, reusable} = await preflight;
+    const checkout = temporary(t);
+    const state = temporary(t);
+    for (const file of setupInputs) put(checkout, file, 'fixture');
+    put(checkout, 'package.json', JSON.stringify({dependencies: {expo: '0.0.0', 'react-native': '0.0.0'}}));
+    put(checkout, 'patches/expo-native/manifest.json', '{}');
+    const secret = 'YIFY_TEST_SECRET_DO_NOT_REPORT';
+    const yarn = join(checkout, 'fake-yarn');
+    put(checkout, 'fake-yarn', `#!/bin/sh\nprintf '%s\\n' '${secret}'\n`, true);
+    const receipt = join(state, 'prerequisites.json');
+    const previousReceipt = JSON.stringify({schemaVersion: 1, mode: 'build', passed: true, fingerprint: {old: true}});
+    writeFileSync(receipt, previousReceipt);
+    const processResult = spawnSync(process.execPath, [join(root, 'scripts/android-qa/preflight.mjs'),
+        'save', checkout, 'a'.repeat(40), 'build', receipt],
+    {encoding: 'utf8', env: {...process.env, YARN_BIN: yarn}});
+    assert.notEqual(processResult.status, 0);
+    const diagnostic = JSON.parse(processResult.stdout);
+    assert.equal(diagnostic.passed, false);
+    assert.equal(diagnostic.mode, 'build');
+    assert.ok(diagnostic.checks.every(check => check.status === 'blocked'));
+    assert.match(diagnostic.checks.find(check => check.id === 'audited-source-toolchain').detail, /Expo pin differs/);
+    assert.ok(diagnostic.checks.some(check => check.id === 'yarn'));
+    assert.equal(existsSync(receipt), false);
+    const stale = readdirSync(state).filter(name => /^prerequisites\.stale-[a-f0-9-]+\.json$/.test(name));
+    assert.equal(stale.length, 1);
+    assert.equal(readFileSync(join(state, stale[0]), 'utf8'), previousReceipt);
+    assert.deepEqual(JSON.parse(readFileSync(join(state, 'prerequisites.failed.json'), 'utf8')), diagnostic);
+    assert.equal(reusable(diagnostic, {schemaVersion: 1, mode: 'build', passed: true, fingerprint: {}}), false);
+    assert.doesNotMatch(processResult.stdout + processResult.stderr + readFileSync(join(state, 'prerequisites.failed.json'), 'utf8'), new RegExp(secret));
+});
+
+test('failed SDK diagnostics exclude arbitrary metadata and retain only known missing files', async () => {
+    const {failedDiagnostic} = await preflight;
+    const secret = 'YIFY_TEST_SECRET_DO_NOT_REPORT';
+    const diagnostic = failedDiagnostic({mode: 'build', checks: [
+        {id: 'sdk:platforms;android-37.0', status: 'blocked', need: 'Install official SDK package platforms;android-37.0',
+            detail: JSON.stringify({identifier: secret, revision: secret, api: secret,
+                missing: ['android.jar', secret], metadata: {Other: secret}})},
+        {id: 'no-local-overrides', status: 'blocked', need: 'Use a fresh checkout', detail: `.env.${secret}`},
+    ]});
+    assert.deepEqual(JSON.parse(diagnostic.checks[0].detail), {
+        identifier: 'platforms;android-37.0', revision: 'missing or invalid', api: 'invalid', missing: ['android.jar'],
+    });
+    assert.equal(diagnostic.checks[1].detail, 'dotenv file present');
+    assert.doesNotMatch(JSON.stringify(diagnostic), new RegExp(secret));
 });
 
 test('ignored dotenv, SDK and signing overrides block an otherwise clean checkout', async t => {

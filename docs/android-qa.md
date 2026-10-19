@@ -24,7 +24,7 @@ SDK installation reads from closed stdin. No `yes` pipe or SDK license-acceptanc
 `scripts/android-qa/toolchain.json` records the audited source-required versions:
 
 - Gradle 9.4.1, including its committed SHA-256
-- Expo 58.0.5, React Native 0.88.0-rc.3, and AGP 9.2.1
+- Expo 58.0.12, React Native 0.88.0, and AGP 9.2.1
 - compileSdk 37 using stable SDK package `platforms;android-37.0` revision 2; targetSdk 36, minSdk 24, and build-tools 37.0.0
 - NDK 27.1.12297006; the dependency-report-only NDK override is not used for compilation
 - React Native CMake 3.30.5, with CMake 3.22.1 also installed for modules using the Android Gradle Plugin default
@@ -35,6 +35,8 @@ The required versions are checked against the installed React Native version cat
 The hosted image, JDK 17 patch release, platform-tools and command-line tools are not globally frozen binary images. Their actual revisions are captured in the receipt and must match for reuse. This is a version-checked setup, not a claim of bit-for-bit reproducible Android output.
 
 `setup-cloud.sh` can be run independently with the same three arguments. It validates once and saves `prerequisites.json`. Subsequent runs recheck the current environment and source inputs; installation is skipped only when the receipt fingerprint still matches. Changes to the lockfile, package manifests, setup scripts, wrapper, compatibility scripts and their patch manifests/content, JDK, or SDK metadata invalidate reuse. A receipt never substitutes for tests, a native compile, or fresh artifact verification on a new app commit. SDK downloads remain disabled inside Gradle.
+
+If the final build preflight fails, `save` prints the blocked checks and writes `prerequisites.failed.json` beside the intended receipt. This diagnostic contains check requirements and selected non-secret details; it cannot be reused as a passing prerequisite receipt. Any older `prerequisites.json` is moved to a uniquely named `prerequisites.stale-*.json` sibling so it cannot be mistaken for the current result or reused. The passing `prerequisites.json` is written only after all build checks pass.
 
 ## Evidence and coverage
 
