@@ -1,5 +1,5 @@
-import {accessSync, constants, existsSync, readFileSync, readdirSync, statfsSync, writeFileSync} from 'node:fs';
-import {createHash} from 'node:crypto';
+import {accessSync, constants, existsSync, readFileSync, readdirSync, renameSync, statfsSync, writeFileSync} from 'node:fs';
+import {createHash, randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {join, resolve} from 'node:path';
@@ -45,6 +45,12 @@ export function properties(text) {
     }));
 }
 
+const sdkRequiredFiles = {
+    'platform-tools': ['adb'], 'build-tools': ['aapt2', 'apksigner', 'zipalign'],
+    ndk: ['toolchains/llvm/prebuilt/linux-x86_64/bin/clang'], cmake: ['bin/cmake', 'bin/ninja'],
+    emulator: ['emulator'], platforms: ['android.jar'], 'system-images': ['system.img'],
+};
+
 function readable(path) {
     try { return readFileSync(path, 'utf8'); } catch { return null; }
 }
@@ -65,11 +71,7 @@ export function sdkPackageStatus(sdk, identifier) {
         metadata['Pkg.Revision'] === toolchain.sdkPlatformRevision && metadata['Platform.CodeName'] === '' &&
         metadata['AndroidVersion.CodeName'] === '' && metadata['AndroidVersion.PreviewSdkInt'] === '0' &&
         metadata['AndroidVersion.BetaVersion'] === '' && metadata['AndroidVersion.IsBaseSdk'] === 'true');
-    const requiredFiles = {
-        'platform-tools': ['adb'], 'build-tools': ['aapt2', 'apksigner', 'zipalign'],
-        ndk: ['toolchains/llvm/prebuilt/linux-x86_64/bin/clang'], cmake: ['bin/cmake', 'bin/ninja'],
-        emulator: ['emulator'], platforms: ['android.jar'], 'system-images': ['system.img'],
-    }[kind] ?? [];
+    const requiredFiles = sdkRequiredFiles[kind] ?? [];
     const missing = requiredFiles.filter(file => !path ||
         (file.endsWith('.jar') || file.endsWith('.img') ? !existsSync(join(path, file)) : !executable(join(path, file))));
     const imageOkay = kind !== 'system-images' || (metadata['SystemImage.Abi'] === 'x86_64' && metadata['SystemImage.TagId'] === 'google_apis');
@@ -198,6 +200,35 @@ export function reusable(previous, current) {
         JSON.stringify(previous.fingerprint) === JSON.stringify(current.fingerprint);
 }
 
+export function failedDiagnostic(result) {
+    const checks = result.checks.filter(check => check.status === 'blocked').map(({id, need, detail}) => {
+        let safeDetail;
+        if (id === 'audited-source-toolchain') safeDetail = detail;
+        else if (id === 'source' && /^[a-f0-9]{40}$/.test(detail ?? '')) safeDetail = detail;
+        else if (id === 'node' && /^\d+\.\d+\.\d+$/.test(detail ?? '')) safeDetail = detail;
+        else if (id === 'yarn' && /^\d+\.\d+\.\d+$/.test(detail ?? '')) safeDetail = detail;
+        else if (id === 'disk' && /^\d+\.\d GiB available$/.test(detail ?? '')) safeDetail = detail;
+        else if (id === 'no-local-overrides') safeDetail = [
+            detail?.includes('.env') && 'dotenv file present',
+            detail?.includes('android/keystore.properties') && 'Android keystore override present',
+            detail?.includes('android/local.properties') && 'Android SDK override present',
+        ].filter(Boolean).join(', ');
+        else if (id === 'build-java') safeDetail = detail?.match(/(?:openjdk|java) version "(\d[\d.+_-]*)"/)?.[1];
+        else if (id === 'compiler') safeDetail = detail?.match(/\bjavac (\d[\d.+_-]*)\b/)?.[1];
+        else if (id === 'sdkmanager' && /^\d[\d.+_-]*$/.test(detail ?? '')) safeDetail = detail;
+        else if (id.startsWith('sdk:')) {
+            const status = JSON.parse(detail);
+            const version = value => typeof value === 'string' && /^\d+(?:\.\d+){0,3}$/.test(value) ? value : null;
+            const kind = id.slice(4).split(';')[0];
+            safeDetail = JSON.stringify({identifier: id.slice(4), revision: version(status.revision) ?? 'missing or invalid',
+                ...(status.api ? {api: version(status.api) ?? 'invalid'} : {}),
+                missing: Array.isArray(status.missing) ? status.missing.filter(file => sdkRequiredFiles[kind]?.includes(file)) : []});
+        }
+        return {id, status: 'blocked', need, ...(safeDetail ? {detail: safeDetail} : {})};
+    });
+    return {schemaVersion: 1, mode: result.mode, passed: false, checks};
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
     const [action, root = '.', expectedSha, mode = 'build', receipt] = process.argv.slice(2);
     if (action === 'sdk-packages') {
@@ -211,7 +242,18 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     } else if (['inspect', 'save', 'reuse'].includes(action)) {
         const result = inspect(resolve(root), expectedSha, mode);
         if (action === 'save') {
-            if (!receipt || !result.passed || mode !== 'build') throw new Error('A passing build preflight and external receipt path are required');
+            if (!result.passed) {
+                const diagnostic = failedDiagnostic(result);
+                const output = JSON.stringify(diagnostic, null, 2) + '\n';
+                process.stdout.write(output);
+                if (receipt && existsSync(receipt)) {
+                    const stem = receipt.replace(/\.json$/, '');
+                    renameSync(receipt, `${stem}.stale-${randomUUID()}.json`);
+                }
+                if (receipt) writeFileSync(receipt.replace(/\.json$/, '') + '.failed.json', output);
+                throw new Error('A passing build preflight and external receipt path are required');
+            }
+            if (!receipt || mode !== 'build') throw new Error('A passing build preflight and external receipt path are required');
             writeFileSync(receipt, JSON.stringify(result, null, 2) + '\n');
         }
         if (action === 'reuse') {

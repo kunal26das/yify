@@ -8,7 +8,7 @@ const {createSentryOptions} = loadTypeScript('instrumentation/sentry-config.ts',
     '@sentry/react-native': {
         breadcrumbsIntegration: () => ({name: 'Breadcrumbs'}),
         reactNativeErrorHandlersIntegration: () => ({name: 'ReactNativeErrorHandlers'}),
-        feedbackIntegration: () => ({name: 'Feedback'}),
+        feedbackIntegration: options => ({name: 'Feedback', options}),
     },
 });
 
@@ -183,6 +183,110 @@ test('installed Sentry SDK drops withdrawn buffers and in-flight traces while st
             assert.deepEqual(sent.flatMap(envelope => envelope[1].map(item => item[0].type)), ['event']);
         });
     } finally {
+        await client.close(500);
+    }
+});
+
+test('installed native SDK does not select replay or profiling for the app feedback configuration', t => {
+    const originalDev = Object.getOwnPropertyDescriptor(globalThis, '__DEV__');
+    Object.defineProperty(globalThis, '__DEV__', {value: false, configurable: true});
+    t.after(() => {
+        if (originalDev) Object.defineProperty(globalThis, '__DEV__', originalDev);
+        else delete globalThis.__DEV__;
+    });
+    const factories = new Proxy({}, {get: (_, name) => (...args) =>
+        name === 'createNativeFramesIntegrations' && !args[0] ? undefined : {name}});
+    const {getDefaultIntegrations} = loadTypeScript(
+        require.resolve('@sentry/react-native/dist/js/integrations/default.js'), {
+            '../tracing': factories,
+            '../utils/environment': {notWeb: () => true},
+            './exports': factories,
+        });
+    const options = {...createSentryOptions({native: true, environment: 'production'}), enableNative: true};
+    const names = getDefaultIntegrations(options).map(integration => integration.name);
+    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
+        assert.equal(names.includes(name), false, name);
+    }
+    const enabled = getDefaultIntegrations({...options, replaysOnErrorSampleRate: 1, profilesSampleRate: 1,
+        attachScreenshot: true, attachViewHierarchy: true}).map(integration => integration.name);
+    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
+        assert.equal(enabled.includes(name), true, name);
+    }
+});
+
+test('installed feedback form requests replay but sends only voluntary feedback without hidden identity or attachments', async () => {
+    const core = require('@sentry/core');
+    const {BrowserClient} = require('@sentry/browser');
+    const {defaultConfiguration} = loadTypeScript(
+        require.resolve('@sentry/react-native/dist/js/feedback/defaults.js'), {'./utils': {feedbackAlertDialog() {}}});
+    const {FeedbackForm} = loadTypeScript(require.resolve('@sentry/react-native/dist/js/feedback/FeedbackForm.js'), {
+        'react-native': {Appearance: {addChangeListener: () => ({remove() {}})}},
+        '../utils/environment': {isExpoGo: () => false, isWeb: () => false, notWeb: () => true},
+        '../wrapper': {NATIVE: new Proxy({}, {get: (_, name) => () => assert.fail(`Unexpected native capture: ${name}`)})},
+        './branding': {},
+        './defaults': {defaultConfiguration},
+        './FeedbackForm.styles': {},
+        './FeedbackForm.theme': {},
+        './FeedbackFormManager': {},
+        './lazy': {lazyLoadFeedbackIntegration() {}},
+        './ScreenshotButton': {},
+        './utils': {feedbackAlertDialog() {}, isValidEmail: () => true},
+    });
+    const f = fixture();
+    f.bind();
+    const options = createSentryOptions({native: true, environment: 'production', consent: f.consent});
+    const feedback = options.integrations.find(integration => integration.name === 'Feedback').options;
+    const sent = [];
+    const hints = [];
+    const previousEventId = core.lastEventId();
+    let opened = 0;
+    let submitted = 0;
+    const client = new BrowserClient({...options, stackParser: () => [],
+        integrations: options.integrations.filter(integration =>
+            ['YifyOptionalTelemetryConsent', 'YifyFeedbackPrivacy'].includes(integration.name)),
+        transport: () => ({send(envelope) {sent.push(envelope); return Promise.resolve({});}, flush: () => Promise.resolve(true)}),
+    });
+    client.on('openFeedbackWidget', () => {opened++;});
+    client.on('beforeSendFeedback', (_, hint) => {hints.push({...hint});});
+    client.init();
+    try {
+        core.getIsolationScope().setLastEventId('a'.repeat(32));
+        await core.withScope(async scope => {
+            scope.setClient(client);
+            scope.setUser({id: 'private-user', name: 'Private Person', email: 'private@example.com'});
+            FeedbackForm.reset();
+            const form = new FeedbackForm({...defaultConfiguration, ...feedback,
+                onSubmitSuccess: () => {submitted++;}, onFormSubmitted() {}});
+            form.setState = update => {form.state = {...form.state, ...update};};
+            assert.equal(form.props.showName, false);
+            assert.equal(form.props.showEmail, false);
+            assert.equal(form.state.email, 'private@example.com');
+            form.state = {...form.state, description: 'Playback controls stopped responding',
+                filename: 'private-screenshot.png', attachment: new Uint8Array([11, 22, 33])};
+            form.componentDidMount();
+            form.handleFeedbackSubmit();
+            form.handleFeedbackSubmit();
+            form.componentWillUnmount();
+            await client.flush(500);
+            assert.equal(opened, 1);
+            assert.equal(submitted, 1);
+            assert.equal(hints.length, 1);
+            assert.equal(hints[0].includeReplay, true);
+            assert.equal(hints[0].attachments[0].filename, 'private-screenshot.png');
+            const items = sent.flatMap(envelope => envelope[1]);
+            assert.deepEqual(items.map(item => item[0].type), ['feedback']);
+            assert.deepEqual(items[0][1].contexts.feedback, {message: 'Playback controls stopped responding',
+                associated_event_id: 'a'.repeat(32)});
+            assert.doesNotMatch(JSON.stringify(sent), /private-user|Private Person|private@example|private-screenshot/);
+            assert.equal(items[0][1].user, undefined);
+            for (const type of ['replay_event', 'replay_recording', 'profile']) {
+                await client.getTransport().send([{}, [[{type}, {secret: 'unexpected optional recording'}]]]);
+            }
+            assert.equal(sent.length, 1);
+        });
+    } finally {
+        core.getIsolationScope().setLastEventId(previousEventId);
+        FeedbackForm.reset();
         await client.close(500);
     }
 });
