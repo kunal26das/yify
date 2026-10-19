@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
-    "electron": "44.7.0",
+    "electron": "44.7.2",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
   },
