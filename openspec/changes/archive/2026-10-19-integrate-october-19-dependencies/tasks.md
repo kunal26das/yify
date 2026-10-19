@@ -10,14 +10,14 @@
 ## 2. Android QA reliability
 
 - [x] 2.1 Align audited Expo/React Native versions with the installed manifest; prove drift detection and safe failed-diagnostic handling in prerequisite tests.
-- [ ] 2.2 Document the diagnostic, preserve it in workflow artifacts, and independently review exact-source compilation safeguards.
+- [x] 2.2 Document the diagnostic, preserve it in workflow artifacts, and independently review exact-source compilation safeguards.
 
 ## 3. Integration and delivery
 
-- [ ] 3.1 Pass typecheck, full app/workspace tests, pin checks, Expo doctor, OpenSpec validation, both rendered web exports and release-console CI against the committed tree.
-- [ ] 3.2 Obtain independent review and exact-source Android compilation/packaging evidence before merging through required checks.
-- [ ] 3.3 Verify automatic main web delivery; close the six original PRs as superseded only after confirming their changes in merged main.
-- [ ] 3.4 Preserve recovery provenance, remove completed branches, and finish on clean current main while retaining unrelated Compose migration work.
+- [x] 3.1 Pass typecheck, full app/workspace tests, pin checks, Expo doctor, OpenSpec validation, both rendered web exports and release-console CI against the committed tree.
+- [x] 3.2 Obtain independent review and exact-source Android compilation/packaging evidence before merging through required checks.
+- [x] 3.3 Verify automatic main web delivery; close the six original PRs as superseded only after confirming their changes in merged main.
+- [x] 3.4 Preserve recovery provenance, remove completed branches, and finish on clean current main while retaining unrelated Compose migration work.
 
 ## Workflow follow-up
 
