@@ -472,25 +472,25 @@
     slugify "^1.3.4"
     sucrase "3.35.0"
 
-"@expo/eas-build-job@25.0.0":
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/@expo/eas-build-job/-/eas-build-job-25.0.0.tgz#95176bdbcd2efc75afafe59ea7bac9025ac53f8a"
-  integrity sha512-Vuai42tVopKuK2KFyTWUsW9cL1YMY1dWhFAKz+evUV5AKaMCk4dYxOYZ6tBWNhIJ15bGK3p4N0YUomlAqubFWg==
+"@expo/eas-build-job@25.1.1":
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/@expo/eas-build-job/-/eas-build-job-25.1.1.tgz#ddb01c98e278a9f93461ae5fa4105f2496f97e4d"
+  integrity sha512-diZvY8wBDW6ewZ7YxPQW4ScGNYr67JZoNZMYADfja3hGL0TjFKATwGG2Fb4zo99Urgto7lcy6Lfy7X48J9zZEw==
   dependencies:
-    "@expo/logger" "25.0.0"
+    "@expo/logger" "25.1.1"
     "@expo/results" "1.0.0"
-    "@expo/turtle-spawn" "25.0.0"
+    "@expo/turtle-spawn" "25.1.1"
     joi "^17.13.1"
     semver "^7.6.2"
     zod "^4.3.5"
 
-"@expo/eas-json@25.0.0":
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/@expo/eas-json/-/eas-json-25.0.0.tgz#55df0cb7a44fecb920cd83144815c4674e804e72"
-  integrity sha512-ilPw4O0Lnce/6lbu1GPwega8KF2GqTio9vuNFjNaGL78pfxz7GdktBsJ9JRaGtiM0LYdPa09W2FYb7DcMY8xWA==
+"@expo/eas-json@25.1.1":
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/@expo/eas-json/-/eas-json-25.1.1.tgz#7a907a73349b4f66bb513374afd46e5c700de815"
+  integrity sha512-zXn2TBxi53od9noS6E63xzmyAbOxyfmgFT7PZQSwFTuu6YC9A6CmFPQdjhIfFY5QAC3w7fyeXIQyKyPc8IAY+A==
   dependencies:
     "@babel/code-frame" "7.23.5"
-    "@expo/eas-build-job" "25.0.0"
+    "@expo/eas-build-job" "25.1.1"
     chalk "4.1.2"
     env-string "1.0.1"
     fs-extra "11.2.0"
@@ -560,10 +560,10 @@
     "@babel/code-frame" "~7.10.4"
     json5 "^2.2.3"
 
-"@expo/logger@25.0.0":
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/@expo/logger/-/logger-25.0.0.tgz#e04e289a801c13ca9adf82d5b4149f4538ac6b5c"
-  integrity sha512-KcNOYmeJH8GESYEjbiewg+LU98XH/yBs368XlPqmEHVZekkbOONpIzPd5AFcFRWO1BW0c2nl/58BUI876UFT8A==
+"@expo/logger@25.1.1":
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/@expo/logger/-/logger-25.1.1.tgz#0be252c5e5e29cad38648060cf5ac0bec522f76a"
+  integrity sha512-QVlK+z2jCUziJiymmTcyczkNIzQQe5/ZWECsmN6OCAE+mNrnIteuaNj6gvfMX1L8DoktQyZ/+oLTfZ4Mml78YA==
   dependencies:
     "@types/bunyan" "^1.8.11"
     bunyan "^1.8.15"
@@ -703,13 +703,13 @@
   dependencies:
     cross-spawn "^7.0.6"
 
-"@expo/steps@25.0.0":
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/@expo/steps/-/steps-25.0.0.tgz#42109208411133770968e045945dc2b56c5850f3"
-  integrity sha512-+o04mm5akQJRX0j9TwwkdZiuNM9swLxw9DsDPtFhbWceg95gky/vc/0qF200kjZL4DEMfd/WhzngBW9aqJ0JQg==
+"@expo/steps@25.1.1":
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/@expo/steps/-/steps-25.1.1.tgz#8b8a995d54d48b6b9ced91484342bcc151d18b44"
+  integrity sha512-QyxNm4mDD0b4pkH6j/feWdHkQRJ/c5J4HNn+yXxocrWBOd7DJECxTKURxoZL47In6fc2hCfMr6ddysawvupKpw==
   dependencies:
-    "@expo/eas-build-job" "25.0.0"
-    "@expo/logger" "25.0.0"
+    "@expo/eas-build-job" "25.1.1"
+    "@expo/logger" "25.1.1"
     "@expo/spawn-async" "^1.7.2"
     arg "^5.0.2"
     fast-glob "^3.3.2"
@@ -726,12 +726,12 @@
   resolved "https://registry.yarnpkg.com/@expo/timeago.js/-/timeago.js-1.0.0.tgz#8fb2b17e93e7a8d28387a4d292af12e071040045"
   integrity sha512-PD45CGlCL8kG0U3YcH1NvYxQThw5XAS7qE9bgP4L7dakm8lsMz+p8BQ1IjBFMmImawVWsV3py6JZINaEebXLnw==
 
-"@expo/turtle-spawn@25.0.0":
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/@expo/turtle-spawn/-/turtle-spawn-25.0.0.tgz#1d76e22ecc9a1cad373e7408f829b6a05103daea"
-  integrity sha512-XBQZ2azxh0IWozO5hCxIJt150LjIGbk6VZakeyA6UXPHp1ESenm97o0JIHOvzQNOgBV481muV88KmIWHGt0yIA==
+"@expo/turtle-spawn@25.1.1":
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/@expo/turtle-spawn/-/turtle-spawn-25.1.1.tgz#1f23f140012e97c1fb6f533f9a8c1fd804aad4d6"
+  integrity sha512-ATzQseKlYSnwvvFkTXCVdFXTtM65hrpav8U0XU52u5+SjXjoHkndafNrlYc+ahifWtGIyWdhwF4lmcKY2vOOjQ==
   dependencies:
-    "@expo/logger" "25.0.0"
+    "@expo/logger" "25.1.1"
     "@expo/spawn-async" "^1.7.2"
 
 "@hapi/address@^5.1.1":
@@ -1832,20 +1832,20 @@ dunder-proto@^1.0.1:
     es-errors "^1.3.0"
     gopd "^1.2.0"
 
-eas-cli@25.0.0:
-  version "25.0.0"
-  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-25.0.0.tgz#bdde891b33f0db5e5d25fc9b2a01589293cfd4e1"
-  integrity sha512-FBY3pIo/3L0s+8KK5ZpMKzlLrA5jOmr5kOpoOwkAXsxMrI4vo+LNoEsciRcOxjce9efc08GqEEPc/CxLRAWIvA==
+eas-cli@25.1.1:
+  version "25.1.1"
+  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-25.1.1.tgz#1db4abb9b01adbb488aba1b197ee3163110751f5"
+  integrity sha512-ibTJq1sZ3ZSqjRU0YHczPgC3PKkdZ6xaoIad0VLBwfn+VCRzWHYv/vIMtldA8kXGH6UfC9Fel1jF/wen/217gw==
   dependencies:
     "@expo/apple-utils" "2.2.1"
     "@expo/code-signing-certificates" "0.0.5"
     "@expo/config" "55.0.10"
     "@expo/config-plugins" "55.0.7"
-    "@expo/eas-build-job" "25.0.0"
-    "@expo/eas-json" "25.0.0"
+    "@expo/eas-build-job" "25.1.1"
+    "@expo/eas-json" "25.1.1"
     "@expo/env" "^1.0.0"
     "@expo/json-file" "8.3.3"
-    "@expo/logger" "25.0.0"
+    "@expo/logger" "25.1.1"
     "@expo/multipart-body-parser" "2.0.0"
     "@expo/osascript" "2.1.4"
     "@expo/package-manager" "1.9.10"
@@ -1857,7 +1857,7 @@ eas-cli@25.0.0:
     "@expo/results" "1.0.0"
     "@expo/rudder-sdk-node" "1.1.1"
     "@expo/spawn-async" "1.7.2"
-    "@expo/steps" "25.0.0"
+    "@expo/steps" "25.1.1"
     "@expo/timeago.js" "1.0.0"
     "@oclif/core" "^4.8.3"
     "@oclif/plugin-autocomplete" "^3.2.40"
@@ -1952,10 +1952,10 @@ electron-to-chromium@^1.5.439:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.459.tgz#98f4b60fc757b882c387c4fb884625d084dca8b3"
   integrity sha512-4SC9HHSFjO/liAhifpdOL5hG9b4BP7/5G3y3UPZVO8trlAXr1CaUEEJL0gWK3kOcYcZrOA5rkwG45Gra/lTIgg==
 
-electron@44.7.2:
-  version "44.7.2"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-44.7.2.tgz#7a5b53e9deafb7e21372cc09ebb57e733a2c1f62"
-  integrity sha512-u3Pbz0Hi1sSSwBMz2v8LiagsfUG4QURPUe/qphM+g4THKP8o4BYdnuboyhlLO8HIC/KfV5rvltyacbP4jEq9yw==
+electron@44.8.0:
+  version "44.8.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-44.8.0.tgz#b5df8325062e08a78d92dcc7fd8879ab7ce26314"
+  integrity sha512-Yn2tJ335l8MGRJj86vaAYq1MOidtiw9eXdmHX6p3ecHQWwucsMMBxDzqUrYnXEHyqdc/IhOh2KGHzmizJvzd3Q==
   dependencies:
     "@electron-internal/extract-zip" "^1.0.1"
     "@electron/get" "^5.0.0"
