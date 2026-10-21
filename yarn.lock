@@ -5279,10 +5279,10 @@ eslint-visitor-keys@^5.0.0, eslint-visitor-keys@^5.0.1:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-5.0.1.tgz#9e3c9489697824d2d4ce3a8ad12628f91e9f59be"
   integrity sha512-tD40eHxA35h0PEIZNeIjkHoDR4YjjJp34biM0mDvplBe//mB+IHCqHDGV7pxF+7MklTvighcCPPZC7ynWyjdTA==
 
-eslint@10.12.0:
-  version "10.12.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-10.12.0.tgz#4f2f7e679bdce9d71438c2900f2c8d4d297332b0"
-  integrity sha512-npHjrHb2o4ehH3mE+YuxABR+0gyb0aVWCIolgJDArwCiHEIsonBm3ZKjel5b0U5+a+MbEvIyRCGCzD3eKKK2NA==
+eslint@10.13.0:
+  version "10.13.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-10.13.0.tgz#a8a4742648c0fa9131f429b509de5407682d4864"
+  integrity sha512-UohDjD4zSzEwhf58M3O7vc/ycc8O1I7dNlhtD0WxE8Px8EHNJKtUwzBqrzeGhisRuv2ag4sAYswszCJRgKXYUg==
   dependencies:
     "@eslint-community/eslint-utils" "^4.8.0"
     "@eslint-community/regexpp" "^4.12.2"
@@ -5491,10 +5491,10 @@ expo-device-corner-radius@0.1.1:
   resolved "https://registry.yarnpkg.com/expo-device-corner-radius/-/expo-device-corner-radius-0.1.1.tgz#945c90bf4bb0b335e2b5445f353907868142a2ca"
   integrity sha512-b4EwP8rxZK2ZBmyaDSYCPrFoNtKp+O1Ai/QUQTAehNiiRmigT+IN5n0b3cbuT8gpAWwnIxRh5WrxJUsJIUflYg==
 
-expo-doctor@1.21.4:
-  version "1.21.4"
-  resolved "https://registry.yarnpkg.com/expo-doctor/-/expo-doctor-1.21.4.tgz#7a5946f75cb7072224b167dda85aa43c63ab1914"
-  integrity sha512-JA2TeT7/o5WmSX+DHWkf4EfgdOsJ1RnRFX5OptlMXywo88j7T4IYPRRtM5ONVSvfGH/nL/3xBmhBgJ8t4fDE9w==
+expo-doctor@1.21.5:
+  version "1.21.5"
+  resolved "https://registry.yarnpkg.com/expo-doctor/-/expo-doctor-1.21.5.tgz#c62be1041492f7a4925edbfc35a2fccd3085560e"
+  integrity sha512-VH/G2zHnc0kNrvfx/kYOD1QaCr2DC3cLaAPw7MzySypPhAb6nsIKJurNDyasbhU3KknK931Kedc2zRLkfdMisA==
 
 expo-eas-client@~58.0.2:
   version "58.0.2"
