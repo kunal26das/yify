@@ -1,8 +1,8 @@
 import {BlurTargetView} from 'expo-blur';
-import {createContext, useContext, useRef, type ReactNode, type RefObject} from 'react';
+import {createContext, useContext, useRef, type ComponentRef, type ReactNode, type RefObject} from 'react';
 import {Platform, StyleSheet, View, type StyleProp, type ViewStyle} from 'react-native';
 
-type BlurTargetRef = RefObject<View | null> | null;
+type BlurTargetRef = RefObject<ComponentRef<typeof BlurTargetView> | null> | null;
 
 const BlurTargetContext = createContext<BlurTargetRef>(null);
 
@@ -13,7 +13,7 @@ export function useBlurTarget(): BlurTargetRef {
 }
 
 export function BlurTargetProvider({children}: {children: ReactNode}) {
-    const ref = useRef<View | null>(null);
+    const ref = useRef<ComponentRef<typeof BlurTargetView> | null>(null);
     if (!supported) return <>{children}</>;
     return <BlurTargetContext.Provider value={ref}>{children}</BlurTargetContext.Provider>;
 }

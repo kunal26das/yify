@@ -128,7 +128,7 @@ test('committed React Native Web policy accepts only the reviewed recommendation
     };
     const current = {packageName: 'react-native-web', actualVersion: '0.21.4', expectedVersionOrRange: '^0.21.4'};
     assert.deepEqual(reviewDeviations([], committed, '58.0.0', installedSdk), []);
-    assert.match(reviewDeviations([current], committed, '58.0.0', installedSdk)[0], /Expo CLI 58.1.10.*public React Native and React Native Web registries/);
+    assert.match(reviewDeviations([current], committed, '58.0.0', installedSdk)[0], /Expo CLI 58.1.11.*public React Native and React Native Web registries/);
     assert.deepEqual(assessDoctor(result(), {reviewedDependencies: []}), []);
     for (const expectedVersionOrRange of ['~0.21.4', '^0.21.3', '^0.21.5', '^0.22.0', '0.21.4', '>=0.21.4', '^0.21.4 || ^0.22.0']) {
         assert.throws(() => reviewDeviations([{...current, expectedVersionOrRange}], committed, '58.0.0', installedSdk), /Unreviewed/);
