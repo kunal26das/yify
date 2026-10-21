@@ -8124,18 +8124,18 @@ react-native-fetch-api@^3.0.0:
   dependencies:
     p-defer "^3.0.0"
 
-react-native-gesture-handler@3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-3.3.0.tgz#58817e551bab57e514fb6784003222d7d7f5738f"
-  integrity sha512-ZCTlJ09nE3GPbm7J74lvwpxmx1TQ/7MDlHZNLARVYTN82k21mJUJ7BmI9eWjEi8eevHiAudI5O1Cpnt0rJfoJA==
+react-native-gesture-handler@3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-3.4.0.tgz#aecac40bb2e468a14dad8cb58917cb6357cc66b6"
+  integrity sha512-jBg4ZWDvegeaZ4OHq9oxVOS/Qa6pV+LhtsUExothyhWxqzG0Lkg7kl2ztemPj/pnJxkq9j/+6wAw3jZGwdssww==
   dependencies:
     "@types/react-test-renderer" "^19.1.0"
     invariant "^2.2.4"
 
-react-native-google-mobile-ads@17.2.0:
-  version "17.2.0"
-  resolved "https://registry.yarnpkg.com/react-native-google-mobile-ads/-/react-native-google-mobile-ads-17.2.0.tgz#5fc7f07c64228f07788d869cd5a09f4d8d6e469b"
-  integrity sha512-FivczWqj4ojmWJyIBACsjjKaUKYpIsqDJnypjlur2iMF8CbbkhQPb68+cIJye4ryBPrsYl2Tsujscac0HSx0EQ==
+react-native-google-mobile-ads@17.3.0:
+  version "17.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-google-mobile-ads/-/react-native-google-mobile-ads-17.3.0.tgz#be9c922ca379baf23139d784c6fe6c0f72c2e6f2"
+  integrity sha512-DWzj+kw0BvE70ah5DW+yrNfaA6UEUSEjUQEf3QFfIDmZ4na7jUa7UhSGwC0kop/t9Ij1POmTbY5/aJ2nHCUT2A==
   dependencies:
     "@iabtcf/core" "^1.5.6"
     use-deep-compare-effect "^1.8.1"
