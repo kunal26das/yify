@@ -9,12 +9,12 @@
 ## 2. Validation
 
 - [x] 2.1 Pass pins, source guards, typecheck, app/workspace tests, Expo doctor, strict OpenSpec validation, both rendered web exports and release-console checks.
-- [ ] 2.2 Obtain independent review of the final integration tree, exact-source all-ABI Android compile/packaging evidence and bounded desktop runtime evidence; record iOS validation scope.
+- [x] 2.2 Obtain independent review of the final integration tree, exact-source all-ABI Android compile/packaging evidence and bounded desktop runtime evidence; record iOS validation scope.
 
 ## 3. Delivery and cleanup
 
-- [ ] 3.1 Merge through required checks and verify main CI and automatic Hosting/Pages delivery.
-- [ ] 3.2 Confirm all four proposed direct changes reached main, close superseded PRs with evidence, and remove completed branches while preserving unrelated migration work.
+- [x] 3.1 Merge through required checks and verify main CI and automatic Hosting/Pages delivery.
+- [x] 3.2 Confirm all four proposed direct changes reached main, close superseded PRs with evidence, and remove completed branches while preserving unrelated migration work.
 
 ## Workflow follow-up
 
