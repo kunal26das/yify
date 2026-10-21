@@ -23,7 +23,7 @@ PODS:
   - EXJSONUtils (58.0.1)
   - EXManifests (58.0.1):
     - ExpoModulesCore
-  - Expo (58.0.12):
+  - Expo (58.0.14):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -50,13 +50,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (58.0.13):
+  - expo-dev-client (58.0.14):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (58.0.13):
+  - expo-dev-launcher (58.0.14):
     - EXManifests
     - expo-dev-menu
     - expo-dev-menu-interface
@@ -147,14 +147,14 @@ PODS:
     - GoogleUtilities/UserDefaults
     - React-Core
     - RecaptchaInterop
-  - ExpoApplication (58.1.1):
+  - ExpoApplication (58.1.2):
     - ExpoModulesCore
   - ExpoAsset (58.0.16):
     - ExpoModulesCore
   - ExpoBackgroundTask (58.0.11):
     - ExpoModulesCore
     - ExpoTaskManager
-  - ExpoBlur (58.0.3):
+  - ExpoBlur (58.0.4):
     - ExpoModulesCore
   - ExpoDeviceCornerRadius (0.1.1):
     - DeviceKit (~> 5.8)
@@ -167,7 +167,7 @@ PODS:
     - ExpoModulesCore
   - ExpoGlassEffect (58.0.4):
     - ExpoModulesCore
-  - ExpoHaptics (58.0.6):
+  - ExpoHaptics (58.0.7):
     - ExpoModulesCore
   - ExpoImage (58.0.15):
     - ExpoModulesCore
@@ -209,11 +209,11 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalization (58.0.4):
     - ExpoModulesCore
-  - ExpoLocation (58.0.16):
+  - ExpoLocation (58.0.17):
     - ExpoModulesCore
   - ExpoLogBox (58.0.12):
     - React-Core
-  - ExpoModulesCore (58.0.20):
+  - ExpoModulesCore (58.0.22):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -238,25 +238,25 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (58.0.14):
+  - ExpoModulesJSI (58.0.15):
     - React-Core
     - ReactCommon
-  - ExpoModulesWorklets (58.0.20):
+  - ExpoModulesWorklets (58.0.22):
     - ExpoModulesCore
     - ExpoModulesJSI
-  - ExpoModulesWorkletsAdapter (58.0.20):
+  - ExpoModulesWorkletsAdapter (58.0.22):
     - ExpoModulesCore
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
   - ExpoNetwork (58.0.3):
     - ExpoModulesCore
-  - ExpoNotifications (58.1.4):
+  - ExpoNotifications (58.1.5):
     - ExpoModulesCore
-  - ExpoRouter (58.0.21):
+  - ExpoRouter (58.0.23):
     - ExpoModulesCore
     - RNScreens
-  - ExpoSplashScreen (58.0.9):
+  - ExpoSplashScreen (58.0.10):
     - ExpoModulesCore
   - ExpoSQLite (58.0.13):
     - ExpoModulesCore
@@ -269,7 +269,7 @@ PODS:
   - ExpoTaskManager (58.0.12):
     - ExpoModulesCore
     - UMAppLoader
-  - ExpoUI (58.0.19):
+  - ExpoUI (58.0.20):
     - ExpoModulesCore
     - ExpoModulesWorklets
     - React-RCTFabric
@@ -398,7 +398,7 @@ PODS:
     - ReactNativeDependencies
   - glog (0.3.5):
     - ReactNativeDependencies
-  - Google-Mobile-Ads-SDK (13.6.0):
+  - Google-Mobile-Ads-SDK (13.10.0):
     - GoogleUserMessagingPlatform (>= 1.1)
   - GoogleAppMeasurement/Core (12.18.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
@@ -2457,7 +2457,7 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNGestureHandler (3.3.0):
+  - RNGestureHandler (3.4.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2482,8 +2482,8 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets (>= 0.8.0)
     - Yoga
-  - RNGoogleMobileAds (17.2.0):
-    - Google-Mobile-Ads-SDK (= 13.6.0)
+  - RNGoogleMobileAds (17.3.0):
+    - Google-Mobile-Ads-SDK (= 13.10.0)
     - GoogleUserMessagingPlatform (= 3.1.0)
     - hermes-engine
     - RCTRequired
@@ -3307,44 +3307,44 @@ SPEC CHECKSUMS:
   EXConstants: ff5c226215048137ea31d39fa460027a6daeeadc
   EXJSONUtils: d59bf6b18639752631a81818559b2675a46f99e2
   EXManifests: b0b83ad894166f7e080b18814c5e73aed46e366e
-  Expo: 3cc50b50a389592932b87874aeac4eaf880042d8
-  expo-dev-client: f521d333198b69ec7a6677eddad9914748744049
-  expo-dev-launcher: 952408c56d7bdf171affada03d182186673bdaaf
+  Expo: 5bcab06812bd25b7818f0d0b01382a5bfc18158e
+  expo-dev-client: 9e1f44c1c5d548611e9e9534d9d169b21373a218
+  expo-dev-launcher: d3ac08884f45bfc7d5cd56d7a77c5b974ad8f879
   expo-dev-menu: 30871bb3aec457b0e21b0b26520134e997815557
   expo-dev-menu-interface: d304e400271187edf1534704a4a05dcc140076e2
   ExpoAdapterGoogleSignIn: dd506e5b1d8b9a172843ff6fc72875e0a9d241e1
-  ExpoApplication: a7a10b2d646701cadd8160cb1dbd2ea98e10ab42
+  ExpoApplication: c83355b2f69f996b5d26b64fef39228e7f1e1208
   ExpoAsset: 7c69bf16ddb143a238c9d6a55b9f699cc60b72cf
   ExpoBackgroundTask: 58850693ca813a3da1f5410ad3dd5e2ef07e2a75
-  ExpoBlur: dd34eb431f3ac36903553b812176b0c640763a39
+  ExpoBlur: fc9e98a643cf63e25c5a31360220970f63e68563
   ExpoDeviceCornerRadius: 377b9d5945ff38bb86de9e0831c615dd2dca3b0e
   ExpoDomWebView: b2a6d681b9d34c23b1f584321386ca8da1d36afb
   ExpoFileSystem: 1c31c9a87bbdf5877865be753f2b9aa1df9bd015
   ExpoFont: 8c11c15724418e0fc2f4cd410afa49686d55a6c4
   ExpoGlassEffect: 008d906ff11ffeb03a8e702af9d6a471c16c10eb
-  ExpoHaptics: 643848b7e73fa625aa78bf4ee3a1bff2e3fc893c
+  ExpoHaptics: c95d1e2162895e710b68dd912eec619900ebdf33
   ExpoImage: 0765d30c52245e378639f83dd2c39f12dfa059f6
   ExpoInAppUpdates: ed49d4718876f390e402540958272239f0278e31
   ExpoInsights: fc09ebe79ed553ec18697ee6edaf3c4f19f17bf9
   ExpoKeepAwake: fd18a5d233329013c578030ad399d8e10b252b5f
   ExpoLinking: 5e84f6510eef3dd1985e3afce4de809610f7f0c4
   ExpoLocalization: 10737c526cc1a661b76b3dbcdd9e5d91df1b8b4b
-  ExpoLocation: f1e659b0f89803e4ad69b012b479cba17fceaffb
+  ExpoLocation: 9f4896d4da9ffda064aa3a317409dba4419dda86
   ExpoLogBox: 14c42e5429c85e1e2acfb9316b4e821db8e40d42
-  ExpoModulesCore: f86ead40a8e0fe4cda487813bc1baee406c50136
-  ExpoModulesJSI: cb8bda43f42c2363702e1ea91cbb37843eb06596
-  ExpoModulesWorklets: effc81bc73e8aace1336f4c6226d60afb10c5273
-  ExpoModulesWorkletsAdapter: 33a00a515fdf72a17054a172fc3bbab93b746aac
+  ExpoModulesCore: 00ec84d4b6b94880b042ff492605a692d5c8807d
+  ExpoModulesJSI: c2111838d63bf8351b556e1cde21da5d763ef224
+  ExpoModulesWorklets: 6256cf8b2b591c89c3576638d9f70bb46ef51ece
+  ExpoModulesWorkletsAdapter: 1a8f385605e9fbcdc817666f76fb8043ce366554
   ExpoNetwork: 05cec4bdbf35b954ab0434f5ecfec363cf826b33
-  ExpoNotifications: 8658a31042301284161254f048c31fda18d62f17
-  ExpoRouter: d98356971eff4ff06a3728baabc9c2441759bafc
-  ExpoSplashScreen: 9012dc47422b1f42f2a87e0aa7fbdb95758c805b
+  ExpoNotifications: b2f5a3a301a48a546ee3156f8633055b8a15fd93
+  ExpoRouter: 6edd74e2d6252e291b5bdfa36e1927e201424905
+  ExpoSplashScreen: fd71780cf74d7a8fdbf5f81eb07e7af78eb9485a
   ExpoSQLite: 7fe5c25b7bcc15897c67d1e2e7bc5a1d108921e8
   ExpoStoreReview: baec43b9560cbe6e03171afb26a011ffdd68cad5
   ExpoSymbols: 1260e741b35b6fd105942779895418db306645c8
   ExpoSystemUI: 7f794f868bd10f62788f85bf169bc8ca45fbe736
   ExpoTaskManager: a9a9c3ccecdf3e0b76d11c35893a5ee0989ccd7a
-  ExpoUI: 796ddcf5f68c04b54e706cf8c7042a9a7dfa2681
+  ExpoUI: 53037e128838f5c74c45dc2d1e27b6f60c81ceb2
   ExpoWebBrowser: 2999ed3f2ee8c06985cb37b4ac566328ca0e4c7a
   EXStructuredHeaders: d38b81fb2ff838c15bf28135deb247e76293d2b9
   EXUpdates: a1d23a49cd71510d83ab29bcbdd7776897f09d22
@@ -3368,7 +3368,7 @@ SPEC CHECKSUMS:
   FirebaseSharedSwift: 9d9404eea60b650d3e549898bfebbb8f665fe601
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93
   glog: 3cf7cb46f743c4bc758ae3e6d9c15bd1b4cfd6d4
-  Google-Mobile-Ads-SDK: 6e501ace4af8d63e967bd45497c8b2b05821163d
+  Google-Mobile-Ads-SDK: 8e764c4990ef82c2727fd32e0c4143817b443603
   GoogleAppMeasurement: d70df385587c4175fc0836c11e413d5cbcaa3c7b
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
   GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
@@ -3472,8 +3472,8 @@ SPEC CHECKSUMS:
   RNFBAuth: 1267d62431f8eb58a8ec60776fd7405a926d910c
   RNFBCrashlytics: 7a1f771c02be3a5ae17c9f18ea95fadcb8067c84
   RNFBRemoteConfig: 0b8fc50c71571a52aded4b73ca7955a29ad054ba
-  RNGestureHandler: ddbdf3f293a498368803f8181ff157271ac05c48
-  RNGoogleMobileAds: f3525f87a5e3ee0f9edbbe4d6be66595c38f35e6
+  RNGestureHandler: abdc2d49ac3970908acd127980b429d377927ee1
+  RNGoogleMobileAds: eeefd1e3dee41b8b5cb9a60cc0e0e240d28f73d9
   RNGoogleSignin: 37efc419c465631b7092afa6f53647ae74d01157
   RNPurchases: 75c8f3a10d5dd0f9601afacf72f9965853bb4fbd
   RNReanimated: 5c641cc430b7255eae87c8039204eb0f816ea1b8

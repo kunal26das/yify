@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.12",
-      "expected": "~58.0.12",
-      "reason": "Retain Expo 58.0.12 and stable React Native 0.88.0 while integrating Sentry 8.31.0, Purchases 10.14.0 and aligned React 19.3.1 under new runtime 1.8.26. Preserve native lifecycle/consent guards and validate regenerated Android/iOS projects before release."
+      "version": "58.0.14",
+      "expected": "~58.0.14",
+      "reason": "Expo 58.0.14 retains the reviewed React Native 0.88.0 bootstrap and iOS scene sources while updating bundled module recommendations. Runtime 1.8.27 coordinates its exact CLI, Babel preset, modules core, dev launcher and application dependencies. Preserve native lifecycle and consent guards; validate regenerated Android and iOS projects and native startup before release."
     },
     "@sentry/react-native": {
       "version": "8.31.0",
@@ -12,9 +12,9 @@
       "reason": "Sentry 8.31.0 updates Android SDK 8.60.0 to 8.61.0, Cocoa SDK 9.30.1 to 9.30.2 and JavaScript SDK 10.76.0 to 10.76.2. Runtime 1.8.26 regenerates native projects and the iOS symbol-upload phase while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads; validate native builds and startup."
     },
     "react-native-gesture-handler": {
-      "version": "3.3.0",
-      "expected": "~3.2.1",
-      "reason": "Retain Gesture Handler 3.3 and the existing gesture API with the coordinated Expo 58 native runtime."
+      "version": "3.4.0",
+      "expected": "~3.3.0",
+      "reason": "Gesture Handler 3.4.0 advances the native gesture implementation while retaining the app's Pan, Pinch, Tap and composed gesture API. Expo 58.0.14 bundles 3.3.0; validate Android and iOS native builds plus watch-screen drag and screenshot-lightbox gestures in runtime 1.8.27."
     },
     "react-native-safe-area-context": {
       "version": "5.10.1",
@@ -24,7 +24,7 @@
     "react-native-web": {
       "version": "0.21.4",
       "expected": "^0.21.4",
-      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.10 resolves legacy registry imports through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
+      "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.11 retains the reviewed legacy registry fallback through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
       "version": "8.0.7",

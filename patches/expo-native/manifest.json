@@ -3,7 +3,7 @@
   "sources": [
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "ios/Expo/ExpoReactNativeFactory.swift",
       "sha256": "c967602d600c3a331799f1f8669615006c865337d6e9ed4a8c766a38d39d0dcc",
       "upstream": [
@@ -12,7 +12,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/src/main/cpp/fabric/AndroidExpoViewComponentDescriptor.cpp",
       "sha256": "43af18848f364124ebd96f7949ae45e2999b54b2ca638af115fca1a40891caf0",
       "upstream": [
@@ -22,7 +22,7 @@
     },
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "src/winter/runtime.ts",
       "sha256": "f63e1909e7a6a3c7d222428c268358c7a90402e7bc65fa3ec089eeeefe6ee3fa",
       "upstream": [
@@ -31,7 +31,7 @@
     },
     {
       "package": "@expo/cli",
-      "version": "58.1.10",
+      "version": "58.1.11",
       "file": "build/src/start/server/metro/withMetroMultiPlatform.js",
       "sha256": "23686dafe7bc5ccd273bfff53fb6a582e1ffadbe006a3dcd2180a079d32fd493",
       "upstream": [
@@ -54,7 +54,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/main.cmake",
       "sha256": "9d1059f17bb8f4133f1478509c0e26f9d7a814b7ef423fe1ceead5d8259e82d4",
       "upstream": [
@@ -63,7 +63,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/EXDevLauncherController.m",
       "sha256": "fa5f37af1df8779c5d21b31e47f2798534462a216d27aa71156a8313051a8a28",
       "upstream": [
@@ -105,9 +105,9 @@
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "android/build.gradle",
-      "sha256": "3f63c6fb95022eb6c405329ae94d26706eb2ab2d4b955481d07c769b601c4b71",
+      "sha256": "addd38b1d096d6098e5da931074091258cd51dd84d692b5cf0ac406f4d201ef4",
       "upstream": [
         "https://github.com/expo/expo/pull/48770",
         "https://github.com/expo/expo/releases/tag/%40expo%2Fui%4058.0.14",
@@ -134,7 +134,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "expo-module-gradle-plugin/build.gradle.kts",
       "sha256": "9577d4bcead6ab324adbc394f03e6ca128b7a2ef170b682ff60d6916a45a00da",
       "upstream": [
@@ -144,7 +144,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "expo-dev-launcher-gradle-plugin/build.gradle.kts",
       "sha256": "fa57e74a7179891b599886d21141772b9676bee985bbe46f5b1c7304ae7633ef",
       "upstream": [
@@ -162,7 +162,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt",
       "sha256": "d1b49dbb438654e834704480c395be003e1e5279d7b87da1e5726382898f6b31",
       "upstream": [
@@ -172,7 +172,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt",
       "sha256": "a022ab0675f61550b922a49890a7a742e9979c0bf393ef9a63c5ded84237f302",
       "upstream": [
@@ -181,7 +181,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/MavenPublicationExtension.kt",
       "sha256": "d0c5e89ae02d3753ea301c2f18ad642a0e86d806a9148cfb742c9f7dcbff124d",
       "upstream": [
@@ -190,7 +190,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Headers/RCTCxxBridge+Private.h",
       "sha256": null,
       "upstream": [
@@ -199,7 +199,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/EXDevLauncherUtils.swift",
       "sha256": "662e99f9ffe35d555b06838fb42f8f9f7071957b77e0f0d155ae1e2d960fd7cc",
       "upstream": [
@@ -208,7 +208,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Errors/EXDevLauncherErrorManager.swift",
       "sha256": "fd3bf3da382a8ba7be5e7f2b75eae419b4cf375ab6361e2162151b94b41ca7a9",
       "upstream": [
@@ -217,7 +217,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Errors/EXDevLauncherRedBox.h",
       "sha256": null,
       "upstream": [
@@ -226,7 +226,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Errors/EXDevLauncherRedBox.m",
       "sha256": null,
       "upstream": [
@@ -235,7 +235,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Headers/RCTBundleURLProvider+Private.h",
       "sha256": null,
       "upstream": [
@@ -244,7 +244,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/ReactNative/EXDevLauncherEarlySetup.m",
       "sha256": null,
       "upstream": [
@@ -253,7 +253,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/ReactNative/EXDevLauncherRedBoxInterceptor.swift",
       "sha256": null,
       "upstream": [
@@ -262,7 +262,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Headers/EXDevLauncherRedBoxProtocol.h",
       "sha256": null,
       "upstream": [
@@ -337,7 +337,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "expo-dev-launcher.podspec",
       "sha256": "08219da9108ca15ac8ea198cb1073aa2435cfe7565cf1dede66a14e601ca2f67",
       "upstream": [
@@ -346,7 +346,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/EXDevLauncherController.h",
       "sha256": "c2cdf641c47544ff58730c4335535a0356c48cc00e748828bf3d782e7cca8e58",
       "upstream": [
@@ -355,7 +355,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/ReactDelegateHandler/ExpoDevLauncherReactDelegateHandler.swift",
       "sha256": "f9e30559a84b63d3fbc713350f9bec9b7349804a60a875473dd48c396fe80a1a",
       "upstream": [
@@ -364,7 +364,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.h",
       "sha256": null,
       "upstream": [
@@ -373,7 +373,7 @@
     },
     {
       "package": "expo-dev-launcher",
-      "version": "58.0.13",
+      "version": "58.0.14",
       "file": "ios/Unsafe/RCTPackagerConnection+EXDevLauncherPackagerConnectionInterceptor.m",
       "sha256": null,
       "upstream": [
@@ -442,55 +442,55 @@
     },
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "ios/Expo/ExpoAppSceneDelegate.swift",
       "sha256": "a39cfa10500282124e09a96e1ef9c61dfd8c2ac9ef69f3e2bbde959e75074eb6"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/common.cmake",
       "sha256": "d77390291455391014aa719b8d58df8b2d3e1fc3bf591e5171579dd30663e65b"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/jsi.cmake",
       "sha256": "4a9d5c30945107e8269ecba36336526f53e09217c1bed35d63db18f493866371"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/pch-ccache.cmake",
       "sha256": "0ddb6381885e975624228ec57f8b490028e5f83739130a3a6bc2301716d3f555"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/tests.cmake",
       "sha256": "eee71356ef185fa8d8116a065b8689693537c6f24b1343cef27ba0b5d3b51ae2"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/cmake/worklets.cmake",
       "sha256": "238a2a8814c0c39c6738cfdba2fb0c204aac3b0e9cd59a12aeebf0d1474ab41f"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/src/main/java/expo/modules/kotlin/exception/CodedException.kt",
       "sha256": "09f02eba4d4de7c3231da11b9f055de7d641e99f4f76921a3aaa36fb74658bb5"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt",
       "sha256": "cc2c738144881b46904eaaebc29e1dc420e74e7ff4f187e0e725c9295b0fb66f"
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/src/main/java/expo/modules/v2/ExpoModulesV2Host.kt",
       "sha256": "fc00fbabb48df94d462c2d88daa8890de5232cadb808b95bbe52aa8e92d9d15e",
       "upstream": [
@@ -499,7 +499,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "ios/Core/AppContext.swift",
       "sha256": "c2792458b9b1b989bce1214728ed522e28a9069c3a76543ad677f9867505524f",
       "upstream": [
@@ -508,7 +508,7 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "ios/Core/Views/SwiftUI/SwiftUIHostingView.swift",
       "sha256": "74bbe48855ca7f57f63250a19de714c8603690dabaa0bd948eb25b5012580bef",
       "upstream": [
@@ -517,9 +517,9 @@
     },
     {
       "package": "expo-modules-core",
-      "version": "58.0.20",
+      "version": "58.0.22",
       "file": "android/build.gradle",
-      "sha256": "979a7e6edbf6a02f037b72c3ad1a13883197598af9e3f81535eb48d813b63af3",
+      "sha256": "a00694b567a3faf39feb036ed2cf0543ba03f1b5a6134246dd4305d0edcaf0c7",
       "upstream": [
         "https://github.com/expo/expo/releases/tag/expo-modules-core%4058.0.14",
         "https://github.com/expo/expo/releases/tag/expo-modules-core%4058.0.20"
@@ -527,9 +527,9 @@
     },
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "bundledNativeModules.json",
-      "sha256": "74e781b3654b8e39e7b906456997de646f12a5342e593d0b9cb17e27a7a1a85e",
+      "sha256": "4e735e4437c701d794c7dba9990cefe6c9e62330e73ec811c65e8008ee600171",
       "upstream": [
         "https://github.com/expo/expo/releases/tag/expo%4058.0.6",
         "https://github.com/expo/expo/releases/tag/expo%4058.0.12"
@@ -537,7 +537,7 @@
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "android/src/main/java/expo/modules/ui/DatePickerView.kt",
       "sha256": "e77a53075b387dfeda01b9809ed15ad66c6074cfc29ba3bbd05140afeef06909",
       "upstream": [
@@ -546,37 +546,37 @@
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "ios/ArrangementViewView.swift",
       "sha256": "dbf560e837eec7ef2860df5d4dae932c3a10ae193526a2da4b4f0be838d8a26d"
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "ios/ExpoUIModule.swift",
       "sha256": "c5c872cb159afa181d1be0cff72c1501f05d7959c7547863eef0815b8834aa2d"
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "ios/Modifiers/ArrangementModifiers.swift",
       "sha256": "7a9b811792402a4130010f8fc3d3dc81de0e3549e2caafdb5b675270a77c277a"
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "ios/Modifiers/HingeObservationModifiers.swift",
       "sha256": "ed39b754fc61b6be78bb55e6ed3d66d3a64c4834712cbea31d2f1a51d713f44a"
     },
     {
       "package": "@expo/ui",
-      "version": "58.0.19",
+      "version": "58.0.20",
       "file": "ios/Modifiers/ViewModifierRegistry.swift",
       "sha256": "c09c2b4cbc71207e441d606ea64c98d9a4561ffe0e7f1a26e05bf4de3f065ed2"
     },
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "src/winter/setupReactNativeEnvironment.ts",
       "sha256": "b63ad0ca1d9fb19c09ed88f07ddcf136b1e0099188987141c7a74375640023fe",
       "upstream": [
@@ -585,7 +585,7 @@
     },
     {
       "package": "expo",
-      "version": "58.0.12",
+      "version": "58.0.14",
       "file": "src/winter/runtime.native.ts",
       "sha256": "c5c4cf20bae6bc0dae0c0432511eebee871f1ae0742cfffa26e7e8a9230d3e87",
       "upstream": [
@@ -604,13 +604,91 @@
     },
     {
       "package": "expo-modules-jsi",
-      "version": "58.0.14",
+      "version": "58.0.15",
       "file": "apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift",
-      "sha256": "3b3f96dfe29534441bd6be9a03d284973570a3a7231e7340a1710e82b1c58cdc",
+      "sha256": "a657a0b4869649210b3ea07d564e72410b4096a8622772ed2e9c09e0aad36163",
       "upstream": [
         "https://github.com/expo/expo/releases/tag/expo-modules-jsi%4058.0.10",
         "https://github.com/expo/expo/pull/51368"
       ]
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "58.0.22",
+      "file": "android/src/main/cpp/worklets/Serializable.h",
+      "sha256": "dd7412f7459f2ddbd0f79042d94c6b47b6e9d315bab30b2119f272b83a8e6145"
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "58.0.22",
+      "file": "android/src/main/cpp/worklets/Worklet.cpp",
+      "sha256": "21a60055f43700789ffdce7dd53f0f8ba5a974c4b804ca566d9358eda2aa465a"
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "58.0.22",
+      "file": "common/cpp/JSI/JSIUtils.cpp",
+      "sha256": "15aa892c1239ab7ac7872f80a6dc417d38d1f407f89a00730e4f1d01a62c2d02"
+    },
+    {
+      "package": "expo-modules-core",
+      "version": "58.0.22",
+      "file": "ios/WorkletsAdapter/ExpoWorkletsBridgeProvider.mm",
+      "sha256": "e24458d4507ccbc3b2f866b6248d416c8ce95fb808abf2d10cc2ac9ea3d74980"
+    },
+    {
+      "package": "expo-build-properties",
+      "version": "58.0.11",
+      "file": "build/android.js",
+      "sha256": "a1f83c54bd8d1d30c275709663b6f105cd865d37e11c51f4e88cee5abeeb0648"
+    },
+    {
+      "package": "expo-build-properties",
+      "version": "58.0.11",
+      "file": "build/androidPCHTemplates.js",
+      "sha256": "acad7165cbb390c32da2f51a8a5fa9d84a537da0cbfbbb22059f880952ab5bc9"
+    },
+    {
+      "package": "@expo/ui",
+      "version": "58.0.20",
+      "file": "ios/HostView.swift",
+      "sha256": "080f8de5ac481a297a634f9421870781604d18a1abbf6e1808a72cfcc6374253"
+    },
+    {
+      "package": "expo-router",
+      "version": "58.0.23",
+      "file": "build/fork/useLinking.native.js",
+      "sha256": "ad83defa8d03728987d1f5e5c756eee05acbe82d00b04ab131ec11cdbffb4861"
+    },
+    {
+      "package": "expo-router",
+      "version": "58.0.23",
+      "file": "build/global-state/getNavigationAction.js",
+      "sha256": "520d8892be5f63aa1e0dda746f4bfccf96edff9405853686fe65da6a11a15d70"
+    },
+    {
+      "package": "expo-router",
+      "version": "58.0.23",
+      "file": "build/global-state/resolveNavigationDestination.js",
+      "sha256": "2ceadf0d049b7eddbdc45b83d3499368e62ff6198487c863cf6b79c064c5b588"
+    },
+    {
+      "package": "expo-router",
+      "version": "58.0.23",
+      "file": "ios/LinkPreview/LinkZoomTransition.swift",
+      "sha256": "e78d4498aac3bf64f569e702315b40207d6c7875d66ce942d88be32dba11602f"
+    },
+    {
+      "package": "expo-splash-screen",
+      "version": "58.0.10",
+      "file": "android/src/main/java/expo/modules/splashscreen/SplashScreenManager.kt",
+      "sha256": "dcfd1377ab8e9303afbf454a8b7b25bc57dadedd93c50f41b62530a38de51a28"
+    },
+    {
+      "package": "expo-location",
+      "version": "58.0.17",
+      "file": "android/src/main/java/expo/modules/location/taskConsumers/LocationTaskConsumer.kt",
+      "sha256": "7a4aff8ae66640e1dfce6b90b36131e6b36ee733557b88c7e38ac928aa817f92"
     }
   ],
   "files": [

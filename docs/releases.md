@@ -130,7 +130,7 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 [Dependency automation](dependency-automation.md) covers daily app, release-console and GitHub Actions updates, including major releases. Related framework packages are grouped; exact version pins and Expo compatibility checks remain required.
 
-Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Verified release-console updates can merge automatically after their required checks pass; app and Actions updates require review. Release-console merges do not trigger app deployments.
+Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Verified release-console updates and the narrowly reviewed same-major ESLint/RevenueCat web updates can merge automatically after their required checks pass. Other app and Actions updates require review; see the exact eligibility and lockfile restrictions in the dependency automation guide. Release-console merges do not trigger app deployments.
 
 Native dependency updates require a compatible new binary and runtime version. The weekly dependency report tracks exact resolution pins and the metadata verifier that Dependabot cannot reliably update.
 
