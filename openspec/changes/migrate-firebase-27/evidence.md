@@ -25,7 +25,7 @@ Full-app Debug/Release compilation, embedding and bounded initialization remain 
 
 Typecheck passes for the app and crashreporting workspace. The complete candidate test run passes2463 app tests, with one existing optimized-JNI test skipped until an APK is supplied, and all51 crashreporting tests. Coverage includes account isolation, sign-in cancellation/retry, consent persistence and withdrawal, purchase/restore attribution, fatal/nonfatal forwarding and crash fingerprints. These are local/mocked regressions, not real provider or billing acceptance.
 
-Both Hosting and Pages exports pass the existing rendered page/API/data-boundary checker. The release console typecheck,150 tests and build pass. Online Expo doctor passes with the existing three reviewed deviations; no exclusion was added. Strict active/archived OpenSpec validation, agent-team validation and targeted ESLint pass. An independent precommit review found and verified the R8 build-suffix guard correction; exact-commit/native/artifact review remains pending.
+Both Hosting and Pages exports pass the existing rendered page/API/data-boundary checker. The release console typecheck,150 baseline tests and build pass. Online Expo doctor passes with the existing three reviewed deviations; no exclusion was added. Strict active/archived OpenSpec validation, agent-team validation and targeted ESLint pass. An independent precommit review found and verified the R8 build-suffix guard correction; exact-commit/native/artifact review remains pending.
 
 ## Android toolchain diagnosis
 
@@ -36,5 +36,7 @@ The final diagnostic verifies Gradle9.4.1, AGP9.2.1, bundled R8 9.2.14, BoM35.0.
 ## Release boundaries
 
 Existing remote Expo Android signing and Play submission assignments were verified by metadata only. The October25 preflight found no1.8.28/code110 build. The previous1.8.27/code109 Expo build/submission finished and Play reported a completed production track; current Google review/public availability was not established. The shipped-runtime ledger must not infer availability from that receipt.
+
+The installed EAS CLI rejects an uppercase build-profile channel, so the candidate retains the existing profile with no channel field and preserves the native Production request headers and EXPO_UPDATE_CHANNEL. No lowercase channel migration is introduced, and null EAS build metadata is not treated as a registered channel. A regression checks the committed profiles through the actual installed CLI schema and rejects the invalid uppercase addition; signed AAB validation must verify the native Production header.
 
 No1.8.29 production build, submission or public release has occurred at this evidence stage. Before release, recheck duplicate jobs, validate the exact source in CI and native QA, inspect the signed four-ABI AAB and generated APKs, verify isolated API36/4KB and API37/16KB startup/consent persistence, and submit the exact build once through play-production. Existing main CI publishes web automatically; source-bound readback is a separate required gate. Provider OAuth, billing and real crash delivery are not proven by mocks, offline initialization or unsigned builds.

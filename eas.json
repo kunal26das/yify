@@ -53,8 +53,7 @@
         "buildType": "app-bundle",
         "credentialsSource": "remote"
       },
-      "node": "24.19.0",
-      "channel": "Production"
+      "node": "24.19.0"
     }
   },
   "submit": {
