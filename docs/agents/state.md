@@ -1,6 +1,12 @@
 # Delivery handoff
 
-Updated 2026-10-21 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-25 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+
+## Current maintenance: 2026-10-25
+
+The [October25 integration](../../openspec/changes/integrate-october-25-dependencies/evidence.md) prepares version/runtime **1.8.28**, code/build **110**, for Expo58.0.16, AdMob17.3.1 and Purchases10.15.0. Every proposed direct update from PR1032 and1034 is coordinated with exact Expo resolutions,96 source guards and regenerated native projects. Fresh/frozen installation, typecheck,2360 app tests plus51 crashreporting tests, both web exports/checkers, reviewed Expo doctor and release-console checks pass; one artifact-dependent app test is intentionally skipped. Native compilation, exact-commit review, required CI, merge and automatic web delivery are pending at this snapshot and must be reconciled in the integration PR closure before claiming completion.
+
+Firebase27 PR1033 remains open for a supported Kotlin2.4+/SPM/dynamic-framework migration and compatible Google Sign-In wrapper. Firebase26.4, analytics-off defaults, classic ads backend and manual consent-gated revenue reporting remain intact. No store build, OTA or iOS release is included; never send the1.8.28 native graph to older runtimes. Prior Android1.8.27 submission/availability is not rechecked in this PR task; its dated evidence below remains the last recorded state. Preserve the unfinished Compose migration branch.
 
 ## Current delivery: 2026-10-21
 
