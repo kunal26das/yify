@@ -1,6 +1,8 @@
 import {readFile} from 'node:fs/promises';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {checkFirebaseCompatibility} from './check-firebase-compat.mjs';
+import {applyCompatibility} from './expo-native-compat.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const exactVersion = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
@@ -17,13 +19,17 @@ export function checkPins(pkg, filename) {
     }
 }
 
-export async function main() {
+export async function main({manifestsOnly = false} = {}) {
     for (const filename of ['package.json', 'crashreporting/package.json', 'release/package.json', 'tooling/package.json']) {
         checkPins(JSON.parse(await readFile(join(root, filename), 'utf8')), filename);
+    }
+    if (!manifestsOnly) {
+        await checkFirebaseCompatibility(root);
+        await applyCompatibility({check: true});
     }
     console.log('Application, crash-reporting workspace, release-console and tooling dependencies use exact versions.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-    main().catch((error) => { console.error(error.message); process.exitCode = 1; });
+    main({manifestsOnly: process.argv.includes('--manifests-only')}).catch((error) => { console.error(error.message); process.exitCode = 1; });
 }

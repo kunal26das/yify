@@ -1,0 +1,5 @@
+--- a/package.json
++++ b/package.json
+@@ -155 +155 @@
+-  "GoogleSignInPodVersion": "~> 9.0"
++  "GoogleSignInPodVersion": "10.1.0"

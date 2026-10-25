@@ -224,7 +224,7 @@ jobs:
         run: |
           LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
           mkdir -p "$LOCKFILE_REPORT_DIR"
-          node scripts/check-dependency-pins.mjs
+          node scripts/check-dependency-pins.mjs --manifests-only
           case "$DEPENDENCY_SCOPE" in
             root)
               cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"

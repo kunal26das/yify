@@ -31,6 +31,8 @@ The app and release console use TypeScript 7, and the app uses ESLint 10. The pr
 
 Run `node scripts/check-expo-doctor.mjs` for Expo compatibility and `node scripts/check-dependency-pins.mjs` for exact versions. The doctor runs dependency checks with exclusions disabled. Deliberate deviations live in `scripts/expo-dependency-policy.json`; each pins the accepted version, Expo's recommendation and a compatibility reason. Update that policy only after validating an upgrade. Do not disable dependency checking globally.
 
+Firebase 27 also requires the aligned installed graph and collection controls in `scripts/firebase-compatibility.json`. Postinstall and the pin checker enforce those prerequisites and the reviewed native source patches. The Google Sign-In 16.1.5 bridge pins Apple SDK 10.1.0 through the shared React Native SwiftPM integration and declares the SDK's iOS 15 minimum; its patches live in `patches/expo-native/`. RNGoogleSignin stays dynamic, the Expo adapter retains its static framework contract, and `withGoogleSigninSpm` links the shared product into the application target. Rebase the patches from verified upstream source when changing the wrapper. Keep the existing Firebase consent/crash flags and compiler checks; regenerate native projects after configuration changes.
+
 Tests use `node --test` with native TypeScript type-stripping for domain tests and Babel 8 for mocked platform fixtures — no Jest. Test files live next to their subject as `*.test.ts` and are excluded from `tsconfig.json` and ESLint.
 
 ## Architecture

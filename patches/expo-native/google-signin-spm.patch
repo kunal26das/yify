@@ -1,0 +1,12 @@
+--- a/RNGoogleSignin.podspec
++++ b/RNGoogleSignin.podspec
+@@ -13 +13 @@
+-  s.platforms    = { :ios => "10.0" }
++  s.platforms    = { :ios => "15.0" }
+@@ -19 +19,5 @@
+-  s.dependency "GoogleSignIn", package["GoogleSignInPodVersion"]
++  spm_dependency(s,
++    url: "https://github.com/google/GoogleSignIn-iOS.git",
++    requirement: {kind: "exactVersion", version: package["GoogleSignInPodVersion"]},
++    products: ["GoogleSignIn"]
++  )

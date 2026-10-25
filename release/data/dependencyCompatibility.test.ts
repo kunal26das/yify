@@ -1,9 +1,28 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import test from 'node:test';
 
 const require = createRequire(import.meta.url);
 const easRequire = createRequire(require.resolve('eas-cli/package.json'));
+
+test('committed EAS profiles validate and preserve the native Production release route', () => {
+    const {EasJsonSchema} = easRequire('@expo/eas-json/build/schema');
+    const {resolveBuildProfile} = easRequire('@expo/eas-json/build/build/resolver');
+    const config = JSON.parse(readFileSync(new URL('../../eas.json', import.meta.url), 'utf8'));
+    assert.equal(EasJsonSchema.validate(config, {allowUnknown: false, abortEarly: false}).error, undefined);
+    const profile = resolveBuildProfile({easJson: config, platform: 'android', profileName: 'production'});
+    assert.equal(profile.env.EXPO_UPDATE_CHANNEL, 'Production');
+    assert.equal(profile.credentialsSource, 'remote');
+    assert.equal(profile.buildType, 'app-bundle');
+    assert.equal(profile.channel, undefined);
+    assert.equal(config.submit['play-production'].android.track, 'production');
+    assert.equal(config.submit['play-production'].android.releaseStatus, 'completed');
+    const invalid = structuredClone(config);
+    invalid.build.production.channel = 'Production';
+    const error = EasJsonSchema.validate(invalid, {allowUnknown: false, abortEarly: false}).error;
+    assert.ok(error?.details.some((detail: {path: string[]}) => detail.path.join('.') === 'build.production.channel'));
+});
 
 test('EAS generates App Store API key names through its installed Nano ID dependency', () => {
     const {getAscApiKeyName} = easRequire('eas-cli/build/credentials/ios/actions/AscApiKeyUtils');

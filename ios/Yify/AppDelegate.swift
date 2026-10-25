@@ -14,10 +14,6 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    if FirebaseApp.app() == nil {
-      FirebaseApp.configure()
-    }
-
     let delegate = ReactNativeDelegate()
     let factory = ExpoReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -27,6 +23,9 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
 
     // The window is created and React Native is started by `SceneDelegate` under the
     // scene-based life cycle (required by the iOS 27 SDK).
+// @generated begin @react-native-firebase/app-didFinishLaunchingWithOptions - expo prebuild (DO NOT MODIFY) sync-10e8520570672fd76b2403b7e1e27f5198a6349a
+FirebaseApp.configure()
+// @generated end @react-native-firebase/app-didFinishLaunchingWithOptions
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

@@ -1,0 +1,18 @@
+--- a/expo/ios/ExpoAdapterGoogleSignIn.podspec
++++ b/expo/ios/ExpoAdapterGoogleSignIn.podspec
+@@ -13 +13 @@
+-  s.platform       = :ios, '13.4'
++  s.platform       = :ios, '15.0'
+@@ -20 +20,5 @@
+-  s.dependency "GoogleSignIn", package["GoogleSignInPodVersion"]
++  spm_dependency(s,
++    url: "https://github.com/google/GoogleSignIn-iOS.git",
++    requirement: {kind: "exactVersion", version: package["GoogleSignInPodVersion"]},
++    products: ["GoogleSignIn"]
++  )
+@@ -22,5 +25,0 @@
+-  # Expo gives direct dependencies of Expo modules modular headers. AppCheckCore,
+-  # pulled in by GoogleSignIn, imports these Objective-C pods from Swift.
+-  s.dependency 'GoogleUtilities/Environment'
+-  s.dependency 'GoogleUtilities/UserDefaults'
+-  s.dependency 'RecaptchaInterop'

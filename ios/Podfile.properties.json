@@ -3,8 +3,8 @@
   "EX_DEV_CLIENT_NETWORK_INSPECTOR": "true",
   "expo.inlineModules.watchedDirectories": "[]",
   "expo.inlineModules.xcodeProjectTargets": "{\"mainTarget\":\"Yify\",\"targets\":[]}",
-  "ios.useFrameworks": "static",
-  "ios.forceStaticLinking": "[]",
+  "ios.useFrameworks": "dynamic",
+  "ios.forceStaticLinking": "[\"RNGoogleMobileAds\"]",
   "apple.privacyManifestAggregationEnabled": "true",
   "EXPO_USE_PRECOMPILED_MODULES": "false",
   "expo.location.motionActivityEnabled": "false"
