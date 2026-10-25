@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.14",
-      "expected": "~58.0.14",
-      "reason": "Expo 58.0.14 retains the reviewed React Native 0.88.0 bootstrap and iOS scene sources while updating bundled module recommendations. Runtime 1.8.27 coordinates its exact CLI, Babel preset, modules core, dev launcher and application dependencies. Preserve native lifecycle and consent guards; validate regenerated Android and iOS projects and native startup before release."
+      "version": "58.0.16",
+      "expected": "~58.0.16",
+      "reason": "Expo 58.0.16 coordinates reviewed modules core 58.0.23, JSI 58.0.16, CLI 58.1.13, Metro 58.0.15, Babel preset 58.0.18, assets 58.0.17 and filesystem 58.0.10. Runtime 1.8.28 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native builds and startup before release."
     },
     "@sentry/react-native": {
       "version": "8.31.0",
