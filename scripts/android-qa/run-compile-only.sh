@@ -36,7 +36,7 @@ cd android
 ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
     -Dhsdp.verify.androidRoot="$PWD" -Dhsdp.verify.ndkVersion=27.1.12297006 \
     -I ../scripts/android-qa/compile-only.gradle -I ../scripts/verify-hsdp.gradle \
-    :app:verifyHsdpRuntime 2>&1 | tee "$STATE/evidence/resolved-native-graph.log"
+    :app:verifyHsdpRuntime :verifyKotlinCompilerArtifacts 2>&1 | tee "$STATE/evidence/resolved-native-graph.log"
 ./gradlew --no-daemon -Pandroid.builder.sdkDownload=false \
     -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64 \
     -I ../scripts/android-qa/compile-only.gradle :app:assembleRelease :app:bundleRelease \

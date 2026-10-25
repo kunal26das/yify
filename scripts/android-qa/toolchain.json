@@ -31,6 +31,18 @@
   "gradleSha256": "2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb",
   "reactNativeCmake": "3.30.5",
   "minimumFreeGiB": 20,
-  "kotlin": "2.4.21",
-  "r8": "9.2.14"
+  "kotlin": "2.4.20",
+  "r8": "9.2.14",
+  "kotlinCompilerPlugins": [
+    {
+      "module": "io.github.expo.pika:pika-compiler",
+      "version": "1.1.0",
+      "sha256": "81a821614934d225f6b46f32947dafce6317a1e5b2a9113a1d6a3bfc20fe3c09"
+    },
+    {
+      "module": "io.github.expo:expo-modules-v2-compiler-plugin",
+      "version": "0.2.5",
+      "sha256": "cfb3a5d5993e4bf8061f7f24aef4754d91350da3a38c7f4ab92019fa9c744227"
+    }
+  ]
 }

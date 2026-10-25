@@ -4,7 +4,7 @@
   "firebaseJavaScript": "13.0.0",
   "androidBom": "35.0.0",
   "appleSdk": "13.0.0",
-  "kotlin": "2.4.21",
+  "kotlin": "2.4.20",
   "androidMinSdk": 24,
   "googleSignInWrapper": "16.1.5",
   "googleSignInAppleSdk": "10.1.0",

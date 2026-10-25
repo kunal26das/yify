@@ -33,15 +33,15 @@ def compile = tasks.register('compileFixture') {
     finalizedBy(uploads[0])
     doLast {
         def verifyVersions = gradle.ext.yifyVerifyToolchainVersions
-        def expected = [kotlin: '2.4.21', r8: '9.2.14']
+        def expected = [kotlin: '2.4.20', r8: '9.2.14']
         def capturedR8 = '9.2.14 (build b159b01e1cdc38c1106be42aeebfb7f44397dad1 from go/r8bot (luci-r8-custom-ci-archive-0-vv1n))'
-        verifyVersions(expected, '2.4.21', capturedR8)
-        verifyVersions(expected, '2.4.21', '9.2.14')
+        verifyVersions(expected, '2.4.20', capturedR8)
+        verifyVersions(expected, '2.4.20', '9.2.14')
         ['9.2.13', '9.2.140', '9.2.14-dev', '9.2.14 unexpected',
          '9.2.14 (build fixture)\ninjected', null].each { actual ->
             def refused = false
             try {
-                verifyVersions(expected, '2.4.21', actual)
+                verifyVersions(expected, '2.4.20', actual)
             } catch (GradleException failure) {
                 assert failure.message.contains('unaudited R8 version')
                 refused = true
