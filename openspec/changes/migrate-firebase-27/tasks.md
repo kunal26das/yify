@@ -20,11 +20,11 @@
 - [x] 3.1 Recheck duplicate jobs/current Play state and dispatch one exact-source production EAS Android build without auto-submit; record source/runtime/code and build ID.
 - [x] 3.2 Verify the exact finished signed AAB/upload certificate, runtime/channel, all four ABI native payloads and actual optimized JNI; install its generated APKs on isolated API 36/4KB and API 37/16KB devices and verify startup/consent persistence/About with explicit journey limits.
 - [x] 3.3 Independently review signed-artifact/device evidence, submit the exact build once via play-production and record authenticated Expo/Play receipt, review and availability boundaries without duplicate submission.
-- [ ] 3.4 Reconcile release/state/ledger only from observed outcomes, validate/merge records and automatic web effects, and clean completed task branches/worktrees/helpers/test resources with recovery evidence retained.
+- [x] 3.4 Reconcile release/state/ledger only from observed outcomes, validate/merge records and automatic web effects, and clean completed task branches/worktrees/helpers/test resources with recovery evidence retained.
 
 ## Remaining scope
 
-Task 2.2 is partially verified: Android four-ABI compile, signed optimized JNI and both offline startup checks pass, as do Apple Debug/Release compile/link/embedding. iOS initialization remains unexercised because app-process egress isolation was not proven; keep this gate before future iOS publication. Task 3.4 awaits this records change's CI/merge/web readback and branch cleanup. Android submission is complete, with Google review/public availability unverified.
+Task 2.2 is partially verified: Android four-ABI compile, signed optimized JNI and both offline startup checks pass, as do Apple Debug/Release compile/link/embedding. iOS initialization remains unexercised because app-process egress isolation was not proven; keep this gate before future iOS publication. Task 3.4 is verified by the merged records, successful main CI, automatic web readback and completed branch/resource cleanup. Android submission is complete, with Google review/public availability unverified.
 
 ## Workflow follow-up
 
