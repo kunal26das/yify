@@ -1,5 +1,15 @@
 # Expo 58 native compatibility
 
+## Firebase27 candidate: runtime1.8.29/code111
+
+The current candidate preserves Expo58.0.16/RN0.88 with101 source/patch targets. Three deterministic Google Sign-In16.1.5 patches pin Apple SDK10.1.0, use React Native SwiftPM integration in both wrappers and declare the SDK minimum iOS15 (the app remains16.4). ExpoAdapter keeps its static framework contract for Expo Core; RNGoogleSignin stays dynamic. `withGoogleSigninSpm` links the same product in the app target and Frameworks phase, which a mixed-link fixture proved necessary for the static adapter. The AdMob wrapper alone uses Expo's static-linking override for its static UMP dependency.
+
+The application and `plugins/ump/build.gradle` pin Kotlin2.4.21. The buildSrc AGP API dependency exports Kotlin into a parent classloader, so an application-only pin still loaded2.2.10 even while resolving2.4.21. The buildSrc template fixes that parent graph without changing the bundled React Native/Expo plugin compilers. Compile-only QA checks the loaded Kotlin version and bundled R8 against the audited toolchain before any app compilation.
+
+`check-firebase-compat.mjs` and the pin checker enforce all five installed/declaration versions, native SDK/toolchain metadata, current consent/crash/ad defaults and the reviewed override list. Hash drift or unapplied native patches fail closed. The SDK-only Google/Firebase fixtures passed bounded compile/link checks; full-app native, embedding, runtime and signed Android release results are tracked by `openspec/changes/migrate-firebase-27`. No store/iOS publication follows from the fixtures.
+
+## Historical migration notes
+
 Runtime 1.8.24 / Android build 106 aligns stable React Native 0.88.0, Expo 58.0.12 and Screens 4.30.0. The three guarded React Native files are unchanged from rc.4. The Expo archive review covers 61 sources: 13 changed and 48 unchanged or absent. Changes coordinate Swift noncopyable JavaScript values between Core and JSI, move the modules-v2 Gradle plugin to 0.2.5, fix native host library loading and SwiftUI containment, and advance Compose/Material3 while retaining legacy picker-color aliases. Metro prefers the public setup entry, then host and legacy entries; the regression executes each fallback. All 71 source guards remain active, and the Reanimated patch is unchanged. Fresh native build and runtime validation are required before store release.
 
 The app uses Expo 58.0.12 with React Native 0.88.0. The SDK 57 compatibility patch payloads are removed: their native, Metro, server-rendering and Gradle fixes are included in the published SDK 58 sources. The manifest records reviewed package versions and SHA-256 source digests, including obsolete bridge files that must remain absent. It fails before applying any later patch if those sources change.

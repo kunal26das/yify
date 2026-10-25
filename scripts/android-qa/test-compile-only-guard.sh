@@ -31,7 +31,33 @@ uploads.each { name ->
 def compile = tasks.register('compileFixture') {
     dependsOn(uploads[1..2])
     finalizedBy(uploads[0])
-    doLast { file('compile.executed').text = 'compiled' }
+    doLast {
+        def verifyVersions = gradle.ext.yifyVerifyToolchainVersions
+        def expected = [kotlin: '2.4.21', r8: '9.2.14']
+        def capturedR8 = '9.2.14 (build b159b01e1cdc38c1106be42aeebfb7f44397dad1 from go/r8bot (luci-r8-custom-ci-archive-0-vv1n))'
+        verifyVersions(expected, '2.4.21', capturedR8)
+        verifyVersions(expected, '2.4.21', '9.2.14')
+        ['9.2.13', '9.2.140', '9.2.14-dev', '9.2.14 unexpected',
+         '9.2.14 (build fixture)\ninjected', null].each { actual ->
+            def refused = false
+            try {
+                verifyVersions(expected, '2.4.21', actual)
+            } catch (GradleException failure) {
+                assert failure.message.contains('unaudited R8 version')
+                refused = true
+            }
+            assert refused : "Unexpectedly accepted R8 version ${actual}"
+        }
+        def refusedKotlin = false
+        try {
+            verifyVersions(expected, '2.2.10', capturedR8)
+        } catch (GradleException failure) {
+            assert failure.message.contains('effective Kotlin version')
+            refusedKotlin = true
+        }
+        assert refusedKotlin
+        file('compile.executed').text = 'compiled'
+    }
 }
 def forbidden = ['uploadUnknownDestination', 'publishFixture', 'deployFixture', 'submitFixture']
 forbidden.each { name ->
@@ -80,4 +106,4 @@ for task in uploadUnknownDestination publishFixture deployFixture submitFixture;
     grep -F "Compile-only QA refuses externally mutating task execution: :app:$task" "$STATE/guard-late-$task.log"
     test -z "$(find "$FIXTURE" -name '*.executed' -print -quit)"
 done
-printf '%s\n' 'Compile-only guard regression PASS: late re-enabled telemetry tasks skipped; enabled and late-enabled unknown external tasks rejected before any action'
+printf '%s\n' 'Compile-only guard regression PASS: audited Kotlin/R8 accepted; wrong versions refused; late re-enabled telemetry tasks skipped; enabled and late-enabled unknown external tasks rejected before any action'

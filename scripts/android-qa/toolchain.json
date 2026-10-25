@@ -30,5 +30,7 @@
   ],
   "gradleSha256": "2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb",
   "reactNativeCmake": "3.30.5",
-  "minimumFreeGiB": 20
+  "minimumFreeGiB": 20,
+  "kotlin": "2.4.21",
+  "r8": "9.2.14"
 }

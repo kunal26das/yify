@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.28",
-  "versionCode": 110,
+  "version": "1.8.29",
+  "versionCode": 111,
   "private": true,
   "workspaces": [
     "crashreporting",
@@ -40,7 +40,7 @@
     "deploy:hosting:prod": "yarn export:hosting && node scripts/check-web-export.mjs dist-hosting --server && bash scripts/eas.sh deploy --export-dir dist-hosting --environment production --prod",
     "test:crashreporting": "yarn workspace @yify/crashreporting test",
     "release": "cd release && yarn gui",
-    "postinstall": "node scripts/expo-native-compat.mjs && node scripts/apply-tooling-compatibility.mjs"
+    "postinstall": "node scripts/expo-native-compat.mjs && node scripts/apply-tooling-compatibility.mjs && node scripts/check-firebase-compat.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/hanken-grotesk": "0.4.3",
@@ -50,11 +50,11 @@
     "@expo/ui": "58.0.21",
     "@expo/vector-icons": "15.1.1",
     "@gorhom/bottom-sheet": "5.2.14",
-    "@react-native-firebase/analytics": "26.4.0",
-    "@react-native-firebase/app": "26.4.0",
-    "@react-native-firebase/auth": "26.4.0",
-    "@react-native-firebase/crashlytics": "26.4.0",
-    "@react-native-firebase/remote-config": "26.4.0",
+    "@react-native-firebase/analytics": "27.0.0",
+    "@react-native-firebase/app": "27.0.0",
+    "@react-native-firebase/auth": "27.0.0",
+    "@react-native-firebase/crashlytics": "27.0.0",
+    "@react-native-firebase/remote-config": "27.0.0",
     "@react-native-google-signin/google-signin": "16.1.5",
     "@revenuecat/purchases-js": "1.71.0",
     "@sentry/react-native": "8.31.0",

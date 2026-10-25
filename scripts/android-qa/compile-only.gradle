@@ -2,6 +2,19 @@ if (System.getenv('SENTRY_DISABLE_AUTO_UPLOAD') != 'true') {
     throw new GradleException('Compile-only QA requires SENTRY_DISABLE_AUTO_UPLOAD=true')
 }
 
+def verifyToolchainVersions = { expected, kotlinVersion, r8Version ->
+    if (kotlinVersion != expected.kotlin) {
+        throw new GradleException("Compile-only QA refuses an effective Kotlin version outside the audited toolchain: ${kotlinVersion}")
+    }
+    def r8Match = r8Version instanceof String
+        ? r8Version =~ /^(\d+\.\d+\.\d+)(?: \(build [A-Za-z0-9][A-Za-z0-9(). \/_-]*\))?$/
+        : null
+    if (r8Match == null || !r8Match.matches() || r8Match.group(1) != expected.r8) {
+        throw new GradleException("Compile-only QA refuses an unaudited R8 version: ${r8Version}")
+    }
+}
+gradle.ext.yifyVerifyToolchainVersions = verifyToolchainVersions
+
 gradle.projectsEvaluated {
     def app = gradle.rootProject.findProject(':app')
     if (app != null && app.plugins.hasPlugin('com.android.application')) {
@@ -11,6 +24,19 @@ gradle.projectsEvaluated {
         if (android.defaultConfig.minSdk != 24 || android.defaultConfig.targetSdk != 36 || android.compileSdk != 37) {
             throw new GradleException('Compile-only QA refuses Android API level overrides')
         }
+        def toolchain = new groovy.json.JsonSlurper().parse(gradle.rootProject.file('../scripts/android-qa/toolchain.json'))
+        def kotlinPlugin = app.plugins.findPlugin('org.jetbrains.kotlin.android')
+        if (kotlinPlugin == null) throw new GradleException('Compile-only QA requires the Android Kotlin plugin')
+        def kotlinVersionClass = kotlinPlugin.class.classLoader.loadClass('org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt')
+        def kotlinVersion = kotlinVersionClass.getMethod('getKotlinPluginVersion', org.gradle.api.Project).invoke(null, app)
+        if (gradle.rootProject.ext.kotlinVersion != toolchain.kotlin) {
+            throw new GradleException('Compile-only QA refuses an unaudited shared Kotlin version')
+        }
+        def androidPlugin = app.plugins.findPlugin('com.android.application')
+        def r8VersionClass = androidPlugin.class.classLoader.loadClass('com.android.tools.r8.Version')
+        def r8Version = r8VersionClass.getMethod('getVersionString').invoke(null)
+        verifyToolchainVersions(toolchain, kotlinVersion, r8Version)
+        println("Verified effective Android toolchain: Kotlin ${kotlinVersion}, R8 ${r8Version}")
         android.buildTypes.release.firebaseCrashlytics.nativeSymbolUploadEnabled = false
     }
 }

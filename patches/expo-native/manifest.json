@@ -845,6 +845,28 @@
         "https://github.com/expo/expo/pull/51739",
         "https://github.com/expo/expo/pull/51743"
       ]
+    },
+    {
+      "package": "@react-native-google-signin/google-signin",
+      "version": "16.1.5",
+      "file": "ios/RNGoogleSignin.mm",
+      "sha256": "1cf1c80767673cb506257c060e128aeb275bd194ca2b1b14ae6532bf220992de",
+      "upstream": [
+        "https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/GoogleSignIn.podspec",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/Package.swift"
+      ]
+    },
+    {
+      "package": "@react-native-google-signin/google-signin",
+      "version": "16.1.5",
+      "file": "ios/RNGoogleSignin.h",
+      "sha256": "a54ca2e724845f49387386db2732e5bce7f7647a0a19009623fbd3a1ae2a36d6",
+      "upstream": [
+        "https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/GoogleSignIn.podspec",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/Package.swift"
+      ]
     }
   ],
   "files": [
@@ -857,6 +879,47 @@
       "patch": "reanimated-nodes-lifecycle.patch",
       "upstream": [
         "https://github.com/software-mansion/react-native-reanimated/issues/10279"
+      ]
+    },
+    {
+      "package": "@react-native-google-signin/google-signin",
+      "version": "16.1.5",
+      "file": "package.json",
+      "before": "8007e4f26f1b1a34a1621f713d8d4bb4a7170f2d976299e14721b74068989727",
+      "after": "d581dc8b21a94f645053362e431db8a3f512f59ec04505c4239314711bc4f099",
+      "patch": "google-signin-appcheck-12.patch",
+      "upstream": [
+        "https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/GoogleSignIn.podspec",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/Package.swift"
+      ]
+    },
+    {
+      "package": "@react-native-google-signin/google-signin",
+      "version": "16.1.5",
+      "file": "RNGoogleSignin.podspec",
+      "before": "50e4c8ec91bb448f4cb5d7dd291b0baea940607a5d3cb6230a96958cb9bb6493",
+      "after": "aa8b7aa57d6a650563ef7190a08b0f8ac858fcff172d05669111fd91ab0348ea",
+      "patch": "google-signin-spm.patch",
+      "upstream": [
+        "https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/GoogleSignIn.podspec",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/Package.swift",
+        "https://github.com/facebook/react-native/blob/v0.88.0/packages/react-native/scripts/cocoapods/spm.rb"
+      ]
+    },
+    {
+      "package": "@react-native-google-signin/google-signin",
+      "version": "16.1.5",
+      "file": "expo/ios/ExpoAdapterGoogleSignIn.podspec",
+      "before": "308fdad5a2016a4c2eb9a24affcdeffb0dbf56e914938843c443d1524b1ed494",
+      "after": "defda14b7a70ed497864237c6cecd6e05811df968bec075f8cf4e13d675e6731",
+      "patch": "google-signin-expo-spm.patch",
+      "upstream": [
+        "https://github.com/google/GoogleSignIn-iOS/releases/tag/10.1.0",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/GoogleSignIn.podspec",
+        "https://github.com/google/GoogleSignIn-iOS/blob/10.1.0/Package.swift",
+        "https://github.com/facebook/react-native/blob/v0.88.0/packages/react-native/scripts/cocoapods/spm.rb"
       ]
     }
   ]

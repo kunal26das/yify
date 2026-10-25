@@ -42,6 +42,18 @@ test('audited Expo and React Native pins match the root manifest', async () => {
     assert.equal(pkg.dependencies['react-native'], toolchain.reactNative);
 });
 
+test('the buildSrc parent loader pins the audited Kotlin plugin in source and generated configuration', async () => {
+    const {toolchain} = await preflight;
+    const policy = JSON.parse(readFileSync(join(root, 'scripts/firebase-compatibility.json'), 'utf8'));
+    assert.equal(toolchain.kotlin, policy.kotlin);
+    for (const filename of ['plugins/ump/build.gradle', 'android/buildSrc/build.gradle']) {
+        const source = readFileSync(join(root, filename), 'utf8');
+        const pins = [...source.matchAll(/implementation\s+'org\.jetbrains\.kotlin:kotlin-gradle-plugin:([^']+)'/g)];
+        assert.equal(pins.length, 1, filename);
+        assert.equal(pins[0][1], toolchain.kotlin, filename);
+    }
+});
+
 test('SDK packages include both CMake requirements and no unrequested emulator download', async () => {
     const {sdkPackages} = await preflight;
     assert.deepEqual(sdkPackages(), ['platform-tools', 'platforms;android-37.0', 'build-tools;37.0.0',

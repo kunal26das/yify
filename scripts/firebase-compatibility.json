@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "reactNativeFirebase": "27.0.0",
+  "firebaseJavaScript": "13.0.0",
+  "androidBom": "35.0.0",
+  "appleSdk": "13.0.0",
+  "kotlin": "2.4.21",
+  "androidMinSdk": 24,
+  "googleSignInWrapper": "16.1.5",
+  "googleSignInAppleSdk": "10.1.0",
+  "staticApplePods": ["RNGoogleMobileAds"],
+  "firebaseDefaults": {
+    "analytics_auto_collection_enabled": false,
+    "analytics_default_allow_analytics_storage": false,
+    "analytics_default_allow_ad_storage": false,
+    "analytics_default_allow_ad_user_data": false,
+    "analytics_default_allow_ad_personalization_signals": false,
+    "google_analytics_adid_collection_enabled": false,
+    "google_analytics_ssaid_collection_enabled": false,
+    "google_analytics_automatic_screen_reporting_enabled": false,
+    "analytics_idfv_collection_enabled": false,
+    "google_analytics_registration_with_ad_network_enabled": false,
+    "crashlytics_is_error_generation_on_js_crash_enabled": true,
+    "crashlytics_javascript_exception_handler_chaining_enabled": false
+  }
+}
