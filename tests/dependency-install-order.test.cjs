@@ -24,5 +24,10 @@ test('a clean checkout validates manifests before install and requires the insta
     assert.equal(before.status, 0, before.stderr);
     const after = spawnSync(process.execPath, [command], {encoding: 'utf8'});
     assert.equal(after.status, 1);
-    assert.match(after.stderr, /node_modules\/@react-native-firebase\/app\/package.json: ENOENT/);
+    const missingPackage = after.stderr.match(/^Firebase compatibility cannot read node_modules\/(.+)\/package\.json: ENOENT\.\n$/)?.[1];
+    assert.ok([
+        '@react-native-firebase/app', '@react-native-firebase/auth', '@react-native-firebase/analytics',
+        '@react-native-firebase/crashlytics', '@react-native-firebase/remote-config',
+        'firebase', '@react-native-google-signin/google-signin',
+    ].includes(missingPackage), after.stderr);
 });

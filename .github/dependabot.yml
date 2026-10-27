@@ -50,7 +50,7 @@ updates:
       react:
         patterns: ["react", "react-dom", "react-test-renderer", "@types/react", "@types/react-dom"]
       firebase-native:
-        patterns: ["@react-native-firebase/*"]
+        patterns: ["@react-native-firebase/*", "firebase"]
       animations:
         patterns: ["react-native-reanimated", "react-native-worklets"]
       sentry:

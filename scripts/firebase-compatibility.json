@@ -1,14 +1,16 @@
 {
   "schemaVersion": 1,
-  "reactNativeFirebase": "27.0.0",
-  "firebaseJavaScript": "13.0.0",
-  "androidBom": "35.0.0",
-  "appleSdk": "13.0.0",
+  "reactNativeFirebase": "27.1.0",
+  "firebaseJavaScript": "13.1.0",
+  "androidBom": "35.0.2",
+  "appleSdk": "13.1.1",
   "kotlin": "2.4.20",
   "androidMinSdk": 24,
   "googleSignInWrapper": "16.1.5",
   "googleSignInAppleSdk": "10.1.0",
-  "staticApplePods": ["RNGoogleMobileAds"],
+  "staticApplePods": [
+    "RNGoogleMobileAds"
+  ],
   "firebaseDefaults": {
     "analytics_auto_collection_enabled": false,
     "analytics_default_allow_analytics_storage": false,
