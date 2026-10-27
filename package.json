@@ -108,7 +108,7 @@
     "react-native-youtube-iframe": "2.4.1"
   },
   "devDependencies": {
-    "@babel/core": "8.0.7",
+    "@babel/core": "8.0.9",
     "@react-native/metro-config": "0.88.0",
     "@types/react": "19.3.0",
     "electron": "44.9.1",
