@@ -196,21 +196,31 @@ test('installed native SDK does not select replay or profiling for the app feedb
     });
     const factories = new Proxy({}, {get: (_, name) => (...args) =>
         name === 'createNativeFramesIntegrations' && !args[0] ? undefined : {name}});
+    const profiling = loadTypeScript(
+        require.resolve('@sentry/react-native/dist/js/profiling/uiProfilingIntegration.js'), {
+            '../wrapper': {NATIVE: new Proxy({}, {get: (_, name) => () => assert.fail(`Unexpected native profiling: ${name}`)})},
+        });
     const {getDefaultIntegrations} = loadTypeScript(
         require.resolve('@sentry/react-native/dist/js/integrations/default.js'), {
+            '../profiling/uiProfilingIntegration': profiling,
             '../tracing': factories,
             '../utils/environment': {notWeb: () => true},
             './exports': factories,
         });
     const options = {...createSentryOptions({native: true, environment: 'production'}), enableNative: true};
     const names = getDefaultIntegrations(options).map(integration => integration.name);
-    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
+    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'ProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
         assert.equal(names.includes(name), false, name);
     }
     const enabled = getDefaultIntegrations({...options, replaysOnErrorSampleRate: 1, profilesSampleRate: 1,
         attachScreenshot: true, attachViewHierarchy: true}).map(integration => integration.name);
     for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
         assert.equal(enabled.includes(name), true, name);
+    }
+    for (const key of ['profilingOptions', 'androidProfilingOptions']) {
+        const configured = {...options, _experiments: {[key]: {lifecycle: 'trace', startOnAppStart: true}}};
+        assert.equal(getDefaultIntegrations(configured).some(integration => integration.name === 'ProfilingIntegration'), true, key);
+        assert.equal(getDefaultIntegrations({...configured, enableNative: false}).some(integration => integration.name === 'ProfilingIntegration'), false, key);
     }
 });
 

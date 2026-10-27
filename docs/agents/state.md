@@ -1,6 +1,12 @@
 # Delivery handoff
 
-Updated 2026-10-25 UTC. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-10-27. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+
+## October 27 dependency maintenance
+
+The [current integration](../../openspec/changes/refresh-october-dependencies/evidence.md) prepares runtime **1.8.30**, code/build **112**, for eight pending dependency proposals. Expo 58.0.19 and its internal packages, RNFirebase 27.1.0 / Firebase JS 13.1.0 / Android BoM 35.0.2 / Apple Firebase 13.1.1, Sentry 8.32.0, RevenueCat, ads, updates, Babel and desktop dependencies are aligned. All 101 native source guards and four actual compatibility patches remain enforced. Firebase collection defaults, entitlement rules and existing customer journeys are preserved.
+
+Fresh and frozen installation, app/workspace typecheck, 2,463 application tests plus 51 workspace tests, 151 release-console tests, rendered Hosting/Pages exports, reviewed doctor, strict specs and focused automation checks pass. Four-ABI Android compilation, protected unsigned iOS compilation and final exact-commit review remain pending. Main CI publishes the web automatically after merge; native store/OTA publication is a separate verified operation. The previously shipped-runtime ledger remains unchanged. Earlier delivery sections retain their original verification limits.
 
 ## Current Firebase 27 / Android delivery: 2026-10-25 UTC
 

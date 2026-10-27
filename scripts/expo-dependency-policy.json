@@ -2,14 +2,14 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.16",
-      "expected": "~58.0.16",
-      "reason": "Expo 58.0.16 coordinates reviewed modules core 58.0.23, JSI 58.0.16, CLI 58.1.13, Metro 58.0.15, Babel preset 58.0.18, assets 58.0.17 and filesystem 58.0.10. Runtime 1.8.28 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native builds and startup before release."
+      "version": "58.0.19",
+      "expected": "~58.0.19",
+      "reason": "Expo 58.0.19 coordinates reviewed modules core 58.0.26, JSI 58.0.19, CLI 58.1.15, Metro 58.0.17, Babel preset 58.0.20, assets 58.0.18 and filesystem 58.0.11. Runtime 1.8.30 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
     },
     "@sentry/react-native": {
-      "version": "8.31.0",
+      "version": "8.32.0",
       "expected": "~8.28.0",
-      "reason": "Sentry 8.31.0 updates Android SDK 8.60.0 to 8.61.0, Cocoa SDK 9.30.1 to 9.30.2 and JavaScript SDK 10.76.0 to 10.76.2. Runtime 1.8.26 regenerates native projects and the iOS symbol-upload phase while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads; validate native builds and startup."
+      "reason": "Sentry 8.32.0 advances Cocoa 9.31.0 and CLI 3.8.1 and introduces an opt-in UI profiling integration while retaining JavaScript SDK 10.76.2. Runtime 1.8.30 regenerates native projects while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
     },
     "react-native-gesture-handler": {
       "version": "3.4.0",
@@ -27,9 +27,9 @@
       "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.11 retains the reviewed legacy registry fallback through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
-      "version": "8.0.7",
+      "version": "8.0.9",
       "expected": "^7.29.7",
-      "reason": "Babel 8.0.7 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs."
+      "reason": "Babel 8.0.9 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs. The 8.0.9 release has no changes beyond the 8.0.8 parser and transformation fixes; preserve the reviewed adapter source hashes and verify both web exports."
     },
     "typescript": {
       "version": "7.0.2",

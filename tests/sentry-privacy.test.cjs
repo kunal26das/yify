@@ -434,7 +434,7 @@ test('documented RevenueCat numeric codes are bounded in every monitoring payloa
         const numeric = Number(code);
         assert.deepEqual(sanitizeDiagnosticAttributes({purchases_error_code: numeric}), {purchases_error_code: numeric});
     }
-    for (const value of [-1, 27, 36, 41, 43, 999999, 2.5, NaN, Infinity, '2', 'private', null, {code: 2}]) {
+    for (const value of [-1, 27, 43, 999999, 2.5, NaN, Infinity, '2', 'private', null, {code: 2}]) {
         assert.deepEqual(sanitizeDiagnosticAttributes({purchases_error_code: value, 'diagnostics.purchases_error_code': value}), {});
     }
     for (const stage of ['billing_check', 'offering_fetch']) {

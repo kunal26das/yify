@@ -1,14 +1,14 @@
 const assert = require('node:assert/strict');
 const {mkdtemp, readFile, rm, writeFile} = require('node:fs/promises');
-const {createRequire} = require('node:module');
 const {tmpdir} = require('node:os');
 const path = require('node:path');
 const {test} = require('node:test');
 const xcode = require('xcode');
 
-test('Xcode resolves the pinned UUID and preserves generated group references through project round trips', async t => {
-    const xcodeRequire = createRequire(require.resolve('xcode/package.json'));
-    assert.equal(xcodeRequire('uuid/package.json').version, require('../package.json').resolutions['**/xcode/uuid']);
+test('Xcode uses the audited native UUID generator and preserves generated group references through project round trips', async t => {
+    const metadata = require('xcode/package.json');
+    assert.equal(metadata.version, require('../package.json').resolutions.xcode);
+    assert.equal(metadata.dependencies.uuid, undefined);
     const directory = await mkdtemp(path.join(tmpdir(), 'yify-xcode-'));
     t.after(() => rm(directory, {recursive: true, force: true}));
     const filename = path.join(directory, 'project.pbxproj');

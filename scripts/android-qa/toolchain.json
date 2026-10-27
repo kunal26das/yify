@@ -4,7 +4,7 @@
   "yarn": "1.22.22",
   "javaMajor": 17,
   "gradle": "9.4.1",
-  "expo": "58.0.16",
+  "expo": "58.0.19",
   "reactNative": "0.88.0",
   "agp": "9.2.1",
   "compileSdk": 37,
