@@ -2465,10 +2465,10 @@
     text-encoding "^0.7.0"
     web-streams-polyfill "^4.2.0"
 
-"@react-native-google-signin/google-signin@16.1.5":
-  version "16.1.5"
-  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.5.tgz#0de2624f291050b1e7bd935919cdd06080f13bb0"
-  integrity sha512-9rmMwACzHK9Cbd0Yp7efg5uWgiYoLwmNAJh4gRCuMcSQH+qplpK7E4d1Q4tbsD8M9jvvVtRX2Z0AP9wwBKmPrQ==
+"@react-native-google-signin/google-signin@17.0.0":
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-17.0.0.tgz#4e50f283765ce29b92a03d89a58a55382c2cc31d"
+  integrity sha512-FAnq5tkoq01np7jCzGjBYK1QPS61hJxjLJHJyJjQN3gaTwAZiGll18Xn3nygITMsZ/WoJ0jmskuHSG/oknUskQ==
 
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"
@@ -2626,27 +2626,22 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@revenuecat/purchases-js-hybrid-mappings@19.14.1":
-  version "19.14.1"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-19.14.1.tgz#500c55a8dc64f86907a373832aa8bde18ba02963"
-  integrity sha512-Sj/sqXuQu0D3GKQQIhL8KQtAqpMUBGJjeXACrgzbvZBGbDu4AKPrnix0kwTOlGDoS4Cw5NZHJEnNU9D8jOxBmQ==
+"@revenuecat/purchases-js-hybrid-mappings@20.1.0":
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-20.1.0.tgz#3cc32c4e6435d4c9fed61979e936042c073eb090"
+  integrity sha512-z64fWoOBqbriflG/tycifXdFZJ6kyW6gQvbburRmobj5W4U8+/8B030wZMluD00MGhifW7Y044o8QFTEMzGl5A==
   dependencies:
-    "@revenuecat/purchases-js" "1.71.0"
-
-"@revenuecat/purchases-js@1.71.0":
-  version "1.71.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.71.0.tgz#bb3a4b7dba46da3e02ede945ed8b45fe177d66b4"
-  integrity sha512-FC118I8NvBh1gvFCw/JtL6oRoZwXws4TnfGtUY7YFPZIA39+kTpmWkGxQwSwn9XXqXPtBVD1b3Hvs7d+OgBpHQ==
+    "@revenuecat/purchases-js" "1.73.1"
 
 "@revenuecat/purchases-js@1.73.1":
   version "1.73.1"
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.73.1.tgz#220873943086ad905040c0bbdf77730572543b03"
   integrity sha512-TAwDzTqFfNCcIkbWOpxfYhvrUbnyW1XhgO78pp78InRRovBdMiXRgyrDT0ELYyCKjPZxtiSjzmHshIXIJ/H0dQ==
 
-"@revenuecat/purchases-typescript-internal@19.14.1":
-  version "19.14.1"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-19.14.1.tgz#f3e633db143fd14df0757bbada3fe5e5c621692a"
-  integrity sha512-knMoRyyLvIG4+yvPXprjddxLB/Y05Ca7pjrAONNL1/7gaq6ezlVC+/YksK8dr/3LHP6kCbJ1tMF+YD6LW4O63Q==
+"@revenuecat/purchases-typescript-internal@20.1.0":
+  version "20.1.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-20.1.0.tgz#65d57848c294afc1a499236ac605a7ad69442d32"
+  integrity sha512-4SnBSFsivBXcy9l4FFcMS/lYPLaMZXR6X4aO44zVshzjay36aKb93qfJgSMYcsnmca9mm6NmSfL6N65nqqvuqw==
 
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
@@ -7937,13 +7932,13 @@ react-native-is-edge-to-edge@^1.3.1:
   resolved "https://registry.yarnpkg.com/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.3.1.tgz#feb9a6a8faf0874298947edd556e5af22044e139"
   integrity sha512-NIXU/iT5+ORyCc7p0z2nnlkouYKX425vuU1OEm6bMMtWWR9yvb+Xg5AZmImTKoF9abxCPqrKC3rOZsKzUYgYZA==
 
-react-native-purchases@10.15.1:
-  version "10.15.1"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-10.15.1.tgz#3704876497871a25a44eac555fbffea58f7c3859"
-  integrity sha512-ooyXWMdC1/BJnokE+Pro+6yWInxzkQbFN4lR3EOvkSPhYh3H/j0Esk/LRnQApCqzkIbWEpfUhPnQdq/CMGofHA==
+react-native-purchases@11.0.0:
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-11.0.0.tgz#c96e296a4bf2b53fbc765954c5d945a941d02ca0"
+  integrity sha512-V4okgrP5F443mEkzhBrIHTvJoKJIdL2MI19QKvCUqndbB6HRtSL4laF8C06mDQN9utoSYt1UZCWqh5QJQwTBzQ==
   dependencies:
-    "@revenuecat/purchases-js-hybrid-mappings" "19.14.1"
-    "@revenuecat/purchases-typescript-internal" "19.14.1"
+    "@revenuecat/purchases-js-hybrid-mappings" "20.1.0"
+    "@revenuecat/purchases-typescript-internal" "20.1.0"
 
 react-native-reanimated@4.7.1:
   version "4.7.1"
@@ -7953,15 +7948,15 @@ react-native-reanimated@4.7.1:
     react-native-is-edge-to-edge "^1.3.1"
     semver "^7.7.3"
 
-react-native-safe-area-context@5.10.1:
-  version "5.10.1"
-  resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-5.10.1.tgz#d05ecf41d18c1a748b49c40a700936e5235a172d"
-  integrity sha512-ax0T3cAHQIhuAjDQpJ9C1Le96aRiM9PF+Kmgg7Y8+mD7QJMEIx04cG0eG3EGUTdvymgOkCrkakgZFwuOIuNQGw==
+react-native-safe-area-context@5.11.0:
+  version "5.11.0"
+  resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-5.11.0.tgz#550f1bf2b3aa4d7d224647d07ac5de87a18cf5d5"
+  integrity sha512-+QuWQSFt9N+GXg9SEGvB+nG1FdjDd8cTTNcNxZBARu5T0n490VsoRm7CsMkEkjY0mneA342LTpkqgOKxpt5tOQ==
 
-react-native-screens@4.30.0, "react-native-screens@^4.30.0 || ^5.0.0-alpha.3":
-  version "4.30.0"
-  resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-4.30.0.tgz#1ec198b7312168830004335921e15ac040608032"
-  integrity sha512-FrZG/Q5gqoDu0SgP4d2Ly0qdio5DR1KdGPEYImhkz7tmrhpML4C39m6RYLGd5TVLHZwcCh8NPvW9rylevjD0uQ==
+react-native-screens@4.30.1, "react-native-screens@^4.30.0 || ^5.0.0-alpha.3":
+  version "4.30.1"
+  resolved "https://registry.yarnpkg.com/react-native-screens/-/react-native-screens-4.30.1.tgz#26b9d170175ce24c2c100cee6265658f642e39b7"
+  integrity sha512-wLzZSQpvMx3FxIlDnb6raDJjsv2x45tFLGFz8RFUvxHzsKU9dWOkZYv9fy2siWtFf3eWGcRh66hL+o+dHhRJLQ==
   dependencies:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
@@ -9220,11 +9215,6 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
 
-uuid@14.0.3:
-  version "14.0.3"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-14.0.3.tgz#48c9b0dcf5a42d983c23162399eeb9af8b2cc617"
-  integrity sha512-Sc5u1VVln93y1Xnz4R+CunOZc7R9LUcTmhj7Rc7Eg3HVcf7rVn2FOoa812fe0W8p3jD7xeoGSYbfqCGGH2B6xw==
-
 validate-npm-package-name@^5.0.0:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/validate-npm-package-name/-/validate-npm-package-name-5.0.1.tgz#a316573e9b49f3ccd90dbb6eb52b3f06c6d604e8"
@@ -9425,7 +9415,7 @@ ws@^8.12.1:
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.22.0.tgz#40f16e1d7588ac0575041be5c49b8eb261c28e73"
   integrity sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==
 
-xcode@^4.0.0:
+xcode@4.0.0, xcode@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/xcode/-/xcode-4.0.0.tgz#cbcd6125a712d32478b27ee730afc4db4122b902"
   integrity sha512-dDaoWzc9EP2fp9FS9PVZUkyvFxY4y1TOV9pcKaKLk++Ei/qb97XDFEVP7GnW7Osii/TzVABJ0jq2F+9/lq0TVA==
