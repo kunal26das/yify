@@ -110,8 +110,12 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin",
-      "./plugins/withGoogleSigninSpm",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosDependencyManager": "spm"
+        }
+      ],
       "./plugins/withAndroidRelease",
       "./plugins/withGradleWrapper",
       "./plugins/withUmpMetricsGuard",

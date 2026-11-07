@@ -1,8 +1,8 @@
 {
   "name": "yify",
   "main": "entry.ts",
-  "version": "1.8.30",
-  "versionCode": 112,
+  "version": "1.8.31",
+  "versionCode": 113,
   "private": true,
   "workspaces": [
     "crashreporting",
@@ -99,7 +99,7 @@
     "react-native-google-mobile-ads": "17.4.0",
     "react-native-purchases": "11.0.0",
     "react-native-reanimated": "4.7.1",
-    "react-native-safe-area-context": "5.11.0",
+    "react-native-safe-area-context": "5.11.1",
     "react-native-screens": "4.30.1",
     "react-native-web": "0.21.4",
     "react-native-web-webview": "1.0.2",
