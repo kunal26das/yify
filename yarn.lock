@@ -2645,6 +2645,11 @@
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.73.1.tgz#220873943086ad905040c0bbdf77730572543b03"
   integrity sha512-TAwDzTqFfNCcIkbWOpxfYhvrUbnyW1XhgO78pp78InRRovBdMiXRgyrDT0ELYyCKjPZxtiSjzmHshIXIJ/H0dQ==
 
+"@revenuecat/purchases-js@1.73.2":
+  version "1.73.2"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.73.2.tgz#3911916bc6f95ffce1c97fac305c9e7bef40b199"
+  integrity sha512-766pf5jK5hvtnF9S/OR5jOi7Bw6sspkNlo9qOGpLGi95NoqTDSa/ba8BbXhL5y09Pu0TDddE98Nx3mMoK++6Og==
+
 "@revenuecat/purchases-typescript-internal@20.1.0":
   version "20.1.0"
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-20.1.0.tgz#65d57848c294afc1a499236ac605a7ad69442d32"
@@ -6434,10 +6439,10 @@ jiti@^2.4.2:
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-2.7.0.tgz#974228f2f4ca2bc21885a1797b45fea68e950c64"
   integrity sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==
 
-jose@6.2.13:
-  version "6.2.13"
-  resolved "https://registry.yarnpkg.com/jose/-/jose-6.2.13.tgz#4e16bf3cc81b5641ef5025cb2c9f61edfa92572f"
-  integrity sha512-7TIg10ZE1x82YediN+lcrPNvGMKge9yFHQD+Qho/b8y2adfugU3AsvvHfxV0fzyFllT6l9xCjf4RWY9g/Z9PJQ==
+jose@6.2.15:
+  version "6.2.15"
+  resolved "https://registry.yarnpkg.com/jose/-/jose-6.2.15.tgz#b1016c7e0a33d711bffc25598526b62d57730a27"
+  integrity sha512-qdF6ewcZARtef63fJ9AKKZPgxw+t7USH6HLXYcD4CrdmSvDp79rpJSPFEKc90QBeGS63u1KQtN2MZQHC0yDIzA==
 
 js-tokens@^10.0.0:
   version "10.0.0"
