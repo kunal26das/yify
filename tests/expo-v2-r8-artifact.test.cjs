@@ -177,10 +177,10 @@ function assertJniContract(classes) {
             encodeModule: '(Ljava/lang/String;)Ljava/lang/Object;',
             encodeModuleNames: '()I',
         }],
+        ['io/github/expo/modules/v2/SharedObject', {getAdditionalMemoryPressure: '()I'}],
         ['io/github/expo/modules/v2/async/AsyncContext', {
-            createPromise: '(J)Lio/github/expo/modules/v2/async/PromiseHandle;',
+            createPromises: '(JI)[Lio/github/expo/modules/v2/async/PromiseHandle;',
             invalidate: '()V',
-            drainInlineSettles: '()V',
             nativeResolveBuffered: '(JJI)V',
             nativeResolveNumber: '(JJD)V',
             nativeResolveBoolean: '(JJZ)V',
