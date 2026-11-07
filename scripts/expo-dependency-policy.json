@@ -16,6 +16,11 @@
       "expected": "~3.3.0",
       "reason": "Gesture Handler 3.4.0 advances the native gesture implementation while retaining the app's Pan, Pinch, Tap and composed gesture API. Expo 58.0.14 bundles 3.3.0; validate Android and iOS native builds plus watch-screen drag and screenshot-lightbox gestures in runtime 1.8.27."
     },
+    "react-native-worklets": {
+      "version": "0.13.1",
+      "expected": "0.13.0",
+      "reason": "Worklets 0.13.1 changes only its version string, Jest resolver and prebuilt OXC plugin binaries; its native sources and the Babel plugin used by the reviewed Babel 7 adapter are byte-identical to 0.13.0. Reanimated 4.7.1 accepts it. Runtime 1.8.31 rebuilds the native module so the JavaScript and native versions match."
+    },
     "react-native-web": {
       "version": "0.21.4",
       "expected": "^0.21.4",

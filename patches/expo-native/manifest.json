@@ -398,7 +398,7 @@
     },
     {
       "package": "react-native-worklets",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "file": "compatibility.json",
       "sha256": "8960063e2a1d4d09c4cf210d0416a1cb71e9d0b020db0923550963ae7eafc335",
       "upstream": [
@@ -407,7 +407,7 @@
     },
     {
       "package": "react-native-worklets",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "file": "android/src/main/java/com/swmansion/worklets/runloop/AnimationFrameQueue.kt",
       "sha256": "3a934db95beaa959074264e8b5b657e4a74f820ed5ba6e279e615cbe5febfa48"
     },
