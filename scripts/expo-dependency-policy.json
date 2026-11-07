@@ -2,9 +2,9 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.19",
-      "expected": "~58.0.19",
-      "reason": "Expo 58.0.19 coordinates reviewed modules core 58.0.26, JSI 58.0.19, CLI 58.1.15, Metro 58.0.17, Babel preset 58.0.20, assets 58.0.18 and filesystem 58.0.11. Runtime 1.8.30 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
+      "version": "58.0.22",
+      "expected": "~58.0.22",
+      "reason": "Expo 58.0.22 coordinates reviewed modules core 58.0.29, JSI 58.0.21, CLI 58.1.18, Metro config 58.0.20, Babel preset 58.0.23, assets 58.0.19 and filesystem 58.0.13 with React Native 0.88.1. Runtime 1.8.31 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
     },
     "@sentry/react-native": {
       "version": "8.32.0",
@@ -37,9 +37,9 @@
       "reason": "Reanimated 4.7.1 supports React Native 0.88 and Worklets 0.13 and adds native teardown and layout-animation crash fixes. Runtime 1.8.15 regenerates native projects, rebases the callback-cleanup patch and verifies the upstream native-state guard with lifecycle tests and Android/iOS builds."
     },
     "react-native": {
-      "version": "0.88.0",
-      "expected": "0.88.0",
-      "reason": "React Native 0.88.0 stable retains the reviewed rc.4 runtime and guarded choreographer/setup sources, with version metadata and AssetRegistry type updates. Pin its Metro config, JS polyfills and transitive packages together under runtime 1.8.24."
+      "version": "0.88.1",
+      "expected": "0.88.1",
+      "reason": "React Native 0.88.1 retains the three guarded choreographer and setup sources byte-for-byte. Pin its Metro config, JS polyfills and transitive packages together under runtime 1.8.31."
     },
     "react": {
       "version": "19.3.1",

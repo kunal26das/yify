@@ -298,8 +298,8 @@ test('Expo Core PCH consumers share the guarded owner and ccache ordering', asyn
   }
   const build = await reviewedSource('expo-modules-core', 'android/build.gradle');
   const plugin = await reviewedSource('expo-modules-core', 'expo-module-gradle-plugin/build.gradle.kts');
-  assert.match(build, /expoModulesV2Version = "0\.2\.5"/);
-  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.5/);
+  assert.match(build, /expoModulesV2Version = "0\.2\.7"/);
+  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.7/);
 });
 
 test('Expo iOS scene passes initial properties to React Native factory', async () => {
