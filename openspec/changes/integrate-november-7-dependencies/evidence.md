@@ -19,3 +19,7 @@ Of the guarded sources in upgraded packages, 16 changed and were compared with t
 ## #1058
 
 Proposal head `a80665738de0547c64371b3145f70e76b6be2495`. Sentry 8.33.0 uses Android 8.62.0, Cocoa 9.32.0, JavaScript 10.77.1 and CLI 3.8.2; the Android Gradle plugin stays at 6.24.0. Native screenshot masking now defaults on. Deferred hard-crash envelopes apply only to the `onerror` mechanism; the app's crash bridge reports `react_native.crash_bridge.global` with `onerror: false`, so fatal reporting is unchanged. The reviewed deviation moves to 8.33.0. Consent, privacy and crash-reporting tests pass.
+
+## #1055
+
+Proposal head `53486170e0e407c53d0daef6c6313e6f78aee6f3`. Worklets 0.13.1 changes only its version string, Jest resolver and prebuilt OXC plugin binaries. Its native sources, both guarded files and the Babel plugin used through the Babel 7 adapter are byte-identical to 0.13.0, so the adapter and guards change only their version. Expo 58.0.22 bundles 0.13.0 exactly, so the reviewed deviation records 0.13.1; Reanimated 4.7.1 accepts it. Tooling compatibility and worklet execution tests pass.
