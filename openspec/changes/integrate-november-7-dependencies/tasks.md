@@ -6,7 +6,7 @@
 - [ ] 1.2 #1068: Expo 58.0.22 / React Native 0.88.1 with rebased guards and resolutions; verify required CI and merge.
 - [ ] 1.3 #1058: Sentry 8.33.0 with its reviewed deviation; verify required CI and merge.
 - [ ] 1.4 #1055: Worklets 0.13.1 with its adapter and guards; verify required CI and merge.
-- [ ] 1.5 #1066: Babel 8.0.10 and ESLint 10.14.0 with the reviewed Babel deviation; verify required CI and merge.
+- [ ] 1.5 #1071, which supersedes #1066: Babel 8.1.0, ESLint 10.14.0 and expo-doctor 1.21.6 with the reviewed Babel deviation; verify required CI and merge.
 - [ ] 1.6 #1062, #1061 and #1069: refresh lockfiles on current main; verify required CI and merge.
 - [ ] 1.7 #1070: hold Firebase JavaScript 13.2.0 until RNFirebase depends on it.
 
