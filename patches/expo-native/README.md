@@ -1,6 +1,10 @@
 # Expo 58 native compatibility
 
-## Firebase27 candidate: runtime1.8.29/code111
+## Google Sign-In 17: runtime 1.8.31/code 113
+
+Google Sign-In 17.0.0 publishes the SwiftPM integration that the three retired 16.1.5 patches added: Apple SDK 10.1.0 metadata, `spm_dependency` in the RNGoogleSignin podspec, an adapter that depends on RNGoogleSignin instead of the SDK, and the iOS 15 SDK minimum. The app selects it with `iosDependencyManager: "spm"`. Upstream requires GoogleSignIn up to the next major version; the one-line `google-signin-spm-exact.patch` restores the exact 10.1.0 requirement the retired patch enforced, and the committed `Package.resolved` pins 10.1.0. Six new guards cover the wrapper manifest, adapter podspec, dependency selector, Swift package and the adapter's URL forwarding. `withGoogleSigninSpm` is retired: the static adapter no longer links the SDK, so also linking it into the application target would add a second copy. Android sources are unchanged. iOS compilation, Podfile.lock regeneration and launch must be verified on macOS before an iOS release.
+
+## Earlier Firebase27 candidate: runtime1.8.29/code111
 
 The current candidate preserves Expo58.0.16/RN0.88 with101 source/patch targets. Three deterministic Google Sign-In16.1.5 patches pin Apple SDK10.1.0, use React Native SwiftPM integration in both wrappers and declare the SDK minimum iOS15 (the app remains16.4). ExpoAdapter keeps its static framework contract for Expo Core; RNGoogleSignin stays dynamic. `withGoogleSigninSpm` links the same product in the app target and Frameworks phase, which a mixed-link fixture proved necessary for the static adapter. The AdMob wrapper alone uses Expo's static-linking override for its static UMP dependency.
 
