@@ -10,7 +10,7 @@ The dependency watch report checks each alias against its underlying npm package
 
 `scripts/apply-tooling-compatibility.mjs` handles two broad peer ranges that Yarn Classic otherwise resolves to incompatible root versions:
 
-- Worklets 0.13.0's Babel plugin imports the Babel 7 adapter at `@yify/tooling/babel`.
+- Worklets 0.13.1's Babel plugin imports the Babel 7 adapter at `@yify/tooling/babel`.
 - The isolated `ts-api-utils` 2.5.0 imports the TypeScript 6 adapter at `@yify/tooling/typescript`. Its root resolution is restricted to this tooling dependency tree.
 
 The patch manifest checks the package version, complete original and patched SHA-256 hashes, and replacement count. Every target is verified before any file is changed. Repeated installation is safe; an unreviewed package or source change fails installation and requires reviewing the adapter again. Remove each adapter and its patch when the consuming tool supports the new major directly.
