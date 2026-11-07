@@ -23,3 +23,7 @@ Proposal head `a80665738de0547c64371b3145f70e76b6be2495`. Sentry 8.33.0 uses And
 ## #1055
 
 Proposal head `53486170e0e407c53d0daef6c6313e6f78aee6f3`. Worklets 0.13.1 changes only its version string, Jest resolver and prebuilt OXC plugin binaries. Its native sources, both guarded files and the Babel plugin used through the Babel 7 adapter are byte-identical to 0.13.0, so the adapter and guards change only their version. Expo 58.0.22 bundles 0.13.0 exactly, so the reviewed deviation records 0.13.1; Reanimated 4.7.1 accepts it. Tooling compatibility and worklet execution tests pass.
+
+## #1071
+
+Dependabot closed #1066 after #1059 merged and opened proposal head `b02ab9ce6358a54973a0b89503277d48bda6a549` on main `13e51ab`: Babel core 8.1.0 replaces 8.0.10, ESLint 10.14.0 is unchanged and expo-doctor 1.21.6 joins the group. Babel core 8.1.0 adds the `generate` export and three opt-in assumptions (`noClassPrototypeAssign`, `noConstructorPrimitiveReturn`, `noUninitializedThis`); its remaining changes raise the Babel 8 parser, generator, helpers, traverse and types floors to 8.1.0, which the lockfile already resolves. Expo and Worklets keep the pinned Babel 7 adapter, and the reviewed Babel deviation moves to 8.1.0. expo-doctor 1.21.6 reports the same reviewed deviations. The lockfile is the proposal's deduplicated graph plus Worklets 0.13.1 from #1055. Local checks: installation guards (2 patches applied, 105 targets verified), exact pins, the reviewed Expo doctor, typecheck, 2,461 app tests with one skipped and 51 workspace tests.
