@@ -89,7 +89,7 @@ export function validateFirebaseCompatibility({policy, manifest, installed, appC
     if (Object.hasOwn(firebase, 'disableSPM') || Object.hasOwn(firebase.ios ?? {}, 'disableSPM')) {
         throw new Error('app.json Firebase app plugin: remove disableSPM entirely; Firebase 27 requires SPM.');
     }
-    plugin(plugins, './plugins/withGoogleSigninSpm');
+    equal(plugin(plugins, googleSignIn).iosDependencyManager, 'spm', `app.json ${googleSignIn} iosDependencyManager`);
     const build = plugin(plugins, 'expo-build-properties');
     equal(build.android?.kotlinVersion, policy.kotlin, 'app.json Android kotlinVersion');
     equal(build.android?.minSdkVersion, policy.androidMinSdk, 'app.json Android minSdkVersion');
