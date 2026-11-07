@@ -4,8 +4,8 @@
   "yarn": "1.22.22",
   "javaMajor": 17,
   "gradle": "9.4.1",
-  "expo": "58.0.19",
-  "reactNative": "0.88.0",
+  "expo": "58.0.22",
+  "reactNative": "0.88.1",
   "agp": "9.2.1",
   "compileSdk": 37,
   "sdkPlatform": "37.0",
@@ -41,8 +41,8 @@
     },
     {
       "module": "io.github.expo:expo-modules-v2-compiler-plugin",
-      "version": "0.2.5",
-      "sha256": "cfb3a5d5993e4bf8061f7f24aef4754d91350da3a38c7f4ab92019fa9c744227"
+      "version": "0.2.7",
+      "sha256": "20d6e9896a8f028436ae7a0badf89639960efd903ba2ebeea524e8e7e3a0ac37"
     }
   ]
 }

@@ -9,3 +9,9 @@ Google Sign-In 17.0.0 changes only iOS packaging: its JavaScript and Android sou
 Purchases 11.0.0 uses RevenueCat Android 11.0.0 with Play Billing Library 9.1.0. The app does not call the changed Amazon sync API, and the error-code enum is unchanged.
 
 Android prebuild changed only the version fields for 1.8.31/113. Local checks: installation guards (2 patches applied, 105 targets verified), tooling adapters, Firebase policy, exact pins, Production channel, typecheck, app and workspace tests, the reviewed Expo doctor and strict specs.
+
+## #1068
+
+Proposal head `d5f02eb48308456b36c6ef993648d627b1a7bcaa`. The proposal installs Expo 58.0.22 but leaves the guarded internal resolutions at their 58.0.19 levels. The resolutions now follow the lowest published versions that satisfy every installed dependent, computed to a fixed point: modules core 58.0.29, CLI 58.1.18, Metro config 58.0.20, dev launcher 58.0.18, dev menu 58.0.12, autolinking 58.0.16, asset 58.0.19, modules JSI 58.0.21, file system 58.0.13, config 58.0.10, config plugins 58.0.11, image utils 0.12.6, inline modules 0.2.8, local build cache 58.0.10, prebuild config 58.0.18, require utils 58.0.5, router server 58.0.20, Babel preset 58.0.23 and the React Native 0.88.1 internals.
+
+Of the guarded sources in upgraded packages, 16 changed and were compared with the previously installed bytes; the rest are byte-identical, and React Native's three guards and the Reanimated patch are unchanged. The Android compile-only pin moves to `io.github.expo:expo-modules-v2-compiler-plugin:0.2.7-2.4.20`, SHA-256 `20d6e9896a8f028436ae7a0badf89639960efd903ba2ebeea524e8e7e3a0ac37`, matching Maven Central's published SHA-1. The reviewed Expo and React Native deviations move to 58.0.22 and 0.88.1; eight Expo modules now carry newer-patch recommendations, which the doctor accepts. Android prebuild produced no further changes.
