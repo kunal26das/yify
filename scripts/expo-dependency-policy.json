@@ -7,9 +7,9 @@
       "reason": "Expo 58.0.22 coordinates reviewed modules core 58.0.29, JSI 58.0.21, CLI 58.1.18, Metro config 58.0.20, Babel preset 58.0.23, assets 58.0.19 and filesystem 58.0.13 with React Native 0.88.1. Runtime 1.8.31 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
     },
     "@sentry/react-native": {
-      "version": "8.32.0",
+      "version": "8.33.0",
       "expected": "~8.28.0",
-      "reason": "Sentry 8.32.0 advances Cocoa 9.31.0 and CLI 3.8.1 and introduces an opt-in UI profiling integration while retaining JavaScript SDK 10.76.2. Runtime 1.8.30 regenerates native projects while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
+      "reason": "Sentry 8.33.0 advances Android 8.62.0, Cocoa 9.32.0, JavaScript SDK 10.77.1 and CLI 3.8.2, keeps Android Gradle plugin 6.24.0, and defaults native screenshot masking on. Its deferred hard-crash envelopes apply only to the onerror mechanism, which the app's crash bridge disables. Runtime 1.8.31 regenerates native projects while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
     },
     "react-native-gesture-handler": {
       "version": "3.4.0",
