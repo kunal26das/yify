@@ -26,6 +26,8 @@ platform :ios, podfile_properties['ios.deploymentTarget'] || '16.4'
 
 prepare_react_native_project!
 
+$RNGoogleSigninDependencyManager = 'spm' # @react-native-google-signin/google-signin iosDependencyManager
+
 target 'Yify' do
   use_expo_modules!
 
