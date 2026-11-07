@@ -1,5 +1,9 @@
 # Expo 58 native compatibility
 
+## Expo 58.0.22: runtime 1.8.31/code 113
+
+Expo 58.0.22 with React Native 0.88.1 keeps all 105 source/patch targets. Sixteen guarded sources changed and were compared with the previously installed bytes: version declarations, Expo's bundled recommendations, the modules-v2 Gradle plugin 0.2.7, Core worklet prototypes for shared-object classes registered by modules, JSI release batching and unretained runtime access, LogBox dropping its Material Components dependency (the app theme is AppCompat; Router, Screens and UI still bring Material), the dev launcher releasing its previous network interceptor first, UI text-decoration modifiers, and background location moving foreground promotion into its service. The other upgraded guards are byte-identical; the three React Native guards and the Reanimated patch are unchanged.
+
 ## Google Sign-In 17: runtime 1.8.31/code 113
 
 Google Sign-In 17.0.0 publishes the SwiftPM integration that the three retired 16.1.5 patches added: Apple SDK 10.1.0 metadata, `spm_dependency` in the RNGoogleSignin podspec, an adapter that depends on RNGoogleSignin instead of the SDK, and the iOS 15 SDK minimum. The app selects it with `iosDependencyManager: "spm"`. Upstream requires GoogleSignIn up to the next major version; the one-line `google-signin-spm-exact.patch` restores the exact 10.1.0 requirement the retired patch enforced, and the committed `Package.resolved` pins 10.1.0. Six new guards cover the wrapper manifest, adapter podspec, dependency selector, Swift package and the adapter's URL forwarding. `withGoogleSigninSpm` is retired: the static adapter no longer links the SDK, so also linking it into the application target would add a second copy. Android sources are unchanged. iOS compilation, Podfile.lock regeneration and launch must be verified on macOS before an iOS release.
