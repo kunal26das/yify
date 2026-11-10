@@ -2633,27 +2633,22 @@
     invariant "^2.2.4"
     nullthrows "^1.1.1"
 
-"@revenuecat/purchases-js-hybrid-mappings@20.1.0":
-  version "20.1.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-20.1.0.tgz#3cc32c4e6435d4c9fed61979e936042c073eb090"
-  integrity sha512-z64fWoOBqbriflG/tycifXdFZJ6kyW6gQvbburRmobj5W4U8+/8B030wZMluD00MGhifW7Y044o8QFTEMzGl5A==
+"@revenuecat/purchases-js-hybrid-mappings@20.4.0":
+  version "20.4.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js-hybrid-mappings/-/purchases-js-hybrid-mappings-20.4.0.tgz#f4e67e04720ac635107590b4395fb38e63efb9ef"
+  integrity sha512-v6Mju04vi0gvN3BduM2ZxRL+rZmt8+0phWaLcuKjMytaUy7BCYO9CiP+Dp3oSLS8YgcZ3Cd7eXNXhO03FFEUAQ==
   dependencies:
-    "@revenuecat/purchases-js" "1.73.1"
-
-"@revenuecat/purchases-js@1.73.1":
-  version "1.73.1"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.73.1.tgz#220873943086ad905040c0bbdf77730572543b03"
-  integrity sha512-TAwDzTqFfNCcIkbWOpxfYhvrUbnyW1XhgO78pp78InRRovBdMiXRgyrDT0ELYyCKjPZxtiSjzmHshIXIJ/H0dQ==
+    "@revenuecat/purchases-js" "1.73.2"
 
 "@revenuecat/purchases-js@1.73.2":
   version "1.73.2"
   resolved "https://registry.yarnpkg.com/@revenuecat/purchases-js/-/purchases-js-1.73.2.tgz#3911916bc6f95ffce1c97fac305c9e7bef40b199"
   integrity sha512-766pf5jK5hvtnF9S/OR5jOi7Bw6sspkNlo9qOGpLGi95NoqTDSa/ba8BbXhL5y09Pu0TDddE98Nx3mMoK++6Og==
 
-"@revenuecat/purchases-typescript-internal@20.1.0":
-  version "20.1.0"
-  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-20.1.0.tgz#65d57848c294afc1a499236ac605a7ad69442d32"
-  integrity sha512-4SnBSFsivBXcy9l4FFcMS/lYPLaMZXR6X4aO44zVshzjay36aKb93qfJgSMYcsnmca9mm6NmSfL6N65nqqvuqw==
+"@revenuecat/purchases-typescript-internal@20.4.0":
+  version "20.4.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-20.4.0.tgz#e4111e195493f2aa3ca3e28ef529b66309dec998"
+  integrity sha512-0yE9fdt7uW+Mr1SBuWONTZ2hFFKki7sltftJtApqomBL4BOa21hDRacqbzQTkP9BktueeZRCWpQ1elrGWotX3w==
 
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
@@ -7918,10 +7913,10 @@ react-native-fetch-api@^3.0.0:
   dependencies:
     p-defer "^3.0.0"
 
-react-native-gesture-handler@3.4.0:
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-3.4.0.tgz#aecac40bb2e468a14dad8cb58917cb6357cc66b6"
-  integrity sha512-jBg4ZWDvegeaZ4OHq9oxVOS/Qa6pV+LhtsUExothyhWxqzG0Lkg7kl2ztemPj/pnJxkq9j/+6wAw3jZGwdssww==
+react-native-gesture-handler@3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-3.5.0.tgz#beb7751c94bac424c45f444b009e1034b16e987d"
+  integrity sha512-bm8yepwMBUhEOSeU7WQbNNrstD0Hbv6i+XsApARBJSlb+WlRvyaQsobi+tZ5Uyr5kDVgXzg6kPb+CWY9zvyfEw==
   dependencies:
     "@types/react-test-renderer" "^19.1.0"
     invariant "^2.2.4"
@@ -7939,13 +7934,13 @@ react-native-is-edge-to-edge@^1.3.1:
   resolved "https://registry.yarnpkg.com/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.3.1.tgz#feb9a6a8faf0874298947edd556e5af22044e139"
   integrity sha512-NIXU/iT5+ORyCc7p0z2nnlkouYKX425vuU1OEm6bMMtWWR9yvb+Xg5AZmImTKoF9abxCPqrKC3rOZsKzUYgYZA==
 
-react-native-purchases@11.0.0:
-  version "11.0.0"
-  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-11.0.0.tgz#c96e296a4bf2b53fbc765954c5d945a941d02ca0"
-  integrity sha512-V4okgrP5F443mEkzhBrIHTvJoKJIdL2MI19QKvCUqndbB6HRtSL4laF8C06mDQN9utoSYt1UZCWqh5QJQwTBzQ==
+react-native-purchases@11.0.1:
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-purchases/-/react-native-purchases-11.0.1.tgz#11a476101c11c402e05dfbb645283195cf1f1b57"
+  integrity sha512-j3bzkFrS0nwGNCfOCEKqfnOuGJipc12y9z7bYW7Tqcho02N6IMphDxqbM/PUsoaXeXnU6VbjzbXEw7V22FpJIA==
   dependencies:
-    "@revenuecat/purchases-js-hybrid-mappings" "20.1.0"
-    "@revenuecat/purchases-typescript-internal" "20.1.0"
+    "@revenuecat/purchases-js-hybrid-mappings" "20.4.0"
+    "@revenuecat/purchases-typescript-internal" "20.4.0"
 
 react-native-reanimated@4.7.1:
   version "4.7.1"
