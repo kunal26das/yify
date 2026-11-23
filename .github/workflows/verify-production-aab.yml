@@ -13,7 +13,7 @@ concurrency:
 jobs:
   verify:
     if: github.repository == 'kunal26das/yify' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - name: Checkout trusted verifier and original source commit
@@ -93,10 +93,9 @@ jobs:
 
       - name: Allow the runner user to use KVM for the emulator
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-          test -r /dev/kvm -a -w /dev/kvm
+          test -c /dev/kvm
+          sudo chown "$(id -u)" /dev/kvm
+          test -r /dev/kvm && test -w /dev/kvm
 
       - name: Install and launch actual bundletool-derived device APKs with traffic blocked
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
