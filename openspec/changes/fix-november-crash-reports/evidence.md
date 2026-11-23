@@ -43,3 +43,7 @@ The same APK on a dedicated API 37 (Android 17) Google Play arm64 AVD with 16 KB
 ## SoLoader fingerprint
 
 Crashlytics events in 89 days: `cd6b3acd…` 57 events on "vivo S1" and "Motorola One Vision", and `6594f4da…` 14 events on "Huawei Enjoy 9s", all reporting byte-identical totals of 33,029,513,216 B memory and 53,665,050,624 B storage on Android 11; `4e6ae7e5…` 20 events on "Pixel 8 Pro" Android 14 reporting 2,061,844,480 B memory and 6,228,115,456 B storage, the template already recorded for this crash family. Identical totals across incompatible models identify emulated sandboxes, consistent with the absence of any SoLoader report in Play vitals.
+
+## Production candidate
+
+EAS build `da81d5e6-75e7-4650-a967-b33584343cb7` (1.8.32/code 114, runtime 1.8.32, Production, source `e9c8d18db91e9e9ce45c9def12dd3e05a9980672`) contains this change. Its 101,127,655-byte AAB (SHA-256 `204ce3aa7de375f3a0e52ff59df226b948c579623d125b3d41edeb8c24d14476`) carries `j$/nio/file` classes in its DEX and passes the Expo modules v2 JNI contract test. Bundletool split sets (base, arm64-v8a, en, xxhdpi) signed with an ephemeral test key were installed on the same isolated API 25 and API 37 emulators: both logged `✅ Expo Modules v2 installed 3 module(s)` and displayed MainActivity (627 ms and 376 ms), passed the adult gate with analytics off, navigated with the top bar, survived a font-scale activity recreation and navigated again in the original process, with no fatal, router, native-module or JavaScript error logged.
