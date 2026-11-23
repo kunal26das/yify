@@ -243,6 +243,16 @@ export function sanitizeMetric(metric: Metric): Metric | null {
     return {...metric, unit: metric.unit === 'millisecond' ? metric.unit : undefined, attributes: sanitizeAttributes(metric.attributes)};
 }
 
+const extensionUrl = /^(?:chrome|moz|safari|safari-web|ms-browser)-extension:\/\//;
+
+export function isBrowserExtensionError(error: unknown): boolean {
+    let stack: unknown;
+    try { stack = error != null && typeof error === 'object' ? (error as {stack?: unknown}).stack : undefined; } catch { return false; }
+    if (typeof stack !== 'string') return false;
+    const sources = [...stack.matchAll(/\b[a-z][a-z0-9+.-]*:\/\/[^\s)]+/gi)].map(match => match[0]);
+    return sources.length > 0 && sources.every(source => extensionUrl.test(source));
+}
+
 export function shouldCaptureErrorReplay(event: Event): boolean {
     return event.exception?.values?.some(exception => exception.mechanism?.handled === false) === true;
 }
