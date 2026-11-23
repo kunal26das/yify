@@ -10,11 +10,12 @@ async function fixture(t, {focused = true, strict = false} = {}) {
     let focus = focused;
     const listeners = new Set();
     const navigation = [];
+    const router = {push: path => navigation.push(path)};
     const {UpgradeScreen} = loadTypeScript('presentation/purchases/UpgradeScreen.tsx', {
         'react-native': {ScrollView: 'ScrollView', StyleSheet: {create: value => value}},
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({bottom: 12})},
         'expo-router': {
-            router: {push: path => navigation.push(path)},
+            useRouter: () => router,
             useIsFocused: () => React.useSyncExternalStore(listener => {
                 listeners.add(listener);
                 return () => listeners.delete(listener);

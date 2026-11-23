@@ -1,6 +1,6 @@
 import {useEffect, useRef} from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, router, Stack, ThemeProvider, useGlobalSearchParams, usePathname} from 'expo-router';
+import {DarkTheme, DefaultTheme, ErrorBoundary as ExpoErrorBoundary, Stack, ThemeProvider, useGlobalSearchParams, usePathname, useRouter, type ImperativeRouter} from 'expo-router';
 import * as Sentry from '@sentry/react-native';
 import * as Notifications from 'expo-notifications';
 import {StatusBar} from 'expo-status-bar';
@@ -43,7 +43,7 @@ import {availabilityNotificationOpen} from '@/domain/policies/availabilityNotifi
 const dependencies = createDependencies();
 installAnalyticsSink(dependencies.analytics);
 
-function handleNotificationData(data: unknown) {
+function handleNotificationData(data: unknown, router: ImperativeRouter) {
     const target = movieNotificationTarget(data);
     if (!target) return;
     Analytics.notificationOpen(target.movieId, target.kind);
@@ -79,6 +79,7 @@ function RootLayout() {
 
 function AppShell() {
     useEffect(() => bootstrap(dependencies), []);
+    const router = useRouter();
     const lastResponse =
         Platform.OS === 'web' ? null : Notifications.useLastNotificationResponse();
     const navReady = true;
@@ -88,9 +89,9 @@ function AppShell() {
         const identifier = lastResponse.notification.request.identifier;
         if (handledNotification.current === identifier) return;
         handledNotification.current = identifier;
-        handleNotificationData(lastResponse.notification.request.content.data);
+        handleNotificationData(lastResponse.notification.request.content.data, router);
         void Notifications.clearLastNotificationResponseAsync().catch(() => {});
-    }, [lastResponse, navReady]);
+    }, [lastResponse, navReady, router]);
 
     const pathname = usePathname();
     const {notification_kind: notificationKind, notification_event: notificationEvent} = useGlobalSearchParams();
