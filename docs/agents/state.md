@@ -1,6 +1,14 @@
 # Delivery handoff
 
-Updated 2026-10-28. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-11-23. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+
+## November 23 crash fixes, dependencies and Android 1.8.32
+
+GitHub moved `ubuntu-latest` to Ubuntu 26.04, which broke the animation lifecycle guard's sanitizer-runtime lookup on every branch; [PR #1089](https://github.com/kunal26das/yify/pull/1089) fixed it and recorded Expo's moved Web Browser recommendation. A review of Sentry, Crashlytics and Play vitals for 1.8.29/code 111 found two fatal defects, fixed in [PR #1091](https://github.com/kunal26das/yify/pull/1091): YIFY-2R, an Expo Router global-router race on Android 17 now avoided with tree-scoped `useRouter()`, and YIFY-2Z, every Android 7.x launch failing because Expo Modules v2 references `java.nio.file.Path`, fixed with NIO core library desugaring. Web reports from browser extensions are dropped. Upstream catalog/TMDB, AdMob, update-check, Remote Config and store failures keep their capture policy; the SoLoader issues are the documented sandbox templates and were closed in Crashlytics with notes. See the [crash change](../../openspec/changes/fix-november-crash-reports/evidence.md).
+
+[PR #1090](https://github.com/kunal26das/yify/pull/1090) integrated the eleven Dependabot proposals (#1085 landed directly) as runtime **1.8.32**, code **114**, merged as `e9c8d18db91e9e9ce45c9def12dd3e05a9980672`: Expo 58.0.26, Reanimated 4.8.0 with the rebased lifecycle patch, Worklets 0.14.0, RNFirebase 27.1.1 with Firebase JS held at 13.1.0, Sentry 8.34.0 and the tooling, desktop and release-console updates. Main CI and both web deployments passed and rendered. See the [integration change](../../openspec/changes/integrate-november-23-dependencies/evidence.md).
+
+[EAS build da81d5e6-75e7-4650-a967-b33584343cb7](https://expo.dev/accounts/kunal26das/projects/yify/builds/da81d5e6-75e7-4650-a967-b33584343cb7) is the production candidate: AAB SHA-256 `204ce3aa7de375f3a0e52ff59df226b948c579623d125b3d41edeb8c24d14476`, verified for metadata, signatures, upload certificate, JNI contract, four-ABI packaging, and isolated API 25/API 37 launch, consent and navigation. **Code 114 has not been submitted;** Play production remains 1.8.29/code 111, and 1.8.31/code 113 must never be submitted. iOS remains unpublished with its Podfile and simulator gate open. Live providers, purchases, ads, Play-installed signing, physical devices and production crash recovery remain unverified.
 
 ## October 27 dependency maintenance
 
