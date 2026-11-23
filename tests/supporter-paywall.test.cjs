@@ -57,6 +57,7 @@ async function fixture(t, options = {}) {
         async signIn() { calls.signIn++; return options.signIn ? options.signIn(session) : false; },
     };
     const colors = new Proxy({}, {get: () => '#123456'});
+    const router = {push: path => calls.navigation.push(path)};
     const {SupporterProvider, SupporterMembership, useSupporterPaywall, useSupporterPaywallVisible} = loadTypeScript('presentation/purchases/supporter-paywall.tsx', {
         'react-native': {
             ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Pressable: 'Pressable',
@@ -66,7 +67,7 @@ async function fixture(t, options = {}) {
             Linking: {async openURL(url) { calls.links.push(url); if (options.openURL) await options.openURL(url); }},
         },
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 20, bottom: 10, left: 0, right: 0})},
-        'expo-router': {router: {push: path => calls.navigation.push(path)}},
+        'expo-router': {useRouter: () => router},
         'expo-web-browser': {async openBrowserAsync(url, options) { calls.browsers.push({url, options}); return {type: 'opened'}; }},
         '../di/DependenciesContext': {
             usePurchaseRepository: () => purchases, useAuthRepository: () => auth,

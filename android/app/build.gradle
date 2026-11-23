@@ -92,6 +92,10 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 apply from: new File(["node", "--print", "require('path').dirname(require.resolve('@sentry/react-native/package.json'))"].execute(null, rootDir).text.trim(), "sentry.gradle.kts")
 
 android {
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+    }
+
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -174,6 +178,8 @@ dependencies {
             version { strictly '2.2.0' }
         }
     }
+
+    coreLibraryDesugaring('com.android.tools:desugar_jdk_libs_nio:2.1.5')
 
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")

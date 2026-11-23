@@ -129,12 +129,13 @@ async function mountHero(t, {visible = true, focused = true, foreground = 'activ
     const video = {mounts: 0, unmounts: 0};
     const palette = {colors: {}, gradients: {accent: ['red', 'orange']}};
     const preferences = {playback: {autoplayTrailers, trailerCaptions: false}};
+    const router = {push: () => assert.fail('test must not navigate')};
     const {HeroBillboard} = loadTypeScript('presentation/movies/components/HeroBillboard.tsx', {
         '@expo/vector-icons/Ionicons': 'Icon',
         'expo-image': {Image: 'Image'},
         'expo-router': {
             useIsFocused: () => React.useContext(Focus),
-            router: {push: () => assert.fail('test must not navigate')},
+            useRouter: () => router,
         },
         'react-native': {
             View: 'View', Pressable: 'Pressable', ScrollView: 'ScrollView', AppState: appState,

@@ -37,6 +37,26 @@ test('native errors are sanitized before mirroring and mirror failures cannot st
     assert.equal(raw.exception.values[0].value, 'user private@example.com failed');
 });
 
+test('web drops errors raised entirely inside browser extensions but keeps app, mixed and native stacks', async () => {
+    const web = createSentryOptions({native: false, environment: 'production'});
+    const event = {event_id: 'b'.repeat(32), exception: {values: [{type: 'Error', value: 'Window message "chrome: call method" timed out.'}]}};
+    const extension = Object.assign(new Error('Window message "chrome: call method" timed out.'), {
+        stack: 'Error: Window message "chrome: call method" timed out.\n    at chrome-extension://abcdefghijklmnop/content.js:13:102787'});
+    assert.equal(await web.beforeSend(event, {originalException: extension}), null);
+    for (const stack of ['@moz-extension://0c3f1a2b/content.js:1:2', 'step@safari-web-extension://A1B2C3/content.js:3:4']) {
+        assert.equal(await web.beforeSend(event, {originalException: Object.assign(new Error('extension'), {stack})}), null);
+    }
+    const app = Object.assign(new Error('app'), {stack: 'Error: app\n    at render (https://yify.expo.app/_expo/static/js/web/entry.js:1:2)'});
+    assert.notEqual(await web.beforeSend(event, {originalException: app}), null);
+    const mixed = Object.assign(new Error('mixed'), {stack: `${extension.stack}\n    at https://yify.expo.app/_expo/static/js/web/entry.js:1:2`});
+    assert.notEqual(await web.beforeSend(event, {originalException: mixed}), null);
+    assert.notEqual(await web.beforeSend(event, {originalException: 'chrome-extension://abc/content.js'}), null);
+    assert.notEqual(await web.beforeSend(event, {originalException: new Error('no stack frames')}), null);
+    assert.notEqual(await web.beforeSend(event, {}), null);
+    const native = createSentryOptions({native: true, environment: 'production'});
+    assert.notEqual(await native.beforeSend(event, {originalException: extension}), null);
+});
+
 test('error request keeps the service origin and method without account paths or credentials', () => {
     const event = {
         event_id: 'event-id',

@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type ReactElement} from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {router, usePathname} from 'expo-router';
+import {usePathname, useRouter} from 'expo-router';
 import {Platform, Pressable, StyleSheet, View, type ViewStyle} from 'react-native';
 import Animated, {Easing, useAnimatedStyle, useSharedValue, withTiming} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ function heightFor(width: number): number {
 }
 
 export function PlayerHost(): ReactElement | null {
+    const router = useRouter();
     const {video, mode, playing, muted, maximize, minimize} = usePlayer();
     const {playback} = usePreferences();
     const {youtube} = usePrivacyChoices();
@@ -94,7 +95,7 @@ export function PlayerHost(): ReactElement | null {
         const routeId = Number(pathname.slice('/movie/'.length));
         if (!Number.isFinite(routeId) || routeId === video.movieId) return;
         router.replace(`/movie/${video.movieId}`);
-    }, [inlineRect, minimize, mode, pathname, video]);
+    }, [inlineRect, minimize, mode, pathname, video, router]);
 
     const shift = useCallback(
         (rect: PlayerRect): PlayerRect => ({...rect, y: rect.y - topBarHeight}),

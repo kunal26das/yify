@@ -1,6 +1,6 @@
 import {useCallback} from 'react';
 import {Platform} from 'react-native';
-import {router, useNavigation, usePathname} from 'expo-router';
+import {useNavigation, usePathname, useRouter, type ImperativeRouter} from 'expo-router';
 
 export type DestinationKey = 'home' | 'movies' | 'shows' | 'anime' | 'watchlist' | 'history';
 
@@ -47,7 +47,7 @@ function routeNameForPath(path: string): string {
     return path === '/' ? 'index' : path.replace(/^\/+/, '');
 }
 
-function applyParams(query: string): void {
+function applyParams(router: ImperativeRouter, query: string): void {
     const incoming = new URLSearchParams(query);
     const next: Record<string, string | undefined> = {};
     for (const key of BROWSE_PARAM_KEYS) {
@@ -59,6 +59,7 @@ function applyParams(query: string): void {
 export function useGoTo(): (href: string) => void {
     const pathname = usePathname();
     const navigation = useNavigation();
+    const router = useRouter();
 
     return useCallback(
         (href: string) => {
@@ -66,7 +67,7 @@ export function useGoTo(): (href: string) => void {
             const target = path || '/';
 
             if (target === pathname) {
-                applyParams(query);
+                applyParams(router, query);
                 return;
             }
 
@@ -79,6 +80,6 @@ export function useGoTo(): (href: string) => void {
 
             router.push(href as never);
         },
-        [pathname, navigation]
+        [pathname, navigation, router]
     );
 }

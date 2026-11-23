@@ -35,6 +35,11 @@ function fixture({platform = 'web', defaults = DEFAULT_BROWSE_DEFAULTS, params =
             React.createElement('output', null, JSON.stringify(viewModel.appliedFilters)),
             autoFocus ? React.createElement('dialog', {open: true}, 'Search') : null);
     }
+    const router = {setParams: value => {
+        writtenParams.push(value);
+        routeParams = {...routeParams, ...value};
+        for (const listener of paramListeners) listener();
+    }};
     const {default: BrowseRoute} = loadTypeScript('app/movies.tsx', {
         react: {...React, useSyncExternalStore: (subscribe, getSnapshot, getServerSnapshot) => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);},
@@ -42,11 +47,7 @@ function fixture({platform = 'web', defaults = DEFAULT_BROWSE_DEFAULTS, params =
         'react-native': {Platform: {OS: platform}},
         'expo-router': {useLocalSearchParams: () => React.useSyncExternalStore(
             listener => {paramListeners.add(listener); return () => paramListeners.delete(listener);},
-            () => routeParams, () => routeParams), router: {setParams: value => {
-            writtenParams.push(value);
-            routeParams = {...routeParams, ...value};
-            for (const listener of paramListeners) listener();
-        }}},
+            () => routeParams, () => routeParams), useRouter: () => router},
         'expo-router/head': () => null,
         '@/instrumentation/ScreenDisplay': {ScreenDisplay: () => null},
         '@/presentation': {

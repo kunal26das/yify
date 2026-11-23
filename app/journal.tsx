@@ -1,8 +1,9 @@
 import Head from 'expo-router/head';
-import {router, useLocalSearchParams} from 'expo-router';
+import {useLocalSearchParams, useRouter} from 'expo-router';
 import {canonicalUrl, JournalScreen, usePageMeta} from '@/presentation';
 
 export default function JournalRoute() {
+    const router = useRouter();
     const {tab} = useLocalSearchParams<{tab?: string | string[]}>();
     usePageMeta({title: 'Journal — Yify', description: 'Your private movie journal and viewing insights.',
         canonical: canonicalUrl('journal'), robots: 'noindex,follow'});

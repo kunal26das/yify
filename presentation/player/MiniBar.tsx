@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {router} from 'expo-router';
+import {useRouter} from 'expo-router';
 import {StyleSheet, View} from 'react-native';
 
 import {PressableScale} from '../components/motion';
@@ -41,6 +41,7 @@ function IconButton({
 }
 
 export function MiniBar({video, rect, wide}: {video: PlayerVideo; rect: PlayerRect; wide: boolean}) {
+    const router = useRouter();
     const {colors} = usePalette();
     const {playing, togglePlay, close, maximize} = usePlayer();
 
