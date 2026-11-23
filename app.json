@@ -93,6 +93,7 @@
       "@react-native-firebase/app",
       "./plugins/withGoogleServicesVersion",
       "./plugins/withHsdpVersion",
+      "./plugins/withCoreLibraryDesugaring",
       "./plugins/withFirebaseSceneStartup",
       "@react-native-firebase/crashlytics",
       "./plugins/withCrashlyticsNdk",
