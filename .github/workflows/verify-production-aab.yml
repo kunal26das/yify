@@ -91,6 +91,13 @@ jobs:
           node scripts/verify-production-aab.mjs apks scripts/android-qa/production-aab-candidate.json "$RUNNER_TEMP/production.aab" "$RUNNER_TEMP/universal-native-check.json"
           echo 'Verified compressed native libraries and ELF identity for all four ABIs'
 
+      - name: Allow the runner user to use KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          test -r /dev/kvm -a -w /dev/kvm
+
       - name: Install and launch actual bundletool-derived device APKs with traffic blocked
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
