@@ -34,6 +34,8 @@ I AndroidRuntime: VM exiting with result code 0, cleanup skipped.
 
 A local arm64 release APK built from the fix with `scripts/android-qa/compile-only.gradle` and `SENTRY_DISABLE_AUTO_UPLOAD=true` finished in 10m 3s; Crashlytics symbol/mapping and Sentry mapping upload tasks were skipped. It is debug-signed and for local verification only (SHA-256 `dcc700a72c7ff29a5cfa3206aab838920acc5ddb145a578b188d82cbdf052303`). On the same isolated API 25 emulator it logged `✅ Expo Modules v2 installed 3 module(s) on globalThis.expo.modules`, `Running "main"` and `Displayed io.github.kunal26das.yify/.MainActivity: +1s171ms`. The adult gate rendered; after confirming with analytics off, home showed the expected offline state, the top-bar Watchlist link navigated, a font-scale change recreated the activity (old surface stopped, new surface started) and the Movies and Shows links still navigated. No fatal exception or router error was logged; the process stayed alive throughout. RevenueCat logged the expected billing-unavailable errors for an emulator without Play Store.
 
+The same APK on a dedicated API 37 (Android 17) Google Play arm64 AVD with 16 KB pages, airplane mode on and DNS pointed at an unused resolver, logged `✅ Expo Modules v2 installed 3 module(s)` and `Displayed … +1s777ms`. After the adult gate with analytics off, the Watchlist link navigated; two font-scale changes each stopped the old React surface and started a new one, and the Movies and Shows links navigated afterwards. No fatal exception or router error was logged and the process stayed alive.
+
 ## Web monitoring
 
 `tests/sentry-privacy.test.cjs` passes 24 tests, including extension-only Chrome, Firefox and Safari stacks dropped and application, mixed, frameless and native events kept.
