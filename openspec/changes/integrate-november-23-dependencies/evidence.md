@@ -13,7 +13,7 @@ All eleven proposals were based on main `f2b91eb`. #1088 and #1085 touch only wo
 | #1081 | node-forge 1.4.3 | 1.4.3 |
 | #1083 | RNFirebase 27.1.1, Firebase JS 13.3.0 | 27.1.1; Firebase JS stays 13.1.0 |
 | #1084 | Expo 58.0.25 set (24 packages) | Expo 58.0.26 set |
-| #1085 | EAS CLI 27.9.0, release Electron 45.3.1 | both |
+| #1085 | EAS CLI 27.9.0, release Electron 45.3.1 | landed directly on main as `bff879a` after Dependabot rebased it to EAS CLI 27.11.0 and Electron 45.4.1; the branch takes main's console manifest and lockfile |
 | #1086 | Babel 8.1.2, ESLint 10.15.0, expo-doctor 1.21.8, modules-commonjs 8.1.2 | all |
 | #1087 | Reanimated 4.8.0, Worklets 0.14.0 | both |
 | #1088 | setup-java `d1374f8`, create-github-app-token 3.4.0 | both |
@@ -44,4 +44,8 @@ Android prebuild changed the version fields for 1.8.32/114 and the Sentry Gradle
 
 ## Local checks
 
-On the merged head: frozen installation (105 targets verified, 2 patches applied, tooling adapters and Firebase policy), exact pins, typecheck, 2,460 app tests with one artifact-dependent skip and 51 workspace tests, Production update channel, the reviewed Expo doctor, both web exports with their checks, the release console's typecheck, 151 tests and build, the lifecycle fixture and strict specs.
+On the merged head: frozen installation (105 targets verified, 2 patches applied, tooling adapters and Firebase policy), exact pins, typecheck, 2,460 app tests with one artifact-dependent skip and 51 workspace tests, Production update channel, the reviewed Expo doctor, both web exports with their checks, the release console's typecheck, 151 tests and build, the lifecycle fixture and strict specs. After main gained #1085, the console's frozen installation from main's lockfile, typecheck and 151 tests pass again.
+
+## CI
+
+On head `7098013`, CI run 45207018348 passed the three required checks on the Ubuntu 26.04 image, including the lifecycle fixture with all 33 cases, 2,460 app tests with one skip and 51 workspace tests; compile-only Android QA 45207018301 built the release graph in 35 minutes and passed, and HSDP verification 45207018763 passed. After merging #1091, head `04a446d` regenerated an identical Android project with its desugaring settings and the 1.8.32/114 fields, passed CI run 45211030533, compile-only Android QA 45211030504 and HSDP verification 45211030726. #1085 then landed on main, so the final head takes its release-console files; the required checks and compile-only QA must pass again on that head.
