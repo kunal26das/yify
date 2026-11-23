@@ -1,4 +1,5 @@
 import com.swmansion.reanimated.*
+import com.swmansion.reanimated.nativeProxy.EventHandler
 import com.swmansion.worklets.runloop.*
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.ReactChoreographer
@@ -11,9 +12,9 @@ fun main(args:Array<String>) {
  Thread.setDefaultUncaughtExceptionHandler { _, error -> error.printStackTrace(); kotlin.system.exitProcess(1) }
  val mode=args.single(); val frames=PlatformFrames(); ReactChoreographer.initialize(frames)
  val context=ReactApplicationContext(); val nodes=NodesManager(context); val native=nodes.getNativeProxy()!!
- val queue=AnimationFrameQueue(context); val choreographer=ReactChoreographer.getInstance()
+ val queue=AnimationFrameQueue(context); queue.resume(); frames.tick(); check(frames.pending()==0); val choreographer=ReactChoreographer.getInstance()
  val callbacks=AtomicInteger(); val events=AtomicInteger()
- nodes.registerEventHandler(object:RCTModernEventEmitter { override fun receiveEvent(a:Int,b:Int,c:String,d:Boolean,e:Int,f:WritableMap?,g:Int) { events.incrementAndGet() } })
+ nodes.registerEventHandler(object:EventHandler() { override fun receiveEvent(a:Int,b:Int,c:String,d:Boolean,e:Int,f:WritableMap?,g:Int) { events.incrementAndGet() }; override fun handle(eventName:String,targetTag:Int,params:WritableMap?) { events.incrementAndGet() } })
  fun post() { nodes.postOnAnimation(object:NodesManager.OnAnimationFrame { override fun onAnimationFrame(t:Double) { callbacks.incrementAndGet() } }) }
  if(mode=="upstream-disposed") {
   native.requestRender(AnimationFrameCallback { callbacks.incrementAndGet() }); native.invalidate()

@@ -198,7 +198,10 @@ test('installed native SDK does not select replay or profiling for the app feedb
         name === 'createNativeFramesIntegrations' && !args[0] ? undefined : {name}});
     const profiling = loadTypeScript(
         require.resolve('@sentry/react-native/dist/js/profiling/uiProfilingIntegration.js'), {
+            'react-native': {Platform: {OS: 'android', Version: 36}},
+            '../utils/environment': {isHermesEnabled: () => true},
             '../wrapper': {NATIVE: new Proxy({}, {get: (_, name) => () => assert.fail(`Unexpected native profiling: ${name}`)})},
+            './hermesProfileChunk': {HERMES_CHUNK_THREAD_ID: '0', createHermesProfileChunk: () => assert.fail('Unexpected Hermes profile chunk')},
         });
     const {getDefaultIntegrations} = loadTypeScript(
         require.resolve('@sentry/react-native/dist/js/integrations/default.js'), {
@@ -206,10 +209,11 @@ test('installed native SDK does not select replay or profiling for the app feedb
             '../tracing': factories,
             '../utils/environment': {notWeb: () => true},
             './exports': factories,
+            './jsHangTracking': {jsHangTrackingIntegration: () => ({name: 'JsHangTracking'})},
         });
     const options = {...createSentryOptions({native: true, environment: 'production'}), enableNative: true};
     const names = getDefaultIntegrations(options).map(integration => integration.name);
-    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'ProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
+    for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'ProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration', 'JsHangTracking']) {
         assert.equal(names.includes(name), false, name);
     }
     const enabled = getDefaultIntegrations({...options, replaysOnErrorSampleRate: 1, profilesSampleRate: 1,
@@ -217,6 +221,7 @@ test('installed native SDK does not select replay or profiling for the app feedb
     for (const name of ['mobileReplayIntegration', 'hermesProfilingIntegration', 'screenshotIntegration', 'viewHierarchyIntegration']) {
         assert.equal(enabled.includes(name), true, name);
     }
+    assert.equal(getDefaultIntegrations({...options, enableJsHangTracking: true}).some(integration => integration.name === 'JsHangTracking'), true);
     for (const key of ['profilingOptions', 'androidProfilingOptions']) {
         const configured = {...options, _experiments: {[key]: {lifecycle: 'trace', startOnAppStart: true}}};
         assert.equal(getDefaultIntegrations(configured).some(integration => integration.name === 'ProfilingIntegration'), true, key);

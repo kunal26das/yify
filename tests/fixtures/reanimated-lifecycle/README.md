@@ -1,6 +1,9 @@
-The fixture compiles the installed NodesManager, Worklets AnimationFrameQueue,
-ReactChoreographer, and ChoreographerProvider unchanged. In particular, real
-ReactChoreographer owns its callbackQueues monitor while invoking frame callbacks.
+The fixture compiles the installed NodesManager, Reanimated event-name resolver,
+Worklets AnimationFrameQueue, ReactChoreographer, and ChoreographerProvider
+unchanged. In particular, real ReactChoreographer owns its callbackQueues monitor
+while invoking frame callbacks. Worklets 0.14 starts its frame queue paused until
+the host resumes, so the harness resumes it and drains that first empty frame
+before each case, as a foreground app would.
 
 It extracts the installed NativeProxy Kotlin admission guard, operation and
 event-query wrappers, render callback wrapper and invalidate body, NativeProxy
@@ -25,7 +28,7 @@ explicit callback assertions in Main.kt:
     inflight late-schedule duplicate draw-pass
     upstream-disposed upstream-inflight upstream-trylock
 
-The reverse-patched baseline control uses unmodified Reanimated 4.7.1 NodesManager
+The reverse-patched baseline control uses unmodified Reanimated 4.8.0 NodesManager
 with the same upstream NativeProxy guard. Six teardown cases prove native calls
 are rejected while stale Nodes callbacks, events or scheduled frames remain.
 The installed patch cancels that work. Three direct NativeProxy cases also run

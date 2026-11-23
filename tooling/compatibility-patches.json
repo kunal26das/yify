@@ -1,10 +1,10 @@
 [
   {
     "package": "node_modules/react-native-worklets",
-    "version": "0.13.1",
+    "version": "0.14.0",
     "file": "plugin/index.js",
-    "before": "059cb16c0bede1b9a72315a105f788b2ae15d3f9cf0c0e27689a2050f7d847ce",
-    "after": "dd2ea225c0f889635eec9d19ecffc4cbd859f4fa8fb8bd9cc004e943a55c56a1",
+    "before": "098dd250b890648117d7c5c1f3ee79c33e56acaf7fd4f1e5ee0150549655a267",
+    "after": "b9407ca361a209fc07a5fc0059f2c251e988c71905a6cf6988f63e895399c07a",
     "find": "require(\"@babel/core\")",
     "replace": "require(\"@yify/tooling/babel\")",
     "count": 5
