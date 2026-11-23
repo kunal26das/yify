@@ -2,24 +2,24 @@
   "sdkVersion": "58.0.0",
   "packages": {
     "expo": {
-      "version": "58.0.22",
-      "expected": "~58.0.22",
-      "reason": "Expo 58.0.22 coordinates reviewed modules core 58.0.29, JSI 58.0.21, CLI 58.1.18, Metro config 58.0.20, Babel preset 58.0.23, assets 58.0.19 and filesystem 58.0.13 with React Native 0.88.1. Runtime 1.8.31 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
+      "version": "58.0.26",
+      "expected": "~58.0.26",
+      "reason": "Expo 58.0.26 coordinates reviewed modules core 58.1.0, autolinking 58.1.0, JSI 58.0.23, CLI 58.1.21, Metro config 58.0.23, Babel preset 58.0.26, assets 58.0.21 and filesystem 58.0.14 with React Native 0.88.1. Runtime 1.8.32 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
     },
     "@sentry/react-native": {
-      "version": "8.33.0",
+      "version": "8.34.0",
       "expected": "~8.28.0",
-      "reason": "Sentry 8.33.0 advances Android 8.62.0, Cocoa 9.32.0, JavaScript SDK 10.77.1 and CLI 3.8.2, keeps Android Gradle plugin 6.24.0, and defaults native screenshot masking on. Its deferred hard-crash envelopes apply only to the onerror mechanism, which the app's crash bridge disables. Runtime 1.8.31 regenerates native projects while preserving crash mirroring, consent, disabled profiling/replay and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
+      "reason": "Sentry 8.34.0 advances Cocoa 9.33.0 and JavaScript SDK 10.78.0 and keeps Android 8.62.0 and CLI 3.8.2; its Android Gradle plugin moves to 6.25.0, which only aligns the bundled CLI 3.8.2 and Android SDK 8.62.0. It now detects expo/fetch, so fetch breadcrumbs and consented, sampled fetch spans pass the existing origin-only sanitizers with no trace propagation targets. logsOrigin js keeps native logs off, and the new JS hang, long-task and Hermes profiling features stay disabled. Runtime 1.8.32 regenerates native projects while preserving crash mirroring, consent and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
     },
     "react-native-gesture-handler": {
-      "version": "3.4.0",
+      "version": "3.5.0",
       "expected": "~3.3.0",
-      "reason": "Gesture Handler 3.4.0 advances the native gesture implementation while retaining the app's Pan, Pinch, Tap and composed gesture API. Expo 58.0.14 bundles 3.3.0; validate Android and iOS native builds plus watch-screen drag and screenshot-lightbox gestures in runtime 1.8.27."
+      "reason": "Gesture Handler 3.5.0 advances the native gesture implementation while retaining the app's Pan, Pinch, Tap and composed gesture API. Expo 58.0.26 bundles 3.3.0; validate Android and iOS native builds plus watch-screen drag and screenshot-lightbox gestures in runtime 1.8.32."
     },
     "react-native-worklets": {
-      "version": "0.13.1",
+      "version": "0.14.0",
       "expected": "0.13.0",
-      "reason": "Worklets 0.13.1 changes only its version string, Jest resolver and prebuilt OXC plugin binaries; its native sources and the Babel plugin used by the reviewed Babel 7 adapter are byte-identical to 0.13.0. Reanimated 4.7.1 accepts it. Runtime 1.8.31 rebuilds the native module so the JavaScript and native versions match."
+      "reason": "Worklets 0.14.0 pairs with Reanimated 4.8.0 and supports React Native 0.88. Its Android frame queue starts paused until the host resumes or a headless task runs, and clears its posted flag while taking callbacks. The reviewed Babel 7 adapter still replaces its five Babel core imports. Runtime 1.8.32 rebuilds the native module so the JavaScript and native versions match."
     },
     "react-native-web": {
       "version": "0.21.4",
@@ -27,9 +27,9 @@
       "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.11 retains the reviewed legacy registry fallback through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
-      "version": "8.1.0",
+      "version": "8.1.2",
       "expected": "^7.29.7",
-      "reason": "Babel 8.1.0 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs. Preserve the reviewed adapter source hashes and verify both web exports."
+      "reason": "Babel 8.1.2 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs. Preserve the reviewed adapter source hashes and verify both web exports."
     },
     "typescript": {
       "version": "7.0.2",
@@ -37,9 +37,9 @@
       "reason": "TypeScript 7 checks the app and crash-reporting workspace. ESLint uses the official TypeScript 6 compatibility package for its compiler API."
     },
     "react-native-reanimated": {
-      "version": "4.7.1",
-      "expected": "4.7.0",
-      "reason": "Reanimated 4.7.1 supports React Native 0.88 and Worklets 0.13 and adds native teardown and layout-animation crash fixes. Runtime 1.8.15 regenerates native projects, rebases the callback-cleanup patch and verifies the upstream native-state guard with lifecycle tests and Android/iOS builds."
+      "version": "4.8.0",
+      "expected": "4.7.1",
+      "reason": "Reanimated 4.8.0 supports React Native 0.88 with Worklets 0.14, keeps the Java part of the native proxy until in-flight calls return, and moves event-name resolution into Reanimated. Its NodesManager still keeps callbacks across teardown, so runtime 1.8.32 rebases the callback-cleanup patch and verifies it with the lifecycle fixture and Android/iOS builds."
     },
     "react-native": {
       "version": "0.88.1",
@@ -55,11 +55,6 @@
       "version": "19.3.1",
       "expected": "19.3.0",
       "reason": "Keep React, React DOM and test renderer aligned at 19.3.1. The upstream patch changes Flight transport/server streams without native/client reconciler implementation changes, and React Native 0.88.0 accepts peer React ^19.3.0. Preserve renderer checks and validate native launch/render behavior under runtime 1.8.26."
-    },
-    "expo-web-browser": {
-      "version": "58.0.7",
-      "expected": "~58.1.0",
-      "reason": "Runtime 1.8.31 ships Web Browser 58.0.7. Expo now recommends 58.1.0, whose only change is optional authentication-session request headers that the app does not use. The native upgrade requires a new runtime, so the next coordinated Expo dependency integration takes it and replaces this deviation."
     }
   }
 }

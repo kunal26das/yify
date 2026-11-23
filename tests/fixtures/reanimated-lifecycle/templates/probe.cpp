@@ -10,7 +10,7 @@ struct Registry { template<class F> void visit(int,F f) { f(ShadowTree{}); } };
 struct UIManager { Registry registry; Registry& getShadowTreeRegistry() { return registry; } };
 struct StaticFeatureFlags { static constexpr bool getFlag(std::string_view) { return false; } };
 struct ReanimatedModuleProxy { std::set<SurfaceId> layoutAnimationFlushRequests_{1}; std::shared_ptr<UIManager> uiManager_=std::make_shared<UIManager>(); void executeLayoutAnimationsRequests(); void performOperations() { ++normalCount; executeLayoutAnimationsRequests(); } void cleanupSensors() {} bool isAnyHandlerWaitingForEvent(const std::string &, int) { return !layoutAnimationFlushRequests_.empty(); } void performNonLayoutOperations() { ++nonLayoutCount; executeLayoutAnimationsRequests(); } };
-struct NativeProxy { std::shared_ptr<int> uiRuntime_=std::make_shared<int>(1); std::shared_ptr<ReanimatedModuleProxy> reanimatedModuleProxy_=std::make_shared<ReanimatedModuleProxy>(); void* javaPart_=nullptr; void performOperations(); void performNonLayoutOperations(); bool isAnyHandlerWaitingForEvent(const std::string &, const int); void invalidateCpp(); };
+struct NativeProxy { std::shared_ptr<int> uiRuntime_=std::make_shared<int>(1); std::shared_ptr<ReanimatedModuleProxy> reanimatedModuleProxy_=std::make_shared<ReanimatedModuleProxy>(); void* javaPart_=nullptr; std::shared_ptr<NativeProxy> strongThis_{this,[](NativeProxy* self) { self->javaPart_=nullptr; }}; void performOperations(); void performNonLayoutOperations(); bool isAnyHandlerWaitingForEvent(const std::string &, const int); void invalidateCpp(); };
 __MODULE_EXECUTE_LAYOUT__
 __NATIVE_PERFORM__
 __NATIVE_INVALIDATE_CPP__

@@ -80,6 +80,7 @@ await writeFile(join(output, 'FixtureVariant.kt'), `object FixtureVariant { cons
 let fixtureNodesSha256;
 for (const [name, path] of [
   ['NodesManager.kt', `${reanimated}/android/src/main/java/com/swmansion/reanimated/NodesManager.kt`],
+  ['EventNames.kt', `${reanimated}/android/src/main/java/com/swmansion/reanimated/EventNames.kt`],
   ['AnimationFrameQueue.kt', 'node_modules/react-native-worklets/android/src/main/java/com/swmansion/worklets/runloop/AnimationFrameQueue.kt'],
   ['ReactChoreographer.kt', `${react}/modules/core/ReactChoreographer.kt`],
   ['ChoreographerProvider.kt', `${react}/internal/ChoreographerProvider.kt`],

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reactNativeFirebase": "27.1.0",
+  "reactNativeFirebase": "27.1.1",
   "firebaseJavaScript": "13.1.0",
   "androidBom": "35.0.2",
   "appleSdk": "13.1.1",
