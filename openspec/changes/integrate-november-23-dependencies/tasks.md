@@ -14,7 +14,7 @@
 ## 2. Delivery
 
 - [x] 2.1 Verify the Hosting and Pages deployments from the final main CI: main CI 45221067936, Hosting 45221896083 and Pages 45221896115 passed; both sites return HTTP 200 with every startup script, and isolated headless Chrome renders the consent screen with runtime-injected Reanimated and expo-image styles.
-- [ ] 2.2 Build Android 1.8.32/114 from final main, verify the signed AAB and submit it through play-production. Built as EAS `da81d5e6-75e7-4650-a967-b33584343cb7` from `e9c8d18` and verified; submission awaits owner authorization.
+- [x] 2.2 Build Android 1.8.32/114 from final main, verify the signed AAB and submit it through play-production: EAS build `da81d5e6-75e7-4650-a967-b33584343cb7` from `e9c8d18`, submission `b1f9ac13-654c-4a11-8df0-f7e92bfcddd6`; Play production shows 1.8.32/114 with the tested bundle hash. Availability is pending Google review.
 
 ## 3. Remaining gates
 
