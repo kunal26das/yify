@@ -55,6 +55,11 @@
       "version": "19.3.1",
       "expected": "19.3.0",
       "reason": "Keep React, React DOM and test renderer aligned at 19.3.1. The upstream patch changes Flight transport/server streams without native/client reconciler implementation changes, and React Native 0.88.0 accepts peer React ^19.3.0. Preserve renderer checks and validate native launch/render behavior under runtime 1.8.26."
+    },
+    "expo-web-browser": {
+      "version": "58.0.7",
+      "expected": "~58.1.0",
+      "reason": "Runtime 1.8.31 ships Web Browser 58.0.7. Expo now recommends 58.1.0, whose only change is optional authentication-session request headers that the app does not use. The native upgrade requires a new runtime, so the next coordinated Expo dependency integration takes it and replaces this deviation."
     }
   }
 }
