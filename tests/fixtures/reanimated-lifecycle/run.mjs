@@ -75,6 +75,20 @@ async function files(root) {
   const nested = await Promise.all(entries.map(entry => entry.isDirectory() ? files(path.join(root, entry.name)) : [path.join(root, entry.name)]));
   return nested.flat().sort();
 }
+async function sanitizerRuntimes(compiler, library) {
+  const dynamic = requireSuccess(command('readelf', ['--dynamic', '--wide', library]), 'Sanitizer runtime dependencies').stdout;
+  const names = [...new Set([...dynamic.matchAll(/\(NEEDED\)\s+Shared library: \[(libclang_rt\.[^\]]+)\]/g)].map(match => match[1]))];
+  if (!names.length) throw new Error('The JNI probe does not link a shared Clang sanitizer runtime');
+  const resources = requireSuccess(command(compiler, ['-print-resource-dir']), 'Clang resource directory').stdout.trim();
+  const installed = await files(resources);
+  return names.map(name => {
+    const found = installed.find(file => path.basename(file) === name);
+    if (found) return found;
+    const located = requireSuccess(command(compiler, [`-print-file-name=${name}`]), 'Clang sanitizer runtime').stdout.trim();
+    if (path.isAbsolute(located)) return located;
+    throw new Error(`Clang sanitizer runtime ${name} is not installed under ${resources}`);
+  });
+}
 try {
   let javaHome = process.env.JAVA_HOME ?? process.env.JAVA_HOME_17_X64 ?? process.env.JAVA_HOME_17_ARM64;
   if (!javaHome && process.platform === 'darwin') javaHome = requireSuccess(command('/usr/libexec/java_home', ['-v', '17']), 'Locate JDK 17').stdout.trim();
@@ -112,9 +126,9 @@ try {
   requireSuccess(native, 'JNI compilation');
   const env = {...process.env};
   if (process.platform === 'linux') {
-    const runtime = requireSuccess(command(compiler, ['--print-runtime-dir']), 'Clang sanitizer runtime').stdout.trim();
-    env.LD_LIBRARY_PATH = [runtime, env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter);
-    receipt.sanitizerRuntime = runtime;
+    const runtimes = await sanitizerRuntimes(compiler, library);
+    env.LD_LIBRARY_PATH = [...new Set(runtimes.map(runtime => path.dirname(runtime))), env.LD_LIBRARY_PATH].filter(Boolean).join(path.delimiter);
+    receipt.sanitizerRuntime = runtimes;
   }
   for (const mode of options.modes) {
     const result = command(java, [`-Dprobe.library=${library}`, '-cp', [classes, stdlib, annotations].join(path.delimiter), options.main, mode], options.timeout, env);
