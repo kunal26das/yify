@@ -1,7 +1,7 @@
 import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ElementRef, type ReactNode, type RefObject} from 'react';
 import {ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {router} from 'expo-router';
+import {useRouter} from 'expo-router';
 import type {AuthSession, PurchaseOffer, PurchasePlacement} from '@/domain';
 import {useAuthRepository, usePurchaseRepository} from '../di/DependenciesContext';
 import {useAuth} from '../hooks/use-auth';
@@ -81,6 +81,7 @@ function SupporterPaywallContent({request, onClose, session, acting, setActing, 
     acting: boolean; setActing: (value: boolean) => void; operationRef: RefObject<boolean>;
     inline?: boolean; active?: boolean; onOpenJournal?: () => void; onOpenInsights?: () => void;
 }) {
+    const router = useRouter();
     const purchases = usePurchaseRepository();
     const auth = useAuthRepository();
     const state = usePurchases();

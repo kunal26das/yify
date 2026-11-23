@@ -20,6 +20,7 @@ function mocks(platform = 'web') {
     const responsive = {width: 1200, contentMaxWidth: 1200, gutter: 24, isPhone: false, isLarge: true};
     const motion = {PressableScale: 'PressableScale', enterFade: noop, enterRise: noop, enterPop: noop};
     const gesture = new Proxy({}, {get: () => () => gesture});
+    const router = {canGoBack: () => false, replace: noop};
     const result = {
         'react-native': {
             ActivityIndicator: 'ActivityIndicator', ScrollView: 'ScrollView', View: 'View',
@@ -31,7 +32,7 @@ function mocks(platform = 'web') {
         },
         '@expo/vector-icons/Ionicons': 'Icon',
         'expo-image': {Image: 'Image'},
-        'expo-router': {router: {canGoBack: () => false, replace: noop}},
+        'expo-router': {useRouter: () => router},
         'react-native-reanimated': {__esModule: true, default: {View: 'AnimatedView'}},
         'react-native-gesture-handler': {Gesture: {Pan: () => gesture}, GestureDetector: 'GestureDetector'},
         'react-native-safe-area-context': {useSafeAreaInsets: () => ({top: 0, bottom: 0})},

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {router} from 'expo-router';
+import {useRouter} from 'expo-router';
 import {
     createContext,
     useCallback,
@@ -257,6 +257,7 @@ function ExpandedCard({
     onNavigate: () => void;
     onDismiss: () => void;
 }) {
+    const router = useRouter();
     const {colors, scheme} = usePalette();
     const rank = useTopTenRank(movie.id);
     const saved = useIsInWatchlist(movie.id);

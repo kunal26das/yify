@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import {
+    isBrowserExtensionError,
     sanitizeBreadcrumb,
     sanitizeErrorEvent,
     sanitizeFeedbackEvent,
@@ -63,6 +64,7 @@ export function createSentryOptions({native, environment, mirrorException, conse
         ],
         beforeBreadcrumb: sanitizeBreadcrumb,
         beforeSend: async (event, hint) => {
+            if (!native && isBrowserExtensionError(hint?.originalException)) return null;
             const clean = sanitizeErrorEvent(event);
             try { if (native) await mirrorException?.(clean, hint); } catch {}
             return clean;

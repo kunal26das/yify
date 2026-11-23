@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {router} from 'expo-router';
+import {useRouter} from 'expo-router';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     ActivityIndicator,
@@ -104,6 +104,7 @@ function toPlayerQueue(movies: Movie[]): PlayerVideo[] {
 }
 
 export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
+    const router = useRouter();
     const {details, suggestions, loading, refreshing, error, reload, refresh} = viewModel;
     const {colors} = usePalette();
     const toast = useToast();
@@ -253,7 +254,7 @@ export function WatchScreen({viewModel}: {viewModel: MovieDetailsViewModel}) {
         minimize();
         if (router.canGoBack()) router.back();
         else router.replace('/');
-    }, [minimize]);
+    }, [minimize, router]);
 
     const dragToMinimize = useMemo(
         () =>

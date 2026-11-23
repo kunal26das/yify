@@ -1,4 +1,4 @@
-import {router, useLocalSearchParams} from 'expo-router';
+import {useLocalSearchParams, useRouter} from 'expo-router';
 import Head from 'expo-router/head';
 import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react';
@@ -52,6 +52,7 @@ const clientHydrationSnapshot = () => true;
 const serverHydrationSnapshot = () => Platform.OS !== 'web';
 
 export default function BrowseRoute() {
+  const router = useRouter();
   const params = useLocalSearchParams<{
     genre?: string;
     quality?: string;
@@ -143,7 +144,7 @@ export default function BrowseRoute() {
       order_by: appliedFilters.order_by,
       focus: undefined,
     });
-  }, [hydrated, appliedQuery, appliedFilters]);
+  }, [hydrated, appliedQuery, appliedFilters, router]);
 
     usePageMeta({
         title: 'Browse Movies — Yify',
