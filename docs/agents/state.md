@@ -2,6 +2,10 @@
 
 Updated 2026-11-24. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
 
+## November 24 security alerts and pin review
+
+The seven open Dependabot alerts (grpc-js, joi, minimatch, glob) are fixed with exact consumer-scoped overrides to the first fixed majors, after checking each consumer uses only retained APIs; `eas-cli/minimatch` 5.1.9 stays because EAS 27.11.0 calls the CommonJS default export, and it is below the vulnerable range. Issue #921's pins advance within compatible majors, and the retained Babel 7, regjsparser 0.14 and EAS minimatch majors carry exact watcher reviews; the local watcher reports zero findings. See the [security change](../../openspec/changes/resolve-dependency-security-alerts/evidence.md) and [pin review](../dependency-pin-review.md).
+
 ## November 24 dependency integration and runtime 1.8.33
 
 Six of the seven November 24 Dependabot proposals are integrated as runtime **1.8.33**, code **115**: Sentry React Native 8.36.0 (Android SDK 8.64.0, Cocoa 9.35.0, Gradle plugin 6.27.0), React Native Purchases 11.0.4 (hybrid common 20.10.0), Babel 8.1.3, Electron 45.4.1, jose 6.2.18 and RevenueCat web 1.78.0. Sentry 8.35.0 restores touch breadcrumbs; a test pins that they keep only their category. #1097 (Firebase JavaScript 13.4.0) stays open because React Native Firebase 27.1.1, the latest release, requires exactly 13.1.0. No 1.8.33 store build or OTA has been made; 1.8.32/114 remains the latest Play submission. See the [integration change](../../openspec/changes/integrate-november-24-dependencies/evidence.md).
