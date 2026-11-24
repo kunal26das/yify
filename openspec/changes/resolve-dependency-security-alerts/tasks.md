@@ -9,5 +9,5 @@
 
 ## 2. Delivery
 
-- [ ] 2.1 Pass required CI and merge after #1106.
-- [ ] 2.2 Confirm GitHub closes the seven alerts and the watcher closes #921 with zero findings.
+- [x] 2.1 Pass required CI and merge after #1106 (#1107 as `8b5097c230943842c3347d252cb7a0f4d900ce82`, tree-identical to `39e9749`).
+- [x] 2.2 Confirm GitHub closes the seven alerts and the watcher closes #921 with zero findings (0 open alerts; watcher run 45330987834 on main reports 0 pins needing review and 0 incomplete checks).
