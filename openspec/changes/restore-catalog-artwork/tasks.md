@@ -17,7 +17,7 @@
 
 ## 3. Delivery
 
-- [ ] 3.1 Pass required CI and merge.
-- [ ] 3.2 Confirm the EAS Hosting and GitHub Pages deployments render catalog artwork on both sites.
-- [ ] 3.3 Confirm an installed production Android binary renders catalog artwork from the deployed API.
-- [ ] 3.4 Deliver saved-entry repair to installed apps through the next binary or an authorized OTA update built from each runtime's compatible source.
+- [x] 3.1 Pass required CI and merge (#1104 as `1a975398d9a5ca62347e454222d203ff56f9b5d2`; PR CI 45318124651, main CI 45318593333).
+- [x] 3.2 Confirm the EAS Hosting and GitHub Pages deployments render catalog artwork on both sites (runs 45319102035 and 45319101991).
+- [x] 3.3 Confirm an installed production Android binary renders catalog artwork from the deployed API (1.8.29/code 111 without an update).
+- [x] 3.4 Deliver saved-entry repair to installed apps through the next binary or an authorized OTA update built from each runtime's compatible source (Production OTA groups `2b47b925-ba77-45d7-93c5-38472a5e52ff` for 1.8.29 and `860214b3-8065-49c5-b8c7-542bdd85aae1` for 1.8.32).
