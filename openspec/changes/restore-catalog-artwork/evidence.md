@@ -44,3 +44,29 @@ A separate reviewer read the diff without these conclusions and found no correct
 ## Android
 
 `./gradlew -PreactNativeArchitectures=arm64-v8a -I ../scripts/android-qa/compile-only.gradle :app:assembleRelease` with `SENTRY_DISABLE_AUTO_UPLOAD=true` built a debug-signed 1.8.32 (114) APK from this source in 4 min 14 s; `android/` stayed unchanged. On a new `yify_artwork_api36` emulator (AOSP API 36, arm64), DNS went through a loopback-only filter that refused Sentry, Crashlytics, Firebase, RevenueCat, ads, Expo update and YouTube hosts and forwarded the rest. After the adult gate with analytics off, catalog screens still received proxied URLs from production and ExpoImage logged `status code: 400`. A title saved from that response showed its backdrop and poster on Watchlist, loaded from `yts.pw` and `img.yts.pw` by the native image loader.
+
+## Delivery
+
+PR #1104 merged as `1a975398d9a5ca62347e454222d203ff56f9b5d2`, tree-identical to reviewed head `a502aed`. Required checks passed on that head in run 45318124651; an earlier attempt of the head's first commit failed only because Google Maven and Maven Central answered the consent-guard downloads with HTTP 429, and its rerun passed. Main CI 45318593333, EAS Hosting run 45319102035 and GitHub Pages run 45319101991 passed.
+
+After deployment, `https://yify.expo.app/api/catalog/movies?v=2` returned direct `yts.pw` posters and backdrops. The isolated headless Chrome run recorded 134 × `img.yts.pw 200` on yify.expo.app and 181 × `img.yts.pw 200` on the Pages mirror, with no failed image and no proxied URL. On the isolated emulator, the production-derived 1.8.29/code 111 APK, without any update, rendered Browse posters from the deployed API with no ExpoImage failure.
+
+## Android OTA updates
+
+On the owner's request to publish OTAs for 1.8.29 through 1.8.32, only runtimes with shipped binaries received an update: 1.8.30 was never released and 1.8.31/code 113 was never submitted.
+
+| Runtime | Source | Update group | Update ID | Published (UTC) | Sentry bundle debug ID |
+| --- | --- | --- | --- | --- | --- |
+| 1.8.29 | `00d6411fac6524016ddd9dc438090e40b284f9d7` on `release/catalog-artwork-1.8.29` | `2b47b925-ba77-45d7-93c5-38472a5e52ff` | `01a20b9f-f544-7c5d-85ec-14b9235351e7` | 2026-11-24T03:36:02.116Z | `62d2d190-b96b-4f99-9b78-f37dd6197f54` |
+| 1.8.32 | `1a975398d9a5ca62347e454222d203ff56f9b5d2` on `main` | `860214b3-8065-49c5-b8c7-542bdd85aae1` | `01a20ba2-6de0-7a3c-bb4d-f10f7a02b5a4` | 2026-11-24T03:38:44.064Z | `4af0c275-4eb5-4c07-8783-9ffefd04f4a1` |
+
+Both were published with `scripts/eas.sh update --channel Production --platform android --environment production --clear-cache --source-maps true`, `EXPO_UPDATE_CHANNEL=Production` and the matching `EXPO_RUNTIME_VERSION`. The wrapper uploaded each Hermes bundle's source map to Sentry; it skipped `availability-worker.js`, a public-folder file outside the Android bundle.
+
+The 1.8.29 source is the 1.8.29 store commit `ec216d5a41672ebeda82d883af4b1d29ce5a92bb` plus this change's hunks, applied unchanged because every touched file was identical there and on `main` before the fix. `main` differs from the 1.8.32 store source `e9c8d18db91e9e9ce45c9def12dd3e05a9980672` only by this change in application code.
+
+Backport checks: dependencies installed from the frozen 1.8.29 lockfile with postinstall guards; typecheck passed. CI 45319487112 on `00d6411` passed pins, typecheck, the full test suite, the consent guard, web exports and the release console. The animation lifecycle guard fixture then failed on the Ubuntu 26.04 sanitizer-runtime lookup that #1089 fixed on `main` (test infrastructure; the native code is the shipped binary's), so the channel and doctor steps were skipped. Locally the channel check passed; Expo doctor reports drift from Expo's current recommendations for 36 packages of the frozen 1.8.29 set (first: `expo-web-browser@58.0.6`, expected `~58.1.0`), which an OTA must not change. A debug-signed release APK built from `00d6411` booted on the isolated API 36 emulator, rendered Browse and showed a newly saved title's artwork on Watchlist with no image failure or fatal exception.
+
+Post-publication, on the same emulator with DNS still refusing telemetry, ads and Expo Insights but allowing `u.expo.dev`:
+
+- The production-derived 1.8.29 APK had saved Microstar while production still served proxied URLs; its Watchlist card was blank. It found update `01a20b9f…`, downloaded 41 of 41 assets, showed "Update downloaded. Applies on next app start." and after a cold start reported no newer update. The saved card then showed its backdrop and poster.
+- The production-derived 1.8.32/code 114 APK found update `01a20ba2…`, downloaded 41 of 41 assets and after a cold start reported no newer update. Browse and Watchlist rendered artwork with no ExpoImage failure or fatal exception.
