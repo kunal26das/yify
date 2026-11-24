@@ -239,6 +239,9 @@ test('excessively encoded upstream text fails closed instead of forwarding an en
 test('image validation accepts direct HTTPS artwork and rejects proxied or unsafe URLs', () => {
     const proxied = `https://wsrv.nl/?url=${encodeURIComponent(IMAGE)}&w=480&fit=cover&output=webp&q=80&we`;
     assert.equal(safeImageUrl(IMAGE), IMAGE);
+    for (const artwork of ['https://yts.pw/assets/images/movies/microstar_2026/medium-cover.jpg',
+        'https://yts.pw/assets/images/movies/microstar_2026/background.jpg',
+        'https://yts.pw/assets/images/actors/thumb/nm7092163.jpg']) assert.equal(safeImageUrl(artwork), artwork);
     for (const value of [
         proxied,
         'http://images.example.com/poster.jpg', '//images.example.com/poster.jpg', 'javascript:alert(1)',

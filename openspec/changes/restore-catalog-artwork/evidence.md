@@ -31,7 +31,11 @@ Android has used `WebMovieRepositoryImpl` against the canonical catalog API sinc
 
 ## Tests
 
-With the change: `yarn typecheck` passes, `yarn test` passes 2,472 of 2,473 app tests with the existing artifact-dependent skip plus 51 workspace tests, and `check-web-export.mjs` passes for `dist-hosting --server` and `dist --static`. The seven new or updated tests (`MovieRepositoryImpl.test.ts` ×3, watchlist, history, journal and projection) fail against `origin/main` in a detached worktree.
+With the change: `yarn typecheck` passes, `yarn test` passes 2,474 of 2,475 app tests with the existing artifact-dependent skip plus 51 workspace tests, and `check-web-export.mjs` passes for `dist-hosting --server` and `dist --static`. The first seven new or updated tests (`MovieRepositoryImpl.test.ts` ×3, watchlist, history, journal and projection) fail against `origin/main` in a detached worktree; the later distinct-thumbnail test fails against the previous `thumbCandidates`, and the poster-selection test pins existing `posterRung` behavior with the new widths.
+
+## Independent review
+
+A separate reviewer read the diff without these conclusions and found no correctness defects. Its low-severity findings: the shared thumbnail and backdrop URL made a failed backdrop retry the same file (fixed by distinct candidates); poster selection and direct-artwork projection lacked tests (added); the documented data cost omitted the placeholder (corrected). Its preconnect suggestion was declined, as recorded in the design.
 
 ## Web rendering
 
