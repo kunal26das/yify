@@ -106,6 +106,14 @@ test('merged breadcrumbs are sanitized again before sending and console content 
     assert.deepEqual(result.breadcrumbs[1], route);
 });
 
+test('touch breadcrumbs keep only their category without component names, labels or messages', () => {
+    const touch = sanitizeBreadcrumb({type: 'user', category: 'touch', level: 'info', timestamp: 1,
+        message: 'Touch event within element: Save The Social Reckoning to watchlist',
+        data: {path: [{name: 'PressableScale', label: 'Save The Social Reckoning to watchlist', file: 'presentation/movies/WatchScreen.tsx'}],
+            target: 'Save The Social Reckoning to watchlist', componentStack: 'WatchScreen'}});
+    assert.deepEqual(touch, {type: 'user', category: 'touch', level: 'info', timestamp: 1, message: undefined, data: {}});
+});
+
 test('invalid, relative, and non-HTTP request URLs are omitted instead of retained', () => {
     for (const url of ['not a url', '/users/private-uid?token=secret', 'file:///private/path', 'data:text/plain,secret', null]) {
         assert.equal(sanitizeErrorEvent({request: {url}}).request.url, undefined);
