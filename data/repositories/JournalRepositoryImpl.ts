@@ -7,6 +7,7 @@ import {emptyJournalData, encodeJournalData, journalEntries, journalLatestTimest
     mergeJournalData, parseJournalData, validateJournalInput} from '@/domain/policies/journal';
 import {isForeground, watchForeground} from '../datasources/platform/ForegroundWatcher';
 import {JournalConflict, JournalDataSource} from '../datasources/sync/JournalDataSource';
+import {withoutLegacyProxy} from './support/artwork';
 
 interface JournalOptions {
     auth: AuthRepository;
@@ -19,6 +20,13 @@ const EMPTY: JournalSnapshot = {ready: false, entries: [], syncing: false, error
 const LOCAL_ERROR = 'Your journal could not be saved on this device. Free up storage and try again.';
 const SYNC_ERROR = 'Your journal is saved on this device. Sync will retry when you are connected.';
 const DELETED_ERROR = 'This journal was removed by an account deletion request.';
+
+function visibleEntries(data: JournalData): JournalEntry[] {
+    return journalEntries(data).map((entry) => {
+        const posterUrl = withoutLegacyProxy(entry.movie.posterUrl);
+        return posterUrl === entry.movie.posterUrl ? entry : {...entry, movie: {...entry.movie, posterUrl}};
+    });
+}
 
 export class JournalRepositoryImpl implements JournalRepository {
     private readonly now: () => number;
@@ -160,7 +168,7 @@ export class JournalRepositoryImpl implements JournalRepository {
             }
             this.data = parseJournalData(this.options.store.getString(this.key(this.uid)));
             this.hydrated = true;
-            this.publish({ready: true, entries: journalEntries(this.data), error: null});
+            this.publish({ready: true, entries: visibleEntries(this.data), error: null});
             return true;
         } catch {
             this.publish({ready: false, entries: [], error: 'Your journal could not be loaded on this device. Retry before adding entries.'});
@@ -186,7 +194,7 @@ export class JournalRepositoryImpl implements JournalRepository {
         try { this.options.store.set(this.key(this.uid!), encoded); }
         catch { this.publish({error: LOCAL_ERROR}); throw new Error(LOCAL_ERROR); }
         this.data = merged;
-        this.publish({entries: journalEntries(merged), error: null});
+        this.publish({entries: visibleEntries(merged), error: null});
     }
 
     private latestLocal(): JournalData {

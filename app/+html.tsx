@@ -35,7 +35,6 @@ export default function Root({children, pathname = '/'}: PropsWithChildren<{path
                 <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
                 <meta name="viewport"
                       content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/>
-                <link rel="preconnect" href="https://wsrv.nl" crossOrigin="anonymous"/>
                 <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous"/>
                 <title>{pageMeta.title}</title>
                 <meta name="description" content={DESCRIPTION} />

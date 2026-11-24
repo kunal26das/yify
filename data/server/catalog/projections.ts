@@ -64,7 +64,7 @@ function publicImageHost(hostname: string): boolean {
         && !/(?:^|\.)(?:localhost|local|internal|test|invalid|example)$/i.test(hostname);
 }
 
-export function safeImageUrl(value: unknown, nested = false): string | undefined {
+export function safeImageUrl(value: unknown): string | undefined {
     if (typeof value !== 'string' || value.length > 4096 || /[\s\\]/.test(value)) return undefined;
     const inspected = decoded(value);
     HASH.lastIndex = 0;
@@ -72,24 +72,6 @@ export function safeImageUrl(value: unknown, nested = false): string | undefined
     try {
         const url = new URL(value);
         if (url.protocol !== 'https:' || url.username || url.password || url.port || url.hash || !publicImageHost(url.hostname)) return undefined;
-        if (url.hostname === 'wsrv.nl' && !nested) {
-            if (url.pathname !== '/') return undefined;
-            const keys = [...url.searchParams.keys()];
-            if (new Set(keys).size !== keys.length || keys.some(key => !['url', 'w', 'fit', 'output', 'q', 'we'].includes(key))) return undefined;
-            const source = safeImageUrl(url.searchParams.get('url'), true);
-            if (!source) return undefined;
-            const width = url.searchParams.get('w');
-            const quality = url.searchParams.get('q');
-            const fit = url.searchParams.get('fit');
-            const output = url.searchParams.get('output');
-            if (width !== null && (!/^\d{1,4}$/.test(width) || Number(width) < 1 || Number(width) > 4096)) return undefined;
-            if (quality !== null && (!/^\d{1,3}$/.test(quality) || Number(quality) < 1 || Number(quality) > 100)) return undefined;
-            if (fit !== null && !['cover', 'contain', 'inside', 'outside', 'fill'].includes(fit)) return undefined;
-            if (output !== null && !['webp', 'avif', 'jpg', 'png'].includes(output)) return undefined;
-            if (url.searchParams.has('we') && url.searchParams.get('we') !== '') return undefined;
-            url.searchParams.set('url', source);
-            return url.href;
-        }
         if (url.search || !IMAGE_EXTENSION.test(url.pathname)) return undefined;
         return url.href;
     } catch {

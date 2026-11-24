@@ -103,6 +103,19 @@ test('offline journal edits survive restart and upload after reconnect without r
     assert.equal(f.calls.filter(call => call.startsWith('write-end')).length, count);
 });
 
+test('journal posters saved through the retired image proxy are shown directly without rewriting the journal', async t => {
+    const cover = 'https://yts.pw/assets/images/movies/a/large-cover.jpg';
+    const legacy = `https://wsrv.nl/?url=${encodeURIComponent(cover)}&w=240&fit=cover&output=webp&q=80`;
+    const entry = {id: 'old', ...input(), movie: {...movie, posterUrl: legacy}, updatedAt: 1, deletedAt: 0};
+    const payload = policy.encodeJournalData({entries: {old: entry}, clearedAt: 0});
+    const f = fixture(t, {values: new Map([['account:alice', payload]]), remote: new Map([['alice', {payload, updateTime: 'v0'}]])});
+    await flush();
+    assert.equal(f.repository.getSnapshot().entries[0].movie.posterUrl, cover);
+    assert.equal(f.values.get('account:alice'), payload);
+    assert.ok(f.calls.includes('read:alice'));
+    assert.equal(f.calls.some(call => call.startsWith('write-start')), false);
+});
+
 test('two offline clients sharing a cache preserve both notes and use newer revisions when editing', t => {
     const f = fixture(t, {online: false});
     const second = f.build();

@@ -81,3 +81,11 @@ test('catalog artwork ignores YouTube thumbnail URLs retained in old caches', ()
     assert.deepEqual(thumbCandidates(movie), ['https://catalog.example/backdrop.jpg', 'https://catalog.example/poster.jpg']);
     assert.equal(thumbPlaceholder(movie), 'https://catalog.example/poster.jpg');
 });
+
+test('thumbnail candidates try each distinct artwork URL once', () => {
+    const {thumbCandidates} = loadTypeScript('presentation/movies/components/format.ts');
+    const backdrop = 'https://yts.pw/assets/images/movies/a/background.jpg';
+    const poster = 'https://yts.pw/assets/images/movies/a/large-cover.jpg';
+    assert.deepEqual(thumbCandidates({id: 1, thumbnailUrls: [backdrop], backgroundImageUrl: backdrop,
+        posterUrls: ['https://yts.pw/assets/images/movies/a/medium-cover.jpg', poster]}), [backdrop, poster]);
+});
