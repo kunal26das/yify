@@ -31,16 +31,20 @@
   "resolutions": {
     "protobufjs": "8.8.1",
     "adm-zip": "0.6.1",
-    "parse-duration": "2.1.9",
+    "parse-duration": "2.1.11",
     "uuid": "14.0.3",
     "esbuild": "0.28.2",
-    "tar": "7.5.22",
-    "joi": "18.2.9",
+    "tar": "7.5.23",
+    "joi": "18.3.2",
     "yaml": "2.9.1",
     "ajv": "8.20.0",
     "eas-cli/minimatch": "5.1.9",
     "nanoid": "6.0.2",
     "diff": "9.0.0",
-    "ts-deepmerge": "8.0.0"
+    "ts-deepmerge": "8.0.0",
+    "**/@expo/config-plugins/glob": "14.0.6",
+    "**/@expo/config/glob": "14.0.6",
+    "**/sucrase/glob": "14.0.6",
+    "**/@oclif/core/minimatch": "11.0.9"
   }
 }
