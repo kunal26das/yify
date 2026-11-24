@@ -31,3 +31,13 @@ The pins match the six proposals exactly. `yarn install` regenerated the lockfil
 ## Local checks
 
 Exact pins, typecheck, `yarn test` (2,475 of 2,476 app tests with the existing artifact-dependent skip, plus 51 workspace tests), the update channel, the reviewed Expo doctor, both web export checks, the release console's frozen install, typecheck, 151 tests and build, and `openspec validate --all --strict` (20 of 20) pass. The new touch-breadcrumb test passes against the existing sanitizer.
+
+## Merge and delivery
+
+#1106 merged as `28795655675320fde2beff6110391983fdc4c0c1`, tree-identical to `482981b`, after required run 45322820047 and compile-only Android QA run 45322872581 passed; every pin was confirmed on main and #1098–#1103 were closed as superseded. Its deploy runs stopped at the current-main recheck because #1107 had already merged; main `8b5097c` (after #1107) passed CI 45327226294 and deployed through Hosting 45327709049 and Pages 45327709083.
+
+## Production candidate
+
+EAS build `8b31e5b2-85b3-481e-a42d-57141cdd23b0` built 1.8.33/115, runtime 1.8.33, channel Production, from `8b5097c230943842c3347d252cb7a0f4d900ce82` and finished at 2026-11-24T05:01:34.789Z. Its AAB is 101,099,969 bytes with SHA-256 `94beb31afec38944d19117495e2d34096346ef6babaf74c10fc69ecb29e5c1c8`. `verify-production-aab.mjs` passed `candidate`, `fetch` (exact finished build; re-fetched bytes identical), `bundle` (manifest, runtime resource, every signed entry and upload certificate `EC97730B…9E79F`) and `apks`; the R8 artifact test found the reflected Expo modules; and a bundletool universal APK carries 37 compressed libraries in each of the four ABIs.
+
+Device-targeted split APKs (base, arm64-v8a, en, xxhdpi) signed with an ephemeral key installed on a new API 37 Google Play arm64 emulator with 16 KB pages, whose DNS refused telemetry, ads, OTA and YouTube hosts. It logged `Expo Modules v2 installed 3 module(s)` and displayed MainActivity in 450 ms; after the adult gate with analytics off, home rendered artwork, Browse, a movie page, Watchlist and Shows opened, and a font-scale change recreated the activity in the same process with navigation still working. No fatal exception, router error, native-module error, image failure or ANR was logged.
