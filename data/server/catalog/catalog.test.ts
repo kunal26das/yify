@@ -236,11 +236,11 @@ test('excessively encoded upstream text fails closed instead of forwarding an en
     assert.equal((await response.json()).summary, '');
 });
 
-test('image validation checks the nested proxy source and accepts normal HTTPS artwork', () => {
+test('image validation accepts direct HTTPS artwork and rejects proxied or unsafe URLs', () => {
     const proxied = `https://wsrv.nl/?url=${encodeURIComponent(IMAGE)}&w=480&fit=cover&output=webp&q=80&we`;
     assert.equal(safeImageUrl(IMAGE), IMAGE);
-    assert.equal(safeImageUrl(proxied), `${proxied}=`);
     for (const value of [
+        proxied,
         'http://images.example.com/poster.jpg', '//images.example.com/poster.jpg', 'javascript:alert(1)',
         'data:image/png;base64,secret', MAGNET, DOWNLOAD, 'https://user:password@images.example.com/poster.jpg',
         'https://127.0.0.1/private.jpg', 'https://localhost/private.jpg', 'https://host.internal/private.jpg',

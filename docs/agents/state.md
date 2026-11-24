@@ -1,6 +1,10 @@
 # Delivery handoff
 
-Updated 2026-11-23. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+Updated 2026-11-24. This is a sanitized evidence snapshot, not an access-control mechanism or authority to publish.
+
+## November 24 catalog artwork outage
+
+Movie artwork stopped rendering on every platform because wsrv.nl now rejects the catalog's image hosts (`yts.pw`, `img.yts.pw`, `yts.lt`) with HTTP 400 "Domain or TLD blocked by policy"; browsers report `ERR_BLOCKED_BY_ORB` and Android's image loader logs status 400. TMDB show artwork was unaffected. The fix loads catalog artwork directly from the catalog's HTTPS image host, with posters using its 230 px and 500 px covers as `POSTER_WIDTHS`. The public projection accepts only direct image URLs. Saved watchlist, history and journal entries repair proxied URLs; history and journal leave synced records unchanged. The catalog API builds these URLs on EAS Hosting, and Android has read movies from it since 1.8.17, so the Hosting deployment restores catalog artwork for web and installed Android 1.8.17 or later without an OTA. Saved-entry repair needs the next binary or an authorized OTA; the changed files are identical in the 1.8.29 source. Direct JPEG covers use about three times the data of the proxy's WebP. See the [artwork change](../../openspec/changes/restore-catalog-artwork/evidence.md).
 
 ## November 23 crash fixes, dependencies and Android 1.8.32
 

@@ -1,4 +1,3 @@
-import {POSTER_WIDTHS} from '@/domain';
 import type {
   CastMember,
   ListMoviesParams,
@@ -11,8 +10,11 @@ import type {
 } from '@/domain';
 import type {YtsApi} from '../datasources/YtsApiDataSource';
 import type {YtsCastMemberDto, YtsMovieDto, YtsTorrentDto} from '../models';
+import {artworkUrl} from './support/artwork';
 
-const SCREENSHOT_THUMB_WIDTH = 800;
+function present(url: string | undefined): url is string {
+  return url != null;
+}
 
 export class MovieRepositoryImpl implements MovieRepository {
   constructor(private readonly api: YtsApi) {
@@ -69,66 +71,27 @@ export class MovieRepositoryImpl implements MovieRepository {
     }));
   }
 
-  private upgradeHttpUrlToHttps(url: string): string {
-    const parsed = new URL(url);
-    if (parsed.protocol === 'http:') {
-      parsed.protocol = 'https:';
-      return parsed.href;
-    }
-    return url;
-  }
-
-  private toDisplayImageUrl(
-      url: string | undefined,
-      width: number,
-      opts?: {quality?: number; noEnlarge?: boolean},
-  ): string | null {
-    if (typeof url !== 'string') return null;
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-    const normalized = this.upgradeHttpUrlToHttps(trimmed);
-    const quality = opts?.quality ?? 80;
-    const withoutEnlargement = opts?.noEnlarge ? '&we' : '';
-    return `https://wsrv.nl/?url=${encodeURIComponent(normalized)}&w=${width}&fit=cover&output=webp&q=${quality}${withoutEnlargement}`;
-  }
-
   private toPosterUrls(dto: YtsMovieDto): string[] {
-      const cover = dto.large_cover_image ?? dto.medium_cover_image ?? dto.small_cover_image;
-      if (!cover) return [];
-      return POSTER_WIDTHS
-          .map((width) => this.toDisplayImageUrl(cover, width))
-        .filter((url): url is string => url != null);
+    const ladder = [dto.medium_cover_image, dto.large_cover_image].map(artworkUrl).filter(present);
+    if (ladder.length > 0) return [...new Set(ladder)];
+    const small = artworkUrl(dto.small_cover_image);
+    return small ? [small] : [];
   }
 
-  private toThumbnailUrls(dto: YtsMovieDto): string[] {
-    const backdrop = dto.background_image_original ?? dto.background_image;
+  private toBackdropUrl(dto: YtsMovieDto): string | undefined {
+    return artworkUrl(dto.background_image_original) ?? artworkUrl(dto.background_image);
+  }
+
+  private toScreenshotUrls(dto: YtsMovieDto): string[] {
     return [
-      this.toDisplayImageUrl(backdrop, 896, {quality: 92, noEnlarge: true}),
-    ].filter((url): url is string => url != null);
+      artworkUrl(dto.large_screenshot_image1) ?? artworkUrl(dto.medium_screenshot_image1),
+      artworkUrl(dto.large_screenshot_image2) ?? artworkUrl(dto.medium_screenshot_image2),
+      artworkUrl(dto.large_screenshot_image3) ?? artworkUrl(dto.medium_screenshot_image3),
+    ].filter(present);
   }
-
-    private screenshotSources(dto: YtsMovieDto): (string | undefined)[] {
-    return [
-      dto.large_screenshot_image1 ?? dto.medium_screenshot_image1,
-      dto.large_screenshot_image2 ?? dto.medium_screenshot_image2,
-      dto.large_screenshot_image3 ?? dto.medium_screenshot_image3,
-    ];
-    }
-
-    private toScreenshotUrls(dto: YtsMovieDto): string[] {
-        return this.screenshotSources(dto)
-        .map((url) => this.toDisplayImageUrl(url, 1920, {quality: 88}))
-        .filter((url): url is string => url != null);
-  }
-
-    private toScreenshotThumbUrls(dto: YtsMovieDto): string[] {
-        return this.screenshotSources(dto)
-            .map((url) => this.toDisplayImageUrl(url, SCREENSHOT_THUMB_WIDTH, {quality: 82}))
-            .filter((url): url is string => url != null);
-    }
 
   private toMovie(dto: YtsMovieDto): Movie {
-    const thumbnailUrls = this.toThumbnailUrls(dto);
+    const backdrop = this.toBackdropUrl(dto);
     return {
       id: dto.id,
       imdbCode: dto.imdb_code,
@@ -144,13 +107,9 @@ export class MovieRepositoryImpl implements MovieRepository {
       language: dto.language,
       mpaRating: dto.mpa_rating,
       posterUrls: this.toPosterUrls(dto),
-      backgroundImageUrl:
-          this.toDisplayImageUrl(dto.background_image_original ?? dto.background_image, 2560, {
-            quality: 90,
-            noEnlarge: true,
-          }) ?? undefined,
+      backgroundImageUrl: backdrop,
       ytTrailerCode: dto.yt_trailer_code || undefined,
-      thumbnailUrls: thumbnailUrls.length > 0 ? thumbnailUrls : undefined,
+      thumbnailUrls: backdrop ? [backdrop] : undefined,
     };
   }
 
@@ -176,11 +135,12 @@ export class MovieRepositoryImpl implements MovieRepository {
       name: dto.name,
       character: dto.character_name,
       imdbCode: dto.imdb_code,
-      imageUrl: this.toDisplayImageUrl(dto.url_small_image, 96) ?? undefined,
+      imageUrl: artworkUrl(dto.url_small_image),
     };
   }
 
   private toMovieDetails(dto: YtsMovieDto): MovieDetails {
+    const screenshotUrls = this.toScreenshotUrls(dto);
     return {
       ...this.toMovie(dto),
       descriptionIntro: dto.description_intro,
@@ -189,8 +149,8 @@ export class MovieRepositoryImpl implements MovieRepository {
       ytTrailerCode: dto.yt_trailer_code,
       likeCount: dto.like_count,
       downloadCount: dto.download_count,
-      screenshotUrls: this.toScreenshotUrls(dto),
-        screenshotThumbUrls: this.toScreenshotThumbUrls(dto),
+      screenshotUrls,
+      screenshotThumbUrls: screenshotUrls,
       cast: (dto.cast ?? []).map((c) => this.toCastMember(c)),
       torrents: (dto.torrents ?? []).map((t) => this.toTorrent(t)),
     };

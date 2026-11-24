@@ -74,3 +74,25 @@ for (const {name, mutate, expected} of [
         assert.deepEqual(notifications, [liveHistory(expected)]);
     });
 }
+
+test('history artwork from the retired image proxy is shown directly without rewriting synced state', () => {
+    const backdrop = 'https://yts.pw/assets/images/movies/a/background.jpg';
+    const legacy: HistoryEntry = {key: 'movie:9', title: 'Legacy movie', watchedAt: 50,
+        imageUrl: `https://wsrv.nl/?url=${encodeURIComponent(backdrop)}&w=896&fit=cover&output=webp&q=92&we`};
+    const show: HistoryEntry = {key: 'show:tt0000001', title: 'Show', watchedAt: 40, imageUrl: 'https://image.tmdb.org/t/p/w780/backdrop.jpg'};
+    const state: HistoryState = {entries: [legacy, show], removed: {}, clearedAt: 0};
+    const values = new Map([['state', encodeHistoryState(state) as string]]);
+    const store = {
+        getString: (key: string) => values.get(key),
+        set: (key: string, value: string) => {values.set(key, value);},
+        delete: (key: string) => {values.delete(key);},
+    };
+    const repository = new WatchHistoryRepositoryImpl(store) as WatchHistoryRepository;
+    const visible = [{...legacy, imageUrl: backdrop}, show];
+
+    assert.deepEqual(repository.getAll(), visible);
+    assert.equal(encodeHistoryState(repository.getState()), encodeHistoryState(state));
+    repository.applyRemote(state);
+    assert.deepEqual(repository.getAll(), visible);
+    assert.equal(values.get('state'), encodeHistoryState(state));
+});
