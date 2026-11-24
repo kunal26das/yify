@@ -87,3 +87,20 @@ test('watchlist activation is recorded only after the failed first save succeeds
     assert.equal(values.get('funnel_saved_milestones_v1'), '[1]');
     assert.deepEqual(events, [['watchlist_activation', {funnel_version: 'v1', app_platform: 'other', saved_milestone: 'one'}]]);
 });
+
+test('saved watchlist artwork from the retired image proxy loads directly and is stored that way', () => {
+    const cover = 'https://yts.pw/assets/images/movies/a/large-cover.jpg';
+    const backdrop = 'https://yts.pw/assets/images/movies/a/background.jpg';
+    const proxied = (url: string, width: number) => `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${width}&fit=cover&output=webp&q=80`;
+    const legacy = {...movie(1), posterUrls: [proxied(cover, 240), proxied(cover, 480), proxied(cover, 720)],
+        backgroundImageUrl: `${proxied(backdrop, 2560)}&we`, thumbnailUrls: [`${proxied(backdrop, 896)}&we`]};
+    const direct = {...movie(2), posterUrls: ['https://image.tmdb.org/t/p/w342/poster.jpg']};
+    const malformed = {...movie(3), posterUrls: null, backgroundImageUrl: 7} as unknown as Movie;
+    const {repository, values} = fixture([legacy, direct, malformed]);
+    const repaired = {...legacy, posterUrls: [cover], backgroundImageUrl: backdrop, thumbnailUrls: [backdrop]};
+
+    assert.deepEqual(repository.getAll(), [repaired, direct, malformed]);
+    assert.deepEqual(JSON.parse(values.get('items')!), [repaired, direct, malformed]);
+    repository.applyRemote([legacy]);
+    assert.deepEqual(repository.getAll(), [repaired]);
+});

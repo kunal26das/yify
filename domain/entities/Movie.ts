@@ -1,4 +1,4 @@
-export const POSTER_WIDTHS = [240, 480, 720] as const;
+export const POSTER_WIDTHS = [230, 500] as const;
 
 export interface Movie {
   id: number;

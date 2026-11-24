@@ -13,11 +13,11 @@ function catalogueArtwork(url: string | undefined): url is string {
 
 export function thumbCandidates(movie: Movie): string[] {
     const posters = movie.posterUrls ?? [];
-    return [
+    return [...new Set([
         ...(movie.thumbnailUrls ?? []),
         movie.backgroundImageUrl,
         posters[posters.length - 1],
-    ].filter(catalogueArtwork);
+    ].filter(catalogueArtwork))];
 }
 
 export function thumbFor(movie: Movie): string | undefined {

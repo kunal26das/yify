@@ -10,8 +10,16 @@ import {
     removeHistory,
     type WatchHistoryRepository,
 } from '@/domain';
+import {withoutLegacyProxy} from './support/artwork';
 
 const KEY = 'state';
+
+function visibleHistory(state: HistoryState): HistoryEntry[] {
+    return liveHistory(state).map((entry) => {
+        const imageUrl = withoutLegacyProxy(entry.imageUrl);
+        return imageUrl === entry.imageUrl ? entry : {...entry, imageUrl};
+    });
+}
 
 export class WatchHistoryRepositoryImpl implements WatchHistoryRepository {
     private readonly store: KeyValueStore;
@@ -24,7 +32,7 @@ export class WatchHistoryRepositoryImpl implements WatchHistoryRepository {
     }
 
     getAll(): HistoryEntry[] {
-        if (this.snapshot == null) this.snapshot = liveHistory(this.read());
+        if (this.snapshot == null) this.snapshot = visibleHistory(this.read());
         return this.snapshot;
     }
 
@@ -66,7 +74,7 @@ export class WatchHistoryRepositoryImpl implements WatchHistoryRepository {
     }
 
     private write(next: HistoryState): void {
-        const snapshot = liveHistory(next);
+        const snapshot = visibleHistory(next);
         this.store.set(KEY, encodeHistoryState(next));
         this.state = next;
         this.snapshot = snapshot;

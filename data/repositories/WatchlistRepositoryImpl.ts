@@ -1,4 +1,5 @@
 import {trackSubscriptionFunnel, type AnalyticsSink, type KeyValueStore, type Movie, type SubscriptionFunnelContext, type WatchlistRepository} from '@/domain';
+import {withoutLegacyProxies, withoutLegacyProxy} from './support/artwork';
 
 const KEY = 'items';
 const MILESTONES_KEY = 'funnel_saved_milestones_v1';
@@ -16,10 +17,10 @@ function toWatchlistMovie(m: Movie): Movie {
         summary: m.summary,
         language: m.language,
         mpaRating: m.mpaRating,
-        posterUrls: m.posterUrls,
-        backgroundImageUrl: m.backgroundImageUrl,
+        posterUrls: withoutLegacyProxies(m.posterUrls),
+        backgroundImageUrl: withoutLegacyProxy(m.backgroundImageUrl),
         ytTrailerCode: m.ytTrailerCode,
-        thumbnailUrls: m.thumbnailUrls,
+        thumbnailUrls: withoutLegacyProxies(m.thumbnailUrls),
     };
 }
 
