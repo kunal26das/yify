@@ -14,8 +14,8 @@
 
 - [x] 2.1 Verify the Hosting and Pages deployments from the final main CI (for `8b5097c`, after #1107: CI 45327226294, Hosting 45327709049 and Pages 45327709083).
 - [x] 2.2 Build Android 1.8.33/115 from `8b5097c` and verify the signed AAB, its four ABIs and an isolated 16 KB-page device launch (EAS build `8b31e5b2-85b3-481e-a42d-57141cdd23b0`).
-- [ ] 2.3 Pass the CI production-bundle verification on main for the recorded candidate.
-- [ ] 2.4 Submit through `play-production` and confirm 1.8.33/115 with the tested bundle on the Play API.
+- [x] 2.3 Pass the CI production-bundle verification on main for the recorded candidate (run 45332883676, attempt 2).
+- [x] 2.4 Submit through `play-production` and confirm 1.8.33/115 with the tested bundle on the Play API (submission `02b5e77e-befd-44c6-baeb-5a72b2addbca`). Availability awaits Google review.
 
 ## 3. Remaining gates
 
