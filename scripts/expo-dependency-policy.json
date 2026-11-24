@@ -7,9 +7,9 @@
       "reason": "Expo 58.0.26 coordinates reviewed modules core 58.1.0, autolinking 58.1.0, JSI 58.0.23, CLI 58.1.21, Metro config 58.0.23, Babel preset 58.0.26, assets 58.0.21 and filesystem 58.0.14 with React Native 0.88.1. Runtime 1.8.32 regenerates native projects while preserving lifecycle, consent and crash-reporting guards; validate native compilation before merging and startup before release."
     },
     "@sentry/react-native": {
-      "version": "8.34.0",
+      "version": "8.36.0",
       "expected": "~8.28.0",
-      "reason": "Sentry 8.34.0 advances Cocoa 9.33.0 and JavaScript SDK 10.78.0 and keeps Android 8.62.0 and CLI 3.8.2; its Android Gradle plugin moves to 6.25.0, which only aligns the bundled CLI 3.8.2 and Android SDK 8.62.0. It now detects expo/fetch, so fetch breadcrumbs and consented, sampled fetch spans pass the existing origin-only sanitizers with no trace propagation targets. logsOrigin js keeps native logs off, and the new JS hang, long-task and Hermes profiling features stay disabled. Runtime 1.8.32 regenerates native projects while preserving crash mirroring, consent and symbol uploads. Verify installed integration selection and native compilation before merging, then startup before release."
+      "reason": "Sentry 8.36.0 advances Android 8.62.0 to 8.64.0 and Cocoa 9.33.0 to 9.35.0 and keeps JavaScript SDK 10.78.0 and CLI 3.8.2; its Android Gradle plugin moves to 6.27.0, which only aligns the bundled Android SDK 8.64.0. It resolves every Sentry Android module to one version and restores touch breadcrumbs on the React Native 0.88 New Architecture; the existing breadcrumb sanitizer keeps only their category. The new opt-in watchdog-termination and breadcrumb options stay unused, and replay, profiling and default PII remain disabled. Runtime 1.8.33 regenerates the Android project; validate native builds and startup."
     },
     "react-native-gesture-handler": {
       "version": "3.5.0",
@@ -27,9 +27,9 @@
       "reason": "React Native Web 0.21.4 adds public AssetRegistry entry points shared by CJS and ESM. Expo CLI 58.1.11 retains the reviewed legacy registry fallback through the public React Native and React Native Web registries; verify Pages and Hosting exports before delivery."
     },
     "@babel/core": {
-      "version": "8.1.2",
+      "version": "8.1.3",
       "expected": "^7.29.7",
-      "reason": "Babel 8.1.2 compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs. Preserve the reviewed adapter source hashes and verify both web exports."
+      "reason": "Babel 8.1.3 fixes spread, block-scoping, module-transform, generator and parser edge cases and compiles mocked TypeScript and JSX test fixtures. Expo and Worklets retain the separately pinned Babel 7 adapter because their transforms still require Babel 7 APIs. Preserve the reviewed adapter source hashes and verify both web exports."
     },
     "typescript": {
       "version": "7.0.2",
