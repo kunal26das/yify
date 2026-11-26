@@ -16,7 +16,6 @@
 # @generated begin expo-build-properties - expo prebuild (DO NOT MODIFY)
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.swmansion.worklets.** { *; }
--keep class com.margelo.nitro.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 -keep class com.google.android.gms.internal.consent_sdk.** { *; }
 -keep class expo.modules.ExpoModulesV2ModuleList { *; }
