@@ -1,0 +1,14 @@
+[
+  {"source": "/privacy", "destination": "https://yify.expo.app/privacy.html", "permanent": true},
+  {"source": "/terms", "destination": "https://yify.expo.app/terms.html", "permanent": true},
+  {"source": "/delete-account", "destination": "https://yify.expo.app/delete-account.html", "permanent": true},
+  {"source": "/support", "destination": "https://yify.expo.app/support.html", "permanent": true},
+  {"source": "/guide", "destination": "/", "permanent": true},
+  {"source": "/anime", "destination": "/", "permanent": true},
+  {"source": "/watchlist", "destination": "/library", "permanent": true},
+  {"source": "/history", "destination": "/library/recent", "permanent": true},
+  {"source": "/journal", "destination": "/library/watched", "permanent": true},
+  {"source": "/preferences", "destination": "/settings", "permanent": true},
+  {"source": "/upgrade", "destination": "/plus", "permanent": true},
+  {"source": "/browse", "destination": "/search", "permanent": true}
+]

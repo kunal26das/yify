@@ -1,4 +1,3 @@
 import '@expo/metro-runtime';
-import './instrumentation/crashlytics';
-import './instrumentation/sentry';
+import './src/core/platform/telemetry/sentry';
 import 'expo-router/entry';
