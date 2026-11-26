@@ -1,5 +1,5 @@
 {
-  "name": "Yify — Movie Discovery",
+  "name": "Yify",
   "short_name": "Yify",
   "description": "Discover movies and shows, watch trailers, and keep a personal watchlist.",
   "id": "/",
@@ -17,8 +17,8 @@
     "entertainment",
     "movies"
   ],
-  "background_color": "#F3F0E9",
-  "theme_color": "#9C452B",
+  "background_color": "#1B1916",
+  "theme_color": "#1B1916",
   "icons": [
     {
       "src": "./icons/icon-192.png",

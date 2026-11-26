@@ -1,0 +1,64 @@
+:root {
+  color-scheme: light dark;
+  --c-surface: #F3F0E9;
+  --c-surfaceContainerLowest: #FBFAF6;
+  --c-surfaceContainerLow: #EFEBE3;
+  --c-surfaceContainer: #EBE5DA;
+  --c-surfaceContainerHigh: #E5DED1;
+  --c-surfaceContainerHighest: #E2DACC;
+  --c-onSurface: #241F19;
+  --c-onSurfaceVariant: #5F5649;
+  --c-outline: #7F7462;
+  --c-outlineVariant: #D4CAB9;
+  --c-primary: #9C452B;
+  --c-onPrimary: #FFFFFF;
+  --c-primaryContainer: #F7DCCF;
+  --c-onPrimaryContainer: #5C2514;
+  --c-secondaryContainer: #E9DDCB;
+  --c-onSecondaryContainer: #3B2F22;
+  --c-error: #B3261E;
+  --c-onError: #FFFFFF;
+  --c-errorContainer: #F9DEDC;
+  --c-onErrorContainer: #410E0B;
+  --c-inverseSurface: #2F2A24;
+  --c-inverseOnSurface: #F3F0E9;
+  --c-inversePrimary: #E39A74;
+  --c-ratingStar: #9A6B12;
+  --c-scrim: rgba(0, 0, 0, 0.5);
+  --c-mediaScrim: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+  --c-onMedia: #FFFFFF;
+  --c-focusRing: #9C452B;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-surface: #1B1916;
+    --c-surfaceContainerLowest: #151310;
+    --c-surfaceContainerLow: #211E1A;
+    --c-surfaceContainer: #25221E;
+    --c-surfaceContainerHigh: #2F2B26;
+    --c-surfaceContainerHighest: #3A352F;
+    --c-onSurface: #EDE7DB;
+    --c-onSurfaceVariant: #BDB3A2;
+    --c-outline: #958A78;
+    --c-outlineVariant: #48413A;
+    --c-primary: #E39A74;
+    --c-onPrimary: #2B160C;
+    --c-primaryContainer: #7A3520;
+    --c-onPrimaryContainer: #FFDBCD;
+    --c-secondaryContainer: #4A4034;
+    --c-onSecondaryContainer: #F2E4D1;
+    --c-error: #F28B7D;
+    --c-onError: #4D0E07;
+    --c-errorContainer: #8C1D18;
+    --c-onErrorContainer: #FFDAD6;
+    --c-inverseSurface: #EDE7DB;
+    --c-inverseOnSurface: #2F2A24;
+    --c-inversePrimary: #9C452B;
+    --c-ratingStar: #E6B450;
+    --c-scrim: rgba(0, 0, 0, 0.6);
+    --c-mediaScrim: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+    --c-onMedia: #FFFFFF;
+    --c-focusRing: #E39A74;
+  }
+}
