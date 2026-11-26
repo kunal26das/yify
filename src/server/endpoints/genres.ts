@@ -1,6 +1,6 @@
 import {queryParams} from '@/server/http/params';
 import {KB, withApi} from '@/server/http/respond';
-import {fixtureGenres} from '@/server/fixtures/reference';
+import {fixtureGenres} from '@/server/fixtures/genres';
 
 export const genresRoute = withApi('genres', {deadlineMs: 12_000, maxBytes: 8 * KB}, async ({url}) => {
   queryParams(url, []);

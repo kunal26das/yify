@@ -73,19 +73,32 @@ test('a successful home fetch saves a snapshot that later seeds the query, keepi
   client.clear();
 });
 
-test('genres and regions share one reference snapshot', async () => {
-  const {options} = load();
-  serve((url) => (url.pathname.endsWith('/genres')
+test('genres and regions share one reference snapshot that never looks fresher than its older list', async () => {
+  const {store, options} = load();
+  const calls = serve((url) => (url.pathname.endsWith('/genres')
     ? {v: 2, genres: [{id: 28, name: 'Action', types: ['movie']}]}
     : {v: 2, regions: [{code: 'IN', name: 'India'}]}));
-  const client = new QueryClient();
+  const seed = (snapshot) => store.data.set('v2.cache.reference', JSON.stringify({v: 1, d: snapshot}));
+  const action = [{id: 28, name: 'Action', types: ['movie']}];
+  const started = Date.now();
   assert.equal(options.genresQueryOptions().initialData(), undefined);
-  await client.fetchQuery(options.genresQueryOptions());
-  await client.fetchQuery(options.regionsQueryOptions());
-  const snapshot = options.readReferenceSnapshot();
-  assert.deepEqual(snapshot.genres, [{id: 28, name: 'Action', types: ['movie']}]);
-  assert.deepEqual(snapshot.regions, [{code: 'IN', name: 'India'}]);
+  await new QueryClient().fetchQuery(options.genresQueryOptions());
+  assert.ok(options.readReferenceSnapshot().savedAt >= started);
+  seed({savedAt: 1_000, genres: [{id: 12, name: 'Adventure', types: ['movie']}], regions: []});
+  await new QueryClient().fetchQuery(options.genresQueryOptions());
+  assert.ok(options.readReferenceSnapshot().savedAt >= started);
+  seed({savedAt: 1_000, genres: [], regions: [{code: 'GB', name: 'United Kingdom'}]});
+  await new QueryClient().fetchQuery(options.genresQueryOptions());
+  assert.deepEqual(options.readReferenceSnapshot(), {savedAt: 1_000, genres: action, regions: [{code: 'GB', name: 'United Kingdom'}]});
+  assert.equal(options.regionsQueryOptions().initialDataUpdatedAt(), 1_000);
+  const client = new QueryClient();
+  assert.deepEqual(await client.fetchQuery(options.regionsQueryOptions()), [{code: 'IN', name: 'India'}]);
+  assert.deepEqual(calls.map((url) => url.pathname), ['/api/v2/genres', '/api/v2/genres', '/api/v2/genres', '/api/v2/regions']);
+  assert.deepEqual(options.readReferenceSnapshot(), {savedAt: 1_000, genres: action, regions: [{code: 'IN', name: 'India'}]});
   assert.deepEqual(options.regionsQueryOptions().initialData(), [{code: 'IN', name: 'India'}]);
+  seed({savedAt: Date.now() + 86_400_000, genres: [], regions: [{code: 'IN', name: 'India'}]});
+  await new QueryClient().fetchQuery(options.genresQueryOptions());
+  assert.ok(options.readReferenceSnapshot().savedAt <= Date.now());
   client.clear();
 });
 

@@ -39,7 +39,7 @@ export type AnalyticsEvent =
   | {name: 'ad_skipped'; params: {reason: AdSkipReasonParam}}
   | {name: 'insights_view'; params: {plus: Flag; period: 'month' | 'year'}}
   | {name: 'setting_change'; params: {setting: SettingName; value: string}}
-  | {name: 'app_update'; params: {type: 'flexible' | 'immediate'; result: 'started' | 'declined' | 'installed' | 'failed'}}
+  | {name: 'store_update'; params: {type: 'flexible' | 'immediate'; result: 'started' | 'declined' | 'installed' | 'failed'}}
   | {name: 'library_migration'; params: {resolved: number; unresolved: number; result: 'ok' | 'partial' | 'failed'}};
 
 export type AnalyticsEventName = AnalyticsEvent['name'];
@@ -47,7 +47,7 @@ export type AnalyticsEventName = AnalyticsEvent['name'];
 export const ANALYTICS_EVENT_NAMES: readonly AnalyticsEventName[] = [
   'screen_view', 'select_content', 'search', 'trailer_start', 'watchlist_add', 'watchlist_remove', 'watched_add', 'list_create',
   'list_item_add', 'watch_provider_open', 'share', 'login', 'sign_up', 'paywall_view', 'purchase_start', 'purchase_result',
-  'restore_result', 'play_store_open', 'ad_shown', 'ad_skipped', 'insights_view', 'setting_change', 'app_update', 'library_migration',
+  'restore_result', 'play_store_open', 'ad_shown', 'ad_skipped', 'insights_view', 'setting_change', 'store_update', 'library_migration',
 ];
 
 export function contentId(type: ContentType, id: number): ContentId {

@@ -1,6 +1,6 @@
 import {queryParams, regionParam} from '@/server/http/params';
 import {KB, withApi} from '@/server/http/respond';
-import {fixtureProviders} from '@/server/fixtures/reference';
+import {fixtureProviders} from '@/server/fixtures/providers';
 
 export const providersRoute = withApi('providers', {deadlineMs: 12_000, maxBytes: 80 * KB}, async ({url}) => {
   const query = queryParams(url, ['region']);

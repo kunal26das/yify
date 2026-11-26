@@ -1,6 +1,6 @@
 import {pageParam, queryParams, searchQueryParam, searchTypeParam} from '@/server/http/params';
 import {KB, withApi} from '@/server/http/respond';
-import {fixtureSearch} from '@/server/fixtures/lists';
+import {fixtureSearch} from '@/server/fixtures/search';
 
 export const searchRoute = withApi('search', {deadlineMs: 12_000, maxBytes: 60 * KB}, async ({url}) => {
   const query = queryParams(url, ['q', 'type', 'page']);

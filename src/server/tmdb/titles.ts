@@ -3,7 +3,8 @@ import type {PersonDetails, PersonSummary} from '@/core/domain/person';
 import type {RegionCode} from '@/core/domain/providers';
 import type {Paged} from '@/core/domain/search';
 import type {MovieDetails, TitleSummary, TvDetails} from '@/core/domain/title';
-import {fixtureDiscoverPage, fixturePopularPeople} from '@/server/fixtures/lists';
+import {fixtureDiscoverPage} from '@/server/fixtures/discover';
+import {fixturePopularPeople} from '@/server/fixtures/people';
 import {fixtureMovie, fixturePerson, fixtureTv} from '@/server/fixtures/titles';
 
 export async function getMovie(id: number, region: RegionCode | null, signal: AbortSignal): Promise<MovieDetails | null> {

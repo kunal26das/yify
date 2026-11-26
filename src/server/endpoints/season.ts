@@ -1,6 +1,6 @@
 import {idParam, notFound, queryParams, seasonParam} from '@/server/http/params';
 import {KB, withApi} from '@/server/http/respond';
-import {fixtureSeason} from '@/server/fixtures/titles';
+import {fixtureSeason} from '@/server/fixtures/seasons';
 
 export const seasonRoute = withApi('season', {deadlineMs: 12_000, maxBytes: 300 * KB}, async ({url, params}) => {
   queryParams(url, []);

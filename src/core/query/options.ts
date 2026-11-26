@@ -88,10 +88,13 @@ export function readReferenceSnapshot(): ReferenceCache | null {
 
 function writeReferenceSnapshot(patch: {genres?: Genre[]; regions?: Region[]}, now: number = Date.now()): void {
   const current = readReferenceSnapshot();
+  const genres = patch.genres ?? current?.genres ?? [];
+  const regions = patch.regions ?? current?.regions ?? [];
+  const keepsOlderList = (patch.genres === undefined && genres.length > 0) || (patch.regions === undefined && regions.length > 0);
   const next: ReferenceCache = {
-    savedAt: now,
-    genres: patch.genres ?? current?.genres ?? [],
-    regions: patch.regions ?? current?.regions ?? [],
+    savedAt: current !== null && keepsOlderList ? Math.min(current.savedAt, now) : now,
+    genres,
+    regions,
   };
   attempt(() => writeValue(kv, KEYS.referenceCache, CODECS.referenceCache, next));
 }
