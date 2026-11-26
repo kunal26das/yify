@@ -58,3 +58,39 @@ test('person cards link to the person page and name the role', () => {
   const [card] = findByProp(view.root, 'aria-label', 'Keanu Reeves, Neo');
   assert.equal(card.props.href, '/person/6384-keanu-reeves');
 });
+
+function flat(style) {
+  return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
+}
+
+test('web rails pad with the CSS clamp gutter at every width, so server HTML and hydration agree', () => {
+  const clamp = 'clamp(16px, 2.5vw, 32px)';
+  for (const width of [390, 700, 1280]) {
+    const kit = createKit({web: true});
+    kit.rn.setWindowDimensions({width});
+    const {Rail} = kit.load('src/core/ui/components/Rail.tsx');
+    const ready = render(React.createElement(Rail, {title: 'Popular', items: MEDIA, status: 'ready', surface: 'home', seeAll: {href: '/search?sort=popular'}}));
+    const list = flat(hosts(ready.root, 'FlatList')[0].props.contentContainerStyle);
+    assert.equal(list.paddingLeft, clamp, `${width}`);
+    assert.equal(list.paddingRight, clamp, `${width}`);
+    const [region] = findByProp(ready.root, 'role', 'region');
+    const header = flat(region.props.children[0].props.style);
+    assert.equal(header.paddingLeft, clamp);
+    assert.equal(header.paddingRight, `calc(${clamp} - 8px)`);
+    const loading = render(React.createElement(Rail, {title: 'Popular', items: [], status: 'loading', surface: 'home'}));
+    assert.equal(flat(findByProp(loading.root, 'aria-busy', true)[0].props.style).paddingLeft, clamp);
+  }
+  const {railGutter} = createKit({web: true}).load('src/core/ui/components/Rail.tsx');
+  assert.deepEqual(railGutter(16), {paddingLeft: clamp, paddingRight: clamp});
+});
+
+test('Android rails pad with the window class gutter', () => {
+  const kit = createKit();
+  kit.rn.setWindowDimensions({width: 1280});
+  const {Rail, railGutter} = kit.load('src/core/ui/components/Rail.tsx');
+  const view = render(React.createElement(Rail, {title: 'Popular', items: MEDIA, status: 'ready', surface: 'home'}));
+  const list = flat(hosts(view.root, 'FlatList')[0].props.contentContainerStyle);
+  assert.equal(list.paddingLeft, 32);
+  assert.equal(list.paddingRight, 32);
+  assert.deepEqual(railGutter(16, 8), {paddingLeft: 16, paddingRight: 8});
+});

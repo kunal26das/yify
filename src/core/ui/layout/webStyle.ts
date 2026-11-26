@@ -12,6 +12,8 @@ export interface WebOnlyStyle {
   scrollSnapType?: string;
 }
 
+export const WEB_GUTTER = 'clamp(16px, 2.5vw, 32px)';
+
 export function webStyle(style: WebOnlyStyle): ViewStyle {
   return style as unknown as ViewStyle;
 }

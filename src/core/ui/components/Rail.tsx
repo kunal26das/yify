@@ -3,12 +3,13 @@ import type {Provider} from '@/core/domain/providers';
 import type {MediaCardItem} from '@/core/navigation/hrefs';
 import {personHref} from '@/core/navigation/hrefs';
 import {useId, useRef, useState} from 'react';
-import type {FlatListProps, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent} from 'react-native';
+import type {FlatListProps, LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ViewStyle} from 'react-native';
 import {FlatList, StyleSheet, View} from 'react-native';
 import {IS_WEB} from '../environment';
 import {useImageHostMode} from '../imageHost';
 import {imageUrl} from '../images';
 import {useWindowClass} from '../layout/useWindowClass';
+import {WEB_GUTTER, webStyle} from '../layout/webStyle';
 import {useTheme} from '../theme/useTheme';
 import {Artwork} from './Artwork';
 import {Avatar} from './Avatar';
@@ -52,6 +53,11 @@ export const SCROLL_STEP = 0.8;
 const WEB_CARD_WIDTH = 'clamp(112px, 12vw, 168px)';
 const PERSON = {width: 96, avatar: 72} as const;
 const STILL = {width: 240, height: 135} as const;
+
+export function railGutter(gutter: number, endInset = 0): ViewStyle {
+  if (!IS_WEB) return {paddingLeft: gutter, paddingRight: gutter - endInset};
+  return webStyle({paddingLeft: WEB_GUTTER, paddingRight: endInset > 0 ? `calc(${WEB_GUTTER} - ${endInset}px)` : WEB_GUTTER});
+}
 
 export function railItemKey(item: RailItem): string {
   if (item.kind === 'media') return itemKey(item.media);
@@ -99,7 +105,7 @@ export function Rail({title, subtitle, variant = 'poster', items, status, onRetr
   const [offset, setOffset] = useState(0);
   const [viewport, setViewport] = useState(0);
   const cardWidth: number | string = IS_WEB ? WEB_CARD_WIDTH : theme.layout.railPosterWidth[windowClass];
-  const gutter = theme.layout.gutter[windowClass];
+  const gutter = railGutter(theme.layout.gutter[windowClass]);
 
   if (status === 'ready' && items.length === 0 && emptyText === undefined) return null;
 
@@ -139,7 +145,7 @@ export function Rail({title, subtitle, variant = 'poster', items, status, onRetr
   let content;
   if (status === 'loading' && items.length === 0) {
     content = (
-      <View aria-busy style={[styles.row, {gap: theme.space.md, paddingHorizontal: gutter}]}>
+      <View aria-busy style={[styles.row, {gap: theme.space.md}, gutter]}>
         <VisuallyHidden>{`Loading ${title}`}</VisuallyHidden>
         {Array.from({length: RAIL_SKELETONS}, (_, index) => (
           <View key={index} style={{width: variant === 'still' ? STILL.width : variant === 'person' ? PERSON.width : (cardWidth as number), gap: theme.space.sm}}>
@@ -151,12 +157,16 @@ export function Rail({title, subtitle, variant = 'poster', items, status, onRetr
     );
   } else if (status === 'error' && items.length === 0) {
     content = (
-      <View style={{paddingHorizontal: gutter}}>
+      <View style={gutter}>
         <ErrorState size="inline" title={`Couldn't load ${title}.`} onRetry={onRetry ?? (() => undefined)}/>
       </View>
     );
   } else if (items.length === 0) {
-    content = <Text variant="bodyMedium" color="onSurfaceVariant" style={{paddingHorizontal: gutter}}>{emptyText}</Text>;
+    content = (
+      <View style={gutter}>
+        <Text variant="bodyMedium" color="onSurfaceVariant">{emptyText}</Text>
+      </View>
+    );
   } else {
     content = (
       <FlatList
@@ -169,7 +179,7 @@ export function Rail({title, subtitle, variant = 'poster', items, status, onRetr
         showsHorizontalScrollIndicator={false}
         initialNumToRender={6}
         windowSize={5}
-        contentContainerStyle={{gap: theme.space.md, paddingHorizontal: gutter}}
+        contentContainerStyle={[{gap: theme.space.md}, gutter]}
         onLayout={scrollable ? (event: LayoutChangeEvent) => setViewport(event.nativeEvent.layout.width) : undefined}
         onScroll={scrollable ? (event: NativeSyntheticEvent<NativeScrollEvent>) => setOffset(event.nativeEvent.contentOffset.x) : undefined}
         scrollEventThrottle={scrollable ? 64 : undefined}
@@ -179,7 +189,7 @@ export function Rail({title, subtitle, variant = 'poster', items, status, onRetr
 
   return (
     <View role="region" aria-labelledby={headerId} style={[styles.region, {gap: theme.space.sm}]}>
-      <View style={{paddingLeft: gutter, paddingRight: seeAll || arrows ? gutter - theme.space.sm : gutter}}>
+      <View style={railGutter(theme.layout.gutter[windowClass], seeAll || arrows ? theme.space.sm : 0)}>
         <SectionHeader
           title={title}
           subtitle={subtitle}

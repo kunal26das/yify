@@ -4,7 +4,7 @@ import type {ReactNode, Ref} from 'react';
 import {useEffect, useRef} from 'react';
 import type {FlatList, HostInstance, ScrollViewInstance} from 'react-native';
 import {ScrollView, StyleSheet, View} from 'react-native';
-import {webStyle} from '../layout/webStyle';
+import {WEB_GUTTER, webStyle} from '../layout/webStyle';
 import {useTheme} from '../theme/useTheme';
 import {Button} from './Button';
 import {ErrorState} from './ErrorState';
@@ -39,7 +39,7 @@ const GRID = webStyle({
   gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(100px, 13vw, 168px), 1fr))',
   gap: 'clamp(12px, 1.5vw, 16px)',
 });
-const GUTTER = webStyle({paddingLeft: 'clamp(16px, 2.5vw, 32px)', paddingRight: 'clamp(16px, 2.5vw, 32px)'});
+const GUTTER = webStyle({paddingLeft: WEB_GUTTER, paddingRight: WEB_GUTTER});
 const SENTINEL_MARGIN = '600px 0px';
 const SKELETON_CELLS = GRID_SKELETON_ROWS * 6;
 
