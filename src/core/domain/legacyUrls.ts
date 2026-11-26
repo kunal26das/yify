@@ -40,7 +40,7 @@ function first(value: string | string[] | undefined): string {
 }
 
 function legacyQuery(value: string): string {
-  return value.replace(CONTROL_CHARACTERS, '').trim().slice(0, MAX_QUERY_LENGTH).trim();
+  return Array.from(value.replace(CONTROL_CHARACTERS, '').trim()).slice(0, MAX_QUERY_LENGTH).join('').trim();
 }
 
 function legacyRating(value: string): number | null {

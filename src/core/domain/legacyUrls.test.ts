@@ -32,6 +32,9 @@ test('minimum ratings round down to half stars and drop invalid values', () => {
 test('array parameters use their first value and queries are cleaned', () => {
   assert.equal(legacyMoviesToSearch({query: ['first', 'second']}).q, 'first');
   assert.equal(legacyMoviesToSearch({query: `a\u0000b${'c'.repeat(200)}`}).q.length, 100);
+  const emoji = legacyMoviesToSearch({query: `${'a'.repeat(99)}\u{1F600}tail`}).q;
+  assert.equal(emoji, `${'a'.repeat(99)}\u{1F600}`);
+  assert.doesNotThrow(() => searchPath(legacyMoviesToSearch({query: `${'a'.repeat(99)}\u{1F600}`})));
   assert.equal(legacyMoviesToSearch({}).q, '');
   assert.equal(searchPath(legacyMoviesToSearch({})), '/search?type=movie');
 });

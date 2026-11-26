@@ -71,3 +71,14 @@ Some scripts land with later parts: `check:web` (F0-D), `build:icons` and `build
 - **Porting** means reading the v1 file with `git show v1-baseline:<path>` and re-creating the logic in the v2 file.
 - **Definition of done.** `yarn check:pins`, `yarn typecheck`, `yarn lint`, `yarn test` and, for web-visible changes, `yarn export:web && yarn check:web` pass in the worktree; the stream's acceptance criteria are demonstrated in the pull request; checks that need a later stream, a deployment or a Play-installed build are listed under "Deferred checks" with the W-I or Part Q step that runs them; no F0 placeholder text remains in the stream's own files.
 - **Delivery.** No merge to `main`, deploy, store submission or console change without the owner.
+- **EAS only through `scripts/eas.sh`** (or the `yarn eas` scripts that call it); never invoke `eas` directly.
+- **Render, don't trust the export.** A successful `expo export` does not prove the page renders: load the build in a browser before calling web work done.
+
+## Task completion
+
+Cleanup is part of finishing every part and stream:
+
+- Reuse a suitable existing checkout. After a pull request merges or is intentionally closed, stop task-owned helpers (dev servers, emulators) and remove the temporary worktree.
+- Inspect tracked, untracked and needed ignored files before removal; preserve unfinished work, credentials and release evidence. Never force-remove a dirty worktree or discard unrelated changes to clean up.
+- Delete the merged local and remote branch, then prune stale remote references. Keep `main`, `redesign/v2`, open pull request branches and the retained `release/*` update-source branches.
+- Report anything deliberately kept and why.
