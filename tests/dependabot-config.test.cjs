@@ -18,14 +18,14 @@ function groupFor(entry, name, update, kind = 'version-updates') {
     !(group['exclude-patterns'] ?? []).some((pattern) => matches(pattern, name)))?.[0];
 }
 
-test('Dependabot checks every installed workspace and Actions daily without suppressing updates', () => {
+test('Dependabot checks every installed workspace and Actions monthly without suppressing updates', () => {
   assert.deepEqual(config.updates.map((entry) => `${entry['package-ecosystem']}:${entry.directory}`).sort(),
     ['github-actions:/', 'npm:/', 'npm:/release']);
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
   assert.ok(pkg.workspaces.includes('crashreporting'));
   assert.ok(pkg.workspaces.includes('tooling'));
   for (const entry of config.updates) {
-    assert.equal(entry.schedule.interval, 'daily');
+    assert.equal(entry.schedule.interval, 'monthly');
     assert.equal(entry.schedule.timezone, 'Asia/Kolkata');
     assert.ok(entry['open-pull-requests-limit'] >= 10);
     assert.equal(entry.ignore, undefined);
@@ -48,7 +48,7 @@ test('coupled dependencies stay together for patch, minor and major proposals', 
       const groups = names.map((name) => groupFor(app, name, level));
       assert.ok(groups[0], `${names[0]} ${level} needs a coordinated group`);
       assert.equal(new Set(groups).size, 1, `${names.join(', ')} must update together`);
-      assert.ok(!['app-patches', 'app-minors'].includes(groups[0]));
+      assert.notEqual(groups[0], 'everything-else');
     }
   }
   assert.notEqual(groupFor(app, 'expo-in-app-updates', 'major'), groupFor(app, 'expo', 'major'));
@@ -59,12 +59,49 @@ test('reviewed compatibility exceptions cannot block the unrelated patch group',
   const policy = JSON.parse(readFileSync(join(root, 'scripts/expo-dependency-policy.json'), 'utf8'));
   assert.ok(Object.keys(policy.packages).length > 0);
   for (const name of Object.keys(policy.packages)) {
-    assert.notEqual(groupFor(app, name, 'patch'), 'app-patches', name);
+    assert.notEqual(groupFor(app, name, 'patch'), 'everything-else', name);
   }
-  assert.equal(groupFor(app, 'jose', 'patch'), 'app-patches');
-  assert.equal(groupFor(app, 'jose', 'minor'), 'app-minors');
+  assert.equal(groupFor(app, 'jose', 'patch'), 'everything-else');
+  assert.equal(groupFor(app, 'jose', 'minor'), 'everything-else');
   assert.equal(groupFor(app, 'jose', 'major'), undefined);
-  assert.equal(groupFor(release, 'react', 'patch'), groupFor(release, 'ink', 'patch'));
+  for (const level of ['patch', 'minor', 'major']) {
+    assert.ok(groupFor(release, 'react', level), `release react ${level} needs a group`);
+    assert.equal(groupFor(release, 'react', level), groupFor(release, 'ink', level));
+  }
+});
+
+test('every application dependency takes its intended group for major updates', () => {
+  const intended = new Map([
+    ['expo-sdk', ['@expo/log-box', '@expo/metro-runtime', '@expo/ui', '@expo/vector-icons', '@react-native/js-polyfills',
+      '@react-native/metro-config', '@types/react', 'eslint-config-expo', 'expo', 'expo-background-task', 'expo-blur',
+      'expo-build-properties', 'expo-constants', 'expo-dev-client', 'expo-font', 'expo-glass-effect', 'expo-haptics',
+      'expo-image', 'expo-insights', 'expo-keep-awake', 'expo-linking', 'expo-localization', 'expo-location',
+      'expo-navigation-bar', 'expo-network', 'expo-notifications', 'expo-router', 'expo-splash-screen', 'expo-sqlite',
+      'expo-status-bar', 'expo-store-review', 'expo-symbols', 'expo-system-ui', 'expo-task-manager', 'expo-updates',
+      'expo-web-browser', 'react', 'react-dom', 'react-native', 'react-native-gesture-handler', 'react-native-reanimated',
+      'react-native-safe-area-context', 'react-native-screens', 'react-native-web', 'react-native-webview',
+      'react-native-worklets', 'react-test-renderer']],
+    ['native-sdks', ['@gorhom/bottom-sheet', '@react-native-firebase/analytics', '@react-native-firebase/app',
+      '@react-native-firebase/auth', '@react-native-firebase/crashlytics', '@react-native-firebase/remote-config',
+      '@react-native-google-signin/google-signin', '@revenuecat/purchases-js', '@sentry/react-native',
+      'expo-device-corner-radius', 'expo-in-app-updates', 'firebase', 'react-native-google-mobile-ads',
+      'react-native-purchases', 'react-native-web-webview', 'react-native-youtube-iframe']],
+    ['tooling', ['@babel/core', '@babel/plugin-transform-dynamic-import', '@babel/plugin-transform-modules-commonjs',
+      '@babel/preset-react', '@babel/preset-typescript', '@eslint/compat', 'electron', 'electron-builder', 'eslint',
+      'eslint-import-resolver-typescript', 'expo-doctor', 'typescript']],
+    [undefined, ['@expo-google-fonts/hanken-grotesk', '@expo-google-fonts/lora', '@xmldom/xmldom', '@yify/crashreporting',
+      'error-stack-parser', 'jose']],
+  ]);
+  const expected = new Map([...intended].flatMap(([group, names]) => names.map((name) => [name, group])));
+  assert.equal(expected.size, [...intended.values()].flat().length, 'each dependency needs exactly one intended group');
+  const manifests = ['package.json', 'crashreporting/package.json', 'tooling/package.json']
+    .map((file) => JSON.parse(readFileSync(join(root, file), 'utf8')));
+  const installed = [...new Set(manifests.flatMap((manifest) =>
+    Object.entries({ ...manifest.dependencies, ...manifest.devDependencies, ...manifest.optionalDependencies })
+      .filter(([, version]) => !version.startsWith('npm:'))
+      .map(([name]) => name)))].sort();
+  assert.deepEqual(installed, [...expected.keys()].sort());
+  for (const name of installed) assert.equal(groupFor(app, name, 'major'), expected.get(name), name);
 });
 
 test('security groups cover every ecosystem independently of normal update levels', () => {
