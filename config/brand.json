@@ -143,26 +143,6 @@
         "inversePrimary": "#0F131A",
         "focusRing": "#EEF1F6"
       }
-    },
-    {
-      "id": "accent4",
-      "name": "Iris",
-      "light": {
-        "primary": "#0F131A",
-        "onPrimary": "#90B0FF",
-        "primaryContainer": "#90B0FF",
-        "onPrimaryContainer": "#0F131A",
-        "inversePrimary": "#90B0FF",
-        "focusRing": "#0F131A"
-      },
-      "dark": {
-        "primary": "#90B0FF",
-        "onPrimary": "#0B0D13",
-        "primaryContainer": "#90B0FF",
-        "onPrimaryContainer": "#0B0D13",
-        "inversePrimary": "#0F131A",
-        "focusRing": "#EEF1F6"
-      }
     }
   ],
   "fonts": {
