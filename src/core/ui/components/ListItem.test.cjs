@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {React, createKit, findByProp, hosts, press, render, spy, texts} = require('../testing/kit.cjs');
+const {React, act, createKit, findByProp, hosts, press, render, spy, texts} = require('../testing/kit.cjs');
 
 function flat(style) {
   return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
@@ -46,4 +46,36 @@ test('a trailing icon button is a separate control beside the row, and destructi
   assert.equal(flat(headline.props.style).color, '#FF97A6');
   const plain = render(React.createElement(ListItem, {headline: 'Version', trailing: {kind: 'text', text: '2.0.0'}}));
   assert.equal(hosts(plain.root, 'Pressable').length, 0);
+});
+
+test('on web Space toggles switch and check rows, and Space on a plain row is left to the browser', () => {
+  const kit = createKit({web: true});
+  const {ListItem} = kit.load('src/core/ui/components/ListItem.tsx');
+  const element = {};
+  const key = (node, type) => {
+    const event = {nativeEvent: {key: ' '}, target: element, currentTarget: element, preventDefault: spy()};
+    act(() => node.props[type](event));
+    return event;
+  };
+  function Setting() {
+    const [value, setValue] = React.useState(false);
+    return React.createElement(ListItem, {headline: 'Trailer captions', trailing: {kind: 'switch', value, onValueChange: setValue}});
+  }
+  const view = render(React.createElement(Setting));
+  const row = () => hosts(view.root, 'Pressable')[0];
+  assert.equal(row().props.role, 'switch');
+  assert.equal(key(row(), 'onKeyDown').preventDefault.calls.length, 1);
+  key(row(), 'onKeyUp');
+  assert.equal(row().props['aria-checked'], true);
+  key(row(), 'onKeyDown');
+  key(row(), 'onKeyUp');
+  assert.equal(row().props['aria-checked'], false);
+  const onPress = spy();
+  const check = hosts(render(React.createElement(ListItem, {headline: 'Favourites', trailing: {kind: 'check', checked: false}, onPress})).root, 'Pressable')[0];
+  key(check, 'onKeyDown');
+  key(check, 'onKeyUp');
+  assert.equal(onPress.calls.length, 1);
+  const plain = hosts(render(React.createElement(ListItem, {headline: 'Country', trailing: {kind: 'chevron'}, href: '/settings/region'})).root, 'Pressable')[0];
+  assert.equal(plain.props.role, 'link');
+  assert.equal(plain.props.onKeyDown, undefined);
 });

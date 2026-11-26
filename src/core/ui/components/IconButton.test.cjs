@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {React, createKit, hosts, press, render, spy} = require('../testing/kit.cjs');
+const {React, createKit, hosts, press, render, spy, touchableStyle} = require('../testing/kit.cjs');
 
 function flat(style) {
   return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
@@ -15,7 +15,7 @@ test('the label is the accessible name and the target reaches 48 dp', () => {
   assert.equal(pressable.props['aria-label'], 'Share');
   assert.equal(pressable.props.role, 'button');
   assert.equal(pressable.props.hitSlop, 4);
-  const style = flat(pressable.props.style);
+  const style = touchableStyle(pressable);
   assert.equal(style.width, 40);
   assert.equal(style.height, 40);
   press(pressable);

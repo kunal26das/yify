@@ -1,7 +1,7 @@
 import {useRouter} from 'expo-router';
 import type {ReactNode, Ref} from 'react';
-import {useState} from 'react';
-import type {GestureResponderEvent, HostInstance, NativeSyntheticEvent, PressableProps, StyleProp, TargetedEvent, ViewStyle} from 'react-native';
+import {useRef, useState} from 'react';
+import type {GestureResponderEvent, HostInstance, KeyDownEvent, KeyUpEvent, NativeSyntheticEvent, PressableProps, StyleProp, TargetedEvent, ViewStyle} from 'react-native';
 import {Pressable, StyleSheet, View} from 'react-native';
 import {IS_WEB} from '../environment';
 import {layerOpacity, rippleColor} from '../theme/stateLayer';
@@ -28,11 +28,59 @@ interface PointerLikeEvent {
   preventDefault?: () => void;
 }
 
+interface KeyLikeEvent {
+  key?: string;
+  nativeEvent?: {key?: string};
+  target?: unknown;
+  currentTarget?: unknown;
+}
+
+const SPACE_ROLES: ReadonlySet<string> = new Set(['checkbox', 'switch', 'radio']);
+const EXTERNAL_HREF = /^[a-z][a-z\d+.-]*:/i;
+const EXTERNAL_ATTRS = {target: '_blank', rel: 'noopener noreferrer'} as const;
+const PLACEMENT_KEYS: ReadonlySet<string> = new Set([
+  'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical', 'marginStart', 'marginEnd',
+  'marginBlock', 'marginBlockStart', 'marginBlockEnd', 'marginInline', 'marginInlineStart', 'marginInlineEnd',
+  'position', 'top', 'bottom', 'left', 'right', 'start', 'end',
+  'inset', 'insetBlock', 'insetBlockStart', 'insetBlockEnd', 'insetInline', 'insetInlineStart', 'insetInlineEnd',
+  'flex', 'flexGrow', 'flexShrink', 'flexBasis', 'alignSelf',
+  'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight', 'aspectRatio',
+  'zIndex', 'transform', 'transformOrigin', 'display',
+]);
+const RADIUS_KEY = /^border(?:(?:Top|Bottom)(?:Left|Right|Start|End)|(?:Start|End)(?:Start|End))?Radius$/;
+
 export function isPlainActivation(event: unknown): boolean {
   const pointer = (event ?? {}) as PointerLikeEvent;
   const modified = pointer.metaKey === true || pointer.altKey === true || pointer.ctrlKey === true || pointer.shiftKey === true;
   const leftButton = pointer.button === undefined || pointer.button === 0;
   return !modified && leftButton;
+}
+
+export function isExternalHref(href: string): boolean {
+  return EXTERNAL_HREF.test(href);
+}
+
+export function splitClipStyle(style: StyleProp<ViewStyle>, radius: number): {clip: ViewStyle; content: ViewStyle} {
+  const clip: Record<string, unknown> = {borderRadius: radius, overflow: 'hidden', pointerEvents: 'box-none'};
+  const content: Record<string, unknown> = {borderRadius: radius};
+  for (const [key, value] of Object.entries(StyleSheet.flatten(style) ?? {})) {
+    if (RADIUS_KEY.test(key)) {
+      clip[key] = value;
+      content[key] = value;
+    } else if (PLACEMENT_KEYS.has(key)) {
+      clip[key] = value;
+    } else {
+      content[key] = value;
+    }
+  }
+  content.flexGrow = 1;
+  return {clip: clip as ViewStyle, content: content as ViewStyle};
+}
+
+function isOwnSpace(event: unknown): boolean {
+  const keyboard = (event ?? {}) as KeyLikeEvent;
+  const key = keyboard.nativeEvent?.key ?? keyboard.key;
+  return (key === ' ' || key === 'Spacebar') && keyboard.target === keyboard.currentTarget;
 }
 
 export function Touchable({
@@ -57,24 +105,28 @@ export function Touchable({
   const router = useRouter();
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const spaceDown = useRef(false);
   const inactive = disabled === true;
   const content = theme.colors[contentColor];
   const radius = theme.shape[shape];
   const link = IS_WEB && href !== undefined;
+  const external = href !== undefined && isExternalHref(href);
+  const spaceToggles = IS_WEB && role !== undefined && SPACE_ROLES.has(role);
 
   const handlePress = (event: GestureResponderEvent) => {
     if (link) {
       if (!isPlainActivation(event)) return;
-      (event as unknown as PointerLikeEvent).preventDefault?.();
+      if (!external) (event as unknown as PointerLikeEvent).preventDefault?.();
     }
     if (onPress) onPress();
-    else if (href !== undefined) router.push(href);
+    else if (href !== undefined && !(link && external)) router.push(href);
   };
   const handleFocus = (event: NativeSyntheticEvent<TargetedEvent>) => {
     if (!IS_WEB) setFocused(true);
     onFocus?.(event);
   };
   const handleBlur = (event: NativeSyntheticEvent<TargetedEvent>) => {
+    spaceDown.current = false;
     if (!IS_WEB) setFocused(false);
     onBlur?.(event);
   };
@@ -86,17 +138,39 @@ export function Touchable({
     if (!IS_WEB) setHovered(false);
     onHoverOut?.(event);
   };
+  const keyboard = spaceToggles ? {
+    onKeyDown: (event: KeyDownEvent) => {
+      if (isOwnSpace(event)) {
+        event.preventDefault();
+        spaceDown.current = !inactive;
+      }
+      rest.onKeyDown?.(event);
+    },
+    onKeyUp: (event: KeyUpEvent) => {
+      if (isOwnSpace(event) && spaceDown.current) {
+        spaceDown.current = false;
+        if (!inactive) handlePress(event as unknown as GestureResponderEvent);
+      }
+      rest.onKeyUp?.(event);
+    },
+  } : {};
 
-  const anchor = link && !inactive ? {href} : {};
+  const anchor = link && !inactive ? (external ? {href, hrefAttrs: EXTERNAL_ATTRS} : {href}) : {};
   const layer = IS_WEB ? null : {opacity: inactive ? 0 : layerOpacity({hovered, focused})};
   const ring = !IS_WEB && focused
     ? {outlineWidth: 2, outlineStyle: 'solid' as const, outlineOffset: 2, outlineColor: theme.colors.focusRing}
     : null;
+  const flat = StyleSheet.flatten(style);
+  const corner = typeof flat?.borderRadius === 'number' ? flat.borderRadius : radius;
+  const clipped = !IS_WEB && ripple === 'bounded' && corner > 0 ? splitClipStyle(style, radius) : null;
+  const {onLayout, ...pressableRest} = rest;
 
-  return (
+  const pressable = (
     <Pressable
-      {...rest}
+      {...pressableRest}
       {...anchor}
+      {...keyboard}
+      onLayout={clipped ? undefined : onLayout}
       ref={ref}
       role={role ?? (rest.accessibilityRole === undefined ? (link ? 'link' : 'button') : undefined)}
       disabled={inactive}
@@ -108,13 +182,19 @@ export function Touchable({
       onHoverOut={handleHoverOut}
       android_ripple={ripple === 'none' || inactive ? undefined : {color: rippleColor(content), borderless: ripple === 'borderless', foreground: true}}
       dataSet={IS_WEB && rest.hitSlop !== undefined ? {...dataSet, focusable: '', hitSlop: ''} : {...dataSet, focusable: ''}}
-      style={[{borderRadius: radius}, ring, style]}
+      style={clipped ? clipped.content : [{borderRadius: radius}, ring, style]}
     >
       <View
         dataSet={{stateLayer: ''}}
-        style={[StyleSheet.absoluteFill, {backgroundColor: content, borderRadius: radius, pointerEvents: 'none'}, layer]}
+        style={[StyleSheet.absoluteFill, {backgroundColor: content, borderRadius: corner, pointerEvents: 'none'}, layer]}
       />
       {children}
     </Pressable>
+  );
+  if (!clipped) return pressable;
+  return (
+    <View collapsable={false} hitSlop={rest.hitSlop} onLayout={onLayout} style={[clipped.clip, ring]}>
+      {pressable}
+    </View>
   );
 }

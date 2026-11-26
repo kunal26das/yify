@@ -167,4 +167,20 @@ function press(node, event) {
   });
 }
 
-module.exports = {React, act, createKit, findByProp, hosts, press, render, spy, texts};
+function flatStyle(style) {
+  return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
+}
+
+function clipOf(node) {
+  const parent = node.parent;
+  if (!parent || parent.type !== 'View') return null;
+  const style = flatStyle(parent.props.style);
+  return style.overflow === 'hidden' && style.pointerEvents === 'box-none' ? parent : null;
+}
+
+function touchableStyle(node) {
+  const clip = clipOf(node);
+  return clip ? {...flatStyle(node.props.style), ...flatStyle(clip.props.style)} : flatStyle(node.props.style);
+}
+
+module.exports = {React, act, clipOf, createKit, findByProp, flatStyle, hosts, press, render, spy, texts, touchableStyle};

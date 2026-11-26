@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {React, createKit, hosts, press, render, spy, texts} = require('../testing/kit.cjs');
+const {React, createKit, hosts, press, render, spy, texts, touchableStyle} = require('../testing/kit.cjs');
 
 function flat(style) {
   return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
@@ -13,7 +13,7 @@ test('variants map to their container and content roles', () => {
   assert.deepEqual(BUTTON_COLORS.outlined, {container: null, content: 'primary', border: 'outline'});
   const view = render(React.createElement(Button, {label: 'Play trailer', icon: 'play_arrow', size: 'large', onPress: spy()}));
   const [pressable] = hosts(view.root, 'Pressable');
-  const style = flat(pressable.props.style);
+  const style = touchableStyle(pressable);
   assert.equal(style.backgroundColor, '#C8F03C');
   assert.equal(style.minHeight, 48);
   assert.equal(style.borderRadius, 9999);
