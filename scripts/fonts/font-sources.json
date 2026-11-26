@@ -1,0 +1,9 @@
+{
+  "package": "@expo-google-fonts/archivo",
+  "version": "0.4.2",
+  "sha256": {
+    "./node_modules/@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf": "36ce8e83756505d014a7353ae332abc19740448fba9a67007b54923ed2899bfd",
+    "./node_modules/@expo-google-fonts/archivo/600SemiBold/Archivo_600SemiBold.ttf": "6e897cf60256b823bd1c69d62aab9c2950a5ad08ca4f4effd47cc911ce7b54c4",
+    "./node_modules/@expo-google-fonts/archivo/800ExtraBold/Archivo_800ExtraBold.ttf": "5c1ec76c6dfe0a41da6720bb0d26584cf59ee134aba61fa01e12736d2f2e94b8"
+  }
+}
