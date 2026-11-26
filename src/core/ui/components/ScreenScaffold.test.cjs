@@ -49,5 +49,6 @@ test('the offline banner appears two seconds after connectivity drops and is a s
   const [status] = findByProp(view.root, 'role', 'status');
   assert.deepEqual(texts(status), ["You're offline. Showing what's saved on this device."]);
   act(() => connectivity.setConnectivity(true));
-  assert.equal(findByProp(view.root, 'role', 'status').length, 0);
+  assert.deepEqual(findByProp(view.root, 'role', 'status'), [status]);
+  assert.deepEqual(texts(status), []);
 });

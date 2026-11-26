@@ -21,3 +21,16 @@ test('the inline error is one line of text with a text button', () => {
   assert.deepEqual(texts(view.root), ["Couldn't load more titles.", 'Try again']);
   assert.equal(findByProp(view.root, 'role', 'alert').length, 1);
 });
+
+test('on Android the error title is announced once, and on web the alert role announces it instead', () => {
+  const kit = createKit();
+  const {ErrorState} = kit.load('src/core/ui/components/ErrorState.tsx');
+  const view = render(React.createElement(ErrorState, {size: 'section', title: "Couldn't load Trending", onRetry: spy()}));
+  view.update(React.createElement(ErrorState, {size: 'section', title: "Couldn't load Trending", onRetry: spy()}));
+  assert.deepEqual(kit.rn.AccessibilityInfo.announceForAccessibility.calls, [["Couldn't load Trending"]]);
+  const web = createKit({web: true});
+  const {ErrorState: WebErrorState} = web.load('src/core/ui/components/ErrorState.tsx');
+  const page = render(React.createElement(WebErrorState, {onRetry: spy()}));
+  assert.equal(findByProp(page.root, 'role', 'alert').length, 1);
+  assert.equal(web.rn.AccessibilityInfo.announceForAccessibility.calls.length, 0);
+});

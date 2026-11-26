@@ -43,6 +43,7 @@ const OVERLAY_SOURCE = 'snackbar';
 const GAP_ABOVE_BAR = 8;
 const COMPACT_MAX_WIDTH = 560;
 const WIDE_MAX_WIDTH = 480;
+const ACTION_HIT_SLOP = {top: 4, bottom: 4};
 
 let nextId = 1;
 
@@ -149,7 +150,6 @@ function Snackbar({entry, leaving, screenReader}: {entry: SnackbarEntry; leaving
   const left = compact ? theme.space.lg : (IS_WEB && windowClass === 'expanded' ? 0 : theme.layout.navigationRailWidth) + theme.space.xl;
   const fade = useAnimatedStyle(() => ({opacity: opacity.get()}));
   const onLayout = (event: LayoutChangeEvent) => setOverlayHeight(OVERLAY_SOURCE, event.nativeEvent.layout.height + bottom);
-  const live = entry.tone === 'error' ? {role: 'alert' as const} : {role: 'status' as const, 'aria-live': 'polite' as const};
   const pause = {
     onFocus: () => setPaused(true),
     onBlur: () => setPaused(false),
@@ -160,7 +160,6 @@ function Snackbar({entry, leaving, screenReader}: {entry: SnackbarEntry; leaving
   return (
     <View style={[styles.anchor, {bottom, left, right: compact ? theme.space.lg : undefined, alignItems: compact ? 'center' : 'flex-start', pointerEvents: 'box-none'}]}>
       <Animated.View
-        {...live}
         {...pause}
         onLayout={onLayout}
         style={[
@@ -191,12 +190,21 @@ function Snackbar({entry, leaving, screenReader}: {entry: SnackbarEntry; leaving
             }}
             contentColor="inversePrimary"
             shape="full"
-            style={[styles.action, {paddingHorizontal: theme.space.md, minHeight: theme.layout.minTouchTarget - theme.space.sm}]}
+            hitSlop={ACTION_HIT_SLOP}
+            style={[styles.action, {paddingHorizontal: theme.space.md, minHeight: theme.layout.minTouchTarget - ACTION_HIT_SLOP.top - ACTION_HIT_SLOP.bottom}]}
           >
             <Text variant="labelLarge" color="inversePrimary">{entry.action.label}</Text>
           </Touchable>
         ) : null}
       </Animated.View>
+    </View>
+  );
+}
+
+function LiveRegion({role, entry}: {role: 'status' | 'alert'; entry: SnackbarEntry | null}) {
+  return (
+    <View role={role} aria-live={role === 'alert' ? 'assertive' : 'polite'} dataSet={{srOnly: ''}} style={styles.srOnly}>
+      {entry ? <Text key={entry.id} variant="bodySmall">{snackbarAnnouncement(entry)}</Text> : null}
     </View>
   );
 }
@@ -226,9 +234,12 @@ export function SnackbarHost({children}: {children: ReactNode}) {
     return () => clearTimeout(timer);
   }, [leaving, reduceMotion]);
 
+  const error = current?.tone === 'error';
   return (
     <>
       {children}
+      {IS_WEB ? <LiveRegion role="status" entry={error ? null : current}/> : null}
+      {IS_WEB ? <LiveRegion role="alert" entry={error ? current : null}/> : null}
       {shown === null ? null : <Snackbar key={shown.id} entry={shown} leaving={leaving} screenReader={screenReader}/>}
     </>
   );
@@ -239,4 +250,5 @@ const styles = StyleSheet.create({
   snackbar: {flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end'},
   message: {flexGrow: 1, flexShrink: 1, flexBasis: 200},
   action: {alignItems: 'center', justifyContent: 'center'},
+  srOnly: {position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0},
 });

@@ -29,7 +29,27 @@ test('an error is shown in the error colour, marks the input invalid and is anno
   assert.equal(flat(input.props.style).borderColor, '#FF97A6');
   assert.equal(flat(input.props.style).borderWidth, 2);
   assert.deepEqual(kit.rn.AccessibilityInfo.announceForAccessibility.calls, [['Enter a name for the list.']]);
-  const live = hosts(view.root, 'View').find((node) => node.props['aria-live'] === 'polite');
-  assert.ok(live);
+  assert.equal(hosts(view.root, 'View').some((node) => node.props['aria-live'] !== undefined), false);
   assert.equal(flat(input.props.style).minHeight, 56);
+});
+
+test('on web the polite error region is mounted before the error appears and keeps the same element', () => {
+  const kit = createKit({web: true});
+  const {TextField} = kit.load('src/core/ui/components/TextField.tsx');
+  const props = {label: 'List name', value: '', onChangeText: spy(), helper: 'Up to 60 characters.'};
+  const view = render(React.createElement(TextField, {...props, error: null}));
+  const live = () => hosts(view.root, 'View').filter((node) => node.props['aria-live'] === 'polite');
+  const [region] = live();
+  assert.ok(region);
+  assert.deepEqual(texts(region), []);
+  assert.deepEqual(texts(view.root), ['List name', 'Up to 60 characters.']);
+  view.update(React.createElement(TextField, {...props, error: 'Enter a name for the list.'}));
+  assert.equal(live().length, 1);
+  assert.equal(live()[0], region);
+  assert.deepEqual(texts(region), ['Enter a name for the list.']);
+  assert.deepEqual(texts(view.root), ['List name', 'Enter a name for the list.']);
+  assert.equal(kit.rn.AccessibilityInfo.announceForAccessibility.calls.length, 0);
+  const bare = render(React.createElement(TextField, {label: 'Search', value: '', onChangeText: spy()}));
+  const row = hosts(bare.root, 'View').find((node) => flat(node.props.style).flexDirection === 'row');
+  assert.equal(flat(row.props.style).marginTop, 0);
 });

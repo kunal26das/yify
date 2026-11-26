@@ -1,4 +1,6 @@
-import {StyleSheet, View} from 'react-native';
+import {useEffect} from 'react';
+import {AccessibilityInfo, StyleSheet, View} from 'react-native';
+import {IS_WEB} from '../environment';
 import {useTheme} from '../theme/useTheme';
 import {Button} from './Button';
 import {Icon} from './Icon';
@@ -19,6 +21,9 @@ export const ERROR_COPY = {
 
 export function ErrorState({title = ERROR_COPY.title, body = ERROR_COPY.body, onRetry, size = 'page'}: ErrorStateProps) {
   const theme = useTheme();
+  useEffect(() => {
+    if (!IS_WEB) AccessibilityInfo.announceForAccessibility(title);
+  }, [title]);
   if (size === 'inline') {
     return (
       <View style={[styles.inline, {gap: theme.space.sm, paddingVertical: theme.space.sm}]}>

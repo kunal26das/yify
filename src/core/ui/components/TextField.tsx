@@ -29,14 +29,16 @@ export function TextField({label, value, onChangeText, multiline = false, maxLen
   const id = useId();
   const labelId = `${id}-label`;
   const [focused, setFocused] = useState(false);
-  const message = error ?? helper ?? null;
+  const errorText = error ? error : null;
+  const counter = showCounter && maxLength !== undefined;
+  const supported = errorText !== null || helper !== undefined || counter;
 
   useEffect(() => {
-    if (error && !IS_WEB) AccessibilityInfo.announceForAccessibility(error);
-  }, [error]);
+    if (errorText !== null && !IS_WEB) AccessibilityInfo.announceForAccessibility(errorText);
+  }, [errorText]);
 
   return (
-    <View style={[styles.column, {gap: theme.space.xs}]}>
+    <View style={styles.column}>
       <Text variant="labelLarge" color="onSurfaceVariant" nativeID={labelId}>{label}</Text>
       <TextInput
         ref={inputRef}
@@ -53,32 +55,34 @@ export function TextField({label, value, onChangeText, multiline = false, maxLen
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         aria-labelledby={labelId}
-        aria-invalid={error ? true : undefined}
+        aria-invalid={errorText !== null ? true : undefined}
         textAlignVertical={multiline ? 'top' : 'center'}
         style={[
           textStyle(theme.type.bodyLarge),
           {
             color: theme.colors.onSurface,
             minHeight: multiline ? MULTILINE_MIN_HEIGHT : MIN_HEIGHT,
+            marginTop: theme.space.xs,
             backgroundColor: theme.colors.surfaceContainerLowest,
             borderRadius: theme.shape.extraSmall,
-            borderWidth: focused || error ? 2 : 1,
-            borderColor: error ? theme.colors.error : focused ? theme.colors.primary : theme.colors.outline,
-            paddingHorizontal: focused || error ? theme.space.lg - 1 : theme.space.lg,
+            borderWidth: focused || errorText !== null ? 2 : 1,
+            borderColor: errorText !== null ? theme.colors.error : focused ? theme.colors.primary : theme.colors.outline,
+            paddingHorizontal: focused || errorText !== null ? theme.space.lg - 1 : theme.space.lg,
             paddingVertical: theme.space.md,
           },
         ]}
       />
-      {message !== null || (showCounter && maxLength !== undefined) ? (
-        <View style={[styles.row, {gap: theme.space.lg}]}>
-          <View style={styles.grow} aria-live={error ? 'polite' : undefined}>
-            {message !== null ? <Text variant="bodySmall" color={error ? 'error' : 'onSurfaceVariant'}>{message}</Text> : null}
+      <View style={[styles.row, {gap: theme.space.lg, marginTop: supported ? theme.space.xs : 0}]}>
+        <View style={styles.grow}>
+          {errorText === null && helper !== undefined ? <Text variant="bodySmall" color="onSurfaceVariant">{helper}</Text> : null}
+          <View {...(IS_WEB ? {'aria-live': 'polite' as const} : {})}>
+            {errorText !== null ? <Text variant="bodySmall" color="error">{errorText}</Text> : null}
           </View>
-          {showCounter && maxLength !== undefined ? (
-            <Text variant="bodySmall" color="onSurfaceVariant" align="right">{`${value.length}/${maxLength}`}</Text>
-          ) : null}
         </View>
-      ) : null}
+        {counter ? (
+          <Text variant="bodySmall" color="onSurfaceVariant" align="right">{`${value.length}/${maxLength}`}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }
