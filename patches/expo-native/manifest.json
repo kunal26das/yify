@@ -11,6 +11,17 @@
       "upstream": [
         "https://github.com/software-mansion/react-native-reanimated/issues/10279"
       ]
+    },
+    {
+      "package": "expo-in-app-updates",
+      "version": "0.13.0",
+      "file": "android/src/main/java/expo/modules/inappupdates/ExpoInAppUpdatesModule.kt",
+      "before": "d37a041f2433c9d12865b2a9fe80947249d73091a34884f06a9263066d9b92f7",
+      "after": "231eb294714f11da656852eec0182f74c2f74b96f7d526269e2d6ff52a6ce2ee",
+      "patch": "expo-in-app-updates-deferred-complete.patch",
+      "upstream": [
+        "https://github.com/SohelIslamImran/expo-in-app-updates"
+      ]
     }
   ]
 }

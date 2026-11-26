@@ -138,14 +138,47 @@ test('reviewed upstream sources fail before patches and enforce removed-file abs
   assert.equal((await applyCompatibility({ ...f, check: true })).applied, 0);
 });
 
-test('the manifest keeps only the reviewed Reanimated lifecycle patch and it is applied', async () => {
+test('the manifest keeps only the reviewed native patches and every one is applied', async () => {
   const manifest = JSON.parse(await fs.readFile(path.join(repository, 'patches/expo-native/manifest.json'), 'utf8'));
   assert.equal(manifest.sources, undefined);
   assert.deepEqual(manifest.files.map((entry) => `${entry.package}/${entry.file}`), [
     'react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NodesManager.kt',
+    'expo-in-app-updates/android/src/main/java/expo/modules/inappupdates/ExpoInAppUpdatesModule.kt',
   ]);
+  for (const entry of manifest.files) {
+    assert.match(entry.before, /^[0-9a-f]{64}$/);
+    assert.match(entry.after, /^[0-9a-f]{64}$/);
+    assert.ok(entry.upstream.length > 0 && entry.upstream.every((url) => url.startsWith('https://github.com/')));
+    await fs.access(path.join(repository, 'patches/expo-native', entry.patch));
+  }
   const { applyCompatibility } = await modulePromise;
-  assert.deepEqual(await applyCompatibility({ check: true }), { applied: 0, verified: 1, reactNative: manifest.reactNative });
+  assert.deepEqual(await applyCompatibility({ check: true }), { applied: 0, verified: manifest.files.length, reactNative: manifest.reactNative });
+});
+
+test('a downloaded flexible update waits for the app instead of restarting it', async () => {
+  const { applyUnifiedPatch, sha256 } = await modulePromise;
+  const manifest = JSON.parse(await fs.readFile(path.join(repository, 'patches/expo-native/manifest.json'), 'utf8'));
+  const entry = manifest.files.find((item) => item.package === 'expo-in-app-updates');
+  const installed = await fs.readFile(path.join(repository, 'node_modules', entry.package, entry.file), 'utf8');
+  const patch = await fs.readFile(path.join(repository, 'patches/expo-native', entry.patch), 'utf8');
+  assert.equal(sha256(installed), entry.after);
+  assert.deepEqual(patch.split('\n').filter((line) => /^-(?!-- )/.test(line)), [
+    '-        appUpdateManager.completeUpdate()',
+    '-          mapOf("updateAvailable" to true, "updateInProgress" to true)',
+  ]);
+  const listener = installed.slice(installed.indexOf('InstallStateUpdatedListener'), installed.indexOf('override fun definition()'));
+  assert.match(listener, /InstallStatus\.DOWNLOADED -> \{\n\s+sendEvent\(EVENT_UPDATE_DOWNLOADED, mapOf\("readyToInstall" to true\)\)\n\s+\}/);
+  assert.doesNotMatch(installed, /\.completeUpdate\(\)/);
+  assert.match(installed, /if \(info\.installStatus\(\) == InstallStatus\.DOWNLOADED\) \{\n\s+try \{\n\s+appUpdateManager\.requestCompleteUpdate\(\)/);
+  const inProgress = installed.slice(installed.indexOf('UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS ->'), installed.indexOf('else -> mapOf("updateAvailable" to false)'));
+  for (const field of ['"updateInProgress" to true', '"installStatus" to info.installStatus()', '"storeVersion" to info.availableVersionCode().toString()', '"serverPriority" to info.updatePriority()']) {
+    assert.ok(inProgress.includes(field), field);
+  }
+  const original = installed
+    .replace('sendEvent(EVENT_UPDATE_DOWNLOADED, mapOf("readyToInstall" to true))\n', 'sendEvent(EVENT_UPDATE_DOWNLOADED, mapOf("readyToInstall" to true))\n        appUpdateManager.completeUpdate()\n')
+    .replace(inProgress, 'UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS ->\n          mapOf("updateAvailable" to true, "updateInProgress" to true)\n        ');
+  assert.equal(sha256(original), entry.before);
+  assert.equal(applyUnifiedPatch(original, patch), installed);
 });
 
 test('the patched animation libraries explicitly support the selected React Native runtime', async () => {
