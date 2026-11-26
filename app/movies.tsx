@@ -1,4 +1,4 @@
-import {useLocalSearchParams, useRouter} from 'expo-router';
+import {useLocalSearchParams, useNavigation} from 'expo-router';
 import Head from 'expo-router/head';
 import {ScreenDisplay} from '@/instrumentation/ScreenDisplay';
 import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from 'react';
@@ -51,8 +51,18 @@ const subscribeHydration = () => () => {};
 const clientHydrationSnapshot = () => true;
 const serverHydrationSnapshot = () => Platform.OS !== 'web';
 
+interface BrowseRouteParams {
+  query?: string;
+  genre?: string;
+  quality?: string;
+  minimum_rating?: string;
+  sort_by?: string;
+  order_by?: string;
+  focus?: string;
+}
+
 export default function BrowseRoute() {
-  const router = useRouter();
+  const navigation = useNavigation<{setParams(params: BrowseRouteParams): void}>();
   const params = useLocalSearchParams<{
     genre?: string;
     quality?: string;
@@ -135,7 +145,7 @@ export default function BrowseRoute() {
     const echoed = serialize(appliedFilters, query);
     if (lastIncomingRef.current === echoed) return;
     lastIncomingRef.current = echoed;
-    router.setParams({
+    navigation.setParams({
       query: query || undefined,
       genre: appliedFilters.genre,
       quality: appliedFilters.quality || undefined,
@@ -144,7 +154,7 @@ export default function BrowseRoute() {
       order_by: appliedFilters.order_by,
       focus: undefined,
     });
-  }, [hydrated, appliedQuery, appliedFilters, router]);
+  }, [hydrated, appliedQuery, appliedFilters, navigation]);
 
     usePageMeta({
         title: 'Browse Movies — Yify',
