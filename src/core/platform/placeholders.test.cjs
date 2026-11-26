@@ -7,20 +7,6 @@ afterEach(() => {
   delete process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN;
 });
 
-test('both auth adapters start signed out and never sign in until P6 lands', async () => {
-  for (const file of ['src/core/platform/auth/firebaseAuth.ts', 'src/core/platform/auth/firebaseAuth.web.ts']) {
-    const {auth} = loadTs(file);
-    assert.doesNotThrow(() => auth.start());
-    assert.deepEqual(auth.getSession(), {ready: true, signingIn: false, available: false, account: null, error: null});
-    assert.equal(typeof auth.subscribe(() => undefined), 'function');
-    assert.equal(await auth.signIn(), false);
-    assert.equal(await auth.reauthenticate(), false);
-    assert.equal(await auth.deleteUser(), 'failed');
-    assert.equal(await auth.getIdToken(true), null);
-    assert.equal(await auth.signOut(), undefined);
-  }
-});
-
 test('the web Firebase app uses the same-origin auth domain only on the proxied hosts', async () => {
   const web = loadTs('src/core/platform/firebase/webApp.web.ts');
   assert.equal(web.firebaseAuthDomain('yify.expo.app'), 'yify.expo.app');
@@ -50,9 +36,4 @@ test('the web Firebase app is created once, lazily, with the host-derived config
   assert.equal(first, second);
   assert.equal(created.length, 1);
   assert.equal(first.options.authDomain, 'yify.expo.app');
-});
-
-test('store updates do nothing until P9 implements them', () => {
-  assert.equal(loadTs('src/core/platform/updates/storeUpdates.ts').startStoreUpdates(), undefined);
-  assert.equal(loadTs('src/core/platform/updates/storeUpdates.web.ts').startStoreUpdates(), undefined);
 });
