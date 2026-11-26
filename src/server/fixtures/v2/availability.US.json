@@ -1,0 +1,1407 @@
+{
+  "v": 2,
+  "region": "US",
+  "items": {
+    "movie:129": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 1825,
+            "name": "HBO Max Amazon Channel",
+            "logoPath": "/64fLWeSyZ1KQZhIdvTdy4QHeWty.png",
+            "priority": 16
+          },
+          {
+            "id": 1899,
+            "name": "HBO Max",
+            "logoPath": "/skypuy7SXuugIQeYg0IglmzoKaS.png",
+            "priority": 156
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/129-qian-to-qian-xun-no-shen-yin-shi/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:155": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 1825,
+            "name": "HBO Max Amazon Channel",
+            "logoPath": "/64fLWeSyZ1KQZhIdvTdy4QHeWty.png",
+            "priority": 16
+          },
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          },
+          {
+            "id": 1899,
+            "name": "HBO Max",
+            "logoPath": "/skypuy7SXuugIQeYg0IglmzoKaS.png",
+            "priority": 156
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/155-the-dark-knight/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:157336": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 350,
+            "name": "Apple TV",
+            "logoPath": "/v9SnyvYt0U3KGgBH3Sbh3z4yODe.png",
+            "priority": 8
+          },
+          {
+            "id": 2303,
+            "name": "Paramount Plus Premium",
+            "logoPath": "/4N4BMd0Mm0kHAmF7RZgL5lW3cwc.png",
+            "priority": 20
+          },
+          {
+            "id": 2616,
+            "name": "Paramount Plus Essential",
+            "logoPath": "/uPWQPyF4nqwtfPNmGcFcenU57HG.png",
+            "priority": 21
+          },
+          {
+            "id": 582,
+            "name": "Paramount+ Amazon Channel",
+            "logoPath": "/bxX0YVOCY7bI85BKRlJAAQ2EjUR.png",
+            "priority": 32
+          },
+          {
+            "id": 633,
+            "name": "Paramount+ Roku Premium Channel",
+            "logoPath": "/tnZCMxbcKdxuVmjxefyXCaip7q3.png",
+            "priority": 68
+          },
+          {
+            "id": 2243,
+            "name": "Apple TV Amazon Channel",
+            "logoPath": "/giKLP7saeUA0WykEPRyZUcOVv92.png",
+            "priority": 218
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 2784,
+            "name": "JustWatch TV Store",
+            "logoPath": "/aaFIYn2NGPCo0rpLiWokbvNqNJd.png",
+            "priority": 15
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 331,
+            "name": "FlixFling",
+            "logoPath": "/hkw2s2Su8EyifB9EbbQP64Fj1xA.png",
+            "priority": 100
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/157336-interstellar/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:194": {
+      "region": "US",
+      "offers": {
+        "stream": [],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 331,
+            "name": "FlixFling",
+            "logoPath": "/hkw2s2Su8EyifB9EbbQP64Fj1xA.png",
+            "priority": 100
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/194-le-fabuleux-destin-d-amelie-poulain/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:27205": {
+      "region": "US",
+      "offers": {
+        "stream": [],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 486,
+            "name": "Spectrum On Demand",
+            "logoPath": "/6qPtM96UZkt3Bu4ZFPsDeHFWUZ2.png",
+            "priority": 125
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/27205-inception/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:299536": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 337,
+            "name": "Disney Plus",
+            "logoPath": "/5eZ872CghnHFLB1j8grszbrx0dx.png",
+            "priority": 9
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/299536-avengers-infinity-war/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:438631": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 1825,
+            "name": "HBO Max Amazon Channel",
+            "logoPath": "/64fLWeSyZ1KQZhIdvTdy4QHeWty.png",
+            "priority": 16
+          },
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          },
+          {
+            "id": 1899,
+            "name": "HBO Max",
+            "logoPath": "/skypuy7SXuugIQeYg0IglmzoKaS.png",
+            "priority": 156
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/438631-dune/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:496243": {
+      "region": "US",
+      "offers": {
+        "stream": [],
+        "free": [
+          {
+            "id": 191,
+            "name": "Kanopy",
+            "logoPath": "/cltb8XKan9ierp23ItPmCOcVLRa.png",
+            "priority": 41
+          }
+        ],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 331,
+            "name": "FlixFling",
+            "logoPath": "/hkw2s2Su8EyifB9EbbQP64Fj1xA.png",
+            "priority": 100
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/496243-gisaengchung/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:550": {
+      "region": "US",
+      "offers": {
+        "stream": [],
+        "free": [],
+        "ads": [
+          {
+            "id": 300,
+            "name": "Pluto TV",
+            "logoPath": "/fN4czqaMQNLeF6sSSIjGbAWzvwK.png",
+            "priority": 78
+          }
+        ],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/550-fight-club/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:603": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 486,
+            "name": "Spectrum On Demand",
+            "logoPath": "/6qPtM96UZkt3Bu4ZFPsDeHFWUZ2.png",
+            "priority": 125
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/603-the-matrix/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:680": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 350,
+            "name": "Apple TV",
+            "logoPath": "/v9SnyvYt0U3KGgBH3Sbh3z4yODe.png",
+            "priority": 8
+          },
+          {
+            "id": 2303,
+            "name": "Paramount Plus Premium",
+            "logoPath": "/4N4BMd0Mm0kHAmF7RZgL5lW3cwc.png",
+            "priority": 20
+          },
+          {
+            "id": 2616,
+            "name": "Paramount Plus Essential",
+            "logoPath": "/uPWQPyF4nqwtfPNmGcFcenU57HG.png",
+            "priority": 21
+          },
+          {
+            "id": 582,
+            "name": "Paramount+ Amazon Channel",
+            "logoPath": "/bxX0YVOCY7bI85BKRlJAAQ2EjUR.png",
+            "priority": 32
+          },
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          },
+          {
+            "id": 633,
+            "name": "Paramount+ Roku Premium Channel",
+            "logoPath": "/tnZCMxbcKdxuVmjxefyXCaip7q3.png",
+            "priority": 68
+          },
+          {
+            "id": 2243,
+            "name": "Apple TV Amazon Channel",
+            "logoPath": "/giKLP7saeUA0WykEPRyZUcOVv92.png",
+            "priority": 218
+          }
+        ],
+        "free": [
+          {
+            "id": 191,
+            "name": "Kanopy",
+            "logoPath": "/cltb8XKan9ierp23ItPmCOcVLRa.png",
+            "priority": 41
+          }
+        ],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 331,
+            "name": "FlixFling",
+            "logoPath": "/hkw2s2Su8EyifB9EbbQP64Fj1xA.png",
+            "priority": 100
+          },
+          {
+            "id": 486,
+            "name": "Spectrum On Demand",
+            "logoPath": "/6qPtM96UZkt3Bu4ZFPsDeHFWUZ2.png",
+            "priority": 125
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/680-pulp-fiction/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "movie:693134": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 1825,
+            "name": "HBO Max Amazon Channel",
+            "logoPath": "/64fLWeSyZ1KQZhIdvTdy4QHeWty.png",
+            "priority": 16
+          },
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          },
+          {
+            "id": 1899,
+            "name": "HBO Max",
+            "logoPath": "/skypuy7SXuugIQeYg0IglmzoKaS.png",
+            "priority": 156
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          },
+          {
+            "id": 486,
+            "name": "Spectrum On Demand",
+            "logoPath": "/6qPtM96UZkt3Bu4ZFPsDeHFWUZ2.png",
+            "priority": 125
+          },
+          {
+            "id": 538,
+            "name": "Plex",
+            "logoPath": "/blAEhvx3XX8sV0fFVFk88FFjubs.png",
+            "priority": 130
+          }
+        ],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 192,
+            "name": "YouTube",
+            "logoPath": "/5Maob4o5w8oZnNeYpCDyVFD3M7X.png",
+            "priority": 27
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/movie/693134-dune-part-two/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:1396": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 8,
+            "name": "Netflix",
+            "logoPath": "/rK1KljqmbvO9HQa1PBFLILWah72.png",
+            "priority": 3
+          },
+          {
+            "id": 1796,
+            "name": "Netflix Standard with Ads",
+            "logoPath": "/eGUwOOIxcazwEBxqJpSN5sWEu6V.png",
+            "priority": 155
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/tv/1396-breaking-bad/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:1399": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 1825,
+            "name": "HBO Max Amazon Channel",
+            "logoPath": "/64fLWeSyZ1KQZhIdvTdy4QHeWty.png",
+            "priority": 16
+          },
+          {
+            "id": 1899,
+            "name": "HBO Max",
+            "logoPath": "/skypuy7SXuugIQeYg0IglmzoKaS.png",
+            "priority": 156
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/tv/1399-game-of-thrones/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:2316": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 386,
+            "name": "Peacock Premium",
+            "logoPath": "/a1UIdq5BrkcAxnxcUhFsNbXnxeu.png",
+            "priority": 22
+          },
+          {
+            "id": 2528,
+            "name": "YouTube TV",
+            "logoPath": "/48bVXEIyCLSL9pZUQ7gB9ToyWto.png",
+            "priority": 44
+          },
+          {
+            "id": 506,
+            "name": "TBS",
+            "logoPath": "/8MX4rbkjJUf2NMb2ZVwHq0IATJf.png",
+            "priority": 121
+          },
+          {
+            "id": 387,
+            "name": "Peacock Premium Plus",
+            "logoPath": "/yrEwyMzEKdqAoGhaWUARtIxByol.png",
+            "priority": 216
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": [
+          {
+            "id": 10,
+            "name": "Amazon Video",
+            "logoPath": "/jn6TLbtaTZntTRX9UYucHJvpQx1.png",
+            "priority": 12
+          },
+          {
+            "id": 2,
+            "name": "Apple TV Store",
+            "logoPath": "/qdEGArH3lKfFnAtYXMkSYk5wxuG.png",
+            "priority": 13
+          },
+          {
+            "id": 3,
+            "name": "Google Play Movies",
+            "logoPath": "/aZRENwYILujqs0RVOZutTh0BVGV.png",
+            "priority": 26
+          },
+          {
+            "id": 7,
+            "name": "Fandango At Home",
+            "logoPath": "/wpOt6x0dRxTrIzuBosto4LGd7E9.png",
+            "priority": 43
+          }
+        ]
+      },
+      "link": "https://www.themoviedb.org/tv/2316-the-office/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:66732": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 8,
+            "name": "Netflix",
+            "logoPath": "/rK1KljqmbvO9HQa1PBFLILWah72.png",
+            "priority": 3
+          },
+          {
+            "id": 1796,
+            "name": "Netflix Standard with Ads",
+            "logoPath": "/eGUwOOIxcazwEBxqJpSN5sWEu6V.png",
+            "priority": 155
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": []
+      },
+      "link": "https://www.themoviedb.org/tv/66732-stranger-things/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:70523": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 8,
+            "name": "Netflix",
+            "logoPath": "/rK1KljqmbvO9HQa1PBFLILWah72.png",
+            "priority": 3
+          },
+          {
+            "id": 1796,
+            "name": "Netflix Standard with Ads",
+            "logoPath": "/eGUwOOIxcazwEBxqJpSN5sWEu6V.png",
+            "priority": 155
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": []
+      },
+      "link": "https://www.themoviedb.org/tv/70523-dark/watch?locale=US",
+      "attribution": "JustWatch"
+    },
+    "tv:93405": {
+      "region": "US",
+      "offers": {
+        "stream": [
+          {
+            "id": 8,
+            "name": "Netflix",
+            "logoPath": "/rK1KljqmbvO9HQa1PBFLILWah72.png",
+            "priority": 3
+          },
+          {
+            "id": 1796,
+            "name": "Netflix Standard with Ads",
+            "logoPath": "/eGUwOOIxcazwEBxqJpSN5sWEu6V.png",
+            "priority": 155
+          }
+        ],
+        "free": [],
+        "ads": [],
+        "rent": [],
+        "buy": []
+      },
+      "link": "https://www.themoviedb.org/tv/93405-ojingeo-geim/watch?locale=US",
+      "attribution": "JustWatch"
+    }
+  },
+  "failed": []
+}
