@@ -1,0 +1,49 @@
+--- a/node_modules/expo-router/build/hooks/useLoaderData.js
++++ b/node_modules/expo-router/build/hooks/useLoaderData.js
+@@ -23,13 +23,22 @@
+ const _resolveLoaderPath = require("../loaders/resolveLoaderPath");
+ const _utils = require("../loaders/utils");
+ const _useCurrentRouteInfo = require("./useCurrentRouteInfo");
++const _matchers = require("../matchers");
++function lookupLoaderData(data, path) {
++    if (!data) return { found: false, key: path, value: undefined };
++    if (path in data) return { found: true, key: path, value: data[path] };
++    for (const key of Object.keys(data)) {
++        if ((0, _matchers.stripGroupSegmentsFromPath)(key) === path) return { found: true, key, value: data[key] };
++    }
++    return { found: false, key: path, value: undefined };
++}
+ function useLoaderData() {
+     const ctx = (0, _react().use)(_LoaderContext.LoaderContext);
+     const serverDataLoaderContext = (0, _react().use)(_ServerDataLoaderContext.ServerDataLoaderContext);
+     const { client, store } = ctx;
+     const routeInfo = (0, _useCurrentRouteInfo.useCurrentRouteInfo)();
+     const contextKey = (0, _Route.useContextKey)();
+-    const resolvedPath = (0, _react().useMemo)(()=>(0, _resolveLoaderPath.resolveLoaderPath)(contextKey, routeInfo), [
++    const resolvedPath = (0, _react().useMemo)(()=>(0, _matchers.stripGroupSegmentsFromPath)((0, _resolveLoaderPath.resolveLoaderPath)(contextKey, routeInfo)), [
+         contextKey,
+         routeInfo
+     ]);
+@@ -38,9 +47,10 @@
+     // Seed first so hydration is not mistaken for an update missed before subscription.
+     if (!serverDataLoaderContext) {
+         const hydrationData = globalThis.__EXPO_ROUTER_LOADER_DATA__;
+-        if (hydrationData && resolvedPath in hydrationData) {
+-            store.seed(resolvedPath, hydrationData[resolvedPath]);
+-            delete hydrationData[resolvedPath];
++        const hit = lookupLoaderData(hydrationData, resolvedPath);
++        if (hit.found) {
++            store.seed(resolvedPath, hit.value);
++            delete hydrationData[hit.key];
+         }
+     }
+     // Keep this render-scoped rather than in a ref: only the committed render's effect should
+@@ -74,7 +84,7 @@
+     ]);
+     // Server renders read request-injected loader data directly.
+     if (serverDataLoaderContext) {
+-        return serverDataLoaderContext[resolvedPath];
++        return lookupLoaderData(serverDataLoaderContext, resolvedPath).value;
+     }
+     const result = (0, _readLoaderData.readLoaderData)(ctx, resolvedPath, _utils.fetchLoader);
+     // React can replay a suspended render once its promise settles. The store then holds the
