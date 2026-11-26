@@ -67,12 +67,12 @@ test('the runtime is the package version and Android uses the package version co
 
 test('brand values come from config/brand.json', () => {
     const config = loadConfig();
-    const defaultAccent = brand.accents.find((accent) => accent.id === 'default');
     assert.equal(config.name, brand.appName);
-    assert.equal(config.primaryColor, defaultAccent.light.primary);
+    assert.equal(config.primaryColor, brand.colors.dark.surface);
     const splash = pluginOptions(config, 'expo-splash-screen');
     assert.equal(splash.backgroundColor, brand.colors.light.surface);
     assert.equal(splash.dark.backgroundColor, brand.colors.dark.surface);
+    assert.notEqual(splash.dark.image, splash.image);
     assert.equal(config.android.adaptiveIcon.backgroundColor, brand.androidIconBackground);
     assert.equal(Object.hasOwn(config.android.adaptiveIcon, 'backgroundImage'), false);
     const fonts = pluginOptions(config, 'expo-font').fonts;
@@ -81,15 +81,16 @@ test('brand values come from config/brand.json', () => {
 
 test('every asset path in the resolved config exists on disk', () => {
     const config = loadConfig();
+    const splash = pluginOptions(config, 'expo-splash-screen');
     const paths = [
         config.icon,
-        config.ios.icon.light, config.ios.icon.dark, config.ios.icon.tinted,
         config.ios.googleServicesFile,
         config.android.googleServicesFile,
         config.android.adaptiveIcon.foregroundImage,
         config.android.adaptiveIcon.monochromeImage,
         config.web.favicon,
-        pluginOptions(config, 'expo-splash-screen').image,
+        splash.image,
+        splash.dark.image,
         ...pluginOptions(config, 'expo-font').fonts,
     ];
     for (const file of paths) {

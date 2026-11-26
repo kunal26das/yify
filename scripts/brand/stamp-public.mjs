@@ -1,11 +1,18 @@
 import {readdir, readFile, stat, writeFile} from 'node:fs/promises';
-import {dirname, extname, join, relative, resolve} from 'node:path';
+import {basename, dirname, extname, join, relative, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {decodeIco, decodePng} from './raster.mjs';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const BANNED_HEX = ['#D97757', '#9C452B', '#F3F0E9'];
-const RELEASE_SCAN = ['config', 'src', 'public', 'app.json'];
+export const BANNED_PIXEL_TOLERANCE = 8;
+export const BANNED_PIXEL_SHARE = 0.01;
+const BANNED_RGB = BANNED_HEX.map((hex) => [1, 3, 5].map((start) => Number.parseInt(hex.slice(start, start + 2), 16)));
+const RELEASE_SCAN = ['config', 'src', 'public', 'assets', 'app.json'];
+const RASTER_SCAN = ['public', 'assets'];
 const TEXT_EXTENSIONS = new Set(['.cjs', '.css', '.html', '.js', '.json', '.md', '.mjs', '.svg', '.ts', '.tsx', '.txt', '.webmanifest', '.xml']);
+const RASTER_EXTENSIONS = new Set(['.avif', '.bmp', '.gif', '.heic', '.ico', '.jpeg', '.jpg', '.png', '.tif', '.tiff', '.webp']);
+const IGNORED_FILES = new Set(['.DS_Store']);
 const USAGE = 'usage: node scripts/brand/stamp-public.mjs [--check] [--require-final] [--icons <directory>]';
 
 export function escapeHtml(value) {
@@ -112,10 +119,65 @@ export async function findBannedColors(root = repository) {
     return findings;
 }
 
+export function bannedPixels({pixels}) {
+    const counts = BANNED_RGB.map(() => 0);
+    let opaque = 0;
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+        if (pixels[offset + 3] < 128) continue;
+        opaque += 1;
+        const match = BANNED_RGB.findIndex(([red, green, blue]) => Math.abs(pixels[offset] - red) <= BANNED_PIXEL_TOLERANCE
+            && Math.abs(pixels[offset + 1] - green) <= BANNED_PIXEL_TOLERANCE && Math.abs(pixels[offset + 2] - blue) <= BANNED_PIXEL_TOLERANCE);
+        if (match >= 0) counts[match] += 1;
+    }
+    return {opaque, counts};
+}
+
+function describeBannedPixels(image) {
+    const {opaque, counts} = bannedPixels(image);
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    if (!opaque || total / opaque < BANNED_PIXEL_SHARE) return null;
+    const worst = BANNED_HEX[counts.indexOf(Math.max(...counts))];
+    return `${((100 * total) / opaque).toFixed(1)}% of its opaque pixels are within ${BANNED_PIXEL_TOLERANCE} of a banned colour, mostly ${worst}`;
+}
+
+export async function findBannedRasterColors(root = repository) {
+    const findings = [];
+    for (const entry of RASTER_SCAN) {
+        for (const file of await walk(join(root, entry), (path) => RASTER_EXTENSIONS.has(extname(path).toLowerCase()))) {
+            const name = relative(root, file);
+            const extension = extname(file).toLowerCase();
+            let images;
+            try {
+                if (extension !== '.png' && extension !== '.ico') throw new Error('check:release reads PNG and ICO images only; save it as PNG');
+                const buffer = await readFile(file);
+                images = extension === '.ico' ? decodeIco(buffer) : [decodePng(buffer)];
+            } catch (error) {
+                findings.push(`${name} cannot be checked for banned colours: ${error.message}.`);
+                continue;
+            }
+            for (const image of images) {
+                const problem = describeBannedPixels(image);
+                const layer = extension === '.ico' ? ` (${image.width}x${image.height} layer)` : '';
+                if (problem) findings.push(`${name}${layer}: ${problem}.`);
+            }
+        }
+    }
+    return findings;
+}
+
+async function mirrorFiles(source) {
+    const info = await stat(source).catch(() => null);
+    if (!info?.isDirectory()) return null;
+    return walk(source, (file) => !IGNORED_FILES.has(basename(file)));
+}
+
 export async function compareIcons(iconsDirectory, root = repository) {
     const source = resolve(iconsDirectory);
+    const files = await mirrorFiles(source);
+    if (!files) return [`${iconsDirectory} is not a directory; --icons takes the identity's icon mirror laid out by repository path.`];
+    if (!files.length) return [`${iconsDirectory} has no icon files to compare.`];
     const differences = [];
-    for (const file of await walk(source, () => true)) {
+    for (const file of files) {
         const target = join(root, relative(source, file));
         const [expected, actual] = await Promise.all([readFile(file), readFile(target).catch(() => null)]);
         if (!actual) differences.push(`${relative(root, target)} is missing`);
@@ -128,7 +190,7 @@ export async function checkRelease({root = repository, icons = null} = {}) {
     const brand = await readBrand(root);
     const problems = [];
     if (brand.status !== 'final') problems.push(`config/brand.json status is "${brand.status}"; the Identity step sets it to "final".`);
-    problems.push(...await findBannedColors(root));
+    problems.push(...await findBannedColors(root), ...await findBannedRasterColors(root));
     if (icons) problems.push(...await compareIcons(icons, root));
     return problems;
 }
@@ -148,7 +210,8 @@ async function main(args) {
     const options = parseArguments(args);
     const {brand, stale} = await stampPublic({check: options.check});
     const problems = options.check ? stale.map((file) => `${file} does not match config/brand.json; run yarn brand:stamp.`) : [];
-    if (options.requireFinal || options.icons) problems.push(...await checkRelease({icons: options.icons}));
+    const release = options.requireFinal || Boolean(options.icons);
+    if (release) problems.push(...await checkRelease({icons: options.icons}));
     if (problems.length) {
         for (const problem of problems) console.error(problem);
         process.exitCode = 1;
@@ -156,6 +219,11 @@ async function main(args) {
     }
     if (options.check) console.log(`Brand files match config/brand.json (${brand.appName}, ${brand.status}).`);
     else console.log(stale.length ? `Stamped ${stale.join(', ')} from config/brand.json.` : 'Brand files already match config/brand.json.');
+    if (!release) return;
+    const icons = options.icons
+        ? `${(await mirrorFiles(resolve(options.icons))).length} icon files match ${options.icons}`
+        : 'icons not compared (pass --icons <mirror>)';
+    console.log(`Release checks passed: status final, no banned colours in text or images; ${icons}.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

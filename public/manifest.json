@@ -17,8 +17,8 @@
     "entertainment",
     "movies"
   ],
-  "background_color": "#1B1916",
-  "theme_color": "#1B1916",
+  "background_color": "#0B0D13",
+  "theme_color": "#0B0D13",
   "icons": [
     {
       "src": "./icons/icon-192.png",

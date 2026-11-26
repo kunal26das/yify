@@ -1,7 +1,7 @@
 import type {MyServices, RegionCode} from './providers';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type Accent = 'default' | 'accent1' | 'accent2' | 'accent3' | 'accent4';
+export type Accent = 'default' | 'accent1' | 'accent2' | 'accent3';
 
 export interface Preferences {
   theme: ThemePreference;

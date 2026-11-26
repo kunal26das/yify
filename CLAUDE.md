@@ -41,7 +41,7 @@ Some scripts land with later parts: `check:web` (F0-D), `build:icons` and `build
 - **Erasable TypeScript.** No `enum`, `namespace`, parameter properties or `import x = require()`; type-only imports use `import type`. Pure tests run under Node's type stripping.
 - **No import-time side effects**, except the Sentry module that `entry.ts` loads first. Everything else starts from `src/features/shell/start.ts` after mount. Server state lives only in `getServerState()` on `globalThis`.
 - **Tests** sit next to their subject: `*.test.ts` for pure logic, `*.test.cjs` through `tests/helpers/loadTs.cjs` (with `rnMock.cjs` and `render.cjs`) for React, React Native and Expo modules. `tests/` holds the setup, helpers, contract tests and the plugin, script, Firestore rules and web tests.
-- **Brand.** `config/brand.json` is the only source of the app name, colours, accents and fonts (placeholders until the Identity step). Code uses `APP_NAME` from `src/core/config/app.ts`, never the literal name; run `yarn brand:stamp` after changing the JSON. Colours, type and radii come only from `src/core/ui/theme`.
+- **Brand.** `config/brand.json` is the only source of the app name, colours, accents and fonts: the final Lights Down identity with Archivo and four accent slots (`default` and the Plus accents `accent1` to `accent3`). Code uses `APP_NAME` from `src/core/config/app.ts`, never the literal name; run `yarn brand:stamp` after changing the JSON. Colours, type and radii come only from `src/core/ui/theme`.
 
 ## Standing rules
 
