@@ -10,10 +10,7 @@ const {bannedMatches} = createRequire(import.meta.url)('../tests/policy/bannedSt
 
 export const HTML_ROUTES = ['/', '/search', '/library', '/you', '/plus', '/title/movie/603-the-matrix', '/person/6384-keanu-reeves'];
 export const CLIENT_MARKERS = ['api.themoviedb.org', 'TMDB_API_KEY', 'YIFY_API_FIXTURES'];
-export const LEGAL_PAGES = new Set([
-  'privacy.html', 'privacy/index.html', 'terms.html', 'terms/index.html', 'support.html', 'support/index.html',
-  'delete-account.html', 'delete-account/index.html', 'legal.css',
-]);
+export const LEGAL_PAGES = new Set(['privacy.html', 'privacy/index.html']);
 const TEXT_FILE = /\.(?:js|mjs|cjs|map|css|html|json|txt|xml|webmanifest|svg)$/;
 const READY_TIMEOUT_MS = 90_000;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -132,14 +129,17 @@ async function checkHealth(origin, failures, rows) {
 function checkClientFiles(dist, failures, notes) {
   const client = join(dist, 'client');
   let scanned = 0;
+  const exempted = new Set();
   for (const file of filesUnder(client).filter((path) => TEXT_FILE.test(path))) {
     const path = relative(client, file).split(sep).join('/');
     const text = readFileSync(file, 'utf8');
     scanned += 1;
     const matches = bannedMatches(text);
     if (matches.length > 0) {
-      if (LEGAL_PAGES.has(path)) notes.push(`${path}: ${matches.join(' ')} (legal page owned by Stream C, C6.8 item 8; not a client bundle)`);
-      else failures.push(`dist/client/${path}: matches ${matches.join(' ')}`);
+      if (LEGAL_PAGES.has(path)) {
+        exempted.add(path);
+        notes.push(`${path}: ${matches.join(' ')} (legal page owned by Stream C, C6.8 item 8; not a client bundle)`);
+      } else failures.push(`dist/client/${path}: matches ${matches.join(' ')}`);
     }
     if (/\.(?:js|mjs|cjs|map)$/.test(path)) {
       for (const marker of CLIENT_MARKERS) {
@@ -148,6 +148,9 @@ function checkClientFiles(dist, failures, notes) {
     }
   }
   if (scanned === 0) failures.push('dist/client: no client files to scan');
+  for (const path of LEGAL_PAGES) {
+    if (!exempted.has(path)) failures.push(`dist/client/${path}: no longer needs the legal-page exemption; remove it from LEGAL_PAGES`);
+  }
   return scanned;
 }
 

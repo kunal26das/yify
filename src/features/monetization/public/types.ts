@@ -35,6 +35,8 @@ export interface OpenTitleInput {
   posterPath: string | null;
 }
 
+export type OpenTitle = (navigate: () => void, input: OpenTitleInput) => void;
+
 export const PLUS_ENTITLEMENT = 'remove_ads';
 
 export const FREE_CUSTOM_LIST_LIMIT = 3;

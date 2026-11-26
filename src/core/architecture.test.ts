@@ -70,6 +70,8 @@ const SOURCE_FILE = /\.(?:ts|tsx|js|cjs|mjs)$/;
 const TEXT_FILE = /\.(?:ts|tsx|js|cjs|mjs|json|css|html|md|txt|svg|xml)$/;
 const TEST_FILE = /\.test\.[cm]?[jt]sx?$|\/testing\//;
 const MAX_ROUTE_LINES = 30;
+const SERVER_ENTRY = /^app\/(?:.*\+api\.ts|\+middleware\.ts)$/;
+const SERVER_ENTRY_TARGETS = ['src/server/', 'src/core/domain/', 'src/core/config/'];
 
 const SDK_RULES: readonly {packages: RegExp; allowed: readonly string[]}[] = [
   {packages: /^react-native-google-mobile-ads$/, allowed: ['src/features/monetization/platform/']},
@@ -295,6 +297,19 @@ test('9. feature public files export something and import only public files of o
       if (feature !== null && feature[1] !== own && !feature[2].startsWith('public/')) {
         violations.push(`${path}: imports ${ref.specifier}, a non-public file of features/${feature[1]}`);
       }
+    }
+  }
+  assert.deepEqual(violations, []);
+});
+
+test('10. API routes and the middleware import only server, domain and config code', () => {
+  const violations: string[] = [];
+  for (const path of appFiles.filter((file) => SERVER_ENTRY.test(file))) {
+    for (const ref of importsOf(read(path))) {
+      const target = resolveLocal(path, ref.specifier);
+      if (target !== null && SERVER_ENTRY_TARGETS.some((prefix) => target.startsWith(prefix))) continue;
+      if (ref.kind === 'type' && ref.specifier === 'expo-router/server') continue;
+      violations.push(`${path}: ${ref.kind} import of ${ref.specifier}; API routes and the middleware may import only src/server, src/core/domain, src/core/config and types from expo-router/server`);
     }
   }
   assert.deepEqual(violations, []);

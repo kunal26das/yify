@@ -29,7 +29,7 @@ import type {openTitle} from '@/features/monetization/public/openTitle';
 import type {canCreateCustomList, effectiveAccent, getPlusStatus, insightsAccess, openPaywall, startPlus, usePlus} from '@/features/monetization/public/plus';
 import type {PlusSheetHost} from '@/features/monetization/public/PlusSheetHost';
 import type {
-  EntitlementSnapshot, FREE_CUSTOM_LIST_LIMIT, OpenTitleInput, PaywallPlacement, PLUS_ENTITLEMENT, PlusEntitlement, PlusStatus, PlusStore, TitleOpenSource,
+  EntitlementSnapshot, FREE_CUSTOM_LIST_LIMIT, OpenTitle, OpenTitleInput, PaywallPlacement, PLUS_ENTITLEMENT, PlusEntitlement, PlusStatus, PlusStore, TitleOpenSource,
 } from '@/features/monetization/public/types';
 import type {TrailerFrame, TrailerFrameProps} from '@/features/player/public/TrailerFrame';
 import type {HeaderSearch} from '@/features/search/public/HeaderSearch';
@@ -227,7 +227,8 @@ export type MonetizationContracts = [
   Expect<Equal<typeof effectiveAccent, <T extends string>(input: {stored: T; status: PlusStatus; fallback: T}) => T>>,
   Expect<Equal<typeof insightsAccess, (status: PlusStatus) => 'full' | 'teaser'>>,
   Expect<Equal<typeof startPlus, () => void>>,
-  Expect<Equal<typeof openTitle, (navigate: () => void, input: OpenTitleInput) => void>>,
+  Expect<Equal<OpenTitle, (navigate: () => void, input: OpenTitleInput) => void>>,
+  Expect<Equal<typeof openTitle, OpenTitle>>,
   Expect<Equal<typeof startAds, () => void>>,
   Expect<Equal<typeof reportTrailerState, (state: 'requested' | 'playing' | 'stopped') => void>>,
   Expect<Equal<typeof useAdPrivacyOptions, () => {required: boolean; show(): Promise<void>}>>,
