@@ -4,14 +4,14 @@ The local operator tool collects a Firebase account export and prepares an erasu
 
 ```sh
 node scripts/privacy/run.mjs
-node --test tests/privacy-request-workflow.test.cjs
+node --test tests/scripts/privacy-request-workflow.test.cjs
 ```
 
 ## Receiving and verifying a request
 
 Keep a restricted request register outside GitHub issues, source control and shared logs. Record receipt time, requested right, jurisdiction, the identity-verification decision, assigned owner, response deadline, processor follow-ups and outcome. Use the existing signed-in account or a proportionate ownership check; do not routinely collect ID scans or ask for passwords. A value in a configuration file records the operator's decision; the tool does not itself verify identity.
 
-Respond without undue delay. For GDPR, the tool calculates a one-calendar-month review date from receipt, clamping month ends. An operator must check applicable deadline calculation, legitimate identity questions and any justified extension; the tool never assumes an extension. Explain a permitted extension within the first month. The seven-day internal review target is operational, not a statutory DPDP access deadline. Keep the published DPDP grievance period within its applicable maximum of 90 days when that rule takes effect. See the legal timing and sources in [the readiness assessment](privacy-readiness-20260925.md).
+Respond without undue delay. For GDPR, the tool calculates a one-calendar-month review date from receipt, clamping month ends. An operator must check applicable deadline calculation, legitimate identity questions and any justified extension; the tool never assumes an extension. Explain a permitted extension within the first month. The seven-day internal review target is operational, not a statutory DPDP access deadline. Keep the published DPDP grievance period within its applicable maximum of 90 days when that rule takes effect. The legal timing and sources are in the September 2026 readiness assessment at the `v1-baseline` tag.
 
 ## Read-only collection
 

@@ -9,9 +9,7 @@
     "google_analytics_ssaid_collection_enabled": false,
     "google_analytics_automatic_screen_reporting_enabled": false,
     "analytics_idfv_collection_enabled": false,
-    "google_analytics_registration_with_ad_network_enabled": false,
-    "crashlytics_is_error_generation_on_js_crash_enabled": true,
-    "crashlytics_javascript_exception_handler_chaining_enabled": false
+    "google_analytics_registration_with_ad_network_enabled": false
   },
   "firestore": {
     "rules": "firestore.rules"

@@ -1,0 +1,18 @@
+{
+  "dsn": "https://ab0c10fbe49dc5a4e4f0c9ab3c7a0386@o4512058491338752.ingest.us.sentry.io/4512058497695744",
+  "environment": "production",
+  "sendDefaultPii": false,
+  "enableNdk": true,
+  "enableNativeCrashHandling": true,
+  "enableAutoSessionTracking": false,
+  "attachScreenshot": false,
+  "attachViewHierarchy": false,
+  "attachThreads": false,
+  "enableTombstone": true,
+  "enableHistoricalTombstoneReporting": false,
+  "sendClientReports": false,
+  "maxBreadcrumbs": 50,
+  "enableUserInteractionBreadcrumbs": false,
+  "enableNetworkEventBreadcrumbs": false,
+  "enableLogs": false
+}

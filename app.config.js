@@ -1,65 +1,52 @@
 const base = require('./app.json');
 const pkg = require('./package.json');
+const brand = require('./config/brand.json');
+const sentry = require('./sentry.options.json');
+const legacyRedirects = require('./config/legacy-redirects.json');
+const {pageHeaders, webHeaders} = require('./config/webHeaders.cjs');
 
-const packageName = base.expo.android.package;
-
-const version = pkg.version;
-const buildNumber = String(pkg.versionCode);
-
-const baseUrl = process.env.EXPO_WEB_BASE_URL ?? '';
-const hostingOutput = process.env.EXPO_WEB_OUTPUT === 'server';
-
-const projectId = base.expo.extra?.eas?.projectId ?? '';
-
+const projectId = base.expo.extra.eas.projectId;
 const updateChannel = process.env.EXPO_UPDATE_CHANNEL || 'Production';
+const webCheckout = process.env.EXPO_PUBLIC_WEB_CHECKOUT === '1';
+const defaultAccent = brand.accents.find((accent) => accent.id === 'default');
+const textFonts = [brand.fonts.display.file, brand.fonts.body.file, brand.fonts.bodyStrong.file];
+
+function withBrand(plugin) {
+    if (!Array.isArray(plugin)) return plugin;
+    const [name, options] = plugin;
+    if (name === 'expo-router') {
+        return [name, {...options, redirects: legacyRedirects, headers: webHeaders({webCheckout, sentryDsn: sentry.dsn}), pageHeaders}];
+    }
+    if (name === 'expo-splash-screen') {
+        return [name, {...options, backgroundColor: brand.colors.light.surface, dark: {backgroundColor: brand.colors.dark.surface}}];
+    }
+    if (name === 'expo-font') {
+        return [name, {...options, fonts: [...textFonts, ...options.fonts]}];
+    }
+    return plugin;
+}
 
 module.exports = {
     ...base,
     expo: {
         ...base.expo,
-        plugins: base.expo.plugins.map((plugin) => {
-            if (!hostingOutput || !Array.isArray(plugin) || plugin[0] !== 'expo-router') return plugin;
-            return [plugin[0], {
-                ...plugin[1],
-                apiRoutes: true,
-                redirects: [
-                    ...(plugin[1].redirects ?? []),
-                    ...['privacy', 'terms', 'delete-account', 'guide', 'support'].map((page) => ({
-                        source: `/${page}`,
-                        destination: `https://yify.expo.app/${page}.html`,
-                        permanent: true,
-                    })),
-                ],
-            }];
-        }),
-        version,
-        runtimeVersion: process.env.EXPO_RUNTIME_VERSION || version,
-        ...(projectId
-            ? {
-                updates: {
-                    url: `https://u.expo.dev/${projectId}`,
-                    requestHeaders: {'expo-channel-name': updateChannel},
-                },
-            }
-            : {}),
-        experiments: {
-            ...base.expo.experiments,
-            baseUrl,
+        name: brand.appName,
+        version: pkg.version,
+        runtimeVersion: pkg.version,
+        primaryColor: defaultAccent.light.primary,
+        updates: {
+            url: `https://u.expo.dev/${projectId}`,
+            requestHeaders: {'expo-channel-name': updateChannel},
+            checkAutomatically: 'ON_LOAD',
+            fallbackToCacheTimeout: 0,
         },
-        web: {
-            ...base.expo.web,
-            output: 'static',
-        },
+        plugins: base.expo.plugins.map(withBrand),
         android: {
             ...base.expo.android,
-            package: packageName,
             versionCode: pkg.versionCode,
             googleServicesFile: './config/android/google-services.json',
+            adaptiveIcon: {...base.expo.android.adaptiveIcon, backgroundColor: brand.androidIconBackground},
         },
-        ios: {
-            ...base.expo.ios,
-            buildNumber,
-            googleServicesFile: './config/ios/GoogleService-Info.plist',
-        },
+        ios: {...base.expo.ios, buildNumber: String(pkg.versionCode), googleServicesFile: './config/ios/GoogleService-Info.plist'},
     },
 };

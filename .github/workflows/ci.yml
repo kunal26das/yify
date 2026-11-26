@@ -3,323 +3,130 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      clean_install:
-        description: Also test a fresh dependency resolution without yarn.lock
-        type: boolean
-        default: false
-      dependabot_pr:
-        description: Dependabot PR to validate after the lockfile commit
-        type: string
-        default: ''
-      dependabot_head:
-        description: Exact Dependabot PR head to validate
-        type: string
-        default: ''
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}-${{ github.event.pull_request.head.sha || inputs.dependabot_head || 'latest' }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  dependabot-context:
-    name: Verify dependency automation context
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-      actions: read
-    outputs:
-      eligible: ${{ steps.inspect.outputs.eligible == 'true' }}
-      automerge: ${{ steps.inspect.outputs.automerge == 'true' }}
-      scope: ${{ steps.inspect.outputs.scope }}
-      lockfile: ${{ steps.inspect.outputs.lockfile }}
-      pr: ${{ steps.inspect.outputs.pr }}
-      head: ${{ steps.inspect.outputs.head }}
-      source: ${{ steps.inspect.outputs.source }}
-      branch: ${{ steps.inspect.outputs.branch }}
-      refreshed: ${{ steps.inspect.outputs.refreshed }}
-    steps:
-      - name: Checkout trusted automation
-        if: >-
-          github.event.pull_request.user.login == 'dependabot[bot]' ||
-          inputs.dependabot_pr != '' || inputs.dependabot_head != ''
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: main
-          persist-credentials: false
-      - name: Verify PR identity and commit chain
-        id: inspect
-        if: >-
-          github.event.pull_request.user.login == 'dependabot[bot]' ||
-          inputs.dependabot_pr != '' || inputs.dependabot_head != ''
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number || inputs.dependabot_pr }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.dependabot_head }}
-          ALLOW_MANUAL_DEPENDENCY_UPDATES: 'true'
-        run: node scripts/dependabot-lockfile.mjs inspect
-
   check:
-    needs: dependabot-context
     name: Typecheck and tests
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.dependabot_head || github.sha }}
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: 24
           cache: yarn
-
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Validate OpenSpec artifacts
-        env:
-          OPENSPEC_TELEMETRY: '0'
-        run: |
-          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec doctor --json
-          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec validate --all --strict --json --no-interactive
-          npx --yes --package=@fission-ai/openspec@1.14.1 -- openspec validate --archived --strict --json --no-interactive
-
-      - name: Check exact dependency pins
-        run: node scripts/check-dependency-pins.mjs
-
+      - name: Exact dependency pins and Firebase alignment
+        run: yarn check:pins
       - name: Typecheck
         run: yarn typecheck
-
+      - name: Lint, boundaries and no-comments rule
+        run: yarn lint
       - name: Tests
         run: yarn test
+      - name: Expo dependency compatibility
+        run: yarn check:expo
 
-      - name: Verify Android consent SDK crash guard
+  web:
+    name: Web exports render and isolate catalog data
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Export web with server output
+        run: yarn export:web
+      - name: Render, metadata, headers, client data boundary and budget
+        run: yarn check:web
+
+  native-guards:
+    name: Native crash guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Detect native-affecting changes
+        id: changes
         run: |
-          UMP_TEST_DIR=$(mktemp -d)
-          trap 'rm -rf "$UMP_TEST_DIR"' EXIT
-          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
-          UMP_ANDROID_JAR=$(find "$ANDROID_HOME/platforms" -name android.jar -type f | sort -V | tail -n 1)
-          test -n "$UMP_ANDROID_JAR"
-          curl --fail --silent --show-error --retry 3 --max-time 120 \
-            https://dl.google.com/dl/android/maven2/com/google/android/ump/user-messaging-platform/4.0.0/user-messaging-platform-4.0.0.aar \
-            --output "$UMP_TEST_DIR/ump.aar"
-          curl --fail --silent --show-error --retry 3 --max-time 120 \
-            https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar \
-            --output "$UMP_TEST_DIR/asm.jar"
-          curl --fail --silent --show-error --retry 3 --max-time 120 \
-            https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar \
-            --output "$UMP_TEST_DIR/asm-tree.jar"
-          node scripts/check-ump-metrics.mjs "$UMP_TEST_DIR/ump.aar" "$UMP_ANDROID_JAR" \
-            "$UMP_TEST_DIR/asm.jar" "$UMP_TEST_DIR/asm-tree.jar"
-
-      - name: Verify Android animation lifecycle crash guard
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE" HEAD -- package.json yarn.lock patches plugins scripts/check-reanimated-lifecycle.mjs scripts/check-ump-metrics.mjs tests/fixtures/reanimated-lifecycle; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        if: steps.changes.outputs.run == 'true'
+        with:
+          node-version: 24
+          cache: yarn
+      - name: Install dependencies
+        if: steps.changes.outputs.run == 'true'
+        run: yarn install --frozen-lockfile
+      - name: Reanimated NodesManager lifecycle patch
+        if: steps.changes.outputs.run == 'true'
         run: |
           export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
           node scripts/check-reanimated-lifecycle.mjs --output "$RUNNER_TEMP/reanimated-lifecycle"
+      - name: UMP consent SDK bytecode guard
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          UMP_TEST_DIR=$(mktemp -d)
+          export JAVA_HOME="${JAVA_HOME_17_X64:-$JAVA_HOME}"
+          UMP_ANDROID_JAR=$(find "$ANDROID_HOME/platforms" -name android.jar -type f | sort -V | tail -n 1)
+          curl --fail --silent --show-error --retry 3 --max-time 120 https://dl.google.com/dl/android/maven2/com/google/android/ump/user-messaging-platform/4.0.0/user-messaging-platform-4.0.0.aar --output "$UMP_TEST_DIR/ump.aar"
+          curl --fail --silent --show-error --retry 3 --max-time 120 https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.9/asm-9.9.jar --output "$UMP_TEST_DIR/asm.jar"
+          curl --fail --silent --show-error --retry 3 --max-time 120 https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.9/asm-tree-9.9.jar --output "$UMP_TEST_DIR/asm-tree.jar"
+          node scripts/check-ump-metrics.mjs "$UMP_TEST_DIR/ump.aar" "$UMP_ANDROID_JAR" "$UMP_TEST_DIR/asm.jar" "$UMP_TEST_DIR/asm-tree.jar"
 
-      - name: Committed OTA channel is Production
-        run: node scripts/check-update-channel.mjs
-
-      - name: Expo doctor
-        run: node scripts/check-expo-doctor.mjs
-
-  web-export:
-    needs: dependabot-context
-    name: Web exports render and isolate catalog data
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.dependabot_head || github.sha }}
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-          cache: yarn
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Export EAS Hosting build
-        run: yarn export:hosting
-
-      - name: Check Hosting pages, catalog API and client data boundary
-        run: node scripts/check-web-export.mjs dist-hosting --server
-
-      - name: Export GitHub Pages build
-        run: yarn export:web
-
-      - name: Check Pages rendering and static client data boundary
-        run: node scripts/check-web-export.mjs dist --static
-
-  release-console:
-    needs: dependabot-context
-    name: Typecheck and test release console
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.dependabot_head || github.sha }}
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-        working-directory: release
-
-      - name: Typecheck
-        run: npx tsc --noEmit
-        working-directory: release
-
-      - name: Tests
-        run: yarn test
-        working-directory: release
-
-      - name: Build
-        run: yarn build
-        working-directory: release
-
-  dependabot-clean-install:
-    name: Dependabot clean reinstall (${{ needs.dependabot-context.outputs.scope || 'root' }})
-    needs: dependabot-context
-    env:
-      DEPENDENCY_SCOPE: ${{ needs.dependabot-context.outputs.scope || 'root' }}
-    outputs:
-      artifact_name: ${{ steps.report.outputs.artifact_name }}
-      source_run_attempt: ${{ steps.report.outputs.source_run_attempt }}
-    if: >-
-      (needs.dependabot-context.outputs.eligible == 'true' &&
-       needs.dependabot-context.outputs.refreshed == 'false') ||
-      (github.event_name == 'workflow_dispatch' && inputs.clean_install && inputs.dependabot_pr == '')
+  firestore-rules:
+    name: Firestore rules
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ needs.dependabot-context.outputs.source || github.sha }}
-          persist-credentials: false
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+          fetch-depth: 0
+      - name: Detect rules changes
+        id: changes
+        run: |
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE" HEAD -- firestore.rules tests/firestore; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        if: steps.changes.outputs.run == 'true'
         with:
           node-version: 24
-
-      - name: Reinstall dependencies from scratch
-        id: reinstall
+          cache: yarn
+      - name: Install dependencies
+        if: steps.changes.outputs.run == 'true'
+        run: yarn install --frozen-lockfile
+      - name: Rules emulator suite
+        if: steps.changes.outputs.run == 'true'
         run: |
-          LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
-          mkdir -p "$LOCKFILE_REPORT_DIR"
-          node scripts/check-dependency-pins.mjs --manifests-only
-          case "$DEPENDENCY_SCOPE" in
-            root)
-              cp yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
-              rm -rf -- node_modules crashreporting/node_modules tooling/node_modules yarn.lock
-              yarn install --non-interactive
-              ;;
-            release)
-              cp release/yarn.lock "$LOCKFILE_REPORT_DIR/original-yarn.lock"
-              rm -rf -- release/node_modules release/yarn.lock
-              yarn --cwd release install --non-interactive
-              ;;
-            *) exit 1 ;;
-          esac
-
-      - name: Typecheck freshly resolved dependencies
-        if: env.DEPENDENCY_SCOPE == 'root'
-        run: yarn typecheck
-
-      - name: Test freshly resolved dependencies
-        if: env.DEPENDENCY_SCOPE == 'root'
-        run: yarn test
-
-      - name: Check Expo dependency compatibility
-        if: env.DEPENDENCY_SCOPE == 'root'
-        run: node scripts/check-expo-doctor.mjs
-
-      - name: Check fresh Hosting export
-        if: env.DEPENDENCY_SCOPE == 'root'
-        run: |
-          yarn export:hosting
-          node scripts/check-web-export.mjs dist-hosting --server
-
-      - name: Check fresh Pages export
-        if: env.DEPENDENCY_SCOPE == 'root'
-        run: |
-          yarn export:web
-          node scripts/check-web-export.mjs dist --static
-
-      - name: Typecheck freshly resolved release console
-        if: env.DEPENDENCY_SCOPE == 'release'
-        run: yarn --cwd release typecheck
-
-      - name: Test freshly resolved release console
-        if: env.DEPENDENCY_SCOPE == 'release'
-        run: yarn --cwd release test
-
-      - name: Build freshly resolved release console
-        if: env.DEPENDENCY_SCOPE == 'release'
-        run: yarn --cwd release build
-
-      - name: Report regenerated lockfile
-        id: report
-        if: always()
-        env:
-          REINSTALL_OUTCOME: ${{ steps.reinstall.outcome }}
-        run: |
-          LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install"
-          mkdir -p "$LOCKFILE_REPORT_DIR"
-          case "$DEPENDENCY_SCOPE" in
-            root) lockfile_path=yarn.lock ;;
-            release) lockfile_path=release/yarn.lock ;;
-            *) exit 1 ;;
-          esac
-          echo "artifact_name=dependabot-clean-install-$DEPENDENCY_SCOPE-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
-          echo "source_run_attempt=$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
-          printf '## Dependabot clean reinstall (%s)\n\nInstall: %s.\n\n' "$DEPENDENCY_SCOPE" "$REINSTALL_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f "$LOCKFILE_REPORT_DIR/original-yarn.lock" ] && [ -f "$lockfile_path" ]; then
-            cp "$lockfile_path" "$LOCKFILE_REPORT_DIR/regenerated-yarn.lock"
-            diff_status=0
-            diff -u --label "a/$lockfile_path" --label "b/$lockfile_path" \
-              "$LOCKFILE_REPORT_DIR/original-yarn.lock" "$lockfile_path" \
-              > "$LOCKFILE_REPORT_DIR/yarn.lock.patch" || diff_status=$?
-            if [ "$diff_status" -gt 1 ]; then exit "$diff_status"; fi
-            if [ "$diff_status" -eq 0 ]; then
-              echo 'The regenerated lockfile matches the committed lockfile.' >> "$GITHUB_STEP_SUMMARY"
-            else
-              echo 'The regenerated lockfile differs. The artifact contains both lockfiles and their diff for review.' >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo 'No complete lockfile comparison is available because setup or installation failed.' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\nSuccessful Dependabot regeneration is committed back to the PR by the trusted maintenance workflow. Full CI then validates the new commit using the committed lockfile.\n' >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Bind regenerated lockfile to its source
-        if: success() && needs.dependabot-context.outputs.eligible == 'true'
-        env:
-          PR_NUMBER: ${{ needs.dependabot-context.outputs.pr }}
-          PR_HEAD_SHA: ${{ needs.dependabot-context.outputs.source }}
-        run: LOCKFILE_REPORT_DIR="$RUNNER_TEMP/dependabot-clean-install" node scripts/dependabot-lockfile.mjs capture
-
-      - name: Save lockfile comparison
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ${{ steps.report.outputs.artifact_name }}
-          path: ${{ runner.temp }}/dependabot-clean-install/
-          if-no-files-found: warn
-          retention-days: 14
+          export JAVA_HOME="${JAVA_HOME_21_X64:-$JAVA_HOME}"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          npx --yes firebase-tools@15.36.0 emulators:exec --only firestore --project demo-yify-rules "node --test tests/firestore/rules.integration.cjs"

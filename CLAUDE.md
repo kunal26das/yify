@@ -1,114 +1,84 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for agents working in this repository.
 
-Yify is an Expo / React Native app (iOS, Android, web, Electron desktop) over the YTS catalog. `README.md` documents the product surface and feature set in detail — this file covers what you need to work in the tree.
+**Status (interim v2 file on `redesign/v2`).** Auto-memory notes about the v1 layers, barrels, the release console, GitHub Pages, Crashlytics or sign-in-gated purchases are historical; `docs/v2/SPEC.md` governs until v2 ships, then this file does. The docs stream replaces this interim version with the final one.
+
+Yify v2 is a movie and TV discovery and watch-diary app for Android and the web, built with Expo SDK 58, React Native 0.88, React 19.3 and TypeScript 7. TMDB is the only catalog, always reached through the app's own edge API under `/api/v2` on EAS Hosting. v1 is the git tag `v1-baseline`; read a v1 file with `git show v1-baseline:<path>`.
 
 ## Commands
 
 | Task | Command |
 | --- | --- |
+| Install | `yarn install --frozen-lockfile` (in a worktree add `--cache-folder "$HOME/.cache/yify-yarn/<branch>"`) |
+| Exact pins, Firebase alignment, native patches applied | `yarn check:pins` |
 | Typecheck | `yarn typecheck` |
+| Lint: boundaries, navigation guards, tokens, no comments | `yarn lint` |
 | Tests | `yarn test` |
-| Single test file | `node --test domain/policies/syncMerge.test.ts` |
-| Single test by name | `node --test --test-name-pattern="tombstone" 'domain/**/*.test.ts'` |
-| Dev server | `yarn start` (or `yarn dev` against an installed dev build) |
-| Run native | `yarn ios` / `yarn android` |
-| Scripted Android builds | `yarn android:debug` / `yarn android:release` |
-| Web | `yarn web` |
-| Desktop | `yarn desktop` |
-| Regenerate native projects | `yarn prebuild` |
-| Release console | `yarn release` |
+| One test file | `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./tests/setup/register.mjs --test src/core/domain/slug.test.ts` |
+| Expo dependency compatibility | `yarn check:expo` |
+| Web export, then render and budget checks | `yarn export:web && yarn check:web` |
+| Serve the web export | `yarn serve:web` |
+| Dev server | `yarn start`, `yarn web`, `yarn dev` (installed development client) |
+| Android | `yarn android`, `yarn android:debug` (JDK 17) |
+| Regenerate `android/` | `yarn prebuild` |
+| Brand files | `yarn brand:stamp`; `yarn check:release` before a release |
+| Icon font and web fonts | `yarn build:icons`, `yarn build:fonts` |
+| EAS | `yarn eas <args>` (`scripts/eas.sh`), `yarn build:android:preview`, `yarn build:android:production`, `yarn submit:android:production --id <buildId>`, `yarn update:android`, `yarn deploy:web:preview` |
+| Play listing and staged rollout | `yarn release:play` |
 
-`yarn` is the package manager (`yarn.lock` is committed; CI uses `--frozen-lockfile`).
-`crashreporting/` is the `@yify/crashreporting` Yarn workspace. Install once at the root;
-`yarn test` and `yarn typecheck` include the package. Keep its dependencies in its own manifest
-and use the package name when importing it from the app.
-
-### Validation and dependency compatibility
-
-The app and release console use TypeScript 7, and the app uses ESLint 10. The private `tooling/` workspace retains explicit, pinned Babel 7 and TypeScript 6 compatibility aliases for Expo, Worklets and ESLint packages that still require their APIs; Babel 8 compiles mocked test fixtures. Install from the root to apply the version-checked compatibility patches and verify the Expo 58 / React Native 0.88 source guards in `patches/expo-native/`. `yarn lint` runs, but the app has existing lint findings; compare against the base revision when assessing a change. Run `yarn typecheck` and `yarn test` as required gates and preserve the architecture rules below.
-
-Run `node scripts/check-expo-doctor.mjs` for Expo compatibility and `node scripts/check-dependency-pins.mjs` for exact versions. The doctor runs dependency checks with exclusions disabled. Deliberate deviations live in `scripts/expo-dependency-policy.json`; each pins the accepted version, Expo's recommendation and a compatibility reason. Update that policy only after validating an upgrade. Do not disable dependency checking globally.
-
-Firebase 27 also requires the aligned installed graph and collection controls in `scripts/firebase-compatibility.json`. Postinstall and the pin checker enforce those prerequisites and the reviewed native source patches. Google Sign-In 17.0.0 uses its own React Native SwiftPM integration, selected by the plugin option `iosDependencyManager: "spm"` and declared with the SDK's iOS 15 minimum. Upstream accepts any GoogleSignIn 10.x; `patches/expo-native/google-signin-spm-exact.patch` keeps RNGoogleSignin at exactly Apple SDK 10.1.0, and the committed `Package.resolved` pins it. RNGoogleSignin stays dynamic and is the only binary that links the SDK; the static Expo adapter forwards sign-in URLs to it, so the application target must not link a second copy. Its podspecs and adapter sources are hash-guarded in `patches/expo-native/manifest.json`; review them and rebase the patch from verified upstream source when changing the wrapper. Keep the existing Firebase consent/crash flags and compiler checks; regenerate native projects after configuration changes.
-
-Tests use `node --test` with native TypeScript type-stripping for domain tests and Babel 8 for mocked platform fixtures — no Jest. Test files live next to their subject as `*.test.ts` and are excluded from `tsconfig.json` and ESLint.
+Some scripts land with later parts: `check:web` (F0-D), `build:icons` and `build:fonts` (F0-C), `release:play` (P9).
 
 ## Architecture
 
-Four layers, each with a single public barrel (`index.ts`), wired only at the composition root. The dependency rule:
+- **Feature-sliced `src/`.** `src/core/` holds `domain`, `config`, `api`, `query`, `storage`, `store`, `navigation`, `platform` and `ui`. `src/features/<name>/` holds `shell`, `home`, `search`, `title`, `person`, `player`, `library`, `sync`, `account`, `settings`, `you`, `monetization` and `legacy`, each with `screens/`, `components/`, `hooks/`, `stores/`, `platform/` and `public/` as needed. `src/server/` is the edge API. Routes stay in the root `app/` as adapters of at most 30 lines. `src/app/` must never exist.
+- **Aliases.** `@/*` maps to `src/*` and `@assets/*` to `assets/*`.
+- **No barrels.** No `index.ts` or `index.tsx` under `src/`; import the module file directly.
+- **Import boundaries** (A1.2, enforced by `yarn lint`): `core/domain` imports only `core/domain`; `core/config` imports only `core/domain` and `core/config`; the rest of `core` never imports features, server code or routes; a feature uses another feature only through its `public/` folder; routes import feature `screens/` and `public/` files only; server code imports only `src/server`, `core/domain` and `core/config`.
+- **Platform-free core.** `core/domain` and `core/config` import no React, React Native, Expo, Firebase, Sentry or TanStack package.
+- **Platform twins.** `.web.ts(x)` twins exist only in `src/core/platform/**`, `src/core/ui/**`, `src/features/<name>/platform/**`, the three named core adapters (`core/api/baseUrl`, `core/query/lifecycle`, `core/storage/kv`) and the three SSR route twins. No `Platform.OS`, `typeof window`, `typeof document` or `typeof navigator` in features, routes or server code outside `platform/` folders.
+- **SDK containment.** Ads and purchases only in `src/features/monetization/platform/`; YouTube and WebView only in `src/features/player/platform/`; Sentry only in `src/core/platform/telemetry/`; Firebase only in `src/core/platform/{auth,firebase,telemetry}/`; `expo-sqlite` only in `src/core/storage/` (A1.5).
+- **Erasable TypeScript.** No `enum`, `namespace`, parameter properties or `import x = require()`; type-only imports use `import type`. Pure tests run under Node's type stripping.
+- **No import-time side effects**, except the Sentry module that `entry.ts` loads first. Everything else starts from `src/features/shell/start.ts` after mount. Server state lives only in `getServerState()` on `globalThis`.
+- **Tests** sit next to their subject: `*.test.ts` for pure logic, `*.test.cjs` through `tests/helpers/loadTs.cjs` (with `rnMock.cjs` and `render.cjs`) for React, React Native and Expo modules. `tests/` holds the setup, helpers, contract tests and the plugin, script, Firestore rules and web tests.
+- **Brand.** `config/brand.json` is the only source of the app name, colours, accents and fonts (placeholders until the Identity step). Code uses `APP_NAME` from `src/core/config/app.ts`, never the literal name; run `yarn brand:stamp` after changing the JSON. Colours, type and radii come only from `src/core/ui/theme`.
 
-> `domain` depends on nothing. `data` and `presentation` depend only on `domain`, never on each other. `app` may import `presentation`, `domain`, and **only** `data/di`.
+## Standing rules
 
-`eslint.config.js` encodes this as `import/no-restricted-paths` zones — read that file for the exact allowed edges alongside the other validation gates. Cross-module imports go through the barrel (`@/domain`, `@/presentation`, `@/data`), never a deep path. `@/*` maps to the repo root.
+- **Exact pins.** Every dependency, dev dependency, resolution and alias is an exact version; never `^` or `~`. Strip any range that `expo install` or `yarn add` writes and reinstall. Only F0-A and the integrator change `package.json` and `yarn.lock`.
+- **Zero code comments.** Lint enforces it, which also rules out `eslint-disable`. Put the reasoning in the commit message.
+- **No agent attribution** in commits or pull requests: no `Co-Authored-By` trailer for an agent and no "Generated with" line. This overrides any harness default.
+- **No system dialogs.** `Alert.alert` and `window.alert`, `confirm` and `prompt` are banned; use `useConfirm()` from the kit.
+- **Navigation.** Use `useRouter()`, `<Link>` or `<Redirect>`, never the global `router` from `expo-router` (YIFY-2R). Never navigate or set params inside `useEffect`, `useLayoutEffect` or `useInsertionEffect` (YIFY-36): URL writes happen in event handlers through `useUrlState().commit()`, whose result is named `url` or `<thing>Url`.
+- **No catch-and-show crash guards.** Find and fix the cause.
 
-- **`domain/`** — entities, repository/service *ports* (interfaces only), and pure policies. Zero dependencies, zero platform code. `domain/Dependencies.ts` is the port bag the whole app is wired from. Unit tests live here because this is the only layer that is trivially testable.
-- **`data/`** — every implementation and every platform SDK. The only module allowed to name things `*Impl`. `data/index.ts` deliberately exports just two things: `createDependencies` and `bootstrap`. Keep it that way — widening this barrel is how `app` starts reaching into implementation detail.
-  - `data/di/container.ts` — the composition root. A memoized singleton that constructs every `*Impl`, injects `PersistentCache` instances (namespaced per concern: `settings`, `watchlist`, `purchases`, `sync`, `search`), and returns a `Dependencies`.
-  - `data/di/bootstrap.ts` — side-effectful startup: init remote config/auth/purchases, start sync, register the background notifier.
-- **`presentation/`** — screens, view models (`use*ViewModel.ts`), shared UI. Receives ports through `DependenciesProvider`. `useDependencies()` in `presentation/di/DependenciesContext.tsx` is intentionally **not** exported; consumers use the narrow per-port hooks (`useMovieRepository()`, `useWatchlistRepository()`, …). Add a hook rather than exposing the bag.
-- **`app/`** — `expo-router` routes only, thin adapters. `app/_layout.tsx` calls `createDependencies()` + `bootstrap()` at module scope and is the only place that touches `@/data`.
+## Native
 
-Adding a capability generally means: port in `domain/services` or `domain/repositories` → add to `Dependencies` → implement in `data/` → construct in `container.ts` → expose a hook in `DependenciesContext.tsx` → re-export from the relevant barrel.
+- `android/` is tracked but generated: change native code only through `app.json`, `app.config.js` and `plugins/`, then run `yarn prebuild` and commit the result. `ios/` stays tracked and untouched; iOS is not a target.
+- Android builds need JDK 17: `export JAVA_HOME=$(/usr/libexec/java_home -v 17)`. Android Studio's bundled JBR 25 fails with a misleading CMake error.
+- Prebuild deletes `android/keystore.properties`; restore it from your private copy before a signed local build and never commit it.
+- `runtimeVersion` is the package `version`, so bump `version` and `versionCode` whenever native code changes (dependencies, `app.json`, `app.config.js`, `plugins/`, `patches/`, `android/`).
+- Launch the app with `adb shell am start -n io.github.kunal26das.yify/.MainActivity`, never with `adb shell monkey`.
 
-### Platform splits
+## Work protocol on `redesign/v2` (Part W, W0)
 
-Metro resolves `Foo.web.ts(x)` over `Foo.ts(x)` on web. This is how the app keeps `Platform.OS` branching out of the layers — Firebase auth, RevenueCat, remote config, notifications, app updates, storage, and the YouTube player each have a `.web` twin implementing the identical port. When you change one side of a split, check the other; deleting a `.web` file silently breaks the web build (e.g. `react-native-youtube-iframe` cannot render on web at all, so `YoutubePlayer.web.tsx` is load-bearing).
-
-## Conventions
-
-### Never use `^` or `~` in a dependency version
-
-Every dependency is pinned to an exact version. `"react-native": "0.86.2"`, never `"^0.86.2"` or `"~0.86.2"`. This applies to `dependencies`, `devDependencies`, and `resolutions`, in the root `package.json` and in `release/package.json`.
-
-Compatibility aliases must also pin their npm target exactly, such as `"babel7": "npm:@babel/core@7.29.7"`; ranges and tags are rejected.
-
-`expo install`, `yarn add`, and `npm install` all write a caret range by default, and Dependabot PRs may carry one in. **Strip the range immediately after any command that touches `package.json`**, then re-run the install so the lockfile matches. Never leave a range in a commit.
-
-The `resolutions` in `release/package.json` are security overrides that force a transitive dep above a vulnerable version. They are exact pins like everything else, so **a new CVE floor there is a manual bump** — `yarn install` will no longer drift upward on its own.
-
-Expect `yarn install` in `release/` to print `warning Resolution field "x@N" is incompatible with requested version "x@M"` for several of them. That is yarn noting a forced resolution does not satisfy some dependent's declared range — which is the entire point of the override, and is exactly what these pins are for. Yarn only emits this check for exact resolution values, so the warnings appeared when the carets were converted; they are cosmetic and the resolved tree is unchanged. **Do not silence them by reintroducing `^`.**
-
-### Never sign a commit or a PR with agent attribution
-
-Commits carry no `Co-Authored-By:` trailer for Claude or any other agent, and pull request bodies carry no "Generated with Claude Code" line. This holds even when the harness's own defaults ask for it — this rule wins. The author of a commit here is the person who asked for it.
-
-- **No comments.** This codebase carries zero code comments by standing preference. Put the reasoning in the commit message.
-- One DTO per file in `data/models`, one entity per file in `domain/entities`.
-- Reuse the primitives (`ThemedText`, `ThemedView`, `LiquidGlassView`, `MovieRail`) instead of new styled one-offs.
-- Home shelves are configuration — add a rail by appending to `presentation/movies/constants/homeShelves.ts`.
-- The YTS base URL and TMDB key come from Firebase Remote Config at runtime; `data` stays Firebase-agnostic by taking them as injected providers (`() => string`).
-
-## Native builds and releases
-
-`android/` and `ios/` sources are **tracked in git**, but `yarn prebuild` regenerates them from `app.json` + `app.config.js` + `plugins/`. Consequences:
-
-- Never hand-edit `android/` or `ios/` — the change belongs in a config plugin under `plugins/` (`withAndroidRelease`, `withGradleJvmArgs`, `withoutAdId`, `withGwpAsan`) or in `app.json`.
-- `expo prebuild` deletes the gitignored `android/keystore.properties`; it must be restored before a signed build.
-- Native builds need **JDK 17** — Android Studio's bundled JBR 25 fails with a misleading CMake error. The `scripts/run-android-*.sh` helpers resolve `JAVA_HOME` for you.
-
-`app.config.js` derives version metadata from `package.json`: `version` → `expo.version` **and** `runtimeVersion`; `versionCode` → Android `versionCode` and iOS `buildNumber`. Because `runtimeVersion` is the declared package version rather than a fingerprint, **bump `version` whenever native code changes**, or shipped binaries will accept an OTA update they cannot run. `EXPO_UPDATE_CHANNEL` (`Production` / `Staging`) is baked in at prebuild time.
-
-EAS commands route through `scripts/eas.sh`, which reuses the release console's `EXPO_TOKEN` from `~/.yify-release.json` — do not invoke `eas` directly. `release/` is a separate workspace (its own `package.json`, `node_modules`, and TypeScript version) holding the clean-architecture release console; `release/releases.json` is the ledger of what actually shipped, and the update flow refuses to publish for a runtime version with no store release.
-
-Web has two distinct exports: `yarn export:web` builds with `baseUrl=/yify` into `dist/` for GitHub Pages (auto-deployed on push to `main`), and `yarn export:hosting` builds with a root `baseUrl` into `dist-hosting/` for EAS Hosting. `EXPO_PUBLIC_*` values are baked in at export time and supplied by GitHub Actions secrets in CI — a change to `.env` needs `--clear` or the export silently reuses the old values. An `expo export` that succeeds does not prove the page renders; load the build before calling a web deploy done.
-
-Before browser QA, run `node scripts/check-web-preview.mjs <preview-base-url>` and block outbound telemetry before navigation. Hosting exports need Expo's server preview; static Pages previews need explicit same-origin catalog fixtures or a proxy. A plain static server cannot run API routes.
-
-Android release verification includes bundletool-generated APKs, not only the AAB: run `node scripts/check-android-native-libs.mjs --abis <comma-separated-abis> --aapt2 <sdk-aapt2-path> <base.apk> [abi-split.apk ...]`. The native startup fix requires compressed libraries and `extractNativeLibs=true`; retain all four ABIs in the store bundle and verify an actual installation.
-
-`.env` is optional — with no keys the app falls back to the default API URL and hides the account section. See `.env.example`.
+- **Branches.** Every part and stream works on its own branch from `redesign/v2` and merges into it through a pull request: `v2/f0a-reset`, `v2/f0b-core` (first PR `v2/f0b1-core`), `v2/f0c-design`, `v2/f0d-shell`, `v2/s1-spike` (never merged), `v2/p1-server` to `v2/p9-android`, `v2/c-docs`; the integrator uses `v2/kit-<n>`, `v2/identity` and `v2/release`. `redesign/v2` merges into `main` only at release step (c), with the owner's approval.
+- **Worktrees.** One worktree per stream, outside the repository folder, installed with `yarn install --frozen-lockfile --cache-folder "$HOME/.cache/yify-yarn/<branch>"` so concurrent installs never share a Yarn cache.
+- **Ownership.** A stream edits only the paths Part W gives it. Everything F0 creates outside a stream's list is frozen.
+- **Requests for frozen files.** A stream that needs a change to `src/core/**`, a frozen contract or another frozen file writes it under "Requests for frozen files" in its pull request and tells the integrator, who lands it as a `v2/kit-<n>` pull request. Never build a local one-off of a kit component.
+- **Dependencies.** Request a package from the integrator; never edit `package.json` or `yarn.lock` in a stream.
+- **Contracts.** The F0.5 signatures are frozen. A stream may add exports to its own `public/` files.
+- **Porting** means reading the v1 file with `git show v1-baseline:<path>` and re-creating the logic in the v2 file.
+- **Definition of done.** `yarn check:pins`, `yarn typecheck`, `yarn lint`, `yarn test` and, for web-visible changes, `yarn export:web && yarn check:web` pass in the worktree; the stream's acceptance criteria are demonstrated in the pull request; checks that need a later stream, a deployment or a Play-installed build are listed under "Deferred checks" with the W-I or Part Q step that runs them; no F0 placeholder text remains in the stream's own files.
+- **Delivery.** No merge to `main`, deploy, store submission or console change without the owner.
+- **EAS only through `scripts/eas.sh`** (or the `yarn eas` scripts that call it); never invoke `eas` directly.
+- **Render, don't trust the export.** A successful `expo export` does not prove the page renders: load the build in a browser before calling web work done.
 
 ## Task completion
 
-Cleanup is part of finishing every task, including delegated work. The lead verifies it before handing back to the user:
+Cleanup is part of finishing every part and stream:
 
-- Reuse a suitable existing checkout. After work is merged or intentionally closed, stop task-owned helpers and remove temporary worktrees; use the Codex archive tool for managed worktrees.
-- Inspect tracked, untracked and needed ignored files before removal. Preserve unfinished work, credentials and release evidence. Verify squash-merge or superseded-work provenance before deleting a branch that Git reports as unmerged; keep a verified private recovery bundle when needed.
-- Delete completed local and remote task branches, then prune stale remote references. Keep the default branch, open-PR branches and work still owned by an active task. Never force-remove a dirty worktree or discard unrelated changes merely to clean up.
-- Finish on a clean, current default checkout where possible. Report anything deliberately retained and why. Do not create another worktree just to document cleanup.
-
-## Other agent configs
-
-This repo contains a `.codex/` directory. If you want its user-level items (MCP servers, slash commands, subagents, skills, instructions) available in Claude Code, reply `/import` to scan and list what's importable, then `/import --yes=<digest>` with the digest from the scan output to apply it. If `/import` isn't available on this surface, run `claude import` from a terminal.
+- Reuse a suitable existing checkout. After a pull request merges or is intentionally closed, stop task-owned helpers (dev servers, emulators) and remove the temporary worktree.
+- Inspect tracked, untracked and needed ignored files before removal; preserve unfinished work, credentials and release evidence. Never force-remove a dirty worktree or discard unrelated changes to clean up.
+- Delete the merged local and remote branch, then prune stale remote references. Keep `main`, `redesign/v2`, open pull request branches and the retained `release/*` update-source branches.
+- Report anything deliberately kept and why.

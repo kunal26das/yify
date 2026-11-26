@@ -1,9 +1,13 @@
 # Yify
 
-A movie and TV catalog browser with trailers, watchlists, and history. Built with
-Expo, React Native, and TypeScript for Android, iOS, and web, with an Electron desktop app.
+Movie and TV discovery with trailers, where to watch and a watch diary. Built with
+Expo, React Native and TypeScript for Android and the web.
 
 [Open Yify](https://yify.expo.app/) · [Get it on Google Play](https://play.google.com/store/apps/details?id=io.github.kunal26das.yify)
+
+This branch rebuilds Yify as version 2.0.0. [`docs/v2/SPEC.md`](docs/v2/SPEC.md) is the
+implementation contract and [`CLAUDE.md`](CLAUDE.md) lists the commands and rules. The v1 app
+is at the `v1-baseline` tag.
 
 ## Run locally
 
@@ -14,18 +18,12 @@ yarn install --frozen-lockfile
 yarn web
 ```
 
-For Android, iOS, desktop, and service configuration, see the
-[development guide](docs/development.md).
-
 ## Checks
 
 ```sh
-npx tsc --noEmit
+yarn check:pins
+yarn typecheck
+yarn lint
 yarn test
+yarn check:expo
 ```
-
-## Documentation
-
-- [Development](docs/development.md) — setup, commands, and code structure.
-- [Releases](docs/releases.md) — Android builds, Expo OTA updates, and web deployment.
-- [RevenueCat operations](docs/revenuecat-operations.md) — subscriptions, ad tracking, and integrations.

@@ -106,8 +106,8 @@ android {
         applicationId 'io.github.kunal26das.yify'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 115
-        versionName "1.8.33"
+        versionCode 116
+        versionName "2.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -244,12 +244,3 @@ androidComponents {
           enabled = false
       }
   }
-
-pluginManager.withPlugin("com.google.firebase.crashlytics") {
-    android.buildTypes.release.firebaseCrashlytics.nativeSymbolUploadEnabled = true
-    tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
-        dependsOn("uploadCrashlyticsSymbolFileRelease")
-    }
-}
-
-apply plugin: 'com.google.firebase.crashlytics'

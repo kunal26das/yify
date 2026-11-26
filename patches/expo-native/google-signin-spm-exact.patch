@@ -1,5 +1,0 @@
---- a/RNGoogleSignin.podspec
-+++ b/RNGoogleSignin.podspec
-@@ -24 +24 @@
--      requirement: { kind: "upToNextMajorVersion", minimumVersion: package["GoogleSignInPodVersion"] },
-+      requirement: { kind: "exactVersion", version: package["GoogleSignInPodVersion"] },

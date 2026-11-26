@@ -6,7 +6,7 @@ This private workspace keeps those build-time dependencies separate with scoped 
 
 The aliases are deliberate compatibility dependencies, not evidence that Expo or ESLint support the newer compiler APIs. Exact version checks accept pinned npm aliases but reject ranges and tags. This workspace contains no native runtime dependency. `babel.config.js` selects the single root Worklets plugin; its version remains identical to the native package selected by autolinking.
 
-The dependency watch report checks each alias against its underlying npm package, including newer versions in the pinned major. It reports compatibility upgrades for review without changing dependencies. This preserves monitoring when Dependabot does not propose updates for aliased packages. Compiler tests compare installed versions with the manifest pins, so compatible patch updates do not require changing version literals in tests; the Babel 7 and TypeScript 6 API checks remain enforced.
+Dependabot does not propose updates for aliased packages, so review the aliases by hand when the toolchain moves. Compiler tests compare installed versions with the manifest pins, so compatible patch updates do not require changing version literals in tests; the Babel 7 and TypeScript 6 API checks remain enforced.
 
 `scripts/apply-tooling-compatibility.mjs` handles two broad peer ranges that Yarn Classic otherwise resolves to incompatible root versions:
 
@@ -17,6 +17,6 @@ The patch manifest checks the package version, complete original and patched SHA
 
 ESLint's official `@eslint/compat` adapter restores removed rule APIs while preserving Expo's rules and the app's import boundaries. Existing lint findings remain visible. The Babel 8 test transform handles TypeScript values, TSX, CommonJS interop, and deferred imports without applying the application's native Babel configuration.
 
-Run `node --test tests/tooling-compatibility.test.cjs` after changing these files. It checks actual worklet execution and serialization, TypeScript/TSX and deferred imports, architecture and React lint failures, exact dependency pins, patch idempotency, and rejection of unexpected package versions or source changes. Then run the application and crash-reporting tests, typechecks, and web/native build checks appropriate to the dependency change.
+Run `node --test tests/scripts/tooling-compatibility.test.cjs` after changing these files. It checks actual worklet execution and serialization, TypeScript/TSX and deferred imports, architecture and React lint failures, exact dependency pins, patch idempotency, and rejection of unexpected package versions or source changes. Then run `yarn test`, `yarn typecheck`, `yarn lint` and the web and native build checks appropriate to the dependency change.
 
 Primary migration guidance: [TypeScript 7 compiler API compatibility](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/), [Babel major-version compatibility](https://babeljs.io/docs/v8-migration#peer-dependency-requirements), [ESLint compatibility utilities](https://eslint.org/blog/2024/05/eslint-compatibility-utilities/), and [Yarn Classic workspace isolation](https://classic.yarnpkg.com/blog/2018/02/15/nohoist/).
