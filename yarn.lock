@@ -1177,15 +1177,10 @@
     "@eslint/core" "^1.2.1"
     levn "^0.4.1"
 
-"@expo-google-fonts/hanken-grotesk@0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/hanken-grotesk/-/hanken-grotesk-0.4.3.tgz#3de1f795f8bccf4ca0017325bdb349e40ba4f7ab"
-  integrity sha512-TZn/Ux+nCxEjG/zAenCFbEhOAPxSXN3lo2YU2jHcPsNBPFeicm8feQStL81igJuAwJLCn62VvEOdTtmVEBDl0g==
-
-"@expo-google-fonts/lora@0.4.2":
+"@expo-google-fonts/archivo@0.4.2":
   version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/lora/-/lora-0.4.2.tgz#cf4464ab37fcbcd3131cba173874690fa3077dc8"
-  integrity sha512-Bnofh2mIOUKp4KUS48VjaBgug4lQOcw/ftU0NFv5OPtiutL422//G1v63xDZEMUEL6ft4fi5q94/uKcpDjbPag==
+  resolved "https://registry.yarnpkg.com/@expo-google-fonts/archivo/-/archivo-0.4.2.tgz#e64ff92c11c00d829d80652a18630970946bec7c"
+  integrity sha512-FLhI4/ZVIFSHHxx15Z7Rr4QX/4ZrJozEebBEFSdHSRRwULGCuSIpbb3dz56Hslux6LZEnJ1mVpZ6CyVpUzLwIg==
 
 "@expo/cli@58.1.21", "@expo/cli@^58.1.21":
   version "58.1.21"

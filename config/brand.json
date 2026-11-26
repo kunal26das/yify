@@ -1,189 +1,189 @@
 {
-  "status": "placeholder",
+  "status": "final",
   "appName": "Yify",
   "colors": {
     "light": {
-      "surface": "#F3F0E9",
-      "surfaceContainerLowest": "#FBFAF6",
-      "surfaceContainerLow": "#EFEBE3",
-      "surfaceContainer": "#EBE5DA",
-      "surfaceContainerHigh": "#E5DED1",
-      "surfaceContainerHighest": "#E2DACC",
-      "onSurface": "#241F19",
-      "onSurfaceVariant": "#5F5649",
-      "outline": "#7F7462",
-      "outlineVariant": "#D4CAB9",
-      "primary": "#9C452B",
-      "onPrimary": "#FFFFFF",
-      "primaryContainer": "#F7DCCF",
-      "onPrimaryContainer": "#5C2514",
-      "secondaryContainer": "#E9DDCB",
-      "onSecondaryContainer": "#3B2F22",
-      "error": "#B3261E",
+      "surface": "#F5F6F9",
+      "surfaceContainerLowest": "#FFFFFF",
+      "surfaceContainerLow": "#EEF0F4",
+      "surfaceContainer": "#E8EBF0",
+      "surfaceContainerHigh": "#E1E5EB",
+      "surfaceContainerHighest": "#DADFE6",
+      "onSurface": "#0E1117",
+      "onSurfaceVariant": "#465061",
+      "outline": "#646D7C",
+      "outlineVariant": "#CDD2DA",
+      "primary": "#0F131A",
+      "onPrimary": "#C8F03C",
+      "primaryContainer": "#C8F03C",
+      "onPrimaryContainer": "#0F131A",
+      "secondaryContainer": "#DCE2EC",
+      "onSecondaryContainer": "#121826",
+      "error": "#A91D3A",
       "onError": "#FFFFFF",
-      "errorContainer": "#F9DEDC",
-      "onErrorContainer": "#410E0B",
-      "inverseSurface": "#2F2A24",
-      "inverseOnSurface": "#F3F0E9",
-      "inversePrimary": "#E39A74",
-      "ratingStar": "#9A6B12",
+      "errorContainer": "#FFD9DF",
+      "onErrorContainer": "#40071A",
+      "inverseSurface": "#171A22",
+      "inverseOnSurface": "#EEF1F6",
+      "inversePrimary": "#C8F03C",
+      "ratingStar": "#0E1117",
       "scrim": "rgba(0, 0, 0, 0.5)",
-      "mediaScrim": "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)",
+      "mediaScrim": "rgba(0, 0, 0, 0.6)",
       "onMedia": "#FFFFFF",
-      "focusRing": "#9C452B"
+      "focusRing": "#0F131A"
     },
     "dark": {
-      "surface": "#1B1916",
-      "surfaceContainerLowest": "#151310",
-      "surfaceContainerLow": "#211E1A",
-      "surfaceContainer": "#25221E",
-      "surfaceContainerHigh": "#2F2B26",
-      "surfaceContainerHighest": "#3A352F",
-      "onSurface": "#EDE7DB",
-      "onSurfaceVariant": "#BDB3A2",
-      "outline": "#958A78",
-      "outlineVariant": "#48413A",
-      "primary": "#E39A74",
-      "onPrimary": "#2B160C",
-      "primaryContainer": "#7A3520",
-      "onPrimaryContainer": "#FFDBCD",
-      "secondaryContainer": "#4A4034",
-      "onSecondaryContainer": "#F2E4D1",
-      "error": "#F28B7D",
-      "onError": "#4D0E07",
-      "errorContainer": "#8C1D18",
-      "onErrorContainer": "#FFDAD6",
-      "inverseSurface": "#EDE7DB",
-      "inverseOnSurface": "#2F2A24",
-      "inversePrimary": "#9C452B",
-      "ratingStar": "#E6B450",
+      "surface": "#0B0D13",
+      "surfaceContainerLowest": "#07080C",
+      "surfaceContainerLow": "#12141C",
+      "surfaceContainer": "#171A22",
+      "surfaceContainerHigh": "#1F222C",
+      "surfaceContainerHighest": "#292D39",
+      "onSurface": "#EEF1F6",
+      "onSurfaceVariant": "#ACB5C3",
+      "outline": "#8690A2",
+      "outlineVariant": "#2B303C",
+      "primary": "#C8F03C",
+      "onPrimary": "#0B0D13",
+      "primaryContainer": "#C8F03C",
+      "onPrimaryContainer": "#0B0D13",
+      "secondaryContainer": "#262C3A",
+      "onSecondaryContainer": "#E4E9F2",
+      "error": "#FF97A6",
+      "onError": "#3E0A16",
+      "errorContainer": "#5C1427",
+      "onErrorContainer": "#FFD9DF",
+      "inverseSurface": "#E8EBF0",
+      "inverseOnSurface": "#171A22",
+      "inversePrimary": "#0F131A",
+      "ratingStar": "#EEF1F6",
       "scrim": "rgba(0, 0, 0, 0.6)",
-      "mediaScrim": "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)",
+      "mediaScrim": "rgba(0, 0, 0, 0.6)",
       "onMedia": "#FFFFFF",
-      "focusRing": "#E39A74"
+      "focusRing": "#EEF1F6"
     }
   },
   "accents": [
     {
       "id": "default",
-      "name": "Rust",
+      "name": "Lime",
       "light": {
-        "primary": "#9C452B",
-        "onPrimary": "#FFFFFF",
-        "primaryContainer": "#F7DCCF",
-        "onPrimaryContainer": "#5C2514",
-        "inversePrimary": "#E39A74",
-        "focusRing": "#9C452B"
+        "primary": "#0F131A",
+        "onPrimary": "#C8F03C",
+        "primaryContainer": "#C8F03C",
+        "onPrimaryContainer": "#0F131A",
+        "inversePrimary": "#C8F03C",
+        "focusRing": "#0F131A"
       },
       "dark": {
-        "primary": "#E39A74",
-        "onPrimary": "#2B160C",
-        "primaryContainer": "#7A3520",
-        "onPrimaryContainer": "#FFDBCD",
-        "inversePrimary": "#9C452B",
-        "focusRing": "#E39A74"
+        "primary": "#C8F03C",
+        "onPrimary": "#0B0D13",
+        "primaryContainer": "#C8F03C",
+        "onPrimaryContainer": "#0B0D13",
+        "inversePrimary": "#0F131A",
+        "focusRing": "#EEF1F6"
       }
     },
     {
       "id": "accent1",
-      "name": "Teal",
+      "name": "Ice",
       "light": {
-        "primary": "#00696B",
-        "onPrimary": "#FFFFFF",
-        "primaryContainer": "#CDEDEB",
-        "onPrimaryContainer": "#00403F",
-        "inversePrimary": "#6FD5D3",
-        "focusRing": "#00696B"
+        "primary": "#0F131A",
+        "onPrimary": "#6BE4F2",
+        "primaryContainer": "#6BE4F2",
+        "onPrimaryContainer": "#0F131A",
+        "inversePrimary": "#6BE4F2",
+        "focusRing": "#0F131A"
       },
       "dark": {
-        "primary": "#6FD5D3",
-        "onPrimary": "#00373A",
-        "primaryContainer": "#005153",
-        "onPrimaryContainer": "#C9F1EF",
-        "inversePrimary": "#00696B",
-        "focusRing": "#6FD5D3"
+        "primary": "#6BE4F2",
+        "onPrimary": "#0B0D13",
+        "primaryContainer": "#6BE4F2",
+        "onPrimaryContainer": "#0B0D13",
+        "inversePrimary": "#0F131A",
+        "focusRing": "#EEF1F6"
       }
     },
     {
       "id": "accent2",
-      "name": "Plum",
+      "name": "Orchid",
       "light": {
-        "primary": "#8A3F7A",
-        "onPrimary": "#FFFFFF",
-        "primaryContainer": "#F9D8EE",
-        "onPrimaryContainer": "#3E0B35",
-        "inversePrimary": "#F2A7E0",
-        "focusRing": "#8A3F7A"
+        "primary": "#0F131A",
+        "onPrimary": "#E29AFF",
+        "primaryContainer": "#E29AFF",
+        "onPrimaryContainer": "#0F131A",
+        "inversePrimary": "#E29AFF",
+        "focusRing": "#0F131A"
       },
       "dark": {
-        "primary": "#F2A7E0",
-        "onPrimary": "#4A1240",
-        "primaryContainer": "#6D2A60",
-        "onPrimaryContainer": "#FFD7F2",
-        "inversePrimary": "#8A3F7A",
-        "focusRing": "#F2A7E0"
+        "primary": "#E29AFF",
+        "onPrimary": "#0B0D13",
+        "primaryContainer": "#E29AFF",
+        "onPrimaryContainer": "#0B0D13",
+        "inversePrimary": "#0F131A",
+        "focusRing": "#EEF1F6"
       }
     },
     {
       "id": "accent3",
-      "name": "Forest",
+      "name": "Mono",
       "light": {
-        "primary": "#3D6B2E",
+        "primary": "#0F131A",
         "onPrimary": "#FFFFFF",
-        "primaryContainer": "#D6EDC9",
-        "onPrimaryContainer": "#0F2E07",
-        "inversePrimary": "#A3D48E",
-        "focusRing": "#3D6B2E"
+        "primaryContainer": "#0F131A",
+        "onPrimaryContainer": "#FFFFFF",
+        "inversePrimary": "#FFFFFF",
+        "focusRing": "#0F131A"
       },
       "dark": {
-        "primary": "#A3D48E",
-        "onPrimary": "#10380A",
-        "primaryContainer": "#255219",
-        "onPrimaryContainer": "#C8EFB6",
-        "inversePrimary": "#3D6B2E",
-        "focusRing": "#A3D48E"
+        "primary": "#F2F4F8",
+        "onPrimary": "#0B0D13",
+        "primaryContainer": "#F2F4F8",
+        "onPrimaryContainer": "#0B0D13",
+        "inversePrimary": "#0F131A",
+        "focusRing": "#EEF1F6"
       }
     },
     {
       "id": "accent4",
-      "name": "Cobalt",
+      "name": "Iris",
       "light": {
-        "primary": "#2F5FA8",
-        "onPrimary": "#FFFFFF",
-        "primaryContainer": "#D9E3FA",
-        "onPrimaryContainer": "#0B2552",
-        "inversePrimary": "#A9C7FF",
-        "focusRing": "#2F5FA8"
+        "primary": "#0F131A",
+        "onPrimary": "#90B0FF",
+        "primaryContainer": "#90B0FF",
+        "onPrimaryContainer": "#0F131A",
+        "inversePrimary": "#90B0FF",
+        "focusRing": "#0F131A"
       },
       "dark": {
-        "primary": "#A9C7FF",
-        "onPrimary": "#0A2F66",
-        "primaryContainer": "#1F4785",
-        "onPrimaryContainer": "#D8E2FF",
-        "inversePrimary": "#2F5FA8",
-        "focusRing": "#A9C7FF"
+        "primary": "#90B0FF",
+        "onPrimary": "#0B0D13",
+        "primaryContainer": "#90B0FF",
+        "onPrimaryContainer": "#0B0D13",
+        "inversePrimary": "#0F131A",
+        "focusRing": "#EEF1F6"
       }
     }
   ],
   "fonts": {
     "display": {
-      "family": "Lora_600SemiBold",
-      "file": "./node_modules/@expo-google-fonts/lora/600SemiBold/Lora_600SemiBold.ttf",
-      "web": "Lora-600.woff2",
-      "weight": 600
+      "family": "Archivo_800ExtraBold",
+      "file": "./node_modules/@expo-google-fonts/archivo/800ExtraBold/Archivo_800ExtraBold.ttf",
+      "web": "Archivo-800.woff2",
+      "weight": 800
     },
     "body": {
-      "family": "HankenGrotesk_400Regular",
-      "file": "./node_modules/@expo-google-fonts/hanken-grotesk/400Regular/HankenGrotesk_400Regular.ttf",
-      "web": "HankenGrotesk-400.woff2",
+      "family": "Archivo_400Regular",
+      "file": "./node_modules/@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf",
+      "web": "Archivo-400.woff2",
       "weight": 400
     },
     "bodyStrong": {
-      "family": "HankenGrotesk_600SemiBold",
-      "file": "./node_modules/@expo-google-fonts/hanken-grotesk/600SemiBold/HankenGrotesk_600SemiBold.ttf",
-      "web": "HankenGrotesk-600.woff2",
+      "family": "Archivo_600SemiBold",
+      "file": "./node_modules/@expo-google-fonts/archivo/600SemiBold/Archivo_600SemiBold.ttf",
+      "web": "Archivo-600.woff2",
       "weight": 600
     }
   },
-  "androidIconBackground": "#9C452B"
+  "androidIconBackground": "#C8F03C"
 }

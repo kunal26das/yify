@@ -34,8 +34,7 @@
     "postinstall": "node scripts/expo-native-compat.mjs && node scripts/apply-tooling-compatibility.mjs"
   },
   "dependencies": {
-    "@expo-google-fonts/hanken-grotesk": "0.4.3",
-    "@expo-google-fonts/lora": "0.4.2",
+    "@expo-google-fonts/archivo": "0.4.2",
     "@expo/metro-runtime": "58.0.17",
     "@expo/vector-icons": "15.1.1",
     "@react-native-firebase/analytics": "27.2.0",

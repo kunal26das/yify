@@ -20,7 +20,7 @@ export interface BrandFont {
   family: string;
   file: string;
   web: string;
-  weight: 400 | 500 | 600 | 700;
+  weight: 400 | 500 | 600 | 700 | 800;
 }
 
 export interface BrandConfig {

@@ -52,7 +52,7 @@ test('config/brand.json defines every colour role, accent slot and font face', (
         assert.ok(fs.statSync(path.resolve(root, font.file)).isFile(), font.file);
         assert.equal(path.basename(font.file, '.ttf'), font.family);
         assert.match(font.web, /^[A-Za-z0-9-]+\.woff2$/);
-        assert.ok([400, 500, 600, 700].includes(font.weight));
+        assert.ok([400, 500, 600, 700, 800].includes(font.weight));
     }
     assert.match(brand.androidIconBackground, HEX);
 });
