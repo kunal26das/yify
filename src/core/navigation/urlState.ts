@@ -23,16 +23,14 @@ function paramValue(value: unknown): string | string[] | null {
 export function useUrlState<S>(codec: UrlCodec<S>): UrlState<S> {
   const params: Record<string, unknown> = useLocalSearchParams();
   const navigation = useNavigation<{setParams(params: Record<string, string | undefined>): void}>();
-  const signature = JSON.stringify(codec.keys.map((key) => paramValue(params[key])));
-  const state = useMemo(() => {
-    const values: (string | string[] | null)[] = JSON.parse(signature);
-    const picked: UrlParams = {};
-    codec.keys.forEach((key, index) => {
-      const value = values[index];
-      if (value !== null && value !== undefined) picked[key] = value;
-    });
-    return codec.parse(picked);
+  const signature = JSON.stringify(Object.keys(params).sort().map((key) => [key, paramValue(params[key])]));
+  const parsed = useMemo(() => {
+    const entries: [string, string | string[] | null][] = JSON.parse(signature);
+    const all: UrlParams = {};
+    for (const [key, value] of entries) if (value !== null) all[key] = value;
+    return JSON.stringify(codec.parse(all));
   }, [codec, signature]);
+  const state = useMemo((): S => JSON.parse(parsed), [parsed]);
   const commit = useCallback((next: S) => {
     const serialized = codec.serialize(next);
     const update: Record<string, string | undefined> = {};

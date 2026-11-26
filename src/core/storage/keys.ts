@@ -130,7 +130,7 @@ const MAX_SERVICES_JSON_LENGTH = 2800;
 const MAX_PROVIDER_ID = 999999;
 
 const THEMES: Members<ThemePreference> = {system: true, light: true, dark: true};
-const ACCENTS: Members<Accent> = {default: true, accent1: true, accent2: true, accent3: true, accent4: true};
+const ACCENTS: Members<Accent> = {default: true, accent1: true, accent2: true, accent3: true};
 const MEDIA_TYPES: Members<MediaType> = {movie: true, tv: true};
 const REGION_SOURCES: Members<DetectedRegion['source']> = {locale: true, geo: true};
 const LOCAL_MIGRATION: Members<LocalMigrationStatus> = {pending: true, done: true, none: true};
@@ -516,6 +516,15 @@ function decodeReferenceCache(value: unknown): ReferenceCache | null {
   return {savedAt: data.savedAt, genres: decodeList(data.genres, decodeGenre), regions: decodeList(data.regions, decodeRegion)};
 }
 
+function decodeHomeCache(value: unknown): HomeCache | null {
+  const data = asRecord(value);
+  const home = asRecord(data?.data);
+  if (data === null || home === null || !isStamp(data.savedAt)) return null;
+  if (home.v !== 2 || !isRegionCode(home.region) || typeof home.generatedAt !== 'string') return null;
+  if (!Array.isArray(home.hero) || !Array.isArray(home.rails)) return null;
+  return {savedAt: data.savedAt, data: home as unknown as HomeResponse};
+}
+
 function decodeImageHost(value: unknown): ImageHostState | null {
   const data = asRecord(value);
   if (data === null) return null;
@@ -606,6 +615,7 @@ export const CODECS = {
   syncState: codec(decodeSyncRecord),
   stash: codec(decodeAccountStash),
   migration: codec(decodeMigrationState),
+  homeCache: codec(decodeHomeCache),
   referenceCache: codec(decodeReferenceCache),
   imageHost: codec(decodeImageHost),
   homeUi: codec(decodeHomeUi),

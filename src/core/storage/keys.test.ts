@@ -114,7 +114,7 @@ test('only the caches use the evictable prefix and every envelope key is a v2 ke
   for (const name of Object.keys(CODECS) as (keyof typeof CODECS)[]) {
     assert.equal(CODECS[name].version, 1, name);
     const key = KEYS[name];
-    const resolved = typeof key === 'function' ? key('uid123') : key;
+    const resolved = typeof key === 'function' ? key(name === 'homeCache' ? 'IN' : 'uid123') : key;
     assert.ok(resolved.startsWith('v2.'), name);
   }
   for (const raw of [KEYS.plusEntitlement, KEYS.adsLastShownAt, KEYS.updatesPrompted('1'), KEYS.updatesDownloaded('1')]) {
@@ -166,6 +166,7 @@ test('valid values round-trip through every codec unchanged', () => {
       v1CleanupAt: 300,
       noticeShown: false,
     }],
+    ['homeCache', CODECS.homeCache as Codec<never>, {savedAt: 5, data: {v: 2, region: 'IN', generatedAt: '2026-11-26T10:00:00Z', hero: [], rails: []}}],
     ['referenceCache', CODECS.referenceCache as Codec<never>, {savedAt: 5, genres: [{id: 28, name: 'Action', types: ['movie']}], regions: [{code: 'IN', name: 'India'}]}],
     ['imageHost', CODECS.imageHost as Codec<never>, {mode: 'proxy', until: 1764150000000}],
     ['homeUi', CODECS.homeUi as Codec<never>, {popular: 'tv'}],
@@ -239,7 +240,7 @@ test('library sections drop invalid records and keep the valid ones', () => {
     },
     removed: {'movie:604': 4},
   }});
-  const entry = {id: 'd_1', key: 'movie:603', snapshot: matrix, watchedOn: '2026-02-29', rating: 9, note: '', rewatch: false, createdAt: 1, updatedAt: 1, deletedAt: 0};
+  const entry = {id: 'd_1', key: 'movie:603', snapshot: matrix, watchedOn: '2026-02-28', rating: 9, note: '', rewatch: false, createdAt: 1, updatedAt: 1, deletedAt: 0};
   const diary = decodeData(CODECS.diary, {rev: 1, state: {clearedAt: 'never', entries: {
     d_1: entry,
     d_2: {...entry, id: 'd_2', watchedOn: '2026-11-31'},
@@ -249,7 +250,7 @@ test('library sections drop invalid records and keep the valid ones', () => {
     'bad id': {...entry, id: 'bad id'},
     d_6: {...entry, id: 'd_6', watchedOn: '2026-11-20', rating: 1, note: 'Fine'},
   }}});
-  assert.deepEqual(Object.keys(diary?.state.entries ?? {}), ['d_6']);
+  assert.deepEqual(Object.keys(diary?.state.entries ?? {}), ['d_1', 'd_6']);
   assert.equal(diary?.state.clearedAt, 0);
   const lists = decodeData(CODECS.lists, {rev: 1, state: {clearedAt: 0, lists: {
     l_1: {id: 'l_1', name: 'Keep', createdAt: 1, updatedAt: 1, removedAt: 0, items: {'movie:603': {at: 1, value: true, snapshot: matrix}, 'v2:1': {at: 1, value: true, snapshot: matrix}, 'tv:1': {at: 1, value: 'yes', snapshot: matrix}}},
@@ -334,6 +335,15 @@ test('migration records validate the phase and every resolution', () => {
     noticeShown: false,
   });
   assert.equal(decodeData(CODECS.migration, {localV1: 'running'}), null);
+});
+
+test('home caches keep a v2 home response and reject anything else whole', () => {
+  const data = {v: 2, region: 'IN', generatedAt: '2026-11-26T10:00:00Z', hero: [], rails: []};
+  assert.deepEqual(decodeData(CODECS.homeCache, {savedAt: 5, data}), {savedAt: 5, data});
+  assert.equal(decodeData(CODECS.homeCache, {savedAt: 5, data: {...data, v: 1}}), null);
+  assert.equal(decodeData(CODECS.homeCache, {savedAt: 5, data: {...data, region: 'india'}}), null);
+  assert.equal(decodeData(CODECS.homeCache, {savedAt: 5, data: {...data, rails: null}}), null);
+  assert.equal(decodeData(CODECS.homeCache, {data}), null);
 });
 
 test('reference caches drop malformed genres and regions', () => {

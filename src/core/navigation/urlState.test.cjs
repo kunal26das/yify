@@ -81,3 +81,23 @@ test('commit writes every codec key through the screen navigation and clears def
   assert.deepEqual(Object.keys(screen.writes[0]), [...searchUrlCodec.keys]);
   screen.unmount();
 });
+
+test('the codec parses every route param, including aliases it never writes', () => {
+  let params = {tab: 'insights'};
+  const expoRouter = {useLocalSearchParams: () => ({...params}), useNavigation: () => ({setParams() {}})};
+  const {useUrlState} = loadTs('src/core/navigation/urlState.ts', {'expo-router': expoRouter});
+  const sectionCodec = {
+    keys: ['section'],
+    parse: (all) => ({section: all.section ?? (all.tab === 'insights' ? 'watched' : 'watchlist')}),
+    serialize: (state) => ({section: state.section === 'watchlist' ? undefined : state.section}),
+  };
+  let url;
+  function Probe() {
+    url = useUrlState(sectionCodec);
+    return null;
+  }
+  const view = render(React.createElement(Probe));
+  assert.deepEqual(url.state, {section: 'watched'});
+  view.unmount();
+});
+
