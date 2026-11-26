@@ -1,6 +1,6 @@
 import {Link} from 'expo-router';
 import type {BottomTabBarProps} from 'expo-router/js-tabs';
-import {StyleSheet, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {DESTINATIONS} from '@/core/ui/navigation/destinations';
 
 export function AppTabBar({state}: BottomTabBarProps) {
@@ -18,6 +18,7 @@ export function AppTabBar({state}: BottomTabBarProps) {
           {destination.label}
         </Link>
       ))}
+      <Text testID="tab-focused">{focused}</Text>
     </View>
   );
 }

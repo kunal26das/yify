@@ -61,9 +61,9 @@
         }
       ]
     },
-    "web": {"output": "server", "favicon": "./assets/images/favicon.png"},
+    "web": {"output": "static", "favicon": "./assets/images/favicon.png"},
     "plugins": [
-      ["expo-router", {"sitemap": false, "headOrigin": "https://yify.expo.app"}],
+      ["expo-router", {"sitemap": false, "headOrigin": "https://yify.expo.app", "apiRoutes": true}],
       ["expo-splash-screen", {"image": "./assets/images/icon.png", "imageWidth": 200, "resizeMode": "contain"}],
       ["expo-font", {"fonts": []}],
       "@react-native-firebase/app",
