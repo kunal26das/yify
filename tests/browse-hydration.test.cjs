@@ -35,6 +35,12 @@ function fixture({platform = 'web', defaults = DEFAULT_BROWSE_DEFAULTS, params =
             React.createElement('output', null, JSON.stringify(viewModel.appliedFilters)),
             autoFocus ? React.createElement('dialog', {open: true}, 'Search') : null);
     }
+    let detachedRouterCalls = 0;
+    const navigation = {setParams: value => {
+        writtenParams.push(value);
+        routeParams = {...routeParams, ...value};
+        for (const listener of paramListeners) listener();
+    }};
     const {default: BrowseRoute} = loadTypeScript('app/movies.tsx', {
         react: {...React, useSyncExternalStore: (subscribe, getSnapshot, getServerSnapshot) => React.useSyncExternalStore(
             listener => {listeners.add(listener); return () => listeners.delete(listener);},
@@ -42,11 +48,10 @@ function fixture({platform = 'web', defaults = DEFAULT_BROWSE_DEFAULTS, params =
         'react-native': {Platform: {OS: platform}},
         'expo-router': {useLocalSearchParams: () => React.useSyncExternalStore(
             listener => {paramListeners.add(listener); return () => paramListeners.delete(listener);},
-            () => routeParams, () => routeParams), router: {setParams: value => {
-            writtenParams.push(value);
-            routeParams = {...routeParams, ...value};
-            for (const listener of paramListeners) listener();
-        }}},
+            () => routeParams, () => routeParams), router: {setParams: () => {
+            detachedRouterCalls += 1;
+            throw new Error('The imperative router is unavailable before the first render has finished.');
+        }}, useNavigation: () => navigation},
         'expo-router/head': () => null,
         '@/instrumentation/ScreenDisplay': {ScreenDisplay: () => null},
         '@/presentation': {
@@ -57,6 +62,7 @@ function fixture({platform = 'web', defaults = DEFAULT_BROWSE_DEFAULTS, params =
     });
     return {
         BrowseRoute, requests, writtenParams, focusSnapshots,
+        get detachedRouterCalls() {return detachedRouterCalls;},
         get current() {return current;},
         hydrate() {hydrated = true; for (const listener of listeners) listener();},
         navigate(next) {routeParams = next;},
@@ -155,4 +161,13 @@ test('native first renders retain saved filters and URL search without a web hyd
         assert.match(html, /value="Dune"/);
         assert.match(html, /dialog/);
     }
+});
+
+test('native Browse writes saved filters to its own route params while the global router is unbound', async t => {
+    const f = fixture({platform: 'android', defaults: savedFilters});
+    await mount(t, f);
+    assert.ok(f.writtenParams.length > 0);
+    assert.deepEqual(f.writtenParams.at(-1), {query: undefined, genre: 'action', quality: '1080p', minimum_rating: '8',
+        sort_by: 'year', order_by: 'asc', focus: undefined});
+    assert.equal(f.detachedRouterCalls, 0);
 });
