@@ -7,9 +7,18 @@ import subsetFont from 'subset-font';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUTPUT = join(ROOT, 'public/fonts');
 const FACES = ['display', 'body', 'bodyStrong'];
+const SOURCES = 'scripts/fonts/font-sources.json';
 
 function readJson(path) {
   return JSON.parse(readFileSync(join(ROOT, path), 'utf8'));
+}
+
+export function verifiedSource(file, buffer, pinned) {
+  const expected = pinned.sha256[file];
+  if (!expected) throw new Error(`${file} has no pinned SHA-256 in ${SOURCES}. Record the hash of the reviewed font before building.`);
+  const actual = createHash('sha256').update(buffer).digest('hex');
+  if (actual !== expected) throw new Error(`${file}: SHA-256 ${actual} does not match the pinned ${expected} (${pinned.package} ${pinned.version}).`);
+  return buffer;
 }
 
 export function subsetFileName(web, subset) {
@@ -31,12 +40,17 @@ export function codepointsOf(unicodeRange) {
 async function main() {
   const brand = readJson('config/brand.json');
   const {subsets} = readJson('src/core/ui/theme/fontSubsets.json');
+  const pinned = readJson(SOURCES);
+  const sources = new Map(FACES.map((face) => {
+    const {file} = brand.fonts[face];
+    return [face, verifiedSource(file, readFileSync(join(ROOT, file)), pinned)];
+  }));
   mkdirSync(OUTPUT, {recursive: true});
   const expected = new Set();
   const lines = [];
   for (const face of FACES) {
     const font = brand.fonts[face];
-    const source = readFileSync(join(ROOT, font.file));
+    const source = sources.get(face);
     for (const subset of subsets) {
       const text = String.fromCodePoint(...codepointsOf(subset.unicodeRange));
       const woff2 = await subsetFont(source, text, {targetFormat: 'woff2'});
