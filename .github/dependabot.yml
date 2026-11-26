@@ -60,10 +60,10 @@ updates:
           - "react-native-screens"
           - "react-native-web"
           - "react-native-webview"
+      firebase-native:
+        patterns: ["@react-native-firebase/*", "firebase"]
       native-sdks:
         patterns:
-          - "@react-native-firebase/*"
-          - "firebase"
           - "@sentry/*"
           - "react-native-purchases"
           - "@revenuecat/*"

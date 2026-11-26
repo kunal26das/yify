@@ -33,6 +33,33 @@ test('Dependabot checks every installed workspace and Actions monthly without su
     assert.equal(entry['target-branch'], undefined);
     assert.equal(entry['exclude-paths'], undefined);
     if (entry['package-ecosystem'] === 'npm') assert.equal(entry['versioning-strategy'], 'increase');
+    assert.equal(entry.cooldown['default-days'], 3);
+    for (const [name, group] of Object.entries(entry.groups)) {
+      assert.equal(group['dependency-type'], undefined, `${name} must not filter by dependency type`);
+    }
+  }
+});
+
+test('group order and pattern specificity agree, so the first matching group is the one Dependabot picks', () => {
+  for (const entry of config.updates) {
+    const groups = Object.entries(entry.groups);
+    const seen = new Map();
+    groups.forEach(([name, group], index) => {
+      const kind = group['applies-to'] ?? 'version-updates';
+      const types = group['update-types'] ?? ['patch', 'minor', 'major'];
+      for (const pattern of group.patterns.filter((item) => !item.includes('*'))) {
+        const key = `${kind}:${pattern}`;
+        assert.equal(seen.get(key), undefined, `${pattern} is listed in ${seen.get(key)} and ${name}`);
+        seen.set(key, name);
+        for (const [earlierName, earlier] of groups.slice(0, index)) {
+          if ((earlier['applies-to'] ?? 'version-updates') !== kind) continue;
+          const earlierTypes = earlier['update-types'] ?? ['patch', 'minor', 'major'];
+          if (!types.some((type) => earlierTypes.includes(type))) continue;
+          const shadowing = earlier.patterns.filter((item) => item.includes('*') && matches(item, pattern));
+          assert.deepEqual(shadowing, [], `${pattern} in ${name} is shadowed by ${earlierName}`);
+        }
+      }
+    });
   }
 });
 
@@ -55,22 +82,28 @@ test('coupled dependencies stay together for patch, minor and major proposals', 
   assert.notEqual(groupFor(app, 'expo-device-corner-radius', 'major'), groupFor(app, 'expo', 'major'));
 });
 
-test('reviewed compatibility exceptions cannot block the unrelated patch group', () => {
+test('reviewed compatibility exceptions stay out of the catch-all group', () => {
   const policy = JSON.parse(readFileSync(join(root, 'scripts/expo-dependency-policy.json'), 'utf8'));
   assert.ok(Object.keys(policy.packages).length > 0);
   for (const name of Object.keys(policy.packages)) {
-    assert.notEqual(groupFor(app, name, 'patch'), 'everything-else', name);
+    for (const level of ['patch', 'minor']) {
+      assert.notEqual(groupFor(app, name, level), 'everything-else', `${name} ${level}`);
+    }
   }
   assert.equal(groupFor(app, 'jose', 'patch'), 'everything-else');
   assert.equal(groupFor(app, 'jose', 'minor'), 'everything-else');
   assert.equal(groupFor(app, 'jose', 'major'), undefined);
   for (const level of ['patch', 'minor', 'major']) {
     assert.ok(groupFor(release, 'react', level), `release react ${level} needs a group`);
-    assert.equal(groupFor(release, 'react', level), groupFor(release, 'ink', level));
+    for (const name of ['ink', 'ink-select-input', 'ink-text-input', '@types/react']) {
+      assert.equal(groupFor(release, name, level), groupFor(release, 'react', level), `${name} ${level}`);
+    }
   }
+  assert.equal(groupFor(release, 'eas-cli', 'minor'), 'release-updates');
+  assert.equal(groupFor(release, 'eas-cli', 'major'), undefined);
 });
 
-test('every application dependency takes its intended group for major updates', () => {
+test('every application dependency takes its intended group for every update level', () => {
   const intended = new Map([
     ['expo-sdk', ['@expo/log-box', '@expo/metro-runtime', '@expo/ui', '@expo/vector-icons', '@react-native/js-polyfills',
       '@react-native/metro-config', '@types/react', 'eslint-config-expo', 'expo', 'expo-background-task', 'expo-blur',
@@ -81,10 +114,10 @@ test('every application dependency takes its intended group for major updates', 
       'expo-web-browser', 'react', 'react-dom', 'react-native', 'react-native-gesture-handler', 'react-native-reanimated',
       'react-native-safe-area-context', 'react-native-screens', 'react-native-web', 'react-native-webview',
       'react-native-worklets', 'react-test-renderer']],
-    ['native-sdks', ['@gorhom/bottom-sheet', '@react-native-firebase/analytics', '@react-native-firebase/app',
-      '@react-native-firebase/auth', '@react-native-firebase/crashlytics', '@react-native-firebase/remote-config',
-      '@react-native-google-signin/google-signin', '@revenuecat/purchases-js', '@sentry/react-native',
-      'expo-device-corner-radius', 'expo-in-app-updates', 'firebase', 'react-native-google-mobile-ads',
+    ['firebase-native', ['@react-native-firebase/analytics', '@react-native-firebase/app', '@react-native-firebase/auth',
+      '@react-native-firebase/crashlytics', '@react-native-firebase/remote-config', 'firebase']],
+    ['native-sdks', ['@gorhom/bottom-sheet', '@react-native-google-signin/google-signin', '@revenuecat/purchases-js',
+      '@sentry/react-native', 'expo-device-corner-radius', 'expo-in-app-updates', 'react-native-google-mobile-ads',
       'react-native-purchases', 'react-native-web-webview', 'react-native-youtube-iframe']],
     ['tooling', ['@babel/core', '@babel/plugin-transform-dynamic-import', '@babel/plugin-transform-modules-commonjs',
       '@babel/preset-react', '@babel/preset-typescript', '@eslint/compat', 'electron', 'electron-builder', 'eslint',
@@ -101,7 +134,12 @@ test('every application dependency takes its intended group for major updates', 
       .filter(([, version]) => !version.startsWith('npm:'))
       .map(([name]) => name)))].sort();
   assert.deepEqual(installed, [...expected.keys()].sort());
-  for (const name of installed) assert.equal(groupFor(app, name, 'major'), expected.get(name), name);
+  for (const name of installed) {
+    assert.equal(groupFor(app, name, 'major'), expected.get(name), `${name} major`);
+    for (const level of ['patch', 'minor']) {
+      assert.equal(groupFor(app, name, level), expected.get(name) ?? 'everything-else', `${name} ${level}`);
+    }
+  }
 });
 
 test('security groups cover every ecosystem independently of normal update levels', () => {
