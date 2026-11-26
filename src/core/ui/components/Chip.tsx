@@ -26,6 +26,8 @@ export interface ChipProps {
 const HEIGHT = 32;
 const HIT_SLOP = {top: 8, bottom: 8};
 const REMOVE_SIZE = 32;
+const REMOVE_SLOP = 8;
+const REMOVE_HIT_SLOP = {top: REMOVE_SLOP, bottom: REMOVE_SLOP, left: REMOVE_SLOP, right: REMOVE_SLOP};
 
 export function chipName(props: Pick<ChipProps, 'kind' | 'label' | 'value' | 'accessibilityLabel'>): string {
   if (props.accessibilityLabel) return props.accessibilityLabel;
@@ -73,7 +75,7 @@ export function Chip(props: ChipProps) {
           contentColor={content}
           shape="small"
           hitSlop={HIT_SLOP}
-          style={[styles.content, styles.grow, {minHeight: HEIGHT, paddingLeft: leading ? theme.space.md : theme.space.lg, paddingRight: theme.space.xs}]}
+          style={[styles.content, styles.grow, {minHeight: HEIGHT, paddingLeft: leading ? theme.space.md : theme.space.lg}]}
         >
           {body}
         </Touchable>
@@ -83,8 +85,8 @@ export function Chip(props: ChipProps) {
           aria-label={`Remove ${label}`}
           contentColor={content}
           shape="full"
-          hitSlop={HIT_SLOP}
-          style={[styles.remove, {width: REMOVE_SIZE, height: REMOVE_SIZE}]}
+          hitSlop={REMOVE_HIT_SLOP}
+          style={[styles.remove, {width: REMOVE_SIZE, height: REMOVE_SIZE, marginLeft: REMOVE_SLOP}]}
         >
           <Icon name="close" size={18} color={content}/>
         </Touchable>

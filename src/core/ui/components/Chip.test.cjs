@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
-const {React, createKit, hosts, press, render, spy, texts} = require('../testing/kit.cjs');
+const {React, act, createKit, hosts, press, render, spy, texts, touchableStyle} = require('../testing/kit.cjs');
 
 function flat(style) {
   return Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
@@ -62,4 +62,44 @@ test('input chips keep a separate remove button and assist chips with an href ar
   const link = render(React.createElement(WebChip, {kind: 'assist', label: 'Drama', href: '/search?genres=18'}));
   assert.equal(hosts(link.root, 'Pressable')[0].props.role, 'link');
   assert.equal(hosts(link.root, 'Pressable')[0].props.href, '/search?genres=18');
+});
+
+function space(node) {
+  const element = {};
+  const event = {nativeEvent: {key: ' '}, target: element, currentTarget: element, preventDefault: spy()};
+  act(() => node.props.onKeyDown(event));
+  act(() => node.props.onKeyUp(event));
+  return event;
+}
+
+test('on web Space toggles a filter chip without scrolling the page', () => {
+  const kit = createKit({web: true});
+  const {Chip} = kit.load('src/core/ui/components/Chip.tsx');
+  function Filter() {
+    const [selected, setSelected] = React.useState(false);
+    return React.createElement(Chip, {kind: 'filter', label: 'Free', selected, onPress: () => setSelected((value) => !value)});
+  }
+  const view = render(React.createElement(Filter));
+  const chip = () => hosts(view.root, 'Pressable')[0];
+  assert.equal(chip().props['aria-checked'], false);
+  const event = space(chip());
+  assert.equal(event.preventDefault.calls.length, 1);
+  assert.equal(chip().props['aria-checked'], true);
+  space(chip());
+  assert.equal(chip().props['aria-checked'], false);
+});
+
+test('the remove button of an input chip is a 48 dp target that does not overlap the chip body', () => {
+  const kit = createKit();
+  const {Chip} = kit.load('src/core/ui/components/Chip.tsx');
+  const view = render(React.createElement(Chip, {kind: 'input', label: 'Comedy', onPress: spy(), onRemove: spy()}));
+  const [body, remove] = hosts(view.root, 'Pressable');
+  const size = touchableStyle(remove);
+  const slop = remove.props.hitSlop;
+  assert.ok(size.width + slop.left + slop.right >= 48);
+  assert.ok(size.height + slop.top + slop.bottom >= 48);
+  assert.ok((size.marginLeft ?? 0) >= slop.left);
+  assert.equal(body.props.hitSlop.left, undefined);
+  assert.equal(body.props.hitSlop.right, undefined);
+  assert.ok(touchableStyle(body).minHeight + body.props.hitSlop.top + body.props.hitSlop.bottom >= 48);
 });
