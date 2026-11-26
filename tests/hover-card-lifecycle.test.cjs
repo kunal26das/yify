@@ -29,6 +29,7 @@ async function fixture(t) {
     let unmounts = 0;
     const analytics = [];
     const colors = new Proxy({}, {get: () => '#123456'});
+    const router = {push() {}};
     const {HoverCardHost, useHoverCard} = loadTypeScript('presentation/movies/components/HoverCard.web.tsx', {
         'react-native': {
             Animated: {Value: class {interpolate() {return 1;}}, View: 'AnimatedView', spring: () => ({start() {}})},
@@ -36,7 +37,7 @@ async function fixture(t) {
             Platform: {select: options => options.web ?? options.default},
         },
         '@expo/vector-icons/Ionicons': 'Icon', 'expo-image': {Image: 'Image'},
-        'expo-router': {router: {push() {}}},
+        'expo-router': {useRouter: () => router},
         '@/presentation/analytics/events': {Analytics: {posterHoverCard: movie => analytics.push(movie.id)}},
         '../useWatchlist': {useToggleWatchlist: () => () => {}, useIsInWatchlist: () => false},
         '../../components/themed-text': {ThemedText: 'Text'},

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Image} from 'expo-image';
-import {router} from 'expo-router';
+import {useRouter} from 'expo-router';
 import {type ComponentProps, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
     type ScrollViewInstance,
@@ -60,6 +60,7 @@ export function HeroBillboard({
                                   backdrops,
                                   onRequestTrailer,
                               }: HeroBillboardProps) {
+    const router = useRouter();
     const {colors} = usePalette();
     const {gutter} = useResponsive();
     const {playback} = usePreferences();
@@ -283,7 +284,7 @@ export function HeroBillboard({
             return;
         }
         router.push(`/movie/${activeMovie.id}`);
-    }, [activeMovie, activeTrailer, youtube]);
+    }, [activeMovie, activeTrailer, youtube, router]);
 
     const toggleMute = useCallback(() => {
         if (!activeMovie) return;
@@ -505,6 +506,7 @@ function HeroSlide({
     onCloseTrailer: () => void;
     onTrailerStarted: () => void;
 }) {
+    const router = useRouter();
     const saved = useIsInWatchlist(movie.id);
     const toggleWatchlist = useToggleWatchlist();
     const [focused, setFocused] = useState<string | null>(null);

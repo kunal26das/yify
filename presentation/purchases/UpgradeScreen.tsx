@@ -1,5 +1,5 @@
 import {ScrollView, StyleSheet} from 'react-native';
-import {router, useIsFocused} from 'expo-router';
+import {useIsFocused, useRouter} from 'expo-router';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Screen} from '../components/screen';
 import {useTopBarHeight} from '../movies/components/TopBar';
@@ -8,6 +8,7 @@ import {useResponsive} from '../hooks/use-responsive';
 import {SupporterMembership} from './supporter-paywall';
 
 export function UpgradeScreen() {
+    const router = useRouter();
     const top = useTopBarHeight();
     const focused = useIsFocused();
     const insets = useSafeAreaInsets();
