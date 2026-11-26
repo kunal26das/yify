@@ -78,6 +78,7 @@
         "useNativeInit": true,
         "experimental_android": {"enableAndroidGradlePlugin": true, "includeNativeSources": false, "includeSourceContext": false}
       }],
+      "./plugins/withSentryInstallSource",
       ["@react-native-google-signin/google-signin", {"iosDependencyManager": "spm"}],
       "./plugins/withAndroidRelease",
       "./plugins/withGradleWrapper",

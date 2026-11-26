@@ -36,6 +36,11 @@ class MainApplication : Application(), ReactApplication {
     // @generated end xml-fonts-init
 
     RNSentrySDK.init(this)
+    runCatching {
+        val installer = if (android.os.Build.VERSION.SDK_INT >= 30) packageManager.getInstallSourceInfo(packageName).installingPackageName else packageManager.getInstallerPackageName(packageName)
+        io.sentry.Sentry.setTag("installer", installer ?: "none")
+        io.sentry.Sentry.setTag("split_count", (applicationInfo.splitSourceDirs?.size ?: 0).toString())
+    }
     DefaultNewArchitectureEntryPoint.releaseLevel = try {
       ReleaseLevel.valueOf(BuildConfig.REACT_NATIVE_RELEASE_LEVEL.uppercase())
     } catch (e: IllegalArgumentException) {
