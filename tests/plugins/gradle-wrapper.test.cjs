@@ -3,7 +3,7 @@ const {test} = require('node:test');
 const {mkdtemp, mkdir, readFile, writeFile, rm} = require('node:fs/promises');
 const {tmpdir} = require('node:os');
 const path = require('node:path');
-const withGradleWrapper = require('../plugins/withGradleWrapper');
+const withGradleWrapper = require('../../plugins/withGradleWrapper');
 
 const URL = 'distributionUrl=https\\://services.gradle.org/distributions/gradle-9.4.1-bin.zip';
 const CHECKSUM = 'distributionSha256Sum=2ab2958f2a1e51120c326cad6f385153bb11ee93b3c216c5fccebfdfbb7ec6cb';
@@ -47,12 +47,12 @@ for (const contents of ['networkTimeout=10000\n', 'distributionUrl=one\ndistribu
 }
 
 test('the production Expo configuration registers the wrapper fix exactly once', () => {
-    const plugins = require('../app.json').expo.plugins;
+    const plugins = require('../../app.json').expo.plugins;
     assert.equal(plugins.filter((plugin) => plugin === './plugins/withGradleWrapper').length, 1);
 });
 
 test('prebuild preserves the upstream Expo template explicit Kotlin plugin and legacy DSL', async () => {
-    const root = path.resolve(__dirname, '..');
+    const root = path.resolve(__dirname, '../..');
     const config = withGradleWrapper({name: 'Yify', slug: 'yify', _internal: {projectRoot: root}});
     const apply = (modResults) => config.mods.android.gradleProperties({...config, modResults, modRequest: {
         platform: 'android', modName: 'gradleProperties', projectRoot: root, platformProjectRoot: path.join(root, 'android'),

@@ -2,9 +2,9 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const {test} = require('node:test');
 const {sdkVersions} = require('@react-native-firebase/app/package.json');
-const withGoogleServicesVersion = require('../plugins/withGoogleServicesVersion');
+const withGoogleServicesVersion = require('../../plugins/withGoogleServicesVersion');
 
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, '../..');
 const fixture = `buildscript {
   dependencies {
     classpath 'com.google.gms:google-services:4.4.4'

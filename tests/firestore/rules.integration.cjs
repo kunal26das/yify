@@ -1,5 +1,3 @@
-// Run against a local emulator started with this repository's firestore.rules:
-// FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node --test tests/firestore-rules.integration.cjs
 const assert = require('node:assert/strict');
 const {test} = require('node:test');
 const {initializeApp, deleteApp} = require('firebase/app');

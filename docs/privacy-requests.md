@@ -4,7 +4,7 @@ The local operator tool collects a Firebase account export and prepares an erasu
 
 ```sh
 node scripts/privacy/run.mjs
-node --test tests/privacy-request-workflow.test.cjs
+node --test tests/scripts/privacy-request-workflow.test.cjs
 ```
 
 ## Receiving and verifying a request

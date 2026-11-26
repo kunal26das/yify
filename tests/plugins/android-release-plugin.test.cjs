@@ -1,9 +1,9 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const {test} = require('node:test');
-const withAndroidRelease = require('../plugins/withAndroidRelease');
+const withAndroidRelease = require('../../plugins/withAndroidRelease');
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(__dirname, '../..');
 const fixture = `def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 android {
     signingConfigs {

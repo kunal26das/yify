@@ -3,11 +3,10 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const semver = require('semver');
-const vm = require('node:vm');
 const { test } = require('node:test');
 
-const modulePromise = import('../scripts/expo-native-compat.mjs');
-const repository = path.resolve(__dirname, '..');
+const modulePromise = import('../../scripts/expo-native-compat.mjs');
+const repository = path.resolve(__dirname, '../..');
 
 async function fixture(t) {
   const { sha256 } = await modulePromise;
@@ -102,108 +101,6 @@ test('strict hunk application preserves final newline and rejects shifted contex
   assert.throws(() => applyUnifiedPatch('old\n', patch.replace('-1,1', '-1,2')), /line count/);
 });
 
-async function reviewedSource(packageName, file) {
-  const directory = path.join(repository, 'patches/expo-native');
-  const manifest = JSON.parse(await fs.readFile(path.join(directory, 'manifest.json'), 'utf8'));
-  const entry = manifest.sources.find((entry) => entry.package === packageName && entry.file === file);
-  assert.ok(entry);
-  const source = await fs.readFile(path.join(repository, 'node_modules', packageName, file), 'utf8');
-  const { sha256 } = await modulePromise;
-  assert.equal(sha256(source), entry.sha256);
-  return source;
-}
-
-test('Expo server frame shim schedules no work and preserves browser/native APIs', async () => {
-  const source = await reviewedSource('expo', 'src/winter/runtime.ts');
-  const shim = source.slice(source.indexOf("if (process.env.EXPO_SERVER && typeof globalThis.requestAnimationFrame"));
-  assert.ok(shim.startsWith('if ('));
-  let calls = 0;
-  const server = vm.createContext({ process: { env: { EXPO_SERVER: 'true' } }, callback: () => { calls += 1; } });
-  vm.runInContext(shim, server);
-  assert.equal(vm.runInContext('requestAnimationFrame(callback)', server), 0);
-  vm.runInContext('cancelAnimationFrame(0)', server);
-  assert.equal(calls, 0);
-  const browser = vm.createContext({ process: { env: {} } });
-  vm.runInContext(shim, browser);
-  assert.equal(vm.runInContext('typeof requestAnimationFrame', browser), 'undefined');
-  const existing = () => 42;
-  const native = vm.createContext({ process: { env: { EXPO_SERVER: 'true' } }, requestAnimationFrame: existing });
-  vm.runInContext(shim, native);
-  assert.equal(native.requestAnimationFrame, existing);
-});
-
-test('Expo native bootstrap uses the current setup entry and retains older platform fallback', async () => {
-  const source = await reviewedSource('expo', 'src/winter/setupReactNativeEnvironment.ts');
-  const installed = await reviewedSource('react-native', 'src/setup-env.js');
-  assert.match(installed, /setUpDefaultReactNativeEnvironment/);
-  const load = new Function('require', source);
-  const current = [];
-  load((name) => current.push(name));
-  assert.deepEqual(current, ['react-native/setup-env']);
-  const older = [];
-  load((name) => {
-    older.push(name);
-    if (name === 'react-native/setup-env') throw new Error('older platform');
-  });
-  assert.deepEqual(older, ['react-native/setup-env', 'react-native/Libraries/Core/InitializeCore']);
-  const runtime = await reviewedSource('expo', 'src/winter/runtime.native.ts');
-  assert.match(runtime, /import '\.\/setupReactNativeEnvironment'/);
-  const cli = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
-  assert.match(cli, /doReplace\(`\$\{hostPackage\}\/src\/setup-env\.js`, undefined\)/);
-  const metro = await reviewedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
-  const body = /getModulesRunBeforeMainModule: \(\)\s*=>\{([\s\S]*?)\n            \},\n            getPolyfills/.exec(metro)?.[1];
-  assert.ok(body);
-  const prepare = new Function('projectRoot', 'getReactNativeHostPath', '_requireutils', '_events', 'getExpoMetroRuntimeOptional', body);
-  for (const entry of ['react-native/setup-env', './src/setup-env.js', 'Libraries/Core/InitializeCore']) {
-    const calls = [];
-    const resolveFrom = (root, name) => {
-      calls.push([root, name]);
-      return name === entry ? '/native/setup.js' : name === 'expo/build/winter' ? '/expo/winter.js' : null;
-    };
-    const result = prepare('/app', () => '/native', () => ({resolveFrom}), {event: () => assert.fail('missing runtime')}, () => '/expo/metro.js');
-    assert.deepEqual(result, ['/native/setup.js', '/expo/winter.js', '/expo/metro.js']);
-    assert.deepEqual(calls[0], ['/app', 'react-native/setup-env']);
-    if (entry !== 'react-native/setup-env') assert.deepEqual(calls[1], ['/native', './src/setup-env.js']);
-    if (entry === 'Libraries/Core/InitializeCore') assert.deepEqual(calls[2], ['/native', entry]);
-  }
-});
-
-test('Metro and React Native share the same asset registry and accepted import routes', async () => {
-  const source = await reviewedSource('@expo/cli', 'build/src/start/server/metro/withMetroMultiPlatform.js');
-  assert.ok(source.includes("'react-native/asset-registry': 'react-native-web/asset-registry'"));
-  const start = source.indexOf('if (/^@react-native');
-  const end = source.indexOf('return null;', start);
-  assert.ok(start >= 0 && end > start);
-  const resolve = new Function('moduleName', 'context', 'platform', 'getStrictResolver', source.slice(start, end));
-  for (const platform of ['web', 'ios', 'android']) {
-    const expected = platform === 'web' ? 'react-native-web/asset-registry' : 'react-native/asset-registry';
-    for (const specifier of ['@react-native/assets-registry/registry', '@react-native/assets-registry/registry.js', 'react-native/Libraries/Image/AssetRegistry', 'react-native/Libraries/Image/AssetRegistry.js']) {
-      assert.equal(resolve(specifier, {}, platform, () => (name) => name), expected);
-    }
-  }
-  assert.equal(resolve('other', {}, 'web', () => (name) => name), undefined);
-  const native = JSON.parse(await fs.readFile(path.join(repository, 'node_modules/react-native/package.json'), 'utf8'));
-  assert.equal(native.exports['./asset-registry'].default, './src/asset-registry.js');
-  const webRegistry = require('react-native-web/asset-registry');
-  const {AssetRegistry} = require('react-native-web');
-  const webAsset = {uri: 'public-registry.png'};
-  assert.equal(AssetRegistry.getAssetByID(webRegistry.registerAsset(webAsset)), webAsset);
-  assert.equal(webRegistry.getAssetByID(AssetRegistry.registerAsset(webAsset)), webAsset);
-});
-
-test('native Metro polyfills resolve the matching supported package', async () => {
-  const source = await reviewedSource('@expo/metro-config', 'build/ExpoMetroConfig.js');
-  const body = /getPolyfills: \(\{ platform \}\)\s*=>\{([\s\S]*?)\n            \},?/.exec(source)?.[1];
-  assert.ok(body);
-  const required = [];
-  const get = new Function('platform', 'require', body);
-  const loader = (name) => { required.push(name); return () => ['guard.js']; };
-  assert.deepEqual(get(null, loader), []);
-  assert.deepEqual(get('android', loader), ['guard.js']);
-  assert.deepEqual(get('ios', loader), ['guard.js']);
-  assert.deepEqual(required, ['@react-native/js-polyfills', '@react-native/js-polyfills']);
-});
-
 test('reviewed new native source files are created once and unknown existing files are rejected', async (t) => {
   const f = await fixture(t);
   const { applyCompatibility, sha256 } = await modulePromise;
@@ -221,7 +118,6 @@ test('reviewed new native source files are created once and unknown existing fil
   await assert.rejects(applyCompatibility(f), /Unrecognized compatibility source/);
   assert.equal(await fs.readFile(f.target(entry.file), 'utf8'), 'unexpected user source\n');
 });
-
 
 test('reviewed upstream sources fail before patches and enforce removed-file absence', async (t) => {
   const f = await fixture(t);
@@ -242,9 +138,20 @@ test('reviewed upstream sources fail before patches and enforce removed-file abs
   assert.equal((await applyCompatibility({ ...f, check: true })).applied, 0);
 });
 
-test('reviewed animation libraries explicitly support the selected React Native runtime', async () => {
-  const reanimated = JSON.parse(await reviewedSource('react-native-reanimated', 'compatibility.json'));
-  const worklets = JSON.parse(await reviewedSource('react-native-worklets', 'compatibility.json'));
+test('the manifest keeps only the reviewed Reanimated lifecycle patch and it is applied', async () => {
+  const manifest = JSON.parse(await fs.readFile(path.join(repository, 'patches/expo-native/manifest.json'), 'utf8'));
+  assert.equal(manifest.sources, undefined);
+  assert.deepEqual(manifest.files.map((entry) => `${entry.package}/${entry.file}`), [
+    'react-native-reanimated/android/src/main/java/com/swmansion/reanimated/NodesManager.kt',
+  ]);
+  const { applyCompatibility } = await modulePromise;
+  assert.deepEqual(await applyCompatibility({ check: true }), { applied: 0, verified: 1, reactNative: manifest.reactNative });
+});
+
+test('the patched animation libraries explicitly support the selected React Native runtime', async () => {
+  const read = async (name) => JSON.parse(await fs.readFile(path.join(repository, 'node_modules', name, 'compatibility.json'), 'utf8'));
+  const reanimated = await read('react-native-reanimated');
+  const worklets = await read('react-native-worklets');
   const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
   const minor = (version) => version.split('.').slice(0, 2).join('.');
   const reactNative = minor(pkg.dependencies['react-native']);
@@ -255,12 +162,12 @@ test('reviewed animation libraries explicitly support the selected React Native 
   assert.ok(worklets[workletsVersion]['react-native'].includes(reactNative));
 });
 
-test('every guarded package has an exact installation pin including transitive Expo tools', async () => {
+test('every patched package has an exact installation pin', async () => {
   const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
   const manifest = JSON.parse(await fs.readFile(path.join(repository, 'patches/expo-native/manifest.json'), 'utf8'));
   const pins = {...pkg.dependencies, ...pkg.devDependencies, ...pkg.resolutions};
   assert.equal(pins['react-native'], manifest.reactNative);
-  for (const entry of [...manifest.sources, ...manifest.files]) {
+  for (const entry of [...(manifest.sources ?? []), ...manifest.files]) {
     assert.equal(pins[entry.package], entry.version, `${entry.package} must stay at its reviewed version after a clean resolution`);
   }
 });
@@ -285,40 +192,13 @@ test('coordinated Expo resolutions satisfy their installed parent requirements',
   }
 });
 
-test('Expo Core PCH consumers share the guarded owner and ccache ordering', async () => {
-  const common = await reviewedSource('expo-modules-core', 'android/cmake/common.cmake');
-  assert.match(common, /include\(\$\{CMAKE_SOURCE_DIR\}\/cmake\/pch-ccache\.cmake\)/);
-  assert.match(common, /function\(use_expo_pch target_name\)/);
-  assert.match(common, /pch_ccache_owner\(expo-modules-pch\)/);
-  assert.match(common, /pch_ccache_consumer\(\$\{target_name\} expo-modules-pch\)/);
-  assert.ok(common.indexOf('pch_ccache_owner(expo-modules-pch)') < common.indexOf('function(use_expo_pch target_name)'));
-  for (const file of ['main.cmake', 'jsi.cmake', 'worklets.cmake', 'tests.cmake']) {
-    const source = await reviewedSource('expo-modules-core', `android/cmake/${file}`);
-    assert.match(source, /use_expo_pch\(expo-modules-(?:core|jsi|worklets|core-tests)\)/);
-  }
-  const build = await reviewedSource('expo-modules-core', 'android/build.gradle');
-  const plugin = await reviewedSource('expo-modules-core', 'expo-module-gradle-plugin/build.gradle.kts');
-  assert.match(build, /expoModulesV2Version = "0\.2\.7"/);
-  assert.match(plugin, /expo-modules-v2-gradle-plugin:0\.2\.7/);
-});
-
-test('Expo iOS scene passes initial properties to React Native factory', async () => {
-  const scene = await reviewedSource('expo', 'ios/Expo/ExpoAppSceneDelegate.swift');
-  assert.match(scene, /open var initialProperties: \[AnyHashable: Any\]\?/);
-  assert.match(scene, /factory\.startReactNative\([\s\S]*initialProperties: initialProperties,/);
-});
-
-test('React Native, Metro tooling and JS polyfills share the Expo SDK runtime', async () => {
+test('React Native and its Metro tooling share one version', async () => {
   const pkg = JSON.parse(await fs.readFile(path.join(repository, 'package.json'), 'utf8'));
-  const bundled = JSON.parse(await reviewedSource('expo', 'bundledNativeModules.json'));
-  const policy = JSON.parse(await fs.readFile(path.join(repository, 'scripts/expo-dependency-policy.json'), 'utf8'));
   const reactNative = pkg.dependencies['react-native'];
-  assert.equal(policy.packages['react-native'].version, reactNative);
-  assert.equal(policy.packages['react-native'].expected, bundled['react-native']);
   assert.equal(pkg.devDependencies['@react-native/metro-config'], reactNative);
-  assert.equal(pkg.devDependencies['@react-native/js-polyfills'], reactNative);
-  for (const name of ['@react-native/js-polyfills', '@react-native/asset-utils', '@react-native/dev-middleware',
-    '@react-native/babel-plugin-codegen', '@react-native/codegen', '@react-native/normalize-colors']) {
+  assert.equal(Object.hasOwn(pkg.devDependencies, '@react-native/js-polyfills'), false);
+  for (const name of ['@react-native/asset-utils', '@react-native/dev-middleware', '@react-native/babel-plugin-codegen',
+    '@react-native/codegen', '@react-native/normalize-colors']) {
     assert.equal(pkg.resolutions[name], reactNative);
   }
 });

@@ -4,7 +4,7 @@ const {mkdtemp, mkdir, readFile, writeFile, rm} = require('node:fs/promises');
 const {tmpdir} = require('node:os');
 const path = require('node:path');
 const {spawnSync} = require('node:child_process');
-const plugin = require('../plugins/withUmpMetricsGuard');
+const plugin = require('../../plugins/withUmpMetricsGuard');
 
 async function fixture(t) {
     const root = await mkdtemp(path.join(tmpdir(), 'yify-ump-plugin-'));
@@ -45,7 +45,7 @@ test('generates identical build logic on repeated prebuilds and retains unrelate
     await f.apply('dangerous', {});
     assert.deepEqual(await Promise.all(paths.map(name => readFile(path.join(f.android, 'buildSrc', name), 'utf8'))), first);
     assert.equal(await readFile(unrelated, 'utf8'), 'keep');
-    for (let index = 0; index < paths.length; index++) assert.equal(first[index], await readFile(path.join(__dirname, '../plugins/ump', path.basename(paths[index])), 'utf8'));
+    for (let index = 0; index < paths.length; index++) assert.equal(first[index], await readFile(path.join(__dirname, '../../plugins/ump', path.basename(paths[index])), 'utf8'));
 });
 
 test('refuses to overwrite an unrelated existing buildSrc configuration', async t => {
@@ -58,10 +58,10 @@ test('refuses to overwrite an unrelated existing buildSrc configuration', async 
 });
 
 test('generated source paths are included by Git and the production Expo plugin is registered once', async () => {
-    const plugins = require('../app.json').expo.plugins;
+    const plugins = require('../../app.json').expo.plugins;
     assert.equal(plugins.filter(item => item === './plugins/withUmpMetricsGuard').length, 1);
     assert.equal(plugins.some(item => String(item).includes('withUmpSdk')), false);
     const files = ['android/buildSrc/build.gradle', ...['UmpMetricsFactory.java', 'UmpMetricsVisitor.java'].map(name => `android/buildSrc/src/main/java/io/github/kunal26das/yify/ump/${name}`)];
-    const result = spawnSync('git', ['check-ignore', '--no-index', ...files], {cwd: path.resolve(__dirname, '..'), encoding: 'utf8'});
+    const result = spawnSync('git', ['check-ignore', '--no-index', ...files], {cwd: path.resolve(__dirname, '../..'), encoding: 'utf8'});
     assert.equal(result.status, 1, result.stdout + result.stderr);
 });

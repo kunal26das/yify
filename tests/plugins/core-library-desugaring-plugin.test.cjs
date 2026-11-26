@@ -2,9 +2,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {test} = require('node:test');
-const withCoreLibraryDesugaring = require('../plugins/withCoreLibraryDesugaring');
+const withCoreLibraryDesugaring = require('../../plugins/withCoreLibraryDesugaring');
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(__dirname, '../..');
 const fixture = `plugins {
     id 'com.android.application'
 }
@@ -43,7 +43,7 @@ test('enables core library desugaring with the exact NIO library so java.nio.fil
 });
 
 test('tracked Android Gradle source matches the registered Expo plugin', async () => {
-    const app = require('../app.json');
+    const app = require('../../app.json');
     const contents = fs.readFileSync(path.join(projectRoot, 'android/app/build.gradle'), 'utf8');
     const gradle = fs.readFileSync(path.join(projectRoot, 'android/gradle.properties'), 'utf8');
     assert.ok(app.expo.plugins.includes('./plugins/withCoreLibraryDesugaring'));

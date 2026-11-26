@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const {test} = require('node:test');
-const withFirebaseSceneStartup = require('../plugins/withFirebaseSceneStartup');
+const withFirebaseSceneStartup = require('../../plugins/withFirebaseSceneStartup');
 
 const fixture = `internal import Expo
 import React
@@ -19,7 +19,7 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
 `;
 
 async function apply(contents, language = 'swift') {
-    const projectRoot = path.resolve(__dirname, '..');
+    const projectRoot = path.resolve(__dirname, '../..');
     const config = withFirebaseSceneStartup({name: 'Yify', slug: 'yify'});
     const result = await config.mods.ios.appDelegate({
         ...config,
@@ -56,7 +56,7 @@ test('unexpected or ambiguous launch methods fail instead of leaving Firebase un
 });
 
 test('the Firebase startup plugin is registered exactly once after the native Firebase app plugin', () => {
-    const plugins = require('../app.json').expo.plugins.map(plugin => Array.isArray(plugin) ? plugin[0] : plugin);
+    const plugins = require('../../app.json').expo.plugins.map(plugin => Array.isArray(plugin) ? plugin[0] : plugin);
     assert.equal(plugins.filter(plugin => plugin === './plugins/withFirebaseSceneStartup').length, 1);
     assert.ok(plugins.indexOf('./plugins/withFirebaseSceneStartup') > plugins.indexOf('@react-native-firebase/app'));
 });

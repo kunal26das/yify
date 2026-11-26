@@ -36,8 +36,6 @@ module.exports = (config) =>
             'projectRoot'
         );
 
-        // Keep the literal versions generated from app.config.js so EAS can read them.
-
         contents = replace(
             contents,
             /^(\s*)keyPassword 'android'\n(\s*)\}\n/m,

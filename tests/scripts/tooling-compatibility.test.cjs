@@ -6,9 +6,9 @@ const {tmpdir} = require('node:os');
 const {createHash} = require('node:crypto');
 const {createRequire} = require('node:module');
 const {test} = require('node:test');
-const {transpileTypeScript} = require('./helpers/transpile-typescript.cjs');
+const {transpileTs} = require('../helpers/loadTs.cjs');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '../..');
 
 test('Babel 8 preserves TypeScript values, CommonJS mocks and automatic JSX in test modules', () => {
     const source = `
@@ -21,7 +21,7 @@ test('Babel 8 preserves TypeScript values, CommonJS mocks and automatic JSX in t
         export const value: number = dependency(new Example().state);
         export const view = <span data-value={value} />;
     `;
-    const code = transpileTypeScript(source, path.join(root, 'tests/fixture.tsx'));
+    const code = transpileTs(source, path.join(root, 'tests/fixture.tsx'));
     const result = {exports: {}};
     const imports = [];
     const mockRequire = specifier => {
@@ -38,18 +38,18 @@ test('Babel 8 preserves TypeScript values, CommonJS mocks and automatic JSX in t
 });
 
 test('test transforms reject invalid TypeScript instead of silently stripping it', () => {
-    assert.throws(() => transpileTypeScript('export const value: = 1;', path.join(root, 'tests/invalid.ts')));
+    assert.throws(() => transpileTs('export const value: = 1;', path.join(root, 'tests/invalid.ts')));
 });
 
 test('plain TypeScript generic functions are not parsed as JSX', () => {
-    const code = transpileTypeScript('export const identity = <T>(value: T): T => value;', path.join(root, 'tests/generic.ts'));
+    const code = transpileTs('export const identity = <T>(value: T): T => value;', path.join(root, 'tests/generic.ts'));
     const result = {exports: {}};
     vm.runInThisContext(`(function(exports, require, module) {${code}\n})`)(result.exports, require, result);
     assert.equal(result.exports.identity(42), 42);
 });
 
 test('dynamic imports remain deferred and use the test loader mock boundary', async () => {
-    const code = transpileTypeScript('export const load = () => import("./native-sdk");', path.join(root, 'tests/dynamic.ts'));
+    const code = transpileTs('export const load = () => import("./native-sdk");', path.join(root, 'tests/dynamic.ts'));
     const result = {exports: {}};
     const calls = [];
     const mockRequire = specifier => {
@@ -68,7 +68,7 @@ test('native Worklets transform stays on Babel 7 while root tools use the reques
     assert.match(require('@babel/core').version, /^8\./);
     assert.match(require('typescript/package.json').version, /^7\./);
     assert.match(require('eslint/package.json').version, /^10\./);
-    const plugin = require('../tooling/babel.cjs');
+    const plugin = require('../../tooling/babel.cjs');
     const babel = require('@yify/tooling/babel');
     assert.match(babel.version, /^7\./);
     assert.equal(plugin, require.resolve('react-native-worklets/plugin'));
@@ -83,7 +83,7 @@ test('native Worklets transform stays on Babel 7 while root tools use the reques
         configFile: false,
         plugins: [plugin],
     });
-    const code = transpileTypeScript(transformed.code, path.join(temporary, 'compiled.ts'));
+    const code = transpileTs(transformed.code, path.join(temporary, 'compiled.ts'));
     const result = {exports: {}};
     vm.runInThisContext(`(function(exports, require, module) {${code}\n})`)(result.exports, require, result);
     assert.equal(result.exports.square(6), 36);
@@ -110,25 +110,30 @@ test('tooling retains the current compilers alongside explicit legacy API adapte
     assert.equal(parsed.statements[0].kind, typescript.SyntaxKind.VariableStatement);
 });
 
-test('ESLint 10 still rejects architecture violations and invalid React lists', async () => {
+test('ESLint 10 still rejects architecture violations, invalid React lists and comments', async () => {
     const {ESLint} = require('eslint');
     const eslint = new ESLint({cwd: root});
     const [architecture] = await eslint.lintText(
-        "import {createDependencies} from '../../data';\nexport const value = createDependencies;\n",
-        {filePath: 'domain/services/tooling-probe.ts'},
+        "import {APP_NAME} from '../config/app';\nexport const value = APP_NAME;\n",
+        {filePath: 'src/core/domain/tooling-probe.ts'},
     );
     assert.ok(architecture.messages.some(message => message.ruleId === 'import/no-restricted-paths'));
     const [react] = await eslint.lintText('export const nodes = [<span />];\n', {
-        filePath: 'presentation/tooling-probe.tsx',
+        filePath: 'src/features/home/tooling-probe.tsx',
     });
     assert.ok(react.messages.some(message => message.ruleId === 'react/jsx-key'));
+    const [comment] = await eslint.lintText('export const value = 1;\n// explanation\n', {
+        filePath: 'src/core/domain/tooling-probe.ts',
+    });
+    assert.ok(comment.messages.some(message => message.ruleId === 'yify/no-comments'));
     assert.equal(architecture.fatalErrorCount, 0);
     assert.equal(react.fatalErrorCount, 0);
+    assert.equal(comment.fatalErrorCount, 0);
 });
 
 test('isolated tooling dependencies retain exact version enforcement', async () => {
-    const {checkPins} = await import('../scripts/check-dependency-pins.mjs');
-    const manifest = require('../tooling/package.json');
+    const {checkPins} = await import('../../scripts/check-dependency-pins.mjs');
+    const manifest = require('../../tooling/package.json');
     assert.doesNotThrow(() => checkPins(manifest, 'tooling/package.json'));
     assert.throws(() => checkPins({devDependencies: {typescript: '^6.0.3'}}, 'tooling/package.json'), /must use an exact version/);
     for (const version of ['npm:@babel/core@7.29.7', 'npm:typescript@7.0.2', 'npm:@typescript/typescript6@6.0.2']) {
@@ -142,7 +147,7 @@ test('isolated tooling dependencies retain exact version enforcement', async () 
 });
 
 test('tooling import patches are idempotent and reject unreviewed source or anchors', async () => {
-    const {preparePatch} = await import('../scripts/apply-tooling-compatibility.mjs');
+    const {preparePatch} = await import('../../scripts/apply-tooling-compatibility.mjs');
     const hash = value => createHash('sha256').update(value).digest('hex');
     const source = "const compiler = require('compiler');";
     const updated = "const compiler = require('@yify/tooling/compiler');";
@@ -158,7 +163,7 @@ test('tooling import patches are idempotent and reject unreviewed source or anch
 });
 
 test('tooling patches verify every package version before writing any source', async t => {
-    const {applyToolingCompatibility} = await import('../scripts/apply-tooling-compatibility.mjs');
+    const {applyToolingCompatibility} = await import('../../scripts/apply-tooling-compatibility.mjs');
     const temporary = await fs.mkdtemp(path.join(tmpdir(), 'yify-tooling-patch-'));
     t.after(() => fs.rm(temporary, {recursive: true, force: true}));
     const hash = value => createHash('sha256').update(value).digest('hex');

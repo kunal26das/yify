@@ -6,7 +6,7 @@ const path = require('node:path');
 const {createHash} = require('node:crypto');
 const {spawnSync} = require('node:child_process');
 
-const load = async () => ({...await import('../scripts/privacy/firebase.mjs'), ...await import('../scripts/privacy/workflow.mjs')});
+const load = async () => ({...await import('../../scripts/privacy/firebase.mjs'), ...await import('../../scripts/privacy/workflow.mjs')});
 const instant = Date.parse('2026-09-25T12:00:00Z');
 const request = {requestId: 'TEST-0001', project: 'demo-yify', uid: 'test-user', right: 'access', jurisdiction: 'GDPR+DPDP',
     receivedAt: '2026-09-25T10:00:00Z', ownershipVerifiedAt: '2026-09-25T11:00:00Z'};
@@ -43,7 +43,7 @@ function fakeProvider() {
 }
 
 test('privacy CLI is completely offline by default even with credentials present', () => {
-    const result = spawnSync(process.execPath, ['scripts/privacy/run.mjs'], {cwd: path.resolve(__dirname, '..'), encoding: 'utf8',
+    const result = spawnSync(process.execPath, ['scripts/privacy/run.mjs'], {cwd: path.resolve(__dirname, '../..'), encoding: 'utf8',
         env: {...process.env, GOOGLE_ACCESS_TOKEN: 'secret', GOOGLE_CLOUD_PROJECT: 'real-project'}});
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), {mode: 'offline-simulation', documents: 3, externalRequests: 0, providerWrites: 0, filesWritten: 0});
@@ -166,7 +166,7 @@ test('bundle output is private, refuses overwrites and records a checksum withou
 });
 
 test('CLI rejects live reads with insecure request files or a mismatched project before network access', async t => {
-    const {main} = await import('../scripts/privacy/run.mjs');
+    const {main} = await import('../../scripts/privacy/run.mjs');
     const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'privacy-cli-'));
     t.after(() => fs.rm(temporary, {recursive: true, force: true}));
     const file = path.join(temporary, 'request.json'); await fs.writeFile(file, JSON.stringify(request), {mode: 0o644});
@@ -182,7 +182,7 @@ test('export refuses relative paths and any ordinary or linked Git worktree even
     const temporary = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'privacy-output-')));
     t.after(() => fs.rm(temporary, {recursive: true, force: true}));
     await assert.rejects(validateOutputDirectory('public/private-export'), /output_requires_absolute_path/);
-    await assert.rejects(validateOutputDirectory(path.resolve(__dirname, '../public/private-export')), /output_inside_git_worktree/);
+    await assert.rejects(validateOutputDirectory(path.resolve(__dirname, '../../public/private-export')), /output_inside_git_worktree/);
     for (const type of ['main', 'linked']) {
         const repository = path.join(temporary, type);
         await fs.mkdir(repository);
@@ -199,7 +199,7 @@ test('export refuses relative paths and any ordinary or linked Git worktree even
 });
 
 test('CLI checks an unsafe output destination before accessing any live account source', async t => {
-    const {main} = await import('../scripts/privacy/run.mjs');
+    const {main} = await import('../../scripts/privacy/run.mjs');
     const temporary = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'privacy-preflight-')));
     t.after(() => fs.rm(temporary, {recursive: true, force: true}));
     const file = path.join(temporary, 'request.json');
@@ -209,7 +209,7 @@ test('CLI checks an unsafe output destination before accessing any live account 
     globalThis.fetch = async () => {calls++; throw new Error('must-not-access-provider');};
     t.after(() => {globalThis.fetch = originalFetch;});
     const env = {GOOGLE_CLOUD_PROJECT: request.project, GOOGLE_ACCESS_TOKEN: 'test-short-lived-token'};
-    const destinations = ['public/private-export', path.resolve(__dirname, '../public/private-export')];
+    const destinations = ['public/private-export', path.resolve(__dirname, '../../public/private-export')];
     const linkedParent = path.join(temporary, 'linked-parent');
     await fs.symlink(path.dirname(destinations[1]), linkedParent);
     destinations.push(path.join(linkedParent, 'private-export'));
