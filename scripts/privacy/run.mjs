@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {firebaseReader} from './firebase.mjs';
+import {ACCOUNT_COLLECTIONS, firebaseReader} from './firebase.mjs';
 import {collectAccount, validateOutputDirectory, validateRequest, writeBundle} from './workflow.mjs';
 
 export async function main(args = process.argv.slice(2), env = process.env, log = console.log) {
@@ -10,10 +10,14 @@ export async function main(args = process.argv.slice(2), env = process.env, log 
         const instant = Date.parse('2026-09-25T12:00:00Z');
         const bundle = await collectAccount({request: {requestId: 'DEMO-0001', project: 'demo-yify', uid, right: 'access',
             jurisdiction: 'GDPR+DPDP', receivedAt: '2026-09-25T10:00:00Z', ownershipVerifiedAt: '2026-09-25T11:00:00Z'}, now: () => instant,
-            reader: {roots: ['users', 'journals', 'availabilityAlertState'].map(collection => `${collection}/${uid}`),
+            reader: {roots: ACCOUNT_COLLECTIONS.map(collection => `${collection}/${uid}`),
                 account: async () => ({localId: uid}), readDocument: async documentPath => ({path: documentPath, exists: true,
                     updateTime: '2026-09-25T09:00:00Z', fields: {payload: {stringValue: '{"example":true}'}}}),
-                collections: async () => [], documents: async () => [], requestCount: () => 0}});
+                collections: async documentPath => (documentPath === `users/${uid}` ? ['sections'] : []),
+                documents: async (parent, collection) => ['watchlist', 'meta'].map(section => ({path: `${parent}/${collection}/${section}`,
+                    exists: true, updateTime: '2026-09-25T09:00:00Z',
+                    fields: {payload: {stringValue: '{"v":1}'}, schema: {integerValue: '1'}}})),
+                requestCount: () => 0}});
         log(JSON.stringify({mode: 'offline-simulation', documents: bundle.documents.length, externalRequests: 0, providerWrites: 0, filesWritten: 0}));
         return;
     }

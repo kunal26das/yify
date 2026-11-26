@@ -16,6 +16,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {status}
 
 function fakeProvider() {
     const calls = [];
+    const section = (suffix, payload) => doc(suffix, {payload: {stringValue: payload}, schema: {integerValue: '1'}});
     const fetcher = async (address, init) => {
         const url = new URL(address); const body = init.body ? JSON.parse(init.body) : null;
         calls.push({url, init, body});
@@ -25,18 +26,17 @@ function fakeProvider() {
         const suffix = decodeURIComponent(url.pathname.split('/documents/')[1] ?? '');
         if (suffix.endsWith(':listCollectionIds')) {
             const parent = suffix.replace(':listCollectionIds', '');
-            if (parent === 'journals/test-user') return json(body.pageToken ? {collectionIds: ['archive']} : {collectionIds: ['entries'], nextPageToken: 'collections-page2'});
-            if (parent === 'journals/test-user/archive/missing') return json({collectionIds: ['notes']});
+            if (parent === 'users/test-user') return json(body.pageToken ? {collectionIds: ['legacy']} : {collectionIds: ['sections'], nextPageToken: 'collections-page2'});
+            if (parent === 'users/test-user/legacy/missing') return json({collectionIds: ['notes']});
             return json({});
         }
-        if (suffix === 'users/test-user') return json(doc(suffix, {watchlist: {stringValue: '{"movies":[1,2]}'}, preferences: {stringValue: '{"country":"IN"}'},
-            availabilityAlerts: {stringValue: '{"devices":[{"token":"private-device-token"}]}'}}));
+        if (suffix === 'users/test-user') return json(doc(suffix, {watchlist: {stringValue: '{"version":2,"items":[1,2]}'}, preferences: {stringValue: '{"country":"IN"}'}}));
         if (suffix === 'journals/test-user') return json({}, 404);
-        if (suffix === 'journals/test-user/entries') return json(url.searchParams.has('pageToken') ? {documents: [doc(`${suffix}/second`, {note: {stringValue: 'second note'}})]}
-            : {documents: [doc(`${suffix}/first`, {note: {stringValue: 'first note'}})], nextPageToken: 'documents-page2'});
-        if (suffix === 'journals/test-user/archive') return json({documents: [{name: name(`${suffix}/missing`)}]});
-        if (suffix === 'journals/test-user/archive/missing/notes') return json({documents: [doc(`${suffix}/old`, {note: {stringValue: 'old note'}})]});
-        if (suffix === 'availabilityAlertState/test-user') return json(doc(suffix, {payload: {stringValue: '{"devices":{"stale-device":{"lastSent":1}}}'}}));
+        if (suffix === 'users/test-user/sections') return json(url.searchParams.has('pageToken')
+            ? {documents: [section(`${suffix}/diary`, '{"clearedAt":0,"entries":{"d_1":{"note":"second note"}},"v":1}'), section(`${suffix}/meta`, '{"v":1}')]}
+            : {documents: [section(`${suffix}/watchlist`, '{"entries":{"movie:603":{"addedAt":1}},"removed":{},"v":1}')], nextPageToken: 'documents-page2'});
+        if (suffix === 'users/test-user/legacy') return json({documents: [{name: name(`${suffix}/missing`)}]});
+        if (suffix === 'users/test-user/legacy/missing/notes') return json({documents: [doc(`${suffix}/old`, {note: {stringValue: 'old note'}})]});
         throw new Error('unexpected_test_request');
     };
     return {calls, fetcher};
@@ -46,33 +46,45 @@ test('privacy CLI is completely offline by default even with credentials present
     const result = spawnSync(process.execPath, ['scripts/privacy/run.mjs'], {cwd: path.resolve(__dirname, '../..'), encoding: 'utf8',
         env: {...process.env, GOOGLE_ACCESS_TOKEN: 'secret', GOOGLE_CLOUD_PROJECT: 'real-project'}});
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {mode: 'offline-simulation', documents: 3, externalRequests: 0, providerWrites: 0, filesWritten: 0});
+    assert.deepEqual(JSON.parse(result.stdout), {mode: 'offline-simulation', documents: 4, externalRequests: 0, providerWrites: 0, filesWritten: 0});
 });
 
-test('export paginates all journals through missing parents and reads worker state without consulting pilot membership', async () => {
+test('export reads the v1 documents and every v2 section, paginating collections and traversing missing parents', async () => {
     const {firebaseReader, collectAccount} = await load(); const source = fakeProvider();
     const reader = firebaseReader({...request, accessToken: 'short-lived-test-token', fetcher: source.fetcher});
+    assert.deepEqual(reader.roots, ['users/test-user', 'journals/test-user']);
     const bundle = await collectAccount({request, reader, now: () => instant});
-    assert.equal(bundle.documents.length, 7);
+    assert.deepEqual(bundle.documents.map(item => item.path).sort(), ['journals/test-user', 'users/test-user', 'users/test-user/legacy/missing',
+        'users/test-user/legacy/missing/notes/old', 'users/test-user/sections/diary', 'users/test-user/sections/meta', 'users/test-user/sections/watchlist']);
     assert.equal(bundle.documents.find(item => item.path.endsWith('/old')).data.note, 'old note');
     assert.equal(bundle.documents.find(item => item.path === 'journals/test-user').exists, false);
-    assert.deepEqual(bundle.documents.find(item => item.path === 'users/test-user').data.watchlist, {movies: [1, 2]});
-    assert.equal(bundle.documents.find(item => item.path.startsWith('availabilityAlertState/')).data.payload.devices['stale-device'].lastSent, 1);
+    assert.deepEqual(bundle.documents.find(item => item.path === 'users/test-user').data.watchlist, {version: 2, items: [1, 2]});
+    const diary = bundle.documents.find(item => item.path === 'users/test-user/sections/diary');
+    assert.equal(diary.data.payload.entries.d_1.note, 'second note');
+    assert.equal(diary.data.schema, 1);
     assert.equal(bundle.provenance.providerWrites, 0);
     assert.equal(bundle.provenance.consistentSnapshot, false);
     assert.equal(bundle.erasureReview.status, 'plan-only-no-deletion-performed');
-    assert.ok(bundle.erasureReview.resources.find(item => item.path === 'journals/test-user').reviewAction.includes('barrier'));
+    const actions = Object.fromEntries(bundle.erasureReview.resources.map(item => [item.path, item.reviewAction]));
+    assert.ok(actions['journals/test-user'].includes('barrier'));
+    assert.equal(actions['users/test-user/sections/watchlist'], 'delete-section-after-barrier');
+    assert.equal(actions['users/test-user'], 'delete-v1-document-after-barrier');
+    assert.equal(actions['users/test-user/legacy/missing/notes/old'], 'review-for-erasure');
+    assert.ok(bundle.erasureReview.prerequisites.some(step => step.includes('journals/{uid} deletion barrier')));
     assert.ok(bundle.completeness.providerGaps.some(gap => gap.includes('RevenueCat')));
+    assert.ok(!JSON.stringify(bundle).includes('availabilityAlertState'));
     assert.ok(source.calls.every(call => call.init.method === 'GET' || call.url.pathname.endsWith(':lookup') || call.url.pathname.endsWith(':listCollectionIds')));
     assert.ok(source.calls.every(call => call.init.redirect === 'error'));
-    assert.ok(source.calls.filter(call => call.url.pathname.endsWith('/entries')).every(call => call.url.searchParams.get('showMissing') === 'true'));
+    const sectionPages = source.calls.filter(call => call.url.pathname.endsWith('/users/test-user/sections'));
+    assert.equal(sectionPages.length, 2);
+    assert.ok(sectionPages.every(call => call.url.searchParams.get('showMissing') === 'true'));
     assert.deepEqual(source.calls[0].body, {localId: ['test-user']});
     assert.ok(!JSON.stringify(bundle.account).includes('do-not-export'));
 });
 
 test('a denied source aborts collection instead of reporting a complete export', async () => {
     const {firebaseReader, collectAccount} = await load(); const source = fakeProvider();
-    const reader = firebaseReader({...request, accessToken: 'test', fetcher: (url, init) => String(url).includes('availabilityAlertState')
+    const reader = firebaseReader({...request, accessToken: 'test', fetcher: (url, init) => String(url).endsWith('/users/test-user/sections') || String(url).includes('/users/test-user/sections?')
         ? json({error: {message: 'sensitive provider detail'}}, 403) : source.fetcher(url, init)});
     await assert.rejects(collectAccount({request, reader, now: () => instant}), /^Error: provider_read_failed$/);
 });
@@ -88,7 +100,8 @@ test('recursive export refuses truncation when document or byte budgets are exce
 test('reader rejects paths outside the verified account without issuing a request', async () => {
     const {firebaseReader} = await load(); let calls = 0;
     const reader = firebaseReader({...request, accessToken: 'test', fetcher: async () => {calls++; return json({});}});
-    for (const value of ['users/other', 'availabilityAlertState/_cache', 'users/test-user/../other', 'https://example.test']) {
+    for (const value of ['users/other', 'availabilityAlertState/test-user', 'availabilityAlertState/_cache', 'users/test-user/../other',
+        'users/other/sections/watchlist', 'https://example.test']) {
         await assert.rejects(reader.readDocument(value), /invalid_document_scope/);
     }
     assert.equal(calls, 0);
@@ -108,9 +121,9 @@ test('reader rejects foreign document names and unexpected account matches', asy
 
 test('collection pagination fails on repeated tokens or invalid collection paths', async () => {
     const {firebaseReader} = await load();
-    for (const response of [{collectionIds: [], nextPageToken: 'repeat'}, {collectionIds: ['../other']}, {collectionIds: ['entries', 'entries']}]) {
+    for (const response of [{collectionIds: [], nextPageToken: 'repeat'}, {collectionIds: ['../other']}, {collectionIds: ['sections', 'sections']}]) {
         const reader = firebaseReader({...request, accessToken: 'test', fetcher: async () => json(response)});
-        await assert.rejects(reader.collections('journals/test-user'), /invalid_pagination|invalid_collection/);
+        await assert.rejects(reader.collections('users/test-user'), /invalid_pagination|invalid_collection/);
     }
 });
 

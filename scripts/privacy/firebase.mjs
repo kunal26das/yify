@@ -1,3 +1,5 @@
+export const ACCOUNT_COLLECTIONS = Object.freeze(['users', 'journals']);
+export const SECTION_NAMES = Object.freeze(['watchlist', 'diary', 'lists', 'recent', 'preferences', 'meta']);
 const PROJECT = /^[a-z][a-z0-9-]{4,61}[a-z0-9]$/;
 const UID = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
 const segment = value => typeof value === 'string' && value.length > 0 && value.length <= 1500
@@ -13,7 +15,7 @@ export function firebaseReader({project, uid, accessToken, fetcher = fetch, maxR
     if (typeof accessToken !== 'string' || !accessToken.trim() || /[\r\n]/.test(accessToken)) throw new Error('missing_access_token');
     const root = `projects/${project}/databases/(default)/documents`;
     const base = `https://firestore.googleapis.com/v1/${root}`;
-    const roots = ['users', 'journals', 'availabilityAlertState'].map(collection => `${collection}/${uid}`);
+    const roots = ACCOUNT_COLLECTIONS.map(collection => `${collection}/${uid}`);
     let requests = 0;
     function scoped(path) {
         if (!roots.some(parent => path === parent || path.startsWith(`${parent}/`)) || !path.split('/').every(segment)) throw new Error('invalid_document_scope');

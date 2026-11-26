@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {validateIdentity} from './firebase.mjs';
+import {SECTION_NAMES, validateIdentity} from './firebase.mjs';
 
 export function validateRequest(value, now = Date.now()) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid_request');
@@ -45,6 +45,14 @@ function decoded(value) {
     return value;
 }
 
+function reviewAction(documentPath, uid) {
+    if (documentPath === `journals/${uid}`) return 'retain-or-establish-empty-deletion-barrier-after-content-erasure';
+    const section = documentPath.startsWith(`users/${uid}/sections/`) ? documentPath.slice(`users/${uid}/sections/`.length) : null;
+    if (section !== null && SECTION_NAMES.includes(section)) return 'delete-section-after-barrier';
+    if (documentPath === `users/${uid}`) return 'delete-v1-document-after-barrier';
+    return 'review-for-erasure';
+}
+
 export async function collectAccount({request, reader, now = Date.now, maxDocuments = 5000, maxBytes = 64_000_000}) {
     request = validateRequest(request, now());
     const startedAt = new Date(now()).toISOString();
@@ -55,7 +63,7 @@ export async function collectAccount({request, reader, now = Date.now, maxDocume
         const doc = source === undefined ? await reader.readDocument(documentPath) : source;
         const row = doc ?? {path: documentPath, exists: false};
         const data = Object.fromEntries(Object.entries(row.fields ?? {}).map(([key, value]) => [key, decoded(value)]));
-        for (const key of ['watchlist', 'history', 'preferences', 'library', 'availabilityAlerts', 'payload', 'lease']) {
+        for (const key of ['watchlist', 'history', 'preferences', 'library', 'availabilityAlerts', 'payload']) {
             if (typeof data[key] === 'string') {try {data[key] = JSON.parse(data[key]);} catch {}}
         }
         bytes += Buffer.byteLength(JSON.stringify({...row, data}));
@@ -69,11 +77,11 @@ export async function collectAccount({request, reader, now = Date.now, maxDocume
     for (const root of reader.roots) await visit(root, undefined, 0);
     const completedAt = new Date(now()).toISOString();
     const providerGaps = [
-        'RevenueCat customer, aliases and purchase records; Play/App Store/Stripe billing and retention require separate requests.',
-        'Firebase Analytics, Crashlytics, Sentry, AdMob/AdSense/CMP and relevant processor logs are not exported here.',
-        'Support mail, backups, hosted server logs, local device caches and device-local consent records need separate assessment.',
+        'RevenueCat customer, aliases and purchase records, and Google Play billing and retention, require separate requests.',
+        'Google Analytics for Firebase, Sentry, AdMob and its consent records, EAS Update install IDs and EAS Hosting request logs are not exported here; Crashlytics only for 1.8.x installs.',
+        'Support mail, backups, local device data (unsynced library, recent searches, consent choices, caches) and the entitlement cache on each device need separate assessment.',
         'Auth password hashes, salts, session credentials, MFA recovery material and unrecognized Auth fields are intentionally excluded.',
-        'Only the default Firebase Auth tenant, default Firestore database and these three account roots are covered; other schemas require inventory review.',
+        'Only the default Firebase Auth tenant, the default Firestore database and the account roots users/{uid} (with its sections subcollection and any other child collection) and journals/{uid} are covered; other schemas require inventory review.',
     ];
     return {schemaVersion: 1, request, provenance: {startedAt, completedAt, scope: [...reader.roots],
         consistentSnapshot: false, providerWrites: 0, requests: reader.requestCount?.() ?? null,
@@ -82,11 +90,11 @@ export async function collectAccount({request, reader, now = Date.now, maxDocume
         deadlines: deadlineReview(request), account, documents,
         erasureReview: {status: 'plan-only-no-deletion-performed', ownershipEvidence: 'Review verification record outside this bundle before any action.',
             prerequisites: ['Verify identity and request scope.', 'Review lawful retention and third-party data before release or erasure.',
-                'Prevent stale-client restoration using the account deletion barrier before removing content.',
-                'Stop alert delivery and inspect availabilityAlertState for the UID even if removed from the pilot allowlist.',
+                'Prevent stale-client restoration: establish the empty journals/{uid} deletion barrier (deleting: true) before removing any content.',
+                'Then delete every users/{uid}/sections document and users/{uid}, and only then the Firebase Auth user, in the order of the in-app deletion.',
                 'Re-read every resource and compare updateTime before approved mutation; this export is not an executable deletion batch.'],
             resources: documents.map(doc => ({path: doc.path, exists: doc.exists, observedUpdateTime: doc.updateTime ?? null,
-                reviewAction: doc.path === `journals/${request.uid}` ? 'retain-or-establish-empty-deletion-barrier-after-content-erasure' : 'review-for-erasure'})),
+                reviewAction: reviewAction(doc.path, request.uid)})),
             authAction: account ? 'review-auth-deletion-and-session-revocation' : 'no-account-found',
             providerGaps, subscriptionNotice: 'Erasure does not cancel a subscription or establish a right to a refund.'}};
 }
