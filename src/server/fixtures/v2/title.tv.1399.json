@@ -1,0 +1,46 @@
+{
+  "key": "tv:1399",
+  "type": "tv",
+  "id": 1399,
+  "slug": "game-of-thrones",
+  "title": "Game of Thrones",
+  "originalTitle": "Game of Thrones",
+  "year": 2011,
+  "releaseDate": "2011-04-17",
+  "overview": "Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north. Amidst the war, a neglected military order of misfits, the Night's Watch, is all that stands between the realms of men and icy horrors beyond.",
+  "posterPath": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+  "backdropPath": "/2OMB0ynKlyIenMJWI2Dy9IWT4c.jpg",
+  "rating": 8.5,
+  "voteCount": 25000,
+  "genreIds": [10765, 18, 10759],
+  "originalLanguage": "en",
+  "tagline": "Winter is coming.",
+  "genres": [
+    {"id": 10765, "name": "Sci-Fi & Fantasy", "types": ["tv"]},
+    {"id": 18, "name": "Drama", "types": ["movie", "tv"]}
+  ],
+  "runtimeMinutes": 57,
+  "certification": "TV-MA",
+  "imdbId": "tt0944947",
+  "status": "Ended",
+  "homepage": null,
+  "cast": [
+    {"personKey": "person:22970", "personId": 22970, "slug": "peter-dinklage", "name": "Peter Dinklage", "character": "Tyrion Lannister", "profilePath": null, "episodeCount": 67}
+  ],
+  "crew": [],
+  "videos": [],
+  "trailer": null,
+  "recommendations": [],
+  "availability": {"region": "", "offers": {"stream": [], "free": [], "ads": [], "rent": [], "buy": []}, "link": null, "attribution": "JustWatch"},
+  "seasons": [
+    {"seasonNumber": 1, "name": "Season 1", "episodeCount": 10, "airDate": "2011-04-17", "posterPath": null}
+  ],
+  "numberOfSeasons": 8,
+  "numberOfEpisodes": 73,
+  "inProduction": false,
+  "lastAirDate": "2019-05-19",
+  "nextEpisode": null,
+  "lastEpisode": {"seasonNumber": 8, "episodeNumber": 6, "name": "The Iron Throne", "airDate": "2019-05-19"},
+  "networks": [{"id": 49, "name": "HBO", "logoPath": null}],
+  "createdBy": [{"personKey": "person:9813", "name": "David Benioff"}]
+}
