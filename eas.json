@@ -1,74 +1,29 @@
 {
-  "cli": {
-    "version": ">= 24.7.0",
-    "appVersionSource": "local"
-  },
+  "cli": {"version": ">= 27.11.0", "appVersionSource": "local"},
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
-      "autoIncrement": false,
-      "env": {
-        "EXPO_UPDATE_CHANNEL": "Production"
-      },
-      "android": {
-        "buildType": "apk",
-        "withoutCredentials": true
-      },
-      "ios": {
-        "simulator": true
-      },
+      "env": {"EXPO_UPDATE_CHANNEL": "Production", "EXPO_PUBLIC_ADMOB_MODE": "test"},
+      "android": {"buildType": "apk", "withoutCredentials": true},
       "node": "24.19.0"
-    },
-    "development-device": {
-      "extends": "development",
-      "ios": {
-        "simulator": false
-      }
     },
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "autoIncrement": false,
-      "env": {
-        "EXPO_UPDATE_CHANNEL": "Staging"
-      },
-      "android": {
-        "buildType": "apk",
-        "withoutCredentials": true
-      },
-      "ios": {
-        "simulator": true
-      },
+      "env": {"EXPO_UPDATE_CHANNEL": "Staging", "SENTRY_ENVIRONMENT": "preview", "EXPO_PUBLIC_ADMOB_MODE": "test", "EXPO_PUBLIC_DIAGNOSTICS": "1"},
+      "android": {"buildType": "apk", "withoutCredentials": true},
       "node": "24.19.0"
     },
     "production": {
       "environment": "production",
-      "autoIncrement": false,
-      "env": {
-        "EXPO_UPDATE_CHANNEL": "Production"
-      },
-      "android": {
-        "buildType": "app-bundle",
-        "credentialsSource": "remote"
-      },
+      "env": {"EXPO_UPDATE_CHANNEL": "Production", "SENTRY_ENVIRONMENT": "production", "EXPO_PUBLIC_ADMOB_MODE": "live"},
+      "android": {"buildType": "app-bundle", "credentialsSource": "remote"},
       "node": "24.19.0"
     }
   },
   "submit": {
-    "production": {
-      "android": {
-        "track": "internal",
-        "releaseStatus": "draft"
-      }
-    },
-    "play-production": {
-      "extends": "production",
-      "android": {
-        "track": "production",
-        "releaseStatus": "completed"
-      }
-    }
+    "play-production": {"android": {"track": "production", "releaseStatus": "draft"}}
   }
 }
