@@ -1,12 +1,16 @@
 const assert = require('node:assert/strict');
+const {execFile} = require('node:child_process');
 const fs = require('node:fs');
+const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const {promisify} = require('node:util');
 
 const privacy = import('../../scripts/check-live-privacy.mjs');
-const canonical = 'https://yify.expo.app/privacy/';
-const store = 'https://yify.expo.app/privacy.html';
+const root = path.resolve(__dirname, '../..');
+const canonical = 'https://yify.expo.app/privacy.html';
+const folder = 'https://yify.expo.app/privacy/';
 const policy = fs.readFileSync(require.resolve('../../public/privacy.html'), 'utf8');
 
 function html(body = policy, status = 200) {
@@ -32,11 +36,11 @@ function fixture(t) {
     return {cwd};
 }
 
-test('both app and Play privacy addresses require unauthenticated GETs, including the live redirect', async (t) => {
+test('the canonical page and the folder twin that 1.8 apps link to both require unauthenticated GETs, including a live redirect', async (t) => {
     const {checkLivePrivacy} = await privacy;
     const f = fixture(t);
     const calls = [];
-    await checkLivePrivacy({...f, fetch: async (url, options) => {
+    const checked = await checkLivePrivacy({...f, fetch: async (url, options) => {
         calls.push(url);
         assert.equal(options.method, 'GET');
         assert.equal(options.credentials, 'omit');
@@ -44,17 +48,25 @@ test('both app and Play privacy addresses require unauthenticated GETs, includin
         assert.equal(options.redirect, 'manual');
         assert.deepEqual(options.headers, {Accept: 'text/html'});
         assert.ok(options.signal instanceof AbortSignal);
-        if (url === canonical) return new Response(null, {status: 308, headers: {location: '/privacy.html'}});
-        assert.equal(url, store);
+        if (url === folder) return new Response(null, {status: 308, headers: {location: '/privacy.html'}});
+        assert.equal(url, canonical);
         return html();
     }});
-    assert.deepEqual(calls.sort(), [canonical, store, store].sort());
+    assert.deepEqual(checked, [canonical, folder]);
+    assert.deepEqual(calls.sort(), [canonical, canonical, folder].sort());
+});
+
+test('the published addresses come from the canonical link of the committed policy', async () => {
+    const {publishedPrivacyUrls} = await privacy;
+    assert.deepEqual(publishedPrivacyUrls(policy), {urls: [canonical, folder], contact: 'mailto:kunal26das@gmail.com'});
+    assert.throws(() => publishedPrivacyUrls('<link rel="canonical" href="http://yify.expo.app/privacy.html"><a href="mailto:a@b.c">'), /HTTPS/);
+    assert.throws(() => publishedPrivacyUrls('<h1>Privacy Policy</h1>'), /canonical URL and contact/);
 });
 
 test('either address failing stops the Android production handoff', async (t) => {
     const {checkLivePrivacy} = await privacy;
     const f = fixture(t);
-    for (const badUrl of [canonical, store]) {
+    for (const badUrl of [canonical, folder]) {
         await assert.rejects(checkLivePrivacy({...f, fetch: async (url) => url === badUrl ? html('Not found', 404) : html()}),
             /HTTP 404.*handoff stopped/);
     }
@@ -135,4 +147,77 @@ test('preview, staging, iOS, help, dry-run, and read-only commands never contact
     ]) {
         assert.equal(requiresLivePrivacyCheck(args, f.cwd), false, args.join(' '));
     }
+});
+
+test('--url accepts a deployed privacy page after at most three redirects', async () => {
+    const {checkPrivacyUrl} = await privacy;
+    const preview = 'https://yify--v2.expo.app/privacy';
+    const calls = [];
+    const checked = await checkPrivacyUrl(preview, {fetch: async (url, options) => {
+        calls.push(url);
+        assert.equal(options.redirect, 'manual');
+        assert.equal(options.credentials, 'omit');
+        if (url === preview) return new Response(null, {status: 301, headers: {location: '/privacy.html'}});
+        assert.equal(url, 'https://yify--v2.expo.app/privacy.html');
+        return html();
+    }});
+    assert.equal(checked, preview);
+    assert.deepEqual(calls, [preview, 'https://yify--v2.expo.app/privacy.html']);
+});
+
+test('--url rejects other statuses, non-HTML, pages without a Privacy heading, insecure hops and redirect loops', async () => {
+    const {checkPrivacyUrl} = await privacy;
+    const url = 'https://yify.expo.app/privacy.html';
+    for (const response of [
+        () => html(policy, 404),
+        () => html(policy, 203),
+        () => new Response(policy, {headers: {'content-type': 'application/json'}}),
+        () => html('<html><title>Privacy</title><div id="root"></div><a href="/privacy.html">Privacy</a></html>'),
+        () => html('<script><h1>Privacy Policy</h1></script>'),
+        () => new Response(null, {status: 302, headers: {location: 'http://yify.expo.app/privacy.html'}}),
+        () => new Response(null, {status: 302, headers: {location: '/privacy.html'}}),
+        () => new Response(null, {status: 302}),
+    ]) {
+        await assert.rejects(checkPrivacyUrl(url, {fetch: async () => response()}), /Privacy URL check failed/);
+    }
+    for (const bad of ['http://yify.expo.app/privacy.html', 'https://user:secret@yify.expo.app/privacy.html', 'ftp://127.0.0.1/privacy.html', 'not a url']) {
+        await assert.rejects(checkPrivacyUrl(bad, {fetch: async () => assert.fail('no request for a rejected URL')}), /Privacy URL check failed/);
+    }
+    assert.equal(await checkPrivacyUrl('http://127.0.0.1:8810/privacy.html', {fetch: async () => html()}), 'http://127.0.0.1:8810/privacy.html');
+});
+
+test('--url times out stalled requests', async () => {
+    const {checkPrivacyUrl} = await privacy;
+    await assert.rejects(checkPrivacyUrl('https://yify.expo.app/privacy.html', {timeoutMs: 15, fetch: async (_url, {signal}) =>
+        new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), {once: true}))}), /timed out/);
+});
+
+test('the command line takes no arguments or exactly one --url', async () => {
+    const {parseArguments} = await privacy;
+    assert.deepEqual(parseArguments([]), {mode: 'published'});
+    assert.deepEqual(parseArguments(['--url', 'https://yify.expo.app/privacy.html']), {mode: 'url', url: 'https://yify.expo.app/privacy.html'});
+    assert.deepEqual(parseArguments(['--url=https://yify.expo.app/privacy.html']), {mode: 'url', url: 'https://yify.expo.app/privacy.html'});
+    for (const args of [['--url'], ['--url='], ['--live'], ['--url', 'a', 'b']]) assert.throws(() => parseArguments(args), /usage:/);
+});
+
+test('node scripts/check-live-privacy.mjs --url passes against a local server that serves the committed page', async (t) => {
+    const server = http.createServer((request, response) => {
+        if (request.url === '/privacy') {
+            response.writeHead(301, {location: '/privacy.html'});
+            response.end();
+        } else if (request.url === '/privacy.html') {
+            response.writeHead(200, {'content-type': 'text/html; charset=utf-8'});
+            response.end(policy);
+        } else {
+            response.writeHead(404, {'content-type': 'text/html'});
+            response.end('<h1>Not found</h1>');
+        }
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    t.after(() => server.close());
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const run = (url) => promisify(execFile)(process.execPath, ['scripts/check-live-privacy.mjs', '--url', url], {cwd: root, timeout: 20_000});
+    const {stdout} = await run(`${origin}/privacy`);
+    assert.match(stdout, new RegExp(`Privacy page passed: ${origin}/privacy`));
+    await assert.rejects(run(`${origin}/missing.html`), (error) => error.code === 1 && /HTTP 404/.test(error.stderr));
 });
