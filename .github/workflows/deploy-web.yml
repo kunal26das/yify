@@ -1,0 +1,75 @@
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'store-artifacts/**'
+      - '.github/dependabot.yml'
+  workflow_dispatch:
+    inputs:
+      production:
+        description: Promote the deployment to the production alias
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Export, check and deploy to EAS Hosting
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      PROMOTE: ${{ github.event_name == 'push' || inputs.production }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 24
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - name: Export
+        run: yarn export:web
+        env:
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+          EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+          EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          EXPO_PUBLIC_FIREBASE_APP_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_APP_ID }}
+          EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          EXPO_PUBLIC_REVENUECAT_WEB_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_WEB_KEY }}
+          SENTRY_ENVIRONMENT: ${{ env.PROMOTE == 'true' && 'production' || 'preview' }}
+      - name: Check export
+        run: yarn check:web
+      - name: Upload source maps to Sentry
+        run: npx sentry-expo-upload-sourcemaps dist
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: kudos-labs
+          SENTRY_PROJECT: yify
+      - name: Remove source maps from the deployment
+        run: find dist -name '*.map' -delete
+      - name: Deploy
+        run: npx --yes eas-cli@27.11.0 deploy --export-dir dist --environment production --non-interactive ${{ env.PROMOTE == 'true' && '--prod' || '--alias v2' }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Live checks
+        if: env.PROMOTE == 'true'
+        run: |
+          node scripts/check-live-web.mjs --origin https://yify.expo.app
+          node scripts/check-live-privacy.mjs --url https://yify.expo.app/privacy.html
+          node scripts/check-legacy-contract.mjs --origin https://yify.expo.app
+      - name: Preview checks
+        if: env.PROMOTE != 'true'
+        run: |
+          node scripts/check-live-web.mjs --origin https://yify--v2.expo.app --preview
+          node scripts/check-legacy-contract.mjs --origin https://yify--v2.expo.app
