@@ -31,14 +31,27 @@ const SEARCH_MAX_WIDTH = 560;
 const AVATAR_SIZE = 32;
 const SCROLLED_AFTER = 4;
 
+interface ScrollBox {
+  scrollTop: number;
+  scrollHeight: number;
+  clientHeight: number;
+}
+
+export function verticalScrollTop(target: unknown): number | null {
+  const node = target as (Partial<ScrollBox> & {scrollingElement?: ScrollBox | null}) | null;
+  const box = node?.scrollingElement ?? node;
+  if (!box || typeof box.scrollTop !== 'number' || typeof box.scrollHeight !== 'number' || typeof box.clientHeight !== 'number') return null;
+  if (box.scrollHeight <= box.clientHeight) return null;
+  return box.scrollTop;
+}
+
 function useDocumentScrolled(): boolean {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
     const onScroll = (event: Event) => {
-      const target = event.target as {scrollTop?: number; scrollingElement?: {scrollTop: number}} | null;
-      const top = target?.scrollingElement?.scrollTop ?? target?.scrollTop ?? 0;
-      setScrolled(top > SCROLLED_AFTER);
+      const top = verticalScrollTop(event.target);
+      if (top !== null) setScrolled(top > SCROLLED_AFTER);
     };
     document.addEventListener('scroll', onScroll, {capture: true, passive: true});
     return () => document.removeEventListener('scroll', onScroll, {capture: true});
