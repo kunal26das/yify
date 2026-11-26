@@ -33,7 +33,7 @@ Approve each row with the data categories, recipients, necessity, applicable gro
 | Device records | Clearing controls, account-cache cleanup and bounded caches vary by namespace. Unreachable devices cannot be remotely wiped. Consent receipts are device-local, versioned and removable. |
 | Analytics, diagnostics, ads, billing, hosting, support and backups | Configured periods, legal retention and provider deletion windows are unverified. Record actual settings and category-specific periods/criteria before publishing them. Withdrawal stops future optional collection; it is not proof of retroactive erasure. |
 
-Evidence: `firestore.rules`, `data/services/AccountSyncImpl.ts`, `domain/policies/syncMerge.ts`, `domain/policies/historyMerge.ts`, `scripts/availability-alerts/worker.mjs`. Scope DPDP Rules 6 and 8(3) before their commencement; neither an assumed universal instant wipe nor an invented blanket retention period is an acceptable policy.
+Evidence at the `v1-baseline` tag: `firestore.rules`, `data/services/AccountSyncImpl.ts`, `domain/policies/syncMerge.ts`, `domain/policies/historyMerge.ts` and the availability alert worker. Scope DPDP Rules 6 and 8(3) before their commencement; neither an assumed universal instant wipe nor an invented blanket retention period is an acceptable policy.
 
 ## Provider agreement and transfer checks
 

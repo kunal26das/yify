@@ -75,27 +75,8 @@ updates:
           - "expo-in-app-updates"
           - "expo-device-corner-radius"
       tooling:
-        patterns: ["typescript", "eslint*", "@eslint/*", "@typescript-eslint/*", "@babel/*", "expo-doctor", "electron", "electron-builder"]
+        patterns: ["typescript", "eslint*", "@eslint/*", "@typescript-eslint/*", "@babel/*"]
       everything-else:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-      security-updates:
-        applies-to: security-updates
-        patterns: ["*"]
-  - package-ecosystem: "npm"
-    directory: "/release"
-    schedule:
-      interval: "monthly"
-      time: "06:15"
-      timezone: "Asia/Kolkata"
-    open-pull-requests-limit: 20
-    versioning-strategy: increase
-    cooldown:
-      default-days: 3
-    groups:
-      release-react:
-        patterns: ["react", "@types/react", "ink", "ink-*"]
-      release-updates:
         patterns: ["*"]
         update-types: ["minor", "patch"]
       security-updates:
