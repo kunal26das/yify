@@ -1,0 +1,123 @@
+{
+  "v": 2,
+  "season": {
+    "key": "tv:1399",
+    "seasonNumber": 1,
+    "name": "Season 1",
+    "overview": "Trouble is brewing in the Seven Kingdoms of Westeros. For the driven inhabitants of this visionary world, control of Westeros' Iron Throne holds the lure of great power. But in a land where the seasons can last a lifetime, winter is coming...and beyond the Great Wall that protects them, an ancient evil has returned. In Season One, the story centers on three primary areas: the Stark and the Lannister families, whose designs on controlling the throne threaten a tenuous peace; the dragon princess Daenerys, heir to the former dynasty, who waits just over the Narrow Sea with her malevolent brother Viserys; and the Great Wall--a massive barrier of ice where a forgotten danger is stirring.",
+    "airDate": "2011-04-17",
+    "posterPath": "/wgfKiqzuMrFIkU1M68DDDY8kGC1.jpg",
+    "episodes": [
+      {
+        "id": 63056,
+        "seasonNumber": 1,
+        "episodeNumber": 1,
+        "name": "Winter Is Coming",
+        "overview": "Jon Arryn, the Hand of the King, is dead. King Robert Baratheon plans to ask his oldest friend, Eddard Stark, to take Jon's place. Across the sea, Viserys Targaryen plans to wed his sister to a nomadic warlord in exchange for an army.",
+        "airDate": "2011-04-17",
+        "runtimeMinutes": 62,
+        "stillPath": "/o4IX9Mm0kpLITVANJMx7inyEUaY.jpg",
+        "rating": 8.2
+      },
+      {
+        "id": 63057,
+        "seasonNumber": 1,
+        "episodeNumber": 2,
+        "name": "The Kingsroad",
+        "overview": "While Bran recovers from his fall, Ned takes only his daughters to Kings Landing. Jon Snow goes with his uncle Benjen to The Wall. Tyrion joins them.",
+        "airDate": "2011-04-24",
+        "runtimeMinutes": 56,
+        "stillPath": "/l0GJx3IR8YasbztTJi5uK0XqkEo.jpg",
+        "rating": 8
+      },
+      {
+        "id": 63058,
+        "seasonNumber": 1,
+        "episodeNumber": 3,
+        "name": "Lord Snow",
+        "overview": "Lord Stark and his daughters arrive at King's Landing to discover the intrigues of the king's realm.",
+        "airDate": "2011-05-01",
+        "runtimeMinutes": 58,
+        "stillPath": "/8HjOlb4slc1xusMgOtoNpxuTgSI.jpg",
+        "rating": 8.1
+      },
+      {
+        "id": 63059,
+        "seasonNumber": 1,
+        "episodeNumber": 4,
+        "name": "Cripples, Bastards, and Broken Things",
+        "overview": "Eddard investigates Jon Arryn's murder. Jon befriends Samwell Tarly, a coward who has come to join the Night's Watch.",
+        "airDate": "2011-05-08",
+        "runtimeMinutes": 56,
+        "stillPath": "/Ai2UPMWv38xGjOgNBuA1o8w8dUI.jpg",
+        "rating": 8.2
+      },
+      {
+        "id": 63060,
+        "seasonNumber": 1,
+        "episodeNumber": 5,
+        "name": "The Wolf and the Lion",
+        "overview": "Catelyn has captured Tyrion and plans to bring him to her sister, Lysa Arryn, at The Vale, to be tried for his, supposed, crimes against Bran. Robert plans to have Daenerys killed, but Eddard refuses to be a part of it and quits.",
+        "airDate": "2011-05-15",
+        "runtimeMinutes": 55,
+        "stillPath": "/u7e1qSWE6v8jfY9vGNrckX47DGN.jpg",
+        "rating": 8.5
+      },
+      {
+        "id": 63061,
+        "seasonNumber": 1,
+        "episodeNumber": 6,
+        "name": "A Golden Crown",
+        "overview": "While recovering from his battle with Jamie, Eddard is forced to run the kingdom while Robert goes hunting. Tyrion demands a trial by combat for his freedom. Viserys is losing his patience with Drogo.",
+        "airDate": "2011-05-22",
+        "runtimeMinutes": 53,
+        "stillPath": "/6FcfWGFlDyWZ2JvQi8uvkxbDx1z.jpg",
+        "rating": 8.5
+      },
+      {
+        "id": 63062,
+        "seasonNumber": 1,
+        "episodeNumber": 7,
+        "name": "You Win or You Die",
+        "overview": "Robert has been injured while hunting and is dying. Jon and the others finally take their vows to the Night's Watch. A man, sent by Robert, is captured for trying to poison Daenerys. Furious, Drogo vows to attack the Seven Kingdoms.",
+        "airDate": "2011-05-29",
+        "runtimeMinutes": 58,
+        "stillPath": "/o6ldSDhIINGNKZR62mHf2m64dD.jpg",
+        "rating": 8.6
+      },
+      {
+        "id": 63063,
+        "seasonNumber": 1,
+        "episodeNumber": 8,
+        "name": "The Pointy End",
+        "overview": "Eddard and his men are betrayed and captured by the Lannisters. When word reaches Robb, he plans to go to war to rescue them. The White Walkers attack The Wall. Tyrion returns to his father with some new friends.",
+        "airDate": "2011-06-05",
+        "runtimeMinutes": 59,
+        "stillPath": "/hH0U1QISWGGjoFutvCLdw28MGiq.jpg",
+        "rating": 8.3
+      },
+      {
+        "id": 63064,
+        "seasonNumber": 1,
+        "episodeNumber": 9,
+        "name": "Baelor",
+        "overview": "Robb goes to war against the Lannisters. Jon finds himself struggling on deciding if his place is with Robb or the Night's Watch. Drogo has fallen ill from a fresh battle wound. Daenerys is desperate to save him.",
+        "airDate": "2011-06-12",
+        "runtimeMinutes": 57,
+        "stillPath": "/fAmBhmw1pQc6fucrdmnRM5FOpXD.jpg",
+        "rating": 9
+      },
+      {
+        "id": 63065,
+        "seasonNumber": 1,
+        "episodeNumber": 10,
+        "name": "Fire and Blood",
+        "overview": "With Ned dead, Robb vows to get revenge on the Lannisters. Jon must officially decide if his place is with Robb or the Night's Watch. Daenerys says her final goodbye to Drogo.",
+        "airDate": "2011-06-19",
+        "runtimeMinutes": 53,
+        "stillPath": "/y1BXkhEqBQS3ewQeqqdHpjhTts0.jpg",
+        "rating": 8.8
+      }
+    ]
+  }
+}

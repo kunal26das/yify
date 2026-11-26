@@ -1,0 +1,1366 @@
+{
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 19,
+  "results": [
+    {
+      "key": "person:2055",
+      "id": 2055,
+      "slug": "robert-davi",
+      "name": "Robert Davi",
+      "profilePath": "/yizOUAKs59CwKM6pU30gIP9gTup.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:709",
+          "type": "movie",
+          "id": 709,
+          "slug": "licence-to-kill",
+          "title": "Licence to Kill",
+          "originalTitle": "Licence to Kill",
+          "year": 1989,
+          "releaseDate": "1989-06-13",
+          "overview": "After capturing the notorious drug lord Franz Sanchez, Bond's close friend and former CIA agent Felix Leiter is left for dead and his wife is murdered. Bond goes rogue and seeks vengeance on those responsible, as he infiltrates Sanchez's organization from the inside.",
+          "posterPath": "/8nzJve63EXA79HGAyidZwivZrQ2.jpg",
+          "backdropPath": "/p6VFbg5lhWj0RCgXf5dj6IDMPvt.jpg",
+          "rating": 6.4,
+          "voteCount": 2304,
+          "genreIds": [
+            12,
+            28,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:9340",
+          "type": "movie",
+          "id": 9340,
+          "slug": "the-goonies",
+          "title": "The Goonies",
+          "originalTitle": "The Goonies",
+          "year": 1985,
+          "releaseDate": "1985-06-07",
+          "overview": "Young teen Mikey Walsh and his friends set off on a quest to find Pirate One-Eyed Willie's treasure in hopes of saving their homes from demolition. However, on their quest to find the treasure, they run into a family of recently escaped criminals, determined to capture the kids and reach the…",
+          "posterPath": "/eBU7gCjTCj9n2LTxvCSIXXOvHkD.jpg",
+          "backdropPath": "/5qsyqA7FeYRymBmNbPBqBgqWPO4.jpg",
+          "rating": 7.5,
+          "voteCount": 6526,
+          "genreIds": [
+            12,
+            35,
+            10751
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:169",
+          "type": "movie",
+          "id": 169,
+          "slug": "predator-2",
+          "title": "Predator 2",
+          "originalTitle": "Predator 2",
+          "year": 1990,
+          "releaseDate": "1990-11-21",
+          "overview": "A police chief in the war-torn streets of Los Angeles discovers that an extraterrestrial creature is hunting down residents - and that he is the next target.",
+          "posterPath": "/83X4VwY9sdSJykskmsplIVG0a4h.jpg",
+          "backdropPath": "/8GGAXEXaTPMDGa0sCPyFcitvlD9.jpg",
+          "rating": 6.3,
+          "voteCount": 4107,
+          "genreIds": [
+            878,
+            28,
+            53
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:137108",
+      "id": 137108,
+      "slug": "johnny-flynn",
+      "name": "Johnny Flynn",
+      "profilePath": "/tS3HIDFJbD8uSLAvaxZfrPc3aM0.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:556678",
+          "type": "movie",
+          "id": 556678,
+          "slug": "emma",
+          "title": "Emma.",
+          "originalTitle": "Emma.",
+          "year": 2020,
+          "releaseDate": "2020-02-13",
+          "overview": "In 1800s England, a well-meaning but selfish young woman meddles in the love lives of her friends.",
+          "posterPath": "/uHpHzbHLSsVmAuuGuQSpyVDZmDc.jpg",
+          "backdropPath": "/42gqGeyXh4caHP19Tqf8DMRgc7r.jpg",
+          "rating": 7,
+          "voteCount": 2045,
+          "genreIds": [
+            35,
+            10749,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:760774",
+          "type": "movie",
+          "id": 760774,
+          "slug": "one-life",
+          "title": "One Life",
+          "originalTitle": "One Life",
+          "year": 2023,
+          "releaseDate": "2023-12-21",
+          "overview": "British stockbroker Nicholas Winton visits Czechoslovakia in the 1930s and forms plans to assist in the rescue of Jewish children before the onset of World War II, in an operation that came to be known as the Kindertransport.",
+          "posterPath": "/yvnIWt2j8VnDgwKJE2VMiFMa2Qo.jpg",
+          "backdropPath": "/7kgDHoXEk0EySTczcmaYpPDBFQS.jpg",
+          "rating": 7.8,
+          "voteCount": 1022,
+          "genreIds": [
+            36,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:799876",
+          "type": "movie",
+          "id": 799876,
+          "slug": "the-outfit",
+          "title": "The Outfit",
+          "originalTitle": "The Outfit",
+          "year": 2022,
+          "releaseDate": "2022-02-25",
+          "overview": "Leonard is an English tailor who used to craft suits on London’s world-famous Savile Row. After a personal tragedy, he’s ended up in Chicago, operating a small tailor shop in a rough part of town where he makes beautiful clothes for the only people around who can afford them: a family of vicious…",
+          "posterPath": "/lZa5EB6PVJBT5mxhgZS5ftqdAm6.jpg",
+          "backdropPath": "/jjXnYpRQMqzylAmYqKL7VFa3l9w.jpg",
+          "rating": 7.1,
+          "voteCount": 1483,
+          "genreIds": [
+            80,
+            18,
+            53,
+            9648
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:3258734",
+      "id": 3258734,
+      "slug": "scarlet-rose-stallone",
+      "name": "Scarlet Rose Stallone",
+      "profilePath": "/13f6FANe7TdbvjtZCbArygnDv1S.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:1387382",
+          "type": "movie",
+          "id": 1387382,
+          "slug": "hunting-season",
+          "title": "Hunting Season",
+          "originalTitle": "Hunting Season",
+          "year": 2025,
+          "releaseDate": "2025-12-05",
+          "overview": "When a reclusive survivalist and his daughter rescue a mysterious, wounded woman from a river, they become entangled in a deadly web of violence and revenge, forcing them to confront a brutal criminal to survive.",
+          "posterPath": "/cbryTyaWdqrKpQCw6K7zm2jrB5v.jpg",
+          "backdropPath": "/eJ0HooOOD1uzI39CfOQNWIiWKlJ.jpg",
+          "rating": 7.3,
+          "voteCount": 505,
+          "genreIds": [
+            28,
+            18,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1146302",
+          "type": "movie",
+          "id": 1146302,
+          "slug": "sly",
+          "title": "Sly",
+          "originalTitle": "Sly",
+          "year": 2023,
+          "releaseDate": "2023-09-16",
+          "overview": "His love of film began as an escape from a rocky childhood. From underdog to Hollywood legend, Sylvester Stallone tells his story in this documentary.",
+          "posterPath": "/1utWajLPvv1R9ZwkD98s2ZEngS.jpg",
+          "backdropPath": "/eca3tlO1vtnua8LUK70ISDMYcwF.jpg",
+          "rating": 7.2,
+          "voteCount": 249,
+          "genreIds": [
+            99
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1293286",
+          "type": "movie",
+          "id": 1293286,
+          "slug": "gunslingers",
+          "title": "Gunslingers",
+          "originalTitle": "Gunslingers",
+          "year": 2025,
+          "releaseDate": "2025-04-11",
+          "overview": "When the most wanted man in America surfaces in a small Kentucky town, his violent history -- and a blood-thirsty mob seeking vengeance and a king’s ransom -- soon follow. As brothers face off against one another and bullets tear the town to shreds, this lightning-fast gunslinger makes his enemies…",
+          "posterPath": "/O7REXWPANWXvX2jhQydHjAq2DV.jpg",
+          "backdropPath": "/zksO4lVnRKRoaSYzh2EDn2Z3Pel.jpg",
+          "rating": 6.1,
+          "voteCount": 129,
+          "genreIds": [
+            28,
+            53,
+            37
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:11288",
+      "id": 11288,
+      "slug": "robert-pattinson",
+      "name": "Robert Pattinson",
+      "profilePath": "/3qZ09UE7lN6AtorfXFRYpEtSY93.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:414906",
+          "type": "movie",
+          "id": 414906,
+          "slug": "the-batman",
+          "title": "The Batman",
+          "originalTitle": "The Batman",
+          "year": 2022,
+          "releaseDate": "2022-03-01",
+          "overview": "In his second year of fighting crime, Batman uncovers corruption in Gotham City that connects to his own family while facing a serial killer known as the Riddler.",
+          "posterPath": "/74xTEgt7R36Fpooo50r9T25onhq.jpg",
+          "backdropPath": "/rvtdN5XkWAfGX6xDuPL6yYS2seK.jpg",
+          "rating": 7.7,
+          "voteCount": 12957,
+          "genreIds": [
+            80,
+            9648,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:8966",
+          "type": "movie",
+          "id": 8966,
+          "slug": "twilight",
+          "title": "Twilight",
+          "originalTitle": "Twilight",
+          "year": 2008,
+          "releaseDate": "2008-11-20",
+          "overview": "When Bella Swan moves to a small town in the Pacific Northwest, she falls in love with Edward Cullen, a mysterious classmate who reveals himself to be a 108-year-old vampire. Despite Edward's repeated cautions, Bella can't stay away from him, a fatal move that endangers her own life.",
+          "posterPath": "/3Gkb6jm6962ADUPaCBqzz9CTbn9.jpg",
+          "backdropPath": "/weAYfu6FfrNxEDJ3xH1XpgQcqUv.jpg",
+          "rating": 6.3,
+          "voteCount": 14900,
+          "genreIds": [
+            14,
+            18,
+            10749
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:503919",
+          "type": "movie",
+          "id": 503919,
+          "slug": "the-lighthouse",
+          "title": "The Lighthouse",
+          "originalTitle": "The Lighthouse",
+          "year": 2019,
+          "releaseDate": "2019-10-18",
+          "overview": "Two lighthouse keepers try to maintain their sanity while living on a remote and mysterious New England island in the 1890s.",
+          "posterPath": "/dwXmOYJVM1VIkkSXHY5zYSaLJLC.jpg",
+          "backdropPath": "/sYLzRuEcwSz0L1Z92wQNrETHU9O.jpg",
+          "rating": 7.5,
+          "voteCount": 5940,
+          "genreIds": [
+            18,
+            14,
+            53
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1172108",
+      "id": 1172108,
+      "slug": "mckenna-grace",
+      "name": "Mckenna Grace",
+      "profilePath": "/sK0CVa56IIpFhCDrcXSTqPWxNbx.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:425909",
+          "type": "movie",
+          "id": 425909,
+          "slug": "ghostbusters-afterlife",
+          "title": "Ghostbusters: Afterlife",
+          "originalTitle": "Ghostbusters: Afterlife",
+          "year": 2021,
+          "releaseDate": "2021-11-18",
+          "overview": "When single mom Callie and her two kids Trevor and Phoebe arrive in a small Oklahoma town, they begin to discover their connection to the original Ghostbusters and the secret legacy their grandfather left behind.",
+          "posterPath": "/sg4xJaufDiQl7caFEskBtQXfD4x.jpg",
+          "backdropPath": "/EnDlndEvw6Ptpp8HIwmRcSSNKQ.jpg",
+          "rating": 7.3,
+          "voteCount": 5460,
+          "genreIds": [
+            14,
+            35,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:521029",
+          "type": "movie",
+          "id": 521029,
+          "slug": "annabelle-comes-home",
+          "title": "Annabelle Comes Home",
+          "originalTitle": "Annabelle Comes Home",
+          "year": 2019,
+          "releaseDate": "2019-06-26",
+          "overview": "Determined to keep Annabelle from wreaking more havoc, demonologists Ed and Lorraine Warren bring the possessed doll to the locked artifacts room in their home, placing her “safely” behind sacred glass and enlisting a priest’s holy blessing. But an unholy night of horror awaits as Annabelle…",
+          "posterPath": "/qFjtLOeVl4jpzPUhp4cl4ieANHY.jpg",
+          "backdropPath": "/tKgOSGe3f8qG5EqG0I82NHJmCRS.jpg",
+          "rating": 6.4,
+          "voteCount": 3990,
+          "genreIds": [
+            27
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:400928",
+          "type": "movie",
+          "id": 400928,
+          "slug": "gifted",
+          "title": "Gifted",
+          "originalTitle": "Gifted",
+          "year": 2017,
+          "releaseDate": "2017-04-07",
+          "overview": "Frank, a single man raising his child prodigy niece Mary, is drawn into a custody battle with his mother.",
+          "posterPath": "/7YB2YrMwIm1g8FyZtlvmVDfRnAT.jpg",
+          "backdropPath": "/aH63TQfTFgAT8tYZs0CjDsqfMo2.jpg",
+          "rating": 8,
+          "voteCount": 6153,
+          "genreIds": [
+            18,
+            35
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:85825",
+      "id": 85825,
+      "slug": "leighton-meester",
+      "name": "Leighton Meester",
+      "profilePath": "/6P8sa2eR2wpNkA1n1NVHREaeXPV.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "tv:1395",
+          "type": "tv",
+          "id": 1395,
+          "slug": "gossip-girl",
+          "title": "Gossip Girl",
+          "originalTitle": "Gossip Girl",
+          "year": 2007,
+          "releaseDate": "2007-09-19",
+          "overview": "An exclusive group of privileged teens from a posh prep school on Manhattan's Upper East Side whose lives revolve around the blog of the all-knowing albeit ultra-secretive Gossip Girl.",
+          "posterPath": "/ep03M6KKZGeljOizPEbt3Geja5n.jpg",
+          "backdropPath": "/5RWAjCYhu3D8Ai2QBYP7GjaxFb3.jpg",
+          "rating": 8.1,
+          "voteCount": 2385,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:49950",
+          "type": "movie",
+          "id": 49950,
+          "slug": "the-roommate",
+          "title": "The Roommate",
+          "originalTitle": "The Roommate",
+          "year": 2011,
+          "releaseDate": "2011-02-04",
+          "overview": "When Sara, a young design student from Iowa, arrives for college in Los Angeles, she is eager to fit in and get to know the big city. Her wealthy roommate, Rebecca, is more than eager to take Sara under her wing and show her the ropes. The two become close, but when Sara begins to branch out and…",
+          "posterPath": "/kQZcOn5rDuwpbQTluC4Wm0amYmR.jpg",
+          "backdropPath": "/501U1FiY8ylubAlDbz6UcTHxvfA.jpg",
+          "rating": 5.4,
+          "voteCount": 1038,
+          "genreIds": [
+            53,
+            18,
+            27
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:840882",
+          "type": "movie",
+          "id": 840882,
+          "slug": "the-weekend-away",
+          "title": "The Weekend Away",
+          "originalTitle": "The Weekend Away",
+          "year": 2022,
+          "releaseDate": "2022-03-03",
+          "overview": "When her best friend vanishes during a girls' trip to Croatia, Beth races to figure out what happened. But each clue yields another unsettling deception.",
+          "posterPath": "/6MS0QEl7UK2gdFFbHfNwuYlsq4H.jpg",
+          "backdropPath": "/ogBxTYI7TDSnkUONkwK4R8hM1lE.jpg",
+          "rating": 6,
+          "voteCount": 841,
+          "genreIds": [
+            53,
+            9648
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:67047",
+      "id": 67047,
+      "slug": "paul-chu-kong",
+      "name": "Paul Chu Kong",
+      "profilePath": "/z1JRz62xX4LoM6r5nOkt2hWS6Bo.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:10835",
+          "type": "movie",
+          "id": 10835,
+          "slug": "the-killer",
+          "title": "The Killer",
+          "originalTitle": "喋血雙雄",
+          "year": 1989,
+          "releaseDate": "1989-03-24",
+          "overview": "Mob assassin Jeffrey is no ordinary hired gun; the best in his business, he views his chosen profession as a calling rather than simply a job. So, when beautiful nightclub chanteuse Jennie is blinded in the crossfire of his most recent hit, Jeffrey chooses to retire after one last job to pay for…",
+          "posterPath": "/8hTxlSqMAHBXAh1eB69ir0BXhzE.jpg",
+          "backdropPath": "/jetidiki3UjVJEpFwcK2kUrvoR5.jpg",
+          "rating": 7.6,
+          "voteCount": 974,
+          "genreIds": [
+            28,
+            80,
+            18,
+            53
+          ],
+          "originalLanguage": "cn"
+        },
+        {
+          "key": "movie:47423",
+          "type": "movie",
+          "id": 47423,
+          "slug": "once-a-thief",
+          "title": "Once a Thief",
+          "originalTitle": "縱橫四海",
+          "year": 1991,
+          "releaseDate": "1991-02-02",
+          "overview": "Three orphans grow up to become art thieves under the tutelage of a crime boss. Romance complicates matters when the trio are double-crossed.",
+          "posterPath": "/xCm4qIID3oyhBxRNKsYo3TpDivF.jpg",
+          "backdropPath": "/r0K79o2AI4VoXFCxXW01HZCwvUh.jpg",
+          "rating": 6.9,
+          "voteCount": 198,
+          "genreIds": [
+            28,
+            35,
+            53,
+            80
+          ],
+          "originalLanguage": "cn"
+        },
+        {
+          "key": "movie:17653",
+          "type": "movie",
+          "id": 17653,
+          "slug": "the-legend",
+          "title": "The Legend",
+          "originalTitle": "方世玉",
+          "year": 1993,
+          "releaseDate": "1993-03-04",
+          "overview": "The secret Red Lotus Flower Society is committed to the overthrow of the evil Manchu Emperor and his minions. One of his Governors is sent on a mission to retrieve a list of members of that secret society. Meanwhile, Canton kung fu practitioner Fong Sai-Yuk falls in love with the beautiful…",
+          "posterPath": "/hdAqW3qn0Y9jNMjDob5ae0NRa0F.jpg",
+          "backdropPath": "/s63esoz5vl0q8W8zRWIYngFWgI7.jpg",
+          "rating": 7,
+          "voteCount": 196,
+          "genreIds": [
+            12,
+            28,
+            35
+          ],
+          "originalLanguage": "cn"
+        }
+      ]
+    },
+    {
+      "key": "person:4744857",
+      "id": 4744857,
+      "slug": "joseph-zada",
+      "name": "Joseph Zada",
+      "profilePath": "/9im3Kn4J41tK2j90E3YhKbjd8qg.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:1300968",
+          "type": "movie",
+          "id": 1300968,
+          "slug": "the-hunger-games-sunrise-on-the-reaping",
+          "title": "The Hunger Games: Sunrise on the Reaping",
+          "originalTitle": "The Hunger Games: Sunrise on the Reaping",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "Return to the world of Panem 24 years before Katniss Everdeen volunteers in her sister's place, commencing on the morning of the reaping of the 50th Hunger Games, also known as the Second Quarter Quell.",
+          "posterPath": "/5ffVOGY3x3Sn3jovzvycJeizpks.jpg",
+          "backdropPath": "/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+          "rating": 7.8,
+          "voteCount": 367,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:215522",
+          "type": "tv",
+          "id": 215522,
+          "slug": "we-were-liars",
+          "title": "We Were Liars",
+          "originalTitle": "We Were Liars",
+          "year": 2025,
+          "releaseDate": "2025-06-18",
+          "overview": "One year after a mysterious accident left her with amnesia, 17-year-old Cadence returns to Beechwood, an island off Martha's Vineyard, seeking answers. As three generations of the distinguished Sinclair family gather at their private summer utopia, no one will talk about the accident – neither her…",
+          "posterPath": "/3RQoNwSkJkh92KL2TwpMlHP5FkT.jpg",
+          "backdropPath": "/trSbjzHQlCxykhGfnS0JMgsGbCC.jpg",
+          "rating": 7.2,
+          "voteCount": 191,
+          "genreIds": [
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:274677",
+          "type": "tv",
+          "id": 274677,
+          "slug": "invisible-boys",
+          "title": "Invisible Boys",
+          "originalTitle": "Invisible Boys",
+          "year": 2025,
+          "releaseDate": "2025-02-13",
+          "overview": "A group of tangentially-connected gay teenagers in the remote coastal town of Geraldton encounter the thrills and devastations of first love and sexual discovery set against the backdrop of Australia voting to legalise same-sex marriage in 2017.",
+          "posterPath": "/7nUl0qtoz3AOF7kim2aO8iDqz5h.jpg",
+          "backdropPath": "/bIgTwQ3pOgT8uLOa80dwyuuvL60.jpg",
+          "rating": 6.9,
+          "voteCount": 22,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1247604",
+      "id": 1247604,
+      "slug": "agnez-mo",
+      "name": "Agnez Mo",
+      "profilePath": "/7GuBJxf5szQRCKLk3iG2ztfCo39.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "tv:108978",
+          "type": "tv",
+          "id": 108978,
+          "slug": "reacher",
+          "title": "Reacher",
+          "originalTitle": "Reacher",
+          "year": 2022,
+          "releaseDate": "2022-02-03",
+          "overview": "Jack Reacher, a veteran military police investigator, has just recently entered civilian life. Reacher is a drifter, carrying no phone and the barest of essentials as he travels the country and explores the nation he once served.",
+          "posterPath": "/f1VCQIG2iCyOookdgOzwtUpwWC0.jpg",
+          "backdropPath": "/pF0qkRsrHkdYadPWY9AMeFZfcwk.jpg",
+          "rating": 8.1,
+          "voteCount": 3630,
+          "genreIds": [
+            10759,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1029756",
+          "type": "movie",
+          "id": 1029756,
+          "slug": "christian-chavez-esencial",
+          "title": "Christian Chávez - Esencial",
+          "originalTitle": "Christian Chávez - Esencial",
+          "year": 2012,
+          "releaseDate": "2012-08-14",
+          "overview": "",
+          "posterPath": "/3SrPSMML9pCK51xq0c5JhFGJn7C.jpg",
+          "backdropPath": null,
+          "rating": null,
+          "voteCount": 2,
+          "genreIds": [],
+          "originalLanguage": "pt"
+        },
+        {
+          "key": "tv:138603",
+          "type": "tv",
+          "id": 138603,
+          "slug": "rupaul-drives",
+          "title": "RuPaul Drives...",
+          "originalTitle": "RuPaul Drives...",
+          "year": 2013,
+          "releaseDate": "2013-08-20",
+          "overview": "Hitchhikers beware! RuPaul is behind the wheel, and picking up passengers on the streets of Hollywood! RuPaul Drives... is the brand-new webseries produced by World of Wonder. And it's about to get REAL. \"Everyone in LA needs a lift; spiritually and physically\" said the Supermodel of the World,…",
+          "posterPath": null,
+          "backdropPath": null,
+          "rating": null,
+          "voteCount": 1,
+          "genreIds": [
+            10767
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1136406",
+      "id": 1136406,
+      "slug": "tom-holland",
+      "name": "Tom Holland",
+      "profilePath": "/xKBAaPIa1c7tzZD3Y0MhBLv4hPE.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:315635",
+          "type": "movie",
+          "id": 315635,
+          "slug": "spider-man-homecoming",
+          "title": "Spider-Man: Homecoming",
+          "originalTitle": "Spider-Man: Homecoming",
+          "year": 2017,
+          "releaseDate": "2017-07-05",
+          "overview": "Following the events of Captain America: Civil War, Peter Parker, with the help of his mentor Tony Stark, tries to balance his life as an ordinary high school student in Queens, New York City, with fighting crime as his superhero alter ego Spider-Man as a new threat, the Vulture, emerges.",
+          "posterPath": "/c24sv2weTHPsmDa7jEMN0m2P3RT.jpg",
+          "backdropPath": "/fn4n6uOYcB6Uh89nbNPoU2w80RV.jpg",
+          "rating": 7.3,
+          "voteCount": 24301,
+          "genreIds": [
+            28,
+            12,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:634649",
+          "type": "movie",
+          "id": 634649,
+          "slug": "spider-man-no-way-home",
+          "title": "Spider-Man: No Way Home",
+          "originalTitle": "Spider-Man: No Way Home",
+          "year": 2021,
+          "releaseDate": "2021-12-15",
+          "overview": "Peter Parker is unmasked and no longer able to separate his normal life from the high-stakes of being a super-hero. When he asks for help from Doctor Strange the stakes become even more dangerous, forcing him to discover what it truly means to be Spider-Man.",
+          "posterPath": "/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg",
+          "backdropPath": "/iQFcwSGbZXMkeyKrxbPnwnRo5fl.jpg",
+          "rating": 7.9,
+          "voteCount": 23631,
+          "genreIds": [
+            28,
+            12,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:429617",
+          "type": "movie",
+          "id": 429617,
+          "slug": "spider-man-far-from-home",
+          "title": "Spider-Man: Far From Home",
+          "originalTitle": "Spider-Man: Far From Home",
+          "year": 2019,
+          "releaseDate": "2019-06-28",
+          "overview": "Peter Parker and his friends go on a summer trip to Europe. However, they will hardly be able to rest - Peter will have to agree to help Nick Fury uncover the mystery of creatures that cause natural disasters and destruction throughout the continent.",
+          "posterPath": "/4q2NNj4S5dG2RLF9CpXsej7yXl.jpg",
+          "backdropPath": "/vamhMTvh9m9zFHDoR0v1nRtf6T4.jpg",
+          "rating": 7.4,
+          "voteCount": 17958,
+          "genreIds": [
+            28,
+            12,
+            878
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:33676",
+      "id": 33676,
+      "slug": "kathleen-robertson",
+      "name": "Kathleen Robertson",
+      "profilePath": "/nGaey63oyvcZWXFEwaihGP2YryY.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:4248",
+          "type": "movie",
+          "id": 4248,
+          "slug": "scary-movie-2",
+          "title": "Scary Movie 2",
+          "originalTitle": "Scary Movie 2",
+          "year": 2001,
+          "releaseDate": "2001-07-04",
+          "overview": "A group of students visit a mansion called \"Hell House,\" and murderous high jinks ensue.",
+          "posterPath": "/7Eb1JWK0Cb0rbfsYjwfc9g0PbQH.jpg",
+          "backdropPath": "/cjSB3ZjaMpaa9oHFyeYha3KG0mp.jpg",
+          "rating": 5.9,
+          "voteCount": 5504,
+          "genreIds": [
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:130267",
+          "type": "movie",
+          "id": 130267,
+          "slug": "seal-team-six-the-raid-on-osama-bin-laden",
+          "title": "Seal Team Six: The Raid on Osama Bin Laden",
+          "originalTitle": "Seal Team Six: The Raid on Osama Bin Laden",
+          "year": 2012,
+          "releaseDate": "2012-11-04",
+          "overview": "When the rumored whereabouts of Osama bin Laden are revealed, the CIA readies a team of seasoned U.S. Navy SEALs for the mission of a lifetime. Despite inconclusive evidence that bin Laden is inside the compound, and ignoring the possible ramifications of an unannounced attack on Pakistani soil,…",
+          "posterPath": "/hau6iHAIWJmlnaaZ0QRYZu9T6B1.jpg",
+          "backdropPath": "/3NV5ZCZMqd6Rqr6XtqEPMVkZpxf.jpg",
+          "rating": 5.9,
+          "voteCount": 303,
+          "genreIds": [
+            53,
+            28,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:157544",
+          "type": "movie",
+          "id": 157544,
+          "slug": "the-vatican-tapes",
+          "title": "The Vatican Tapes",
+          "originalTitle": "The Vatican Tapes",
+          "year": 2015,
+          "releaseDate": "2015-07-23",
+          "overview": "In a highly secured vault deep within the walls of Vatican City, the Catholic Church holds thousands of old films and video footage documenting exorcisms/supposed exorcisms and other unexplained religious phenomena they feel the world is not ready to see. This is the first tape - Case 83-G -…",
+          "posterPath": "/uUc8dqnhTOzYypFiWLlz7ez55QW.jpg",
+          "backdropPath": "/vxcUvt5V3qsDddh0ivgdeSLUMyG.jpg",
+          "rating": 5.4,
+          "voteCount": 849,
+          "genreIds": [
+            53,
+            27
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:287",
+      "id": 287,
+      "slug": "brad-pitt",
+      "name": "Brad Pitt",
+      "profilePath": "/ajNaPmXVVMJFg9GWmu6MJzTaXdV.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:16869",
+          "type": "movie",
+          "id": 16869,
+          "slug": "inglourious-basterds",
+          "title": "Inglourious Basterds",
+          "originalTitle": "Inglourious Basterds",
+          "year": 2009,
+          "releaseDate": "2009-08-02",
+          "overview": "In Nazi-occupied France during World War II, a group of Jewish-American soldiers known as \"The Basterds\" are chosen specifically to spread fear throughout the Third Reich by scalping and brutally killing Nazis. The Basterds, lead by Lt. Aldo Raine soon cross paths with a French-Jewish teenage girl…",
+          "posterPath": "/aupnPtagH9JVBuMrGEanf4iqXEQ.jpg",
+          "backdropPath": "/bMJxwgLyD47CDQ6BFCT2AMMlID7.jpg",
+          "rating": 8.2,
+          "voteCount": 25229,
+          "genreIds": [
+            18,
+            53,
+            10752
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:72190",
+          "type": "movie",
+          "id": 72190,
+          "slug": "world-war-z",
+          "title": "World War Z",
+          "originalTitle": "World War Z",
+          "year": 2013,
+          "releaseDate": "2013-06-19",
+          "overview": "Life for former United Nations investigator Gerry Lane and his family seems content. Suddenly, the world is plagued by a mysterious infection turning whole human populations into rampaging mindless zombies. After barely escaping the chaos, Lane is persuaded to go on a mission to investigate this…",
+          "posterPath": "/aCnVdvExw6UWSeQfr0tUH3jr4qG.jpg",
+          "backdropPath": "/kg2FOT2Oe5PSCgs3L4vLel6B7ck.jpg",
+          "rating": 6.9,
+          "voteCount": 17336,
+          "genreIds": [
+            28,
+            27,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:550",
+          "type": "movie",
+          "id": 550,
+          "slug": "fight-club",
+          "title": "Fight Club",
+          "originalTitle": "Fight Club",
+          "year": 1999,
+          "releaseDate": "1999-10-15",
+          "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion.",
+          "posterPath": "/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg",
+          "backdropPath": "/c6OLXfKAk5BKeR6broC8pYiCquX.jpg",
+          "rating": 8.4,
+          "voteCount": 33441,
+          "genreIds": [
+            18,
+            53
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:2676077",
+      "id": 2676077,
+      "slug": "julia-doyle",
+      "name": "Julia Doyle",
+      "profilePath": "/k4afhKG1dBeD36SkHHnwIdsPbB6.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "tv:124364",
+          "type": "tv",
+          "id": 124364,
+          "slug": "from",
+          "title": "FROM",
+          "originalTitle": "FROM",
+          "year": 2022,
+          "releaseDate": "2022-02-20",
+          "overview": "Unravel the mystery of a nightmarish town in middle America that traps all those who enter. As the unwilling residents fight to keep a sense of normalcy and search for a way out, they must also survive the threats of the surrounding forest – including the terrifying creatures that come out when…",
+          "posterPath": "/pRtJagIxpfODzzb0T0NAvZSzErC.jpg",
+          "backdropPath": "/m7eiSGHFzr584zFmetGqkqaU6BN.jpg",
+          "rating": 8.5,
+          "voteCount": 4474,
+          "genreIds": [
+            9648,
+            18,
+            10765
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:999243",
+          "type": "movie",
+          "id": 999243,
+          "slug": "hell-of-a-summer",
+          "title": "Hell of a Summer",
+          "originalTitle": "Hell of a Summer",
+          "year": 2025,
+          "releaseDate": "2025-04-03",
+          "overview": "When 24-year-old Jason Hochberg arrives for counsellor weekend at his beloved Camp Pineway, his biggest problem is feeling out of touch with his teenage co-workers. Little does he know; a masked killer has murdered camp owners John and Kathy and is preparing to strike again.",
+          "posterPath": "/q9rRLc9pRDR8H6YoJTmXrBmivxD.jpg",
+          "backdropPath": "/517uHmTS9Z9nUWBe0gcFaoehNk6.jpg",
+          "rating": 5.5,
+          "voteCount": 208,
+          "genreIds": [
+            27,
+            35,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:153269",
+          "type": "tv",
+          "id": 153269,
+          "slug": "astrid-and-lilly-save-the-world",
+          "title": "Astrid & Lilly Save the World",
+          "originalTitle": "Astrid & Lilly Save the World",
+          "year": 2022,
+          "releaseDate": "2022-01-26",
+          "overview": "High school is hard enough when you're different, but when outcast BFFs Astrid and Lilly accidentally crack open a portal to a terrifyingly quirky monster dimension, it gets a lot more complicated. It's up to them to vanquish the creepy creatures and save the world, becoming the badass heroes they…",
+          "posterPath": "/dgYFcMUOojIeK7jZEjkjK3tOqTe.jpg",
+          "backdropPath": "/5tdBOcx5OAUkNh8TbHJ1wEoWrh.jpg",
+          "rating": 5.8,
+          "voteCount": 22,
+          "genreIds": [
+            35,
+            9648,
+            10765,
+            18
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1373737",
+      "id": 1373737,
+      "slug": "florence-pugh",
+      "name": "Florence Pugh",
+      "profilePath": "/qqDsryavx9rwSMhDAxW6OC7oNQg.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:530385",
+          "type": "movie",
+          "id": 530385,
+          "slug": "midsommar",
+          "title": "Midsommar",
+          "originalTitle": "Midsommar",
+          "year": 2019,
+          "releaseDate": "2019-07-03",
+          "overview": "Several friends travel to Sweden to study as anthropologists a summer festival that is held every ninety years in the remote hometown of one of them. What begins as a dream vacation in a place where the sun never sets, gradually turns into a dark nightmare as the mysterious inhabitants invite them…",
+          "posterPath": "/7LEI8ulZzO5gy9Ww2NVCrKmHeDZ.jpg",
+          "backdropPath": "/pYgj8e2Y6RufnSyOA6OnzmxFXxZ.jpg",
+          "rating": 7.1,
+          "voteCount": 8666,
+          "genreIds": [
+            27,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:497698",
+          "type": "movie",
+          "id": 497698,
+          "slug": "black-widow",
+          "title": "Black Widow",
+          "originalTitle": "Black Widow",
+          "year": 2021,
+          "releaseDate": "2021-07-07",
+          "overview": "Natasha Romanoff, also known as Black Widow, confronts the darker parts of her ledger when a dangerous conspiracy with ties to her past arises. Pursued by a force that will stop at nothing to bring her down, Natasha must deal with her history as a spy and the broken relationships left in her wake…",
+          "posterPath": "/qAZ0pzat24kLdO3o8ejmbLxyOac.jpg",
+          "backdropPath": "/keIxh0wPr2Ymj0Btjh4gW7JJ89e.jpg",
+          "rating": 7.1,
+          "voteCount": 11856,
+          "genreIds": [
+            28,
+            12,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:986056",
+          "type": "movie",
+          "id": 986056,
+          "slug": "thunderbolts",
+          "title": "Thunderbolts*",
+          "originalTitle": "Thunderbolts*",
+          "year": 2025,
+          "releaseDate": "2025-04-30",
+          "overview": "After finding themselves ensnared in a death trap, seven disillusioned castoffs must embark on a dangerous mission that will force them to confront the darkest corners of their pasts.",
+          "posterPath": "/hqcexYHbiTBfDIdDWxrxPtVndBX.jpg",
+          "backdropPath": "/rthMuZfFv4fqEU4JVbgSW9wQ8rs.jpg",
+          "rating": 7.3,
+          "voteCount": 4344,
+          "genreIds": [
+            28,
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1813",
+      "id": 1813,
+      "slug": "anne-hathaway",
+      "name": "Anne Hathaway",
+      "profilePath": "/s6tflSD20MGz04ZR2R1lZvhmC4Y.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:157336",
+          "type": "movie",
+          "id": 157336,
+          "slug": "interstellar",
+          "title": "Interstellar",
+          "originalTitle": "Interstellar",
+          "year": 2014,
+          "releaseDate": "2014-11-04",
+          "overview": "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.",
+          "posterPath": "/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg",
+          "backdropPath": "/8sNiAPPYU14PUepFNeSNGUTiHW.jpg",
+          "rating": 8.5,
+          "voteCount": 42029,
+          "genreIds": [
+            12,
+            18,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:350",
+          "type": "movie",
+          "id": 350,
+          "slug": "the-devil-wears-prada",
+          "title": "The Devil Wears Prada",
+          "originalTitle": "The Devil Wears Prada",
+          "year": 2006,
+          "releaseDate": "2006-06-29",
+          "overview": "A young woman from the Midwest gets more than she bargained for when she moves to New York to become a writer and ends up as the assistant to the tyrannical, larger-than-life editor-in-chief of a major fashion magazine.",
+          "posterPath": "/8912AsVuS7Sj915apArUFbv6F9L.jpg",
+          "backdropPath": "/gkh6Nt8DtY1XT4gQsyFq9XAVJlJ.jpg",
+          "rating": 7.4,
+          "voteCount": 14472,
+          "genreIds": [
+            18,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:9880",
+          "type": "movie",
+          "id": 9880,
+          "slug": "the-princess-diaries",
+          "title": "The Princess Diaries",
+          "originalTitle": "The Princess Diaries",
+          "year": 2001,
+          "releaseDate": "2001-08-03",
+          "overview": "A socially awkward but very bright 15-year-old girl being raised by a single mom discovers that she is the princess of a small European country because of the recent death of her long-absent father, who, unknown to her, was the crown prince of Genovia. She must make a choice between continuing the…",
+          "posterPath": "/7axhsbEzFan6HQQ1aMOy7w3CFRx.jpg",
+          "backdropPath": "/ktPixrzD9Rbet7Co4uUWxyR9191.jpg",
+          "rating": 7,
+          "voteCount": 5432,
+          "genreIds": [
+            35,
+            10751,
+            10749
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:2524",
+      "id": 2524,
+      "slug": "tom-hardy",
+      "name": "Tom Hardy",
+      "profilePath": "/d81K0RH8UX7tZj49tZaQhZ9ewH.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:76341",
+          "type": "movie",
+          "id": 76341,
+          "slug": "mad-max-fury-road",
+          "title": "Mad Max: Fury Road",
+          "originalTitle": "Mad Max: Fury Road",
+          "year": 2015,
+          "releaseDate": "2015-05-13",
+          "overview": "An apocalyptic story set in the furthest reaches of our planet, in a stark desert landscape where humanity is broken, and most everyone is crazed fighting for the necessities of life. Within this world exist two rebels on the run who just might be able to restore order.",
+          "posterPath": "/ulcAi4dKpAjHwYGS08vNyx9H6I9.jpg",
+          "backdropPath": "/uT895WNwm0aIJRtGizcQhrejWUo.jpg",
+          "rating": 7.6,
+          "voteCount": 25005,
+          "genreIds": [
+            28,
+            12,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:335983",
+          "type": "movie",
+          "id": 335983,
+          "slug": "venom",
+          "title": "Venom",
+          "originalTitle": "Venom",
+          "year": 2018,
+          "releaseDate": "2018-09-28",
+          "overview": "Investigative journalist Eddie Brock attempts a comeback following a scandal, but accidentally becomes the host of Venom, a violent, super powerful alien symbiote. Soon, he must rely on his newfound powers to protect the world from a shadowy organization looking for a symbiote of their own.",
+          "posterPath": "/2uNW4WbgBXL25BAbXGLnLqX71Sw.jpg",
+          "backdropPath": "/VuukZLgaCrho2Ar8Scl9HtV3yD.jpg",
+          "rating": 6.8,
+          "voteCount": 17842,
+          "genreIds": [
+            878,
+            28
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:580489",
+          "type": "movie",
+          "id": 580489,
+          "slug": "venom-let-there-be-carnage",
+          "title": "Venom: Let There Be Carnage",
+          "originalTitle": "Venom: Let There Be Carnage",
+          "year": 2021,
+          "releaseDate": "2021-09-30",
+          "overview": "After finding a host body in investigative reporter Eddie Brock, the alien symbiote must face a new enemy, Carnage, the alter ego of serial killer Cletus Kasady.",
+          "posterPath": "/pzKsRuKLFmYrW5Q0q8E8G78Tcgo.jpg",
+          "backdropPath": "/eENEf62tMXbhyVvdcXlnQz2wcuT.jpg",
+          "rating": 6.7,
+          "voteCount": 11607,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:3223",
+      "id": 3223,
+      "slug": "robert-downey-jr",
+      "name": "Robert Downey Jr.",
+      "profilePath": "/5qHNjhtjMD4YWH3UP0rm4tKwxCL.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:24428",
+          "type": "movie",
+          "id": 24428,
+          "slug": "the-avengers",
+          "title": "The Avengers",
+          "originalTitle": "The Avengers",
+          "year": 2012,
+          "releaseDate": "2012-04-25",
+          "overview": "When an unexpected enemy emerges and threatens global safety and security, Nick Fury, director of the international peacekeeping agency known as S.H.I.E.L.D., finds himself in need of a team to pull the world back from the brink of disaster. Spanning the globe, a daring recruitment effort begins!",
+          "posterPath": "/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg",
+          "backdropPath": "/9BBTo63ANSmhC4e6r62OJFuK2GL.jpg",
+          "rating": 8.1,
+          "voteCount": 40479,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:299536",
+          "type": "movie",
+          "id": 299536,
+          "slug": "avengers-infinity-war",
+          "title": "Avengers: Infinity War",
+          "originalTitle": "Avengers: Infinity War",
+          "year": 2018,
+          "releaseDate": "2018-04-25",
+          "overview": "As the Avengers and their allies have continued to protect the world from threats too large for any one hero to handle, a new danger has emerged from the cosmic shadows: Thanos. A despot of intergalactic infamy, his goal is to collect all six Infinity Stones, artifacts of unimaginable power, and…",
+          "posterPath": "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
+          "backdropPath": "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg",
+          "rating": 8.2,
+          "voteCount": 33484,
+          "genreIds": [
+            12,
+            28,
+            878
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:299534",
+          "type": "movie",
+          "id": 299534,
+          "slug": "avengers-endgame",
+          "title": "Avengers: Endgame",
+          "originalTitle": "Avengers: Endgame",
+          "year": 2019,
+          "releaseDate": "2019-04-24",
+          "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos' actions and restore order to the universe once and for all, no matter what…",
+          "posterPath": "/jtDv3lCnST0fZRvdYFwR5CVwK2x.jpg",
+          "backdropPath": "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg",
+          "rating": 8.2,
+          "voteCount": 29516,
+          "genreIds": [
+            12,
+            878,
+            28
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:1995207",
+      "id": 1995207,
+      "slug": "manni-l-perez",
+      "name": "Manni L. Perez",
+      "profilePath": "/fKyqWFLMGNMqGT7jzjptu9jjapg.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "movie:1744462",
+          "type": "movie",
+          "id": 1744462,
+          "slug": "grand-theft-auto-vi-an-extended-look",
+          "title": "Grand Theft Auto VI: An Extended Look",
+          "originalTitle": "Grand Theft Auto VI: An Extended Look",
+          "year": 2026,
+          "releaseDate": "2026-08-27",
+          "overview": "Captured entirely from in-game footage on PlayStation 5, this extended look at the next Grand Theft Auto showcases the biggest, most immersive evolution of the series yet.",
+          "posterPath": "/xTZuh9ziUjIyHBWO9OvqNIPqVWe.jpg",
+          "backdropPath": "/po0uFYwWNByHQzHLCVJ6FetkN4M.jpg",
+          "rating": 8.8,
+          "voteCount": 383,
+          "genreIds": [
+            16,
+            28,
+            12,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:619447",
+          "type": "movie",
+          "id": 619447,
+          "slug": "the-unborn",
+          "title": "The Unborn",
+          "originalTitle": "The Unborn",
+          "year": 2020,
+          "releaseDate": "2020-05-01",
+          "overview": "Strange, unexplained events unfold at an old factory. Two security guards must come to terms with reality: Tiffany as a future mother, and Joey who is secretly in love with her. But someone has other plans for both as well as Tiffany’s unborn child.",
+          "posterPath": "/69mcxo4OzvG1deu7EtmrLcl0JQN.jpg",
+          "backdropPath": "/vtiu8UJQ7sP11nsqvLiiHd2uGtG.jpg",
+          "rating": 5,
+          "voteCount": 18,
+          "genreIds": [
+            27
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:62710",
+          "type": "tv",
+          "id": 62710,
+          "slug": "blindspot",
+          "title": "Blindspot",
+          "originalTitle": "Blindspot",
+          "year": 2015,
+          "releaseDate": "2015-09-21",
+          "overview": "A vast international plot explodes when a beautiful Jane Doe is discovered naked in Times Square, completely covered in mysterious, intricate tattoos with no memory of who she is or how she got there. But there's one tattoo that is impossible to miss: the name of FBI agent Kurt Weller, emblazoned…",
+          "posterPath": "/4AeYzamQmd9Fa6hawDmYKbdvBSe.jpg",
+          "backdropPath": "/1GWiao0QYuKsoTvUmd7ivnE3qDY.jpg",
+          "rating": 7.4,
+          "voteCount": 2607,
+          "genreIds": [
+            80,
+            18,
+            10759
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "key": "person:4997795",
+      "id": 4997795,
+      "slug": "siriwalee-siriwibool",
+      "name": "Siriwalee Siriwibool",
+      "profilePath": "/7vzqaFnNBe3DJQxWbwOgmKB8RJe.jpg",
+      "knownForDepartment": "Acting",
+      "knownFor": [
+        {
+          "key": "tv:282471",
+          "type": "tv",
+          "id": 282471,
+          "slug": "clairebell",
+          "title": "ClaireBell",
+          "originalTitle": "คลั่ง/รัก/นักโทษ",
+          "year": 2025,
+          "releaseDate": "2025-10-27",
+          "overview": "Fate led Bell, an unfortunate young woman, into prison, where she had to struggle for survival alone, without hope. That was until Claire, a mysterious female inmate, appeared to help her. And from that moment on... the encounter between these two souls began to fill this dark and desolate place…",
+          "posterPath": "/wNb7PxdshRHLkJiDgfOuDB0IamA.jpg",
+          "backdropPath": "/eJKWvkgJE6Rdtr9qibK2Dmw9PPQ.jpg",
+          "rating": 8.4,
+          "voteCount": 36,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "th"
+        },
+        {
+          "key": "movie:1370610",
+          "type": "movie",
+          "id": 1370610,
+          "slug": "endpresso",
+          "title": "Endpresso",
+          "originalTitle": "ปณิธานหวานน้อย",
+          "year": 2024,
+          "releaseDate": "2024-11-07",
+          "overview": "O, an artistic workaholic who loves to live in her own head, has become an overthinking coffee addict. One day, fate leads her to meet the heir of a prominent artist, who is intrigued by her quirky and unique personality. He invites her to join an art project about love at Stalla Café in Chiang…",
+          "posterPath": "/2C9izRi4iyTkfevcWIx0fracBgU.jpg",
+          "backdropPath": "/fPPeVpq5MC3bAnUAIC9rn3cEK94.jpg",
+          "rating": null,
+          "voteCount": 1,
+          "genreIds": [],
+          "originalLanguage": "th"
+        },
+        {
+          "key": "tv:330613",
+          "type": "tv",
+          "id": 330613,
+          "slug": "the-rules",
+          "title": "The Rules",
+          "originalTitle": "กฎหลังเที่ยงคืน",
+          "year": 2026,
+          "releaseDate": "2026-10-28",
+          "overview": "Haunted by his past, Metha takes a night shift at a mysterious convenience store where breaking its strange rules leads to supernatural death, forcing him to confront both the store's dark secrets and his own sins.",
+          "posterPath": "/IECgq0Hd4ezuyGhbQgQawURGKT.jpg",
+          "backdropPath": "/VgW1XPEFiwEZgYuR2Wl204DxGL.jpg",
+          "rating": null,
+          "voteCount": 4,
+          "genreIds": [
+            18,
+            9648,
+            10765
+          ],
+          "originalLanguage": "th"
+        }
+      ]
+    }
+  ]
+}

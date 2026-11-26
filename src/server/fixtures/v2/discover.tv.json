@@ -1,0 +1,418 @@
+{
+  "v": 2,
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 20,
+  "results": [
+    {
+      "key": "tv:42009",
+      "type": "tv",
+      "id": 42009,
+      "slug": "black-mirror",
+      "title": "Black Mirror",
+      "originalTitle": "Black Mirror",
+      "year": 2011,
+      "releaseDate": "2011-12-04",
+      "overview": "Twisted tales run wild in this mind-bending anthology series that reveals humanity's worst traits, greatest innovations and more.",
+      "posterPath": "/seN6rRfN0I6n8iDXjlSMk1QjNcq.jpg",
+      "backdropPath": "/dg3OindVAGZBjlT3xYKqIAdukPL.jpg",
+      "rating": 8.3,
+      "voteCount": 6737,
+      "genreIds": [
+        10765,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:32573",
+      "type": "tv",
+      "id": 32573,
+      "slug": "strike-back",
+      "title": "Strike Back",
+      "originalTitle": "Strike Back",
+      "year": 2010,
+      "releaseDate": "2010-05-05",
+      "overview": "The series follows John Porter, a former British Special Forces soldier, who is drafted back into service by Section 20, a fictional branch of the Secret Intelligence Service.",
+      "posterPath": "/c0ItaC2Grf4WVJ06G87BjNn9pRs.jpg",
+      "backdropPath": "/2tL3pNaPQb2ioEYswMkDGVTo1pt.jpg",
+      "rating": 7.4,
+      "voteCount": 422,
+      "genreIds": [
+        18,
+        10759
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:4620",
+      "type": "tv",
+      "id": 4620,
+      "slug": "eureka",
+      "title": "Eureka",
+      "originalTitle": "Eureka",
+      "year": 2006,
+      "releaseDate": "2006-07-18",
+      "overview": "The sleepy Pacific Northwest town of Eureka is hiding a mysterious secret. The government has been relocating the world's geniuses and their families to this rustic town for years where innovation and chaos have lived hand in hand. U.S. Marshal Jack Carter stumbles upon this odd town after…",
+      "posterPath": "/f2l5hUk63hPqYTucnFy2HmElFV0.jpg",
+      "backdropPath": "/8MQeyFsWrp2ILjbumtxrinmk7t4.jpg",
+      "rating": 7.7,
+      "voteCount": 761,
+      "genreIds": [
+        10765,
+        35,
+        18
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:46923",
+      "type": "tv",
+      "id": 46923,
+      "slug": "shetland",
+      "title": "Shetland",
+      "originalTitle": "Shetland",
+      "year": 2013,
+      "releaseDate": "2013-03-10",
+      "overview": "Created from the novels by award winning crime writer Ann Cleeves, Shetland follows DI Jimmy Perez and his team as they investigate crime within the close knit island community. In this isolated and sometimes inhospitable environment, the team have to rely on a uniquely resourceful style of…",
+      "posterPath": "/rKnxmir8m5I3RdSTdZr3jaQaCZi.jpg",
+      "backdropPath": "/AdlDrgoNCDu3naYjZMwmiklBHnV.jpg",
+      "rating": 7.5,
+      "voteCount": 219,
+      "genreIds": [
+        80,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1420",
+      "type": "tv",
+      "id": 1420,
+      "slug": "new-girl",
+      "title": "New Girl",
+      "originalTitle": "New Girl",
+      "year": 2011,
+      "releaseDate": "2011-09-20",
+      "overview": "Jessica Day is an offbeat and adorable girl in her late 20s who, after a bad breakup, moves in with three single guys. Goofy, positive, vulnerable and honest to a fault, Jess has faith in people, even when she shouldn't. Although she's dorky and awkward, she's comfortable in her own skin. More…",
+      "posterPath": "/8oCqMlKKomCArVtyOjRzMN6g40Z.jpg",
+      "backdropPath": "/959IFVeGqz2M6qGvQ1RxN2r6Mq6.jpg",
+      "rating": 7.4,
+      "voteCount": 1785,
+      "genreIds": [
+        35
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:76331",
+      "type": "tv",
+      "id": 76331,
+      "slug": "succession",
+      "title": "Succession",
+      "originalTitle": "Succession",
+      "year": 2018,
+      "releaseDate": "2018-06-03",
+      "overview": "Follow the lives of the Roy family as they contemplate their future once their aging father begins to step back from the media and entertainment conglomerate they control.",
+      "posterPath": "/z0XiwdrCQ9yVIr4O0pxzaAYRxdW.jpg",
+      "backdropPath": "/d87JXX3DLkRJMfm5StCmmnmhHuX.jpg",
+      "rating": 8.3,
+      "voteCount": 1871,
+      "genreIds": [
+        18,
+        35
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1438",
+      "type": "tv",
+      "id": 1438,
+      "slug": "the-wire",
+      "title": "The Wire",
+      "originalTitle": "The Wire",
+      "year": 2002,
+      "releaseDate": "2002-06-02",
+      "overview": "Told from the points of view of both the Baltimore homicide and narcotics detectives and their targets, the series captures a universe in which the national war on drugs has become a permanent, self-sustaining bureaucracy, and distinctions between good and evil are routinely obliterated.",
+      "posterPath": "/4lbclFySvugI51fwsyxBTOm4DqK.jpg",
+      "backdropPath": "/aQTtua5pG490fMfeKgtYg5B853e.jpg",
+      "rating": 8.6,
+      "voteCount": 2926,
+      "genreIds": [
+        80,
+        18
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:95480",
+      "type": "tv",
+      "id": 95480,
+      "slug": "slow-horses",
+      "title": "Slow Horses",
+      "originalTitle": "Slow Horses",
+      "year": 2022,
+      "releaseDate": "2022-04-01",
+      "overview": "Follow a dysfunctional team of MI5 agents—and their obnoxious boss, the notorious Jackson Lamb—as they navigate the espionage world's smoke and mirrors to defend England from sinister forces.",
+      "posterPath": "/AdYr4DjOgXvDUMwu6vEhZy1Rnxk.jpg",
+      "backdropPath": "/gPQppUnLx9vqPDLz3WwZ2HJsNbt.jpg",
+      "rating": 8.1,
+      "voteCount": 1157,
+      "genreIds": [
+        80,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1622",
+      "type": "tv",
+      "id": 1622,
+      "slug": "supernatural",
+      "title": "Supernatural",
+      "originalTitle": "Supernatural",
+      "year": 2005,
+      "releaseDate": "2005-09-13",
+      "overview": "When they were boys, Sam and Dean Winchester lost their mother to a mysterious and demonic supernatural force. Subsequently, their father raised them to be soldiers. He taught them about the paranormal evil that lives in the dark corners and on the back roads of America ... and he taught them how…",
+      "posterPath": "/8iixmfGx5EIFPdpNvB2JvI3VIqX.jpg",
+      "backdropPath": "/lirPqYLTtd6XZqGn4cS1wiesTq0.jpg",
+      "rating": 8.3,
+      "voteCount": 8860,
+      "genreIds": [
+        18,
+        9648,
+        10765
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1434",
+      "type": "tv",
+      "id": 1434,
+      "slug": "family-guy",
+      "title": "Family Guy",
+      "originalTitle": "Family Guy",
+      "year": 1999,
+      "releaseDate": "1999-01-31",
+      "overview": "Sick, twisted, politically incorrect and Freakin' Sweet animated series featuring the adventures of the dysfunctional Griffin family. Bumbling Peter and long-suffering Lois have three kids. Stewie (a brilliant but sadistic baby bent on killing his mother and taking over the world), Meg (the…",
+      "posterPath": "/3PFsEuAiyLkWsP4GG6dIV37Q6gu.jpg",
+      "backdropPath": "/jbTqU6BJMufoMnPSlO4ThrcXs3Y.jpg",
+      "rating": 7.4,
+      "voteCount": 5232,
+      "genreIds": [
+        16,
+        35
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:2691",
+      "type": "tv",
+      "id": 2691,
+      "slug": "two-and-a-half-men",
+      "title": "Two and a Half Men",
+      "originalTitle": "Two and a Half Men",
+      "year": 2003,
+      "releaseDate": "2003-09-22",
+      "overview": "A hedonistic jingle writer's free-wheeling life comes to an abrupt halt when his brother and 10-year-old nephew move into his beach-front house.",
+      "posterPath": "/xgfjxyV3g1S68opzuvG6G87muDp.jpg",
+      "backdropPath": "/coHpOy9OJyFiHWeH36cSHMpLUHC.jpg",
+      "rating": 7.4,
+      "voteCount": 3864,
+      "genreIds": [
+        35
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:5920",
+      "type": "tv",
+      "id": 5920,
+      "slug": "the-mentalist",
+      "title": "The Mentalist",
+      "originalTitle": "The Mentalist",
+      "year": 2008,
+      "releaseDate": "2008-09-23",
+      "overview": "Patrick Jane, a former celebrity psychic medium, uses his razor sharp skills of observation and expertise at \"reading\" people to solve serious crimes with the California Bureau of Investigation.",
+      "posterPath": "/k0kMdO52LpC5JWgd0uWEH7gqcCe.jpg",
+      "backdropPath": "/rJFqKcmMSttdNP58l0dVzY2NcTA.jpg",
+      "rating": 8.4,
+      "voteCount": 5046,
+      "genreIds": [
+        80,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:41727",
+      "type": "tv",
+      "id": 41727,
+      "slug": "banshee",
+      "title": "Banshee",
+      "originalTitle": "Banshee",
+      "year": 2013,
+      "releaseDate": "2013-01-11",
+      "overview": "Banshee is an American drama television series set in a small town in Pennsylvania Amish country and features an enigmatic ex-con posing as a murdered sheriff who imposes his own brand of justice while also cooking up plans that serve his own interests.",
+      "posterPath": "/5nXFiz8Rn8eezVjSTZBd7HmnF1G.jpg",
+      "backdropPath": "/mo9bfYdewzmHxnaeURB2jRPvGuX.jpg",
+      "rating": 8,
+      "voteCount": 1511,
+      "genreIds": [
+        80,
+        18
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1413",
+      "type": "tv",
+      "id": 1413,
+      "slug": "american-horror-story",
+      "title": "American Horror Story",
+      "originalTitle": "American Horror Story",
+      "year": 2011,
+      "releaseDate": "2011-10-05",
+      "overview": "An anthology horror drama series centering on different characters and locations, including a house with a murderous past, an asylum, a witch coven, a freak show, a hotel, a farmhouse in Roanoke, a cult, the apocalypse and a summer camp.",
+      "posterPath": "/yCkPLQ10qKIUgRBXmQVVMF1h96d.jpg",
+      "backdropPath": "/5G4Bnc4Q0YUK1bwLEUYmIsmm2Ib.jpg",
+      "rating": 8.1,
+      "voteCount": 6320,
+      "genreIds": [
+        18,
+        9648,
+        10765
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:18347",
+      "type": "tv",
+      "id": 18347,
+      "slug": "community",
+      "title": "Community",
+      "originalTitle": "Community",
+      "year": 2009,
+      "releaseDate": "2009-09-17",
+      "overview": "Follow the lives of a group of students at what is possibly the world’s worst community college in the fictional locale of Greendale, Colorado.",
+      "posterPath": "/3KUjDt8XY7w2Ku70UE0SECmv1zP.jpg",
+      "backdropPath": "/1xRfgONYmK3T6FSmbtcuo8eyxVt.jpg",
+      "rating": 8,
+      "voteCount": 2254,
+      "genreIds": [
+        35
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1877",
+      "type": "tv",
+      "id": 1877,
+      "slug": "phineas-and-ferb",
+      "title": "Phineas and Ferb",
+      "originalTitle": "Phineas and Ferb",
+      "year": 2007,
+      "releaseDate": "2007-08-17",
+      "overview": "Each day, two kindhearted suburban stepbrothers on summer vacation embark on some grand new project, which annoys their controlling sister, Candace, who tries to bust them. Meanwhile, their pet platypus plots against evil Dr. Doofenshmirtz.",
+      "posterPath": "/g6TidT7be954rrzPPBTIXkSmfXj.jpg",
+      "backdropPath": "/5MWFjQ3NuNtNeOE9FdrVLeNMNPs.jpg",
+      "rating": 7.9,
+      "voteCount": 1100,
+      "genreIds": [
+        16,
+        35,
+        10751,
+        10765
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:2734",
+      "type": "tv",
+      "id": 2734,
+      "slug": "law-and-order-special-victims-unit",
+      "title": "Law & Order: Special Victims Unit",
+      "originalTitle": "Law & Order: Special Victims Unit",
+      "year": 1999,
+      "releaseDate": "1999-09-20",
+      "overview": "In the criminal justice system, sexually-based offenses are considered especially heinous. In New York City, the dedicated detectives who investigate these vicious felonies are members of an elite squad known as the Special Victims Unit. These are their stories.",
+      "posterPath": "/pHNhUwSXuDQ9jPZOCb8SgJaQZsc.jpg",
+      "backdropPath": "/xhK9YCxNwnE0OB1SWvCY39heHQI.jpg",
+      "rating": 8,
+      "voteCount": 4428,
+      "genreIds": [
+        80,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:1411",
+      "type": "tv",
+      "id": 1411,
+      "slug": "person-of-interest",
+      "title": "Person of Interest",
+      "originalTitle": "Person of Interest",
+      "year": 2011,
+      "releaseDate": "2011-09-22",
+      "overview": "John Reese, former CIA paramilitary operative, is presumed dead and teams up with reclusive billionaire Finch to prevent violent crimes in New York City by initiating their own type of justice. With the special training that Reese has had in Covert Operations and Finch's genius software inventing…",
+      "posterPath": "/f8aIvYk5h7Z8EP3dinCmVgQFYow.jpg",
+      "backdropPath": "/efeMgQn6iRALsOqDa2cqlf6Pw5O.jpg",
+      "rating": 8.1,
+      "voteCount": 2245,
+      "genreIds": [
+        10759,
+        80,
+        10765,
+        18,
+        9648
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:247718",
+      "type": "tv",
+      "id": 247718,
+      "slug": "mobland",
+      "title": "MobLand",
+      "originalTitle": "MobLand",
+      "year": 2025,
+      "releaseDate": "2025-03-30",
+      "overview": "Two mob families clash in a war that threatens to topple empires and lives.",
+      "posterPath": "/5Xc7WpWsgflfgEMoBlf9TmWhfbH.jpg",
+      "backdropPath": "/h0OC7ouop8YLwbAVfS3UUE2Lw4T.jpg",
+      "rating": 8.7,
+      "voteCount": 1315,
+      "genreIds": [
+        80,
+        18
+      ],
+      "originalLanguage": "en"
+    },
+    {
+      "key": "tv:83631",
+      "type": "tv",
+      "id": 83631,
+      "slug": "what-we-do-in-the-shadows",
+      "title": "What We Do in the Shadows",
+      "originalTitle": "What We Do in the Shadows",
+      "year": 2019,
+      "releaseDate": "2019-03-27",
+      "overview": "A documentary-style look into the daily (or rather, nightly) lives of a group of vampires in Staten Island who have “lived” together for hundreds and hundreds of years.",
+      "posterPath": "/wa3ZQE9kLnqwN3vQ0NNjg1NPsCa.jpg",
+      "backdropPath": "/mKikck71CvVISUSTLk29fwRbH4y.jpg",
+      "rating": 8,
+      "voteCount": 1118,
+      "genreIds": [
+        35,
+        10765
+      ],
+      "originalLanguage": "en"
+    }
+  ]
+}

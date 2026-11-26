@@ -1,0 +1,2868 @@
+{
+  "v": 2,
+  "region": "US",
+  "generatedAt": "2026-11-26T16:37:24.253Z",
+  "hero": [
+    {
+      "key": "tv:171802",
+      "type": "tv",
+      "id": 171802,
+      "slug": "blade-runner-2099",
+      "title": "Blade Runner 2099",
+      "originalTitle": "Blade Runner 2099",
+      "year": 2026,
+      "releaseDate": "2026-11-24",
+      "overview": "Fifty years after the events of Blade Runner 2049, Los Angeles has been reborn, just not by humanity. Cora, a fugitive in a final bid to stop running, takes on one last identity: a Blade Runner. Forced to partner with Olwen, a Replicant days from dying, she hunts down a runaway hiding a truth that…",
+      "posterPath": "/d8IKBDXQvj3d6clsjqydT4xcw14.jpg",
+      "backdropPath": "/rACaCUxa8WAxkqdpZl0vGqBmIJg.jpg",
+      "rating": 5.2,
+      "voteCount": 42,
+      "genreIds": [
+        10765,
+        18
+      ],
+      "originalLanguage": "en",
+      "trailer": {
+        "key": "1d4x_eSdqNc",
+        "type": "Trailer",
+        "name": "Final Trailer",
+        "official": true,
+        "language": "en",
+        "publishedAt": "2026-11-09T17:03:37.000Z"
+      }
+    },
+    {
+      "key": "movie:1458300",
+      "type": "movie",
+      "id": 1458300,
+      "slug": "the-mosquito-bowl",
+      "title": "The Mosquito Bowl",
+      "originalTitle": "The Mosquito Bowl",
+      "year": 2026,
+      "releaseDate": "2026-10-29",
+      "overview": "In the aftermath of Pearl Harbor, four college football stars enlist in the US Marines, discovering the strength of brotherhood and the cost of war.",
+      "posterPath": "/uxYs0bNTF4XzM8LThJk2x3AJ0Iv.jpg",
+      "backdropPath": "/k2djfMwL3LhpvZMfPN7IFX4DG5N.jpg",
+      "rating": 7.2,
+      "voteCount": 22,
+      "genreIds": [
+        10752,
+        36,
+        18
+      ],
+      "originalLanguage": "en",
+      "trailer": {
+        "key": "F6YDzPfjH4I",
+        "type": "Trailer",
+        "name": "Red Band Trailer",
+        "official": true,
+        "language": "en",
+        "publishedAt": "2026-10-27T18:30:00.000Z"
+      }
+    },
+    {
+      "key": "movie:1003596",
+      "type": "movie",
+      "id": 1003596,
+      "slug": "avengers-doomsday",
+      "title": "Avengers: Doomsday",
+      "originalTitle": "Avengers: Doomsday",
+      "year": 2026,
+      "releaseDate": "2026-12-16",
+      "overview": "Beloved heroes from three distinct universes are set on a deadly collision course and face an existential threat unlike anything they've ever encountered.",
+      "posterPath": "/1zqWkLwC1zLBBBtIWzmkmWeMWnT.jpg",
+      "backdropPath": "/rObL4of4eFA8yWaN9pRFo9aOVNi.jpg",
+      "rating": null,
+      "voteCount": 0,
+      "genreIds": [
+        878,
+        28,
+        12
+      ],
+      "originalLanguage": "en",
+      "trailer": {
+        "key": "Wb8Tq_HD4E8",
+        "type": "Trailer",
+        "name": "Final Trailer",
+        "official": true,
+        "language": "en",
+        "publishedAt": "2026-11-23T14:00:01.000Z"
+      }
+    },
+    {
+      "key": "movie:1280115",
+      "type": "movie",
+      "id": 1280115,
+      "slug": "way-of-the-warrior-kid",
+      "title": "Way of the Warrior Kid",
+      "originalTitle": "Way of the Warrior Kid",
+      "year": 2026,
+      "releaseDate": "2026-11-24",
+      "overview": "Jake is an injured Navy SEAL who becomes a mentor for his shy, struggling nephew Marc. Using the principles of his military training, Jake teaches Marc how to be a Warrior Kid as he enters high school.",
+      "posterPath": "/atI81xXKNVah7PJFBo3aXqQKtnG.jpg",
+      "backdropPath": "/1JL6mDxYRauwv81bLupSZczC39M.jpg",
+      "rating": 7.3,
+      "voteCount": 25,
+      "genreIds": [
+        18
+      ],
+      "originalLanguage": "en",
+      "trailer": {
+        "key": "R1ECMLrwDYQ",
+        "type": "Trailer",
+        "name": "Official Trailer",
+        "official": true,
+        "language": "en",
+        "publishedAt": "2026-10-27T12:59:55.000Z"
+      }
+    },
+    {
+      "key": "tv:84773",
+      "type": "tv",
+      "id": 84773,
+      "slug": "the-lord-of-the-rings-the-rings-of-power",
+      "title": "The Lord of the Rings: The Rings of Power",
+      "originalTitle": "The Lord of the Rings: The Rings of Power",
+      "year": 2022,
+      "releaseDate": "2022-09-01",
+      "overview": "Beginning in a time of relative peace, we follow an ensemble cast of characters as they confront the re-emergence of evil to Middle-earth. From the darkest depths of the Misty Mountains, to the majestic forests of Lindon, to the breathtaking island kingdom of Númenor, to the furthest reaches of…",
+      "posterPath": "/bMXWXKM9ydUmMTNvDnYo9QtCBRt.jpg",
+      "backdropPath": "/uVOcz7JBOuZxsx9IYpx6Ah174LX.jpg",
+      "rating": 7.2,
+      "voteCount": 4149,
+      "genreIds": [
+        10759,
+        10765
+      ],
+      "originalLanguage": "en",
+      "trailer": {
+        "key": "x8UAUAuKNcU",
+        "type": "Trailer",
+        "name": "Official Trailer",
+        "official": true,
+        "language": "en",
+        "publishedAt": "2022-08-23T13:00:23.000Z"
+      }
+    }
+  ],
+  "rails": [
+    {
+      "id": "trending",
+      "kind": "ranked",
+      "items": [
+        {
+          "key": "tv:171802",
+          "type": "tv",
+          "id": 171802,
+          "slug": "blade-runner-2099",
+          "title": "Blade Runner 2099",
+          "originalTitle": "Blade Runner 2099",
+          "year": 2026,
+          "releaseDate": "2026-11-24",
+          "overview": "Fifty years after the events of Blade Runner 2049, Los Angeles has been reborn, just not by humanity. Cora, a fugitive in a final bid to stop running, takes on one last identity: a Blade Runner. Forced to partner with Olwen, a Replicant days from dying, she hunts down a runaway hiding a truth that…",
+          "posterPath": "/d8IKBDXQvj3d6clsjqydT4xcw14.jpg",
+          "backdropPath": "/rACaCUxa8WAxkqdpZl0vGqBmIJg.jpg",
+          "rating": 5.2,
+          "voteCount": 43,
+          "genreIds": [
+            10765,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1003596",
+          "type": "movie",
+          "id": 1003596,
+          "slug": "avengers-doomsday",
+          "title": "Avengers: Doomsday",
+          "originalTitle": "Avengers: Doomsday",
+          "year": 2026,
+          "releaseDate": "2026-12-16",
+          "overview": "Beloved heroes from three distinct universes are set on a deadly collision course and face an existential threat unlike anything they've ever encountered.",
+          "posterPath": "/1zqWkLwC1zLBBBtIWzmkmWeMWnT.jpg",
+          "backdropPath": "/rObL4of4eFA8yWaN9pRFo9aOVNi.jpg",
+          "rating": null,
+          "voteCount": 0,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1300968",
+          "type": "movie",
+          "id": 1300968,
+          "slug": "the-hunger-games-sunrise-on-the-reaping",
+          "title": "The Hunger Games: Sunrise on the Reaping",
+          "originalTitle": "The Hunger Games: Sunrise on the Reaping",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "Return to the world of Panem 24 years before Katniss Everdeen volunteers in her sister's place, commencing on the morning of the reaping of the 50th Hunger Games, also known as the Second Quarter Quell.",
+          "posterPath": "/5ffVOGY3x3Sn3jovzvycJeizpks.jpg",
+          "backdropPath": "/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+          "rating": 7.8,
+          "voteCount": 369,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1368337",
+          "type": "movie",
+          "id": 1368337,
+          "slug": "the-odyssey",
+          "title": "The Odyssey",
+          "originalTitle": "The Odyssey",
+          "year": 2026,
+          "releaseDate": "2026-07-15",
+          "overview": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point.",
+          "posterPath": "/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
+          "backdropPath": "/c7btGYblBnfAaw713WvFM0Kimc7.jpg",
+          "rating": 8,
+          "voteCount": 5506,
+          "genreIds": [
+            12,
+            28,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1458300",
+          "type": "movie",
+          "id": 1458300,
+          "slug": "the-mosquito-bowl",
+          "title": "The Mosquito Bowl",
+          "originalTitle": "The Mosquito Bowl",
+          "year": 2026,
+          "releaseDate": "2026-10-29",
+          "overview": "In the aftermath of Pearl Harbor, four college football stars enlist in the US Marines, discovering the strength of brotherhood and the cost of war.",
+          "posterPath": "/uxYs0bNTF4XzM8LThJk2x3AJ0Iv.jpg",
+          "backdropPath": "/k2djfMwL3LhpvZMfPN7IFX4DG5N.jpg",
+          "rating": 7.4,
+          "voteCount": 24,
+          "genreIds": [
+            10752,
+            36,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:84773",
+          "type": "tv",
+          "id": 84773,
+          "slug": "the-lord-of-the-rings-the-rings-of-power",
+          "title": "The Lord of the Rings: The Rings of Power",
+          "originalTitle": "The Lord of the Rings: The Rings of Power",
+          "year": 2022,
+          "releaseDate": "2022-09-01",
+          "overview": "Beginning in a time of relative peace, we follow an ensemble cast of characters as they confront the re-emergence of evil to Middle-earth. From the darkest depths of the Misty Mountains, to the majestic forests of Lindon, to the breathtaking island kingdom of Númenor, to the furthest reaches of…",
+          "posterPath": "/bMXWXKM9ydUmMTNvDnYo9QtCBRt.jpg",
+          "backdropPath": "/uVOcz7JBOuZxsx9IYpx6Ah174LX.jpg",
+          "rating": 7.2,
+          "voteCount": 4149,
+          "genreIds": [
+            10759,
+            10765
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1538497",
+          "type": "movie",
+          "id": 1538497,
+          "slug": "hexed",
+          "title": "Hexed",
+          "originalTitle": "Hexed",
+          "year": 2026,
+          "releaseDate": "2026-11-25",
+          "overview": "An impulsive and unconventional teenage girl named Billie discovers secret magical abilities which, once unleashed, hurtle her into a spectacle-filled journey out of suburbia and into a vast witch realm called Hexe. Forced to team up with her cautious mother, Alice, they uncover family mysteries…",
+          "posterPath": "/yykeYKbDBM9eUMJUucaaDo2mi1p.jpg",
+          "backdropPath": "/wdjW11Tp4w9EfDBxbjyBJvDVHDA.jpg",
+          "rating": 5.7,
+          "voteCount": 19,
+          "genreIds": [
+            12,
+            16,
+            10751,
+            14,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:969681",
+          "type": "movie",
+          "id": 969681,
+          "slug": "spider-man-brand-new-day",
+          "title": "Spider-Man: Brand New Day",
+          "originalTitle": "Spider-Man: Brand New Day",
+          "year": 2026,
+          "releaseDate": "2026-07-29",
+          "overview": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat…",
+          "posterPath": "/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg",
+          "backdropPath": "/r08LxMJCbf1SiJIWeyH9aJmdqwC.jpg",
+          "rating": 8.5,
+          "voteCount": 7124,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:326247",
+          "type": "tv",
+          "id": 326247,
+          "slug": "fool-night",
+          "title": "Fool Night",
+          "originalTitle": "フールナイト",
+          "year": 2026,
+          "releaseDate": "2026-11-26",
+          "overview": "In a dark world full of despair, he chooses the path of transforming into a Spirit Flower — a plant into which humans transform. Should he continue living as a person, or discard his pain and start a new life as a plant? Which path would you choose in his situation?",
+          "posterPath": "/7kHLQwQZKbQOZJGx1mIDYIKeBYv.jpg",
+          "backdropPath": "/rumSTVTcuZj0khFXxXgwXouIMgg.jpg",
+          "rating": null,
+          "voteCount": 1,
+          "genreIds": [
+            16,
+            18,
+            10765,
+            9648
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "tv:244447",
+          "type": "tv",
+          "id": 244447,
+          "slug": "the-hunting-wives",
+          "title": "The Hunting Wives",
+          "originalTitle": "The Hunting Wives",
+          "year": 2025,
+          "releaseDate": "2025-07-21",
+          "overview": "Sophie trades New England for East Texas and falls into a wealthy socialite's magnetic orbit — where a clique of housewives hide deadly secrets.",
+          "posterPath": "/iKL02GmejLCGBJr7XHU82vvqA1C.jpg",
+          "backdropPath": "/6PerjrTmwTNiRcfn0SpjU8N9Nio.jpg",
+          "rating": 7,
+          "voteCount": 118,
+          "genreIds": [
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "id": "popular-movies",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "movie:1726",
+          "type": "movie",
+          "id": 1726,
+          "slug": "iron-man",
+          "title": "Iron Man",
+          "originalTitle": "Iron Man",
+          "year": 2008,
+          "releaseDate": "2008-05-02",
+          "overview": "After being held captive in an Afghan cave, billionaire engineer Tony Stark creates a unique weaponized suit of armor to fight evil.",
+          "posterPath": "/78lPtwv72eTNqFW9COBYI0dWDJa.jpg",
+          "backdropPath": "/cKvDv2LpwVEqbdXWoQl4XgGN6le.jpg",
+          "rating": 7.7,
+          "voteCount": 29289,
+          "genreIds": [
+            28,
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:801688",
+          "type": "movie",
+          "id": 801688,
+          "slug": "kalki-2898-ad",
+          "title": "Kalki 2898-AD",
+          "originalTitle": "కల్కి 2898-ఎ.డి",
+          "year": 2024,
+          "releaseDate": "2024-06-26",
+          "overview": "In the year 2898 AD, around 6000 years after Kurukshetra war, Ashwatthama gears up for his final battle of redemption at the sign of hope in a dystopian world and Bhairava, a wisecracking and self-interested bounty hunter, tired of the perilous life becomes the hurdle in the process.",
+          "posterPath": "/rstcAnBeCkxNQjNp3YXrF6IP1tW.jpg",
+          "backdropPath": "/seAIZLEq2Il2psjMUREDbSdRmbu.jpg",
+          "rating": 6.4,
+          "voteCount": 215,
+          "genreIds": [
+            18,
+            28,
+            14,
+            878
+          ],
+          "originalLanguage": "te"
+        },
+        {
+          "key": "movie:1368337",
+          "type": "movie",
+          "id": 1368337,
+          "slug": "the-odyssey",
+          "title": "The Odyssey",
+          "originalTitle": "The Odyssey",
+          "year": 2026,
+          "releaseDate": "2026-07-17",
+          "overview": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point.",
+          "posterPath": "/5rhTDKUhPYvpdQIijFIs5VoWsON.jpg",
+          "backdropPath": "/c7btGYblBnfAaw713WvFM0Kimc7.jpg",
+          "rating": 8,
+          "voteCount": 5500,
+          "genreIds": [
+            12,
+            28,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1300968",
+          "type": "movie",
+          "id": 1300968,
+          "slug": "the-hunger-games-sunrise-on-the-reaping",
+          "title": "The Hunger Games: Sunrise on the Reaping",
+          "originalTitle": "The Hunger Games: Sunrise on the Reaping",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "Return to the world of Panem 24 years before Katniss Everdeen volunteers in her sister's place, commencing on the morning of the reaping of the 50th Hunger Games, also known as the Second Quarter Quell.",
+          "posterPath": "/5ffVOGY3x3Sn3jovzvycJeizpks.jpg",
+          "backdropPath": "/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+          "rating": 7.8,
+          "voteCount": 368,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1263337",
+          "type": "movie",
+          "id": 1263337,
+          "slug": "heart-of-the-beast",
+          "title": "Heart of the Beast",
+          "originalTitle": "Heart of the Beast",
+          "year": 2026,
+          "releaseDate": "2026-09-25",
+          "overview": "After a harrowing plane crash, Special Forces officer James Belmont and his combat dog, Odin, find themselves stranded deep in the Alaskan wilderness. Together, they are forced into a brutal fight for survival against the elements.",
+          "posterPath": "/6sYemVUn79UPKz1ZsSG6kPU4RVy.jpg",
+          "backdropPath": "/yE766yhgg98tKwTKd8CyNvAtmn6.jpg",
+          "rating": 7.9,
+          "voteCount": 1240,
+          "genreIds": [
+            12,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:969681",
+          "type": "movie",
+          "id": 969681,
+          "slug": "spider-man-brand-new-day",
+          "title": "Spider-Man: Brand New Day",
+          "originalTitle": "Spider-Man: Brand New Day",
+          "year": 2026,
+          "releaseDate": "2026-07-31",
+          "overview": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat…",
+          "posterPath": "/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg",
+          "backdropPath": "/r08LxMJCbf1SiJIWeyH9aJmdqwC.jpg",
+          "rating": 8.5,
+          "voteCount": 7121,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1003596",
+          "type": "movie",
+          "id": 1003596,
+          "slug": "avengers-doomsday",
+          "title": "Avengers: Doomsday",
+          "originalTitle": "Avengers: Doomsday",
+          "year": 2026,
+          "releaseDate": "2026-12-18",
+          "overview": "Beloved heroes from three distinct universes are set on a deadly collision course and face an existential threat unlike anything they've ever encountered.",
+          "posterPath": "/1zqWkLwC1zLBBBtIWzmkmWeMWnT.jpg",
+          "backdropPath": "/rObL4of4eFA8yWaN9pRFo9aOVNi.jpg",
+          "rating": null,
+          "voteCount": 0,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1423191",
+          "type": "movie",
+          "id": 1423191,
+          "slug": "resident-evil",
+          "title": "Resident Evil",
+          "originalTitle": "Resident Evil",
+          "year": 2026,
+          "releaseDate": "2026-09-18",
+          "overview": "Medical courier Bryan unwittingly finds himself fighting for survival as one fateful, horrifying night collapses around him in chaos.",
+          "posterPath": "/gAgWJhUSQWCgtKR8170nMkYlBda.jpg",
+          "backdropPath": "/vqNSvCFknXObgqn7nOFrJVEeGht.jpg",
+          "rating": 7.5,
+          "voteCount": 2571,
+          "genreIds": [
+            27,
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1400837",
+          "type": "movie",
+          "id": 1400837,
+          "slug": "other-mommy",
+          "title": "Other Mommy",
+          "originalTitle": "Other Mommy",
+          "year": 2026,
+          "releaseDate": "2026-10-09",
+          "overview": "Young Bela forms a relationship with a sinister entity in her home that looks uncannily like her own mother, drawing her into a terrifying and increasingly dark world.",
+          "posterPath": "/fGRNCssTRrhYZxNzykGGCoMsAVq.jpg",
+          "backdropPath": "/smZ8BT4Vzw4iCEppTLCnN8jNYtn.jpg",
+          "rating": 6.5,
+          "voteCount": 633,
+          "genreIds": [
+            27
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1058424",
+          "type": "movie",
+          "id": 1058424,
+          "slug": "hope",
+          "title": "Hope",
+          "originalTitle": "호프",
+          "year": 2026,
+          "releaseDate": "2026-09-09",
+          "overview": "In the remote South Korean village of Hope Harbor, police chief Bum-seok and officer Sung-ae are called to investigate a mysterious creature wreaking havoc on the community. But all is not as it seems, and perceptions can be misleading. What begins as ignorance plants the seed of disaster,…",
+          "posterPath": "/6VY1ZKgpsc8CfGsQcCGiYEgHdH0.jpg",
+          "backdropPath": "/qqHFLg90IUSoTmSMpKOOW5RyqN3.jpg",
+          "rating": 6.9,
+          "voteCount": 788,
+          "genreIds": [
+            878,
+            9648,
+            28
+          ],
+          "originalLanguage": "ko"
+        },
+        {
+          "key": "movie:1551025",
+          "type": "movie",
+          "id": 1551025,
+          "slug": "guarding-stars",
+          "title": "Guarding Stars",
+          "originalTitle": "Guarding Stars",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "When a no-nonsense bodyguard is assigned to protect a charming action star over the holidays, sparks fly, secrets unravel, and Christmas gets a whole lot more complicated.",
+          "posterPath": "/5bsXFYXOlbzHBpl9mPaxmOPIQJ9.jpg",
+          "backdropPath": "/qHvap0vpfTBIbv7cnR0OyBRqQHG.jpg",
+          "rating": 6.8,
+          "voteCount": 137,
+          "genreIds": [
+            10749,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1507696",
+          "type": "movie",
+          "id": 1507696,
+          "slug": "apocalypse-z-new-world",
+          "title": "Apocalypse Z: New World",
+          "originalTitle": "Apocalipsis Z: Nuevo mundo",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "The Canary Islands have become Europe’s last refuge following the outbreak of the TSJ virus. When a special mission sets out for the mainland in search of vital supplies, Roberto joins the team with questionable intentions. The dangerous operation turns into a desperate race for survival, and…",
+          "posterPath": "/wXln4DUrwcyjcFPwgQxFPYTlG1Z.jpg",
+          "backdropPath": "/o3XwuDUj0n8qnK91p6q8LKfr6rj.jpg",
+          "rating": 6.1,
+          "voteCount": 268,
+          "genreIds": [
+            28,
+            53,
+            27
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:1244523",
+          "type": "movie",
+          "id": 1244523,
+          "slug": "beware-boiuna",
+          "title": "Beware Boiúna",
+          "originalTitle": "Beware Boiúna",
+          "year": 2026,
+          "releaseDate": "2026-10-02",
+          "overview": "A medical mission deep in the Amazon becomes a desperate fight for survival when a colossal ancient predator awakens, turning the jungle into a deadly battleground where nature decides who lives and dies.",
+          "posterPath": "/tENVMxKvOkslv8kagVNdIEQ13RT.jpg",
+          "backdropPath": "/9nU0FKNefmhbgi2xXlvZchZsqwm.jpg",
+          "rating": 5.9,
+          "voteCount": 75,
+          "genreIds": [
+            12,
+            27,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1616687",
+          "type": "movie",
+          "id": 1616687,
+          "slug": "never-surrender",
+          "title": "Never Surrender",
+          "originalTitle": "Serangan Balik",
+          "year": 2026,
+          "releaseDate": "2026-11-12",
+          "overview": "When a deadly gang descends on his remote home, a guilt-ridden veteran and the estranged grandchildren he barely knows must unite to survive.",
+          "posterPath": "/hKROmLddpzpjkxKKVFYFRAOXX1b.jpg",
+          "backdropPath": "/bjt53Hjqwl9VrtJkDv39GwmE1QN.jpg",
+          "rating": 6.8,
+          "voteCount": 83,
+          "genreIds": [
+            28,
+            80,
+            53
+          ],
+          "originalLanguage": "id"
+        },
+        {
+          "key": "movie:1741617",
+          "type": "movie",
+          "id": 1741617,
+          "slug": "hansel-and-gretels-halloween",
+          "title": "Hansel & Gretel's Halloween",
+          "originalTitle": "Hansel & Gretel's Halloween",
+          "year": 2026,
+          "releaseDate": "2026-08-01",
+          "overview": "On Halloween night, six teens enter a candy-coated labyrinth from the tale of Hansel and Gretel, where a deadly Witch turns temptation into traps-and resisting the sweetest lure is their only way out.",
+          "posterPath": "/taNnBPN5FrJqYxsiJIqAL0KhqZ.jpg",
+          "backdropPath": null,
+          "rating": null,
+          "voteCount": 9,
+          "genreIds": [
+            27,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1813355",
+          "type": "movie",
+          "id": 1813355,
+          "slug": "a-story-of-derry",
+          "title": "A Story of Derry",
+          "originalTitle": "A Story of Derry",
+          "year": 2026,
+          "releaseDate": "2026-10-31",
+          "overview": "Hundreds of years before Pennywise, three youngsters venture into the Western Wood...where they encounter a terrifying ancient spirit.",
+          "posterPath": "/4PtzGcegF5Po1NmDAW9IklyvAUh.jpg",
+          "backdropPath": "/z26LxXDMmAIzKr06FPDudCJyvsM.jpg",
+          "rating": 6.6,
+          "voteCount": 151,
+          "genreIds": [
+            18,
+            27,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1595124",
+          "type": "movie",
+          "id": 1595124,
+          "slug": "steps",
+          "title": "Steps",
+          "originalTitle": "Steps",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "After being blamed for disrupting the Royal Ball with a stolen magic wand, a misunderstood stepsister accidentally turns her sister into a frog and must team up with Cinderella and an unlikely ally to save the kingdom and rewrite their fairytale ending.",
+          "posterPath": "/jtfCcWZ3ZyKdgi0u7JVOxEOSSJP.jpg",
+          "backdropPath": "/g1bEboMx1a8JCg1jXeDCh24RtgW.jpg",
+          "rating": 7.1,
+          "voteCount": 101,
+          "genreIds": [
+            16,
+            10751,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1496696",
+          "type": "movie",
+          "id": 1496696,
+          "slug": "breeder",
+          "title": "Breeder",
+          "originalTitle": "Breeder",
+          "year": 2026,
+          "releaseDate": "2026-10-28",
+          "overview": "An eccentric poodle breeder lures a broke college student to her remote ranch with a promise of research funding. But, as he soon learns, there’s a catch.",
+          "posterPath": "/alsb3UC17kxIcytLWvwkmL0STgU.jpg",
+          "backdropPath": "/l5gJE9xW1FFtub3gUezh1PjBbY5.jpg",
+          "rating": 7.4,
+          "voteCount": 28,
+          "genreIds": [
+            27,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:656908",
+          "type": "movie",
+          "id": 656908,
+          "slug": "ramayana-rise-of-a-legend",
+          "title": "Ramayana: Rise of a Legend",
+          "originalTitle": "रामायणम्",
+          "year": 2026,
+          "releaseDate": "2026-11-05",
+          "overview": "An ancient epic follows a young prince and princess whose marriage and subsequent exile mark the beginning of a legendary journey. Their story of love, duty and destiny sets the stage for greater challenges ahead.",
+          "posterPath": "/vBQ7wks68OhJKlb3RnXSl2yXBXK.jpg",
+          "backdropPath": "/prbMZ3DPf8taS6JYQd6igPnm2mA.jpg",
+          "rating": 7.5,
+          "voteCount": 75,
+          "genreIds": [
+            14,
+            28,
+            12
+          ],
+          "originalLanguage": "hi"
+        },
+        {
+          "key": "movie:1294189",
+          "type": "movie",
+          "id": 1294189,
+          "slug": "the-mongoose",
+          "title": "The Mongoose",
+          "originalTitle": "The Mongoose",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "A falsely accused war hero with nothing to lose leads police on an epic televised cross-country car chase, helped by members of his former Special Forces Army battalion and closely monitored by a fascinated public rooting for his safe getaway.",
+          "posterPath": "/eSS5mvSG84UUuvtbHel5Yu3Wik4.jpg",
+          "backdropPath": "/uAe2LEuZ2xg312FY7D8Ei4bl0aG.jpg",
+          "rating": 6.6,
+          "voteCount": 271,
+          "genreIds": [
+            28,
+            53
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "id": "in-theaters",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "movie:1300968",
+          "type": "movie",
+          "id": 1300968,
+          "slug": "the-hunger-games-sunrise-on-the-reaping",
+          "title": "The Hunger Games: Sunrise on the Reaping",
+          "originalTitle": "The Hunger Games: Sunrise on the Reaping",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "Return to the world of Panem 24 years before Katniss Everdeen volunteers in her sister's place, commencing on the morning of the reaping of the 50th Hunger Games, also known as the Second Quarter Quell.",
+          "posterPath": "/5ffVOGY3x3Sn3jovzvycJeizpks.jpg",
+          "backdropPath": "/aqFZcr2dxSZ2UwWSo1WC6C0rwDf.jpg",
+          "rating": 7.8,
+          "voteCount": 367,
+          "genreIds": [
+            878,
+            28,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1595124",
+          "type": "movie",
+          "id": 1595124,
+          "slug": "steps",
+          "title": "Steps",
+          "originalTitle": "Steps",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "After being blamed for disrupting the Royal Ball with a stolen magic wand, a misunderstood stepsister accidentally turns her sister into a frog and must team up with Cinderella and an unlikely ally to save the kingdom and rewrite their fairytale ending.",
+          "posterPath": "/jtfCcWZ3ZyKdgi0u7JVOxEOSSJP.jpg",
+          "backdropPath": "/g1bEboMx1a8JCg1jXeDCh24RtgW.jpg",
+          "rating": 7.1,
+          "voteCount": 101,
+          "genreIds": [
+            16,
+            10751,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1496696",
+          "type": "movie",
+          "id": 1496696,
+          "slug": "breeder",
+          "title": "Breeder",
+          "originalTitle": "Breeder",
+          "year": 2026,
+          "releaseDate": "2026-10-28",
+          "overview": "An eccentric poodle breeder lures a broke college student to her remote ranch with a promise of research funding. But, as he soon learns, there’s a catch.",
+          "posterPath": "/alsb3UC17kxIcytLWvwkmL0STgU.jpg",
+          "backdropPath": "/l5gJE9xW1FFtub3gUezh1PjBbY5.jpg",
+          "rating": 7.4,
+          "voteCount": 28,
+          "genreIds": [
+            27,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:656908",
+          "type": "movie",
+          "id": 656908,
+          "slug": "ramayana-rise-of-a-legend",
+          "title": "Ramayana: Rise of a Legend",
+          "originalTitle": "रामायणम्",
+          "year": 2026,
+          "releaseDate": "2026-11-05",
+          "overview": "An ancient epic follows a young prince and princess whose marriage and subsequent exile mark the beginning of a legendary journey. Their story of love, duty and destiny sets the stage for greater challenges ahead.",
+          "posterPath": "/vBQ7wks68OhJKlb3RnXSl2yXBXK.jpg",
+          "backdropPath": "/prbMZ3DPf8taS6JYQd6igPnm2mA.jpg",
+          "rating": 7.5,
+          "voteCount": 75,
+          "genreIds": [
+            14,
+            28,
+            12
+          ],
+          "originalLanguage": "hi"
+        },
+        {
+          "key": "movie:1294189",
+          "type": "movie",
+          "id": 1294189,
+          "slug": "the-mongoose",
+          "title": "The Mongoose",
+          "originalTitle": "The Mongoose",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "A falsely accused war hero with nothing to lose leads police on an epic televised cross-country car chase, helped by members of his former Special Forces Army battalion and closely monitored by a fascinated public rooting for his safe getaway.",
+          "posterPath": "/eSS5mvSG84UUuvtbHel5Yu3Wik4.jpg",
+          "backdropPath": "/uAe2LEuZ2xg312FY7D8Ei4bl0aG.jpg",
+          "rating": 6.6,
+          "voteCount": 271,
+          "genreIds": [
+            28,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1562642",
+          "type": "movie",
+          "id": 1562642,
+          "slug": "ghost-soldier",
+          "title": "Ghost Soldier",
+          "originalTitle": "Ghost Soldier",
+          "year": 2026,
+          "releaseDate": "2026-11-11",
+          "overview": "Henry “Fitz” Fitzgerald has spent years living quietly off the grid, hiding from a past few people know anything about. But when a powerful foreign corporation moves into his hometown to seize his neighbors’ land for a massive payday, Fitz is forced to reveal who he really is: a former Special…",
+          "posterPath": "/8Y4oJ5iUs3hgPcDB3SIEmsNYjZk.jpg",
+          "backdropPath": "/ggqvhSdAASrseKuMlzk51sbvbE8.jpg",
+          "rating": 9,
+          "voteCount": 35,
+          "genreIds": [
+            28,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1381071",
+          "type": "movie",
+          "id": 1381071,
+          "slug": "godzilla-minus-zero",
+          "title": "Godzilla Minus Zero",
+          "originalTitle": "ゴジラ-0.0",
+          "year": 2026,
+          "releaseDate": "2026-11-03",
+          "overview": "War reduced Japan to zero, and Godzilla plunged it into minus. Two years have passed since then, and the country has faced agonizing struggles to achieve recovery and finally reclaim its daily life. Just as humanity managed to cling to a hard-won peace, a new threat strikes, crushing hope in an…",
+          "posterPath": "/hSmIJluOJmTWvJs4d7kHRxjc8s8.jpg",
+          "backdropPath": "/oqrYIDH4tvfEzPe1yqT4jzmAWHQ.jpg",
+          "rating": 7.7,
+          "voteCount": 309,
+          "genreIds": [
+            878,
+            27,
+            28
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "movie:1567605",
+          "type": "movie",
+          "id": 1567605,
+          "slug": "ebenezer",
+          "title": "Ebenezer",
+          "originalTitle": "Ebenezer",
+          "year": 2026,
+          "releaseDate": "2026-11-13",
+          "overview": "An elderly miser embarks on a supernatural journey after visits from the ghost of his former business partner and the Spirits of Christmas Past, Present, and Yet to Come force him to confront his past and fight for a second chance at happiness.",
+          "posterPath": "/6H2N59jJW1hZEzn2ZdrMvJw5vNI.jpg",
+          "backdropPath": "/274ahmbkJSzdmcWrWSTu9DFv5rp.jpg",
+          "rating": 7.5,
+          "voteCount": 199,
+          "genreIds": [
+            14,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1195803",
+          "type": "movie",
+          "id": 1195803,
+          "slug": "wicker",
+          "title": "Wicker",
+          "originalTitle": "Wicker",
+          "year": 2026,
+          "releaseDate": "2026-10-23",
+          "overview": "On the outskirts of a village by the sea, lives a Fisherwoman; smelly, single and perpetually ridiculed. One day, fed up with her stuffy, small-minded neighbours, she commissions herself a husband to be made from wicker. In an otherwise conservative town, this unconventional romance sparks…",
+          "posterPath": "/6FcBZOKvyrLCKGCyBG0ySCR4okt.jpg",
+          "backdropPath": "/r4DTGm1f1r23cyjRJ5kFMh7qYlj.jpg",
+          "rating": 7.5,
+          "voteCount": 72,
+          "genreIds": [
+            10749,
+            14,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1422041",
+          "type": "movie",
+          "id": 1422041,
+          "slug": "la-bola-negra",
+          "title": "LA BOLA NEGRA",
+          "originalTitle": "La bola negra",
+          "year": 2026,
+          "releaseDate": "2026-10-16",
+          "overview": "The intertwined lives of three men in three different eras, three lives intimately linked by sexuality and desire, pain, and legacy.",
+          "posterPath": "/7HwFQTMghL6HOvzEnXYUvyuZXeh.jpg",
+          "backdropPath": "/bDsmYvrzto7xrEwqDpLC3SPhn9A.jpg",
+          "rating": 7.9,
+          "voteCount": 264,
+          "genreIds": [
+            18,
+            10752
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:1131943",
+          "type": "movie",
+          "id": 1131943,
+          "slug": "madden",
+          "title": "Madden",
+          "originalTitle": "Madden",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "Chronicles John Madden's incredible journey alongside best friend and true original Al Davis—from a Super Bowl-winning partnership with the Raiders, to becoming football's most recognizable voice, to building the worldwide Madden NFL video game.",
+          "posterPath": "/bRa83oPFFPqaAF3wrpVWPqqfFel.jpg",
+          "backdropPath": "/lRsapglJZIyMfGl8oQyNASlZqDC.jpg",
+          "rating": 6.5,
+          "voteCount": 69,
+          "genreIds": [
+            18,
+            36,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1458300",
+          "type": "movie",
+          "id": 1458300,
+          "slug": "the-mosquito-bowl",
+          "title": "The Mosquito Bowl",
+          "originalTitle": "The Mosquito Bowl",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "In the aftermath of Pearl Harbor, four college football stars enlist in the US Marines, discovering the strength of brotherhood and the cost of war.",
+          "posterPath": "/uxYs0bNTF4XzM8LThJk2x3AJ0Iv.jpg",
+          "backdropPath": "/k2djfMwL3LhpvZMfPN7IFX4DG5N.jpg",
+          "rating": 7.2,
+          "voteCount": 20,
+          "genreIds": [
+            10752,
+            36,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1538497",
+          "type": "movie",
+          "id": 1538497,
+          "slug": "hexed",
+          "title": "Hexed",
+          "originalTitle": "Hexed",
+          "year": 2026,
+          "releaseDate": "2026-11-25",
+          "overview": "An impulsive and unconventional teenage girl named Billie discovers secret magical abilities which, once unleashed, hurtle her into a spectacle-filled journey out of suburbia and into a vast witch realm called Hexe. Forced to team up with her cautious mother, Alice, they uncover family mysteries…",
+          "posterPath": "/yykeYKbDBM9eUMJUucaaDo2mi1p.jpg",
+          "backdropPath": "/wdjW11Tp4w9EfDBxbjyBJvDVHDA.jpg",
+          "rating": 5.7,
+          "voteCount": 19,
+          "genreIds": [
+            12,
+            16,
+            10751,
+            14,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:693134",
+          "type": "movie",
+          "id": 693134,
+          "slug": "dune-part-two",
+          "title": "Dune: Part Two",
+          "originalTitle": "Dune: Part Two",
+          "year": 2024,
+          "releaseDate": "2024-03-01",
+          "overview": "Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the known universe, Paul endeavors to prevent a terrible future only he can…",
+          "posterPath": "/6izwz7rsy95ARzTR3poZ8H6c5pp.jpg",
+          "backdropPath": "/eZ239CUp1d6OryZEBPnO2n87gMG.jpg",
+          "rating": 8.1,
+          "voteCount": 9053,
+          "genreIds": [
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1400336",
+          "type": "movie",
+          "id": 1400336,
+          "slug": "focker-in-law",
+          "title": "Focker In-Law",
+          "originalTitle": "Focker In-Law",
+          "year": 2026,
+          "releaseDate": "2026-11-25",
+          "overview": "Henry, son of Greg and Pam Focker, aims to marry Olivia, a strong-willed former hostage negotiator who appears to be his complete mismatch. To Greg's shock, father-in-law Jack Byrnes takes a liking to Olivia, and her unprecedented rise into his Circle of Trust sparks chaos in the family before…",
+          "posterPath": "/iHJhSfqFpDMOyeMc6h6BOeHxse2.jpg",
+          "backdropPath": "/6IfsmHoVWwgJwzxA9DLim2XZbSn.jpg",
+          "rating": 6.8,
+          "voteCount": 13,
+          "genreIds": [
+            35,
+            10749
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1286656",
+          "type": "movie",
+          "id": 1286656,
+          "slug": "i-play-rocky",
+          "title": "I Play Rocky",
+          "originalTitle": "I Play Rocky",
+          "year": 2026,
+          "releaseDate": "2026-11-06",
+          "overview": "The electrifying true story about an unknown actor with an unshakable belief that he wasn't just meant to write Rocky—he was meant to be Rocky Balboa. Told \"no\" at every turn, Sylvester Stallone bets everything on himself, holding the line on playing the lead against seemingly impossible odds.",
+          "posterPath": "/8q8AF8xvV1drhACtEL2Iti5gJ8P.jpg",
+          "backdropPath": "/1lnnjBCRLZzKRhQipK5zm61YkPe.jpg",
+          "rating": 8.3,
+          "voteCount": 79,
+          "genreIds": [
+            18,
+            36
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:791523",
+          "type": "movie",
+          "id": 791523,
+          "slug": "wildwood",
+          "title": "Wildwood",
+          "originalTitle": "Wildwood",
+          "year": 2026,
+          "releaseDate": "2026-10-23",
+          "overview": "Prue and her classmate Curtis are drawn into a magical forest filled with enchanted creatures, loyal allies, and formidable adversaries as they embark on a desperate quest to rescue Prue's abducted baby brother from a murder of crows led by a mysterious woman named Alexandra.",
+          "posterPath": "/snFM00mpNAfUzUtkdEW0uDEvXA0.jpg",
+          "backdropPath": "/sl5NJ1vtyhP9Vr88bB4blULsJYp.jpg",
+          "rating": 8.5,
+          "voteCount": 329,
+          "genreIds": [
+            16,
+            12,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:438631",
+          "type": "movie",
+          "id": 438631,
+          "slug": "dune",
+          "title": "Dune",
+          "originalTitle": "Dune",
+          "year": 2021,
+          "releaseDate": "2021-10-22",
+          "overview": "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people. As malevolent forces explode into conflict over the planet's exclusive supply of the most…",
+          "posterPath": "/v1tRXZ4JtD2Iv6fjkPvT4GiwslV.jpg",
+          "backdropPath": "/xS0g3s4blsiPmtpjjb7chFjI1ip.jpg",
+          "rating": 7.8,
+          "voteCount": 16043,
+          "genreIds": [
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1437511",
+          "type": "movie",
+          "id": 1437511,
+          "slug": "how-to-rob-a-bank",
+          "title": "How to Rob a Bank",
+          "originalTitle": "How to Rob a Bank",
+          "year": 2026,
+          "releaseDate": "2026-11-13",
+          "overview": "A crew of social media-savvy bank robbers broadcasts their daring heists, unaware that their growing viral fame has put them in the crosshairs of a veteran FBI agent and a brilliant software engineer. Despite the unlikely duo closing in, the crime ring pushes past their limits, putting everything…",
+          "posterPath": "/ifYDZkr2qkHFz87TNVvlxajOxl5.jpg",
+          "backdropPath": "/u38hNQbxvIicUdfrHpqa9puBnA9.jpg",
+          "rating": 6.5,
+          "voteCount": 66,
+          "genreIds": [
+            28,
+            80,
+            53
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1400940",
+          "type": "movie",
+          "id": 1400940,
+          "slug": "clayface",
+          "title": "Clayface",
+          "originalTitle": "Clayface",
+          "year": 2026,
+          "releaseDate": "2026-10-23",
+          "overview": "Matt Hagen's meteoric rise from Gotham street kid to Hollywood leading man is tragically cut short when a local crime boss's actions leave him horribly disfigured. Abandoned by his team and with nothing left, Matt seeks out a cutting edge treatment that miraculously returns him to his former self……",
+          "posterPath": "/9l1NuFjel2j89hiuiJbsxfblqjy.jpg",
+          "backdropPath": "/f1TVhqJJdxMvUsUDuKHS0ekgYkk.jpg",
+          "rating": 7.4,
+          "voteCount": 476,
+          "genreIds": [
+            27,
+            53,
+            878
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "id": "streaming-now",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "movie:1280115",
+          "type": "movie",
+          "id": 1280115,
+          "slug": "way-of-the-warrior-kid",
+          "title": "Way of the Warrior Kid",
+          "originalTitle": "Way of the Warrior Kid",
+          "year": 2026,
+          "releaseDate": "2026-11-24",
+          "overview": "Jake is an injured Navy SEAL who becomes a mentor for his shy, struggling nephew Marc. Using the principles of his military training, Jake teaches Marc how to be a Warrior Kid as he enters high school.",
+          "posterPath": "/atI81xXKNVah7PJFBo3aXqQKtnG.jpg",
+          "backdropPath": "/1JL6mDxYRauwv81bLupSZczC39M.jpg",
+          "rating": 7.3,
+          "voteCount": 25,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1611767",
+          "type": "movie",
+          "id": 1611767,
+          "slug": "clashing-through-the-snow",
+          "title": "Clashing Through the Snow",
+          "originalTitle": "Clashing Through the Snow",
+          "year": 2026,
+          "releaseDate": "2026-11-23",
+          "overview": "Rival publishing editors Ryan Mitchell and Hannah Hendricks are stranded by a holiday snowstorm and forced to share a rental car to New York, where a career-saving deal awaits them both. As roadside mishaps and small-town detours pile up, the holiday spirit begins to melt their fierce rivalry into…",
+          "posterPath": "/95K1Y96ELBDL3M8kyTVb5wocCtX.jpg",
+          "backdropPath": "/x6kwEsxxqLIoqpIrZOXRV0LORqm.jpg",
+          "rating": 6.1,
+          "voteCount": 65,
+          "genreIds": [
+            10749,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1595124",
+          "type": "movie",
+          "id": 1595124,
+          "slug": "steps",
+          "title": "Steps",
+          "originalTitle": "Steps",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "After being blamed for disrupting the Royal Ball with a stolen magic wand, a misunderstood stepsister accidentally turns her sister into a frog and must team up with Cinderella and an unlikely ally to save the kingdom and rewrite their fairytale ending.",
+          "posterPath": "/jtfCcWZ3ZyKdgi0u7JVOxEOSSJP.jpg",
+          "backdropPath": "/g1bEboMx1a8JCg1jXeDCh24RtgW.jpg",
+          "rating": 7.1,
+          "voteCount": 105,
+          "genreIds": [
+            16,
+            10751,
+            35,
+            12,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1568060",
+          "type": "movie",
+          "id": 1568060,
+          "slug": "perfect-liars",
+          "title": "Perfect Liars",
+          "originalTitle": "Perfectos mentirosos",
+          "year": 2026,
+          "releaseDate": "2026-11-20",
+          "overview": "Jude Derry arrives at the exclusive Tagus university with a hidden mission: to infiltrate the circle of the Cash brothers and uncover the truth about her brother's death. What begins as revenge turns into a dangerous triangle of seduction, forbidden attraction and lies, drawing her toward a truth…",
+          "posterPath": "/kej8EipJOvfHUHFg5wtT7gQ6bNb.jpg",
+          "backdropPath": "/qKFLZz7rnZAJuyZ9HVEhwIINftz.jpg",
+          "rating": 7.2,
+          "voteCount": 44,
+          "genreIds": [
+            18,
+            10749,
+            53
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:1551025",
+          "type": "movie",
+          "id": 1551025,
+          "slug": "guarding-stars",
+          "title": "Guarding Stars",
+          "originalTitle": "Guarding Stars",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "When a no-nonsense bodyguard is assigned to protect a charming action star over the holidays, sparks fly, secrets unravel, and Christmas gets a whole lot more complicated.",
+          "posterPath": "/5bsXFYXOlbzHBpl9mPaxmOPIQJ9.jpg",
+          "backdropPath": "/qHvap0vpfTBIbv7cnR0OyBRqQHG.jpg",
+          "rating": 6.8,
+          "voteCount": 137,
+          "genreIds": [
+            10749,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1131943",
+          "type": "movie",
+          "id": 1131943,
+          "slug": "madden",
+          "title": "Madden",
+          "originalTitle": "Madden",
+          "year": 2026,
+          "releaseDate": "2026-11-18",
+          "overview": "Chronicles John Madden's incredible journey alongside best friend and true original Al Davis—from a Super Bowl-winning partnership with the Raiders, to becoming football's most recognizable voice, to building the worldwide Madden NFL video game.",
+          "posterPath": "/bRa83oPFFPqaAF3wrpVWPqqfFel.jpg",
+          "backdropPath": "/lRsapglJZIyMfGl8oQyNASlZqDC.jpg",
+          "rating": 6.5,
+          "voteCount": 69,
+          "genreIds": [
+            18,
+            36,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1543469",
+          "type": "movie",
+          "id": 1543469,
+          "slug": "heartland",
+          "title": "Heartland",
+          "originalTitle": "Heartland",
+          "year": 2026,
+          "releaseDate": "2026-11-13",
+          "overview": "Former country music legend Misty Jones returns to Nashville to unravel the truth behind her rising-star niece's disappearance.",
+          "posterPath": "/azArOQaVxKa3367XJv2l4ewjsdB.jpg",
+          "backdropPath": "/psTMZj8gvsfYVfvd7FZCHH4xL6P.jpg",
+          "rating": 6.2,
+          "voteCount": 131,
+          "genreIds": [
+            53,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1780407",
+          "type": "movie",
+          "id": 1780407,
+          "slug": "snoopy-presents-12-days-of-snoopy",
+          "title": "Snoopy Presents: 12 Days of Snoopy",
+          "originalTitle": "Snoopy Presents: 12 Days of Snoopy",
+          "year": 2026,
+          "releaseDate": "2026-11-12",
+          "overview": "Eager to get off Santa's naughty list, Snoopy goes all out to be the nicest beagle in town.",
+          "posterPath": "/9wZAvvAZgwp2Lxbhjkp9N6HHJBm.jpg",
+          "backdropPath": "/3gIGgmK27lt3YK9EUnZ6iXMHg7Q.jpg",
+          "rating": 7.9,
+          "voteCount": 33,
+          "genreIds": [
+            16,
+            10751
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1757174",
+          "type": "movie",
+          "id": 1757174,
+          "slug": "the-christmas-switch",
+          "title": "The Christmas Switch",
+          "originalTitle": "Bara till jul",
+          "year": 2026,
+          "releaseDate": "2026-11-12",
+          "overview": "Craving a change of pace, work-hard-play-hard city girl Freddie swaps lives with her homebody sister Mattie at Christmas time, only to unwrap a whole new kind of mess.",
+          "posterPath": "/9kHrUoPF2rl5Hj0QMquAy3xznXT.jpg",
+          "backdropPath": "/tNoB9ptCmp8bzdanndxswxrOfG6.jpg",
+          "rating": 6.5,
+          "voteCount": 80,
+          "genreIds": [
+            10749,
+            35
+          ],
+          "originalLanguage": "sv"
+        },
+        {
+          "key": "movie:1518204",
+          "type": "movie",
+          "id": 1518204,
+          "slug": "allen",
+          "title": "Allen",
+          "originalTitle": "Allen",
+          "year": 2026,
+          "releaseDate": "2026-11-12",
+          "overview": "20 years after his encounter with an alien, Petey never moved on. Now his old friend has returned, and the reason why is complicated — and unexpected.",
+          "posterPath": "/alhhrpj1PSAn5bfz4Os1k7Bweoj.jpg",
+          "backdropPath": "/51fGmBW7WjyJouP9TjIcxRpCUNk.jpg",
+          "rating": 6.5,
+          "voteCount": 72,
+          "genreIds": [
+            878,
+            12,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1616687",
+          "type": "movie",
+          "id": 1616687,
+          "slug": "never-surrender",
+          "title": "Never Surrender",
+          "originalTitle": "Serangan Balik",
+          "year": 2026,
+          "releaseDate": "2026-11-11",
+          "overview": "When a deadly gang descends on his remote home, a guilt-ridden veteran and the estranged grandchildren he barely knows must unite to survive.",
+          "posterPath": "/hKROmLddpzpjkxKKVFYFRAOXX1b.jpg",
+          "backdropPath": "/bjt53Hjqwl9VrtJkDv39GwmE1QN.jpg",
+          "rating": 6.8,
+          "voteCount": 83,
+          "genreIds": [
+            28,
+            80,
+            53
+          ],
+          "originalLanguage": "id"
+        },
+        {
+          "key": "movie:1559980",
+          "type": "movie",
+          "id": 1559980,
+          "slug": "the-gospel-of-christmas",
+          "title": "The Gospel of Christmas",
+          "originalTitle": "The Gospel of Christmas",
+          "year": 2026,
+          "releaseDate": "2026-11-11",
+          "overview": "A struggling pastor moves his family to a troubled New York neighborhood, where they must save a neglected church from foreclosure before Christmas.",
+          "posterPath": "/ihbN6lNDXKe6w9xE6IBFMVF2Rkr.jpg",
+          "backdropPath": "/p1Ag7etCR5yUvElhwZmWsMo5IFu.jpg",
+          "rating": 6.9,
+          "voteCount": 28,
+          "genreIds": [
+            10402,
+            10751,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1798383",
+          "type": "movie",
+          "id": 1798383,
+          "slug": "wolves-up-close-with-bertie-gregory",
+          "title": "Wolves Up Close with Bertie Gregory",
+          "originalTitle": "Wolves Up Close with Bertie Gregory",
+          "year": 2026,
+          "releaseDate": "2026-11-06",
+          "overview": "Reconnecting with a pack of wolves he has followed for seven years, Bertie sets out to capture one of the Arctic's most dangerous and rarely filmed hunts: wolves taking on a bull moose, prey roughly ten times their size. Led by Kona, a striking white breeding male, the pack faces a critical winter…",
+          "posterPath": "/fopmDU345HPkMC9iUaNQEY0uRkk.jpg",
+          "backdropPath": "/8uRYkZe2pbQ3m0l7pwb52I2dJyB.jpg",
+          "rating": 7.3,
+          "voteCount": 67,
+          "genreIds": [
+            99
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1794569",
+          "type": "movie",
+          "id": 1794569,
+          "slug": "unprotected-murder-in-galicia",
+          "title": "Unprotected: Murder in Galicia",
+          "originalTitle": "Desprotexida: el crimen de Pazos",
+          "year": 2026,
+          "releaseDate": "2026-11-06",
+          "overview": "Documentary film that tells the story of Isabel Fuentes. In April 2015, alleged burglars left her on the brink of death in her own home, in the village of Pazos, in Verín. From the very beginning, the Guardia Civil sergeant in charge of the case suspected that the account of what had happened did…",
+          "posterPath": "/ljDe9CMzO7PpM86WOqIZzDfokgE.jpg",
+          "backdropPath": "/5DEE6tP6FOkgfjvoQYvjNjvt3cn.jpg",
+          "rating": 6.5,
+          "voteCount": 21,
+          "genreIds": [
+            99,
+            80
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:1050981",
+          "type": "movie",
+          "id": 1050981,
+          "slug": "being-heumann",
+          "title": "Being Heumann",
+          "originalTitle": "Being Heumann",
+          "year": 2026,
+          "releaseDate": "2026-11-06",
+          "overview": "Scrappy, defiant, and done being treated like a burden, Judy Heumann turns her outrage into a revolution. In 1977, she and more than 100 disability rights protestors send a very loud message: The system is broken—not us.",
+          "posterPath": "/ouGH1PS0xjDyfTQOhppn7QzJqQZ.jpg",
+          "backdropPath": "/25aB8RXP4mfQLFRSuEEhk0d0sTC.jpg",
+          "rating": 6.8,
+          "voteCount": 43,
+          "genreIds": [
+            18,
+            36
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1654940",
+          "type": "movie",
+          "id": 1654940,
+          "slug": "one-year-to-live-buy-a-man",
+          "title": "One Year to Live, Buy a Man",
+          "originalTitle": "余命一年、男をかう",
+          "year": 2026,
+          "releaseDate": "2026-11-05",
+          "overview": "Given a year to live, frugal 40-year-old Yui finally lets herself spend: \"buying\" nightclub host Sena. What begins as a contract takes an unexpected turn.",
+          "posterPath": "/fez7kLyGzpowduJapTFZZ1feCS0.jpg",
+          "backdropPath": "/6vGH7JZFLzFawpwCcnNweF8j3KD.jpg",
+          "rating": 7.1,
+          "voteCount": 32,
+          "genreIds": [
+            10749,
+            18,
+            35
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "movie:1570488",
+          "type": "movie",
+          "id": 1570488,
+          "slug": "a-dogs-perfect-christmas",
+          "title": "A Dog's Perfect Christmas",
+          "originalTitle": "A Dog's Perfect Christmas",
+          "year": 2026,
+          "releaseDate": "2026-11-04",
+          "overview": "When a medical emergency pulls the Goss family apart, determined dog Winstead will do all he can to bring his humans back together before Christmas Eve.",
+          "posterPath": "/zvsNAohDHRWcGvbPSD7r3WojpKb.jpg",
+          "backdropPath": "/hhQT0TySg3LXCE8BEPpfPJ5zJA2.jpg",
+          "rating": 7.1,
+          "voteCount": 87,
+          "genreIds": [
+            35,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1813355",
+          "type": "movie",
+          "id": 1813355,
+          "slug": "a-story-of-derry",
+          "title": "A Story of Derry",
+          "originalTitle": "A Story of Derry",
+          "year": 2026,
+          "releaseDate": "2026-10-31",
+          "overview": "Hundreds of years before Pennywise, three youngsters venture into the Western Wood...where they encounter a terrifying ancient spirit.",
+          "posterPath": "/4PtzGcegF5Po1NmDAW9IklyvAUh.jpg",
+          "backdropPath": "/z26LxXDMmAIzKr06FPDudCJyvsM.jpg",
+          "rating": 6.6,
+          "voteCount": 151,
+          "genreIds": [
+            18,
+            27,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1789549",
+          "type": "movie",
+          "id": 1789549,
+          "slug": "the-birthday-gift",
+          "title": "The Birthday Gift",
+          "originalTitle": "Das Geschenk",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "Single mother Marlene Frischmann organizes a birthday party for her son Theo at her brother's chic country villa, which quickly spirals into family drama, world-view quarrels, and chaos.",
+          "posterPath": "/jqGFILLsEDwsLteNDQextojsYFV.jpg",
+          "backdropPath": "/eBtITrrdFo1EG7t6TSG5U5c4P2e.jpg",
+          "rating": 6,
+          "voteCount": 44,
+          "genreIds": [
+            35
+          ],
+          "originalLanguage": "de"
+        },
+        {
+          "key": "movie:1571955",
+          "type": "movie",
+          "id": 1571955,
+          "slug": "collision-course",
+          "title": "Collision Course",
+          "originalTitle": "Colisión",
+          "year": 2026,
+          "releaseDate": "2026-10-30",
+          "overview": "Spain, 2013. After robbing a bank, a getaway crash reveals the hidden side of each thief, exposing betrayals and lies that began long before the heist.",
+          "posterPath": "/s2eAK0uiODjlNUSIiOBwdp3at2u.jpg",
+          "backdropPath": "/uI3kWI7kGW5E0F8WduewgQYPt34.jpg",
+          "rating": 6.2,
+          "voteCount": 133,
+          "genreIds": [
+            53,
+            18,
+            80
+          ],
+          "originalLanguage": "es"
+        }
+      ]
+    },
+    {
+      "id": "popular-tv",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "tv:42009",
+          "type": "tv",
+          "id": 42009,
+          "slug": "black-mirror",
+          "title": "Black Mirror",
+          "originalTitle": "Black Mirror",
+          "year": 2011,
+          "releaseDate": "2011-12-04",
+          "overview": "Twisted tales run wild in this mind-bending anthology series that reveals humanity's worst traits, greatest innovations and more.",
+          "posterPath": "/seN6rRfN0I6n8iDXjlSMk1QjNcq.jpg",
+          "backdropPath": "/dg3OindVAGZBjlT3xYKqIAdukPL.jpg",
+          "rating": 8.3,
+          "voteCount": 6739,
+          "genreIds": [
+            10765,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:32573",
+          "type": "tv",
+          "id": 32573,
+          "slug": "strike-back",
+          "title": "Strike Back",
+          "originalTitle": "Strike Back",
+          "year": 2010,
+          "releaseDate": "2010-05-05",
+          "overview": "The series follows John Porter, a former British Special Forces soldier, who is drafted back into service by Section 20, a fictional branch of the Secret Intelligence Service.",
+          "posterPath": "/c0ItaC2Grf4WVJ06G87BjNn9pRs.jpg",
+          "backdropPath": "/2tL3pNaPQb2ioEYswMkDGVTo1pt.jpg",
+          "rating": 7.4,
+          "voteCount": 422,
+          "genreIds": [
+            18,
+            10759
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:4620",
+          "type": "tv",
+          "id": 4620,
+          "slug": "eureka",
+          "title": "Eureka",
+          "originalTitle": "Eureka",
+          "year": 2006,
+          "releaseDate": "2006-07-18",
+          "overview": "The sleepy Pacific Northwest town of Eureka is hiding a mysterious secret. The government has been relocating the world's geniuses and their families to this rustic town for years where innovation and chaos have lived hand in hand. U.S. Marshal Jack Carter stumbles upon this odd town after…",
+          "posterPath": "/f2l5hUk63hPqYTucnFy2HmElFV0.jpg",
+          "backdropPath": "/8MQeyFsWrp2ILjbumtxrinmk7t4.jpg",
+          "rating": 7.7,
+          "voteCount": 761,
+          "genreIds": [
+            10765,
+            35,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:46923",
+          "type": "tv",
+          "id": 46923,
+          "slug": "shetland",
+          "title": "Shetland",
+          "originalTitle": "Shetland",
+          "year": 2013,
+          "releaseDate": "2013-03-10",
+          "overview": "Created from the novels by award winning crime writer Ann Cleeves, Shetland follows DI Jimmy Perez and his team as they investigate crime within the close knit island community. In this isolated and sometimes inhospitable environment, the team have to rely on a uniquely resourceful style of…",
+          "posterPath": "/rKnxmir8m5I3RdSTdZr3jaQaCZi.jpg",
+          "backdropPath": "/AdlDrgoNCDu3naYjZMwmiklBHnV.jpg",
+          "rating": 7.5,
+          "voteCount": 219,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1420",
+          "type": "tv",
+          "id": 1420,
+          "slug": "new-girl",
+          "title": "New Girl",
+          "originalTitle": "New Girl",
+          "year": 2011,
+          "releaseDate": "2011-09-20",
+          "overview": "Jessica Day is an offbeat and adorable girl in her late 20s who, after a bad breakup, moves in with three single guys. Goofy, positive, vulnerable and honest to a fault, Jess has faith in people, even when she shouldn't. Although she's dorky and awkward, she's comfortable in her own skin. More…",
+          "posterPath": "/8oCqMlKKomCArVtyOjRzMN6g40Z.jpg",
+          "backdropPath": "/959IFVeGqz2M6qGvQ1RxN2r6Mq6.jpg",
+          "rating": 7.4,
+          "voteCount": 1786,
+          "genreIds": [
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:76331",
+          "type": "tv",
+          "id": 76331,
+          "slug": "succession",
+          "title": "Succession",
+          "originalTitle": "Succession",
+          "year": 2018,
+          "releaseDate": "2018-06-03",
+          "overview": "Follow the lives of the Roy family as they contemplate their future once their aging father begins to step back from the media and entertainment conglomerate they control.",
+          "posterPath": "/z0XiwdrCQ9yVIr4O0pxzaAYRxdW.jpg",
+          "backdropPath": "/d87JXX3DLkRJMfm5StCmmnmhHuX.jpg",
+          "rating": 8.3,
+          "voteCount": 1872,
+          "genreIds": [
+            18,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1438",
+          "type": "tv",
+          "id": 1438,
+          "slug": "the-wire",
+          "title": "The Wire",
+          "originalTitle": "The Wire",
+          "year": 2002,
+          "releaseDate": "2002-06-02",
+          "overview": "Told from the points of view of both the Baltimore homicide and narcotics detectives and their targets, the series captures a universe in which the national war on drugs has become a permanent, self-sustaining bureaucracy, and distinctions between good and evil are routinely obliterated.",
+          "posterPath": "/4lbclFySvugI51fwsyxBTOm4DqK.jpg",
+          "backdropPath": "/aQTtua5pG490fMfeKgtYg5B853e.jpg",
+          "rating": 8.6,
+          "voteCount": 2927,
+          "genreIds": [
+            80,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:95480",
+          "type": "tv",
+          "id": 95480,
+          "slug": "slow-horses",
+          "title": "Slow Horses",
+          "originalTitle": "Slow Horses",
+          "year": 2022,
+          "releaseDate": "2022-04-01",
+          "overview": "Follow a dysfunctional team of MI5 agents—and their obnoxious boss, the notorious Jackson Lamb—as they navigate the espionage world's smoke and mirrors to defend England from sinister forces.",
+          "posterPath": "/AdYr4DjOgXvDUMwu6vEhZy1Rnxk.jpg",
+          "backdropPath": "/gPQppUnLx9vqPDLz3WwZ2HJsNbt.jpg",
+          "rating": 8.1,
+          "voteCount": 1157,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1622",
+          "type": "tv",
+          "id": 1622,
+          "slug": "supernatural",
+          "title": "Supernatural",
+          "originalTitle": "Supernatural",
+          "year": 2005,
+          "releaseDate": "2005-09-13",
+          "overview": "When they were boys, Sam and Dean Winchester lost their mother to a mysterious and demonic supernatural force. Subsequently, their father raised them to be soldiers. He taught them about the paranormal evil that lives in the dark corners and on the back roads of America ... and he taught them how…",
+          "posterPath": "/8iixmfGx5EIFPdpNvB2JvI3VIqX.jpg",
+          "backdropPath": "/lirPqYLTtd6XZqGn4cS1wiesTq0.jpg",
+          "rating": 8.3,
+          "voteCount": 8860,
+          "genreIds": [
+            18,
+            9648,
+            10765
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1434",
+          "type": "tv",
+          "id": 1434,
+          "slug": "family-guy",
+          "title": "Family Guy",
+          "originalTitle": "Family Guy",
+          "year": 1999,
+          "releaseDate": "1999-01-31",
+          "overview": "Sick, twisted, politically incorrect and Freakin' Sweet animated series featuring the adventures of the dysfunctional Griffin family. Bumbling Peter and long-suffering Lois have three kids. Stewie (a brilliant but sadistic baby bent on killing his mother and taking over the world), Meg (the…",
+          "posterPath": "/3PFsEuAiyLkWsP4GG6dIV37Q6gu.jpg",
+          "backdropPath": "/jbTqU6BJMufoMnPSlO4ThrcXs3Y.jpg",
+          "rating": 7.4,
+          "voteCount": 5232,
+          "genreIds": [
+            16,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:2691",
+          "type": "tv",
+          "id": 2691,
+          "slug": "two-and-a-half-men",
+          "title": "Two and a Half Men",
+          "originalTitle": "Two and a Half Men",
+          "year": 2003,
+          "releaseDate": "2003-09-22",
+          "overview": "A hedonistic jingle writer's free-wheeling life comes to an abrupt halt when his brother and 10-year-old nephew move into his beach-front house.",
+          "posterPath": "/xgfjxyV3g1S68opzuvG6G87muDp.jpg",
+          "backdropPath": "/coHpOy9OJyFiHWeH36cSHMpLUHC.jpg",
+          "rating": 7.4,
+          "voteCount": 3864,
+          "genreIds": [
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:5920",
+          "type": "tv",
+          "id": 5920,
+          "slug": "the-mentalist",
+          "title": "The Mentalist",
+          "originalTitle": "The Mentalist",
+          "year": 2008,
+          "releaseDate": "2008-09-23",
+          "overview": "Patrick Jane, a former celebrity psychic medium, uses his razor sharp skills of observation and expertise at \"reading\" people to solve serious crimes with the California Bureau of Investigation.",
+          "posterPath": "/k0kMdO52LpC5JWgd0uWEH7gqcCe.jpg",
+          "backdropPath": "/rJFqKcmMSttdNP58l0dVzY2NcTA.jpg",
+          "rating": 8.4,
+          "voteCount": 5046,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:41727",
+          "type": "tv",
+          "id": 41727,
+          "slug": "banshee",
+          "title": "Banshee",
+          "originalTitle": "Banshee",
+          "year": 2013,
+          "releaseDate": "2013-01-11",
+          "overview": "Banshee is an American drama television series set in a small town in Pennsylvania Amish country and features an enigmatic ex-con posing as a murdered sheriff who imposes his own brand of justice while also cooking up plans that serve his own interests.",
+          "posterPath": "/5nXFiz8Rn8eezVjSTZBd7HmnF1G.jpg",
+          "backdropPath": "/mo9bfYdewzmHxnaeURB2jRPvGuX.jpg",
+          "rating": 8,
+          "voteCount": 1511,
+          "genreIds": [
+            80,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1413",
+          "type": "tv",
+          "id": 1413,
+          "slug": "american-horror-story",
+          "title": "American Horror Story",
+          "originalTitle": "American Horror Story",
+          "year": 2011,
+          "releaseDate": "2011-10-05",
+          "overview": "An anthology horror drama series centering on different characters and locations, including a house with a murderous past, an asylum, a witch coven, a freak show, a hotel, a farmhouse in Roanoke, a cult, the apocalypse and a summer camp.",
+          "posterPath": "/yCkPLQ10qKIUgRBXmQVVMF1h96d.jpg",
+          "backdropPath": "/5G4Bnc4Q0YUK1bwLEUYmIsmm2Ib.jpg",
+          "rating": 8.1,
+          "voteCount": 6320,
+          "genreIds": [
+            18,
+            9648,
+            10765
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:18347",
+          "type": "tv",
+          "id": 18347,
+          "slug": "community",
+          "title": "Community",
+          "originalTitle": "Community",
+          "year": 2009,
+          "releaseDate": "2009-09-17",
+          "overview": "Follow the lives of a group of students at what is possibly the world’s worst community college in the fictional locale of Greendale, Colorado.",
+          "posterPath": "/3KUjDt8XY7w2Ku70UE0SECmv1zP.jpg",
+          "backdropPath": "/1xRfgONYmK3T6FSmbtcuo8eyxVt.jpg",
+          "rating": 8,
+          "voteCount": 2254,
+          "genreIds": [
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1877",
+          "type": "tv",
+          "id": 1877,
+          "slug": "phineas-and-ferb",
+          "title": "Phineas and Ferb",
+          "originalTitle": "Phineas and Ferb",
+          "year": 2007,
+          "releaseDate": "2007-08-17",
+          "overview": "Each day, two kindhearted suburban stepbrothers on summer vacation embark on some grand new project, which annoys their controlling sister, Candace, who tries to bust them. Meanwhile, their pet platypus plots against evil Dr. Doofenshmirtz.",
+          "posterPath": "/g6TidT7be954rrzPPBTIXkSmfXj.jpg",
+          "backdropPath": "/5MWFjQ3NuNtNeOE9FdrVLeNMNPs.jpg",
+          "rating": 7.9,
+          "voteCount": 1100,
+          "genreIds": [
+            16,
+            35,
+            10751,
+            10765
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:2734",
+          "type": "tv",
+          "id": 2734,
+          "slug": "law-and-order-special-victims-unit",
+          "title": "Law & Order: Special Victims Unit",
+          "originalTitle": "Law & Order: Special Victims Unit",
+          "year": 1999,
+          "releaseDate": "1999-09-20",
+          "overview": "In the criminal justice system, sexually-based offenses are considered especially heinous. In New York City, the dedicated detectives who investigate these vicious felonies are members of an elite squad known as the Special Victims Unit. These are their stories.",
+          "posterPath": "/pHNhUwSXuDQ9jPZOCb8SgJaQZsc.jpg",
+          "backdropPath": "/xhK9YCxNwnE0OB1SWvCY39heHQI.jpg",
+          "rating": 8,
+          "voteCount": 4428,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:1411",
+          "type": "tv",
+          "id": 1411,
+          "slug": "person-of-interest",
+          "title": "Person of Interest",
+          "originalTitle": "Person of Interest",
+          "year": 2011,
+          "releaseDate": "2011-09-22",
+          "overview": "John Reese, former CIA paramilitary operative, is presumed dead and teams up with reclusive billionaire Finch to prevent violent crimes in New York City by initiating their own type of justice. With the special training that Reese has had in Covert Operations and Finch's genius software inventing…",
+          "posterPath": "/f8aIvYk5h7Z8EP3dinCmVgQFYow.jpg",
+          "backdropPath": "/efeMgQn6iRALsOqDa2cqlf6Pw5O.jpg",
+          "rating": 8.1,
+          "voteCount": 2245,
+          "genreIds": [
+            10759,
+            80,
+            10765,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:247718",
+          "type": "tv",
+          "id": 247718,
+          "slug": "mobland",
+          "title": "MobLand",
+          "originalTitle": "MobLand",
+          "year": 2025,
+          "releaseDate": "2025-03-30",
+          "overview": "Two mob families clash in a war that threatens to topple empires and lives.",
+          "posterPath": "/5Xc7WpWsgflfgEMoBlf9TmWhfbH.jpg",
+          "backdropPath": "/h0OC7ouop8YLwbAVfS3UUE2Lw4T.jpg",
+          "rating": 8.7,
+          "voteCount": 1317,
+          "genreIds": [
+            80,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:83631",
+          "type": "tv",
+          "id": 83631,
+          "slug": "what-we-do-in-the-shadows",
+          "title": "What We Do in the Shadows",
+          "originalTitle": "What We Do in the Shadows",
+          "year": 2019,
+          "releaseDate": "2019-03-27",
+          "overview": "A documentary-style look into the daily (or rather, nightly) lives of a group of vampires in Staten Island who have “lived” together for hundreds and hundreds of years.",
+          "posterPath": "/wa3ZQE9kLnqwN3vQ0NNjg1NPsCa.jpg",
+          "backdropPath": "/mKikck71CvVISUSTLk29fwRbH4y.jpg",
+          "rating": 8,
+          "voteCount": 1118,
+          "genreIds": [
+            35,
+            10765
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "id": "acclaimed",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "movie:1560520",
+          "type": "movie",
+          "id": 1560520,
+          "slug": "batman-knightfall-part-1-knightfall",
+          "title": "Batman: Knightfall Part 1: Knightfall",
+          "originalTitle": "Batman: Knightfall Part 1: Knightfall",
+          "year": 2026,
+          "releaseDate": "2026-08-25",
+          "overview": "Arkham Asylum has been destroyed, and all its inmates have been unleashed upon Gotham City. As Batman races to round up some of his greatest enemies, he is pushed to his physical and mental limits and into a final confrontation with a new threat: the man called Bane!",
+          "posterPath": "/360qdtu2hLnqMu8SVHMywn420w1.jpg",
+          "backdropPath": "/caBIySpwuFi2i7ynvHIlnxJLOdN.jpg",
+          "rating": 9.1,
+          "voteCount": 515,
+          "genreIds": [
+            16,
+            28,
+            12,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:980431",
+          "type": "movie",
+          "id": 980431,
+          "slug": "avatar-aang-the-last-airbender",
+          "title": "Avatar Aang: The Last Airbender",
+          "originalTitle": "Avatar Aang: The Last Airbender",
+          "year": 2026,
+          "releaseDate": "2026-07-24",
+          "overview": "Avatar Aang, the world's last Airbender, learns of an ancient power that could save his culture from extinction. With the help of his friends, he embarks on a global quest to find it before it falls into the wrong hands and threatens to upend the peace they sacrificed everything to achieve.",
+          "posterPath": "/3sgnSfNT27Bx5O5ukr7B26mhEQq.jpg",
+          "backdropPath": "/ezbrL1dMymKQZw7mDEWa2ZTzN7d.jpg",
+          "rating": 9,
+          "voteCount": 1476,
+          "genreIds": [
+            16,
+            12,
+            14,
+            28
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1007757",
+          "type": "movie",
+          "id": 1007757,
+          "slug": "swapped",
+          "title": "Swapped",
+          "originalTitle": "Swapped",
+          "year": 2026,
+          "releaseDate": "2026-05-01",
+          "overview": "A small woodland creature and a majestic bird, two natural sworn enemies of the Valley, magically trade places and set off on an adventure of a lifetime to switch back. Their journey soon uncovers a greater threat—one that could endanger not only their species, but the entire valley they call home.",
+          "posterPath": "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
+          "backdropPath": "/zMwhWailP1WY7sb6AoE6b8ugoy.jpg",
+          "rating": 8.8,
+          "voteCount": 2316,
+          "genreIds": [
+            12,
+            16,
+            10751,
+            14
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1311031",
+          "type": "movie",
+          "id": 1311031,
+          "slug": "demon-slayer-kimetsu-no-yaiba-infinity-castle",
+          "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+          "originalTitle": "劇場版「鬼滅の刃」無限城編 第一章 猗窩座再来",
+          "year": 2025,
+          "releaseDate": "2025-07-18",
+          "overview": "The Demon Slayer Corps are drawn into the Infinity Castle, where Tanjiro, Nezuko, and the Hashira face terrifying Upper Rank demons in a desperate fight as the final battle against Muzan Kibutsuji begins.",
+          "posterPath": "/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
+          "backdropPath": "/1RgPyOhN4DRs225BGTlHJqCudII.jpg",
+          "rating": 8.8,
+          "voteCount": 2406,
+          "genreIds": [
+            16,
+            28,
+            14
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "movie:1632181",
+          "type": "movie",
+          "id": 1632181,
+          "slug": "accidental-partners",
+          "title": "Accidental Partners",
+          "originalTitle": "Socias por accidente",
+          "year": 2026,
+          "releaseDate": "2026-03-12",
+          "overview": "Two women discover they were both scammed by the same man (who also got them pregnant). They form an alliance to take revenge.",
+          "posterPath": "/j0CIVzeR7hRAPBPGR54qDZoOQpp.jpg",
+          "backdropPath": "/iCML6fBe3X0y06P33bM7dyYXPKZ.jpg",
+          "rating": 8.8,
+          "voteCount": 411,
+          "genreIds": [
+            35,
+            10749
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:278",
+          "type": "movie",
+          "id": 278,
+          "slug": "the-shawshank-redemption",
+          "title": "The Shawshank Redemption",
+          "originalTitle": "The Shawshank Redemption",
+          "year": 1994,
+          "releaseDate": "1994-09-23",
+          "overview": "Imprisoned in the 1940s for the double murder of his wife and her lover, upstanding banker Andy Dufresne begins a new life at the Shawshank prison, where he puts his accounting skills to work for an amoral warden. During his long stretch in prison, Dufresne comes to be admired by the other inmates…",
+          "posterPath": "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
+          "backdropPath": "/v8xVDqt8uCul3c3mgx4VpGCwxJC.jpg",
+          "rating": 8.7,
+          "voteCount": 31939,
+          "genreIds": [
+            18,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1621552",
+          "type": "movie",
+          "id": 1621552,
+          "slug": "facing-el-chapo",
+          "title": "Facing El Chapo",
+          "originalTitle": "La captura",
+          "year": 2026,
+          "releaseDate": "2026-08-21",
+          "overview": "Two Mexican officers must survive the final hours of their shift after crossing a ruthless cartel boss.",
+          "posterPath": "/alpf5v4UqSFawPmG9RX03Or4BDk.jpg",
+          "backdropPath": "/c4U96GrPRfnNrS01mBtqnocvlLJ.jpg",
+          "rating": 8.7,
+          "voteCount": 1003,
+          "genreIds": [
+            80,
+            28,
+            53
+          ],
+          "originalLanguage": "es"
+        },
+        {
+          "key": "movie:238",
+          "type": "movie",
+          "id": 238,
+          "slug": "the-godfather",
+          "title": "The Godfather",
+          "originalTitle": "The Godfather",
+          "year": 1972,
+          "releaseDate": "1972-03-14",
+          "overview": "Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son, Michael steps in to take care of the would-be killers, launching a campaign of bloody…",
+          "posterPath": "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+          "backdropPath": "/ejdD20cdHNFAYAN2DlqPToXKyzx.jpg",
+          "rating": 8.7,
+          "voteCount": 24053,
+          "genreIds": [
+            18,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:687163",
+          "type": "movie",
+          "id": 687163,
+          "slug": "project-hail-mary",
+          "title": "Project Hail Mary",
+          "originalTitle": "Project Hail Mary",
+          "year": 2026,
+          "releaseDate": "2026-03-15",
+          "overview": "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific…",
+          "posterPath": "/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg",
+          "backdropPath": "/2I1OFQJ0L9T0dpU6FobKFWV2PxX.jpg",
+          "rating": 8.6,
+          "voteCount": 9030,
+          "genreIds": [
+            878,
+            12
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1232449",
+          "type": "movie",
+          "id": 1232449,
+          "slug": "young-hearts",
+          "title": "Young Hearts",
+          "originalTitle": "Young Hearts",
+          "year": 2024,
+          "releaseDate": "2024-10-26",
+          "overview": "14-year-old Elias increasingly feels like an outsider in his village. When he meets his new neighbour of the same age, Alexander, Elias is confronted with his burgeoning sexuality.",
+          "posterPath": "/iGCtYxfuvXfy0BD5m6p7vKuPOxS.jpg",
+          "backdropPath": "/3HaqAPZ0C8n6Hd5T86U53yJlBAN.jpg",
+          "rating": 8.6,
+          "voteCount": 339,
+          "genreIds": [
+            18,
+            10749
+          ],
+          "originalLanguage": "nl"
+        },
+        {
+          "key": "movie:389",
+          "type": "movie",
+          "id": 389,
+          "slug": "12-angry-men",
+          "title": "12 Angry Men",
+          "originalTitle": "12 Angry Men",
+          "year": 1957,
+          "releaseDate": "1957-04-10",
+          "overview": "The defense and the prosecution have rested and the jury is filing into the jury room to decide if a young Spanish-American is guilty or innocent of murdering his father. What begins as an open and shut case soon becomes a mini-drama of each of the jurors' prejudices and preconceptions about the…",
+          "posterPath": "/zhG3vKWyDRaZYoaww1UVAi29T9h.jpg",
+          "backdropPath": "/qqHQsStV6exghCM7zbObuYBiYxw.jpg",
+          "rating": 8.6,
+          "voteCount": 10638,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:240",
+          "type": "movie",
+          "id": 240,
+          "slug": "the-godfather-part-ii",
+          "title": "The Godfather Part II",
+          "originalTitle": "The Godfather Part II",
+          "year": 1974,
+          "releaseDate": "1974-12-20",
+          "overview": "In the continuing saga of the Corleone crime family, a young Vito Corleone grows up in Sicily and in 1910s New York. In the 1950s, Michael Corleone attempts to expand the family business into Las Vegas, Hollywood and Cuba.",
+          "posterPath": "/8a1lJs7mFyGhGhZZDT1azJUoQiZ.jpg",
+          "backdropPath": "/pGzqRKrYeK4LogoysNro0vG8d8N.jpg",
+          "rating": 8.6,
+          "voteCount": 14665,
+          "genreIds": [
+            18,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:424",
+          "type": "movie",
+          "id": 424,
+          "slug": "schindlers-list",
+          "title": "Schindler's List",
+          "originalTitle": "Schindler's List",
+          "year": 1993,
+          "releaseDate": "1993-12-15",
+          "overview": "The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis while they worked as slaves in his factory during World War II.",
+          "posterPath": "/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg",
+          "backdropPath": "/zb6fM1CX41D9rF9hdgclu0peUmy.jpg",
+          "rating": 8.6,
+          "voteCount": 18237,
+          "genreIds": [
+            18,
+            36,
+            10752
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:936075",
+          "type": "movie",
+          "id": 936075,
+          "slug": "michael",
+          "title": "Michael",
+          "originalTitle": "Michael",
+          "year": 2026,
+          "releaseDate": "2026-04-22",
+          "overview": "The story of Michael Jackson, one of the most influential artists the world has ever known, and his life beyond the music. His journey from the discovery of his extraordinary talent as the lead of the Jackson Five, to the visionary artist whose creative ambition fueled a relentless pursuit to…",
+          "posterPath": "/dueFqKLvjftnELZaGYwY7xinfaI.jpg",
+          "backdropPath": "/ufSwlnECLoUbBjPrFqEQcWBzHwc.jpg",
+          "rating": 8.6,
+          "voteCount": 4781,
+          "genreIds": [
+            10402,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:1218925",
+          "type": "movie",
+          "id": 1218925,
+          "slug": "chainsaw-man-the-movie-reze-arc",
+          "title": "Chainsaw Man - The Movie: Reze Arc",
+          "originalTitle": "劇場版 チェンソーマン レゼ篇",
+          "year": 2025,
+          "releaseDate": "2025-09-19",
+          "overview": "In a world where devils are born from humanity’s fears, Denji has only ever dreamed of living a simple life, eating good food, finding happiness, and experiencing the warmth of being loved. Then, one rainy afternoon, fate leads him to Reze, a mysterious girl working at a small café. With her…",
+          "posterPath": "/i69jR67amezdJ3sx6OOvOGn7HAR.jpg",
+          "backdropPath": "/pQBjQCtldmru3EhWVH83qKfnvPL.jpg",
+          "rating": 8.5,
+          "voteCount": 1322,
+          "genreIds": [
+            16,
+            28,
+            10749,
+            14
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "movie:155",
+          "type": "movie",
+          "id": 155,
+          "slug": "the-dark-knight",
+          "title": "The Dark Knight",
+          "originalTitle": "The Dark Knight",
+          "year": 2008,
+          "releaseDate": "2008-07-16",
+          "overview": "Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos…",
+          "posterPath": "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+          "backdropPath": "/cfT29Im5VDvjE0RpyKOSdCKZal7.jpg",
+          "rating": 8.5,
+          "voteCount": 37483,
+          "genreIds": [
+            28,
+            53,
+            80
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:129",
+          "type": "movie",
+          "id": 129,
+          "slug": "spirited-away",
+          "title": "Spirited Away",
+          "originalTitle": "千と千尋の神隠し",
+          "year": 2001,
+          "releaseDate": "2001-07-20",
+          "overview": "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.",
+          "posterPath": "/jUo8cNmU400WtZiJss45HNXlQ2e.jpg",
+          "backdropPath": "/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg",
+          "rating": 8.5,
+          "voteCount": 19289,
+          "genreIds": [
+            16,
+            10751,
+            14,
+            12
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "movie:1630423",
+          "type": "movie",
+          "id": 1630423,
+          "slug": "my-dearest-assassin",
+          "title": "My Dearest Assassin",
+          "originalTitle": "เลือดรักนักฆ่า",
+          "year": 2026,
+          "releaseDate": "2026-05-06",
+          "overview": "Hunted for her rare blood type, a caged woman vows to fight alongside the assassin she loves to protect their future when an old enemy resurfaces.",
+          "posterPath": "/ul4dQcA68mtSx8J56N5gEcaCCtP.jpg",
+          "backdropPath": "/xA6AM5MvEkieZKlv1Tn3sN23I7i.jpg",
+          "rating": 8.5,
+          "voteCount": 328,
+          "genreIds": [
+            28,
+            18,
+            10749
+          ],
+          "originalLanguage": "th"
+        },
+        {
+          "key": "movie:122",
+          "type": "movie",
+          "id": 122,
+          "slug": "the-lord-of-the-rings-the-return-of-the-king",
+          "title": "The Lord of the Rings: The Return of the King",
+          "originalTitle": "The Lord of the Rings: The Return of the King",
+          "year": 2003,
+          "releaseDate": "2003-12-17",
+          "overview": "As armies mass for a final battle that will decide the fate of the world--and powerful, ancient forces of Light and Dark compete to determine the outcome--one member of the Fellowship of the Ring is revealed as the noble heir to the throne of the Kings of Men. Yet, the sole hope for triumph over…",
+          "posterPath": "/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+          "backdropPath": "/ctiw6FZK4N36LmkjSklWEbuvlq9.jpg",
+          "rating": 8.5,
+          "voteCount": 27909,
+          "genreIds": [
+            12,
+            14,
+            28
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "movie:497",
+          "type": "movie",
+          "id": 497,
+          "slug": "the-green-mile",
+          "title": "The Green Mile",
+          "originalTitle": "The Green Mile",
+          "year": 1999,
+          "releaseDate": "1999-12-10",
+          "overview": "A supernatural tale set on death row in a Southern prison, where gentle giant John Coffey possesses the mysterious power to heal people's ailments. When the cell block's head guard, Paul Edgecomb, recognizes Coffey's miraculous gift, he tries desperately to help stave off the condemned man's…",
+          "posterPath": "/8VG8fDNiy50H4FedGwdSVUPoaJe.jpg",
+          "backdropPath": "/amZavErrjrdgDwhsIdpWxHNenIx.jpg",
+          "rating": 8.5,
+          "voteCount": 20199,
+          "genreIds": [
+            14,
+            18,
+            80
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    },
+    {
+      "id": "new-episodes",
+      "kind": "posters",
+      "items": [
+        {
+          "key": "tv:46923",
+          "type": "tv",
+          "id": 46923,
+          "slug": "shetland",
+          "title": "Shetland",
+          "originalTitle": "Shetland",
+          "year": 2013,
+          "releaseDate": "2013-03-10",
+          "overview": "Created from the novels by award winning crime writer Ann Cleeves, Shetland follows DI Jimmy Perez and his team as they investigate crime within the close knit island community. In this isolated and sometimes inhospitable environment, the team have to rely on a uniquely resourceful style of…",
+          "posterPath": "/rKnxmir8m5I3RdSTdZr3jaQaCZi.jpg",
+          "backdropPath": "/AdlDrgoNCDu3naYjZMwmiklBHnV.jpg",
+          "rating": 7.5,
+          "voteCount": 219,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:81723",
+          "type": "tv",
+          "id": 81723,
+          "slug": "the-gilded-age",
+          "title": "The Gilded Age",
+          "originalTitle": "The Gilded Age",
+          "year": 2022,
+          "releaseDate": "2022-01-24",
+          "overview": "It's 1882 and the Gilded Age is in full swing when Marian Brook moves in with her rigidly conventional aunts in New York City. With the help of Peggy Scott, an African-American woman masquerading as her maid, Marian gets caught up in the dazzling lives of her rich neighbors as she struggles to…",
+          "posterPath": "/tdsuFe0JVLqjxfptElRA9YFJcUE.jpg",
+          "backdropPath": "/afUVsProh46h31w2EvL7qyHXrqj.jpg",
+          "rating": 7.7,
+          "voteCount": 303,
+          "genreIds": [
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:2734",
+          "type": "tv",
+          "id": 2734,
+          "slug": "law-and-order-special-victims-unit",
+          "title": "Law & Order: Special Victims Unit",
+          "originalTitle": "Law & Order: Special Victims Unit",
+          "year": 1999,
+          "releaseDate": "1999-09-20",
+          "overview": "In the criminal justice system, sexually-based offenses are considered especially heinous. In New York City, the dedicated detectives who investigate these vicious felonies are members of an elite squad known as the Special Victims Unit. These are their stories.",
+          "posterPath": "/pHNhUwSXuDQ9jPZOCb8SgJaQZsc.jpg",
+          "backdropPath": "/xhK9YCxNwnE0OB1SWvCY39heHQI.jpg",
+          "rating": 8,
+          "voteCount": 4428,
+          "genreIds": [
+            80,
+            18,
+            9648
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:37678",
+          "type": "tv",
+          "id": 37678,
+          "slug": "the-voice",
+          "title": "The Voice",
+          "originalTitle": "The Voice",
+          "year": 2011,
+          "releaseDate": "2011-04-26",
+          "overview": "The strongest vocalists from across the United states compete in a blockbusters vocal competition, the winner becomes “The Voice.” The show's innovative format features four stages of competition: the blind auditions, the battle rounds, the knockouts and, finally, the live performance shows.",
+          "posterPath": "/7ah1WExcMkzbq7sARCTmcC23tBr.jpg",
+          "backdropPath": "/a7T6Em0tUpEauMXosTWQ2q8SQCM.jpg",
+          "rating": 5.9,
+          "voteCount": 235,
+          "genreIds": [
+            10764
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:456",
+          "type": "tv",
+          "id": 456,
+          "slug": "the-simpsons",
+          "title": "The Simpsons",
+          "originalTitle": "The Simpsons",
+          "year": 1989,
+          "releaseDate": "1989-12-17",
+          "overview": "Set in Springfield, the average American town, the show focuses on the antics and everyday adventures of the Simpson family; Homer, Marge, Bart, Lisa and Maggie, as well as a virtual cast of thousands. Since the beginning, the series has been a pop culture icon, attracting hundreds of celebrities…",
+          "posterPath": "/tf0CUEynk6GfmrlHIQKQ5mfFP5P.jpg",
+          "backdropPath": "/jIArNHIekrCSVgdMbKPAXpPY03Y.jpg",
+          "rating": 8,
+          "voteCount": 11199,
+          "genreIds": [
+            16,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:22980",
+          "type": "tv",
+          "id": 22980,
+          "slug": "watch-what-happens-live-with-andy-cohen",
+          "title": "Watch What Happens Live with Andy Cohen",
+          "originalTitle": "Watch What Happens Live with Andy Cohen",
+          "year": 2009,
+          "releaseDate": "2009-07-16",
+          "overview": "Bravo network executive Andy Cohen discusses pop culture topics with celebrities and reality show personalities.",
+          "posterPath": "/onSD9UXfJwrMXWhq7UY7hGF2S1h.jpg",
+          "backdropPath": "/hINekSpbcBxjnjGqmIm6I4bz2ab.jpg",
+          "rating": 4.9,
+          "voteCount": 102,
+          "genreIds": [
+            10767,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:33238",
+          "type": "tv",
+          "id": 33238,
+          "slug": "running-man",
+          "title": "Running Man",
+          "originalTitle": "런닝맨",
+          "year": 2010,
+          "releaseDate": "2010-07-11",
+          "overview": "These days, as variety shows are gradually disappearing, this is one of Korea’s representative variety shows that has been responsible for Sunday evenings for over 10 years. This program features numerous stars and members going around various places, playing games, and completing missions. In…",
+          "posterPath": "/2Wmmu1MkqxJ48J7aySET9EKEjXz.jpg",
+          "backdropPath": "/wsHj4oHQJoe7DMYaqNFwVoyLiAh.jpg",
+          "rating": 8.2,
+          "voteCount": 227,
+          "genreIds": [
+            35,
+            10764
+          ],
+          "originalLanguage": "ko"
+        },
+        {
+          "key": "tv:65733",
+          "type": "tv",
+          "id": 65733,
+          "slug": "doraemon",
+          "title": "Doraemon",
+          "originalTitle": "ドラえもん",
+          "year": 2005,
+          "releaseDate": "2005-04-22",
+          "overview": "Robotic cat Doraemon is sent back in time from the 22nd century to protect 10-year-old Noby, a lazy and uncoordinated boy who is destined to have a tragic future. Doraemon can create secret gadgets from a pocket on his stomach, but they usually cause more bad than good because of Noby's propensity…",
+          "posterPath": "/9ZN1P32SHviL3SV51qLivxycvcx.jpg",
+          "backdropPath": "/c2oiRa7V3bQzof4wVGzLXtWJ5QU.jpg",
+          "rating": 8.1,
+          "voteCount": 266,
+          "genreIds": [
+            10759,
+            16,
+            35,
+            10765,
+            10762,
+            10751
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "tv:11890",
+          "type": "tv",
+          "id": 11890,
+          "slug": "goede-tijden-slechte-tijden",
+          "title": "Goede Tijden, Slechte Tijden",
+          "originalTitle": "Goede Tijden, Slechte Tijden",
+          "year": 1990,
+          "releaseDate": "1990-10-01",
+          "overview": "Goede tijden, slechte tijden, also known as GTST, is the longest-running Dutch soap opera, revolving around the lives of the families Alberts, Sanders, De Jong, Van Houten and Bouwhuis. It all takes place in the fictional town of Meerdijk.",
+          "posterPath": "/p1oXgtJ0q0wAcEp3tHA5DpiynxL.jpg",
+          "backdropPath": "/ksNrsIkIwFKpetIyiUA7kBSBKvC.jpg",
+          "rating": 5.2,
+          "voteCount": 23,
+          "genreIds": [
+            10766
+          ],
+          "originalLanguage": "nl"
+        },
+        {
+          "key": "tv:2224",
+          "type": "tv",
+          "id": 2224,
+          "slug": "the-daily-show",
+          "title": "The Daily Show",
+          "originalTitle": "The Daily Show",
+          "year": 1996,
+          "releaseDate": "1996-07-22",
+          "overview": "The World's Fakest News Team tackle the biggest stories in news, politics and pop culture.",
+          "posterPath": "/ixcfyK7it6FjRM36Te4OdblAq4X.jpg",
+          "backdropPath": "/qLMfcvdCcCGD2BNLH8b6ZCBuO7D.jpg",
+          "rating": 6.4,
+          "voteCount": 684,
+          "genreIds": [
+            10763,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:549",
+          "type": "tv",
+          "id": 549,
+          "slug": "law-and-order",
+          "title": "Law & Order",
+          "originalTitle": "Law & Order",
+          "year": 1990,
+          "releaseDate": "1990-09-13",
+          "overview": "In cases ripped from the headlines, police investigate serious and often deadly crimes, weighing the evidence and questioning the suspects until someone is taken into custody. The district attorney's office then builds a case to convict the perpetrator by proving the person guilty beyond a…",
+          "posterPath": "/hmd2tEtjolLWpNLCTvXS2PO5VCi.jpg",
+          "backdropPath": "/hrfP9BQ4mOMZOa8nHbFJLSDHBLz.jpg",
+          "rating": 7.3,
+          "voteCount": 744,
+          "genreIds": [
+            80,
+            18
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:4614",
+          "type": "tv",
+          "id": 4614,
+          "slug": "ncis",
+          "title": "NCIS",
+          "originalTitle": "NCIS",
+          "year": 2003,
+          "releaseDate": "2003-09-23",
+          "overview": "From murder and espionage to terrorism and stolen submarines, a team of special agents investigates any crime that has any connection to Navy and Marine Corps personnel, regardless of rank or position.",
+          "posterPath": "/y4fGncqELtnvRQuwSpuH8LncZqU.jpg",
+          "backdropPath": "/rHKRZCBpDFSNc45kzyf665LJYp3.jpg",
+          "rating": 7.6,
+          "voteCount": 2630,
+          "genreIds": [
+            80,
+            18,
+            10759
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:291",
+          "type": "tv",
+          "id": 291,
+          "slug": "coronation-street",
+          "title": "Coronation Street",
+          "originalTitle": "Coronation Street",
+          "year": 1960,
+          "releaseDate": "1960-12-09",
+          "overview": "The residents of Coronation Street are ordinary, working-class people, and the show follows them through regular social and family interactions at home, in the workplace, and in their local pub, the Rovers Return Inn. Britain's longest-running soap.",
+          "posterPath": "/5x1HXqYqPyYw7oc7Isu1lvVmwRP.jpg",
+          "backdropPath": "/5APjn4LnV5wWk5DXq7ZewT6zzP1.jpg",
+          "rating": 5.3,
+          "voteCount": 121,
+          "genreIds": [
+            10766
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:4656",
+          "type": "tv",
+          "id": 4656,
+          "slug": "raw",
+          "title": "Raw",
+          "originalTitle": "Raw",
+          "year": 1993,
+          "releaseDate": "1993-01-11",
+          "overview": "A regularly scheduled, live, year-round program featuring some of the biggest WWE Superstars.",
+          "posterPath": "/fstEe6RsyNyPUnMwNcL20iNl0nE.jpg",
+          "backdropPath": "/ykWWT8FAChBffNxcDzoJMCK9LBb.jpg",
+          "rating": 6.7,
+          "voteCount": 387,
+          "genreIds": [
+            10764
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:153312",
+          "type": "tv",
+          "id": 153312,
+          "slug": "tulsa-king",
+          "title": "Tulsa King",
+          "originalTitle": "Tulsa King",
+          "year": 2022,
+          "releaseDate": "2022-11-13",
+          "overview": "New York mafia capo Dwight \"The General\" Manfredi is released from prison after 25 years and exiled by his boss to set up shop in Tulsa, Oklahoma. Realizing that his mob family may not have his best interests in mind, Dwight slowly builds a crew.",
+          "posterPath": "/y13WOeZ2rz2Ezpws0RJ0I8sQpG4.jpg",
+          "backdropPath": "/mNHRGO1gFpR2CYZdANe72kcKq7G.jpg",
+          "rating": 8.3,
+          "voteCount": 2981,
+          "genreIds": [
+            80,
+            18,
+            35
+          ],
+          "originalLanguage": "en"
+        },
+        {
+          "key": "tv:2661",
+          "type": "tv",
+          "id": 2661,
+          "slug": "kamen-rider",
+          "title": "Kamen Rider",
+          "originalTitle": "仮面ライダー",
+          "year": 1971,
+          "releaseDate": "1971-04-03",
+          "overview": "Takeshi Hongo is a promising young man with a passion for motorcycle racing. However, his dreams are suddenly ruined when he gets kidnapped by Shocker, the evil secret organization planning to dominate the world. After being remodeled into a cyborg, Takeshi escapes and swears to protect the world…",
+          "posterPath": "/lv3OlrXyTNg4Dz0JrtopOmMziNs.jpg",
+          "backdropPath": "/usLRh1bcbL0Q9X8zf6rL4OV1qrA.jpg",
+          "rating": 6.5,
+          "voteCount": 111,
+          "genreIds": [
+            10759,
+            10765,
+            18
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "tv:206559",
+          "type": "tv",
+          "id": 206559,
+          "slug": "binnelanders",
+          "title": "Binnelanders",
+          "originalTitle": "Binnelanders",
+          "year": 2005,
+          "releaseDate": "2005-10-13",
+          "overview": "A South African Afrikaans soap opera. It is set in and around the fictional private hospital, Binneland Kliniek, in Pretoria, and the storyline follows the trials, trauma and tribulations of the staff and patients of the hospital.",
+          "posterPath": "/3bzECfllho8PphdYujLUIuhncJD.jpg",
+          "backdropPath": "/s1dTt4M31q2HwD5Fkl1tf5tQzJg.jpg",
+          "rating": 5.5,
+          "voteCount": 114,
+          "genreIds": [
+            10766
+          ],
+          "originalLanguage": "af"
+        },
+        {
+          "key": "tv:57775",
+          "type": "tv",
+          "id": 57775,
+          "slug": "chibi-maruko-chan",
+          "title": "Chibi Maruko-chan",
+          "originalTitle": "ちびまる子ちゃん",
+          "year": 1990,
+          "releaseDate": "1990-01-07",
+          "overview": "Meet Maruko, a sweet schoolgirl with a hefty dose of curiosity (and occasional laziness!). She sails through life in a cozy town alongside her loving parents, grandparents, and sister. Maruko has a band of loyal friends, including her closest pal, Tama-chan, but her playful and doting grandpa is…",
+          "posterPath": "/bfn54AAMuh47IFqeoco0jgeVH1a.jpg",
+          "backdropPath": "/vuajwjep1FxphPhMEWKv4bfrCnf.jpg",
+          "rating": 7.7,
+          "voteCount": 27,
+          "genreIds": [
+            16,
+            35
+          ],
+          "originalLanguage": "ja"
+        },
+        {
+          "key": "tv:330613",
+          "type": "tv",
+          "id": 330613,
+          "slug": "the-rules",
+          "title": "The Rules",
+          "originalTitle": "กฎหลังเที่ยงคืน",
+          "year": 2026,
+          "releaseDate": "2026-10-28",
+          "overview": "Haunted by his past, Metha takes a night shift at a mysterious convenience store where breaking its strange rules leads to supernatural death, forcing him to confront both the store's dark secrets and his own sins.",
+          "posterPath": "/IECgq0Hd4ezuyGhbQgQawURGKT.jpg",
+          "backdropPath": "/VgW1XPEFiwEZgYuR2Wl204DxGL.jpg",
+          "rating": null,
+          "voteCount": 5,
+          "genreIds": [
+            18,
+            9648,
+            10765
+          ],
+          "originalLanguage": "th"
+        },
+        {
+          "key": "tv:1871",
+          "type": "tv",
+          "id": 1871,
+          "slug": "eastenders",
+          "title": "EastEnders",
+          "originalTitle": "EastEnders",
+          "year": 1985,
+          "releaseDate": "1985-02-19",
+          "overview": "The everyday lives of working-class residents of Albert Square, a traditional Victorian square of terrace houses surrounding a park in the East End of London's Walford borough.",
+          "posterPath": "/ETFWCToRFx45vNAsNexh31ufSE.jpg",
+          "backdropPath": "/2jzrUm0vGW2TqJPds1PfZVRYrh7.jpg",
+          "rating": 4.4,
+          "voteCount": 235,
+          "genreIds": [
+            10766,
+            18,
+            80
+          ],
+          "originalLanguage": "en"
+        }
+      ]
+    }
+  ]
+}
