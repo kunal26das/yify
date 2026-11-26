@@ -3,116 +3,198 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="How Yify handles account data, watchlists, viewing history, purchases, advertising and diagnostics, and how to exercise your privacy choices.">
-  <meta name="theme-color" content="#111110">
-  <link rel="canonical" href="https://yify.expo.app/privacy/">
-  <link rel="stylesheet" href="../legal.css">
+  <meta name="description" content="What the Android app and the website at yify.expo.app collect, why, who receives it, how long it is kept and the choices you have.">
+  <link rel="canonical" href="https://yify.expo.app/privacy.html">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/legal.css">
   <title>Privacy Policy · Yify</title>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
-    <a class="brand" href="../" aria-label="Yify home">YIFY</a>
+    <a class="brand" href="/"><img src="/icons/icon-192.png" alt="" width="32" height="32"><span class="app-name">Yify</span></a>
     <nav aria-label="Legal pages">
-      <a href="../privacy/" aria-current="page">Privacy Policy</a>
-      <a href="../terms/">Terms &amp; Conditions</a>
-      <a href="../delete-account/">Delete account</a>
+      <a href="/privacy.html" aria-current="page">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/support.html">Plus and support</a>
+      <a href="/delete-account.html">Delete account</a>
     </nav>
   </header>
   <main id="main">
-    <p class="eyebrow">Yify · Legal</p>
+    <p class="tag">Legal</p>
     <h1>Privacy Policy</h1>
-    <p class="date">Last updated: <time datetime="2026-09-25">25 September 2026</time></p>
-    <p class="intro">This policy explains what information Yify uses, why it is used, and the choices you have when using our apps and websites.</p>
-    <p>Yify Movies: Trailers, Ratings is operated by Kunal Das, using the name Kudos Labs. Kunal Das is responsible for the personal information processed by Yify. You can contact us about this policy or your information at <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a>. This policy covers Yify on Android, iOS, desktop and the web, including <a href="https://yify.expo.app/">yify.expo.app</a> and <a href="https://kunal26das.github.io/yify/">kunal26das.github.io/yify</a>. Features and providers vary by platform.</p>
-    <p>Correspondence address: Kunal Das, C-92/93 Chhatrapati NAGAR, Bhopal, Madhya Pradesh 462041, India.</p>
-    <nav class="contents" aria-label="On this page">
-      <div>
-        <h2>On this page</h2>
-        <ol>
-          <li><a href="#information">Information we use</a></li>
-          <li><a href="#providers">Service providers</a></li>
-          <li><a href="#advertising">Advertising and cookies</a></li>
-          <li><a href="#choices">Your choices</a></li>
-          <li><a href="#retention">Retention and deletion</a></li>
-          <li><a href="#security">Security and transfers</a></li>
-          <li><a href="#children">Children</a></li>
-          <li><a href="#changes">Changes and contact</a></li>
-        </ol>
-      </div>
-    </nav>
-    <section aria-labelledby="information">
-      <h2 id="information">1. Information we use</h2>
-      <h3>Accounts and saved activity</h3>
-      <p>If you sign in with Google, Firebase Authentication supplies an account identifier, name, email address and profile image. We use these to sign you in and associate your saved information with your account. We do not receive your Google password.</p>
-      <p>Your watchlist, viewing history, watched status, collection names and membership, and preferences (including your selected viewing country) can be stored on your device. When signed in, Yify also synchronizes this saved activity, settings and records of removals through Firebase so your devices can stay in sync. Recent searches and cached catalogue information are also stored locally.</p>
-      <p>If you use the private movie journal, Yify stores the movies you log, watch dates, your optional personal ratings and notes, and records of edits and removals. Journal records are associated with your signed-in account, cached separately on your device and synchronized through Firebase. They are not published to other users. Viewing insights are calculated on your device from these records. Your journal remains available to read, edit and delete if Yify Plus access ends.</p>
-      <h3>Usage and diagnostics</h3>
-      <p>In versions with the Privacy controls introduced on 25 September 2026, optional usage analytics stays off until you enable it. If enabled, Google Analytics for Firebase receives usage events such as screens visited, search length and result counts, selected titles, playback and watchlist activity, notification opens, purchase activity and app preferences. These versions do not send the text of your searches as analytics events. Providers may also process device or browser information, IP addresses, installation or session identifiers, and technical usage information.</p>
-      <p>If optional usage analytics is enabled, journal analytics record actions such as opening the journal, saving or deleting an entry, and opening insights or Yify Plus options. These journal events do not include your notes, personal ratings, watch dates or logged titles.</p>
-      <p>Firebase Crashlytics and Sentry help diagnose crashes and performance problems. Reports can include error messages, stack traces, app and operating-system versions, device information, timings and the actions leading to an error. With the Privacy update, optional Sentry performance traces, diagnostic logs and metrics require the same optional usage-analytics choice. Automatic session tracking, profiling and replay are disabled. Turning analytics off discards optional telemetry still queued by Yify, including if you later enable it again. Information already handed to a provider’s transport or offline storage cannot be recalled through this setting. The update also stops copying app analytics payloads into Crashlytics breadcrumbs. Crash and error reporting remains active separately from this choice. If you choose to send a problem report, Sentry processes that report separately from optional measurement. Yify filters information from Sentry reports, but diagnostic information should not be assumed to be anonymous.</p>
-      <p>If you send a problem report or contact support, we receive the message and any information you choose to include. The in-app problem-report form does not request your name or email address or attach screenshots. Please avoid including sensitive information in a report.</p>
-      <h3>Purchases and support</h3>
-      <p>RevenueCat processes customer identifiers, products, transaction and subscription status, and purchase history so Yify can validate purchases, restore access and manage Yify Plus benefits. When you sign in, your Yify account identifier can be linked to your RevenueCat customer record. On supported native builds, a Firebase app-instance identifier is shared with RevenueCat for purchase and advertising measurement only while optional usage analytics is enabled. Disabling it requests removal of that linkage; this does not erase information already received by providers. Purchase validation, restoration and subscription management still operate when optional usage analytics is off.</p>
-      <p>The store or web checkout provider processes billing and payment details. Yify does not store complete payment-card numbers. An external tip through Buy Me a Coffee is handled by that service and does not unlock Yify features.</p>
-      <h3>Notifications and external content</h3>
-      <p>With your permission, Yify can check the catalogue in the background and create local notifications for new titles. Your operating-system and app preferences control these notifications.</p>
-      <p>Where the optional <strong>Watchlist availability</strong> pilot is offered, you can separately enable alerts for saved movies becoming available on your selected streaming services. This requires an eligible subscription and a signed-in account. Yify stores a device or browser push-delivery token, a device registration identifier, your time zone, viewing country and registration time with your Firebase account. Scheduled processing on GitHub uses these records, your synchronized watchlist, selected streaming services and notification preferences to check availability through TMDB and verify subscription access through RevenueCat. Backend availability requests identify titles and do not send your Yify account identifier or push token to TMDB.</p>
-      <p>These optional alerts use Expo, Google Firebase Cloud Messaging and, on Apple devices, Apple’s push-notification service to deliver messages without an open Yify screen or tab, subject to device and browser support. Delivery providers process the destination token and notification content. Yify keeps availability observations and delivery records to detect changes, avoid repeated alerts and handle delivery failures. The browser also stores a bounded list of recent notification event identifiers to prevent duplicate displays.</p>
-      <p>Streaming-service choices are saved preferences, not connected streaming accounts. Yify does not collect streaming-service passwords. For availability supplied by JustWatch through <a href="https://www.themoviedb.org/privacy-policy">TMDB</a>, the app connects directly to TMDB, which receives requested title identifiers, country filters where applicable, and connection information such as your IP address. These requests do not include your Yify account credentials or streaming-service credentials. Viewing links open a regional TMDB page; following its provider links takes you to that service, where its own sign-in and privacy policy apply.</p>
-      <p>If you choose <strong>Use current location</strong>, Yify asks for location permission to detect your viewing country once. You can decline and select a country manually. Mobile apps use the operating system’s location and reverse-geocoding services; their providers may process the location needed to identify your country. On the web, Yify requests location with high accuracy disabled, rounds latitude and longitude to two decimal places, and sends those approximate coordinates and your connection IP address directly to <a href="https://www.bigdatacloud.com/privacy">BigDataCloud</a>. BigDataCloud uses location/IP pairings to improve its geolocation data, as described in its policy. Yify saves only the resulting country preference, which can sync with your account; it does not save coordinates, include them in analytics or diagnostics, or track your location in the background. You can revoke location permission through your browser or device settings.</p>
-      <p>Catalogue, artwork and trailer requests connect to external providers. Those providers receive the connection information needed to respond, such as your IP address and the requested resource. Anime searches are sent through Yify’s server to Nyaa with the search text and selected category. Yify does not send your account identity to Nyaa. In versions with Privacy controls, YouTube embeds stay unloaded until you select <strong>Allow YouTube</strong> in the player or enable <strong>YouTube trailers</strong> under <strong>Preferences → Privacy</strong>. YouTube then receives your IP address, video choices and device information and may use cookies or other storage under Google’s policy. This permission is saved on this device. Turning it off removes loaded embeds; it does not erase records already held by Google. Catalogue browsing uses catalogue artwork instead of YouTube thumbnails. Autoplay requires both this permission and your playback preference.</p>
+    <p class="date">Last updated: <time datetime="2026-11-27">27 November 2026</time></p>
+    <p class="intro">This policy explains what information <span class="app-name">Yify</span> uses, why it is used, who receives it and the choices you have.</p>
+    <p>It covers the <span class="app-name">Yify</span> app for Android and the website at <a href="https://yify.expo.app/">yify.expo.app</a>, including the API that serves both. <span class="app-name">Yify</span> is operated by Kunal Das, using the name Kudos Labs, who is responsible for the personal information it processes. Contact us about this policy or your information at <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a>. Correspondence address: Kunal Das, C-92/93 Chhatrapati NAGAR, Bhopal, Madhya Pradesh 462041, India.</p>
+
+    <section class="box" aria-labelledby="summary">
+      <h2 id="summary">In short</h2>
+      <ul>
+        <li>You can use <span class="app-name">Yify</span> without an account. Your watchlist, diary and lists stay on your device unless you sign in to sync them.</li>
+        <li>Usage analytics is off until you allow it, and you can turn it off at any time.</li>
+        <li>Crash and error reports are always on. They are filtered before they leave your device, and our crash-reporting provider does not store your IP address.</li>
+        <li>The Android app shows an occasional Google ad to people without <span class="app-name">Yify</span> Plus. The website shows no ads.</li>
+        <li>Catalog data reaches you through our own API. Trailers play from YouTube, which receives your IP address and what you watch.</li>
+      </ul>
     </section>
+
+    <nav class="box contents" aria-labelledby="contents">
+      <h2 id="contents">On this page</h2>
+      <ol>
+        <li><a href="#information">What we use and why</a></li>
+        <li><a href="#providers">Service providers</a></li>
+        <li><a href="#legal-bases">Legal bases</a></li>
+        <li><a href="#choices">Your choices and rights</a></li>
+        <li><a href="#retention">Retention and deletion</a></li>
+        <li><a href="#security">Security and international processing</a></li>
+        <li><a href="#children">Children</a></li>
+        <li><a href="#older-versions"><span class="app-name">Yify</span> 1.8 and earlier (Android)</a></li>
+        <li><a href="#changes">Changes and contact</a></li>
+      </ol>
+    </nav>
+
+    <section aria-labelledby="information">
+      <h2 id="information">1. What we use and why</h2>
+
+      <h3 id="library">Your library and settings</h3>
+      <p>Your watchlist, your diary of what you watched (dates, ratings, notes and rewatches), your lists, your recently viewed titles, your recent searches and your settings (theme, accent color, country, streaming services and trailer captions) are stored on your device: in the app's storage on Android, or in your browser's local storage on the website. Without an account we do not receive them. The app uses some of them to build requests to our API, such as your country, the streaming services you filter by and the titles whose streaming availability it shows (see <a href="#catalog">Catalog, images and where to watch</a>).</p>
+      <p>If you used <span class="app-name">Yify</span> 1.8 or earlier on the same device, the update converts the library, journal, history and settings that version saved into the new format when it first opens, and deletes the old copies 30 days later. Titles saved by those versions were identified by the old catalog, so to match them the app sends their IMDb IDs, or their old IDs with their names and years, to our API. Our API looks them up at TMDB and, until the old catalog is retired, at the third-party catalog service those versions used. No account information is sent.</p>
+
+      <h3 id="account">Your account and sync</h3>
+      <p>Signing in is optional. You sign in with Google through Firebase Authentication, which gives us your account ID, name, email address and profile photo. We never receive your Google password. On the website, the sign-in pages are served from yify.expo.app and passed on to Firebase.</p>
+      <p>While you are signed in, your watchlist, diary, lists, recently viewed titles and synced settings (theme, accent color, country, streaming services, trailer captions and whether recently viewed is paused) are stored in Cloud Firestore under your account, so they are the same on every device where you sign in. Recent searches, your privacy choices and cached catalog data stay on each device. Nothing you save is shown to other people.</p>
+      <p>If you used <span class="app-name">Yify</span> 1.8 or earlier with the same Google account, the app copies the watchlist, history, collections, journal and settings that version saved in your account into the new format. While devices on those versions are still in use, it checks for changes they made, at most once an hour, and copies those too. You can run the import again from You › Settings › Account. Signing out removes your synced library and settings from that device; they stay in your account and return when you sign in again.</p>
+
+      <h3 id="catalog">Catalog, images and where to watch</h3>
+      <p>Titles, people, search results and streaming availability come from TMDB through our own API, which Expo's EAS Hosting runs at yify.expo.app. The app sends our API what it needs to answer: the page or title requested, your search words, your country, the streaming services you filter by and the titles whose availability it shows. Our API passes these to TMDB without your IP address or account details. Your device does not send catalog requests to TMDB itself.</p>
+      <p>Our API keeps your IP address briefly in memory to limit how many requests one connection can make. It writes one log line per request with the kind of request, the result and how long it took, and never logs your IP address, search words or account details. Expo processes your IP address and the addresses you request in order to serve the website and the API, and may keep standard request logs.</p>
+      <p>On the website, our API reads the country that Expo's network derives from your IP address to suggest your starting country. The suggestion is saved on your device only, never on our servers. In the Android app, the starting country comes from your device's region setting. No version 2 of <span class="app-name">Yify</span> asks for location permission. You can change your country in You › Settings › Region and services.</p>
+      <p>Posters, backdrops, photos and streaming-service logos load directly from TMDB's image server (image.tmdb.org), which receives your IP address and the image requested. If those images keep failing on your connection, the app loads them through our API instead for the next 24 hours.</p>
+      <p>JustWatch supplies the streaming availability that TMDB passes to us; JustWatch receives no information from <span class="app-name">Yify</span>. Choosing a streaming service opens TMDB's watch page for that title in your browser, where links lead to each service under its own privacy policy.</p>
+
+      <h3 id="youtube">Trailers and YouTube API Services</h3>
+      <p><span class="app-name">Yify</span> uses YouTube API Services to play trailers. When you play a trailer, YouTube receives your IP address and what you watch, and may set cookies. Google's Privacy Policy applies: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>.</p>
+      <p>Trailers play only when you tap Play trailer. The first time, the app asks you to agree to this policy and the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a> before anything loads from YouTube, and it saves that choice on your device. The website uses YouTube's privacy-enhanced embed (youtube-nocookie.com). You can turn the YouTube trailers setting off in You › Settings › Privacy; the app then asks again before the next trailer.</p>
+
+      <h3 id="analytics">Usage analytics (optional)</h3>
+      <p>Usage analytics is off until you choose Allow in the privacy prompt or turn on Usage analytics in You › Settings › Privacy. While it is on, Google Analytics for Firebase receives:</p>
+      <ul>
+        <li>a random app instance ID, which is not your name, email address or account ID;</li>
+        <li>the screens you open and what you do there, such as opening a title (by its TMDB number), starting a trailer, adding to your watchlist, logging a watch, creating a list, opening a streaming service, sharing, signing in, viewing <span class="app-name">Yify</span> Plus offers, the steps of a purchase, ads shown or skipped in the Android app, and changing a setting;</li>
+        <li>for a search, how many characters it had and how many results it found, never the words;</li>
+        <li>whether you have <span class="app-name">Yify</span> Plus and whether you are signed in;</li>
+        <li>device and app details, such as the model, operating system, language and app version, and an approximate location (country, region and city) that Google derives from your IP address.</li>
+      </ul>
+      <p>Analytics never receives your diary notes, the ratings you give, the names of your lists or your search words. On the website, Google Analytics sets first-party cookies (named <code>_ga</code>) to tell visits apart; Google signals and ad personalization are turned off for our analytics, and turning analytics off stops collection and deletes those cookies. In the Android app, while analytics is on, the app shares its analytics instance ID with RevenueCat, which then reports purchases and renewals to Google Analytics. If you see ads in the Android app, Google Analytics also records ad impressions while analytics is on.</p>
+      <p>While analytics is on, Sentry also receives performance measurements and counts of expected failures, such as how long screens and requests take and how often a request timed out. These carry the same filtered details as crash reports.</p>
+
+      <h3 id="diagnostics">Crash and error reports</h3>
+      <p>To find and fix problems, the app and the website send crash and error reports to Sentry. These reports are always on, because we need them to keep <span class="app-name">Yify</span> working; they are never used for advertising. A report contains the error and where it happened in our code, the app or browser version, the operating system, device details such as the model, memory, storage, screen, battery and network state, the kind of screen where it happened (never the title or person it showed) and a short list of the app's recent steps, such as which kind of request failed.</p>
+      <p>Before a report leaves your device, the app removes email addresses, account identifiers, search words, access tokens and the paths of web addresses. The Android app also records how it was installed (for example from Google Play) so we can tell real devices from automated test devices. Sentry receives your IP address with each report and is configured not to store it. There is no session replay, screen recording or profiling, and the app sends at most 25 error reports per session. Our API reports its own failures to Sentry with only the name of the failing request type and the data center that served it.</p>
+      <p>If you send us a problem report from the app or by email, we receive your message and anything you choose to include. Please leave out sensitive information.</p>
+
+      <h3 id="advertising">Ads in the Android app</h3>
+      <p>If you don't have <span class="app-name">Yify</span> Plus, the Android app may occasionally show a full-screen Google AdMob ad when you open a title. Ads never appear when the app starts, on links you open from elsewhere, or while a trailer is playing or about to play, and the ad SDK is not started for <span class="app-name">Yify</span> Plus members. The website shows no ads.</p>
+      <p>To show and measure ads and to prevent fraud, Google's Mobile Ads SDK receives your device's advertising ID, your IP address and approximate location, device and app details, and how you interact with ads. Where the law requires consent, including in the European Economic Area, the United Kingdom and Switzerland, Google's consent form asks for your choices before ads load, and Ad privacy choices in You › Settings › Privacy lets you change them. Ads are limited to content suitable for teens. You can reset or delete your advertising ID in your Android settings, and manage Google's ad personalization in <a href="https://myadcenter.google.com/">My Ad Center</a>. Learn <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites and apps that use its services</a>.</p>
+
+      <h3 id="purchases"><span class="app-name">Yify</span> Plus purchases</h3>
+      <p><span class="app-name">Yify</span> Plus is a Google Play subscription. Google Play handles payment; we never see your card or payment details. RevenueCat validates purchases and keeps a record of your subscription and purchase history so that Plus can unlock, renew and be restored.</p>
+      <p>In the Android app you can buy Plus without an account. RevenueCat then knows you by a random app user ID created on your device. If you sign in, RevenueCat links that ID to your account ID so that Plus also works on the website. RevenueCat's collection of device identifiers is turned off. On the website, RevenueCat is contacted only when you are signed in and a page needs your Plus status, and it receives your account ID. The website does not sell Plus. Your current Plus status is saved on your device so that the app knows it offline.</p>
+
+      <h3 id="updates">App updates</h3>
+      <p>The Android app uses Google Play's in-app update service to learn when a newer version is available in the store; the update downloads in the background and installs when you choose Restart or while the app is in the background. Between store releases, Expo's update service (EAS Update) can deliver small fixes: each time the app starts, it asks Expo whether one is available, sending a random installation ID that Expo uses to deliver and count updates, the app version, the update channel and your IP address.</p>
+
+      <h3 id="storage">Storage on your device and cookies</h3>
+      <p>The Android app keeps your library, settings and choices in its private storage. The website keeps them in your browser's local storage, together with your signed-in session from Firebase. <span class="app-name">Yify</span> sets no cookies of its own. Cookies can come from Google Analytics if you allow it on the website, from YouTube when you play a trailer, and from Firebase's sign-in handler, which we serve from yify.expo.app, while you sign in. These legal pages load no analytics, advertising or sign-in code.</p>
+    </section>
+
     <section aria-labelledby="providers">
       <h2 id="providers">2. Service providers</h2>
-      <p>We use information to operate Yify, synchronize your account, deliver purchases and advertising, understand usage, fix problems, provide support and protect the service. Providers process information needed for these functions:</p>
+      <p>These providers process information for the purposes above, under their own terms and privacy policies:</p>
       <ul>
-        <li><a href="https://policies.google.com/privacy">Google and Firebase</a>: authentication, cloud storage, usage analytics, crash reporting, advertising, Google Play purchases, push-notification delivery and YouTube content.</li>
-        <li><a href="https://www.revenuecat.com/privacy/">RevenueCat</a> and <a href="https://stripe.com/privacy">Stripe</a>: purchase validation, subscription management, web checkout and related analytics.</li>
-        <li><a href="https://sentry.io/privacy/">Sentry</a>: errors, performance measurements and user-submitted problem reports.</li>
-        <li><a href="https://expo.dev/privacy">Expo</a>: app updates, website hosting and optional push-notification delivery.</li>
-        <li><a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a>: website hosting and scheduled processing for optional availability alerts. Hosting and processing can produce ordinary delivery and server logs.</li>
-        <li><a href="https://www.apple.com/legal/privacy/">Apple</a>: operating-system services and push-notification delivery on Apple devices.</li>
-        <li>Catalogue and media services, including YTS-compatible catalogue providers, EZTV, Nyaa, <a href="https://www.themoviedb.org/privacy-policy">TMDB</a>, image-delivery services and <a href="https://policies.google.com/privacy">YouTube</a>.</li>
+        <li><a href="https://firebase.google.com/support/privacy">Google Firebase</a>: Firebase Authentication and Cloud Firestore for your account and sync; Google Analytics for Firebase for usage analytics, only with your consent.</li>
+        <li><a href="https://policies.google.com/privacy">Google</a>: AdMob and Google's User Messaging Platform for ads and ad consent in the Android app; Google Play for payments and in-app updates; YouTube for trailers.</li>
+        <li><a href="https://sentry.io/privacy/">Sentry</a>: crash and error reports, and performance measurements with your consent.</li>
+        <li><a href="https://www.revenuecat.com/privacy/">RevenueCat</a>: purchase validation and subscription status.</li>
+        <li><a href="https://expo.dev/privacy">Expo</a>: EAS Hosting, which runs the website and our API, and EAS Update, which delivers app updates.</li>
+        <li><a href="https://www.themoviedb.org/privacy-policy">TMDB</a>: catalog data through our API, and images loaded from its image server.</li>
+        <li>JustWatch: streaming availability, supplied through TMDB. It receives no information from <span class="app-name">Yify</span>.</li>
       </ul>
-      <p>External stores, websites and services also have their own policies. We may disclose information when required by law, to respond to lawful requests, or to protect users and the service. If the service changes ownership, any transfer of information will remain subject to applicable privacy obligations and notice requirements.</p>
+      <p>We may disclose information when the law requires it, to respond to lawful requests, or to protect users and the service. If <span class="app-name">Yify</span> changes ownership, your information stays subject to this policy and to any notice the law requires.</p>
     </section>
-    <section aria-labelledby="advertising">
-      <h2 id="advertising">3. Advertising and cookies</h2>
-      <p>Yify uses Google AdMob on supported mobile builds and Google AdSense on the web. Google and advertising partners may use cookies, web beacons, IP addresses, device or advertising identifiers and information about ad interactions to deliver, measure and personalize advertising where permitted. Third parties may place and read cookies in your browser as a result of ad serving. Yify sends its additional AdMob impression, click and revenue measurements to Firebase and RevenueCat only while optional usage analytics is enabled. Google’s own ad-serving processing is governed separately by its advertising choices.</p>
-      <p>Learn <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites and apps that use its services</a>. You can manage Google ad personalization in <a href="https://myadcenter.google.com/">My Ad Center</a>.</p>
-      <p>Where applicable, Google's consent message offers choices for advertising data use. Use <strong>Ad privacy choices</strong> in the Android app when available, or <strong>Preferences → Privacy → Privacy and cookie settings</strong> on the web, to revisit those choices. The web control requests Google’s form when its consent service is available and stops Yify from requesting more ads during that page session. If Yify cannot request the form, it shows a message; this does not change your consent. Browser cookie controls and device advertising settings provide additional controls. Disabling storage may affect sign-in, saved preferences or other features.</p>
-      <p>Active Yify Plus access removes ads placed by Yify. It does not remove advertising placed independently by external video or website providers. These legal pages do not load the app's advertising, analytics or sign-in scripts; the hosting service can still process ordinary connection logs.</p>
+
+    <section aria-labelledby="legal-bases">
+      <h2 id="legal-bases">3. Legal bases</h2>
+      <p>Where data-protection laws such as the GDPR apply, we rely on these grounds:</p>
+      <ul>
+        <li><strong>Providing the service you ask for:</strong> your account and sync, <span class="app-name">Yify</span> Plus, the catalog and trailers you open, and app updates.</li>
+        <li><strong>Your consent:</strong> usage analytics and the related performance measurements, playing trailers from YouTube, and ad choices where Google's consent form asks for them. You can withdraw consent at any time; this does not affect processing that happened before.</li>
+        <li><strong>Our legitimate interests:</strong> crash and error reports that keep <span class="app-name">Yify</span> working, protecting the API from abuse, answering your messages, and funding the free app with occasional ads where no consent is required.</li>
+        <li><strong>Legal obligations:</strong> keeping purchase records where the law requires it.</li>
+      </ul>
     </section>
+
     <section aria-labelledby="choices">
-      <h2 id="choices">4. Your choices</h2>
-      <p>In versions with Privacy controls, change <strong>Optional usage analytics</strong> under <strong>Preferences → Privacy</strong>. Refusing it does not block browsing, sign-in or paid benefits. Your adult declaration, analytics and YouTube choices, notice version and the time of your choice are saved on this device or browser; they do not synchronize between devices. Change the choice separately on each device. Refused events are not held for later replay. Older installed versions may continue their previous behaviour until updated.</p>
-      <p>You can use catalogue features without signing in. In Preferences, you can manage saved history, watchlist data, playback and notification settings. You can also clear local browser or app data using your device's controls.</p>
-      <p>You can turn off <strong>Watchlist availability</strong> under <strong>Preferences → Notifications</strong> on each device or browser where you enabled it. Disabling alerts or signing out requests removal of that device’s enrollment and revocation of its push delivery. If the device is offline, cleanup may need to wait until you reconnect. You can also block notifications through your operating-system or browser settings. Changing these alert settings does not cancel your subscription.</p>
-      <p>To delete your Yify account, use <strong>Preferences → Account → Delete account</strong>, or follow the <a href="../delete-account/">account-deletion instructions</a>. Contact us to request access to, correction of, or deletion of other personal information. We may need to verify your identity before acting on a request.</p>
-      <p>Depending on your location, applicable law may also give you rights to restrict or object to processing, receive a copy of your information, withdraw consent, or complain to a data-protection authority. Withdrawing consent does not affect processing that was lawful before withdrawal. Use <strong>Preferences → Privacy → Request your data or raise a privacy concern</strong>, or email us, to exercise applicable rights or ask how they apply to your information. You can also ask about nominating someone to exercise applicable rights after death or incapacity. Include the account email used with Yify and the request you want us to handle; do not send passwords or identity documents unless a specific, necessary verification step has been agreed. For GDPR requests, we respond without undue delay and within one month; if a permitted extension of up to two further months is necessary, we explain it within that first month. You may complain to your local data-protection authority. India’s DPDP rights and Board complaint route apply as the relevant provisions take effect; contact us first through the grievance route above.</p>
+      <h2 id="choices">4. Your choices and rights</h2>
+      <ul>
+        <li>Turn <strong>Usage analytics</strong> and <strong>YouTube trailers</strong> on or off in You › Settings › Privacy. These choices are saved on each device and are not synced.</li>
+        <li>In the Android app, use <strong>Ad privacy choices</strong> in You › Settings › Privacy when Google's consent form applies in your region, or get <span class="app-name">Yify</span> Plus to turn off <span class="app-name">Yify</span> ads.</li>
+        <li>Use <span class="app-name">Yify</span> without signing in, sign out at any time, pause or clear Recently viewed in your Library, and remove any title, diary entry or list.</li>
+        <li>Delete your account in You › Settings › Account › Delete account, or follow the <a href="/delete-account.html">account deletion instructions</a>.</li>
+        <li>Ask for a copy of your data with <strong>Request a copy of your data</strong> in You › Settings › Privacy, which opens an email to us, or email <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a>.</li>
+      </ul>
+      <p>Depending on where you live, you may have the right to access, correct, delete or receive a copy of your information, to restrict or object to its use, to withdraw consent, and to complain to a data-protection authority. Email us to use these rights. We may ask you to confirm that you control the account concerned; we never ask for your password. We answer without undue delay and within one month; if a request is complex and we need up to two more months, we tell you within the first month. Under India's Digital Personal Data Protection Act you can also nominate someone to exercise your rights after death or incapacity, and please contact us first with any grievance.</p>
     </section>
+
     <section aria-labelledby="retention">
       <h2 id="retention">5. Retention and deletion</h2>
-      <p>Account and synchronized data are kept to provide your account and cross-device features until you delete them or your account. Successful account deletion removes the Firebase account and the cloud content synchronized by Yify, including journal entries and availability-alert enrollments. A minimal deletion marker associated with the former account identifier is retained to prevent another signed-in device from restoring deleted account content. It retains a deletion timestamp, but no journal entries, titles, watch dates, ratings or notes. Updated apps clear synchronized caches attributable to the deleted account on the deleting device after confirming cloud deletion, including the journal, watchlist, history, collections and synced preferences. Other updated devices clear their attributable copies after verifying the deletion. Copies on devices that cannot synchronize can remain until local app or browser data is cleared. Scheduled alert processing clears delivery state for the accounts it processes when it detects an unenrolled device or a deleted account. Records outside the current alert pilot may need a separate administrative cleanup. Device-only data must be cleared separately.</p>
-      <p>Account deletion does not automatically cancel a subscription, refund a payment, or delete every record held by billing, advertising, analytics or diagnostics providers. Transaction records may be retained for accounting, tax, fraud-prevention, refund and legal obligations. Usage, diagnostic, support and delivery records are retained according to their purpose, provider configuration and applicable requirements. Contact us about additional deletion requests.</p>
+      <ul>
+        <li><strong>On your device:</strong> until you remove it, sign out (for synced data), clear the app's or the browser's data, or uninstall the app.</li>
+        <li><strong>In your account:</strong> until you delete it or your account. A removed title or entry leaves a small marker without its notes or ratings so that your other devices remove it too; watchlist and recently viewed markers are dropped after 90 days.</li>
+        <li><strong>Account deletion</strong> removes your Firebase account and everything synced to it, including data saved by <span class="app-name">Yify</span> 1.8 or earlier, from our servers and from the device you delete it on. An empty deletion marker under your former account ID stays so that other signed-in devices cannot restore deleted data; it holds no titles, dates, ratings or notes. See <a href="/delete-account.html">Delete your account</a>.</li>
+        <li><strong>Purchases:</strong> RevenueCat keeps your purchase history while we use it; email us to have your RevenueCat record deleted. Google Play keeps its transaction records under its own policy and legal duties. Deleting your account does not cancel a subscription.</li>
+        <li><strong>Analytics and crash reports</strong> are not linked to your account. They are kept according to our retention settings with Google Analytics and Sentry, then deleted.</li>
+        <li><strong>Messages you send us</strong> are kept as long as we need them to handle your request.</li>
+      </ul>
     </section>
+
     <section aria-labelledby="security">
       <h2 id="security">6. Security and international processing</h2>
-      <p>We use access controls and encrypted network connections supported by our services to protect information. No system is completely secure. Providers may process information outside your country, including in the United States and other locations in which they operate. Applicable provider agreements and data-protection requirements govern that processing.</p>
+      <p>Information travels over encrypted connections, and the Cloud Firestore rules let only your signed-in account read or change your synced data. No system is completely secure. Our providers may process information outside your country, including in the United States, under their data-protection agreements and the safeguards the law requires.</p>
     </section>
+
     <section aria-labelledby="children">
       <h2 id="children">7. Children</h2>
-      <p>Yify is intended only for adults aged 18 and over. Updated versions ask you to confirm that you are at least 18 before opening the app. We save the confirmation rather than a date of birth or identity document. A self-declaration is not independent age verification. We do not offer a parental-consent flow for under-18 users. If you believe a child has provided personal information, contact us so we can investigate and take appropriate action. Do not use Yify if you are under 18. Third-party services may impose additional requirements.</p>
+      <p><span class="app-name">Yify</span> is not directed to children under 13. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has given us personal information, contact us and we will delete it.</p>
     </section>
+
+    <section aria-labelledby="older-versions">
+      <h2 id="older-versions">8. <span class="app-name">Yify</span> 1.8 and earlier (Android)</h2>
+      <p>Until every Android user has moved to version 2, <span class="app-name">Yify</span> 1.8 and earlier stay installed on some devices. Besides what this policy describes, those versions:</p>
+      <ul>
+        <li>report crashes to Firebase Crashlytics as well as Sentry;</li>
+        <li>ask for approximate location permission, only when you choose to detect your viewing country, and keep only the resulting country;</li>
+        <li>check for new titles in the background and show local notifications if you turn them on;</li>
+        <li>send a launch event with app and device details to Expo's EAS Insights;</li>
+        <li>load their movie catalog from third-party catalog services through our legacy API, which receives the pages and titles you request and your IP address.</li>
+      </ul>
+      <p>Updating to version 2 from Google Play stops all of these. We will remove this section once version 2 has replaced the older versions.</p>
+    </section>
+
     <section aria-labelledby="changes">
-      <h2 id="changes">8. Changes and contact</h2>
-      <p>We will publish updates on this page and revise the date above. For material changes, we will provide an appropriate notice before they take effect where required. Questions or requests can be sent to <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a>.</p>
+      <h2 id="changes">9. Changes and contact</h2>
+      <p>We publish updates on this page and change the date above. For material changes we give notice before they take effect where the law requires it. Questions and requests: <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a>.</p>
     </section>
   </main>
-  <footer>
-    <nav aria-label="Footer"><a href="../">Back to Yify</a><a href="../terms/">Terms &amp; Conditions</a><a href="../delete-account/">Delete account</a></nav>
-    <p>Yify Movies: Trailers, Ratings · Kudos Labs</p>
+  <footer class="site-footer">
+    <nav aria-label="Footer">
+      <a href="/">Back to <span class="app-name">Yify</span></a>
+      <a href="/terms.html">Terms</a>
+      <a href="/support.html">Plus and support</a>
+      <a href="/delete-account.html">Delete account</a>
+    </nav>
+    <p><span class="app-name">Yify</span> · Kudos Labs</p>
   </footer>
 </body>
 </html>

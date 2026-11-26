@@ -3,57 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Delete your Yify account and cloud data, understand what stays on your device, and manage subscriptions separately.">
-  <link rel="canonical" href="https://yify.expo.app/delete-account/">
-  <link rel="stylesheet" href="legal.css">
-  <title>Delete account · Yify</title>
+  <meta name="description" content="How to delete your account and the data synced to it, what deletion removes, what remains and how to cancel a subscription.">
+  <link rel="canonical" href="https://yify.expo.app/delete-account.html">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/brand.css">
+  <link rel="stylesheet" href="/legal.css">
+  <title>Delete your account · Yify</title>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
-    <a class="brand" href="https://yify.expo.app/" aria-label="Yify home">YIFY</a>
+    <a class="brand" href="/"><img src="/icons/icon-192.png" alt="" width="32" height="32"><span class="app-name">Yify</span></a>
     <nav aria-label="Legal pages">
-      <a href="https://yify.expo.app/privacy/">Privacy Policy</a>
-      <a href="https://yify.expo.app/terms/">Terms &amp; Conditions</a>
-      <a href="https://yify.expo.app/delete-account/" aria-current="page">Delete account</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/support.html">Plus and support</a>
+      <a href="/delete-account.html" aria-current="page">Delete account</a>
     </nav>
   </header>
   <main id="main">
-    <p class="eyebrow">Yify · Your account</p>
+    <p class="tag">Your account</p>
     <h1>Delete your account</h1>
-    <p class="intro">You can delete your Yify account and its synchronized data at any time. Account deletion is permanent.</p>
-    <h2>In the app or on the website</h2>
+    <p class="intro">You can delete your <span class="app-name">Yify</span> account and the data synced to it at any time. Deletion is permanent.</p>
+
+    <h2 id="in-the-app">In the app or on the website</h2>
     <ol>
-      <li>Open Yify and go to <strong>Preferences</strong>.</li>
-      <li>Under <strong>Account</strong>, choose <strong>Delete account</strong>.</li>
-      <li>Read the confirmation and confirm deletion.</li>
+      <li>Open <span class="app-name">Yify</span> on Android or at <a href="https://yify.expo.app/">yify.expo.app</a>, and sign in with the Google account you use for <span class="app-name">Yify</span>.</li>
+      <li>Go to You › Settings › Account › Delete account.</li>
+      <li>Read the confirmation and choose Delete account.</li>
+      <li>Google asks you to confirm your account. If you cancel here, nothing changes.</li>
     </ol>
-    <p>You must be signed in to see this option. Sign in with the same Google account you used for Yify. You may be asked to sign in again to verify the request.</p>
-    <h2>If you cannot access Yify</h2>
-    <p>Email <a href="mailto:kunal26das@gmail.com?subject=Yify%20account%20deletion">kunal26das@gmail.com</a> from the Google account you used to sign in and request deletion of your Yify account. We may ask you to verify ownership before deleting anything. Account-deletion requests are actioned within 30 days.</p>
-    <h2>What account deletion removes</h2>
-    <p>When deletion completes successfully, Yify removes:</p>
+    <p>When deletion finishes you see "Your account was deleted." and you are signed out. If you have <span class="app-name">Yify</span> Plus, deleting your account does not cancel it. Cancel it in Google Play first, in Payments &amp; subscriptions.</p>
+
+    <h2 id="by-email">If you can't use the app</h2>
+    <p>Email <a href="mailto:kunal26das@gmail.com">kunal26das@gmail.com</a> from the Google account you use for <span class="app-name">Yify</span> and ask us to delete your account. We may ask you to confirm that you control the account; we never ask for your password. We act on deletion requests within 30 days.</p>
+
+    <h2 id="removed">What deletion removes</h2>
     <ul>
-      <li>Your Firebase sign-in account record, including your account ID, name, email address and profile image information.</li>
-      <li>Your synchronized watchlist and the records of removed titles.</li>
-      <li>Your private movie journal, including logged titles, watch dates, personal ratings and notes.</li>
-      <li>Your synchronized viewing history and the records of removed history entries.</li>
-      <li>Your synchronized settings, including theme, browsing, playback and notification preferences.</li>
+      <li>Your sign-in account: your account ID, name, email address and profile photo.</li>
+      <li>Everything synced to the account: your watchlist, your diary with its dates, ratings and notes, your lists, your recently viewed titles and your synced settings.</li>
+      <li>Data that <span class="app-name">Yify</span> 1.8 and earlier saved to the account: the old watchlist, history, collections, journal and settings.</li>
+      <li>The same synced data on the device you delete your account from.</li>
     </ul>
-    <p>Yify retains a minimal, empty journal deletion marker under the former account identifier to stop other signed-in devices from restoring deleted entries. Your journal cache is cleared on the deleting device. Other devices clear it when they next successfully synchronize; clear local app or browser data on devices that cannot connect. If you cancel or cannot complete account deletion after journal removal, the journal remains removed and cannot accept new entries.</p>
-    <h2>What needs separate action</h2>
-    <h3>Subscriptions and purchase records</h3>
-    <p>Deleting your account does not cancel a subscription or refund a purchase. Use <strong>Manage subscription</strong> in Yify, your Google Play subscriptions page, or the billing portal or receipt for the provider where you paid. If another store supplied your purchase, manage it through that store.</p>
-    <p>Billing providers may retain transaction records for accounting, tax, fraud prevention, refunds and other legal obligations. Contact us about additional requests involving information held by RevenueCat or another provider.</p>
-    <h3>Information saved only on your device</h3>
-    <p>Local watchlists, viewing history, recent searches and preferences can remain after account deletion. Clear them using Yify's Preferences or your device's app-storage or browser site-data controls. Clearing local data by itself does not delete a cloud account.</p>
-    <h3>Analytics, diagnostics and support records</h3>
-    <p>Account deletion does not automatically erase all information held by analytics, advertising, diagnostics or support providers. These records can contain installation or session identifiers, activity and technical details; they are not guaranteed to be anonymous. Their retention depends on the purpose, provider configuration and applicable requirements. Email us if you want to request deletion of additional personal information.</p>
-    <p>Read the <a href="https://yify.expo.app/privacy/">Privacy Policy</a> for more about how Yify handles information.</p>
+
+    <h2 id="remains">What remains</h2>
+    <ul>
+      <li><strong>An empty deletion marker</strong> under your former account ID. It stops other signed-in devices from restoring deleted data, holds no titles, dates, ratings or notes, and cannot be changed.</li>
+      <li><strong>Your purchase record at RevenueCat.</strong> Email us to have it deleted. Google Play keeps its own records of your purchases under its policy and legal duties.</li>
+      <li><strong>Other devices.</strong> A device that is still signed in to the deleted account stops syncing and shows that the account was deleted. Sign out there to remove its copy.</li>
+      <li><strong>Data saved only on a device</strong>, such as a library kept without signing in, recent searches and privacy choices. It is not part of your account. Clear the app's data or uninstall it on Android, or clear this site's data in your browser.</li>
+      <li><strong>Usage analytics and crash reports.</strong> They are not linked to your account and expire under our retention settings. Email us if you want to ask about them.</li>
+    </ul>
+
+    <h2 id="interrupted">If deletion stops partway</h2>
+    <p>If the last step fails, for example because the connection drops, your synced data has already been removed and You › Settings › Account shows Finish deleting account, which repeats only that step.</p>
+    <p>Read the <a href="/privacy.html">Privacy Policy</a> for more about how <span class="app-name">Yify</span> handles information.</p>
   </main>
-  <footer>
-    <nav aria-label="Footer"><a href="https://yify.expo.app/">Back to Yify</a><a href="https://yify.expo.app/privacy/">Privacy Policy</a><a href="https://yify.expo.app/terms/">Terms &amp; Conditions</a></nav>
-    <p>Yify Movies: Trailers, Ratings · Kudos Labs</p>
+  <footer class="site-footer">
+    <nav aria-label="Footer">
+      <a href="/">Back to <span class="app-name">Yify</span></a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/support.html">Plus and support</a>
+    </nav>
+    <p><span class="app-name">Yify</span> · Kudos Labs</p>
   </footer>
 </body>
 </html>

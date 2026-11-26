@@ -10,7 +10,7 @@ const {bannedMatches} = createRequire(import.meta.url)('../tests/policy/bannedSt
 
 export const HTML_ROUTES = ['/', '/search', '/library', '/you', '/plus', '/title/movie/603-the-matrix', '/person/6384-keanu-reeves'];
 export const CLIENT_MARKERS = ['api.themoviedb.org', 'TMDB_API_KEY', 'YIFY_API_FIXTURES'];
-export const LEGAL_PAGES = new Set(['privacy.html', 'privacy/index.html']);
+export const LEGAL_PAGES = new Set();
 const TEXT_FILE = /\.(?:js|mjs|cjs|map|css|html|json|txt|xml|webmanifest|svg)$/;
 const READY_TIMEOUT_MS = 90_000;
 const REQUEST_TIMEOUT_MS = 30_000;
