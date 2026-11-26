@@ -36,7 +36,7 @@ registerHooks({
     return nextResolve(specifier, context);
   },
   load(url, context, nextLoad) {
-    if (url.startsWith('file:') && url.endsWith('.json')) {
+    if (url.startsWith('file:') && url.endsWith('.json') && context.conditions?.includes('import') && context.importAttributes?.type !== 'json') {
       const text = readFileSync(fileURLToPath(url), 'utf8');
       return {format: 'module', source: `export default ${text};`, shortCircuit: true};
     }
