@@ -26,7 +26,16 @@ test('Android resolves the stored preference and accent into hex colour roles', 
   assert.equal(light.read().colors.surface, '#F5F6F9');
   assert.equal(light.read().colors.primary, '#0F131A');
   assert.equal(light.read().colors.primaryContainer, '#E29AFF');
-  assert.deepEqual(kit.navigationBar.setStyle.calls.at(-1), ['light']);
+});
+
+test('system bar content contrasts with the surface: light buttons and icons on dark, dark on light', () => {
+  const kit = createKit();
+  probe(kit, 'src/core/ui/theme/ThemeProvider.tsx', {preference: 'dark', accent: 'default'});
+  assert.deepEqual(kit.navigationBar.setStyle.calls, [['light']]);
+  assert.deepEqual(kit.statusBar.setStatusBarStyle.calls, [['light']]);
+  assert.deepEqual(kit.systemUi.setBackgroundColorAsync.calls, [['#0B0D13']]);
+  probe(kit, 'src/core/ui/theme/ThemeProvider.tsx', {preference: 'light', accent: 'default'});
+  assert.deepEqual(kit.navigationBar.setStyle.calls.at(-1), ['dark']);
   assert.deepEqual(kit.statusBar.setStatusBarStyle.calls.at(-1), ['dark']);
   assert.deepEqual(kit.systemUi.setBackgroundColorAsync.calls.at(-1), ['#F5F6F9']);
 });

@@ -6,7 +6,7 @@ import type {ColorScheme} from './theme/tokens';
 import {tokens} from './theme/tokens';
 
 export function applySystemBars(scheme: ColorScheme): void {
-  NavigationBar.setStyle(scheme === 'dark' ? 'dark' : 'light');
+  NavigationBar.setStyle(scheme === 'dark' ? 'light' : 'dark');
   setStatusBarStyle(scheme === 'dark' ? 'light' : 'dark');
   setBackgroundColorAsync(tokens.colors[scheme].surface).catch(() => undefined);
 }
