@@ -128,7 +128,7 @@ update's platform, channel and runtime; the app checks on launch/foreground and 
 
 ## Dependabot updates
 
-[Dependency automation](dependency-automation.md) covers daily app, release-console and GitHub Actions updates, including major releases. Related framework packages are grouped; exact version pins and Expo compatibility checks remain required.
+[Dependency automation](dependency-automation.md) covers monthly app, release-console and GitHub Actions updates, including major releases. The Expo SDK, other native SDKs and tooling each update as one group, and security updates still arrive when alerts are raised; exact version pins and Expo compatibility checks remain required.
 
 Root and release-console PRs receive separate clean reinstalls. A trusted job commits only the corresponding regenerated lockfile after validating its source commit and successful checks, then reruns CI on the committed result. Verified release-console updates and the narrowly reviewed same-major ESLint/RevenueCat web updates can merge automatically after their required checks pass. Other app and Actions updates require review; see the exact eligibility and lockfile restrictions in the dependency automation guide. Release-console merges do not trigger app deployments.
 

@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
       time: "06:00"
       timezone: "Asia/Kolkata"
     open-pull-requests-limit: 30
@@ -17,6 +17,7 @@ updates:
           - "@expo/log-box"
           - "@expo/metro-runtime"
           - "@expo/ui"
+          - "@expo/vector-icons"
           - "eslint-config-expo"
           - "expo-background-task"
           - "expo-blur"
@@ -47,33 +48,44 @@ updates:
           - "expo-web-browser"
           - "react-native"
           - "@react-native/*"
-      react:
-        patterns: ["react", "react-dom", "react-test-renderer", "@types/react", "@types/react-dom"]
+          - "react"
+          - "react-dom"
+          - "react-test-renderer"
+          - "@types/react"
+          - "@types/react-dom"
+          - "react-native-reanimated"
+          - "react-native-worklets"
+          - "react-native-gesture-handler"
+          - "react-native-safe-area-context"
+          - "react-native-screens"
+          - "react-native-web"
+          - "react-native-webview"
       firebase-native:
         patterns: ["@react-native-firebase/*", "firebase"]
-      animations:
-        patterns: ["react-native-reanimated", "react-native-worklets"]
-      sentry:
-        patterns: ["@sentry/*"]
-      native-integrations:
-        patterns: ["react-native-*", "@react-native-*/*", "@gorhom/*", "expo-device-corner-radius", "expo-in-app-updates", "@expo/vector-icons"]
+      native-sdks:
+        patterns:
+          - "@sentry/*"
+          - "react-native-purchases"
+          - "@revenuecat/*"
+          - "react-native-google-mobile-ads"
+          - "@react-native-google-signin/*"
+          - "@gorhom/*"
+          - "react-native-youtube-iframe"
+          - "react-native-web-webview"
+          - "expo-in-app-updates"
+          - "expo-device-corner-radius"
       tooling:
-        patterns: ["typescript", "eslint*", "@typescript-eslint/*", "@babel/*", "expo-doctor"]
-      desktop:
-        patterns: ["electron", "electron-builder"]
-      app-patches:
+        patterns: ["typescript", "eslint*", "@eslint/*", "@typescript-eslint/*", "@babel/*", "expo-doctor", "electron", "electron-builder"]
+      everything-else:
         patterns: ["*"]
-        update-types: ["patch"]
-      app-minors:
-        patterns: ["*"]
-        update-types: ["minor"]
+        update-types: ["minor", "patch"]
       security-updates:
         applies-to: security-updates
         patterns: ["*"]
   - package-ecosystem: "npm"
     directory: "/release"
     schedule:
-      interval: "daily"
+      interval: "monthly"
       time: "06:15"
       timezone: "Asia/Kolkata"
     open-pull-requests-limit: 20
@@ -83,19 +95,16 @@ updates:
     groups:
       release-react:
         patterns: ["react", "@types/react", "ink", "ink-*"]
-      release-patches:
+      release-updates:
         patterns: ["*"]
-        update-types: ["patch"]
-      release-minors:
-        patterns: ["*"]
-        update-types: ["minor"]
+        update-types: ["minor", "patch"]
       security-updates:
         applies-to: security-updates
         patterns: ["*"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
       time: "06:30"
       timezone: "Asia/Kolkata"
     open-pull-requests-limit: 10
