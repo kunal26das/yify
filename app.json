@@ -64,7 +64,7 @@
     "plugins": [
       ["expo-router", {"sitemap": false, "headOrigin": "https://yify.expo.app"}],
       ["expo-splash-screen", {"image": "./assets/images/splash-icon.png", "imageWidth": 96, "resizeMode": "contain", "dark": {"image": "./assets/images/splash-icon-dark.png"}}],
-      ["expo-font", {"fonts": []}],
+      ["expo-font", {"fonts": ["./src/core/ui/icons/YifyIcons.ttf", "./src/core/ui/icons/YifyIconsFilled.ttf"]}],
       "@react-native-firebase/app",
       "./plugins/withGoogleServicesVersion",
       "./plugins/withHsdpVersion",
